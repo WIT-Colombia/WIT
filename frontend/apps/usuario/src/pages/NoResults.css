@@ -1,0 +1,3 @@
+.no-results-page .user-content-main { display:grid; min-height:calc(100vh - 155px); align-content:center; justify-items:center; gap:14px; text-align:center; }
+.no-results-page .location-availability-notice { width:100%; text-align:left; }
+.no-results-note { color:var(--wit-text-muted); font-size:10px; }

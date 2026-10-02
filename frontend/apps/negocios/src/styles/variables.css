@@ -1,0 +1,16 @@
+:root {
+  --wit-primary: #2563EB;
+  --wit-primary-dark: #1D4ED8;
+  --wit-primary-light: #DBEAFE;
+  --wit-background: #F6F8FB;
+  --wit-surface: #FFFFFF;
+  --wit-text-primary: #172033;
+  --wit-text-secondary: #64748B;
+  --wit-text-muted: #8B97A8;
+  --wit-border: #E2E8F0;
+  --wit-divider: #EEF2F7;
+  --wit-radius-sm: 8px;
+  --wit-radius-md: 12px;
+  --wit-radius-lg: 16px;
+  --wit-radius-xl: 20px;
+}

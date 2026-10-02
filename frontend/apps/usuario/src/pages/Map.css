@@ -1,0 +1,34 @@
+.map-page .user-content-main { width:min(100% - 48px,1400px); }
+.map-page-heading { display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:21px; }
+.map-page-heading>div>span { color:var(--wit-primary-dark); font-size:10px; font-weight:700; letter-spacing:.1em; }
+.map-page-heading h1 { margin:6px 0; font-size:32px; letter-spacing:-1px; }
+.map-page-heading p { margin:0; color:var(--wit-text-secondary); font-size:12px; }
+.map-page-heading>a,.map-controls>a { color:var(--wit-primary-dark); font-size:12px; font-weight:600; text-decoration:none; }
+.map-controls { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.map-search { display:flex; flex:1; align-items:center; gap:10px; min-height:47px; padding:0 13px; border:1px solid var(--wit-border); border-radius:12px; background:#fff; color:var(--wit-primary-dark); font-size:23px; }
+.map-search input { width:100%; border:0; outline:0; color:var(--wit-text-primary); font:inherit; font-size:13px; }
+.map-open-filter,.map-controls>a { display:flex; min-height:44px; align-items:center; gap:8px; padding:0 13px; border:1px solid var(--wit-border); border-radius:10px; background:#fff; white-space:nowrap; }
+.map-open-filter { color:var(--wit-text-secondary); font-size:11px; }
+.map-open-filter input { accent-color:var(--wit-primary-dark); }
+.map-category-chips { display:flex; gap:8px; margin:0 0 16px; overflow-x:auto; padding-bottom:3px; }
+.map-category-chips button { flex-shrink:0; min-height:34px; padding:0 12px; border:1px solid var(--wit-border); border-radius:999px; background:#fff; color:var(--wit-text-secondary); font-size:10px; cursor:pointer; }
+.map-category-chips button.selected { border-color:#a6d9bc; background:var(--wit-primary-light); color:var(--wit-primary-dark); font-weight:700; }
+.map-content { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(340px,.8fr); gap:16px; align-items:start; }
+.map-canvas { position:sticky; top:90px; height:min(72vh,710px); min-height:460px; overflow:hidden; border:1px solid var(--wit-border); border-radius:18px; background:var(--wit-background); }
+.map-google-embed { width:100%; height:100%; min-height:100%; border:0; border-radius:0; }
+.map-results { display:grid; align-content:start; gap:10px; max-height:72vh; padding-right:3px; overflow-y:auto; }
+.map-results .entity-card__image { height:135px; }
+.map-results .entity-card__content { padding:10px 12px; }
+.map-results .entity-card__actions { padding-top:6px; }
+.map-results-heading { position:sticky; z-index:2; top:0; display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border:1px solid var(--wit-border); border-radius:12px; background:#fff; }
+.map-results-heading>div { display:grid; gap:3px; }
+.map-results-heading b { font-size:13px; }
+.map-results-heading span,.map-results-heading a { color:var(--wit-text-secondary); font-size:10px; }
+.map-results-heading a { color:var(--wit-primary-dark); text-decoration:none; }
+.map-empty { padding:25px 17px; border:1px dashed var(--wit-border); border-radius:13px; background:#fff; }
+.map-empty b { font-size:14px; }
+.map-empty p { color:var(--wit-text-secondary); font-size:12px; }
+.map-empty a { color:var(--wit-primary-dark); font-size:12px; font-weight:700; text-decoration:none; }
+.map-disclaimer { margin:0; color:var(--wit-text-muted); font-size:10px; line-height:1.5; }
+@media(max-width:900px) { .map-content { grid-template-columns:minmax(0,1fr) minmax(300px,.85fr); }.map-canvas { min-height:400px; } }
+@media(max-width:700px) { .map-page .user-content-main { width:calc(100% - 30px); }.map-page-heading { align-items:start; flex-direction:column; gap:10px; }.map-page-heading h1 { font-size:27px; }.map-controls { flex-wrap:wrap; gap:7px; }.map-search { flex-basis:100%; }.map-content { grid-template-columns:1fr; }.map-canvas { position:relative; top:auto; height:350px; min-height:0; }.map-results { max-height:none; overflow:visible; }.map-results .entity-card { display:grid; grid-template-columns:112px minmax(0,1fr); }.map-results .entity-card__image { height:100%; min-height:146px; }.map-results .entity-card__heading { gap:5px; }.map-results .entity-card__heading h3 { font-size:12px; }.map-results .entity-rating { font-size:9px; }.map-disclaimer { font-size:9px; } }

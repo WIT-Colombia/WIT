@@ -1,0 +1,17 @@
+.wit-button {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--wit-primary);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 140ms ease, transform 140ms ease;
+}
+.wit-button:hover { background: var(--wit-primary-dark); }
+.wit-button:active { transform: translateY(1px); }
+.wit-button--secondary { background: var(--wit-primary-light); color: var(--wit-primary-dark); }
+.wit-button--outline { border-color: var(--wit-border); background: var(--wit-surface); color: var(--wit-text-primary); }
+.wit-button--ghost { background: transparent; color: var(--wit-text-primary); }
+.wit-logo { color: var(--wit-primary); font-size: 24px; font-weight: 800; letter-spacing: -1.2px; }

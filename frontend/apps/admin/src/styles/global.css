@@ -1,0 +1,9 @@
+.app-shell { display: flex; min-height: 100vh; }
+.admin-sidebar { display: flex; flex: 0 0 240px; flex-direction: column; gap: 32px; padding: 28px 24px; background: var(--wit-sidebar); color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .1em; }
+.admin-sidebar .wit-logo { color: #fff; }
+.admin-main { flex: 1; min-width: 0; }
+.admin-header { display: flex; align-items: center; height: 76px; padding: 0 32px; border-bottom: 1px solid var(--wit-border); background: var(--wit-surface); font-weight: 600; }
+.app-panel { max-width: 800px; margin: clamp(48px, 12vh, 120px) auto; padding: 40px; border: 1px solid var(--wit-border); border-radius: var(--wit-radius-lg); background: var(--wit-surface); }
+.app-panel h1 { margin: 8px 0 16px; font-size: clamp(30px, 4vw, 44px); }
+.app-panel p { color: var(--wit-text-secondary); line-height: 1.6; }
+.eyebrow { color: var(--wit-primary-dark) !important; font-size: 12px; font-weight: 600; letter-spacing: .08em; }

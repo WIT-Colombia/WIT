@@ -1,0 +1,13 @@
+{
+  "name": "wit-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:usuario": "npm run dev --workspace=@wit/usuario",
+    "dev:negocios": "npm run dev --workspace=@wit/negocios",
+    "dev:admin": "npm run dev --workspace=@wit/admin",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

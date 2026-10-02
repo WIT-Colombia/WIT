@@ -1,0 +1,22 @@
+.report-page .user-content-main { max-width:760px; }
+.report-back { display:inline-block; margin-bottom:24px; color:var(--wit-text-secondary); font-size:12px; text-decoration:none; }
+.report-back:hover { color:var(--wit-primary-dark); }
+.report-heading { margin-bottom:23px; }
+.report-eyebrow { color:var(--wit-primary-dark); font-size:10px; font-weight:700; letter-spacing:.1em; }
+.report-heading h1,.report-confirmation h1,.report-missing h1 { margin:8px 0; color:var(--wit-text-primary); font-size:clamp(27px,4vw,34px); letter-spacing:-.8px; }
+.report-heading p,.report-confirmation>p:not(.report-eyebrow),.report-missing p { margin:0; color:var(--wit-text-secondary); font-size:13px; line-height:1.6; }
+.report-form { display:grid; gap:17px; padding:22px; border:1px solid var(--wit-border); border-radius:15px; background:#fff; }
+.report-form label { display:grid; gap:7px; color:var(--wit-text-primary); font-size:12px; font-weight:600; }
+.report-form label span { color:var(--wit-text-muted); font-weight:400; }
+.report-form select,.report-form textarea { width:100%; min-height:43px; padding:10px 12px; border:1px solid var(--wit-border); border-radius:9px; background:#fff; color:var(--wit-text-primary); font:inherit; font-size:12px; }
+.report-form textarea { resize:vertical; }
+.report-form select:focus,.report-form textarea:focus { outline:2px solid #16b97840; border-color:var(--wit-primary); }
+.report-privacy-note { margin:0; color:var(--wit-text-muted); font-size:10px; line-height:1.5; }
+.report-form>button { min-height:44px; border:0; border-radius:10px; background:var(--wit-primary); color:#fff; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+.report-form>button:disabled { background:#a9cbb8; cursor:not-allowed; }
+.report-confirmation,.report-missing { display:grid; justify-items:center; padding:42px 24px; border:1px solid var(--wit-border); border-radius:16px; background:#fff; text-align:center; }
+.report-confirmation>span { display:grid; width:48px; height:48px; place-items:center; border-radius:50%; background:var(--wit-primary-light); color:var(--wit-primary-dark); font-size:25px; }
+.report-confirmation .report-eyebrow { margin:15px 0 0; }
+.report-confirmation a,.report-missing a { margin-top:16px; color:var(--wit-primary-dark); font-size:12px; font-weight:700; text-decoration:none; }
+.report-missing { margin-top:30px; }
+@media(max-width:700px) { .report-back { margin-bottom:18px; }.report-form { gap:14px; padding:17px; }.report-confirmation,.report-missing { padding:31px 18px; } }

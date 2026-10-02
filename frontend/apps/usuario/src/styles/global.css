@@ -1,0 +1,14 @@
+.flow-placeholder { display: grid; min-height: 100vh; align-content: center; justify-items: start; gap: 12px; max-width: 620px; margin: auto; padding: 32px; }
+.flow-placeholder > a:first-child { color: var(--wit-primary); font-size: 28px; font-weight: 800; text-decoration: none; }
+.flow-placeholder p { margin: 32px 0 0; color: var(--wit-primary-dark); font-size: 12px; font-weight: 700; letter-spacing: .1em; }
+.flow-placeholder h1 { margin: 0; font-size: clamp(32px, 7vw, 48px); }
+.flow-placeholder span { color: var(--wit-text-secondary); line-height: 1.6; }
+.flow-placeholder__link { margin-top: 16px; color: var(--wit-primary-dark); font-weight: 600; }
+:root[data-reduced-motion="true"] *,
+:root[data-reduced-motion="true"] *::before,
+:root[data-reduced-motion="true"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
+}

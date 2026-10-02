@@ -1,0 +1,6 @@
+.app-shell { min-height: 100vh; padding: 24px; }
+.app-header { display: flex; align-items: center; justify-content: space-between; max-width: 1120px; margin: auto; color: var(--wit-text-secondary); font-size: 12px; font-weight: 600; letter-spacing: .08em; }
+.app-panel { max-width: 720px; margin: clamp(64px, 16vh, 160px) auto; padding: 40px; border: 1px solid var(--wit-border); border-radius: var(--wit-radius-lg); background: var(--wit-surface); }
+.app-panel h1 { max-width: 560px; margin: 8px 0 16px; font-size: clamp(30px, 5vw, 44px); }
+.app-panel p { color: var(--wit-text-secondary); line-height: 1.6; }
+.eyebrow { color: var(--wit-primary-dark) !important; font-size: 12px; font-weight: 600; letter-spacing: .08em; }
