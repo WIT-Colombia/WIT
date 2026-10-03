@@ -17,6 +17,7 @@
 .results-section-heading h2 { margin:4px 0 0; font-size:20px; letter-spacing:-.35px; }
 .results-section-heading>span { padding-bottom:3px; color:var(--wit-text-muted); font-size:12px; }
 .results-businesses .results-grid { margin-top:0; }
+.results-more{display:flex;min-height:42px;align-items:center;justify-content:center;margin:18px auto 0;padding:0 16px;border:1px solid var(--wit-border);border-radius:10px;background:#fff;color:var(--wit-primary-dark);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .results-offer-group + .results-offer-group { margin-top:20px; }
 .results-offer-group h3 { margin:0 0 10px; color:var(--wit-text-secondary); font-size:14px; }
 @media(max-width:620px) { .results-section-heading h2 { font-size:17px; }.results-section-heading>span { font-size:10px; } }

@@ -263,6 +263,7 @@ const slug = (value: string) => value.toLocaleLowerCase("es-CO").normalize("NFD"
 
 export const demoProducts: Product[] = [];
 export const demoServices: Service[] = [];
+let recentProductIndex = 0;
 
 seeds.forEach((seed, index) => {
   const business = demoBusinesses[index];
@@ -271,7 +272,8 @@ seeds.forEach((seed, index) => {
   chosen.forEach((template) => {
     const id = `${seed.id}-${slug(template.name)}`;
     if (template.kind === "product") {
-      demoProducts.push({ id, businessId: seed.id, name: template.name, description: template.description, price: template.price, image: business.image });
+      demoProducts.push({ id, businessId: seed.id, name: template.name, description: template.description, price: template.price, image: business.image, ...(recentProductIndex < 10 ? { createdAt: new Date(Date.now() - recentProductIndex * 86400000).toISOString() } : {}) });
+      recentProductIndex += 1;
     } else {
       demoServices.push({ id, businessId: seed.id, name: template.name, description: template.description, priceLabel: template.priceLabel, image: business.image });
     }

@@ -17,6 +17,7 @@ export type Business = {
   createdAt?: string;
   phone?: string;
   whatsapp?: string;
+  coordinates?: { lat: number; lng: number };
 };
 
 export type Product = {
@@ -27,6 +28,7 @@ export type Product = {
   price?: number;
   image: string;
   createdAt?: string;
+  likeCount?: number;
 };
 
 const sampleProductPublished = (daysAgo: number) => new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
@@ -38,6 +40,7 @@ export type Service = {
   description: string;
   priceLabel?: string;
   image: string;
+  likeCount?: number;
 };
 
 export type Review = {
@@ -159,3 +162,19 @@ export const reviews: Review[] = [
   { id: "review-tools-1", businessId: "casa-tornillo", author: "Camilo T.", rating: 4, date: "2026-06-18", comment: "Me orientaron para encontrar justo la herramienta que necesitaba." },
   { id: "review-tech-1", businessId: "tecno-palmira", author: "Laura M.", rating: 5, date: "2026-08-04", comment: "Encontré el accesorio que buscaba y me ayudaron a instalarlo." },
 ];
+
+// Datos de muestra para previsualizar un catálogo activo mientras llega el backend.
+products.forEach((product, index) => { product.likeCount = product.likeCount ?? 18 + ((index * 13) % 74); });
+services.forEach((service, index) => { service.likeCount = service.likeCount ?? 12 + ((index * 17) % 58); });
+businesses.forEach((business, index) => {
+  const existing = reviews.filter((review) => review.businessId === business.id);
+  if (existing.length === 0) {
+    reviews.push(
+      { id: `sample-${business.id}-1`, businessId: business.id, author: "Valentina M.", rating: 4 + (index % 2), date: "2026-09-18", comment: "Buena atención y una experiencia que volvería a repetir." },
+      { id: `sample-${business.id}-2`, businessId: business.id, author: "Santiago R.", rating: 4, date: "2026-09-09", comment: "Encontré lo que necesitaba y me atendieron con amabilidad." },
+    );
+  }
+  const businessReviews = reviews.filter((review) => review.businessId === business.id);
+  business.reviewCount = Math.max(business.reviewCount, businessReviews.length + 24 + (index % 40));
+  business.rating = Number((businessReviews.reduce((sum, review) => sum + review.rating, 0) / businessReviews.length).toFixed(1));
+});

@@ -1,0 +1,6 @@
+.offer-business-rating{display:flex;align-items:center;gap:7px;margin:14px 0 2px;color:var(--wit-text-secondary);font-size:12px}.offer-business-stars{color:#e8a627;font-size:20px;letter-spacing:1px;line-height:1}.offer-business-rating b{color:var(--wit-text-primary);font-size:14px}.offer-business-rating small{color:var(--wit-text-muted);font-size:10px}
+.thumbs-down-icon{display:inline-flex;transform:rotate(180deg)}
+.offer-detail-actions .offer-like-count.is-active{order:1}
+.offer-detail-actions .entity-like.is-active{order:2}
+.offer-business-stars{display:inline-block;background:linear-gradient(90deg,#e9a727 calc(var(--rating, 0) * 1%),#d6ddd9 calc(var(--rating, 0) * 1%));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px}
+.offer-like-count-note{display:block;margin-top:8px;color:var(--wit-text-muted);font-size:10px}

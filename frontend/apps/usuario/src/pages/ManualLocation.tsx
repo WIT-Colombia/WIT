@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Logo } from "@wit/ui";
 import type { Department, Locality } from "../data/locations";
 import { getSelectedLocation, saveSelectedLocation } from "../services/locationService";
@@ -16,6 +16,8 @@ function PinIcon() {
 
 export default function ManualLocation() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const returnTo = params.get("returnTo") || "/home";
   const current = getSelectedLocation();
   const catalog = getColombianAdministrativeDivisions();
   const [departments] = useState<Department[]>(catalog.departments);
@@ -52,7 +54,7 @@ export default function ManualLocation() {
   function continueWithLocation() {
     if (!selectedMunicipality) return;
     saveSelectedLocation(selectedMunicipality);
-    navigate("/home");
+    navigate(returnTo);
   }
 
   return <main className="manual-location-page">

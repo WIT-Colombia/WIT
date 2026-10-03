@@ -13,6 +13,8 @@ import { NewProductsBanner } from "../components/NewProductsBanner";
 import { NoResultsState } from "../components/NoResultsState";
 import { getFavoriteIds, getLikeIds, toggleFavorite, toggleLike } from "../services/userDataService";
 import "./Home.css";
+import "./HomeChanges.css";
+import "./HomeAdjustments.css";
 
 function Icon({ name }: { name: "pin" | "star" | "arrow" | "phone" | "map" }) {
   const paths = {
@@ -39,6 +41,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [showAllNearby, setShowAllNearby] = useState(false);
   const [items, setItems] = useState<Business[]>([]);
   const [favorites, setFavorites] = useState<string[]>(getFavoriteIds);
   const [likes, setLikes] = useState<string[]>(getLikeIds);
@@ -98,8 +101,7 @@ export default function Home() {
         const ageDays = (Date.now() - Date.parse(product.createdAt)) / (1000 * 60 * 60 * 24);
         return ageDays >= 0 && ageDays < NEW_PRODUCT_WINDOW_DAYS;
       })
-      .sort((a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""))
-      .slice(0, 4);
+      .sort((a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""));
   }, [hasSampleCatalog]);
   useEffect(() => {
     const viewport = bannerViewportRef.current;
@@ -204,21 +206,12 @@ export default function Home() {
       <section className="hero-section">
         <div className="hero-copy"><span className="hero-kicker"><span className="pulse-dot" /> DESCUBRE LO LOCAL</span><h1>Lo que necesitas,<br /><em>está más cerca.</em></h1><p>Encuentra negocios, productos y servicios en tu zona. Todo empieza con una búsqueda.</p>
           <SearchBar onSearch={setQuery} onSubmitSearch={(value) => navigate(`/results${value.trim() ? `?q=${encodeURIComponent(value.trim())}` : ""}`)} />
-          {bannerBusinesses.length > 0 && <section className="home-business-banner" aria-label="Descubre negocios">
-            <div className="home-business-banner__heading"><span>DESCUBRE NEGOCIOS</span><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div>
-            <div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}>
-              <div className="home-business-banner__track">
-              {[0, 1].map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__copy"><small>{business.plan === "premium" || business.isFeatured ? "DESTACADO" : isRecentlyAdded(business.createdAt) ? "NUEVO EN WIT" : "CERCA DE TI"}</small><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}
-            </div></div>
-          </section>}
           <div className="search-hint"><Icon name="pin" /> Explorando en <strong>{locationLabel}</strong></div>
         </div>
-        <div className="hero-art" aria-label="Ilustración de una búsqueda local">
-          <div className="art-sun" /><div className="art-road" /><div className="art-block block-one" /><div className="art-block block-two" /><div className="art-block block-three" /><div className="art-pin"><Icon name="pin" /></div>
-          <div className="art-label"><span className="art-label__icon">✦</span><span><b>Algo bueno</b><small>te espera cerca</small></span></div>
-          <div className="art-distance"><Icon name="pin" /> A pocos pasos</div>
-        </div>
+        <div className="hero-art home-hero-map" aria-label={`Mapa de negocios cerca de ${locationLabel}`}><iframe title={`Mapa de Google Maps centrado en ${locationLabel}`} src={`https://www.google.com/maps?q=${encodeURIComponent(`negocios cerca de ${locationLabel}`)}&z=14&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></div>
       </section>
+
+      {bannerBusinesses.length > 0 && <section className="home-business-banner home-business-banner--below-hero" aria-label="Descubre negocios"><div className="home-business-banner__heading"><span>DESCUBRE NEGOCIOS</span><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div><div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}><div className="home-business-banner__track">{[0, 1].map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__copy"><small>{business.plan === "premium" || business.isFeatured ? "DESTACADO" : isRecentlyAdded(business.createdAt) ? "NUEVO EN WIT" : "CERCA DE TI"}</small><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}</div></div></section>}
 
       <section className="category-section" id="explorar" aria-labelledby="category-title">
         <div className="section-heading"><div><span className="section-kicker">¿QUÉ NECESITAS?</span><h2 id="category-title">Explora por categoría</h2></div><button className="text-link" type="button" aria-expanded={showAllCategories} aria-controls="home-category-list" onClick={() => setShowAllCategories((current) => !current)}>{showAllCategories ? "Ver menos" : `Ver todas (${categories.length})`} <Icon name="arrow" /></button></div>
@@ -229,8 +222,8 @@ export default function Home() {
 
       <section className="business-section" id="lugares" aria-labelledby="business-title">
         <div className="section-heading businesses-heading"><div><span className="section-kicker">CERCA DE TU ZONA</span><h2 id="business-title">{resultsLabel}</h2><p>{hasSampleCatalog ? `${visibleItems.length} negocios de muestra en ${cityName}` : `Estamos preparando la información para ${cityName}.`}</p></div><Button variant={mapView ? "primary" : "outline"} type="button" onClick={() => setMapView((current) => !current)}><Icon name="map" />{mapView ? "Ver lista" : "Ver en mapa"}</Button></div>
-        {mapView && <div className="map-preview"><div className="map-streets" /><span className="map-area-name">{locationLabel.toLocaleUpperCase("es-CO")}</span>{visibleItems.slice(0, 4).map((item, index) => <span key={item.id} className={`map-marker marker-${index + 1}`} title={item.name}>●</span>)}<div className="map-caption"><Icon name="pin" />{hasSampleCatalog ? `Negocios de muestra en ${cityName}` : `Aún no hay negocios de muestra en ${cityName}`}</div></div>}
-          {!hasSampleCatalog ? <LocationAvailabilityNotice location={selectedLocation} query={query}/> : visibleItems.length ? <div className="business-grid">{nearbyItems.map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => saveFavorite(business.id)} />)}</div> : <NoResultsState term={query || category} locationName={cityName}/>}
+        {mapView && <div className="map-preview home-google-map"><iframe title={`Negocios cerca de ${locationLabel}`} src={`https://www.google.com/maps?q=${encodeURIComponent(`negocios cerca de ${locationLabel}`)}&z=14&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /><div className="map-caption"><Icon name="pin" />Negocios cerca de {cityName} · radio aproximado de 3 km</div></div>}
+          {!hasSampleCatalog ? <LocationAvailabilityNotice location={selectedLocation} query={query}/> : visibleItems.length ? <><div className="business-grid">{(showAllNearby ? nearbyItems : nearbyItems.slice(0, 12)).map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => saveFavorite(business.id)} />)}</div>{nearbyItems.length > 12 && !showAllNearby && <button className="home-see-all" type="button" onClick={() => setShowAllNearby(true)}>Ver todos ({nearbyItems.length})</button>}</> : <NoResultsState term={query || category} locationName={cityName}/>}
       </section>
 
       {hasSampleCatalog && <section className="need-banner"><div><span>¿No lo encontraste?</span><h2>Cuéntanos qué necesitas</h2><p>Ayúdanos a descubrir qué hace falta cerca de ti.</p></div><Button variant="outline" type="button" onClick={() => navigate("/register-need")}>Registrar una necesidad <Icon name="arrow" /></Button><span className="banner-sparkle">✳</span></section>}

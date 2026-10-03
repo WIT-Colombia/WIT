@@ -8,6 +8,7 @@ const REPORTS_KEY = "wit-user-reports";
 const NOTIFICATIONS_KEY = "wit-notifications";
 const PROFILE_KEY = "wit-profile";
 const SETTINGS_KEY = "wit-settings";
+const RATINGS_KEY = "wit-user-ratings";
 const PREVIEW_SESSION_KEY = "wit-preview-user-session";
 
 function readIds(key: string): string[] {
@@ -40,12 +41,33 @@ function toggleId(key: string, id: string): string[] {
 
 export function toggleFavorite(id: string): string[] { return businessIds.has(id) ? toggleId(FAVORITES_KEY, id) : getFavoriteIds(); }
 export function toggleLike(id: string): string[] { return likeableIds.has(id) ? toggleId(LIKES_KEY, id) : getLikeIds(); }
+export function getLikeCount(id: string, baseCount = 0): number { return Math.max(0, baseCount) + (getLikeIds().includes(id) ? 1 : 0); }
 
 export type UserReview = Review & { isMock?: boolean };
 export function getUserReviews(): UserReview[] {
   try { return JSON.parse(localStorage.getItem(REVIEWS_KEY) ?? "[]") as UserReview[]; } catch { return []; }
 }
 export function saveUserReview(review: UserReview): void { localStorage.setItem(REVIEWS_KEY, JSON.stringify([review, ...getUserReviews()])); }
+export function deleteUserReview(id: string): UserReview[] {
+  const next = getUserReviews().filter((review) => review.id !== id);
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(next));
+  return next;
+}
+
+export type UserRating = { id: string; businessId: string; rating: number; createdAt: string };
+export function getUserRatings(): UserRating[] {
+  try { return JSON.parse(localStorage.getItem(RATINGS_KEY) ?? "[]") as UserRating[]; } catch { return []; }
+}
+export function saveUserRating(businessId: string, rating: number): UserRating[] {
+  const next = [{ id: `rating-${businessId}-${Date.now()}`, businessId, rating, createdAt: new Date().toISOString() }, ...getUserRatings()];
+  localStorage.setItem(RATINGS_KEY, JSON.stringify(next));
+  return next;
+}
+export function deleteUserRating(id: string): UserRating[] {
+  const next = getUserRatings().filter((item) => item.id !== id);
+  localStorage.setItem(RATINGS_KEY, JSON.stringify(next));
+  return next;
+}
 
 export type UserNeed = { id: string; title: string; category: string; description: string; location: { id: string; name: string; context: string }; createdAt: string };
 export function getUserNeeds(): UserNeed[] {
@@ -58,16 +80,21 @@ export function getUserReports(): UserReport[] {
   try { return JSON.parse(localStorage.getItem(REPORTS_KEY) ?? "[]") as UserReport[]; } catch { return []; }
 }
 export function saveUserReport(report: UserReport): void { localStorage.setItem(REPORTS_KEY, JSON.stringify([report, ...getUserReports()])); }
+export function getMatchingReportCount(targetType: UserReport["targetType"], targetId: string, category: string): number {
+  return getUserReports().filter((report) => report.targetType === targetType && report.targetId === targetId && report.category === category).length;
+}
 
 export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean };
 const defaultNotifications: UserNotification[] = [
   { id: "welcome", title: "Te damos la bienvenida a WIT", body: "Empieza buscando eso que necesitas cerca de ti.", date: "Hoy", read: false },
   { id: "saved-tip", title: "Guarda los lugares que te interesan", body: "Toca el corazón de una ficha para volver a ella después.", date: "Ayer", read: false },
+  ...Array.from({ length: 10 }, (_, index) => ({ id: `demo-unread-${index + 1}`, title: `Novedad cerca de ti ${index + 1}`, body: "Hay un nuevo lugar que podría interesarte.", date: "Hoy", read: false })),
 ];
 export function getNotifications(): UserNotification[] {
   try {
     const saved = localStorage.getItem(NOTIFICATIONS_KEY);
-    return saved ? JSON.parse(saved) as UserNotification[] : defaultNotifications;
+    if (!saved) { localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(defaultNotifications)); return defaultNotifications; }
+    return JSON.parse(saved) as UserNotification[];
   } catch { return defaultNotifications; }
 }
 export function markNotificationRead(id: string): UserNotification[] {
@@ -80,8 +107,13 @@ export function markAllNotificationsRead(): UserNotification[] {
   localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next));
   return next;
 }
+export function deleteNotification(id: string): UserNotification[] {
+  const next = getNotifications().filter((notification) => notification.id !== id);
+  localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next));
+  return next;
+}
 
-export type UserProfile = { name: string; email: string; city: string };
+export type UserProfile = { name: string; email: string; city: string; photo?: string };
 export function getProfile(): UserProfile {
   try { return { name: "", email: "", city: "", ...JSON.parse(localStorage.getItem(PROFILE_KEY) ?? "{}") as Partial<UserProfile> }; } catch { return { name: "", email: "", city: "" }; }
 }

@@ -1,0 +1,10 @@
+.profile-welcome{align-items:center}
+.profile-avatar-picker{position:relative;display:grid;flex:0 0 72px;width:72px;height:72px;place-items:center;overflow:hidden;border-radius:50%;background:var(--wit-primary-light);color:var(--wit-primary-dark);font-size:26px;font-weight:700;cursor:pointer}
+.profile-avatar-picker img{width:100%;height:100%;object-fit:cover}
+.profile-avatar-picker input{position:absolute;width:1px;height:1px;opacity:0}
+.profile-avatar-picker em{position:absolute;right:0;bottom:0;left:0;padding:4px 1px;background:#17211db8;color:#fff;font-size:8px;font-style:normal;font-weight:600;text-align:center}
+.profile-city{display:inline-flex;align-items:center;gap:5px;color:var(--wit-primary-dark);font-size:11px;font-weight:600;text-decoration:none}
+.profile-activity-only{width:100%;max-width:none;box-sizing:border-box}
+.profile-notification-badge{display:inline-grid;min-width:17px;height:17px;margin-left:5px;place-items:center;border-radius:99px;background:var(--wit-primary);color:#fff;font-size:9px;font-style:normal;vertical-align:middle}
+.profile-links>a>span svg{width:18px;height:18px}
+@media(max-width:750px){.profile-avatar-picker{flex-basis:60px;width:60px;height:60px}.profile-welcome{gap:12px}}

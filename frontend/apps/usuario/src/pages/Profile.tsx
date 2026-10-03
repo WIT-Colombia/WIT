@@ -1,16 +1,53 @@
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getProfile, saveProfile, signOutUser, type UserProfile } from "../services/userDataService";
+import { getNotifications, getProfile, saveProfile, signOutUser, type UserProfile } from "../services/userDataService";
 import { PageLayout } from "../components/PageLayout";
-import { HeartIcon, ThumbsUpIcon } from "../components/ActionIcons";
+import { BellIcon, HeartIcon, ThumbsUpIcon } from "../components/ActionIcons";
 import "./Profile.css";
+import "./ProfileEnhancements.css";
 
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile>(getProfile);
-  const [saved, setSaved] = useState(false);
   const navigate = useNavigate();
-  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); saveProfile(profile); setSaved(true); window.setTimeout(() => setSaved(false), 2800); }
-  function signOut() { signOutUser(); navigate("/home"); }
-  function update(field: keyof UserProfile, value: string) { setProfile((current) => ({ ...current, [field]: value })); }
-  return <PageLayout active="home" className="profile-page"><div className="profile-welcome"><span className="profile-avatar-large">{profile.name.trim().charAt(0).toUpperCase() || "D"}</span><div><span>PERFIL DE WIT</span><h1>{profile.name || "Tu espacio"}</h1><p>Administra tu actividad y tus datos en WIT.</p></div></div><div className="profile-preview-note" role="status">Estás viendo una cuenta de muestra. El registro real se habilitará al conectar la autenticación.</div><div className="profile-page-grid"><section className="profile-edit-card"><h2>Tus datos</h2><p>Completa estos datos solo si quieres personalizar la experiencia.</p><form onSubmit={submit}><label>Nombre<input value={profile.name} onChange={(event) => update("name", event.target.value)} placeholder="Cómo te llamas" maxLength={60}/></label><label>Correo electrónico <span>(opcional)</span><input type="email" value={profile.email} onChange={(event) => update("email", event.target.value)} placeholder="tu@correo.com"/></label><label>Ciudad<input value={profile.city} onChange={(event) => update("city", event.target.value)} placeholder="Tu ciudad" maxLength={70}/></label><button type="submit">Guardar en este dispositivo</button>{saved && <small role="status">Cambios guardados.</small>}</form></section><aside className="profile-links"><h2>Tu actividad</h2><Link to="/favorites"><span className="profile-icon--stores"><HeartIcon/></span><div><b>Tiendas guardadas</b><small>Establecimientos que guardaste</small></div><i>→</i></Link><Link to="/likes"><span className="profile-icon--products"><ThumbsUpIcon/></span><div><b>Productos y servicios que te gustan</b><small>Marcados con “Me gusta”</small></div><i>→</i></Link><Link to="/reviews"><span>★</span><div><b>Opiniones</b><small>Lee o comparte experiencias</small></div><i>→</i></Link><Link to="/notifications"><span>♧</span><div><b>Notificaciones</b><small>Novedades de WIT</small></div><i>→</i></Link><Link to="/settings"><span>⚙</span><div><b>Ajustes</b><small>Preferencias de la experiencia</small></div><i>→</i></Link></aside></div><section className="profile-logout-area" aria-label="Sesión"><div><b>¿Terminaste por ahora?</b><small>Cierra tu sesión en este dispositivo.</small></div><button className="profile-signout" type="button" onClick={signOut}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 17l5-5-5-5M15 12H3"/><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg>Cerrar sesión</button></section></PageLayout>;
+  const unreadNotifications = getNotifications().filter((item) => !item.read).length;
+
+  function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const next = { ...profile, photo: String(reader.result) };
+      setProfile(next);
+      saveProfile(next);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <PageLayout active="home" className="profile-page">
+      <div className="profile-welcome">
+        <label className="profile-avatar-picker">
+          {profile.photo ? <img src={profile.photo} alt="Foto de perfil" /> : <span>{profile.name.trim().charAt(0).toUpperCase() || "D"}</span>}
+          <input type="file" accept="image/*" onChange={selectPhoto} />
+          <em>Cambiar foto</em>
+        </label>
+        <div>
+          <span>MI PERFIL</span>
+          <h1>Hola{profile.name ? `, ${profile.name}` : ""}</h1>
+        </div>
+      </div>
+      <section className="profile-links profile-activity-only">
+        <h2>Tu actividad</h2>
+        <Link to="/favorites"><span className="profile-icon--stores"><HeartIcon /></span><div><b>Tiendas guardadas</b><small>Encuentra tus favoritos</small></div><i>›</i></Link>
+        <Link to="/likes"><span className="profile-icon--products"><ThumbsUpIcon /></span><div><b>Productos y servicios que te gustan</b><small>Lo que has marcado con Me gusta</small></div><i>›</i></Link>
+        <Link to="/reviews"><span><span aria-hidden="true">✦</span></span><div><b>Mis opiniones</b><small>Comparte tu experiencia</small></div><i>›</i></Link>
+        <Link to="/notifications"><span><BellIcon /></span><div><b>Notificaciones {unreadNotifications > 0 && <em className="profile-notification-badge">{unreadNotifications}</em>}</b><small>Mantente al día</small></div><i>›</i></Link>
+        <Link to="/settings"><span><span aria-hidden="true">⚙</span></span><div><b>Ajustes</b><small>Configura tu experiencia</small></div><i>›</i></Link>
+      </section>
+      <section className="profile-logout-area">
+        <div><b>¿Terminaste por hoy?</b><small>Puedes volver cuando quieras.</small></div>
+        <button className="profile-signout" type="button" onClick={() => { signOutUser(); navigate("/home"); }}>↪&nbsp; Cerrar sesión</button>
+      </section>
+    </PageLayout>
+  );
 }

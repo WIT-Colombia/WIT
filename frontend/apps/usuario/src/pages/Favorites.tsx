@@ -11,7 +11,7 @@ export default function Favorites() {
   const savedStores = useMemo(() => businesses.filter((item) => favoriteIds.includes(item.id)), [favoriteIds]);
   function remove(id: string) { setFavoriteIds(toggleFavorite(id)); }
 
-  return <PageLayout><div className="user-page-heading"><span>TUS TIENDAS GUARDADAS</span><h1>Tiendas guardadas</h1><p>Guarda una tienda para volver a encontrarla fácilmente.</p></div>
+  return <PageLayout><Link className="offer-detail-back" to="/profile">← Volver al perfil</Link><div className="user-page-heading"><h1>Tiendas guardadas</h1></div>
     {savedStores.length ? <div className="user-card-grid">{savedStores.map((business) => <BusinessCard key={business.id} business={business} favorite onFavorite={() => remove(business.id)}/>)}</div> : <div className="user-empty-state"><span className="empty-store-heart" aria-hidden="true"><HeartIcon/></span><h2>Aún no has guardado tiendas</h2><p>Usa el corazón “Guardar” en la ficha de una tienda para verla aquí.</p><Link to="/search">Buscar tiendas cerca de mí →</Link></div>}
   </PageLayout>;
 }

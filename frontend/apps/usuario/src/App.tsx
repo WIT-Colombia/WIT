@@ -21,6 +21,9 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import Register from "./pages/Register";
+import AccountPrivacy from "./pages/AccountPrivacy";
+import Legal from "./pages/Legal";
+import PasswordRecovery from "./pages/PasswordRecovery";
 import { RequireAccount } from "./components/RequireAccount";
 
 export default function App() {
@@ -44,6 +47,9 @@ export default function App() {
     <Route path="/register-need" element={<RegisterNeed />} />
     <Route path="/report" element={<Report />} />
     <Route path="/register" element={<Register />} />
+    <Route path="/recover-password" element={<PasswordRecovery />} />
+    <Route path="/account" element={<RequireAccount><AccountPrivacy /></RequireAccount>} />
+    <Route path="/legal/:page" element={<Legal />} />
     <Route path="/favorites" element={<RequireAccount><Favorites /></RequireAccount>} />
     <Route path="/likes" element={<RequireAccount><Likes /></RequireAccount>} />
     <Route path="/reviews" element={<Reviews />} />

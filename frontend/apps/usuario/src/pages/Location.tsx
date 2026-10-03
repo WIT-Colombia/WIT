@@ -15,6 +15,7 @@ function CompassIcon() {
 
 export default function Location() {
   const [state, setState] = useState<LocationState>("ready");
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
   function requestLocation() {
     if (!navigator.geolocation) {
@@ -24,7 +25,7 @@ export default function Location() {
 
     setState("loading");
     navigator.geolocation.getCurrentPosition(
-      () => setState("granted"),
+      (position) => { setCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude }); setState("granted"); },
       (error) => setState(error.code === error.PERMISSION_DENIED ? "denied" : "error"),
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
     );
@@ -61,7 +62,7 @@ export default function Location() {
             {state === "loading" ? "Buscando tu ubicación…" : state === "granted" ? "Ubicación permitida" : "Usar mi ubicación"}
             {state === "ready" && <span aria-hidden="true">→</span>}
           </Button>
-          <Link className="location-manual-link" to="/location/manual">Prefiero elegir mi zona</Link>
+          <Link className="location-manual-link" to={`/location/manual${window.location.search ? window.location.search : ""}`}>Prefiero elegir mi zona</Link>
         </div>
 
         {message && <div className={`location-feedback location-feedback--${message.kind}`} role="status" aria-live="polite"><b>{message.title}</b><span>{message.body}</span>{state === "granted" && <Link to="/home">Ver ejemplos de Palmira →</Link>}</div>}
@@ -69,15 +70,7 @@ export default function Location() {
         <p className="location-privacy">WIT solo pide permiso cuando tocas el botón. En esta vista previa, las coordenadas no se guardan ni se envían.</p>
       </div>
 
-      <aside className="location-visual" aria-label="Ilustración de lugares cerca de ti">
-        <div className="location-map-lines" />
-        <span className="location-map-area">TU ZONA</span>
-        <span className="location-map-pin location-map-pin--main"><PinIcon /></span>
-        <span className="location-map-pin location-map-pin--one"><span /></span>
-        <span className="location-map-pin location-map-pin--two"><span /></span>
-        <span className="location-distance-card"><span><PinIcon /></span><span><b>Lugares cerca de ti</b><small>A un paso de lo que buscas</small></span></span>
-        <div className="location-visual-caption"><span className="location-visual-dot" />Tu ciudad, tus opciones</div>
-      </aside>
+      <aside className="location-visual location-google-map" aria-label="Mapa de tu ubicación"><iframe title="Mapa de tu ubicación" src={coordinates ? `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=16&output=embed` : "https://www.google.com/maps?q=Palmira,Valle+del+Cauca&z=13&output=embed"} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></aside>
     </section>
 
     <footer className="location-footer"><span><Logo /> <i /> Tu ubicación, a tu manera.</span><Link to="/home">Explorar ejemplos</Link></footer>

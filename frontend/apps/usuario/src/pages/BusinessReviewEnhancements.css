@@ -1,0 +1,3 @@
+.business-review-section .business-section-heading>a{display:inline-flex;min-height:40px;align-items:center;gap:8px;padding:0 14px;border-radius:10px;background:var(--wit-primary);color:#fff;font-size:12px;font-weight:700;box-shadow:0 5px 14px rgba(24,104,67,.14)}
+.business-review-section .business-section-heading>a:hover{background:var(--wit-primary-dark)}
+@media(max-width:600px){.business-review-section .business-section-heading{align-items:flex-start;flex-direction:column}.business-review-section .business-section-heading>a{width:100%;justify-content:center}}
