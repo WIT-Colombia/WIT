@@ -10,9 +10,11 @@ export type Business = {
   isOpen: boolean;
   address: string;
   image: string;
+  gallery?: string[];
   tags: string[];
   description?: string;
   isFeatured?: boolean;
+  isVerified?: boolean;
   plan?: "free" | "premium";
   createdAt?: string;
   phone?: string;
@@ -92,7 +94,7 @@ export const businesses: Business[] = [
     id: "arepa-majo", name: "La Arepería de Majo", category: "Restaurantes", rating: 4.8,
     reviewCount: 126, distanceKm: 0.4, isOpen: true, address: "Calle 30 # 28-16, Palmira",
     image: "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?auto=format&fit=crop&w=900&q=85",
-    tags: ["Comida típica", "Desayunos"], isFeatured: true, plan: "premium",
+    tags: ["Comida típica", "Desayunos"], isFeatured: true, isVerified: true, plan: "premium",
     whatsapp: "+57 000 000 0003",
     description: "Arepas hechas al momento y sabores de casa para empezar bien el día.",
   },
@@ -100,7 +102,7 @@ export const businesses: Business[] = [
     id: "drogueria-central", name: "Droguería San Jorge", category: "Droguerías", rating: 4.7,
     reviewCount: 84, distanceKm: 0.7, isOpen: true, address: "Carrera 29 # 31-42, Palmira",
     image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?auto=format&fit=crop&w=900&q=85",
-    tags: ["Salud", "Cuidado personal"],
+    tags: ["Salud", "Cuidado personal"], isVerified: true,
     description: "Un lugar cercano para encontrar productos de cuidado personal y bienestar.",
   },
   {
@@ -114,7 +116,7 @@ export const businesses: Business[] = [
     id: "distrito-23", name: "Distrito 23 Barbería", category: "Barberías", rating: 4.9,
     reviewCount: 91, distanceKm: 1.3, isOpen: true, address: "Carrera 31 # 27-23, Palmira",
     image: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=900&q=85",
-    tags: ["Barbería", "Cuidado personal"],
+    tags: ["Barbería", "Cuidado personal"], isVerified: true,
     description: "Cortes y cuidado personal en un espacio pensado para hacer una pausa.",
   },
   {

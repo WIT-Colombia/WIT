@@ -1,0 +1,14 @@
+import { useState } from "react";
+import { PageHeader } from "../components/common/PageHeader";
+import { businessReviews } from "../data/business.mock";
+import { useBusinessStore } from "../services/businessStore";
+
+export function ReviewsPage() {
+  const { business, businesses } = useBusinessStore();
+  const personalBusiness = businesses.length === 0 || business.isNew || !businessReviews[business.name as keyof typeof businessReviews];
+  const reviews = personalBusiness ? [] : (businessReviews[business.name as keyof typeof businessReviews] ?? businessReviews["La Arepería de Majo"]);
+  const ratingBars = personalBusiness ? [[5,0],[4,0],[3,0],[2,0],[1,0]] : [[5,72],[4,19],[3,6],[2,2],[1,1]];
+  const [filter, setFilter] = useState("Todas");
+  const visible = reviews.filter(review => filter === "Todas" || review.rating === Number(filter));
+  return <><PageHeader eyebrow="REPUTACIÓN" title="Opiniones y calificaciones" description={businesses.length === 0 ? "Aquí aparecerán las opiniones cuando tu tienda empiece a recibir visitas." : `Conoce lo que piensan las personas sobre ${business.name}.`} /><div className="reviews-layout"><section className="surface-card review-overview"><span className="page-eyebrow">CALIFICACIÓN GENERAL</span><div className="review-score"><strong>{business.rating?.toFixed(1) ?? "—"}</strong><div><span>★★★★★</span><p>{business.reviewCount ?? reviews.length} calificaciones recibidas</p></div></div><div className="rating-bars full">{ratingBars.map(([star,value]) => <div key={star}><span>{star} ★</span><i><b style={{width:`${value}%`}} /></i><small>{value}%</small></div>)}</div><div className="review-explainer"><strong>Calificaciones y opiniones</strong><p>Una calificación es la puntuación en estrellas. Una opinión incluye además un comentario escrito. Los negocios pueden consultar ambas, pero no editarlas.</p></div></section><section className="surface-card review-feed"><div className="card-heading"><div><h2>Opiniones escritas</h2><p>Comentarios recientes de la comunidad WIT</p></div><label className="filter-box"><span className="sr-only">Filtrar opiniones</span><select value={filter} onChange={event => setFilter(event.target.value)}><option>Todas</option>{[5,4,3,2,1].map(star => <option key={star} value={star}>{star} estrellas</option>)}</select></label></div>{visible.length ? visible.map(review => <article className="review-entry" key={review.id}><div className="review-avatar">{review.author.charAt(0)}</div><div><div className="review-entry-head"><strong>{review.author}</strong><time>{review.date}</time></div><div className="review-stars" aria-label={`${review.rating} de 5 estrellas`}>{"★".repeat(review.rating)}<span>{"☆".repeat(5-review.rating)}</span></div><p>{review.text}</p><small>Sobre: {review.item}</small></div></article>) : <div className="empty-state"><span>☆</span><h2>Sin opiniones en este filtro</h2><p>Selecciona otra calificación para ver comentarios.</p></div>}</section></div></>;
+}

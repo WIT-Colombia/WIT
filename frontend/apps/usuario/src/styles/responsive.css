@@ -1,3 +1,4 @@
 @media (max-width: 600px) {
   .flow-placeholder { padding: 24px; }
+  input, select, textarea { font-size: 16px; }
 }

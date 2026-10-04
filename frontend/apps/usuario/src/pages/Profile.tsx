@@ -9,6 +9,7 @@ import "./ProfileEnhancements.css";
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile>(getProfile);
   const navigate = useNavigate();
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
 
   function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
@@ -46,7 +47,7 @@ export default function Profile() {
       </section>
       <section className="profile-logout-area">
         <div><b>¿Terminaste por hoy?</b><small>Puedes volver cuando quieras.</small></div>
-        <button className="profile-signout" type="button" onClick={() => { signOutUser(); navigate("/home"); }}>↪&nbsp; Cerrar sesión</button>
+        {confirmingLogout ? <div className="profile-signout-confirm"><span>¿Cerrar sesión?</span><div><button type="button" onClick={() => { signOutUser(); navigate("/home"); }}>Sí, cerrar</button><button type="button" onClick={() => setConfirmingLogout(false)}>Cancelar</button></div></div> : <button className="profile-signout" type="button" onClick={() => setConfirmingLogout(true)}>Cerrar sesión</button>}
       </section>
     </PageLayout>
   );

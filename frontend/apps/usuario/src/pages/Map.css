@@ -65,3 +65,4 @@
   .map-results{grid-template-columns:1fr}
   .map-results-heading,.map-empty{grid-column:auto}
 }
+@media(max-width:700px){.map-search input{font-size:16px;-webkit-text-size-adjust:100%}}

@@ -20,7 +20,7 @@ export default function Welcome() {
 
   return <main className="welcome-page">
     <header className="welcome-header">
-      <a className="welcome-brand" href="/welcome" aria-label="WIT, bienvenida"><Logo /><span>Descubre algo cerca</span></a>
+      <a className="welcome-brand" href="/welcome" aria-label="WIT, bienvenida"><Logo /><span>Encuentra cerca de ti</span></a>
       <a className="welcome-skip" href="/home">Entrar a explorar <span aria-hidden="true">↗</span></a>
     </header>
 

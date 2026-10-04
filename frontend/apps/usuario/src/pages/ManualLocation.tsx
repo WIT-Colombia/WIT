@@ -92,7 +92,6 @@ export default function ManualLocation() {
       </div>
 
       <div className="national-location-refine"><div><b>¿Quieres una búsqueda más precisa?</b><span>Usa tu ubicación actual o explora los lugares en el mapa.</span></div><div><Link to="/location"><PinIcon/> Usar mi ubicación</Link><Link to="/home?view=map#lugares">Explorar en el mapa <span aria-hidden="true">↗</span></Link></div></div>
-      <p className="manual-location-note">El catálogo de municipios sigue la DIVIPOLA 2025 del DANE. Los negocios que ves en esta versión continúan siendo ejemplos de Palmira.</p>
     </section>
 
     <footer className="manual-location-footer"><span><Logo/><i/> Elige dónde quieres descubrir.</span><Link to="/location">Usar mi ubicación</Link></footer>

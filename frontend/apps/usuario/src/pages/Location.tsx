@@ -32,7 +32,7 @@ export default function Location() {
   }
 
   const feedback = {
-    granted: { kind: "success", title: "Listo, ya tenemos permiso.", body: "En esta vista previa el catálogo sigue siendo de muestra. WIT no guarda ni envía tus coordenadas." },
+    granted: { kind: "success", title: "Listo, ya tenemos permiso.", body: "Tu ubicación está lista para mostrarte lugares cercanos." },
     denied: { kind: "error", title: "No pudimos acceder a tu ubicación.", body: "Puedes permitirla desde los ajustes del navegador o elegir una zona manualmente." },
     unavailable: { kind: "error", title: "Este navegador no ofrece ubicación.", body: "No pasa nada: puedes continuar con una zona manualmente." },
     error: { kind: "error", title: "No pudimos encontrar tu ubicación ahora.", body: "Revisa la conexión o el permiso del navegador, o elige tu zona manualmente." },
@@ -65,14 +65,13 @@ export default function Location() {
           <Link className="location-manual-link" to={`/location/manual${window.location.search ? window.location.search : ""}`}>Prefiero elegir mi zona</Link>
         </div>
 
-        {message && <div className={`location-feedback location-feedback--${message.kind}`} role="status" aria-live="polite"><b>{message.title}</b><span>{message.body}</span>{state === "granted" && <Link to="/home">Ver ejemplos de Palmira →</Link>}</div>}
+        {message && <div className={`location-feedback location-feedback--${message.kind}`} role="status" aria-live="polite"><b>{message.title}</b><span>{message.body}</span>{state === "granted" && <Link to="/home">Ver negocios en Palmira →</Link>}</div>}
 
-        <p className="location-privacy">WIT solo pide permiso cuando tocas el botón. En esta vista previa, las coordenadas no se guardan ni se envían.</p>
       </div>
 
       <aside className="location-visual location-google-map" aria-label="Mapa de tu ubicación"><iframe title="Mapa de tu ubicación" src={coordinates ? `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=16&output=embed` : "https://www.google.com/maps?q=Palmira,Valle+del+Cauca&z=13&output=embed"} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></aside>
     </section>
 
-    <footer className="location-footer"><span><Logo /> <i /> Tu ubicación, a tu manera.</span><Link to="/home">Explorar ejemplos</Link></footer>
+    <footer className="location-footer"><span><Logo /> <i /> Tu ubicación, a tu manera.</span><Link to="/home">Explorar negocios</Link></footer>
   </main>;
 }

@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import Home from "./pages/Home";
 import Location from "./pages/Location";
 import ManualLocation from "./pages/ManualLocation";
@@ -24,10 +25,21 @@ import Register from "./pages/Register";
 import AccountPrivacy from "./pages/AccountPrivacy";
 import Legal from "./pages/Legal";
 import PasswordRecovery from "./pages/PasswordRecovery";
+import RecoverPassword from "./pages/RecoverPassword";
 import { RequireAccount } from "./components/RequireAccount";
 
+function ScrollToTop() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 export default function App() {
-  return <Routes>
+  return <><ScrollToTop /><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Welcome />} />
@@ -47,7 +59,8 @@ export default function App() {
     <Route path="/register-need" element={<RegisterNeed />} />
     <Route path="/report" element={<Report />} />
     <Route path="/register" element={<Register />} />
-    <Route path="/recover-password" element={<PasswordRecovery />} />
+    <Route path="/recover-password" element={<RecoverPassword />} />
+    <Route path="/change-password" element={<PasswordRecovery />} />
     <Route path="/account" element={<RequireAccount><AccountPrivacy /></RequireAccount>} />
     <Route path="/legal/:page" element={<Legal />} />
     <Route path="/favorites" element={<RequireAccount><Favorites /></RequireAccount>} />
@@ -57,5 +70,5 @@ export default function App() {
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<Navigate to="/home" replace />} />
-  </Routes>;
+  </Routes></>;
 }

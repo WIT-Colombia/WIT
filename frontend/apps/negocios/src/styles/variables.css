@@ -1,16 +1,8 @@
 :root {
-  --wit-primary: #2563EB;
-  --wit-primary-dark: #1D4ED8;
-  --wit-primary-light: #DBEAFE;
-  --wit-background: #F6F8FB;
-  --wit-surface: #FFFFFF;
-  --wit-text-primary: #172033;
-  --wit-text-secondary: #64748B;
-  --wit-text-muted: #8B97A8;
-  --wit-border: #E2E8F0;
-  --wit-divider: #EEF2F7;
-  --wit-radius-sm: 8px;
-  --wit-radius-md: 12px;
-  --wit-radius-lg: 16px;
-  --wit-radius-xl: 20px;
+  --wit-primary: #2563eb; --wit-primary-dark: #1d4ed8; --wit-primary-light: #e8f0ff;
+  --wit-background: #f7fafc; --wit-surface: #fff; --wit-text-primary: #17211d;
+  --wit-text-secondary: #64736c; --wit-text-muted: #8b9892; --wit-border: #dde6e1;
+  --wit-divider: #eef2f0; --wit-success: #16a66a; --wit-warning: #f59e0b;
+  --wit-radius-sm: 10px; --wit-radius-md: 14px; --wit-radius-lg: 18px;
+  --wit-shadow: 0 4px 18px rgba(23, 33, 29, .04);
 }

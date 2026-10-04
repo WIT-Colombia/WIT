@@ -115,7 +115,7 @@ export function deleteNotification(id: string): UserNotification[] {
 
 export type UserProfile = { name: string; email: string; city: string; photo?: string };
 export function getProfile(): UserProfile {
-  try { return { name: "", email: "", city: "", ...JSON.parse(localStorage.getItem(PROFILE_KEY) ?? "{}") as Partial<UserProfile> }; } catch { return { name: "", email: "", city: "" }; }
+  try { return { name: "Danilo Jaramillo", email: "danilo.jaramillo@hotmail.com", city: "", ...JSON.parse(localStorage.getItem(PROFILE_KEY) ?? "{}") as Partial<UserProfile> }; } catch { return { name: "Danilo Jaramillo", email: "danilo.jaramillo@hotmail.com", city: "" }; }
 }
 export function saveProfile(profile: UserProfile): void { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }
 // Temporary browser-session access lets the UI be previewed before real auth is connected.
