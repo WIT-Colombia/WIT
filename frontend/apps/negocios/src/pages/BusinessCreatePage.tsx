@@ -52,7 +52,6 @@ export function BusinessCreatePage() {
   const [pinPosition, setPinPosition] = useState({ x: 50, y: 50 });
   const [manualLocation, setManualLocation] = useState(false);
   const [mapSelectionLabel, setMapSelectionLabel] = useState("");
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const municipalities = locationCatalog.municipalities.filter(item => item.departmentCode === departmentCode);
   const departmentName = locationCatalog.departments.find(item => item.code === departmentCode)?.name ?? "Colombia";
   const mapQuery = encodeURIComponent([locationMode === "address" ? address : "", city, departmentName].filter(Boolean).join(", "));
@@ -99,12 +98,6 @@ export function BusinessCreatePage() {
     setBusiness(item);
     if (editingBusiness) navigate(`/mi-negocio/detalle/${businesses.indexOf(editingBusiness)}`); else setCreatedName(item.name);
   };
-  const remove = () => {
-    if (!editingBusiness || businesses.length === 1) return;
-    const deleted = { ...editingBusiness, status: "Eliminado" as const, deletedAt: new Date().toISOString() };
-    const next = businesses.map(item => item === editingBusiness ? deleted : item);
-    setBusinesses(next); setBusiness(deleted); navigate(`/mi-negocio/detalle/${businesses.indexOf(editingBusiness)}`);
-  };
   const back = () => step === 1 ? navigate("/mis-negocios") : setStep(current => current - 1);
 
   if (createdName) return <section className="business-create-success surface-card"><span className="business-create-success-icon">✓</span><h1>¡Tienda creada correctamente!</h1><p><strong>{createdName}</strong> ya está asociada a tu cuenta.</p><small>Te llevaremos a Mi negocio…</small><button className="action-button" type="button" onClick={() => navigate("/mi-negocio")}>Ir a Mi negocio</button></section>;
@@ -119,8 +112,8 @@ export function BusinessCreatePage() {
         {step === 3 && <div className="business-wizard-panel"><h2>Información de contacto</h2><p>Estos datos permitirán que las personas se comuniquen directamente contigo.</p><div className="form-grid"><label className="form-field">Teléfono<input value={phone} onFocus={event => event.currentTarget.select()} onChange={event => setPhone(normalizeColombianPhone(event.target.value))} required type="tel" inputMode="numeric" maxLength={14} placeholder="+57 300 000 0000" /></label><label className="form-field">WhatsApp<input value={whatsapp} onFocus={event => event.currentTarget.select()} onChange={event => setWhatsapp(normalizeColombianPhone(event.target.value))} type="tel" inputMode="numeric" maxLength={14} placeholder="Usa el mismo número si aplica" /></label></div></div>}
         {step === 4 && <div className="business-wizard-panel"><h2>Horarios de atención</h2><p>Configura cuándo está abierto tu negocio. Podrás cambiarlo después.</p><div className="wizard-hours">{days.map(day => <div key={day}><label><input type="checkbox" checked={hours[day].enabled} onChange={event => updateDay(day, "enabled", event.target.checked)} /> <strong>{day}</strong></label><input type="time" value={hours[day].open} disabled={!hours[day].enabled} onChange={event => updateDay(day, "open", event.target.value)} /><span>–</span><input type="time" value={hours[day].close} disabled={!hours[day].enabled} onChange={event => updateDay(day, "close", event.target.value)} /></div>)}</div><label className="form-field wizard-photos">Fotos del negocio <small>(solo imágenes, hasta 10)</small><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple onChange={selectPhotos} />{photoNames.length > 0 && <span>{photoNames.length} foto{photoNames.length === 1 ? " seleccionada" : "s seleccionadas"}</span>}</label>{photoPreviews.length > 0 && <><p className="photo-order-hint">Arrastra las imágenes para ordenar. La primera será la portada visible para las personas.</p><div className="photo-preview-grid">{photoPreviews.map((preview, index) => <div className={`photo-preview${index === 0 ? " is-cover" : ""}`} key={`${preview.slice(0, 20)}-${index}`} draggable onDragStart={() => setDraggedPhoto(index)} onDragOver={event => event.preventDefault()} onDrop={event => dropPhoto(index, event)}><img src={preview} alt={`Vista previa ${index + 1}`} /><span className="photo-preview-label">{index === 0 ? "Portada" : `Imagen ${index + 1}`}</span><div className="photo-preview-controls"><button type="button" aria-label={`Eliminar imagen ${index + 1}`} onClick={() => removePhoto(index)}>×</button></div></div>)}</div></>}</div>}
         {step === 5 && <div className="business-wizard-panel"><h2>Revisa la información</h2><p>Confirma que todo esté listo antes de crear tu tienda.</p><div className="wizard-review"><div><strong>{name || "Sin nombre"}</strong><span>{category || "Sin categoría"} · {city || "Sin ciudad"}</span></div><dl><div><dt>Descripción</dt><dd>{description || "Sin descripción"}</dd></div><div><dt>Ubicación</dt><dd>{locationValue || "Sin ubicación"}</dd></div><div><dt>Contacto</dt><dd>{phone || "Sin teléfono"} · {whatsapp || "Sin WhatsApp"}</dd></div><div><dt>Horario</dt><dd>{hoursText}</dd></div><div><dt>Fotos</dt><dd>{photoNames.length ? `${photoNames.length} seleccionadas` : "Sin fotos todavía"}</dd></div></dl></div></div>}
-        <div className="business-wizard-actions">{isEditing && step === 5 && <button className="danger-button" type="button" onClick={() => setConfirmingDelete(true)}>Eliminar negocio</button>}<button className="outline-button" type="button" onClick={back}>{step === 1 ? "Cancelar" : "← Anterior"}</button><button className="action-button" type="submit">{step === 5 ? (isEditing ? "Guardar cambios" : "Crear mi tienda") : "Siguiente →"}</button></div>
-        {confirmingDelete && <div className="business-delete-confirm wizard-delete-confirm"><strong>¿Eliminar este negocio?</strong><div><button className="danger-button" type="button" onClick={remove}>Sí, eliminar</button><button className="outline-button" type="button" onClick={() => setConfirmingDelete(false)}>Cancelar</button></div></div>}
+        <div className="business-wizard-actions"><button className="outline-button" type="button" onClick={back}>{step === 1 ? "Cancelar" : "← Anterior"}</button><button className="action-button" type="submit">{step === 5 ? (isEditing ? "Guardar cambios" : "Crear mi tienda") : "Siguiente →"}</button></div>
+        
       </form>
     </section>
   </>;
