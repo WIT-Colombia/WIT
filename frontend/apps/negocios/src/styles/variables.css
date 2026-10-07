@@ -1,8 +1,9 @@
 :root {
-  --wit-primary: #2563eb; --wit-primary-dark: #1d4ed8; --wit-primary-light: #e8f0ff;
-  --wit-background: #f7fafc; --wit-surface: #fff; --wit-text-primary: #17211d;
-  --wit-text-secondary: #64736c; --wit-text-muted: #8b9892; --wit-border: #dde6e1;
-  --wit-divider: #eef2f0; --wit-success: #16a66a; --wit-warning: #f59e0b;
+  --wit-primary: #2563eb; --wit-primary-dark: #1749b8; --wit-primary-light: #eaf2ff;
+  --wit-background: #f3f6fb; --wit-surface: #fff; --wit-text-primary: #14213c;
+  --wit-text-secondary: #61708b; --wit-text-muted: #8290a6; --wit-border: #dfe7f2;
+  --wit-divider: #edf1f6; --wit-success: #159a68; --wit-warning: #d88a12;
+  --wit-danger: #d64557; --wit-danger-dark: #b93447;
   --wit-radius-sm: 10px; --wit-radius-md: 14px; --wit-radius-lg: 18px;
-  --wit-shadow: 0 4px 18px rgba(23, 33, 29, .04);
+  --wit-shadow: 0 5px 18px rgba(31, 61, 101, .06);
 }

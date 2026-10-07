@@ -48,7 +48,7 @@ export default function Location() {
 
     <section className="location-content" aria-labelledby="location-title">
       <div className="location-copy">
-        <span className="location-eyebrow"><i /> CERCA DE TI</span>
+        <span className="location-eyebrow"><i /> Cerca de ti</span>
         <h1 id="location-title">Primero, cuéntanos<br /><em>dónde estás.</em></h1>
         <p className="location-intro">Así podemos mostrarte lugares cerca de ti y decirte a qué distancia quedan.</p>
 

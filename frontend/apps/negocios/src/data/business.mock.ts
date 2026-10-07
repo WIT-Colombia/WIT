@@ -82,6 +82,9 @@ export const initialNotifications: BusinessNotification[] = [
   { id: "n2", title: "Tu capuchino está llamando la atención", description: "Este producto recibió más interés durante la última semana.", date: "Ayer · 4:18 p. m.", type: "interest", read: false },
   { id: "n3", title: "Completa la información de tu perfil", description: "Añade más fotos y detalles para ayudar a tus clientes.", date: "30 sep · 11:05 a. m.", type: "profile", read: false },
   { id: "n4", title: "Tu negocio está verificado", description: "Tu establecimiento aparece en las búsquedas de WIT.", date: "22 sep · 8:00 a. m.", type: "wit", read: true },
+  { id: "n5", title: "Mensaje del equipo WIT", description: "Recuerda mantener actualizados tus horarios para que tus clientes encuentren información confiable.", date: "18 sep · 10:30 a. m.", type: "admin", read: true },
+  { id: "n6", title: "Nueva oportunidad para tu negocio", description: "Tu perfil puede destacar más si agregas una descripción y fotografías de tus productos.", date: "15 sep · 2:15 p. m.", type: "offer", read: true },
+  { id: "n7", title: "Tu contraseña se actualizó", description: "La contraseña de tu cuenta fue actualizada correctamente.", date: "10 sep · 8:05 a. m.", type: "security", read: true },
 ];
 
-export const initialPreferences: Preferences = { emailUpdates: true, reviewAlerts: true, interestAlerts: true, profileVisible: true };
+export const initialPreferences: Preferences = { emailUpdates: true, reviewAlerts: true, interestAlerts: true, profileVisible: true, visibilityUntil: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000).toISOString() };

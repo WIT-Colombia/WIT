@@ -18,6 +18,7 @@ import { LegalPage } from "./pages/LegalPage";
 import { RecoveryPage } from "./pages/RecoveryPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { NoBusinessPage } from "./pages/NoBusinessPage";
+import { HelpPage } from "./pages/HelpPage";
 
 export default function App() {
   return <BusinessStoreProvider><Routes>
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/configuracion" element={<SettingsPage />} />
       <Route path="/perfil" element={<ProfilePage />} />
       <Route path="/mas" element={<MorePage />} />
+      <Route path="/ayuda" element={<HelpPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></BusinessStoreProvider>;

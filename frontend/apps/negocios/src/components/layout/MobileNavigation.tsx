@@ -11,7 +11,6 @@ const primaryLinks: MobileLink[] = [
   { label: "Opiniones", icon: "star", to: "/opiniones" },
 ];
 const moreLinks: MobileLink[] = [
-  { label: "Mis negocios", icon: "store", to: "/mis-negocios" },
   { label: "Servicios", icon: "tag", to: "/servicios" },
   { label: "Estadísticas", icon: "chart", to: "/estadisticas" },
   { label: "Notificaciones", icon: "bell", to: "/notificaciones" },
@@ -39,12 +38,12 @@ export function MobileNavigation() {
     return () => document.removeEventListener("pointerdown", closeOnOutsidePress);
   }, [businessesOpen]);
   const renderLink = (link: MobileLink, compact = false) => link.label === "Mi cuenta" ? <NavLink key={link.label} to={destination(link)} className={({ isActive }) => `mobile-link ${compact ? "mobile-more-link mobile-account-link" : ""} ${isActive ? "active" : ""}`}><span className="mobile-account-avatar">{account.name.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span><span className="mobile-account-copy"><strong>{account.name}</strong><small>Mi cuenta</small></span></NavLink> : <NavLink key={link.label} to={destination(link)} end={link.end} className={({ isActive }) => `mobile-link ${compact ? "mobile-more-link" : ""} ${isActive ? "active" : ""}`}><span className="mobile-link-icon" aria-hidden="true"><SidebarIcon name={link.icon} />{link.label === "Notificaciones" && unread > 0 && !compact && <span className="mobile-notification-dot">{unread}</span>}</span><span className="mobile-link-label">{link.label}</span>{link.label === "Notificaciones" && unread > 0 && compact && <span className="mobile-menu-count">{unread}</span>}</NavLink>;
-  const activeBusiness = business ?? businesses[0];
+  const activeBusiness = empty ? undefined : (business ?? businesses[0]);
   return <>
     <header className="mobile-topbar">
-      <button type="button" className="mobile-menu-button" aria-label={moreOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={moreOpen} onClick={() => setMoreOpen((value) => !value)}><span /><span /><span /></button>
+      <button type="button" className="mobile-menu-button" aria-label={moreOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={moreOpen} onClick={() => { setMoreOpen((value) => !value); setBusinessesOpen(false); }}><span /><span /><span /></button>
       <div className="mobile-business-wrap" ref={businessWrapRef}>
-        <button type="button" className={`mobile-business-picker${businessesOpen ? " active" : ""}`} onClick={() => setBusinessesOpen((value) => !value)} aria-expanded={businessesOpen}>
+        <button type="button" className={`mobile-business-picker${businessesOpen ? " active" : ""}`} onClick={() => { setBusinessesOpen((value) => !value); setMoreOpen(false); }} aria-expanded={businessesOpen}>
           <span className="mobile-business-avatar">{activeBusiness?.coverImage ? <img src={activeBusiness.coverImage} alt="" /> : activeBusiness?.name?.charAt(0) ?? "W"}</span>
           <span className="mobile-business-copy"><strong>{activeBusiness?.name ?? "Crea tu negocio"}</strong><small>{activeBusiness ? `${activeBusiness.category} · ${activeBusiness.city}` : "Empieza en WIT Negocios"}</small></span><span className="mobile-business-chevron">⌄</span>
         </button>

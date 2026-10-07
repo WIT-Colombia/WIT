@@ -1,5 +1,5 @@
-import { useState, type FormEvent, type ChangeEvent, type PointerEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState, type FormEvent, type ChangeEvent, type PointerEvent } from "react";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useBusinessStore } from "../services/businessStore";
 import { getColombianAdministrativeDivisions } from "../../../usuario/src/services/administrativeDivisionService";
 
@@ -20,9 +20,19 @@ export function BusinessDetailPage() {
   const [editLocationMode, setEditLocationMode] = useState<"address" | "map">("address");
   const [editPinPosition, setEditPinPosition] = useState({ x: 50, y: 50 });
   const [galleryIndex, setGalleryIndex] = useState(0);
-  const business = businesses[Number(index)] ?? businesses[0];
+  const businessIndex = Number(index);
+  const hasValidBusiness = Number.isInteger(businessIndex) && businessIndex >= 0 && businessIndex < businesses.length;
+  const business = businesses[businessIndex] ?? businesses[0];
   const [draft, setDraft] = useState(business);
-  if (!business) return <p>No encontramos este negocio.</p>;
+  useEffect(() => {
+    if (!business) return;
+    setBusiness(business);
+    setDraft(business);
+    setGalleryIndex(0);
+    setConfirmingDelete(false);
+    setConfirmingRecovery(false);
+  }, [business, setBusiness]);
+  if (!hasValidBusiness || !business) return <Navigate to="/mis-negocios" replace />;
   const weeklyHours = parseBusinessHours(business.hours).length ? parseBusinessHours(business.hours) : [["Lunes", "Sin horario configurado"], ["Martes", "Sin horario configurado"], ["Miércoles", "Sin horario configurado"], ["Jueves", "Sin horario configurado"], ["Viernes", "Sin horario configurado"], ["Sábado", "Sin horario configurado"], ["Domingo", "Sin horario configurado"]];
   const setAsProfilePhoto = (image: string) => { const updated = { ...business, coverImage: image }; setBusinesses(businesses.map(item => item === business ? updated : item)); setBusiness(updated); };
   const info = (entries: string[][]) => <div className="business-detail-grid">{entries.map(([label, value]) => <div key={label}><small>{label}</small><strong>{value || "Sin información"}</strong></div>)}</div>;

@@ -39,10 +39,8 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
   const [businesses, setBusinesses] = useStoredState("businesses", initialBusinesses);
   useEffect(() => {
     const oldDemo = ["Café del Barrio", "Casa Verde", "Taller Nómada"];
-    const canonicalNames = initialBusinesses.map(item => item.name);
     const isOldDemo = businesses.length === 3 && businesses.every(item => oldDemo.includes(item.name));
-    const isWitUsersDemo = businesses.length === 3 && businesses.every((item, index) => item.name === canonicalNames[index]);
-    if (isOldDemo || (isWitUsersDemo && JSON.stringify(businesses) !== JSON.stringify(initialBusinesses))) setBusinesses(initialBusinesses);
+    if (isOldDemo) setBusinesses(initialBusinesses);
   }, [businesses]);
   useEffect(() => {
     if (!businesses.some(item => item.name === business.name)) setBusiness(businesses[0] ?? initialBusinesses[0]);

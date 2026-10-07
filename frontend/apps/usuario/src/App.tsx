@@ -22,7 +22,6 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import Register from "./pages/Register";
-import AccountPrivacy from "./pages/AccountPrivacy";
 import Legal from "./pages/Legal";
 import PasswordRecovery from "./pages/PasswordRecovery";
 import RecoverPassword from "./pages/RecoverPassword";
@@ -61,7 +60,7 @@ export default function App() {
     <Route path="/register" element={<Register />} />
     <Route path="/recover-password" element={<RecoverPassword />} />
     <Route path="/change-password" element={<PasswordRecovery />} />
-    <Route path="/account" element={<RequireAccount><AccountPrivacy /></RequireAccount>} />
+    <Route path="/account" element={<RequireAccount><Navigate to="/settings" replace /></RequireAccount>} />
     <Route path="/legal/:page" element={<Legal />} />
     <Route path="/favorites" element={<RequireAccount><Favorites /></RequireAccount>} />
     <Route path="/likes" element={<RequireAccount><Likes /></RequireAccount>} />

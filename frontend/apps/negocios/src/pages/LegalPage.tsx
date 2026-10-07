@@ -19,6 +19,7 @@ export function LegalPage() {
   const { page = "terms" } = useParams();
   const [searchParams] = useSearchParams();
   const origin = searchParams.get("from") === "ajustes" ? "ajustes" : "registro";
+  const originLabel = origin === "ajustes" ? "Configuración" : "Registro";
   const backPath = origin === "ajustes" ? "/configuracion" : "/registro";
   const legalPath = (document: string) => `/legal/${document}?from=${origin}`;
   const isTerms = page === "terms";
@@ -26,9 +27,8 @@ export function LegalPage() {
     <BusinessHeader />
     <div className="legal-layout">
       <aside className="legal-sidebar"><span className="page-eyebrow">CENTRO LEGAL</span><h1>{isTerms ? "Términos y condiciones" : "Política de privacidad"}</h1><p>Información clara para usar WIT Negocios con confianza.</p><nav aria-label="Documentos legales"><Link className={isTerms ? "active" : ""} to={legalPath("terms")}>Términos y condiciones</Link><Link className={!isTerms ? "active" : ""} to={legalPath("privacy")}>Política de privacidad</Link></nav></aside>
-      <article className="legal-card legal-document"><div className="legal-document-heading"><span className="page-eyebrow">WIT NEGOCIOS · DOCUMENTO LEGAL</span><h2>{isTerms ? "Términos y condiciones" : "Política de privacidad"}</h2><p>Última actualización: 3 de octubre de 2026</p></div>
+      <article className="legal-card legal-document"><Link className="text-link legal-back legal-back-top" to={backPath}>← Volver a {originLabel}</Link><div className="legal-document-heading"><span className="page-eyebrow">WIT NEGOCIOS · DOCUMENTO LEGAL</span><h2>{isTerms ? "Términos y condiciones" : "Política de privacidad"}</h2><p>Última actualización: 3 de octubre de 2026</p></div>
         {isTerms ? <><nav className="legal-toc" aria-label="Contenido del documento"><strong>En este documento</strong>{termsSections.map(section => <a key={section.id} href={`#${section.id}`}>{section.title}</a>)}</nav>{termsSections.map(section => <section className="legal-section" id={section.id} key={section.id}><h3>{section.title}</h3>{section.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}{section.bullets && <ul>{section.bullets.map(bullet => <li key={bullet}>{bullet}</li>)}</ul>}</section>)}</> : <><section className="legal-section"><h3>Tratamiento de datos</h3><p>Esta política explicará las finalidades, derechos y canales aplicables al tratamiento de datos personales en WIT. Su contenido debe completarse antes de activar el registro definitivo.</p></section><section className="legal-section"><h3>Marco aplicable</h3><p>El tratamiento se organizará conforme a la Ley 1581 de 2012, sus normas reglamentarias y las instrucciones de la autoridad colombiana competente.</p></section></>}
-        <Link className="text-link legal-back" to={backPath}>← Volver a {origin}</Link>
       </article>
     </div>
   </main>;

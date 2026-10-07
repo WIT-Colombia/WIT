@@ -1,4 +1,5 @@
 import { businesses, products, reviews, services, type Business, type Product, type Review, type Service } from "../data/mockData";
+import { isBusinessPublished, isOfferPublished } from "./negociosPublicationService";
 
 export type BusinessFilters = { query?: string; category?: string };
 
@@ -44,11 +45,17 @@ function matchesQuery(query: string | undefined, fields: string[]): boolean {
   });
 }
 
+function isOfferVisible(businessId: string, offerName: string): boolean {
+  const business = businesses.find((item) => item.id === businessId);
+  return Boolean(business && isBusinessPublished(business.name) && isOfferPublished(business.name, offerName));
+}
+
 export async function getBusinesses(filters: BusinessFilters = {}): Promise<Business[]> {
   return businesses.filter((business) => {
+    if (!isBusinessPublished(business.name)) return false;
     const matchesCategory = !filters.category || business.category === filters.category;
-    const businessProducts = products.filter((product) => product.businessId === business.id).flatMap((product) => [product.name, product.description]);
-    const businessServices = services.filter((service) => service.businessId === business.id).flatMap((service) => [service.name, service.description]);
+    const businessProducts = products.filter((product) => product.businessId === business.id && isOfferVisible(product.businessId, product.name)).flatMap((product) => [product.name, product.description]);
+    const businessServices = services.filter((service) => service.businessId === business.id && isOfferVisible(service.businessId, service.name)).flatMap((service) => [service.name, service.description]);
     const searchableFields = [business.name, business.category, business.address, business.description ?? "", ...business.tags, ...businessProducts, ...businessServices];
     return matchesCategory && matchesQuery(filters.query, searchableFields);
   });
@@ -59,6 +66,7 @@ export async function getMatchingProducts(filters: BusinessFilters = {}): Promis
   const matchedBusinesses = new Set((await getBusinesses(filters)).map((business) => business.id));
   return products.filter((product) => {
     const business = businesses.find((item) => item.id === product.businessId);
+    if (!business || !isOfferVisible(product.businessId, product.name)) return false;
     const matchesCategory = !filters.category || business?.category === filters.category;
     return matchesCategory && (matchesQuery(filters.query, [product.name, product.description]) || (Boolean(filters.query) && matchedBusinesses.has(product.businessId)));
   });
@@ -69,29 +77,32 @@ export async function getMatchingServices(filters: BusinessFilters = {}): Promis
   const matchedBusinesses = new Set((await getBusinesses(filters)).map((business) => business.id));
   return services.filter((service) => {
     const business = businesses.find((item) => item.id === service.businessId);
+    if (!business || !isOfferVisible(service.businessId, service.name)) return false;
     const matchesCategory = !filters.category || business?.category === filters.category;
     return matchesCategory && (matchesQuery(filters.query, [service.name, service.description]) || (Boolean(filters.query) && matchedBusinesses.has(service.businessId)));
   });
 }
 
 export async function getBusinessById(id: string): Promise<Business | undefined> {
-  return businesses.find((business) => business.id === id);
+  return businesses.find((business) => business.id === id && isBusinessPublished(business.name));
 }
 
 export async function getProductsByBusinessId(businessId: string): Promise<Product[]> {
-  return products.filter((product) => product.businessId === businessId);
+  return products.filter((product) => product.businessId === businessId && isOfferVisible(product.businessId, product.name));
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-  return products.find((product) => product.id === id);
+  const product = products.find((item) => item.id === id);
+  return product && isOfferVisible(product.businessId, product.name) ? product : undefined;
 }
 
 export async function getServicesByBusinessId(businessId: string): Promise<Service[]> {
-  return services.filter((service) => service.businessId === businessId);
+  return services.filter((service) => service.businessId === businessId && isOfferVisible(service.businessId, service.name));
 }
 
 export async function getServiceById(id: string): Promise<Service | undefined> {
-  return services.find((service) => service.id === id);
+  const service = services.find((item) => item.id === id);
+  return service && isOfferVisible(service.businessId, service.name) ? service : undefined;
 }
 
 export async function getReviewsByBusinessId(businessId: string): Promise<Review[]> {

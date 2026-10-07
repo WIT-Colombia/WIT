@@ -8,6 +8,8 @@ export interface CatalogItem {
   description: string;
   price: string;
   image: string;
+  images?: string[];
+  priceNegotiable?: boolean;
   active: boolean;
   interest: number;
 }
@@ -48,7 +50,7 @@ export interface BusinessNotification {
   title: string;
   description: string;
   date: string;
-  type: "review" | "interest" | "profile" | "wit";
+  type: "review" | "interest" | "profile" | "wit" | "admin" | "offer" | "security";
   read: boolean;
 }
 
@@ -57,4 +59,6 @@ export interface Preferences {
   reviewAlerts: boolean;
   interestAlerts: boolean;
   profileVisible: boolean;
+  visibilityUntil?: string | null;
+  visibilityByBusiness?: Record<string, { profileVisible: boolean; visibilityUntil?: string | null }>;
 }

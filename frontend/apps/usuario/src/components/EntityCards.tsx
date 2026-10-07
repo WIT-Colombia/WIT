@@ -3,6 +3,7 @@ import { businesses, type Business, type Product, type Service } from "../data/m
 import { HeartIcon, ThumbsUpIcon } from "./ActionIcons";
 import { useAccountGate } from "../hooks/useAccountGate";
 import { getLikeCount } from "../services/userDataService";
+import { getBusinessPublicationState } from "../services/negociosPublicationService";
 import "./EntityCards.css";
 import "./EntityCardsEnhancements.css";
 
@@ -16,9 +17,11 @@ function formatPrice(price: number): string {
 
 export function BusinessCard({ business, favorite = false, onFavorite, onContact }: BusinessCardProps) {
   const requireAccount = useAccountGate();
-  return <article className="entity-card entity-business-card">
+  const isFeatured = business.plan === "premium" || business.isFeatured;
+  const publicationState = getBusinessPublicationState(business.name);
+  return <article className={`entity-card entity-business-card${isFeatured ? " entity-business-card--featured" : ""}`}>
     <Link className="entity-card__image" to={`/business/${business.id}`}><img src={business.image} alt={business.name} loading="lazy"/>{(business.plan === "premium" || business.isFeatured) && <span className="entity-featured">Destacado</span>}<span className={`entity-open${business.isOpen ? " is-open" : ""}`}><i/>{business.isOpen ? "Abierto" : "Cerrado"}</span></Link>
-    <div className="entity-card__content"><div className="entity-card__heading"><div><p>{business.category}</p>{business.isVerified && <span className="entity-verified">✓ Verificado</span>}<h3><Link to={`/business/${business.id}`}>{business.name}</Link></h3></div><span className="entity-rating">★ {business.rating.toFixed(1)} <small>({business.reviewCount})</small></span></div>
+    <div className="entity-card__content"><div className="entity-card__heading"><div><p>{business.category}</p>{publicationState === "pending" ? <span className="entity-verified entity-pending">• Verificación pendiente</span> : business.isVerified && <span className="entity-verified">✓ Verificado</span>}<h3><Link to={`/business/${business.id}`}>{business.name}</Link></h3></div><span className="entity-rating">★ {business.rating.toFixed(1)} <small>({business.reviewCount})</small></span></div>
       <p className="entity-address">⌖ {business.address}</p><div className="entity-card__actions"><span>A {business.distanceKm.toFixed(1)} km</span><div>
         {onFavorite && <button className={`entity-action entity-favorite${favorite ? " is-active" : ""}`} type="button" aria-label={favorite ? `Quitar ${business.name} de tiendas guardadas` : `Guardar ${business.name}`} title={favorite ? "Quitar de tiendas guardadas" : "Guardar tienda"} aria-pressed={favorite} onClick={() => requireAccount(onFavorite)}><HeartIcon/></button>}
         {onContact ? <button className="entity-view" type="button" onClick={onContact}>Contactar <span>→</span></button> : <Link className="entity-view" to={`/business/${business.id}`}>Ver negocio <span>→</span></Link>}
