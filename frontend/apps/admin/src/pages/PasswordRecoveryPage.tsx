@@ -1,0 +1,10 @@
+import { FormEvent, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Logo } from '@wit/ui';
+import { Icon } from '../components/Icon';
+
+export function PasswordRecoveryPage() {
+  const [sent, setSent] = useState(false);
+  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSent(true); }
+  return <main className="login-page recovery-page"><section className="login-story"><div className="brand"><Logo /><span>ADMIN</span></div><div><span className="login-kicker">WIT ADMIN</span><h1>Recupera tu acceso.</h1><p>Te ayudaremos a restablecer la contraseña de tu cuenta administrativa.</p><div className="login-pill"><Icon name="shield" /> Acceso seguro al centro de control</div></div><small>Descubrimiento local. Conexiones reales.</small></section><section className="login-form-wrap"><div className="recovery-card"><div className="login-form"><span className="state-icon"><Icon name="lock" size={26} /></span><p className="eyebrow">RECUPERAR CONTRASEÑA</p><h2>Solicita un enlace</h2><p>Escribe el correo asociado a tu cuenta y te enviaremos un enlace para crear una nueva contraseña.</p>{sent ? <><p role="status" className="form-notice">Si el correo está registrado, recibirás las instrucciones para recuperar el acceso.</p><Link className="primary login-submit recovery-back" to="/login">Volver al inicio de sesión</Link></> : <form onSubmit={submit}><label htmlFor="recovery-email">Correo de recuperación</label><input className="recovery-email-input" id="recovery-email" name="email" type="email" defaultValue="danilo.jaramillo@hotmail.com" autoComplete="email" required /><button className="primary login-submit" type="submit">Enviar enlace de recuperación <Icon name="arrow" size={18} /></button><p className="recovery-help"><Icon name="shield" size={15} /> Por seguridad, el enlace solo estará disponible durante un tiempo limitado.</p><Link className="text-button recovery-link" to="/login">Volver al inicio de sesión</Link></form>}</div></div></section></main>;
+}

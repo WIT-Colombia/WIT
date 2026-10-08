@@ -1,0 +1,5 @@
+import type { ReactNode } from 'react';
+import { Icon } from './Icon';
+export function Badge({ children, tone = 'Normal' }: { children: ReactNode; tone?: string }) { return <span className={`badge tone-${tone.toLowerCase()}`}>{children}</span>; }
+export function StatePanel({ kind, title, message, retry }: { kind: 'loading' | 'empty' | 'error' | 'permission'; title: string; message: string; retry?: () => void }) { return <div className={`state-panel ${kind}`} role={kind === 'error' ? 'alert' : 'status'}><span className="state-icon"><Icon name={kind === 'permission' ? 'lock' : kind === 'error' ? 'flag' : 'grid'} size={28} /></span><h2>{title}</h2><p>{message}</p>{retry && <button className="primary" onClick={retry}>Volver a intentar</button>}</div>; }
+export function Panel({ title, subtitle, action, children, className = '', id }: { title: string; subtitle?: string; action?: ReactNode; children: ReactNode; className?: string; id?: string }) { return <section id={id} className={`panel ${className}`}><div className="panel-heading"><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>{action}</div>{children}</section>; }

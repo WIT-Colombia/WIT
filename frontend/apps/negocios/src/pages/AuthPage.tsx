@@ -6,10 +6,6 @@ import { BusinessHeader } from "../components/layout/BusinessHeader";
 function GoogleIcon() { return <svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.5 9.5 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8V33A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4v-5.1H5.8a20 20 0 0 0 0 17.6l6.8-5.1Z"/><path fill="#EA4335" d="M24 12c3 0 5.6 1 7.7 3l5.8-5.8A19.4 19.4 0 0 0 24 4 20 20 0 0 0 5.8 15.2l6.8 5.1C14.2 15.6 18.7 12 24 12Z"/></svg>; }
 function FacebookIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.3c0-3 1.8-4.7 4.5-4.7 1.3 0 2.6.2 2.6.2v2.9h-1.5c-1.5 0-2 .9-2 1.9V12h3.3l-.5 3.5h-2.8v8.4A12 12 0 0 0 24 12Z"/></svg>; }
 const providers = [{ name: "Google", Icon: GoogleIcon }, { name: "Facebook", Icon: FacebookIcon }];
-const userPreviewUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? `${window.location.protocol}//${window.location.hostname}:5174/`
-  : "/";
-
 export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const navigate = useNavigate();
   const { account, setAccount, setBusinesses } = useBusinessStore();
@@ -47,9 +43,9 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
           {message && <p className="auth-status" role="status">{message}</p>}
           <button type="submit" className="action-button auth-submit">{register ? "Crear mi cuenta" : "Iniciar sesión"}</button>
         </form>
-        {!register && <Link className="auth-forgot" to="/recuperar">¿Olvidaste tu contraseña?</Link>}
+        {!register && <Link className="auth-forgot" to="/recuperar?mode=email">¿Olvidaste tu contraseña?</Link>}
         <button className="auth-mode-switch" type="button" onClick={() => navigate(register ? "/login" : "/registro")}>{register ? "¿Ya tienes una cuenta? Iniciar sesión" : "¿No tienes una cuenta? Crear cuenta"}</button>
-        <a className="auth-preview-button" href={userPreviewUrl}>Entrar en vista previa como usuario registrado</a>
+        <Link className="auth-preview-button" to="/">Entrar en vista previa como usuario registrado</Link>
       </section>
     </div>
   </main>;

@@ -4,8 +4,14 @@
 .entity-business-card { display: flex; flex-direction: column; height: 100%; }
 .entity-business-card .entity-card__content { display: flex; flex: 1; flex-direction: column; min-height: 0; }
 .entity-business-card .entity-card__actions { margin-top: auto; }
-.entity-business-card--featured { border-color: #9ed3b5; box-shadow: 0 5px 18px rgba(24, 123, 79, .10); }
-.entity-business-card--featured:hover { border-color: #67b98c; box-shadow: 0 10px 26px rgba(24, 123, 79, .16); }
+.entity-business-card--featured { position: relative; border: 2px solid #59b784; background: linear-gradient(180deg, #f4fcf7 0%, var(--wit-surface) 34%); box-shadow: 0 8px 24px rgba(24, 123, 79, .18); }
+.entity-business-card--featured::before { position: absolute; z-index: 2; top: -2px; right: 18px; left: 18px; height: 4px; border-radius: 0 0 8px 8px; background: linear-gradient(90deg, #168653, #63c58d); content: ""; }
+.entity-business-card--featured:hover { border-color: #168653; box-shadow: 0 12px 30px rgba(24, 123, 79, .25); }
+.entity-business-card--featured .entity-featured { border-color: #9bdfb8; background: #e9faef; color: #087449; font-weight: 800; box-shadow: 0 3px 9px rgba(24, 123, 79, .16); }
+.entity-business-card--featured .entity-featured::before { content: "★"; font-size: 11px; }
+.entity-business-card--featured .entity-card__content { background: linear-gradient(135deg, rgba(235, 250, 240, .92), rgba(255, 255, 255, .98) 72%); }
+.entity-business-card--featured .entity-card__heading p { color: #168653; font-weight: 700; }
+.entity-business-card--featured .entity-rating { color: #087449; }
 @media(max-width:700px) { .entity-card__image { height:165px; }.entity-card__content { padding:12px; }.entity-card__heading h3,.entity-offer-card h3 { font-size:13px; }.entity-address { margin:9px 0; font-size:9px; }.entity-card__actions { font-size:9px; }.entity-card__actions>div { gap:5px; }.entity-action { width:30px; height:30px; }.entity-view { font-size:10px; }.entity-offer-card .entity-card__image { height:140px; }.entity-offer-description { font-size:10px; } }
 .entity-favorite { color:#bd5a61; }.entity-favorite svg,.entity-product-like svg { display:block; width:17px; height:17px; }.entity-favorite.is-active { border-color:#f3d2d3; background:#fff3f3; color:#e5484d; }.entity-like { color:#42765f; }.entity-like.is-active { border-color:#79cda0; background:#d9f4e4; color:#087449; }
 .entity-action { padding:0; line-height:0; }
