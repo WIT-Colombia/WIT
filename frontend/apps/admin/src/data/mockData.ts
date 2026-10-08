@@ -1,5 +1,5 @@
 import type { Admin, DashboardData, Period } from '../types/admin';
-export const mockAdmin: Admin = { id: 'admin-demo', name: 'Alex Rivera', email: 'danilo.jaramillo@hotmail.com', role: 'principal' };
+export const mockAdmin: Admin = { id: 'admin-demo', name: 'Danilo Jaramillo', email: 'danilo.jaramillo@hotmail.com', role: 'principal' };
 export function dashboardMock(period: Period): DashboardData {
 const scale = period === 7 ? .24 : period === 90 ? 2.7 : 1;
 return {
