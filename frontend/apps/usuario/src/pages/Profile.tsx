@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { PageLayout } from "../components/PageLayout";
 import { BellIcon, HeartIcon, ThumbsUpIcon } from "../components/ActionIcons";
 import { EmailVerificationNotice } from "../components/EmailVerificationNotice";
+import { getSelectedLocation } from "../services/locationService";
 import "./Profile.css";
 import "./ProfileEnhancements.css";
 
@@ -14,6 +15,7 @@ export default function Profile() {
   const { logout, user } = useAuth();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
+  const selectedLocation = getSelectedLocation();
 
   useEffect(() => {
     if (!user) return;
@@ -44,9 +46,10 @@ export default function Profile() {
         <div>
           <span>MI PERFIL</span>
           <h1>Hola{profile.name ? `, ${profile.name}` : ""}</h1>
+          <p className="profile-location-label">{selectedLocation ? `${selectedLocation.name}, ${selectedLocation.context}` : "Palmira, Valle del Cauca"}</p>
         </div>
       </div>
-      <p className="profile-verification-status" role="status">{user?.emailVerified ? "Correo verificado" : "Correo pendiente de verificación"}</p>
+      {user && !user.emailVerified && <p className="profile-verification-status" role="status">Correo pendiente de verificación</p>}
       <section className="profile-links profile-activity-only">
         <h2>Tu actividad</h2>
         <Link to="/favorites"><span className="profile-icon--stores"><HeartIcon /></span><div><b>Tiendas guardadas</b><small>Encuentra tus favoritos</small></div><i>›</i></Link>

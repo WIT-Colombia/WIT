@@ -60,7 +60,7 @@ export default function ManualLocation() {
   return <main className="manual-location-page">
     <header className="manual-location-header">
       <Link className="manual-location-back" to="/location"><span aria-hidden="true">←</span> Volver</Link>
-      <Link className="manual-location-logo" to="/welcome" aria-label="WIT, bienvenida"><Logo /></Link>
+      <Link className="manual-location-logo" to="/home" aria-label="WIT, inicio"><Logo /></Link>
       <Link className="manual-location-skip" to="/home">Ir a Inicio</Link>
     </header>
 

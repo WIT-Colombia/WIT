@@ -2,13 +2,16 @@
   "name": "wit-frontend",
   "version": "0.1.0",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev:usuario": "npm run dev --workspace=@wit/usuario",
     "dev:negocios": "npm run dev --workspace=@wit/negocios",
     "dev:admin": "npm run dev --workspace=@wit/admin",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test:verification": "../backend/node_modules/.bin/tsx --test tests/email-verification.test.ts"
+    "test:verification": "../backend/node_modules/.bin/tsx --test tests/email-verification.test.ts tests/email-validation.test.ts tests/welcome-navigation.test.ts"
   }
 }

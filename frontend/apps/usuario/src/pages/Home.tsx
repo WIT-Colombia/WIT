@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button, Logo } from "@wit/ui";
 import { businesses as sampleBusinesses, categories, products as sampleProducts, type Business } from "../data/mockData";
 import { getSelectedLocation, hasSampleCatalogForLocation } from "../services/locationService";
@@ -38,6 +38,8 @@ function isRecentlyAdded(createdAt?: string): boolean {
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigationMessage = (location.state as { toast?: unknown } | null)?.toast;
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [showAllCategories, setShowAllCategories] = useState(false);
@@ -56,7 +58,12 @@ export default function Home() {
   const [selectedLocation] = useState(() => getSelectedLocation());
   const hasSampleCatalog = hasSampleCatalogForLocation(selectedLocation);
   const [mapView, setMapView] = useState(() => new URLSearchParams(window.location.search).get("view") === "map");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(() => typeof navigationMessage === "string" ? navigationMessage : "");
+
+  useEffect(() => {
+    if (typeof navigationMessage !== "string") return;
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+  }, [location.pathname, location.search, navigate, navigationMessage]);
 
   useEffect(() => { void getBusinesses({ query, category }).then(setItems); }, [query, category]);
   useEffect(() => {

@@ -19,3 +19,18 @@
 @media(min-width:701px) and (max-width:900px){.settings-sections{max-width:760px}.settings-panel{max-width:none}}
 .settings-primary-stack{display:grid;gap:16px}
 @media(min-width:901px){.settings-sections{grid-template-columns:minmax(0,1fr) minmax(330px,.82fr)}.settings-primary-stack{grid-column:1;grid-row:1}.settings-account-panel{grid-column:2;grid-row:1}}
+
+/* Compact, centered settings layout */
+.settings-sections{width:min(100%,620px);margin:0 auto;grid-template-columns:1fr;gap:12px}
+.settings-primary-stack,.settings-account-panel{grid-column:auto;grid-row:auto}
+.settings-panel{padding:18px 20px}
+.settings-info-panel{min-height:0}
+.settings-account-panel{box-shadow:0 10px 28px rgba(23,33,29,.045)}
+.settings-account-panel h2{margin-bottom:12px}
+.settings-account-fields,.settings-account-actions{max-width:430px}
+.settings-account-fields{gap:9px}
+.settings-save-button,.settings-account-actions .settings-password-link,.settings-account-actions .settings-legal-button{min-height:36px}
+.settings-account-actions{margin-top:11px;gap:8px}
+.settings-saved-message{margin-top:10px!important;margin-left:0!important}
+@media(max-width:620px){.settings-sections{width:100%}.settings-panel{padding:16px}.settings-account-fields,.settings-account-actions{max-width:none}}
+.settings-account-fields input[readonly]{background:#f0f3f1;color:var(--wit-text-muted);cursor:not-allowed}

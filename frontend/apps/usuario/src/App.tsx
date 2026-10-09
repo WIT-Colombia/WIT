@@ -27,6 +27,7 @@ import PasswordRecovery from "./pages/PasswordRecovery";
 import RecoverPassword from "./pages/RecoverPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
+import GoogleCallback from "./pages/GoogleCallback";
 import { RequireAccount } from "./components/RequireAccount";
 
 function ScrollToTop() {
@@ -63,14 +64,15 @@ export default function App() {
     <Route path="/recover-password" element={<RecoverPassword />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/verify-email" element={<VerifyEmail />} />
-    <Route path="/change-password" element={<PasswordRecovery />} />
+    <Route path="/auth/google/callback" element={<GoogleCallback />} />
+    <Route path="/change-password" element={<RequireAccount><PasswordRecovery /></RequireAccount>} />
     <Route path="/account" element={<RequireAccount><Navigate to="/settings" replace /></RequireAccount>} />
     <Route path="/legal/:page" element={<Legal />} />
     <Route path="/favorites" element={<RequireAccount><Favorites /></RequireAccount>} />
     <Route path="/likes" element={<RequireAccount><Likes /></RequireAccount>} />
     <Route path="/reviews" element={<Reviews />} />
     <Route path="/profile" element={<RequireAccount><Profile /></RequireAccount>} />
-    <Route path="/settings" element={<Settings />} />
+    <Route path="/settings" element={<RequireAccount><Settings /></RequireAccount>} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<Navigate to="/home" replace />} />
   </Routes></>;

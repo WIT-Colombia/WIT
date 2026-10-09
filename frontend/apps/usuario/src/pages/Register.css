@@ -15,4 +15,5 @@
 .register-side-panel li>div{display:grid;gap:2px}.register-side-panel li b{font-size:11px}.register-side-panel li small{color:var(--wit-text-secondary);font-size:10px}
 @media(max-width:800px){.register-shell{display:block;width:100%;margin:5vh auto}.register-side-panel{display:none}.register-shell .register-panel{width:min(calc(100% - 32px),480px);margin:0 auto}}
 .register-brand{display:inline-flex!important;align-items:center;gap:12px}.register-brand>span{padding-left:12px;border-left:1px solid var(--wit-border);color:var(--wit-text-secondary);font-size:13px;font-weight:400}
+.password-field{position:relative;display:flex;align-items:center}.password-field input{width:100%;padding-right:42px}.password-visibility{position:absolute;right:8px;display:grid;width:30px;height:30px;place-items:center;padding:0;border:0;border-radius:6px;background:transparent;color:var(--wit-text-secondary);cursor:pointer}.password-visibility:hover{background:var(--wit-background);color:var(--wit-primary-dark)}.password-visibility svg{width:18px;height:18px}
 @media(max-width:600px){.register-brand{gap:0}.register-brand>span{display:none}}

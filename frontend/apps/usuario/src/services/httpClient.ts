@@ -1,7 +1,7 @@
-export type ApiErrorPayload = { error?: { code?: string; message?: string } };
+export type ApiErrorPayload = { error?: { code?: string; message?: string; fields?: Record<string, string> } };
 
 export class ApiError extends Error {
-  constructor(public readonly status: number, public readonly code: string, message: string, public readonly retryAfterSeconds?: number) {
+  constructor(public readonly status: number, public readonly code: string, message: string, public readonly retryAfterSeconds?: number, public readonly fields: Record<string, string> = {}) {
     super(message);
     this.name = "ApiError";
   }
@@ -26,7 +26,7 @@ export async function requestJson<T>(path: string, init: RequestInit = {}): Prom
     const message = response.status === 429 && retryAfterSeconds !== undefined
       ? `${baseMessage} Puedes volver a intentarlo en ${retryAfterSeconds} segundos.`
       : baseMessage;
-    throw new ApiError(response.status, errorPayload?.error?.code ?? "HTTP_ERROR", message, retryAfterSeconds);
+    throw new ApiError(response.status, errorPayload?.error?.code ?? "HTTP_ERROR", message, retryAfterSeconds, errorPayload?.error?.fields ?? {});
   }
   return payload as T;
 }

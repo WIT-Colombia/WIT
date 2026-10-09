@@ -22,7 +22,6 @@ export type UserSession = {
   name: string;
   email: string;
   provider: "email" | "google" | "facebook";
-  phone?: { countryCode: string; dialCode: string; number: string };
   avatarUrl?: string;
 };
 
@@ -42,7 +41,7 @@ export interface UsuarioBackendClient {
   getServices(businessId: string): Promise<Service[]>;
   getReviews(businessId: string): Promise<Review[]>;
   getSession(): Promise<UserSession | null>;
-  updateSession(data: Partial<Pick<UserSession, "name" | "phone" | "avatarUrl">>): Promise<UserSession>;
+  updateSession(data: Partial<Pick<UserSession, "name" | "avatarUrl">>): Promise<UserSession>;
   toggleFavorite(businessId: string, saved: boolean): Promise<void>;
   toggleLike(entityId: string, entityType: "product" | "service", liked: boolean): Promise<void>;
   submitReview(businessId: string, rating: number, comment: string): Promise<Review>;

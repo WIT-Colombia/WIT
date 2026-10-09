@@ -42,7 +42,7 @@ export default function Location() {
   return <main className="location-page">
     <header className="location-header">
       <Link className="location-back" to="/welcome" aria-label="Volver a Bienvenida"><span aria-hidden="true">←</span><span>Volver</span></Link>
-      <Link className="location-logo" to="/welcome" aria-label="WIT, bienvenida"><Logo /></Link>
+      <Link className="location-logo" to="/home" aria-label="WIT, inicio"><Logo /></Link>
       <span className="location-progress">PASO <b>1</b> DE 2</span>
     </header>
 

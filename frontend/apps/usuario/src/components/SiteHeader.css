@@ -5,3 +5,6 @@
 .profile-button { display:flex; flex:0 0 38px; align-items:center; justify-content:center; width:38px; height:38px; padding:0; border:0; border-radius:50%; background:var(--wit-primary-light); color:var(--wit-primary-dark); font-family:inherit; font-size:14px; font-weight:700; line-height:1; text-align:center; text-decoration:none; cursor:pointer; }
 @media(max-width:1080px) { .site-header { gap:22px; padding:0 24px; } }
 @media(max-width:700px) { .site-header { position:relative; height:64px; gap:12px; padding:0 18px; }.brand { gap:0; }.brand .wit-logo { font-size:27px; }.brand>span:last-child { display:none; }.desktop-nav { display:none; }.location-pill { gap:6px; margin-left:auto; padding:6px 9px; }.location-pill>svg { width:18px; height:18px; }.location-pill>span:nth-child(2) { font-size:11px; }.location-pill small { font-size:9px; }.location-pill .chevron { margin-left:0; }.profile-button { flex-basis:34px; width:34px; height:34px; } }
+
+.profile-button svg { width:20px; height:20px; }
+.profile-button img { width:100%; height:100%; border-radius:50%; object-fit:cover; }

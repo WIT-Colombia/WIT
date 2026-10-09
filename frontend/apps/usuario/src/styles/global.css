@@ -17,7 +17,3 @@
   animation-iteration-count: 1 !important;
   transition-duration: .01ms !important;
 }
-
-.email-verification-notice { padding: 16px 24px; background: #eef7ef; color: #173d28; border-bottom: 1px solid #b9d7c0; }
-.email-verification-notice p { margin: 8px 0; }
-.email-verification-notice button { padding: 8px 16px; border: 1px solid #287947; border-radius: 8px; background: white; color: #173d28; cursor: pointer; }

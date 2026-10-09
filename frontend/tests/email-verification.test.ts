@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { confirmEmail, getMe, requestVerification } from '../apps/usuario/src/services/authService.ts';
 import { ApiError } from '../apps/usuario/src/services/httpClient.ts';
+import { completeGoogleCallback } from '../apps/usuario/src/services/googleCallbackFlow.ts';
 
 test('confirmation uses POST and profile refresh reads the verified state', async () => {
   const original = globalThis.fetch;
@@ -31,4 +32,26 @@ test('server unavailability is not labeled as token expiry', async () => {
   globalThis.fetch = async () => new Response(null, { status: 503 });
   try { await assert.rejects(confirmEmail('synthetic-test-token'), (error: unknown) => error instanceof ApiError && error.status === 503 && !error.message.includes('expir')); }
   finally { globalThis.fetch = original; }
+});
+test('Google callback redirects to home after the session is restored', async () => {
+  let restored = false;
+  const destination = await completeGoogleCallback(async () => { restored = true; }, '/profile');
+  assert.equal(restored, true);
+  assert.equal(destination, '/home');
+});
+test('Google callback tolerates React StrictMode re-running the effect', async () => {
+  let restoreCalls = 0;
+  const restore = async () => {
+    restoreCalls += 1;
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  };
+  const destinations = await Promise.all([
+    completeGoogleCallback(restore, '/profile'),
+    completeGoogleCallback(restore, '/profile'),
+  ]);
+  assert.equal(restoreCalls, 2);
+  assert.deepEqual(destinations, ['/home', '/home']);
+});
+test('Google callback never stays pending when session restoration fails', async () => {
+  await assert.rejects(completeGoogleCallback(() => Promise.reject(new ApiError(401, 'UNAUTHENTICATED', 'Autenticación requerida.')), '/profile'), (error: unknown) => error instanceof ApiError && error.status === 401);
 });

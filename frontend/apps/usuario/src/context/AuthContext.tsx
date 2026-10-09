@@ -1,14 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ApiError } from "../services/httpClient";
-import { getMe, login, logout, refreshSession, register, type AuthUser } from "../services/authService";
+import { getMe, login, logout, refreshSession, register, restoreSession, type AuthUser } from "../services/authService";
 
 type AuthContextValue = {
   user: AuthUser | null;
   status: "loading" | "authenticated" | "anonymous";
   isAuthenticated: boolean;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<AuthUser>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   reloadUser: () => Promise<void>;
+  restoreSession: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -37,11 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
-    reloadUser: async () => { setUser(await getMe()); },
+    reloadUser: async () => { const next = await getMe(); setUser(next); setStatus("authenticated"); },
+    restoreSession: async () => { const next = await restoreSession(); setUser(next); setStatus("authenticated"); },
     status,
     isAuthenticated: status === "authenticated",
-    register: async (name, email, password) => { setUser(await register(name, { email, password })); setStatus("authenticated"); },
-    login: async (email, password) => { setUser(await login({ email, password })); setStatus("authenticated"); },
+    register: async (name, email, password) => { const created = await register(name, { email, password }); setUser(null); setStatus("anonymous"); return created; },
+    login: async (email, password, rememberMe = true) => { setUser(await login({ email, password }, rememberMe)); setStatus("authenticated"); },
     logout: async () => { await logout(); setUser(null); setStatus("anonymous"); },
   }), [status, user]);
 
