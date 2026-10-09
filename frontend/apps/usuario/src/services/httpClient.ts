@@ -1,7 +1,7 @@
 export type ApiErrorPayload = { error?: { code?: string; message?: string } };
 
 export class ApiError extends Error {
-  constructor(public readonly status: number, public readonly code: string, message: string) {
+  constructor(public readonly status: number, public readonly code: string, message: string, public readonly retryAfterSeconds?: number) {
     super(message);
     this.name = "ApiError";
   }
@@ -20,7 +20,13 @@ export async function requestJson<T>(path: string, init: RequestInit = {}): Prom
   try { payload = text ? JSON.parse(text) as T | ApiErrorPayload : null; } catch { /* handled as an empty response */ }
   if (!response.ok) {
     const errorPayload = payload as ApiErrorPayload | null;
-    throw new ApiError(response.status, errorPayload?.error?.code ?? "HTTP_ERROR", errorPayload?.error?.message ?? "No se pudo completar la solicitud.");
+    const retryAfterHeader = response.headers.get("Retry-After");
+    const retryAfterSeconds = retryAfterHeader && /^\d+$/.test(retryAfterHeader) ? Number(retryAfterHeader) : undefined;
+    const baseMessage = errorPayload?.error?.message ?? "No se pudo completar la solicitud.";
+    const message = response.status === 429 && retryAfterSeconds !== undefined
+      ? `${baseMessage} Puedes volver a intentarlo en ${retryAfterSeconds} segundos.`
+      : baseMessage;
+    throw new ApiError(response.status, errorPayload?.error?.code ?? "HTTP_ERROR", message, retryAfterSeconds);
   }
   return payload as T;
 }

@@ -25,6 +25,8 @@ import Register from "./pages/Register";
 import Legal from "./pages/Legal";
 import PasswordRecovery from "./pages/PasswordRecovery";
 import RecoverPassword from "./pages/RecoverPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import { RequireAccount } from "./components/RequireAccount";
 
 function ScrollToTop() {
@@ -59,6 +61,8 @@ export default function App() {
     <Route path="/report" element={<Report />} />
     <Route path="/register" element={<Register />} />
     <Route path="/recover-password" element={<RecoverPassword />} />
+    <Route path="/reset-password" element={<ResetPassword />} />
+    <Route path="/verify-email" element={<VerifyEmail />} />
     <Route path="/change-password" element={<PasswordRecovery />} />
     <Route path="/account" element={<RequireAccount><Navigate to="/settings" replace /></RequireAccount>} />
     <Route path="/legal/:page" element={<Legal />} />

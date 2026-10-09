@@ -8,6 +8,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   register: (name: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  reloadUser: () => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -26,8 +27,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    let active = true;
+    const update = () => { getMe().then((next) => { if (active) setUser(next); }).catch(() => {}); };
+    window.addEventListener("focus", update);
+    return () => { active = false; window.removeEventListener("focus", update); };
+  }, [status]);
+
   const value = useMemo<AuthContextValue>(() => ({
     user,
+    reloadUser: async () => { setUser(await getMe()); },
     status,
     isAuthenticated: status === "authenticated",
     register: async (name, email, password) => { setUser(await register(name, { email, password })); setStatus("authenticated"); },

@@ -1,6 +1,8 @@
 import { ApiError, requestJson } from "./httpClient";
 
 export type AuthUser = {
+  emailVerified: boolean;
+  verificationEmailSent?: boolean;
   id: string;
   publicId: string;
   displayName: string;
@@ -14,6 +16,7 @@ export type AuthUser = {
 
 type AuthResponse = { user: AuthUser; accessToken: string };
 type Credentials = { email: string; password: string };
+type MessageResponse = { message: string };
 
 let accessToken: string | null = null;
 let refreshInFlight: Promise<AuthUser> | null = null;
@@ -57,6 +60,24 @@ export async function getMe(): Promise<AuthUser> {
 export async function logout(): Promise<void> {
   try { await requestJson<void>("/api/v1/auth/logout", { method: "POST", body: "{}" }); }
   finally { accessToken = null; }
+}
+
+export async function requestPasswordReset(email: string): Promise<string> {
+  const result = await requestJson<MessageResponse>("/api/v1/auth/password-reset/request", { method: "POST", body: JSON.stringify({ email }) });
+  return result.message;
+}
+
+export async function confirmPasswordReset(token: string, password: string): Promise<void> {
+  await requestJson<void>("/api/v1/auth/password-reset/confirm", { method: "POST", body: JSON.stringify({ token, password }) });
+}
+
+export async function confirmEmail(token: string): Promise<void> {
+  await requestJson<void>("/api/v1/auth/verify-email/confirm", { method: "POST", body: JSON.stringify({ token }) });
+}
+
+export async function requestVerification(email: string): Promise<string> {
+  const result = await requestJson<MessageResponse>("/api/v1/auth/verify-email/request", { method: "POST", body: JSON.stringify({ email }) });
+  return result.message;
 }
 
 export function clearAccessToken(): void { accessToken = null; }

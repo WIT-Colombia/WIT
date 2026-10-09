@@ -4,6 +4,7 @@ import { getNotifications, getProfile, saveProfile, type UserProfile } from "../
 import { useAuth } from "../context/AuthContext";
 import { PageLayout } from "../components/PageLayout";
 import { BellIcon, HeartIcon, ThumbsUpIcon } from "../components/ActionIcons";
+import { EmailVerificationNotice } from "../components/EmailVerificationNotice";
 import "./Profile.css";
 import "./ProfileEnhancements.css";
 
@@ -33,6 +34,7 @@ export default function Profile() {
 
   return (
     <PageLayout active="home" className="profile-page">
+      <EmailVerificationNotice />
       <div className="profile-welcome">
         <label className="profile-avatar-picker">
           {profile.photo ? <img src={profile.photo} alt="Foto de perfil" /> : <span>{profile.name.trim().charAt(0).toUpperCase() || "D"}</span>}
@@ -44,6 +46,7 @@ export default function Profile() {
           <h1>Hola{profile.name ? `, ${profile.name}` : ""}</h1>
         </div>
       </div>
+      <p className="profile-verification-status" role="status">{user?.emailVerified ? "Correo verificado" : "Correo pendiente de verificación"}</p>
       <section className="profile-links profile-activity-only">
         <h2>Tu actividad</h2>
         <Link to="/favorites"><span className="profile-icon--stores"><HeartIcon /></span><div><b>Tiendas guardadas</b><small>Encuentra tus favoritos</small></div><i>›</i></Link>
