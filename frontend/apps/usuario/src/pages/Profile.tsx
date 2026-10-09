@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getNotifications, getProfile, saveProfile, type UserProfile } from "../services/userDataService";
 import { useAuth } from "../context/AuthContext";
@@ -10,9 +10,14 @@ import "./ProfileEnhancements.css";
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile>(getProfile);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
+
+  useEffect(() => {
+    if (!user) return;
+    setProfile((current) => ({ ...current, name: user.displayName, email: user.emailNormalized ?? current.email }));
+  }, [user]);
 
   function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
