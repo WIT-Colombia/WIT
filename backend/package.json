@@ -10,7 +10,7 @@
     "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.json",
-    "test": "node --import tsx --test src/shared/email/email-templates.test.ts src/shared/email/resend-email-sender.test.ts src/modules/auth/verification-confirmation.test.ts",
+    "test": "node --import tsx --test src/shared/email/email-templates.test.ts src/shared/email/resend-email-sender.test.ts src/modules/auth/verification-confirmation.test.ts src/modules/auth/account-settings.test.ts src/modules/auth/google-oauth.test.ts",
     "prisma:generate": "prisma generate",
     "start": "node dist/server.js"
   },

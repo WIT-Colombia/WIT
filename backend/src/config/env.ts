@@ -59,6 +59,11 @@ if (emailMode === 'resend' && !emailApiKey) {
   throw new Error('EMAIL_API_KEY es obligatorio cuando EMAIL_MODE=resend.');
 }
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI?.trim() ?? 'http://localhost:3000/api/v1/auth/google/callback';
+const googleFrontendUrl = process.env.GOOGLE_FRONTEND_URL?.trim() ?? 'http://localhost:5173';
+
 export const env = Object.freeze({
   nodeEnv,
   port,
@@ -78,4 +83,8 @@ export const env = Object.freeze({
   smtpHost: process.env.SMTP_HOST?.trim(),
   smtpPort: process.env.SMTP_PORT?.trim(),
   smtpUser: process.env.SMTP_USER?.trim(),
+  googleClientId,
+  googleClientSecret,
+  googleRedirectUri,
+  googleFrontendUrl,
 });

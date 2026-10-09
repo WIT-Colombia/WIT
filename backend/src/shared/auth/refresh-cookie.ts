@@ -9,13 +9,13 @@ export function getRefreshToken(request: { headers: { cookie?: string } }): stri
   return parseCookie(request.headers.cookie ?? '')[REFRESH_COOKIE_NAME];
 }
 
-export function setRefreshCookie(response: Response, token: string): void {
+export function setRefreshCookie(response: Response, token: string, persistent = true): void {
   response.appendHeader('Set-Cookie', stringifySetCookie({ name: REFRESH_COOKIE_NAME, value: token,
     httpOnly: true,
     secure: env.nodeEnv === 'production',
     sameSite: env.authCookieSameSite,
     path: REFRESH_COOKIE_PATH,
-    maxAge: env.refreshTokenTtlDays * 24 * 60 * 60,
+    ...(persistent ? { maxAge: env.refreshTokenTtlDays * 24 * 60 * 60 } : {}),
   }));
 }
 

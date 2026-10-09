@@ -7,7 +7,13 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _request, resp
     return;
   }
   if (error instanceof AppError) {
-    response.status(error.statusCode).json({ error: { code: error.code, message: error.message } });
+    response.status(error.statusCode).json({
+      error: {
+        code: error.code,
+        message: error.message,
+        ...(error.fieldErrors ? { fields: error.fieldErrors } : {}),
+      },
+    });
     return;
   }
   if (error instanceof SyntaxError && 'status' in error && error.status === 400) {

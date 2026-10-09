@@ -133,8 +133,6 @@ model User {
   publicId                   String                    @unique @default(uuid()) @db.VarChar(64)
   emailNormalized            String?                   @unique @db.VarChar(320)
   displayName                String                    @db.VarChar(120)
-  phoneCountryCode           String?                   @db.VarChar(8)
-  phoneNumber                String?                   @db.VarChar(32)
   avatarUrl                  String?                   @db.VarChar(2048)
   locale                     String                    @default("es-CO") @db.VarChar(16)
   status                     UserStatus                @default(ACTIVE)
