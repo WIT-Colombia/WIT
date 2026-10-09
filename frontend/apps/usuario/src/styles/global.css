@@ -4,6 +4,11 @@
 .flow-placeholder h1 { margin: 0; font-size: clamp(32px, 7vw, 48px); }
 .flow-placeholder span { color: var(--wit-text-secondary); line-height: 1.6; }
 .flow-placeholder__link { margin-top: 16px; color: var(--wit-primary-dark); font-weight: 600; }
+
+/* Tratamiento visual común para controles interactivos, conservando la paleta de Usuario. */
+:where(button, a, input, select, textarea) {
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
 :root[data-reduced-motion="true"] *,
 :root[data-reduced-motion="true"] *::before,
 :root[data-reduced-motion="true"] *::after {
