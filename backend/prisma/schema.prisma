@@ -1,4 +1,5 @@
-// Prisma schema for WIT. Models will be added in a later phase.
+// Modelo fundamental de datos de WIT.
+// Este schema solo define estructura; las migraciones se ejecutarán en una fase posterior.
 
 generator client {
   provider = "prisma-client"
@@ -7,4 +8,419 @@ generator client {
 
 datasource db {
   provider = "mysql"
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  APPLE
+  FACEBOOK
+}
+
+enum BusinessAccountStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum BusinessLifecycleStatus {
+  DRAFT
+  ACTIVE
+}
+
+enum BusinessPublicationStatus {
+  UNPUBLISHED
+  PUBLISHED
+  REVIEW
+}
+
+enum BusinessVisibilityStatus {
+  VISIBLE
+  HIDDEN
+  EXPIRED
+  REVIEW
+}
+
+enum BusinessVerificationStatus {
+  NONE
+  PENDING
+  INFORMATION
+  APPROVED
+  REJECTED
+}
+
+enum BusinessDeletionStatus {
+  NONE
+  RECOVERY
+  DELETED
+}
+
+enum MembershipRole {
+  OWNER
+  COLLABORATOR
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  REJECTED
+  REVOKED
+}
+enum MembershipPermissionCode {
+  EDIT_BUSINESS
+  MANAGE_CATALOG
+  MANAGE_PHOTOS
+  MANAGE_HOURS
+  READ_REVIEWS
+  MANAGE_COLLABORATORS
+  CHANGE_PUBLICATION
+  EXTEND_VISIBILITY
+  DELETE_BUSINESS
+  TRANSFER_OWNERSHIP
+}
+enum OwnershipTransferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum OfferKind {
+  PRODUCT
+  SERVICE
+}
+
+enum OfferPublicationStatus {
+  UNPUBLISHED
+  PUBLISHED
+  REVIEW
+}
+
+enum PhotoSource {
+  NEGOCIOS
+}
+
+enum VisibilityPeriodKind {
+  INITIAL
+  MANUAL_EXTENSION
+  RESTORE
+}
+enum AuditEntityType {
+  USER
+  BUSINESS_ACCOUNT
+  BUSINESS
+  MEMBERSHIP
+  OWNERSHIP_TRANSFER
+  OFFER
+  PHOTO
+  VISIBILITY_PERIOD
+}
+
+model User {
+  id                         String                    @id @default(uuid()) @db.Char(36)
+  publicId                   String                    @unique @default(uuid()) @db.VarChar(64)
+  emailNormalized            String?                   @unique @db.VarChar(320)
+  displayName                String                    @db.VarChar(120)
+  phoneCountryCode           String?                   @db.VarChar(8)
+  phoneNumber                String?                   @db.VarChar(32)
+  avatarUrl                  String?                   @db.VarChar(2048)
+  locale                     String                    @default("es-CO") @db.VarChar(16)
+  status                     UserStatus                @default(ACTIVE)
+  lastLoginAt                DateTime?                 @db.DateTime(3)
+  createdAt                  DateTime                  @default(now()) @db.DateTime(3)
+  updatedAt                  DateTime                  @updatedAt @db.DateTime(3)
+  authIdentities             AuthIdentity[]
+  sessions                   Session[]
+  createdBusinessAccounts    BusinessAccount[]         @relation("BusinessAccountCreator")
+  createdBusinesses          Business[]                @relation("BusinessCreator")
+  memberships                BusinessMembership[]
+  requestedTransfers         OwnershipTransfer[]        @relation("TransferFromUser")
+  receivedTransfers          OwnershipTransfer[]        @relation("TransferToUser")
+  requestedVisibilityPeriods BusinessVisibilityPeriod[] @relation("VisibilityRequester")
+  uploadedPhotos             Photo[]                    @relation("PhotoUploader")
+  auditLogs                  AuditLog[]                 @relation("AuditActor")
+
+  @@index([status])
+}
+
+model AuthIdentity {
+  id              String       @id @default(uuid()) @db.Char(36)
+  userId          String       @db.Char(36)
+  provider        AuthProvider
+  providerSubject String       @db.VarChar(255)
+  passwordHash    String?      @db.VarChar(255)
+  verifiedAt      DateTime?    @db.DateTime(3)
+  createdAt       DateTime     @default(now()) @db.DateTime(3)
+  updatedAt       DateTime     @updatedAt @db.DateTime(3)
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerSubject])
+  @@index([userId])
+}
+
+model Session {
+  id         String    @id @default(uuid()) @db.Char(36)
+  userId     String    @db.Char(36)
+  tokenHash  String    @unique @db.VarChar(255)
+  expiresAt  DateTime  @db.DateTime(3)
+  revokedAt  DateTime? @db.DateTime(3)
+  lastSeenAt DateTime? @db.DateTime(3)
+  userAgent  String?   @db.VarChar(512)
+  ipAddress  String?   @db.VarChar(45)
+  createdAt  DateTime  @default(now()) @db.DateTime(3)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([revokedAt])
+}
+
+model BusinessAccount {
+  id          String                @id @default(uuid()) @db.Char(36)
+  name        String                @db.VarChar(160)
+  status      BusinessAccountStatus @default(ACTIVE)
+  createdById String                @db.Char(36)
+  createdAt   DateTime              @default(now()) @db.DateTime(3)
+  updatedAt   DateTime              @updatedAt @db.DateTime(3)
+  createdBy   User                  @relation("BusinessAccountCreator", fields: [createdById], references: [id])
+  businesses  Business[]
+
+  @@index([createdById, status])
+}
+
+model Business {
+  id                  String                    @id @default(uuid()) @db.Char(36)
+  publicId            String                    @unique @default(uuid()) @db.VarChar(64)
+  businessAccountId   String                    @db.Char(36)
+  createdById         String                    @db.Char(36)
+  name                String                    @db.VarChar(180)
+  slug                String                    @db.VarChar(180)
+  description         String?                   @db.Text
+  categoryId          String                    @db.Char(36)
+  email               String?                   @db.VarChar(320)
+  website             String?                   @db.VarChar(2048)
+  instagram           String?                   @db.VarChar(255)
+  phone               String?                   @db.VarChar(32)
+  whatsapp            String?                   @db.VarChar(32)
+  completeness        Int                       @default(0)
+  lifecycleStatus     BusinessLifecycleStatus  @default(DRAFT)
+  publicationStatus   BusinessPublicationStatus @default(UNPUBLISHED)
+  visibilityStatus    BusinessVisibilityStatus @default(REVIEW)
+  verificationStatus BusinessVerificationStatus @default(NONE)
+  deletionStatus      BusinessDeletionStatus   @default(NONE)
+  createdAt           DateTime                  @default(now()) @db.DateTime(3)
+  updatedAt           DateTime                  @updatedAt @db.DateTime(3)
+  businessAccount     BusinessAccount           @relation(fields: [businessAccountId], references: [id])
+  createdBy           User                       @relation("BusinessCreator", fields: [createdById], references: [id])
+  category            Category                   @relation(fields: [categoryId], references: [id])
+  memberships         BusinessMembership[]
+  offers              BusinessOffer[]
+  location            BusinessLocation?
+  hours               BusinessHour[]
+  photos              Photo[]
+  visibilityPeriods   BusinessVisibilityPeriod[]
+  ownershipTransfers  OwnershipTransfer[]
+
+  @@unique([businessAccountId, slug])
+  @@index([businessAccountId, lifecycleStatus])
+  @@index([publicationStatus, visibilityStatus, deletionStatus])
+  @@index([categoryId, lifecycleStatus])
+  @@index([createdById])
+}
+
+model BusinessMembership {
+  id          String           @id @default(uuid()) @db.Char(36)
+  businessId  String           @db.Char(36)
+  userId      String           @db.Char(36)
+  role        MembershipRole
+  status      MembershipStatus @default(INVITED)
+  invitedAt   DateTime         @default(now()) @db.DateTime(3)
+  acceptedAt  DateTime?        @db.DateTime(3)
+  revokedAt   DateTime?        @db.DateTime(3)
+  createdAt   DateTime         @default(now()) @db.DateTime(3)
+  updatedAt   DateTime         @updatedAt @db.DateTime(3)
+  business    Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions BusinessMembershipPermission[]
+
+  @@unique([businessId, userId])
+  @@index([userId, status])
+  @@index([businessId, role, status])
+}
+
+model BusinessMembershipPermission {
+  id           String                  @id @default(uuid()) @db.Char(36)
+  membershipId String                  @db.Char(36)
+  permission   MembershipPermissionCode
+  allowed      Boolean                 @default(true)
+  createdAt    DateTime                @default(now()) @db.DateTime(3)
+  membership   BusinessMembership      @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, permission])
+}
+
+model OwnershipTransfer {
+  id          String                 @id @default(uuid()) @db.Char(36)
+  businessId  String                 @db.Char(36)
+  fromUserId  String                 @db.Char(36)
+  toUserId    String                 @db.Char(36)
+  status      OwnershipTransferStatus @default(PENDING)
+  requestedAt DateTime               @default(now()) @db.DateTime(3)
+  respondedAt DateTime?              @db.DateTime(3)
+  expiresAt   DateTime?              @db.DateTime(3)
+  reason      String?                @db.Text
+  business    Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  fromUser    User                   @relation("TransferFromUser", fields: [fromUserId], references: [id])
+  toUser      User                   @relation("TransferToUser", fields: [toUserId], references: [id])
+
+  @@index([businessId, status])
+  @@index([toUserId, status])
+}
+
+model Category {
+  id           String                @id @default(uuid()) @db.Char(36)
+  code         String                @unique @db.VarChar(100)
+  active       Boolean               @default(true)
+  sortOrder    Int                   @default(0)
+  createdAt    DateTime              @default(now()) @db.DateTime(3)
+  updatedAt    DateTime              @updatedAt @db.DateTime(3)
+  businesses   Business[]
+  offers       BusinessOffer[]
+  translations CategoryTranslation[]
+}
+
+model CategoryTranslation {
+  id         String   @id @default(uuid()) @db.Char(36)
+  categoryId String   @db.Char(36)
+  locale     String   @db.VarChar(16)
+  name       String   @db.VarChar(160)
+  iconKey    String?  @db.VarChar(100)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+  @@index([locale, name])
+}
+
+model BusinessOffer {
+  id                String                 @id @default(uuid()) @db.Char(36)
+  businessId        String                 @db.Char(36)
+  categoryId        String?                @db.Char(36)
+  kind              OfferKind
+  name              String                 @db.VarChar(180)
+  description       String?                @db.Text
+  priceAmount       Decimal?               @db.Decimal(12, 2)
+  currency          String?                @db.Char(3)
+  priceText         String?                @db.VarChar(180)
+  negotiable        Boolean                @default(false)
+  active            Boolean                @default(true)
+  publicationStatus OfferPublicationStatus @default(UNPUBLISHED)
+  createdAt         DateTime               @default(now()) @db.DateTime(3)
+  updatedAt         DateTime               @updatedAt @db.DateTime(3)
+  business          Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category          Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  photos            Photo[]
+
+  @@index([businessId, kind, active])
+  @@index([categoryId, kind])
+  @@index([publicationStatus])
+}
+
+model BusinessLocation {
+  id            String    @id @default(uuid()) @db.Char(36)
+  businessId    String    @unique @db.Char(36)
+  countryCode   String    @db.Char(2)
+  regionCode    String?   @db.VarChar(32)
+  regionName    String?   @db.VarChar(160)
+  cityName      String    @db.VarChar(160)
+  zoneName      String?   @db.VarChar(160)
+  address       String    @db.VarChar(255)
+  postalCode    String?   @db.VarChar(32)
+  latitude      Decimal?  @db.Decimal(9, 6)
+  longitude     Decimal?  @db.Decimal(9, 6)
+  googlePlaceId String?   @db.VarChar(255)
+  geocodeSource String?   @db.VarChar(64)
+  timezone      String    @default("UTC") @db.VarChar(64)
+  createdAt     DateTime  @default(now()) @db.DateTime(3)
+  updatedAt     DateTime  @updatedAt @db.DateTime(3)
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([countryCode, regionCode, cityName])
+  @@index([latitude, longitude])
+}
+
+model BusinessHour {
+  id         String   @id @default(uuid()) @db.Char(36)
+  businessId String   @db.Char(36)
+  dayOfWeek  Int
+  isClosed   Boolean  @default(false)
+  opensAt    String?  @db.VarChar(5)
+  closesAt   String?  @db.VarChar(5)
+  timezone   String   @default("UTC") @db.VarChar(64)
+  updatedAt  DateTime @updatedAt @db.DateTime(3)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, dayOfWeek])
+  @@index([businessId, isClosed])
+}
+
+model Photo {
+  id           String         @id @default(uuid()) @db.Char(36)
+  businessId   String?        @db.Char(36)
+  offerId      String?        @db.Char(36)
+  storageKey   String         @db.VarChar(1024)
+  url          String?        @db.VarChar(2048)
+  source       PhotoSource    @default(NEGOCIOS)
+  altText      String?        @db.VarChar(255)
+  sortOrder    Int            @default(0)
+  isCover      Boolean        @default(false)
+  uploadedById String         @db.Char(36)
+  createdAt    DateTime       @default(now()) @db.DateTime(3)
+  business     Business?      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  offer        BusinessOffer? @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  uploadedBy   User           @relation("PhotoUploader", fields: [uploadedById], references: [id])
+
+  @@index([businessId, sortOrder])
+  @@index([offerId, sortOrder])
+  @@index([uploadedById])
+}
+
+model BusinessVisibilityPeriod {
+  id            String              @id @default(uuid()) @db.Char(36)
+  businessId    String              @db.Char(36)
+  kind          VisibilityPeriodKind
+  startsAt      DateTime            @db.DateTime(3)
+  expiresAt     DateTime            @db.DateTime(3)
+  requestedAt   DateTime            @default(now()) @db.DateTime(3)
+  requestedById String?             @db.Char(36)
+  reason        String?             @db.Text
+  createdAt     DateTime            @default(now()) @db.DateTime(3)
+  business      Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  requestedBy   User?               @relation("VisibilityRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+
+  @@index([businessId, startsAt, expiresAt])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id            String          @id @default(uuid()) @db.Char(36)
+  actorUserId   String?         @db.Char(36)
+  entityType    AuditEntityType
+  entityId      String          @db.Char(36)
+  action        String          @db.VarChar(100)
+  previousState Json?
+  newState      Json?
+  reason        String?         @db.Text
+  comment       String?         @db.Text
+  ipAddress     String?         @db.VarChar(45)
+  createdAt     DateTime        @default(now()) @db.DateTime(3)
+  actor         User?           @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId, createdAt])
 }
