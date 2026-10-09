@@ -45,9 +45,11 @@ export async function register(input: RegisterInput, requestMeta?: { userAgent?:
       },
       select: { id: true, publicId: true, displayName: true, emailNormalized: true },
     });
-    const result = { user, ...(await issueSession(user.id, requestMeta)) };
-    await sendVerificationRequest(emailNormalized);
-    return result;
+    const result = { user: await getCurrentUser(user.id), ...(await issueSession(user.id, requestMeta)) };
+    let verificationEmailSent = true;
+    try { await sendVerificationRequest(emailNormalized); }
+    catch { verificationEmailSent = false; console.warn('Registration verification email could not be sent'); }
+    return { ...result, user: { ...result.user, verificationEmailSent } };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       throw new AppError(409, 'EMAIL_UNAVAILABLE', 'No se pudo registrar la cuenta con esos datos.');
@@ -66,7 +68,7 @@ export async function login(input: LoginInput, requestMeta?: { userAgent?: strin
   const valid = await argon2.verify(identity.passwordHash, input.password);
   if (!valid) throw invalidCredentials();
   await prisma.user.update({ where: { id: identity.user.id }, data: { lastLoginAt: new Date() } });
-  return { user: identity.user, ...(await issueSession(identity.user.id, requestMeta)) };
+  return { user: await getCurrentUser(identity.user.id), ...(await issueSession(identity.user.id, requestMeta)) };
 }
 
 export async function refresh(refreshToken: string, requestMeta?: { userAgent?: string; ipAddress?: string }) {
@@ -84,7 +86,7 @@ export async function refresh(refreshToken: string, requestMeta?: { userAgent?: 
       data: { userId: session.userId, tokenHash: hashRefreshToken(nextRefreshToken), expiresAt: refreshExpiresAt(), userAgent: requestMeta?.userAgent, ipAddress: requestMeta?.ipAddress },
     });
     return {
-      user: { id: session.user.id, publicId: session.user.publicId, displayName: session.user.displayName, emailNormalized: session.user.emailNormalized },
+      user: await getCurrentUser(session.userId),
       accessToken: await createAccessToken({ userId: session.userId, sessionId: nextSession.id }),
       refreshToken: nextRefreshToken,
     };
@@ -96,7 +98,8 @@ export async function logout(refreshToken: string): Promise<void> {
 }
 
 export async function getCurrentUser(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, publicId: true, displayName: true, emailNormalized: true, phoneCountryCode: true, phoneNumber: true, avatarUrl: true, locale: true, status: true } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, publicId: true, displayName: true, emailNormalized: true, phoneCountryCode: true, phoneNumber: true, avatarUrl: true, locale: true, status: true, authIdentities: { where: { provider: 'EMAIL' }, select: { verifiedAt: true } } } });
   if (!user || user.status !== 'ACTIVE') throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
-  return user;
+  const { authIdentities, ...publicUser } = user;
+  return { ...publicUser, emailVerified: authIdentities.some((identity) => identity.verifiedAt !== null) };
 }

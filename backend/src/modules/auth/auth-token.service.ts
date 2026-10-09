@@ -1,3 +1,4 @@
+import { consumeVerificationToken } from './verification-confirmation.js';
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
@@ -24,45 +25,29 @@ async function issueToken(userId: string, type: TokenType, ttlMs: number): Promi
   return rawToken;
 }
 
-async function consumeToken(token: string, type: TokenType) {
-  const now = new Date();
-  return prisma.$transaction(async (transaction) => {
-    const record = await transaction.authToken.findUnique({ where: { tokenHash: hashToken(token) } });
-    if (!record || record.type !== type || record.consumedAt || record.expiresAt <= now) {
-      throw new AppError(400, 'INVALID_AUTH_TOKEN', 'El enlace no es válido o ya expiró.');
-    }
-    const consumed = await transaction.authToken.updateMany({
-      where: { id: record.id, consumedAt: null, expiresAt: { gt: now } },
-      data: { consumedAt: now },
-    });
-    if (consumed.count !== 1) throw new AppError(400, 'INVALID_AUTH_TOKEN', 'El enlace no es válido o ya expiró.');
-    return { ...record, consumedAt: now };
-  });
-}
 
 export async function sendVerificationRequest(emailNormalized: string): Promise<void> {
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
-    select: { userId: true, verifiedAt: true, user: { select: { emailNormalized: true, status: true } } },
+    select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || identity.verifiedAt || identity.user.status !== 'ACTIVE') return;
   const token = await issueToken(identity.userId, 'EMAIL_VERIFICATION', 24 * 60 * 60 * 1000);
-  await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, token);
+  await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName);
 }
 
 export async function confirmEmail(token: string): Promise<void> {
-  const record = await consumeToken(token, 'EMAIL_VERIFICATION');
-  await prisma.authIdentity.updateMany({ where: { userId: record.userId, provider: 'EMAIL' }, data: { verifiedAt: new Date() } });
+  await prisma.$transaction((transaction) => consumeVerificationToken(transaction, token));
 }
 
 export async function sendPasswordResetRequest(emailNormalized: string): Promise<void> {
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
-    select: { userId: true, user: { select: { emailNormalized: true, status: true } } },
+    select: { userId: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || identity.user.status !== 'ACTIVE') return;
   const token = await issueToken(identity.userId, 'PASSWORD_RESET', 30 * 60 * 1000);
-  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token);
+  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName);
 }
 
 export async function resetPassword(token: string, passwordHash: string): Promise<void> {
