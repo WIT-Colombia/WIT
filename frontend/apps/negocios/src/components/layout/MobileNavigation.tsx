@@ -27,6 +27,7 @@ export function MobileNavigation() {
   const businessWrapRef = useRef<HTMLDivElement>(null);
   const empty = businesses.length === 0;
   const unread = notifications.filter((item) => !item.read).length;
+  const roleForAccount = (item: typeof business) => item.ownerNickname === account.nickname ? "Propietario" : item.collaborators?.some((collaborator) => collaborator.active && ((collaborator.nickname && collaborator.nickname === account.nickname) || (collaborator.email && collaborator.email.toLowerCase() === account.email.toLowerCase()))) ? "Colaborador" : item.role;
   const destination = (link: MobileLink) => empty && link.label !== "Mi cuenta" ? "/sin-negocio" : link.label === "Mi cuenta" && empty ? "/perfil?empty=1" : link.to;
   useEffect(() => setMoreOpen(false), [location.pathname]);
   useEffect(() => {
@@ -47,7 +48,7 @@ export function MobileNavigation() {
           <span className="mobile-business-avatar">{activeBusiness?.coverImage ? <img src={activeBusiness.coverImage} alt="" /> : activeBusiness?.name?.charAt(0) ?? "W"}</span>
           <span className="mobile-business-copy"><strong>{activeBusiness?.name ?? "Crea tu negocio"}</strong><small>{activeBusiness ? `${activeBusiness.category} · ${activeBusiness.city}` : "Empieza en WIT Negocios"}</small></span><span className="mobile-business-chevron">⌄</span>
         </button>
-        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{businesses.map((item, index) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate("/"); }}><span className="mobile-business-avatar">{item.coverImage ? <img src={item.coverImage} alt="" /> : item.name.charAt(0)}</span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{item.category} · {item.city}</small></span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}<button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button></div>}
+        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{businesses.map((item, index) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate("/"); }}><span className="mobile-business-avatar">{item.coverImage ? <img src={item.coverImage} alt="" /> : item.name.charAt(0)}</span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{item.category} · {item.city}</small><em className="business-role-badge">{roleForAccount(item)}</em></span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}<button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button></div>}
       </div>
       <NavLink className="mobile-notification-button" to={empty ? "/sin-negocio" : "/notificaciones"} aria-label="Notificaciones"><SidebarIcon name="bell" />{!empty && unread > 0 && <span className="mobile-topbar-dot">{unread}</span>}</NavLink>
     </header>

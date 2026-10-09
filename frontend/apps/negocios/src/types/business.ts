@@ -1,4 +1,5 @@
 export type CatalogKind = "product" | "service";
+export type BusinessRole = "Propietario" | "Colaborador";
 
 export interface CatalogItem {
   id: string;
@@ -15,6 +16,8 @@ export interface CatalogItem {
 }
 
 export interface BusinessDetails {
+  role: BusinessRole;
+  ownerNickname?: string;
   name: string;
   coverImage?: string;
   images?: string[];
@@ -34,15 +37,27 @@ export interface BusinessDetails {
   hours: string;
   status: "Verificado" | "Pendiente" | "Requiere confirmación" | "Información incompleta" | "Eliminado";
   deletedAt?: string;
+  recoveryUntil?: string;
   isNew?: boolean;
   catalog?: CatalogItem[];
+  collaborators?: BusinessCollaborator[];
+}
+
+export interface BusinessCollaborator {
+  id: string;
+  nickname?: string;
+  name: string;
+  email?: string;
+  role: "Colaborador";
+  active: boolean;
+  invitationMethod?: "nickname" | "email";
 }
 
 export interface BusinessAccount {
   name: string;
+  nickname: string;
   email: string;
   phone: string;
-  role: string;
 }
 
 export interface BusinessNotification {
@@ -50,8 +65,14 @@ export interface BusinessNotification {
   title: string;
   description: string;
   date: string;
-  type: "review" | "interest" | "profile" | "wit" | "admin" | "offer" | "security";
+  createdAt?: string;
+  type: "review" | "interest" | "profile" | "wit" | "admin" | "offer" | "security" | "collaboration";
   read: boolean;
+  recipientNickname?: string;
+  recipientEmail?: string;
+  businessName?: string;
+  businessId?: string;
+  invitationId?: string;
 }
 
 export interface Preferences {

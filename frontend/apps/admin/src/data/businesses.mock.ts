@@ -1,4 +1,5 @@
 import type { BusinessStatus, ManagedBusiness } from '../types/business';
+import { BUSINESS_RECOVERY_DAYS, BUSINESS_VISIBILITY_DAYS } from '../services/visibilityPolicy';
 const day = (offset: number) => new Date(Date.now() + offset * 86400000).toISOString();
 const seeds: { id: string; name: string; category: string; city: string; status: BusinessStatus; days: number }[] = [
   { id: 'demo-cafe', name: 'La Arepería de Majo', category: 'Restaurantes', city: 'Palmira', status: 'pending', days: 28 },
@@ -31,6 +32,7 @@ export function createBusinessMocks(): ManagedBusiness[] {
     const applicant = { id: `owner-${index}`, name: `Propietario demo ${String(index + 1).padStart(2, '0')}`, email: `propietario${index + 1}@example.test` };
     const published = ['verified', 'hidden', 'expired', 'recovery'].includes(seed.status);
     const visibility = seed.status === 'verified' ? 'visible' : seed.status === 'hidden' ? 'hidden' : seed.status === 'expired' ? 'expired' : seed.status === 'recovery' ? 'recovery' : seed.status === 'pending' ? 'review' : 'unpublished';
+    const deletionOffset = seed.id === 'b13' ? -29 : seed.id === 'b14' ? -40 : -10;
     return {
       ...seed, ownerId: applicant.id, owner: applicant, createdBy: applicant,
       claimant: seed.status === 'pending' ? { ...applicant, discrepancy: seed.id === 'b6' } : undefined,
@@ -46,8 +48,10 @@ export function createBusinessMocks(): ManagedBusiness[] {
       // Admin reads this collection from the WIT Negocios media store. No placeholder
       // or admin-created image is included in the first-stage mock.
       photos: info?.image ? [{ id: `${seed.id}-cover`, title: 'Portada', source: 'negocios', url: info.image, uploadedAt: day(-35) }] : [],
-      visibility: { status: visibility, startsAt: published ? day(-25) : undefined, expiresAt: published ? day(seed.days) : undefined, renewal: seed.status === 'expired' ? 'pending' : 'none', history: [] },
-      deletion: ['recovery', 'deleted'].includes(seed.status) ? { deletedAt: day(-10), recoverUntil: day(seed.id === 'b13' ? -1 : seed.id === 'b14' ? -3 : 5), responsible: applicant.name, reason: 'Solicitud del propietario (demostración)', previousStatus: 'verified', previousVisibility: 'visible' } : undefined,
+      // Cada establecimiento usa un periodo de 40 días. Los días de la semilla
+      // representan cuánto falta para vencer; se limita a 40 para conservar la regla.
+      visibility: { status: visibility, startsAt: published ? day(Math.min(seed.days, BUSINESS_VISIBILITY_DAYS) - BUSINESS_VISIBILITY_DAYS) : undefined, expiresAt: published ? day(Math.min(seed.days, BUSINESS_VISIBILITY_DAYS)) : undefined, renewal: seed.status === 'expired' ? 'pending' : 'none', history: [] },
+      deletion: ['recovery', 'deleted'].includes(seed.status) ? { deletedAt: day(deletionOffset), recoverUntil: day(deletionOffset + BUSINESS_RECOVERY_DAYS), responsible: applicant.name, reason: 'Solicitud del propietario (demostración)', previousStatus: 'verified', previousVisibility: 'visible' } : undefined,
       createdAt: day(-110 + index * 3), updatedAt: day(-index % 5), completeness: seed.status === 'draft' ? 42 : 72 + index % 5 * 6,
       content: [
         { id: `${seed.id}-p1`, name: seed.id === 'demo-cafe' ? 'Arepa con queso' : seed.category === 'Cafeterías' ? 'Café de origen' : 'Producto principal', kind: 'product', price: foreign ? 8 : 18000, currency: foreign ? 'USD' : 'COP', negotiable: false, active: true, image: info?.image },

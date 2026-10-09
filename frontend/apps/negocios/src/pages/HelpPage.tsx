@@ -5,7 +5,7 @@ const faqs = [
   ["¿Cómo hago visible mi negocio?", "Ve a Configuración y selecciona Hacerme visible por 40 días. Puedes extender ese plazo o ocultar tu negocio cuando quieras."],
   ["¿Cómo agrego productos o servicios?", "Usa Productos o Servicios en el menú principal y selecciona el botón Agregar. Podrás editar, activar o eliminar cada elemento."],
   ["¿Cómo respondo una opinión?", "En Opiniones, abre el comentario y selecciona Responder. Tu respuesta aparecerá debajo de la opinión del cliente."],
-  ["¿Qué ocurre si elimino mi negocio?", "El negocio queda oculto durante 10 días y puedes recuperarlo desde su detalle. Después de ese plazo podría eliminarse definitivamente."],
+  ["¿Qué ocurre si elimino mi negocio?", "El negocio queda oculto durante 30 días y puedes recuperarlo desde su detalle. Después de ese plazo podría eliminarse definitivamente."],
 ];
 
 export function HelpPage() {

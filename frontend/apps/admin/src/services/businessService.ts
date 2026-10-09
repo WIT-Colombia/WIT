@@ -2,6 +2,7 @@ import { createBusinessMocks } from '../data/businesses.mock';
 import { can } from './adminService';
 import type { Admin } from '../types/admin';
 import type { BusinessAction, BusinessMutation, ManagedBusiness } from '../types/business';
+import { addBusinessRecoveryPeriod, addBusinessVisibilityPeriod } from './visibilityPolicy';
 
 export const businessStatusLabels = { draft: 'Borrador', pending: 'Verificación pendiente', verified: 'Verificado', rejected: 'Rechazado', hidden: 'Oculto por el propietario', expired: 'Visibilidad vencida', recovery: 'Eliminado en recuperación', deleted: 'Eliminado definitivamente' };
 export const visibilityLabels = { visible: 'Visible', hidden: 'Oculto por el propietario', expired: 'Visibilidad vencida', review: 'Pendiente de revisión', noncompliant: 'No publicado por incumplimiento', recovery: 'Eliminado en recuperación', unpublished: 'No publicado' };
@@ -50,7 +51,7 @@ export function applyBusinessMutation(business: ManagedBusiness, mutation: Busin
   const previousState = JSON.stringify({ status: business.status, verification: business.verification.status, claim: business.claimStatus, owner: business.owner?.id, visibility: business.visibility.status, expiry: business.visibility.expiresAt });
   switch (mutation.action) {
     case 'delete-business':
-      next.deletion = { deletedAt: now.toISOString(), recoverUntil: new Date(now.getTime() + 30 * 86400000).toISOString(), responsible: admin.name, reason: 'Eliminación solicitada por el administrador.', previousStatus: business.status, previousVisibility: business.visibility.status };
+      next.deletion = { deletedAt: now.toISOString(), recoverUntil: addBusinessRecoveryPeriod(now).toISOString(), responsible: admin.name, reason: 'Eliminación solicitada por el administrador.', previousStatus: business.status, previousVisibility: business.visibility.status };
       next.status = 'recovery'; next.visibility.status = 'recovery';
       break;
     case 'approve':
@@ -67,8 +68,9 @@ export function applyBusinessMutation(business: ManagedBusiness, mutation: Busin
     case 'hide': next.visibility.status = 'noncompliant'; break;
     case 'publish': next.visibility.status = 'visible'; next.status = 'verified'; break;
     case 'extend': {
-      const expiry = new Date(`${mutation.expiresAt}T23:59:59.999Z`);
-      if (Number.isNaN(expiry.getTime()) || expiry <= now || (next.visibility.expiresAt && expiry <= new Date(next.visibility.expiresAt))) throw new Error('La nueva fecha debe ser posterior a hoy y al vencimiento actual.');
+      // La renovación siempre fija una nueva vigencia de 40 días desde hoy;
+      // no acumula el periodo sobre la fecha anterior.
+      const expiry = addBusinessVisibilityPeriod(now);
       next.visibility.history.unshift({ id: crypto.randomUUID(), date: now.toISOString(), previousExpiry: next.visibility.expiresAt, newExpiry: expiry.toISOString(), reason: mutation.reason.trim(), adminName: admin.name });
       next.visibility.expiresAt = expiry.toISOString(); next.visibility.startsAt ??= now.toISOString(); next.visibility.renewal = 'renewed';
       if (next.visibility.status === 'expired' || next.visibility.status === 'unpublished') { next.visibility.status = 'visible'; next.status = 'verified'; }

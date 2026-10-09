@@ -71,7 +71,7 @@ export const moduleMocks: Record<string, ModuleRecord[]> = {
   ],
   settings: [
     record('setting-01', 'Días de recuperación', 'Reglas de eliminación', 'Configurado', ['30 días', 'Política de plataforma'], { Configuración: 'Días de recuperación', Valor: '30 días', Alcance: 'Negocios y contenido', 'Última modificación': 'Sistema de demostración' }, 'success'),
-    record('setting-02', 'Días de visibilidad', 'Reglas de publicación', 'Configurado', ['90 días', 'Política de plataforma'], { Configuración: 'Días de visibilidad', Valor: '90 días', Alcance: 'Negocios publicados', 'Última modificación': 'Sistema de demostración' }, 'success'),
+    record('setting-02', 'Días de visibilidad', 'Reglas de publicación', 'Configurado', ['40 días', 'Política de plataforma'], { Configuración: 'Días de visibilidad', Valor: '40 días', Alcance: 'Negocios publicados', 'Última modificación': 'Sistema de demostración' }, 'success'),
     record('setting-03', 'Administrador principal', 'Roles y permisos', 'Activo', ['Danilo Jaramillo', 'Administrador principal'], { Configuración: 'Administrador principal', Valor: 'Danilo Jaramillo · admin@example.test', Alcance: 'Todas las funciones permitidas', 'Última modificación': 'Sistema de demostración' }, 'success'),
   ],
 };
