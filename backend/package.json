@@ -17,6 +17,7 @@
     "@prisma/adapter-mariadb": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "argon2": "^0.45.1",
+    "cookie": "^2.0.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.1",
     "jose": "^6.2.12",

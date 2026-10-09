@@ -33,6 +33,16 @@ if (!Number.isInteger(refreshTokenTtlDays) || refreshTokenTtlDays < 1 || refresh
   throw new Error('AUTH_REFRESH_TOKEN_TTL_DAYS debe estar entre 1 y 365.');
 }
 
+const authCookieSameSite = process.env.AUTH_COOKIE_SAMESITE?.trim().toLowerCase() ?? 'lax';
+if (!['lax', 'strict', 'none'].includes(authCookieSameSite) || (authCookieSameSite === 'none' && nodeEnv !== 'production')) {
+  throw new Error('AUTH_COOKIE_SAMESITE debe ser lax, strict o none; none solo está permitido en producción.');
+}
+const defaultTrustedOrigins = nodeEnv === 'development' ? 'http://127.0.0.1:5173,http://localhost:5173' : '';
+const trustedOrigins = (process.env.AUTH_TRUSTED_ORIGINS ?? defaultTrustedOrigins).split(',').map((origin) => origin.trim()).filter(Boolean);
+if (nodeEnv === 'production' && trustedOrigins.length === 0) {
+  throw new Error('AUTH_TRUSTED_ORIGINS debe configurarse en producción.');
+}
+
 const emailMode = process.env.EMAIL_MODE?.trim() ?? 'development';
 if (!['development', 'smtp'].includes(emailMode)) {
   throw new Error('EMAIL_MODE debe ser development o smtp.');
@@ -52,6 +62,8 @@ export const env = Object.freeze({
   accessTokenSecret,
   accessTokenTtlSeconds,
   refreshTokenTtlDays,
+  authCookieSameSite: authCookieSameSite as 'lax' | 'strict' | 'none',
+  trustedOrigins,
   emailMode,
   emailFrom,
   emailVerificationUrl,
