@@ -44,14 +44,19 @@ if (nodeEnv === 'production' && trustedOrigins.length === 0) {
 }
 
 const emailMode = process.env.EMAIL_MODE?.trim() ?? 'development';
-if (!['development', 'smtp'].includes(emailMode)) {
-  throw new Error('EMAIL_MODE debe ser development o smtp.');
+if (!['development', 'resend'].includes(emailMode)) {
+  throw new Error('EMAIL_MODE debe ser development o resend.');
 }
 const emailFrom = process.env.EMAIL_FROM?.trim() ?? 'no-reply@wit.local';
-const emailVerificationUrl = process.env.EMAIL_VERIFICATION_URL?.trim() ?? 'http://localhost:3000/verify-email';
-const passwordResetUrl = process.env.PASSWORD_RESET_URL?.trim() ?? 'http://localhost:3000/reset-password';
+const emailVerificationUrl = process.env.EMAIL_VERIFICATION_URL?.trim() ?? 'http://localhost:5173/verify-email';
+const passwordResetUrl = process.env.PASSWORD_RESET_URL?.trim() ?? 'http://localhost:5173/reset-password';
+const emailApiKey = process.env.EMAIL_API_KEY?.trim();
+const emailApiUrl = process.env.EMAIL_API_URL?.trim() ?? 'https://api.resend.com/emails';
 if (!emailFrom || !emailVerificationUrl || !passwordResetUrl) {
   throw new Error('La configuración de correo no puede estar vacía.');
+}
+if (emailMode === 'resend' && !emailApiKey) {
+  throw new Error('EMAIL_API_KEY es obligatorio cuando EMAIL_MODE=resend.');
 }
 
 export const env = Object.freeze({
@@ -68,6 +73,8 @@ export const env = Object.freeze({
   emailFrom,
   emailVerificationUrl,
   passwordResetUrl,
+  emailApiKey,
+  emailApiUrl,
   smtpHost: process.env.SMTP_HOST?.trim(),
   smtpPort: process.env.SMTP_PORT?.trim(),
   smtpUser: process.env.SMTP_USER?.trim(),
