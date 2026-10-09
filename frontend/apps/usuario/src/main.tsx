@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import { AuthProvider } from "./context/AuthContext";
 import { getSettings } from "./services/userDataService";
 import "@wit/ui/styles/global.css";
 import "@wit/ui/styles/components.css";
@@ -12,5 +13,5 @@ import "./styles/responsive.css";
 document.documentElement.dataset.reducedMotion = String(getSettings().reducedMotion);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode><BrowserRouter><App /></BrowserRouter></React.StrictMode>,
+  <React.StrictMode><BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter></React.StrictMode>,
 );

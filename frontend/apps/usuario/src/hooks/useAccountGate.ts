@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { isUserAuthenticated } from "../services/userDataService";
+import { useAuth } from "../context/AuthContext";
 
 export function useAccountGate() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated, status } = useAuth();
   return (action: () => void) => {
-    if (!isUserAuthenticated()) {
+    if (status === "loading" || !isAuthenticated) {
       const returnTo = `${location.pathname}${location.search}${location.hash}`;
       navigate(`/register?next=${encodeURIComponent(returnTo)}`);
       return;

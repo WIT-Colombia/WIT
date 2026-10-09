@@ -9,7 +9,6 @@ const NOTIFICATIONS_KEY = "wit-notifications";
 const PROFILE_KEY = "wit-profile";
 const SETTINGS_KEY = "wit-settings";
 const RATINGS_KEY = "wit-user-ratings";
-const PREVIEW_SESSION_KEY = "wit-preview-user-session";
 
 function readIds(key: string): string[] {
   try {
@@ -118,11 +117,6 @@ export function getProfile(): UserProfile {
   try { return { name: "Danilo Jaramillo", email: "danilo.jaramillo@hotmail.com", city: "", ...JSON.parse(localStorage.getItem(PROFILE_KEY) ?? "{}") as Partial<UserProfile> }; } catch { return { name: "Danilo Jaramillo", email: "danilo.jaramillo@hotmail.com", city: "" }; }
 }
 export function saveProfile(profile: UserProfile): void { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }
-// Temporary browser-session access lets the UI be previewed before real auth is connected.
-export function isUserAuthenticated(): boolean { return sessionStorage.getItem(PREVIEW_SESSION_KEY) === "active"; }
-export function startPreviewUserSession(): void { sessionStorage.setItem(PREVIEW_SESSION_KEY, "active"); }
-export function signOutUser(): void { sessionStorage.removeItem(PREVIEW_SESSION_KEY); }
-
 export type UserSettings = { nearbyUpdates: boolean; availabilityUpdates: boolean; reducedMotion: boolean };
 const defaultSettings: UserSettings = { nearbyUpdates: true, availabilityUpdates: true, reducedMotion: false };
 export function getSettings(): UserSettings {

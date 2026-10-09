@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getNotifications, getProfile, saveProfile, signOutUser, type UserProfile } from "../services/userDataService";
+import { getNotifications, getProfile, saveProfile, type UserProfile } from "../services/userDataService";
+import { useAuth } from "../context/AuthContext";
 import { PageLayout } from "../components/PageLayout";
 import { BellIcon, HeartIcon, ThumbsUpIcon } from "../components/ActionIcons";
 import "./Profile.css";
@@ -9,6 +10,7 @@ import "./ProfileEnhancements.css";
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile>(getProfile);
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
 
@@ -47,7 +49,7 @@ export default function Profile() {
       </section>
       <section className="profile-logout-area">
         <div><b>¿Terminaste por hoy?</b><small>Puedes volver cuando quieras.</small></div>
-        {confirmingLogout ? <div className="profile-signout-confirm"><span>¿Cerrar sesión?</span><div><button type="button" onClick={() => { signOutUser(); navigate("/home"); }}>Sí, cerrar</button><button type="button" onClick={() => setConfirmingLogout(false)}>Cancelar</button></div></div> : <button className="profile-signout" type="button" onClick={() => setConfirmingLogout(true)}>Cerrar sesión</button>}
+        {confirmingLogout ? <div className="profile-signout-confirm"><span>¿Cerrar sesión?</span><div><button type="button" onClick={async () => { await logout(); navigate("/home"); }}>Sí, cerrar</button><button type="button" onClick={() => setConfirmingLogout(false)}>Cancelar</button></div></div> : <button className="profile-signout" type="button" onClick={() => setConfirmingLogout(true)}>Cerrar sesión</button>}
       </section>
     </PageLayout>
   );
