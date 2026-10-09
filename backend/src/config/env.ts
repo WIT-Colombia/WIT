@@ -33,6 +33,17 @@ if (!Number.isInteger(refreshTokenTtlDays) || refreshTokenTtlDays < 1 || refresh
   throw new Error('AUTH_REFRESH_TOKEN_TTL_DAYS debe estar entre 1 y 365.');
 }
 
+const emailMode = process.env.EMAIL_MODE?.trim() ?? 'development';
+if (!['development', 'smtp'].includes(emailMode)) {
+  throw new Error('EMAIL_MODE debe ser development o smtp.');
+}
+const emailFrom = process.env.EMAIL_FROM?.trim() ?? 'no-reply@wit.local';
+const emailVerificationUrl = process.env.EMAIL_VERIFICATION_URL?.trim() ?? 'http://localhost:3000/verify-email';
+const passwordResetUrl = process.env.PASSWORD_RESET_URL?.trim() ?? 'http://localhost:3000/reset-password';
+if (!emailFrom || !emailVerificationUrl || !passwordResetUrl) {
+  throw new Error('La configuración de correo no puede estar vacía.');
+}
+
 export const env = Object.freeze({
   nodeEnv,
   port,
@@ -41,4 +52,11 @@ export const env = Object.freeze({
   accessTokenSecret,
   accessTokenTtlSeconds,
   refreshTokenTtlDays,
+  emailMode,
+  emailFrom,
+  emailVerificationUrl,
+  passwordResetUrl,
+  smtpHost: process.env.SMTP_HOST?.trim(),
+  smtpPort: process.env.SMTP_PORT?.trim(),
+  smtpUser: process.env.SMTP_USER?.trim(),
 });

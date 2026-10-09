@@ -23,6 +23,11 @@ enum AuthProvider {
   FACEBOOK
 }
 
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 enum BusinessAccountStatus {
   ACTIVE
   SUSPENDED
@@ -137,6 +142,7 @@ model User {
   createdAt                  DateTime                  @default(now()) @db.DateTime(3)
   updatedAt                  DateTime                  @updatedAt @db.DateTime(3)
   authIdentities             AuthIdentity[]
+  authTokens                 AuthToken[]
   sessions                   Session[]
   createdBusinessAccounts    BusinessAccount[]         @relation("BusinessAccountCreator")
   createdBusinesses          Business[]                @relation("BusinessCreator")
@@ -163,6 +169,20 @@ model AuthIdentity {
 
   @@unique([provider, providerSubject])
   @@index([userId])
+}
+
+model AuthToken {
+  id         String        @id @default(uuid()) @db.Char(36)
+  userId     String        @db.Char(36)
+  type       AuthTokenType
+  tokenHash  String        @unique @db.VarChar(64)
+  expiresAt  DateTime      @db.DateTime(3)
+  consumedAt DateTime?     @db.DateTime(3)
+  createdAt  DateTime      @default(now()) @db.DateTime(3)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, expiresAt])
+  @@index([expiresAt])
 }
 
 model Session {

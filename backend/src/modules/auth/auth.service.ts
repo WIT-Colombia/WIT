@@ -5,6 +5,7 @@ import { env } from '../../config/env.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { createAccessToken, createRefreshToken, hashRefreshToken } from '../../shared/auth/tokens.js';
 import type { LoginInput, RegisterInput } from './auth.schemas.js';
+import { sendVerificationRequest } from './auth-token.service.js';
 
 const invalidCredentials = () => new AppError(401, 'INVALID_CREDENTIALS', 'Correo o contraseña incorrectos.');
 
@@ -44,7 +45,9 @@ export async function register(input: RegisterInput, requestMeta?: { userAgent?:
       },
       select: { id: true, publicId: true, displayName: true, emailNormalized: true },
     });
-    return { user, ...(await issueSession(user.id, requestMeta)) };
+    const result = { user, ...(await issueSession(user.id, requestMeta)) };
+    await sendVerificationRequest(emailNormalized);
+    return result;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       throw new AppError(409, 'EMAIL_UNAVAILABLE', 'No se pudo registrar la cuenta con esos datos.');
