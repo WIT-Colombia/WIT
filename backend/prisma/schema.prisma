@@ -1,0 +1,10 @@
+// Prisma schema for WIT. Models will be added in a later phase.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
