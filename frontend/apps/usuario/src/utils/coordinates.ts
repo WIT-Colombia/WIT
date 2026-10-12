@@ -2,18 +2,23 @@ import type { Business } from "../data/mockData";
 
 export type Coordinates = { lat: number; lng: number };
 
-// The mock catalog has no verified coordinates. This stable approximation keeps
-// previews useful without presenting the locations as confirmed.
-export function getBusinessCoordinates(business: Business): Coordinates {
-  if (business.coordinates) return business.coordinates;
-  let seed = 0;
-  for (const character of business.id) seed = (seed * 31 + character.charCodeAt(0)) >>> 0;
-  const latOffset = ((seed % 1801) - 900) / 100000;
-  const lngOffset = ((((seed / 1801) | 0) % 1801) - 900) / 100000;
-  return { lat: 3.5394 + latOffset, lng: -76.3036 + lngOffset };
+export function getBusinessCoordinates(business: Business): Coordinates | null {
+  return business.coordinatesVerified && business.coordinates ? business.coordinates : null;
 }
 
-export function getDirectionsDestination(business: Business): string {
+export function getDirectionsDestination(business: Business): string | null {
   const point = getBusinessCoordinates(business);
-  return `${point.lat},${point.lng}`;
+  return point ? `${point.lat},${point.lng}` : null;
+}
+
+export function distanceBetweenCoordinates(a: Coordinates, b: Coordinates): number {
+  const earthRadiusKm = 6371;
+  const toRadians = (degrees: number) => degrees * Math.PI / 180;
+  const latitudeDelta = toRadians(b.lat - a.lat);
+  const longitudeDelta = toRadians(b.lng - a.lng);
+  const latitudeA = toRadians(a.lat);
+  const latitudeB = toRadians(b.lat);
+  const haversine = Math.sin(latitudeDelta / 2) ** 2
+    + Math.cos(latitudeA) * Math.cos(latitudeB) * Math.sin(longitudeDelta / 2) ** 2;
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
 }

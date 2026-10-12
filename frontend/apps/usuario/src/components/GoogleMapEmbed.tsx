@@ -3,7 +3,7 @@ import "./GoogleMapEmbed.css";
 type GoogleMapEmbedProps = { query: string; title: string; className?: string };
 
 export function GoogleMapEmbed({ query, title, className = "" }: GoogleMapEmbedProps) {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_API_KEY?.trim();
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_STATIC_API_KEY?.trim();
   const searchUrl = new URL("https://www.google.com/maps/search/");
   searchUrl.searchParams.set("api", "1");
   searchUrl.searchParams.set("query", query);

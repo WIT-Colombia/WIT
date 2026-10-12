@@ -1,2 +1,61 @@
 .entity-like-count{display:inline-flex;align-items:center;gap:3px;color:var(--wit-text-muted);font-size:10px;font-weight:700}
 .thumbs-down-icon{display:inline-flex;transform:rotate(180deg)}
+.entity-card{position:relative}
+.entity-card__whole-link{position:absolute;inset:0;z-index:3;display:block;border-radius:inherit;color:inherit;text-decoration:none;cursor:pointer}
+.entity-card__image,.entity-card__content{position:relative;z-index:2;pointer-events:none}
+.entity-card__content a,.entity-card__content button{position:relative;z-index:4;pointer-events:auto}
+.entity-card__whole-link:focus-visible{outline:3px solid rgba(123,63,251,.35);outline-offset:3px}
+
+/* Tarjetas de productos y servicios con la identidad XAMUKO. */
+.entity-offer-card{
+  overflow:hidden;
+  border:1px solid var(--xamuko-border);
+  border-radius:20px;
+  background:var(--xamuko-white);
+  box-shadow:0 10px 26px rgba(15,23,42,.06);
+}
+.entity-offer-card:hover{
+  border-color:#cfc1ff;
+  box-shadow:0 16px 34px rgba(123,63,251,.13);
+}
+.entity-offer-card .entity-card__image{
+  position:relative;
+  height:190px;
+  flex-basis:190px;
+  background:#f0ebff;
+}
+.entity-offer-badge{position:absolute;top:12px;left:12px;z-index:1;padding:6px 10px;border:1px solid #f4c7d4;border-radius:999px;background:#fff1f5;color:#d92d64;font-size:10px;font-weight:800;box-shadow:0 4px 10px rgba(217,45,100,.12)}
+.entity-offer-card .entity-card__image::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(15,23,42,0) 56%,rgba(15,23,42,.16));
+}
+.entity-offer-card .entity-card__content{padding:16px 17px 14px}
+.entity-offer-type{margin-bottom:8px;color:var(--xamuko-violet);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.entity-offer-deadline{display:block;margin:-2px 0 7px;color:#e54867;font-size:10px;font-weight:800}
+.entity-offer-card h3{color:var(--xamuko-navy);font-size:17px;letter-spacing:-.2px}
+.entity-offer-description{display:-webkit-box;min-height:3.1em;overflow:hidden;color:var(--xamuko-muted);font-size:11px;line-height:1.55;text-overflow:ellipsis;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.entity-establishment{color:var(--xamuko-violet);font-size:10px;font-weight:700}
+.entity-offer-footer{border-top-color:var(--xamuko-border)}
+.entity-offer-footer strong{color:var(--xamuko-navy);font-size:14px}
+.entity-offer-footer .entity-product-like{
+  border-color:#d8ccff;
+  background:#faf8ff;
+  color:var(--xamuko-violet);
+}
+.entity-offer-footer .entity-product-like:hover,
+.entity-offer-footer .entity-product-like.is-active{
+  border-color:var(--xamuko-violet);
+  background:#f0ebff;
+  color:var(--xamuko-violet);
+}
+.entity-like-count{color:var(--xamuko-muted);font-size:10px}
+@media(max-width:700px){
+  .entity-offer-card{border-radius:17px}
+  .entity-offer-card .entity-card__image{height:155px;flex-basis:155px}
+  .entity-offer-card .entity-card__content{padding:13px}
+  .entity-offer-card h3{font-size:15px}
+  .entity-offer-description{font-size:10px}
+}

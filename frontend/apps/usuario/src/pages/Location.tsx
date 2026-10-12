@@ -1,6 +1,8 @@
+import { useLocationContext } from "../context/LocationContext";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Logo } from "@wit/ui";
+import { Button } from "@wit/ui";
+import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
 import "./Location.css";
 
 type LocationState = "ready" | "loading" | "granted" | "denied" | "unavailable" | "error";
@@ -14,26 +16,20 @@ function CompassIcon() {
 }
 
 export default function Location() {
-  const [state, setState] = useState<LocationState>("ready");
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const { selection, requestAutomaticLocation, isRequesting } = useLocationContext();
+  const [state, setState] = useState<LocationState>(() => selection?.mode === "automatic" ? "granted" : "ready");
+  const coordinates = selection?.mode === "automatic" ? selection.coordinates : null;
 
   function requestLocation() {
-    if (!navigator.geolocation) {
-      setState("unavailable");
-      return;
-    }
-
     setState("loading");
-    navigator.geolocation.getCurrentPosition(
-      (position) => { setCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude }); setState("granted"); },
-      (error) => setState(error.code === error.PERMISSION_DENIED ? "denied" : "error"),
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
-    );
+    void requestAutomaticLocation().then(() => setState("granted")).catch((error: GeolocationPositionError | Error) => {
+      setState("code" in error && error.code === error.PERMISSION_DENIED ? "denied" : error.message === "GEOLOCATION_UNAVAILABLE" ? "unavailable" : "error");
+    });
   }
 
   const feedback = {
     granted: { kind: "success", title: "Listo, ya tenemos permiso.", body: "Tu ubicación está lista para mostrarte lugares cercanos." },
-    denied: { kind: "error", title: "No pudimos acceder a tu ubicación.", body: "Puedes permitirla desde los ajustes del navegador o elegir una zona manualmente." },
+    denied: { kind: "error", title: "Autoriza tu ubicación en el navegador.", body: "Cuando aparezca el aviso, selecciona «Permitir». Si ya lo bloqueaste, habilítalo desde los ajustes del sitio y vuelve a intentarlo." },
     unavailable: { kind: "error", title: "Este navegador no ofrece ubicación.", body: "No pasa nada: puedes continuar con una zona manualmente." },
     error: { kind: "error", title: "No pudimos encontrar tu ubicación ahora.", body: "Revisa la conexión o el permiso del navegador, o elige tu zona manualmente." },
   } as const;
@@ -41,8 +37,8 @@ export default function Location() {
 
   return <main className="location-page">
     <header className="location-header">
-      <Link className="location-back" to="/welcome" aria-label="Volver a Bienvenida"><span aria-hidden="true">←</span><span>Volver</span></Link>
-      <Link className="location-logo" to="/home" aria-label="WIT, inicio"><Logo /></Link>
+      <Link className="location-back" to="/home" aria-label="Volver al inicio"><span aria-hidden="true">←</span><span>Volver</span></Link>
+      <Link className="location-logo" to="/home" aria-label="XAMUKO, inicio"><img src={xamukoLogo} alt="XAMUKO · Descubre · Apoya · Disfruta" /></Link>
       <span className="location-progress">PASO <b>1</b> DE 2</span>
     </header>
 
@@ -58,20 +54,20 @@ export default function Location() {
         </ul>
 
         <div className="location-actions">
-          <Button type="button" disabled={state === "loading" || state === "granted"} onClick={requestLocation}>
-            {state === "loading" ? "Buscando tu ubicación…" : state === "granted" ? "Ubicación permitida" : "Usar mi ubicación"}
+          <Button type="button" disabled={isRequesting || state === "granted"} onClick={requestLocation}>
+            {isRequesting ? "Buscando tu ubicación…" : state === "granted" ? "Ubicación permitida" : "Usar mi ubicación"}
             {state === "ready" && <span aria-hidden="true">→</span>}
           </Button>
-          <Link className="location-manual-link" to={`/location/manual${window.location.search ? window.location.search : ""}`}>Prefiero elegir mi zona</Link>
+          <Link className="location-manual-link" to={`/location${window.location.search ? window.location.search : ""}`}>Prefiero elegir mi zona</Link>
         </div>
 
-        {message && <div className={`location-feedback location-feedback--${message.kind}`} role="status" aria-live="polite"><b>{message.title}</b><span>{message.body}</span>{state === "granted" && <Link to="/home">Ver negocios en Palmira →</Link>}</div>}
+        {message && <div className={`location-feedback location-feedback--${message.kind}`} role="status" aria-live="polite"><b>{message.title}</b><span>{message.body}</span>{state === "granted" && <Link to="/home">Explorar con mi ubicación →</Link>}</div>}
 
       </div>
 
-      <aside className="location-visual location-google-map" aria-label="Mapa de tu ubicación"><iframe title="Mapa de tu ubicación" src={coordinates ? `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=16&output=embed` : "https://www.google.com/maps?q=Palmira,Valle+del+Cauca&z=13&output=embed"} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></aside>
+      <aside className="location-visual location-google-map" aria-label="Mapa de tu ubicación">{coordinates ? <iframe title="Mapa de tu ubicación" src={`https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=16&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div className="location-map-placeholder">Activa tu ubicación o elige una zona para verla en el mapa.</div>}</aside>
     </section>
 
-    <footer className="location-footer"><span><Logo /> <i /> Tu ubicación, a tu manera.</span><Link to="/home">Explorar negocios</Link></footer>
+    <footer className="location-footer"><span><img src={xamukoLogo} alt="XAMUKO" /> <i /> Tu ubicación, a tu manera.</span><Link to="/home">Explorar negocios</Link></footer>
   </main>;
 }

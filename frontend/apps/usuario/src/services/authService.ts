@@ -2,7 +2,7 @@ import { ApiError, requestJson } from "./httpClient";
 
 export type AuthUser = {
   emailVerified: boolean;
-  authProviders: Array<"EMAIL" | "GOOGLE" | "APPLE" | "FACEBOOK">;
+  authProviders: Array<"EMAIL" | "GOOGLE" | "APPLE">;
   verificationEmailSent?: boolean;
   id: string;
   publicId: string;
@@ -116,8 +116,10 @@ export async function confirmPasswordReset(token: string, password: string): Pro
   return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
 
-export async function confirmEmail(token: string): Promise<void> {
-  await requestJson<void>("/api/v1/auth/verify-email/confirm", { method: "POST", body: JSON.stringify({ token }) });
+export async function confirmEmail(token: string): Promise<{ user: AuthUser; autoLogin: boolean }> {
+  const result = await requestJson<PasswordResetResponse>("/api/v1/auth/verify-email/confirm", { method: "POST", body: JSON.stringify({ token }) });
+  if (result.accessToken) accessToken = result.accessToken;
+  return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
 
 export async function requestVerification(email: string): Promise<string> {

@@ -8,3 +8,53 @@
 .notification-main-action{width:calc(100% - 52px)}
 .notification-delete{display:grid!important;place-items:center}
 .notification-main-action{width:100%}.notification-item.is-selected .notification-main-action{width:calc(100% - 52px)}
+
+/* XAMUKO visual treatment and progressive notification list. */
+.notifications-page{background:var(--xamuko-background)}
+.notifications-page .user-content-main{width:min(100% - 48px,960px);padding-top:34px}
+.notifications-page .offer-detail-back{display:inline-flex;align-items:center;min-height:34px;margin-bottom:24px;padding:0 13px;border:1px solid #ddd2ff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font-size:11px;font-weight:700;text-decoration:none;box-shadow:0 5px 16px rgba(123,63,251,.08);transition:background .2s ease,transform .2s ease}
+.notifications-page .offer-detail-back:hover{background:#f4efff;transform:translateY(-1px)}
+.notifications-page .notifications-heading{align-items:end;margin-bottom:23px}
+.notifications-page .user-page-heading{margin-bottom:0}
+.notifications-page .user-page-heading>span:first-child{display:block;margin-bottom:7px;color:var(--xamuko-violet);font-size:11px;font-weight:700;letter-spacing:.02em}
+.notifications-page .user-page-heading h1{margin:0;color:var(--xamuko-navy);font-size:clamp(30px,4vw,40px);font-weight:800;letter-spacing:-1.2px}
+.notifications-page .notification-unread-count{margin-top:9px;border:1px solid #cceff4;background:#ecfbff;color:#08758b;font-size:10px}
+.notifications-page .notification-success{margin:10px 0 0;padding:8px 11px;border:1px solid #b9eedf;border-radius:9px;background:#ecfffa;color:#087d67;font-size:10px;font-weight:700}
+.notifications-page .notifications-heading>button{min-height:35px;padding:0 12px;border:1px solid #d9cbff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font-size:10px;font-weight:700;box-shadow:0 5px 16px rgba(123,63,251,.07);transition:background .2s ease,color .2s ease}
+.notifications-page .notifications-heading>button:hover{background:var(--xamuko-violet);color:#fff}
+.notifications-page .notification-list{max-width:900px;overflow:visible;border:0;border-radius:0;background:transparent}
+.notifications-page .notification-item{position:relative;min-height:80px;margin-bottom:10px;padding:0;border:1px solid var(--xamuko-border);border-radius:16px;background:#fff;box-shadow:0 8px 22px rgba(15,23,42,.045);transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+.notifications-page .notification-item:hover{border-color:#d7c7ff;box-shadow:0 12px 28px rgba(123,63,251,.09);transform:translateY(-1px)}
+.notifications-page .notification-item:not(.is-read){border-color:#d8ccff;background:linear-gradient(105deg,#fff 0%,#faf8ff 100%)}
+.notifications-page .notification-item.is-selected{border-color:#b9a2ff;background:#f7f3ff}
+.notifications-page .notification-main-action{box-sizing:border-box;width:100%;min-height:78px;padding:15px 48px 15px 16px;gap:13px;border-radius:16px}
+.notifications-page .notification-icon{flex-basis:40px;height:40px;border-radius:13px;background:linear-gradient(145deg,#eee8ff,#def9ff);color:var(--xamuko-violet);font-size:18px}
+.notifications-page .notification-copy{gap:4px}
+.notifications-page .notification-copy b{color:var(--xamuko-navy);font-size:13px}
+.notifications-page .notification-copy small{color:var(--xamuko-muted);font-size:11px;line-height:1.45}
+.notifications-page .notification-copy time{color:#94a3b8;font-size:9px}
+.notifications-page .notification-item>i{flex:0 0 8px;width:8px;height:8px;background:var(--xamuko-violet);box-shadow:0 0 0 4px #eee8ff}
+.notifications-page .notification-delete{right:12px;color:#94a3b8;font-size:17px;transition:color .2s ease,background .2s ease}
+.notifications-page .notification-delete:hover{color:#b4535b;background:#fff1f2}
+.notifications-page .notification-actions{position:absolute;top:50%;right:12px;z-index:3;display:flex;align-items:center;gap:7px;transform:translateY(-50%)}
+.notifications-page .notification-actions .notification-delete{position:static;transform:none}
+.notifications-page .notification-delete-confirm{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid #e2d8ff;border-radius:8px;background:#fff;color:var(--xamuko-muted);font-size:10px;white-space:nowrap;box-shadow:0 5px 14px rgba(15,23,42,.08)}
+.notifications-page .notification-delete-confirm button{padding:2px 5px;border:1px solid var(--xamuko-border);border-radius:5px;background:#fff;color:var(--xamuko-violet);font:inherit;font-size:10px;cursor:pointer}
+.notifications-page .notification-delete-confirm button:first-of-type{border-color:#efb8bd;color:#b14b56}
+.notifications-page .notifications-pagination{display:flex;justify-content:center;padding:18px 0 4px}
+.notifications-page .notifications-pagination button{display:inline-flex;align-items:center;gap:9px;padding:10px 17px;border:1px solid #d9cbff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font:inherit;font-size:11px;font-weight:800;cursor:pointer;box-shadow:0 6px 16px rgba(123,63,251,.08);transition:background .2s ease,color .2s ease,transform .2s ease}
+.notifications-page .notifications-pagination button:hover{background:var(--xamuko-violet);color:#fff;transform:translateY(-1px)}
+.notifications-page .notifications-pagination span{font-size:16px;line-height:10px}
+
+@media(max-width:700px){
+ .notifications-page .user-content-main{width:calc(100% - 32px);padding-top:22px}
+ .notifications-page .offer-detail-back{margin-bottom:19px}
+ .notifications-page .notifications-heading{display:block;margin-bottom:18px}
+ .notifications-page .notifications-heading>button{margin-top:12px}
+ .notifications-page .user-page-heading h1{font-size:30px;letter-spacing:-.8px}
+ .notifications-page .notification-item{margin-bottom:8px;border-radius:14px}
+ .notifications-page .notification-main-action{min-height:76px;padding:13px 45px 13px 12px;gap:10px;border-radius:14px}
+ .notifications-page .notification-icon{flex-basis:36px;height:36px;border-radius:11px;font-size:16px}
+ .notifications-page .notification-copy b{font-size:12px}
+ .notifications-page .notification-copy small{font-size:10px}
+}

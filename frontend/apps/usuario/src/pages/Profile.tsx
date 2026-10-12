@@ -3,9 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { getNotifications, getProfile, saveProfile, type UserProfile } from "../services/userDataService";
 import { useAuth } from "../context/AuthContext";
 import { PageLayout } from "../components/PageLayout";
-import { BellIcon, HeartIcon, ThumbsUpIcon } from "../components/ActionIcons";
+import { BellIcon, HeartIcon, ReviewIcon, ThumbsUpIcon } from "../components/ActionIcons";
 import { EmailVerificationNotice } from "../components/EmailVerificationNotice";
-import { getSelectedLocation } from "../services/locationService";
+import { useLocationContext } from "../context/LocationContext";
 import "./Profile.css";
 import "./ProfileEnhancements.css";
 
@@ -15,7 +15,8 @@ export default function Profile() {
   const { logout, user } = useAuth();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
-  const selectedLocation = getSelectedLocation();
+  const { selection } = useLocationContext();
+  const selectedLocation = selection?.mode === "manual" ? selection.locality : null;
 
   useEffect(() => {
     if (!user) return;
@@ -46,17 +47,17 @@ export default function Profile() {
         <div>
           <span>MI PERFIL</span>
           <h1>Hola{profile.name ? `, ${profile.name}` : ""}</h1>
-          <p className="profile-location-label">{selectedLocation ? `${selectedLocation.name}, ${selectedLocation.context}` : "Palmira, Valle del Cauca"}</p>
+          <p className="profile-location-label">{selectedLocation ? `${selectedLocation.name}, ${selectedLocation.context}` : selection?.mode === "automatic" ? "Ubicación actual" : "Zona no seleccionada"}</p>
         </div>
       </div>
       {user && !user.emailVerified && <p className="profile-verification-status" role="status">Correo pendiente de verificación</p>}
       <section className="profile-links profile-activity-only">
         <h2>Tu actividad</h2>
-        <Link to="/favorites"><span className="profile-icon--stores"><HeartIcon /></span><div><b>Tiendas guardadas</b><small>Encuentra tus favoritos</small></div><i>›</i></Link>
+        <Link to="/favorites"><span className="profile-icon--stores"><HeartIcon /></span><div><b>Favoritos</b><small>Lugares que guardaste</small></div><i>›</i></Link>
         <Link to="/likes"><span className="profile-icon--products"><ThumbsUpIcon /></span><div><b>Productos y servicios que te gustan</b><small>Lo que has marcado con Me gusta</small></div><i>›</i></Link>
-        <Link to="/reviews"><span><span aria-hidden="true">✦</span></span><div><b>Mis opiniones</b><small>Comparte tu experiencia</small></div><i>›</i></Link>
+        <Link to="/reviews"><span className="profile-icon--reviews"><ReviewIcon /></span><div><b>Mis opiniones</b><small>Comparte tu experiencia</small></div><i>›</i></Link>
         <Link to="/notifications"><span><BellIcon /></span><div><b>Notificaciones {unreadNotifications > 0 && <em className="profile-notification-badge">{unreadNotifications}</em>}</b><small>Mantente al día</small></div><i>›</i></Link>
-        <Link to="/settings"><span><span aria-hidden="true">⚙</span></span><div><b>Ajustes</b><small>Configura tu experiencia</small></div><i>›</i></Link>
+        <Link to="/settings"><span className="profile-icon--settings"><span aria-hidden="true">⚙</span></span><div><b>Ajustes</b><small>Configura tu experiencia</small></div><i>›</i></Link>
       </section>
       <section className="profile-logout-area">
         <div><b>¿Terminaste por hoy?</b><small>Puedes volver cuando quieras.</small></div>

@@ -11,8 +11,9 @@ test('renders a verification message with an encoded one-time link', () => {
   assert.match(message.html, /24 horas/);
   assert.match(message.html, /max-width:600px/);
   assert.match(message.html, /padding:40px/);
-  assert.match(message.html, /background:#16B978/);
-  assert.match(message.html, /WIT Usuarios · Encuentra lo que necesitas/);
+  assert.match(message.html, /background:linear-gradient\(110deg,#7B3FFB 0%,#2563EB 100%\)/);
+  assert.match(message.html, /XAMUKO · Lo que necesitas, está más cerca\./);
+  assert.doesNotMatch(message.html, /WIT/);
 });
 
 test('renders a password reset message with the shorter expiry', () => {
@@ -23,6 +24,7 @@ test('renders a password reset message with the shorter expiry', () => {
   assert.match(message.html, /role="presentation"/);
   assert.match(message.html, /viewport/);
   assert.match(message.html, /Hola, ahí\./);
+  assert.match(message.subject, /XAMUKO/);
 });
 
 test('escapes dynamic values in the HTML while preserving the plain-text link', () => {
@@ -50,4 +52,15 @@ test('supports the admin brand variant through a server-selected application', (
   assert.match(message.html, /WIT Admin/);
   assert.match(message.html, /background:#6D5AE6/);
   assert.match(message.text, /WIT Admin · Encuentra lo que necesitas/);
+});
+
+
+test('uses the configured HTTPS logo for XAMUKO and keeps a text fallback without it', () => {
+  const withLogo = renderVerificationEmail({ to: 'person@example.test', token: 'token', baseUrl: 'https://usuario.example/verify-email', logoUrl: 'https://cdn.example/xamuko.png' });
+  assert.match(withLogo.html, /src="https:\/\/cdn\.example\/xamuko\.png"/);
+  assert.match(withLogo.html, /alt="XAMUKO"/);
+
+  const withoutLogo = renderPasswordResetEmail({ to: 'person@example.test', token: 'token', baseUrl: 'https://usuario.example/reset-password' });
+  assert.doesNotMatch(withoutLogo.html, /<img[^>]+src=/);
+  assert.match(withoutLogo.html, />XAMUKO<\/span>/);
 });

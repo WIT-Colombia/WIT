@@ -20,6 +20,10 @@ export type Business = {
   phone?: string;
   whatsapp?: string;
   coordinates?: { lat: number; lng: number };
+  /** Only true when the coordinates were verified by the business or platform. */
+  coordinatesVerified?: boolean;
+  /** Development-only preview coordinates; never used for real navigation. */
+  staticMapPreviewCoordinates?: { lat: number; lng: number };
 };
 
 export type Product = {
@@ -31,6 +35,10 @@ export type Product = {
   image: string;
   createdAt?: string;
   likeCount?: number;
+  isOffer?: boolean;
+  offerLabel?: string;
+  discount?: string;
+  offerDeadline?: string;
 };
 
 const sampleProductPublished = (daysAgo: number) => new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
@@ -43,6 +51,10 @@ export type Service = {
   priceLabel?: string;
   image: string;
   likeCount?: number;
+  isOffer?: boolean;
+  offerLabel?: string;
+  discount?: string;
+  offerDeadline?: string;
 };
 
 export type Review = {
@@ -137,13 +149,37 @@ export const businesses: Business[] = [
   ...demoBusinesses,
 ];
 
+// Marca diez negocios de muestra como destacados para probar la sección y su acción "Ver todos".
+businesses.slice(0, 10).forEach((business) => {
+  business.isFeatured = true;
+  business.plan = "premium";
+});
+
 export const products: Product[] = [
-  { id: "arepa-queso", businessId: "arepa-majo", name: "Arepa con queso", description: "Arepa de maíz dorada en plancha con queso derretido.", price: 6500, image: businesses[0].image, createdAt: sampleProductPublished(1) },
-  { id: "desayuno-campesino", businessId: "arepa-majo", name: "Desayuno campesino", description: "Arepa, huevos al gusto, bebida caliente y fruta del día.", price: 18000, image: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=85" },
+  { id: "arepa-queso", businessId: "arepa-majo", name: "Arepa con queso", description: "Arepa de maíz dorada en plancha con queso derretido.", price: 6500, image: businesses[0].image, createdAt: sampleProductPublished(1), likeCount: 24, isOffer: true, offerLabel: "Oferta", discount: "-20%", offerDeadline: "31 oct." },
+  { id: "desayuno-campesino", businessId: "arepa-majo", name: "Desayuno campesino", description: "Arepa, huevos al gusto, bebida caliente y fruta del día.", price: 18000, image: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=85", likeCount: 42, isOffer: true, offerLabel: "Oferta", discount: "-15%", offerDeadline: "30 oct." },
+  { id: "calentado-campesino", businessId: "arepa-majo", name: "Calentado campesino", description: "Arroz, fríjol, huevo y acompañamiento de la casa para empezar con energía.", price: 16000, image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=85", likeCount: 16, isOffer: true, offerLabel: "Oferta", discount: "-10%", offerDeadline: "28 oct." },
+  { id: "chocolate-con-queso", businessId: "arepa-majo", name: "Chocolate con queso", description: "Chocolate caliente servido con queso y pan recién horneado.", price: 9000, image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=900&q=85", likeCount: 60 },
+  { id: "arepa-mixta", businessId: "arepa-majo", name: "Arepa mixta de la casa", description: "Arepa dorada con pollo, chorizo y queso, preparada al momento.", price: 14500, image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=85", likeCount: 35 },
+  ...Array.from({ length: 35 }, (_, index) => {
+    const number = index + 6;
+    const sampleNames = ["Arepa de chocolo", "Huevos pericos", "Arepa paisa", "Jugo natural", "Café de la casa", "Tostadas con aguacate", "Caldo campesino"];
+    const sampleImages = [businesses[0].image, "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=85"];
+    return {
+      id: `arepa-majo-producto-${number}`,
+      businessId: "arepa-majo",
+      name: `${sampleNames[index % sampleNames.length]} ${number}`,
+      description: "Una opción preparada al momento con el sabor de la casa.",
+      price: 7000 + ((index * 1250) % 24000),
+      image: sampleImages[index % sampleImages.length],
+      likeCount: 10 + ((index * 7) % 28),
+    };
+  }),
   { id: "vitaminas", businessId: "drogueria-central", name: "Vitaminas y bienestar", description: "Opciones de cuidado diario. Consulta disponibilidad en el establecimiento.", image: businesses[1].image, createdAt: sampleProductPublished(3) },
   { id: "kit-herramientas", businessId: "casa-tornillo", name: "Kit básico de herramientas", description: "Una selección práctica para pequeñas reparaciones del hogar.", price: 45900, image: businesses[2].image, createdAt: sampleProductPublished(5) },
   { id: "cera-cabello", businessId: "distrito-23", name: "Cera para peinar", description: "Fijación flexible para completar tu rutina de cuidado.", price: 22000, image: businesses[3].image },
   { id: "soporte-celular", businessId: "tecno-palmira", name: "Soporte para celular", description: "Soporte ajustable para escritorio y videollamadas.", price: 28000, image: businesses[5].image, createdAt: sampleProductPublished(7) },
+  { id: "combo-cuidado-diario", businessId: "drogueria-central", name: "Combo de cuidado diario", description: "Selección práctica para acompañar tu rutina de cuidado personal.", price: 32000, image: businesses[1].image, createdAt: sampleProductPublished(1) },
   ...demoProducts,
 ];
 
@@ -154,6 +190,16 @@ export const services: Service[] = [
   { id: "barba", businessId: "distrito-23", name: "Arreglo de barba", description: "Perfilado y cuidado para mantener tu estilo.", priceLabel: "Desde $18.000", image: businesses[3].image },
   { id: "diagnostico-celular", businessId: "tecno-palmira", name: "Diagnóstico de celular", description: "Revisión inicial del equipo para identificar qué puede estar pasando.", priceLabel: "Consulta disponibilidad", image: businesses[5].image },
   { id: "asesoria-ferretera", businessId: "casa-tornillo", name: "Asesoría para tu proyecto", description: "Orientación para elegir herramientas y materiales adecuados.", image: businesses[2].image },
+  ...Array.from({ length: 40 }, (_, index) => ({
+    id: `arepa-majo-servicio-${index + 7}`,
+    businessId: "arepa-majo",
+    name: ["Desayuno para llevar", "Servicio de domicilio", "Catering para eventos", "Menú personalizado", "Reserva de mesa", "Combo familiar"][index % 6] + ` ${index + 7}`,
+    description: "Una atención cercana y preparada según lo que necesitas.",
+    priceLabel: index % 3 === 0 ? "Desde $12.000" : "Consulta disponibilidad",
+    image: [businesses[0].image, "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=85"][index % 3],
+    likeCount: 8 + ((index * 5) % 26),
+    ...(index < 3 ? { isOffer: true, offerLabel: "Oferta", discount: index === 0 ? "-20%" : index === 1 ? "-15%" : "-10%", offerDeadline: index === 0 ? "31 oct." : index === 1 ? "30 oct." : "28 oct." } : {}),
+  })),
   ...demoServices,
 ];
 

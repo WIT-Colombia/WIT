@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button, Logo } from "@wit/ui";
 import { businesses } from "../data/mockData";
 import { HeartIcon } from "../components/ActionIcons";
-import { getSelectedLocation } from "../services/locationService";
+import { useLocationContext } from "../context/LocationContext";
 import "./Welcome.css";
 
 function SearchIcon() {
@@ -16,7 +16,8 @@ function PinIcon() {
 export default function Welcome() {
   const navigate = useNavigate();
   const featured = businesses[0];
-  const selectedLocation = getSelectedLocation();
+  const { selection } = useLocationContext();
+  const selectedLocation = selection?.mode === "manual" ? selection.locality : null;
 
   return <main className="welcome-page">
     <header className="welcome-header">
@@ -33,10 +34,10 @@ export default function Welcome() {
           <Button type="button" onClick={() => navigate("/location")}>Vamos a empezar <span aria-hidden="true">→</span></Button>
           <button className="welcome-text-action" type="button" onClick={() => navigate("/home")}>Explorar ahora</button>
         </div>
-        <Link className="welcome-trust" to="/location/manual" aria-label={`Cambiar zona${selectedLocation ? ` actual: ${selectedLocation.name}` : " de búsqueda"}`}>
+          <Link className="welcome-trust" to="/location" aria-label={`Cambiar zona${selectedLocation ? ` actual: ${selectedLocation.name}` : " de búsqueda"}`}>
           <span className="welcome-trust__icon"><PinIcon /></span>
-          <span className="welcome-trust__copy"><b>Tu zona, tu punto de partida</b><small>{selectedLocation ? `Ahora: ${selectedLocation.name}, ${selectedLocation.context}` : "Elige dónde quieres buscar y empecemos."}</small></span>
-          <span className="welcome-trust__edit">{selectedLocation ? "Cambiar" : "Elegir zona"}<span aria-hidden="true">↗</span></span>
+          <span className="welcome-trust__copy"><b>Tu zona, tu punto de partida</b><small>{selectedLocation ? `Ahora: ${selectedLocation.name}, ${selectedLocation.context}` : selection?.mode === "automatic" ? "Ubicación actual autorizada" : "Elige dónde quieres buscar y empecemos."}</small></span>
+          <span className="welcome-trust__edit">{selectedLocation || selection?.mode === "automatic" ? "Cambiar" : "Elegir zona"}<span aria-hidden="true">↗</span></span>
         </Link>
       </div>
 

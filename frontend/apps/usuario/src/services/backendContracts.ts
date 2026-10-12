@@ -21,7 +21,7 @@ export type UserSession = {
   id: string;
   name: string;
   email: string;
-  provider: "email" | "google" | "facebook";
+  provider: "email" | "google";
   avatarUrl?: string;
 };
 

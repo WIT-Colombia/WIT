@@ -52,8 +52,17 @@ const emailVerificationUrl = process.env.EMAIL_VERIFICATION_URL?.trim() ?? 'http
 const passwordResetUrl = process.env.PASSWORD_RESET_URL?.trim() ?? 'http://localhost:5173/reset-password';
 const emailApiKey = process.env.EMAIL_API_KEY?.trim();
 const emailApiUrl = process.env.EMAIL_API_URL?.trim() ?? 'https://api.resend.com/emails';
+const emailLogoUrl = process.env.EMAIL_LOGO_URL?.trim();
 if (!emailFrom || !emailVerificationUrl || !passwordResetUrl) {
   throw new Error('La configuración de correo no puede estar vacía.');
+}
+if (emailLogoUrl) {
+  try {
+    const logoUrl = new URL(emailLogoUrl);
+    if (logoUrl.protocol !== 'https:') throw new Error('EMAIL_LOGO_URL debe usar HTTPS.');
+  } catch {
+    throw new Error('EMAIL_LOGO_URL debe ser una URL HTTPS válida.');
+  }
 }
 if (emailMode === 'resend' && !emailApiKey) {
   throw new Error('EMAIL_API_KEY es obligatorio cuando EMAIL_MODE=resend.');
@@ -80,6 +89,7 @@ export const env = Object.freeze({
   passwordResetUrl,
   emailApiKey,
   emailApiUrl,
+  emailLogoUrl,
   smtpHost: process.env.SMTP_HOST?.trim(),
   smtpPort: process.env.SMTP_PORT?.trim(),
   smtpUser: process.env.SMTP_USER?.trim(),

@@ -10,9 +10,9 @@ const sender: EmailSender = env.emailMode === 'resend'
   : new DevelopmentEmailSender();
 
 export async function sendVerificationEmail(to: string, token: string, displayName?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  await sender.send(renderVerificationEmail({ to, token, displayName, baseUrl: env.emailVerificationUrl }, application));
+  await sender.send(renderVerificationEmail({ to, token, displayName, baseUrl: env.emailVerificationUrl, logoUrl: env.emailLogoUrl }, application));
 }
 
 export async function sendPasswordResetEmail(to: string, token: string, displayName?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  await sender.send(renderPasswordResetEmail({ to, token, displayName, baseUrl: env.passwordResetUrl }, application));
+  await sender.send(renderPasswordResetEmail({ to, token, displayName, baseUrl: env.passwordResetUrl, logoUrl: env.emailLogoUrl }, application));
 }

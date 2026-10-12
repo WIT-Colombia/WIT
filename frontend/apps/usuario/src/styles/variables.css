@@ -1,4 +1,13 @@
 :root {
+  --xamuko-violet: #7B3FFB;
+  --xamuko-blue: #2563EB;
+  --xamuko-cyan: #22D3EE;
+  --xamuko-navy: #0F172A;
+  --xamuko-white: #FFFFFF;
+  --xamuko-background: #F8FAFC;
+  --xamuko-muted: #64748B;
+  --xamuko-border: #E2E8F0;
+  --xamuko-gradient: linear-gradient(110deg, #7B3FFB 0%, #2563EB 54%, #22D3EE 100%);
   --wit-primary: #16B978;
   --wit-primary-dark: #0C8F5B;
   --wit-primary-light: #DDF7EC;

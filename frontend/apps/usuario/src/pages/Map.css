@@ -66,3 +66,35 @@
   .map-results-heading,.map-empty{grid-column:auto}
 }
 @media(max-width:700px){.map-search input{font-size:16px;-webkit-text-size-adjust:100%}}
+
+/* Mapa con la identidad visual XAMUKO. */
+.map-page{background:var(--xamuko-background);color:var(--xamuko-navy)}
+.map-page-heading h1{color:var(--xamuko-navy);font-weight:800}
+.map-page-heading p{color:var(--xamuko-muted)}
+.map-page-heading>a{display:inline-flex;min-height:38px;align-items:center;padding:0 14px;border:1px solid #d8ccff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font-weight:700;box-shadow:0 5px 14px rgba(123,63,251,.06);transition:.2s ease}
+.map-page-heading>a:hover{background:#f7f4ff;transform:translateY(-1px)}
+.map-search{border-color:#e2d9ff;border-radius:16px;box-shadow:0 8px 22px rgba(123,63,251,.08);color:var(--xamuko-violet)}
+.map-search input{color:var(--xamuko-navy)}
+.map-category-chips button{border-color:#d8ccff;background:#fff;color:var(--xamuko-muted);transition:.2s ease}
+.map-category-chips button:hover{border-color:#bfaeff;background:#f7f4ff;color:var(--xamuko-violet)}
+.map-category-chips button.selected{border-color:#c7baff;background:#f0ebff;color:var(--xamuko-violet)}
+.map-canvas{border-color:#d8ccff;border-radius:20px;box-shadow:0 10px 26px rgba(37,99,235,.08)}
+.map-results-heading{border-color:#d8ccff;border-radius:16px;box-shadow:0 6px 16px rgba(123,63,251,.06)}
+.map-results-heading b{color:var(--xamuko-navy)}
+.map-results-heading span{color:var(--xamuko-muted)}
+.map-expand-button{border-color:#d8ccff;border-radius:999px;background:#f0ebff;color:var(--xamuko-violet)}
+.map-expand-button:hover{border-color:#bfaeff;background:#e8e0ff}
+.map-page .entity-card{border-color:var(--xamuko-border);border-radius:18px;box-shadow:0 8px 22px rgba(15,23,42,.05)}
+.map-page .entity-card:hover{border-color:#c8b9ff;box-shadow:0 14px 28px rgba(123,63,251,.11)}
+.map-page .entity-card__actions{border-color:var(--xamuko-border)}
+.map-page .entity-view,.map-page .entity-establishment{color:var(--xamuko-violet)}
+.map-page .entity-action{border-color:var(--xamuko-border);color:var(--xamuko-violet)}
+.map-page .entity-favorite.is-active{border-color:#c7baff;background:#f1edff;color:var(--xamuko-violet)}
+.map-empty{border-color:#d8ccff;background:linear-gradient(145deg,#fff,#fbfaff 60%,#f1fbff);box-shadow:0 10px 24px rgba(37,99,235,.06)}
+.map-empty__icon{background:linear-gradient(145deg,#eee7ff,#e8f8ff);color:var(--xamuko-violet)}
+.map-empty b{color:var(--xamuko-navy)}
+.map-empty p{color:var(--xamuko-muted)}
+.map-empty__actions button{border-color:transparent;background:linear-gradient(110deg,var(--xamuko-violet),var(--xamuko-blue));box-shadow:0 7px 18px rgba(123,63,251,.18)}
+.map-empty__actions button:hover{background:linear-gradient(110deg,#6c32e8,#1f56d5)}
+.map-empty__actions a{border-color:#d8ccff;color:var(--xamuko-violet)}
+.map-empty__actions a:hover{background:#f7f4ff}

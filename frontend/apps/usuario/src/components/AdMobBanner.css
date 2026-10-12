@@ -1,0 +1,23 @@
+.admob-banner{order:6;display:flex;width:min(100%,728px);min-height:90px;align-items:center;gap:15px;margin:30px auto 4px;padding:14px 18px;border:1px solid #e2e8f0;border-radius:18px;background:linear-gradient(105deg,#f5f1ff 0%,#f4f8ff 58%,#ecfbff 100%);box-shadow:0 8px 22px rgba(15,23,42,.06)}
+.admob-banner__label{display:inline-flex;min-height:22px;align-items:center;padding:0 8px;border:1px solid #cfc2ff;border-radius:999px;color:var(--xamuko-violet);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.admob-banner__copy{display:grid;min-width:0;gap:4px}.admob-banner__copy strong{overflow:hidden;color:var(--xamuko-navy);font-size:13px;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}.admob-banner__copy span{overflow:hidden;color:var(--xamuko-muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}.admob-banner__mark{display:grid;width:28px;height:28px;align-items:center;justify-content:center;margin-left:auto;border-radius:50%;background:linear-gradient(135deg,var(--xamuko-violet),var(--xamuko-blue));color:#fff;font-size:16px;font-weight:700}
+.home-page .admob-banner[data-admob-slot="home-footer"]{order:8}
+.home-page .admob-banner,.business-detail-page .admob-banner{margin:24px auto}
+@media(max-width:700px){.admob-banner{width:100%;min-height:60px;gap:10px;margin:24px 0 0;padding:10px 13px;border-radius:16px}.admob-banner__label{padding:0 7px;font-size:8px}.admob-banner__copy strong{font-size:11px}.admob-banner__copy span{font-size:9px}.admob-banner__mark{width:25px;height:25px;font-size:14px}}
+
+@media(max-width:700px){.home-page .admob-banner,.business-detail-page .admob-banner{margin:24px 0}}
+
+/* Separación XAMUKO uniforme en Inicio y fichas de negocio. */
+.home-page .admob-banner,
+.business-detail-page .admob-banner { margin-top:24px !important; margin-bottom:24px !important; }
+@media(max-width:700px) {
+  .home-page .admob-banner,
+  .business-detail-page .admob-banner { margin-right:0 !important; margin-left:0 !important; }
+}
+
+/* Espacio estructural: evita que los márgenes colapsen con las secciones vecinas. */
+.admob-banner-slot { margin:24px 0; }
+.home-page .admob-banner-slot--home-inline { order:6; }
+.home-page .admob-banner-slot--home-footer { order:8; }
+.admob-banner-slot .admob-banner { margin:0 auto !important; }
+@media(max-width:700px) { .admob-banner-slot .admob-banner { margin:0 !important; } }

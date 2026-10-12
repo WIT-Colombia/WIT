@@ -2,3 +2,9 @@
 .register-panel label.field-invalid input { border-color:#c94b4b; background:#fff8f8; box-shadow:0 0 0 3px #c94b4b18; }
 .register-panel label.field-invalid { color:#a63d3d; }
 .register-panel .field-error { color:#b13f3f; font-size:10px; font-weight:600; line-height:1.4; }
+
+/* Enlaces legales con la identidad XAMUKO. */
+.register-legal-check{color:var(--xamuko-muted)!important}
+.register-legal-check a{color:var(--xamuko-violet);font-weight:600;text-decoration:underline;text-decoration-color:#cfc2ff;text-underline-offset:2px}
+.register-legal-check a:hover,.register-legal-check a:focus-visible{color:#5f2dd7}
+.register-legal-check input{accent-color:var(--xamuko-violet)}

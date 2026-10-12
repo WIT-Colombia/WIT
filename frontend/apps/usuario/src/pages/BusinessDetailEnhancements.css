@@ -22,3 +22,293 @@
 .business-weekly-hours{display:grid;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--wit-divider)}
 .business-weekly-hours>div{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--wit-text-secondary);font-size:10px}
 .business-weekly-hours b{color:var(--wit-text-primary);font-size:10px}
+
+/* Identidad visual XAMUKO para la ficha pública del negocio. */
+.business-detail-page .business-detail-hero,
+.business-detail-page .business-about,
+.business-detail-page .business-detail-aside{
+  border-color:var(--xamuko-border);
+  box-shadow:0 12px 30px rgba(15,23,42,.05);
+}
+.business-detail-page .business-detail-back .business-back-link,
+.business-detail-page .business-offers-back{
+  color:var(--xamuko-violet);
+}
+.business-detail-page .business-detail-back .business-back-link{
+  display:inline-flex;
+  min-height:36px;
+  align-items:center;
+  padding:0 13px;
+  border:1px solid #ddd4ff;
+  border-radius:999px;
+  background:#fff;
+  font-size:11px;
+  font-weight:700;
+  box-shadow:0 5px 14px rgba(123,63,251,.08);
+}
+.business-detail-page .business-detail-back .business-back-link:hover,
+.business-detail-page .business-detail-back .business-back-link:focus-visible{
+  border-color:#c8b8ff;
+  background:#f7f4ff;
+  color:#6330db;
+  transform:translateX(-1px);
+}
+.business-detail-page .business-share-wrap>button{
+  min-height:36px;
+  padding:0 13px;
+  border:1px solid var(--xamuko-border);
+  border-radius:999px;
+  background:#fff;
+  color:var(--xamuko-navy);
+  font:inherit;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+.business-detail-page .business-share-wrap>button:hover,
+.business-detail-page .business-share-wrap>button[aria-expanded="true"]{
+  border-color:#c8b8ff;
+  background:#f7f4ff;
+  color:var(--xamuko-violet);
+}
+.business-detail-page .business-detail-category,
+.business-detail-page .business-section-label{color:var(--xamuko-violet)}
+.business-detail-page .business-detail-intro h1,
+.business-detail-page .business-about h2,
+.business-detail-page .business-section-heading h2{color:var(--xamuko-navy)}
+.business-detail-page .business-primary-action{
+  border:1px solid #d8ccff;
+  background:#f4f0ff;
+  color:var(--xamuko-violet);
+  box-shadow:none;
+}
+.business-detail-page .business-primary-action:hover{border-color:#bfaeff;background:#eee9ff;color:#6333d8;box-shadow:0 6px 14px rgba(123,63,251,.1)}
+.business-detail-page .business-section-heading>a{
+  display:inline-flex;
+  min-height:40px;
+  align-items:center;
+  padding:0 14px;
+  border:1px solid #cfc1ff;
+  border-radius:12px;
+  background:linear-gradient(110deg,#f1eaff 0%,#eef4ff 58%,#e9fbff 100%);
+  color:var(--xamuko-violet);
+  font-size:11px;
+  font-weight:700;
+  text-decoration:none;
+  transition:background .2s ease,border-color .2s ease,transform .2s ease;
+}
+.business-detail-page .business-section-heading>a:hover{border-color:#a996ff;background:linear-gradient(110deg,#e9dfff 0%,#e5edff 58%,#dcf8ff 100%);box-shadow:0 6px 14px rgba(123,63,251,.1);transform:translateY(-1px)}
+.business-detail-page .business-tabs{
+  border-color:var(--xamuko-border);
+  background:#f5f3ff;
+}
+.business-detail-page .business-tabs button{color:var(--xamuko-muted)}
+.business-detail-page .business-tabs button:hover{color:var(--xamuko-violet)}
+.business-detail-page .business-tabs button.active{
+  border-color:#d8ccff;
+  color:var(--xamuko-violet);
+  box-shadow:0 3px 10px rgba(123,63,251,.1);
+}
+.business-detail-page .business-tabs button span{background:#eee9ff;color:var(--xamuko-violet)}
+.business-detail-page .business-section-heading>a,
+.business-detail-page .business-add-review,
+.business-detail-page .business-report{color:var(--xamuko-violet)}
+.business-detail-page .business-map-preview{border-color:var(--xamuko-border)}
+.business-detail-page .business-map-heading>div>span{color:var(--xamuko-violet)}
+.business-detail-page .business-map-heading button:hover{border-color:#c8b8ff;background:#f7f4ff}
+.business-detail-page .business-gallery-heading{padding:16px 20px;border-bottom-color:var(--xamuko-border);background:linear-gradient(110deg,#fff 0%,#fbfaff 60%,#f1fbff 100%)}
+.business-detail-page .business-gallery-heading>div{display:grid;gap:3px}
+.business-detail-page .business-gallery-heading span{color:var(--xamuko-violet);font-size:9px;font-weight:800;letter-spacing:.14em}
+.business-detail-page .business-gallery-heading b{color:var(--xamuko-navy);font-size:17px;letter-spacing:-.2px}
+.business-detail-page .business-gallery-heading small{color:var(--xamuko-muted);font-size:10px}
+.business-detail-page .business-gallery-heading button:hover{border-color:#c8b8ff;background:#f7f4ff;color:var(--xamuko-violet)}
+.business-detail-page .business-gallery-main{background:#f5f3ff}
+.business-detail-page .business-gallery-arrow{border-color:#d8ccff;color:var(--xamuko-violet)}
+.business-detail-page .business-gallery-arrow:hover{background:#eee9ff}
+.business-detail-page .business-gallery-thumbs button.active{border-color:var(--xamuko-violet)}
+.business-detail-page .business-share-menu a:hover,
+.business-detail-page .business-share-menu button:hover{background:#f7f4ff;color:var(--xamuko-violet)}
+@media(max-width:600px){
+  .business-detail-page .business-detail-back .business-back-link,
+  .business-detail-page .business-share-wrap>button{min-height:34px;padding:0 11px;font-size:10px}
+}
+
+.business-detail-page a.business-contact-button:not(.business-whatsapp-button){
+  border-color:#d8ccff;
+  color:var(--xamuko-violet);
+}
+.business-detail-page a.business-contact-button:not(.business-whatsapp-button):hover{background:#f7f4ff}
+.business-detail-page .business-contact-button{
+  width:44px;
+  min-width:44px;
+  flex:0 0 44px;
+  height:44px;
+  padding:0;
+  border-radius:50%;
+}
+.business-detail-page .business-contact-icon{width:20px;height:20px;flex:0 0 20px}
+.business-detail-page .business-whatsapp-button{border-color:#b8e7cf;background:#eafaf1;color:#15945d}
+.business-detail-page .business-whatsapp-button:hover{border-color:#8bd3ae;background:#d8f5e5;color:#087b4a}
+.business-detail-page .business-contact-button.is-unavailable{display:inline-flex}
+.business-detail-page .business-whatsapp-icon .business-whatsapp-disc{fill:currentColor}
+.business-detail-page .business-whatsapp-icon .business-whatsapp-phone{fill:#fff}
+@media(max-width:600px){
+  .business-detail-page .business-contact-button{width:42px;min-width:42px;flex:0 0 42px;height:42px}
+  .business-detail-page .business-contact-icon{width:21px;height:21px;flex-basis:21px}
+}
+
+/* Pulido final de la ficha pública con la identidad XAMUKO. */
+.business-detail-page .business-detail-hero{
+  position:relative;
+  overflow:hidden;
+  border-radius:28px;
+  background:linear-gradient(125deg,#fff 0%,#fff 62%,#f6f2ff 100%);
+  box-shadow:0 18px 46px rgba(15,23,42,.07);
+}
+.business-detail-page .business-detail-hero::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  width:48%;
+  height:4px;
+  background:var(--xamuko-gradient);
+}
+.business-detail-page .business-detail-photo{
+  min-height:360px;
+  border-radius:21px;
+  box-shadow:0 12px 30px rgba(15,23,42,.14);
+}
+.business-detail-page .business-detail-photo::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(15,23,42,0) 58%,rgba(15,23,42,.32));
+}
+.business-detail-page .business-detail-photo .entity-open,
+.business-detail-page .business-photo-gallery-hint{z-index:2}
+.business-detail-page .business-detail-category{
+  display:inline-flex;
+  width:max-content;
+  padding:7px 10px;
+  border-radius:999px;
+  background:#f0ebff;
+  font-size:10px;
+  letter-spacing:.02em;
+}
+.business-detail-page .business-detail-intro h1{margin-top:14px;font-size:clamp(32px,4vw,48px);letter-spacing:-1.6px}
+.business-detail-page .business-detail-rating{
+  width:max-content;
+  margin:2px 0 13px;
+  padding:7px 10px;
+  border:1px solid #f3dfae;
+  border-radius:999px;
+  background:#fffaf0;
+}
+.business-detail-page .business-detail-rating b{color:#d58e08}
+.business-detail-page .business-detail-intro>p{max-width:580px;margin:0 0 6px}
+.business-detail-page .business-detail-location{
+  margin-top:12px;
+  padding:11px 13px;
+  border:1px solid #e4dcff;
+  border-radius:14px;
+  background:#faf8ff;
+}
+.business-detail-page .business-detail-location>span{color:var(--xamuko-violet);font-size:18px}
+.business-detail-page .business-detail-actions{margin-top:14px}
+.business-detail-page .business-primary-action{min-height:46px;border-radius:13px}
+.business-detail-page .business-social-action{min-height:46px;border-radius:13px}
+.business-detail-page .business-contact-actions{margin-top:12px}
+.business-detail-page .business-tabs{margin-top:26px;border-radius:16px;background:linear-gradient(100deg,#f4f0ff,#f5fbff)}
+.business-detail-page .business-detail-columns{margin-top:24px}
+.business-detail-page .business-detail-columns{grid-template-columns:minmax(0,1fr)}
+.business-detail-page .business-about,
+.business-detail-page .business-detail-aside{border-radius:20px;background:#fff}
+.business-detail-page .business-about h2{font-size:22px;letter-spacing:-.4px}
+.business-detail-page .business-hours{border-top-color:var(--xamuko-border)}
+.business-detail-page .business-hours .open{color:#168b59}
+.business-detail-page .business-weekly-hours{border-top-color:var(--xamuko-border)}
+.business-detail-page .business-offer-section,.business-detail-page .business-review-section{margin-top:42px}
+.business-detail-page .business-section-heading h2{font-size:24px;letter-spacing:-.6px}
+.business-detail-page .business-offer-grid{gap:18px}
+.business-detail-page .business-popular-grid{
+  display:flex;
+  align-items:stretch;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scrollbar-width:thin;
+  scrollbar-color:var(--xamuko-violet) #eee9ff;
+  padding:2px 2px 10px;
+  cursor:grab;
+  touch-action:pan-x;
+}
+.business-detail-page .business-popular-grid:active{cursor:grabbing}
+.business-detail-page .business-popular-grid::-webkit-scrollbar{height:7px}
+.business-detail-page .business-popular-grid::-webkit-scrollbar-track{border-radius:999px;background:#eee9ff}
+.business-detail-page .business-popular-grid::-webkit-scrollbar-thumb{border-radius:999px;background:var(--xamuko-violet)}
+.business-detail-page .business-popular-grid>.entity-card{flex:0 0 calc((100% - 54px)/4);min-width:0;height:auto;align-self:stretch}
+.business-scroll-hint{color:var(--xamuko-muted);font-size:10px}
+.business-detail-page .business-products-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+.business-products-more{
+  display:flex;
+  min-height:42px;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin:22px auto 0;
+  padding:0 18px;
+  border:1px solid #d8ccff;
+  border-radius:999px;
+  background:#faf8ff;
+  color:var(--xamuko-violet);
+  font:inherit;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  transition:background .2s ease,transform .2s ease,box-shadow .2s ease;
+}
+.business-products-more:hover{background:#f0ebff;box-shadow:0 8px 18px rgba(123,63,251,.12);transform:translateY(-1px)}
+.business-products-top{
+  min-height:42px;
+  padding:0 22px;
+  border-color:#d8ccff;
+  background:#fff;
+  color:var(--xamuko-violet);
+  box-shadow:0 6px 16px rgba(123,63,251,.08);
+  font-size:12px;
+  font-weight:700;
+}
+.business-products-top:hover{border-color:#bfaeff;background:#f7f4ff;color:var(--xamuko-violet);transform:translateY(-1px)}
+.business-detail-page .business-review{padding:18px 0;border-bottom-color:var(--xamuko-border)}
+.business-detail-page .business-review-avatar{background:#f0ebff;color:var(--xamuko-violet)}
+@media(max-width:800px){
+  .business-detail-page .business-detail-hero{border-radius:22px}
+  .business-detail-page .business-detail-photo{min-height:280px;border-radius:17px}
+}
+@media(max-width:600px){
+  .business-detail-page .business-detail-hero{padding:11px}
+  .business-detail-page .business-detail-hero::before{width:72%;height:3px}
+  .business-detail-page .business-detail-intro h1{margin-top:11px;font-size:30px}
+  .business-detail-page .business-detail-rating{margin-bottom:9px;font-size:10px}
+  .business-detail-page .business-detail-location{margin-top:8px;padding:10px}
+  .business-detail-page .business-social-action{min-height:43px}
+  .business-detail-page .business-section-heading h2{font-size:19px}
+  .business-detail-page .business-section-heading{align-items:center;flex-direction:row}
+  .business-detail-page .business-popular-grid{margin-right:-16px;padding-right:16px}
+  .business-detail-page .business-popular-grid>.entity-card{flex-basis:calc((100% - 12px)/2)}
+  .business-scroll-hint{font-size:9px}
+  .business-detail-page .business-products-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .business-detail-page .business-offer-grid>.entity-offer-card{height:238px;min-height:238px;max-height:238px;border-radius:14px}
+  .business-detail-page .business-offer-grid>.entity-offer-card .entity-card__image{height:118px;min-height:118px;max-height:118px;flex-basis:118px}
+  .business-detail-page .business-offer-grid>.entity-offer-card .entity-card__content{padding:9px 10px 8px;overflow:hidden}
+  .business-detail-page .business-offer-grid>.entity-offer-card .entity-offer-description{display:none}
+  .business-detail-page .business-offer-grid>.entity-offer-card h3{font-size:11px;line-height:1.12}
+  .business-detail-page .business-offer-grid>.entity-offer-card .entity-offer-type{margin-bottom:3px;font-size:9px}
+  .business-detail-page .business-offer-grid>.entity-offer-card .entity-offer-deadline{display:none}
+  .business-detail-page .business-offer-grid>.entity-offer-card .entity-establishment{font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .business-detail-page .business-offer-grid>.entity-offer-card .entity-offer-footer{height:42px;min-height:42px;flex:0 0 42px;margin-top:auto;padding-top:6px;box-sizing:border-box}
+  .business-detail-page .business-offer-grid>.entity-offer-card .entity-offer-footer strong{max-width:calc(100% - 38px);overflow:hidden;font-size:9px;white-space:nowrap;text-overflow:ellipsis}
+  .business-products-more{min-height:40px;margin-top:18px;font-size:10px}
+}

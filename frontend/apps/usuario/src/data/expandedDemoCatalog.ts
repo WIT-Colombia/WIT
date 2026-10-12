@@ -7,6 +7,7 @@ type DemoSeed = {
   tags: [string, string];
   description: string;
   sector: string;
+  staticMapPreviewCoordinates?: { lat: number; lng: number };
 };
 
 type ProductSeed = { kind: "product"; name: string; description: string; price: number };
@@ -42,7 +43,7 @@ const seeds: DemoSeed[] = [
   { id: "esencia-cuidado", name: "Esencia Cuidado Personal", category: "Belleza y cuidado personal", tags: ["Cuidado personal", "Belleza"], description: "Productos y servicios para acompañar tus rutinas de cuidado.", sector: "Las Flores" },
   { id: "sazon-treinta", name: "Sazón de la 30", category: "Restaurantes", tags: ["Almuerzos", "Comida casera"], description: "Platos caseros y almuerzos preparados con sabores del Valle.", sector: "Centro" },
   { id: "farmacia-treinta-tres", name: "Farmacia La 33", category: "Droguerías", tags: ["Cuidado personal", "Bienestar"], description: "Productos de cuidado personal y artículos para el bienestar diario.", sector: "El Prado" },
-  { id: "ferreteria-martillo", name: "Ferretería El Martillo", category: "Ferreterías", tags: ["Herramientas", "Materiales"], description: "Herramientas y materiales para reparaciones y proyectos en casa.", sector: "Las Mercedes" },
+  { id: "ferreteria-martillo", name: "Ferretería El Martillo", category: "Ferreterías", tags: ["Herramientas", "Materiales"], description: "Herramientas y materiales para reparaciones y proyectos en casa.", sector: "Las Mercedes", staticMapPreviewCoordinates: { lat: 3.5394, lng: -76.3036 } },
   { id: "rodar-motos", name: "Rodar Taller de Motos", category: "Talleres", tags: ["Motos", "Mecánica"], description: "Mecánica y mantenimiento para que tu moto siga rodando.", sector: "Colombia" },
   { id: "barberia-plaza", name: "Barbería La Plaza", category: "Barberías", tags: ["Corte", "Barba"], description: "Cortes clásicos y actuales en un ambiente relajado.", sector: "Centro" },
   { id: "tecno-accesorios", name: "Tecno Accesorios", category: "Tecnología", tags: ["Celulares", "Accesorios"], description: "Accesorios y soluciones para tus dispositivos y equipos.", sector: "Centro" },
@@ -253,6 +254,7 @@ export const demoBusinesses: Business[] = seeds.map((seed, index) => {
     image: `https://images.unsplash.com/${categoryImages[seed.category] ?? "photo-1486406146926-c627a92ad1ab"}?auto=format&fit=crop&w=900&q=85`,
     tags: seed.tags,
     description: seed.description,
+    ...(import.meta.env.DEV && seed.staticMapPreviewCoordinates ? { staticMapPreviewCoordinates: seed.staticMapPreviewCoordinates } : {}),
     ...(demoContacts[seed.id] ?? {}),
     ...(plan ? { plan } : {}),
     ...(newSeedDates.has(index) ? { createdAt: newSeedDates.get(index) } : {}),

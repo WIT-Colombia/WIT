@@ -36,8 +36,9 @@ export async function sendVerificationRequest(emailNormalized: string): Promise<
   await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName);
 }
 
-export async function confirmEmail(token: string): Promise<void> {
-  await prisma.$transaction((transaction) => consumeVerificationToken(transaction, token));
+export async function confirmEmail(token: string): Promise<string> {
+  const record = await prisma.$transaction((transaction) => consumeVerificationToken(transaction, token));
+  return record.userId;
 }
 
 export async function sendPasswordResetRequest(emailNormalized: string): Promise<void> {

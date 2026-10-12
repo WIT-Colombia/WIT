@@ -12,10 +12,10 @@ export type EmailBrand = {
 const brands: Record<EmailApplication, EmailBrand> = {
   usuario: {
     application: 'usuario',
-    name: 'WIT Usuarios',
-    primary: '#16B978',
-    primaryDark: '#0C8F5B',
-    primaryLight: '#DDF7EC',
+    name: 'XAMUKO',
+    primary: '#7B3FFB',
+    primaryDark: '#5F2DD7',
+    primaryLight: '#EEE9FF',
   },
   negocios: {
     application: 'negocios',

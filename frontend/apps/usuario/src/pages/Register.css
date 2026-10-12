@@ -17,3 +17,45 @@
 .register-brand{display:inline-flex!important;align-items:center;gap:12px}.register-brand>span{padding-left:12px;border-left:1px solid var(--wit-border);color:var(--wit-text-secondary);font-size:13px;font-weight:400}
 .password-field{position:relative;display:flex;align-items:center}.password-field input{width:100%;padding-right:42px}.password-visibility{position:absolute;right:8px;display:grid;width:30px;height:30px;place-items:center;padding:0;border:0;border-radius:6px;background:transparent;color:var(--wit-text-secondary);cursor:pointer}.password-visibility:hover{background:var(--wit-background);color:var(--wit-primary-dark)}.password-visibility svg{width:18px;height:18px}
 @media(max-width:600px){.register-brand{gap:0}.register-brand>span{display:none}}
+
+/* XAMUKO identity for account access */
+.register-page{background:linear-gradient(145deg,#f8faff 0%,#fff 52%,#f4f8ff 100%);color:var(--xamuko-navy)}
+.register-shell{position:relative;gap:clamp(42px,7vw,96px);width:min(calc(100% - 40px),1120px);margin:clamp(34px,7vh,76px) auto}
+.register-shell::before{position:absolute;z-index:0;top:-80px;left:-130px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#7b3ffb1a 0%,transparent 70%);content:"";pointer-events:none}
+.register-side-panel,.register-shell .register-panel{position:relative;z-index:1}
+.register-side-panel{width:min(100%,440px);padding:22px 0}
+.register-side-eyebrow{color:var(--xamuko-violet);font-size:10px;letter-spacing:.16em}
+.register-side-panel h2{max-width:430px;margin:14px 0 16px;color:var(--xamuko-navy);font-size:clamp(32px,4vw,50px);letter-spacing:-2px;line-height:1.05}
+.register-side-panel>p{max-width:390px;color:var(--xamuko-muted);font-size:15px;line-height:1.7}
+.register-side-panel ul{gap:12px;margin-top:30px}.register-side-panel li>span{width:36px;height:36px;border-radius:12px;background:#eee9ff;color:var(--xamuko-violet)}.register-side-panel li b{color:var(--xamuko-navy);font-size:12px}.register-side-panel li small{color:var(--xamuko-muted);font-size:11px}
+.register-shell .register-panel{width:min(100%,490px);margin:0;padding:34px;border:1px solid #e2e8f0;border-radius:24px;background:rgba(255,255,255,.94);box-shadow:0 20px 60px rgba(42,35,115,.1)}
+.register-panel h1{margin:0 0 10px;color:var(--xamuko-navy);font-size:32px;letter-spacing:-1px}.register-panel>p{margin-bottom:16px;color:var(--xamuko-muted);font-size:13px;line-height:1.55}
+.register-social-options{gap:9px}.register-provider-button{min-height:46px;border-color:#e2e8f0;border-radius:12px;background:#fff;color:var(--xamuko-navy);font-size:12px;transition:border-color .2s,box-shadow .2s,transform .2s}.register-provider-button:hover{border-color:#cfc2ff;background:#fff;box-shadow:0 5px 15px #7b3ffb14;transform:translateY(-1px)}
+.register-divider{margin:19px 0;color:var(--xamuko-muted)}
+.register-panel form{gap:14px}.register-panel label{color:var(--xamuko-navy);font-size:11px}.register-panel input{min-height:46px;border-color:#dfe4ef;border-radius:12px;background:#fbfcff;color:var(--xamuko-navy);font-size:13px}.register-panel input:focus{border-color:var(--xamuko-violet);outline:0;box-shadow:0 0 0 4px #7b3ffb1c;background:#fff}
+.register-submit{min-height:48px;border-radius:12px;background:var(--xamuko-gradient);box-shadow:0 9px 20px #5731dc2b;font-size:13px}.register-submit:hover{background:linear-gradient(110deg,#6c2ff1,#1f58d2);box-shadow:0 12px 24px #5731dc3b}
+.register-panel form>button.register-submit{border:0;background:var(--xamuko-gradient);color:#fff;box-shadow:0 9px 20px #5731dc2b}.register-panel form>button.register-submit:hover{background:linear-gradient(110deg,#6c2ff1,#1f58d2);color:#fff;box-shadow:0 12px 24px #5731dc3b}
+.register-mode-switch{margin-top:16px;color:var(--xamuko-violet);font-size:11px}.register-forgot-link{margin-top:15px}.register-legal-check a{color:var(--xamuko-violet)}
+@media(max-width:800px){.register-shell{width:100%;margin:28px auto}.register-shell::before{top:-70px;left:-100px;width:230px;height:230px}.register-shell .register-panel{width:min(calc(100% - 32px),490px);padding:27px 22px;border-radius:21px}.register-panel h1{font-size:28px}}
+@media(max-width:420px){.register-shell .register-panel{padding:24px 18px}.register-panel h1{font-size:26px}.register-panel>p{font-size:12px}.register-provider-button{min-height:44px}}
+.register-panel input[type="email"]{min-height:50px;border-color:#d8ccff;border-radius:14px;background:#faf9ff;color:var(--xamuko-navy);box-shadow:inset 0 1px 0 #fff}
+.register-panel input[type="email"]:focus{border-color:var(--xamuko-violet);box-shadow:0 0 0 4px #7b3ffb1c;background:#fff}
+.register-shell .register-panel{box-sizing:border-box;max-width:100%;}
+
+/* Responsive containment: the shared header must not widen the auth page. */
+.register-page{width:100%;max-width:100%;overflow-x:visible}
+.register-page .site-header{min-width:0}
+.register-page .site-header .brand{min-width:0;flex:1 1 auto}
+.register-page .site-header .brand-logo{max-width:100%}
+.register-page .site-header .location-pill{min-width:0;flex:0 1 auto}
+.register-page .site-header .location-pill>span:nth-child(2){min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:800px){
+  .register-shell{display:grid;place-items:center;width:100%;max-width:100%;padding-inline:16px}
+  .register-shell .register-panel{width:100%;max-width:490px;margin-inline:auto}
+}
+@media(max-width:1100px){
+  .register-shell{display:grid;place-items:center;width:100%;max-width:100%;padding-inline:16px}
+  .register-side-panel{display:none}
+  .register-shell .register-panel{width:100%;max-width:490px;margin-inline:auto}
+}
+@media(max-width:700px){.register-page .site-header .brand-logo{width:clamp(112px,40vw,143px)}}

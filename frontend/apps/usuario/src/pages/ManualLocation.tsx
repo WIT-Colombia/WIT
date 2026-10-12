@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Button, Logo } from "@wit/ui";
+import { Button } from "@wit/ui";
 import type { Department, Locality } from "../data/locations";
-import { getSelectedLocation, saveSelectedLocation } from "../services/locationService";
 import { getColombianAdministrativeDivisions } from "../services/administrativeDivisionService";
+import { useLocationContext } from "../context/LocationContext";
+import { SiteHeader } from "../components/SiteHeader";
 import "./ManualLocation.css";
+import "../components/PageLayout.css";
 
 function SearchIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>;
@@ -16,15 +18,18 @@ function PinIcon() {
 
 export default function ManualLocation() {
   const navigate = useNavigate();
+  const { selection, setManualLocation, requestAutomaticLocation, isRequesting } = useLocationContext();
   const [params] = useSearchParams();
   const returnTo = params.get("returnTo") || "/home";
-  const current = getSelectedLocation();
+  const current = selection?.mode === "manual" ? selection.locality : null;
   const catalog = getColombianAdministrativeDivisions();
   const [departments] = useState<Department[]>(catalog.departments);
   const [municipalities] = useState<Locality[]>(catalog.municipalities);
   const [departmentCode, setDepartmentCode] = useState(current?.departmentCode ?? "");
   const [municipalityId, setMunicipalityId] = useState(current?.id ?? "");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(current?.name ?? "");
+  const [showMunicipalityOptions, setShowMunicipalityOptions] = useState(false);
+  const [automaticError, setAutomaticError] = useState(false);
 
   useEffect(() => {
     if (!current) return;
@@ -33,8 +38,9 @@ export default function ManualLocation() {
     if (saved) {
       setDepartmentCode(saved.departmentCode);
       setMunicipalityId(saved.id);
+      setQuery(saved.name);
     }
-  }, []);
+  }, [current, municipalities]);
 
   const selectedDepartment = departments.find((department) => department.code === departmentCode);
   const departmentMunicipalities = useMemo(() => municipalities.filter((municipality) => municipality.departmentCode === departmentCode), [municipalities, departmentCode]);
@@ -49,27 +55,46 @@ export default function ManualLocation() {
     setDepartmentCode(code);
     setMunicipalityId("");
     setQuery("");
+    setShowMunicipalityOptions(false);
+  }
+
+  function changeMunicipalityQuery(value: string) {
+    setQuery(value);
+    setShowMunicipalityOptions(value.trim().length > 0);
+    if (selectedMunicipality && value.trim().toLocaleLowerCase("es-CO") !== selectedMunicipality.name.toLocaleLowerCase("es-CO")) {
+      setMunicipalityId("");
+    }
+  }
+
+  function selectMunicipality(municipality: Locality) {
+    setMunicipalityId(municipality.id);
+    setQuery(municipality.name);
+    setShowMunicipalityOptions(false);
   }
 
   function continueWithLocation() {
     if (!selectedMunicipality) return;
-    saveSelectedLocation(selectedMunicipality);
+    setManualLocation(selectedMunicipality);
     navigate(returnTo);
   }
 
+  function useCurrentLocation() {
+    setAutomaticError(false);
+    void requestAutomaticLocation().then(() => navigate(returnTo)).catch(() => setAutomaticError(true));
+  }
+
   return <main className="manual-location-page">
-    <header className="manual-location-header">
-      <Link className="manual-location-back" to="/location"><span aria-hidden="true">←</span> Volver</Link>
-      <Link className="manual-location-logo" to="/home" aria-label="WIT, inicio"><Logo /></Link>
-      <Link className="manual-location-skip" to="/home">Ir a Inicio</Link>
-    </header>
+    <SiteHeader />
 
     <section className="manual-location-content" aria-labelledby="manual-location-title">
+      <button className="manual-location-back" type="button" onClick={() => navigate(-1)}><span aria-hidden="true">←</span> Volver</button>
       <div className="manual-location-heading">
         <span className="manual-location-eyebrow"><i /> TODA COLOMBIA</span>
         <h1 id="manual-location-title">¿En qué ciudad<br/><em>estás buscando?</em></h1>
-        <p>Elige primero un departamento y luego tu ciudad o municipio. Si quieres afinar más la búsqueda, podrás usar tu ubicación o explorar el mapa.</p>
+        <p>Selecciona un departamento y luego tu ciudad o municipio. También puedes usar tu ubicación o explorar el mapa.</p>
       </div>
+
+      <div className="national-location-refine"><div><b>¿Quieres una búsqueda más precisa?</b><span>Usa tu ubicación actual o elige un punto en el mapa.</span>{automaticError && <small role="status">Permite el acceso a tu ubicación en el aviso del navegador y vuelve a intentarlo.</small>}</div><div><button className="national-location-auto-link" type="button" disabled={isRequesting} onClick={useCurrentLocation}><PinIcon/> {isRequesting ? "Solicitando permiso…" : "Usar mi ubicación"}</button><Link to="/location/map">Explorar en el mapa <span aria-hidden="true">↗</span></Link></div></div>
 
       <div className="national-location-form">
         <label className="national-location-field" htmlFor="department-select"><span>1</span><span className="national-location-field__label">Departamento</span>
@@ -81,9 +106,9 @@ export default function ManualLocation() {
 
         <div className={`national-location-field${!departmentCode ? " is-disabled" : ""}`}>
           <label htmlFor="municipality-search"><span>2</span><span className="national-location-field__label">Ciudad o municipio</span></label>
-          <div className="manual-location-search national-location-search"><SearchIcon/><input id="municipality-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={departmentCode ? "Escribe para encontrar tu ciudad" : "Primero selecciona el departamento"} autoComplete="off" disabled={!departmentCode}/>{query && <button type="button" aria-label="Borrar búsqueda" onClick={() => setQuery("")}>×</button>}</div>
-          {departmentCode && <div className="national-location-options" role="listbox" aria-label="Ciudades y municipios disponibles">
-            {visibleMunicipalities.length ? visibleMunicipalities.map((municipality) => <button key={municipality.id} type="button" role="option" aria-selected={municipality.id === municipalityId} className={`national-location-option${municipality.id === municipalityId ? " is-selected" : ""}`} onClick={() => setMunicipalityId(municipality.id)}><span className="manual-location-option__icon"><PinIcon/></span><span className="manual-location-option__copy"><b>{municipality.name}</b><small>{municipality.kind}</small></span>{municipality.id === municipalityId ? <span className="manual-location-option__current">Elegida</span> : <span className="manual-location-option__arrow" aria-hidden="true">→</span>}</button>) : <p className="national-location-no-results">No encontramos coincidencias en {selectedDepartment?.name}. Prueba con otro nombre.</p>}
+          <div className="manual-location-search national-location-search"><SearchIcon/><input id="municipality-search" type="search" value={query} onChange={(event) => changeMunicipalityQuery(event.target.value)} placeholder={departmentCode ? "Escribe para encontrar tu ciudad" : "Primero selecciona el departamento"} autoComplete="off" disabled={!departmentCode}/></div>
+          {departmentCode && showMunicipalityOptions && <div className="national-location-options" role="listbox" aria-label="Ciudades y municipios disponibles">
+            {visibleMunicipalities.length ? visibleMunicipalities.map((municipality) => <button key={municipality.id} type="button" role="option" aria-selected={municipality.id === municipalityId} className={`national-location-option${municipality.id === municipalityId ? " is-selected" : ""}`} onClick={() => selectMunicipality(municipality)}><span className="manual-location-option__icon"><PinIcon/></span><span className="manual-location-option__copy"><b>{municipality.name}</b><small>{municipality.kind}</small></span>{municipality.id === municipalityId ? <span className="manual-location-option__current">Elegida</span> : <span className="manual-location-option__arrow" aria-hidden="true">→</span>}</button>) : <p className="national-location-no-results">No encontramos coincidencias en {selectedDepartment?.name}. Prueba con otro nombre.</p>}
           </div>}
         </div>
 
@@ -91,9 +116,8 @@ export default function ManualLocation() {
         <Button className="national-location-continue" type="button" disabled={!selectedMunicipality} onClick={continueWithLocation}><span>Continuar con esta ciudad</span><span className="national-location-continue__arrow" aria-hidden="true">→</span></Button>
       </div>
 
-      <div className="national-location-refine"><div><b>¿Quieres una búsqueda más precisa?</b><span>Usa tu ubicación actual o explora los lugares en el mapa.</span></div><div><Link to="/location"><PinIcon/> Usar mi ubicación</Link><Link to="/home?view=map#lugares">Explorar en el mapa <span aria-hidden="true">↗</span></Link></div></div>
     </section>
 
-    <footer className="manual-location-footer"><span><Logo/><i/> Elige dónde quieres descubrir.</span><Link to="/location">Usar mi ubicación</Link></footer>
+    <footer className="site-footer"><strong className="site-footer__brand">XAMUKO</strong><span>Lo que necesitas, está más cerca.</span><small>© 2026 XAMUKO · Palmira, Colombia</small></footer>
   </main>;
 }

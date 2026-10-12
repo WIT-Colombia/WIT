@@ -10,3 +10,29 @@
 .location-availability-notice__secondary { color:var(--wit-primary-dark); font-size:13px; font-weight:600; text-decoration:none; }
 .location-availability-notice__secondary:hover { text-decoration:underline; }
 @media(max-width:600px) { .location-availability-notice { gap:12px; padding:17px; }.location-availability-notice__icon { flex-basis:36px; width:36px; height:36px; font-size:21px; }.location-availability-notice h2 { font-size:17px; }.location-availability-notice p { font-size:13px; }.location-availability-notice__actions { align-items:flex-start; flex-direction:column; gap:12px; } }
+
+/* XAMUKO: acciones inferiores cuando aún no hay resultados en la zona */
+.location-availability-notice {
+  border-color: #d8ccff;
+  background: linear-gradient(145deg, #fff, #fbfaff 60%, #f1fbff);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, .06);
+}
+.location-availability-notice__icon {
+  background: linear-gradient(145deg, #eee7ff, #e8f8ff);
+  color: var(--xamuko-violet);
+}
+.location-availability-notice__copy>span { color: var(--xamuko-violet); }
+.location-availability-notice h2 { color: var(--xamuko-navy); }
+.location-availability-notice p { color: var(--xamuko-muted); }
+.location-availability-notice__primary {
+  border-radius: 999px;
+  background: linear-gradient(110deg, var(--xamuko-violet), var(--xamuko-blue));
+  box-shadow: 0 7px 18px rgba(123, 63, 251, .18);
+}
+.location-availability-notice__primary:hover {
+  background: linear-gradient(110deg, #6c32e8, #1f56d5);
+}
+.location-availability-notice__secondary {
+  color: var(--xamuko-violet);
+  font-weight: 700;
+}

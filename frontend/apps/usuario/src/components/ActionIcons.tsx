@@ -10,6 +10,11 @@ export function ThumbsDownIcon() {
   return <span className="thumbs-down-icon" aria-hidden="true"><ThumbsUpIcon /></span>;
 }
 
+export function ReviewIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 5.5A3.5 3.5 0 0 1 8.5 2h7A3.5 3.5 0 0 1 19 5.5v4a3.5 3.5 0 0 1-3.5 3.5H11l-4.5 3v-3.8A3.5 3.5 0 0 1 5 9.5v-4Z"/><path d="M9 7.8h.01M12 7.8h.01M15 7.8h.01" strokeWidth="2.6"/>
+  </svg>;
+}
+
 export function BellIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/></svg>;
 }

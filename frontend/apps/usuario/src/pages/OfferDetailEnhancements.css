@@ -4,3 +4,173 @@
 .offer-detail-actions .entity-like.is-active{order:2}
 .offer-business-stars{display:inline-block;background:linear-gradient(90deg,#e9a727 calc(var(--rating, 0) * 1%),#d6ddd9 calc(var(--rating, 0) * 1%));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px}
 .offer-like-count-note{display:block;margin-top:8px;color:var(--wit-text-muted);font-size:10px}
+
+/* Ficha de producto/servicio con la jerarquía visual XAMUKO. */
+.offer-detail-page .user-content-main{padding-top:26px}
+.offer-detail-page{background:var(--xamuko-background)}
+.offer-detail{
+  position:relative;
+  overflow:hidden;
+  gap:clamp(24px,4vw,54px);
+  padding:clamp(14px,2.4vw,24px);
+  border:1px solid var(--xamuko-border);
+  border-radius:28px;
+  background:var(--xamuko-white);
+  box-shadow:0 18px 50px rgba(15,23,42,.07);
+}
+.offer-detail::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  width:48%;
+  height:4px;
+  background:var(--xamuko-gradient);
+}
+.offer-detail-image{
+  min-height:460px;
+  border-radius:22px;
+  background:#e9e5ff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+}
+.offer-detail-image::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(15,23,42,.05) 45%,rgba(15,23,42,.3));
+  pointer-events:none;
+}
+.offer-detail-image img{z-index:0}
+.offer-detail-image span{
+  z-index:1;
+  top:18px;
+  left:18px;
+  padding:8px 12px;
+  border:1px solid rgba(255,255,255,.72);
+  background:rgba(255,255,255,.92);
+  color:var(--xamuko-violet);
+  font-size:10px;
+  letter-spacing:.04em;
+  box-shadow:0 6px 18px rgba(15,23,42,.12);
+}
+.offer-detail-copy{position:relative;padding:16px 12px 14px}
+.offer-detail-label{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#f0ebff;
+  color:var(--xamuko-violet);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+.offer-detail-copy h1{
+  margin:14px 0 10px;
+  color:var(--xamuko-navy);
+  font-size:clamp(30px,4vw,48px);
+  line-height:1.05;
+  letter-spacing:-1.5px;
+}
+.offer-detail-copy>p{max-width:520px;margin:0;color:var(--xamuko-muted);font-size:15px;line-height:1.65}
+.offer-detail-price{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  margin:22px 0 18px;
+  color:var(--xamuko-navy);
+  font-size:24px;
+  letter-spacing:-.4px;
+}
+.offer-business-card{
+  gap:13px;
+  padding:13px;
+  border:1px solid var(--xamuko-border);
+  border-radius:16px;
+  background:#fbfcff;
+  transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease;
+}
+.offer-business-card:hover{border-color:#cfc1ff;box-shadow:0 10px 24px rgba(123,63,251,.1);transform:translateY(-1px)}
+.offer-business-card img{width:52px;height:52px;border-radius:12px}
+.offer-business-card small{color:var(--xamuko-muted);font-size:8px}
+.offer-business-card b{color:var(--xamuko-navy);font-size:13px}
+.offer-business-card em{color:var(--xamuko-muted);font-size:11px}
+.offer-business-card i{color:var(--xamuko-violet);font-size:20px}
+.offer-business-rating{margin:18px 0 4px}
+.offer-business-stars{font-size:21px}
+.offer-business-rating b{color:var(--xamuko-navy)}
+.offer-detail-actions{gap:12px;margin-top:18px}
+.offer-detail-primary{
+  min-height:48px;
+  padding:0 18px;
+  border-radius:13px;
+  background:var(--xamuko-gradient);
+  box-shadow:0 10px 22px rgba(91,62,222,.2);
+  font-size:12px;
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+.offer-detail-primary:hover{transform:translateY(-1px);box-shadow:0 13px 26px rgba(91,62,222,.28)}
+.offer-detail-actions .entity-action{
+  width:48px;
+  height:48px;
+  border:1px solid #d8ccff;
+  background:#fff;
+  color:var(--xamuko-violet);
+}
+.offer-detail-actions .entity-action:hover,.offer-detail-actions .entity-action.is-active{border-color:var(--xamuko-violet);background:#f0ebff;color:var(--xamuko-violet)}
+.offer-like-count{color:var(--xamuko-muted);font-size:11px}
+.offer-like-count.is-active{color:var(--xamuko-violet);font-weight:700}
+.offer-like-count-note{margin-top:9px;color:var(--xamuko-muted);font-size:10px}
+.offer-detail-report{margin-top:18px;color:#94a3b8;font-size:10px;transition:color .2s ease}
+.offer-detail-report:hover{color:var(--xamuko-violet)}
+
+@media(max-width:750px){
+  .offer-detail-page .user-content-main{width:calc(100% - 28px);padding-top:18px}
+  .offer-detail{gap:18px;padding:10px;border-radius:22px;box-shadow:0 12px 32px rgba(15,23,42,.06)}
+  .offer-detail::before{width:70%;height:3px}
+  .offer-detail-image{min-height:270px;border-radius:17px}
+  .offer-detail-image span{top:12px;left:12px;padding:7px 10px}
+  .offer-detail-copy{padding:5px 5px 9px}
+  .offer-detail-copy h1{margin:11px 0 8px;font-size:30px;letter-spacing:-.9px}
+  .offer-detail-copy>p{font-size:13px;line-height:1.55}
+  .offer-detail-price{margin:16px 0 14px;font-size:21px}
+  .offer-business-card{padding:11px}
+  .offer-business-rating{margin:15px 0 2px}
+  .offer-detail-actions{flex-wrap:wrap;gap:9px}
+  .offer-detail-primary{flex:1;justify-content:center;min-height:46px;padding:0 12px}
+  .offer-detail-actions .entity-action{width:46px;height:46px}
+  .offer-detail-actions .offer-like-count{margin-right:2px}
+}
+
+/* Navegación de retorno con el lenguaje visual XAMUKO. */
+.offer-detail-back{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  width:max-content;
+  min-height:36px;
+  margin-bottom:18px;
+  padding:0 13px;
+  border:1px solid #ddd4ff;
+  border-radius:999px;
+  background:#fff;
+  color:var(--xamuko-violet);
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+  text-decoration:none;
+  box-shadow:0 5px 14px rgba(123,63,251,.08);
+}
+.offer-detail-back:hover,
+.offer-detail-back:focus-visible{
+  border-color:#c8b8ff;
+  background:#f7f4ff;
+  color:#6330db;
+  box-shadow:0 7px 18px rgba(123,63,251,.14);
+  transform:translateX(-1px);
+}
+.offer-detail-back:focus-visible{outline:3px solid rgba(34,211,238,.28);outline-offset:2px}
+@media(max-width:600px){
+  .offer-detail-back{min-height:34px;margin-bottom:14px;padding:0 11px;font-size:10px}
+}

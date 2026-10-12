@@ -1,10 +1,9 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Home from "./pages/Home";
-import Location from "./pages/Location";
 import ManualLocation from "./pages/ManualLocation";
-import Welcome from "./pages/Welcome";
-import Search from "./pages/Search";
+import Location from "./pages/Location";
+import LocationMap from "./pages/LocationMap";
 import Results from "./pages/Results";
 import MapPage from "./pages/Map";
 import Filters from "./pages/Filters";
@@ -40,14 +39,26 @@ function ScrollToTop() {
   return null;
 }
 
+function SearchRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/home${location.search}`} replace />;
+}
+
+function ManualLocationRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/location${location.search}${location.hash}`} replace />;
+}
+
 export default function App() {
   return <><ScrollToTop /><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
-    <Route path="/welcome" element={<Welcome />} />
-    <Route path="/location" element={<Location />} />
-    <Route path="/location/manual" element={<ManualLocation />} />
-    <Route path="/search" element={<Search />} />
+    <Route path="/welcome" element={<Navigate to="/home" replace />} />
+    <Route path="/location" element={<ManualLocation />} />
+    <Route path="/location/automatic" element={<Location />} />
+    <Route path="/location/map" element={<LocationMap />} />
+    <Route path="/location/manual" element={<ManualLocationRedirect />} />
+    <Route path="/search" element={<SearchRedirect />} />
     <Route path="/results" element={<Results />} />
     <Route path="/map" element={<MapPage />} />
     <Route path="/filters" element={<Filters />} />

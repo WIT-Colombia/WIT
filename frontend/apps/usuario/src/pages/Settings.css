@@ -34,3 +34,39 @@
 .settings-saved-message{margin-top:10px!important;margin-left:0!important}
 @media(max-width:620px){.settings-sections{width:100%}.settings-panel{padding:16px}.settings-account-fields,.settings-account-actions{max-width:none}}
 .settings-account-fields input[readonly]{background:#f0f3f1;color:var(--wit-text-muted);cursor:not-allowed}
+
+/* XAMUKO visual system for Ajustes. */
+.settings-page{background:var(--xamuko-background)}
+.settings-page .user-content-main{width:min(100% - 48px,960px);padding-top:34px}
+.settings-page .settings-profile-link{display:inline-flex;align-items:center;min-height:34px;margin:0 0 24px;padding:0 13px;border:1px solid #ddd2ff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font-size:11px;font-weight:700;text-decoration:none;box-shadow:0 5px 16px rgba(123,63,251,.08);transition:background .2s ease,transform .2s ease}
+.settings-page .settings-profile-link:hover{background:#f4efff;text-decoration:none;transform:translateY(-1px)}
+.settings-page .user-page-heading{margin-bottom:23px}
+.settings-page .user-page-heading>span{display:block;margin-bottom:7px;color:var(--xamuko-violet);font-size:11px;font-weight:700;letter-spacing:.02em}
+.settings-page .user-page-heading h1{margin:0;color:var(--xamuko-navy);font-size:clamp(30px,4vw,40px);font-weight:800;letter-spacing:-1.2px}
+.settings-page .user-page-heading p{margin-top:7px;color:var(--xamuko-muted);font-size:13px}
+.settings-page .settings-sections{width:min(100%,900px);gap:14px}
+.settings-page .settings-panel{border:1px solid var(--xamuko-border);border-radius:18px;background:#fff;box-shadow:0 9px 24px rgba(15,23,42,.045)}
+.settings-page .settings-panel h2{color:var(--xamuko-navy);font-size:16px;font-weight:800}
+.settings-page .settings-account-fields label{color:var(--xamuko-navy);font-size:11px}
+.settings-page .settings-account-fields label small{color:var(--xamuko-muted)}
+.settings-page .settings-account-fields input{border-color:var(--xamuko-border);border-radius:10px;color:var(--xamuko-navy);transition:border-color .2s ease,box-shadow .2s ease}
+.settings-page .settings-account-fields input:focus{border-color:var(--xamuko-violet);box-shadow:0 0 0 3px rgba(123,63,251,.12);outline:0}
+.settings-page .settings-account-fields input[readonly]{background:#f1f5f9;color:#94a3b8}
+.settings-page .settings-account-actions .settings-save-button{background:var(--xamuko-gradient);box-shadow:0 6px 15px rgba(123,63,251,.2);transition:transform .2s ease,box-shadow .2s ease}
+.settings-page .settings-account-actions .settings-save-button:hover{box-shadow:0 9px 20px rgba(123,63,251,.28);transform:translateY(-1px)}
+.settings-page .settings-account-actions .settings-password-link,.settings-page .settings-account-actions .settings-legal-button{border-color:#ddd2ff;background:#fff;color:var(--xamuko-violet)}
+.settings-page .settings-account-actions .settings-password-link:hover,.settings-page .settings-account-actions .settings-legal-button:hover{border-color:#b9a2ff;background:#f7f3ff}
+.settings-page .settings-row{border-bottom:0}
+.settings-page .settings-row b{color:var(--xamuko-navy);font-size:13px}
+.settings-page .settings-row small{color:var(--xamuko-muted);font-size:10px}
+.settings-page .settings-row input{accent-color:var(--xamuko-violet)}
+.settings-page .settings-notification-panel{min-height:84px}
+.settings-page .settings-saved-message{border:1px solid #b9eedf;border-radius:9px;background:#ecfffa;color:#087d67!important;padding:8px 11px;font-size:10px}
+
+@media(max-width:700px){
+ .settings-page .user-content-main{width:calc(100% - 32px);padding-top:22px}
+ .settings-page .settings-profile-link{margin-bottom:19px}
+ .settings-page .user-page-heading{margin-bottom:18px}
+ .settings-page .user-page-heading h1{font-size:30px;letter-spacing:-.8px}
+ .settings-page .settings-panel{border-radius:15px;padding:16px}
+}

@@ -10,7 +10,7 @@ test('confirmation uses POST and profile refresh reads the verified state', asyn
   let verified = false;
   globalThis.fetch = async (path, init) => {
     requests.push({ path: String(path), method: init?.method, body: init?.body });
-    if (String(path).endsWith('/confirm')) { verified = true; return new Response(null, { status: 204 }); }
+    if (String(path).endsWith('/confirm')) { verified = true; return Response.json({ user: { id: 'user-1' }, accessToken: 'access-token', autoLogin: true }); }
     return Response.json({ user: { id: 'fake-user', emailVerified: verified } });
   };
   try {

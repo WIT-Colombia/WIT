@@ -5,6 +5,7 @@ import type { Request, Response } from 'express';
 import { env } from '../../config/env.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
+import { type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
 
 const GOOGLE_STATE_COOKIE = 'wit_google_oauth_state';
 const GOOGLE_STATE_PATH = '/api/v1/auth/google';
@@ -30,6 +31,17 @@ export type GoogleProfile = {
   displayName: string;
   avatarUrl: string | null;
 };
+
+export class GoogleOAuthDiagnosticError extends Error {
+  constructor(
+    public readonly stage: GoogleDiagnosticStage,
+    public readonly category: GoogleDiagnosticCategory,
+    public readonly publicError: unknown,
+  ) {
+    super('Google OAuth operation failed');
+    this.name = 'GoogleOAuthDiagnosticError';
+  }
+}
 
 function requireGoogleConfig(): { clientId: string; clientSecret: string; redirectUri: string } {
   if (!env.googleClientId || !env.googleClientSecret) {
@@ -109,10 +121,16 @@ export function createGoogleAuthorization(requested: { flow: GoogleFlow; returnT
 
 async function exchangeCode(code: string, state: GoogleState): Promise<string> {
   const { clientId, clientSecret, redirectUri } = requireGoogleConfig();
-  const response = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ code, client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri, grant_type: 'authorization_code', code_verifier: state.verifier }) });
-  if (!response.ok) throw new AppError(502, 'GOOGLE_PROVIDER_ERROR', 'No se pudo completar la autenticación con Google.');
-  const body = await response.json() as { id_token?: unknown };
-  if (typeof body.id_token !== 'string') throw new AppError(502, 'GOOGLE_PROVIDER_ERROR', 'No se pudo completar la autenticación con Google.');
+  let response: globalThis.Response;
+  try {
+    response = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ code, client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri, grant_type: 'authorization_code', code_verifier: state.verifier }) });
+  } catch (error) {
+    throw new GoogleOAuthDiagnosticError('code_exchange', 'provider_unavailable', error);
+  }
+  if (!response.ok) throw new GoogleOAuthDiagnosticError('code_exchange', 'provider_rejected', new AppError(502, 'GOOGLE_PROVIDER_ERROR', 'No se pudo completar la autenticación con Google.'));
+  let body: { id_token?: unknown };
+  try { body = await response.json() as { id_token?: unknown }; } catch (error) { throw new GoogleOAuthDiagnosticError('code_exchange', 'provider_response_invalid', error); }
+  if (typeof body.id_token !== 'string') throw new GoogleOAuthDiagnosticError('code_exchange', 'provider_response_invalid', new AppError(502, 'GOOGLE_PROVIDER_ERROR', 'No se pudo completar la autenticación con Google.'));
   return body.id_token;
 }
 
@@ -123,11 +141,12 @@ function claimString(payload: JWTPayload, key: string): string | undefined {
 export async function verifyGoogleCode(code: string, state: GoogleState): Promise<GoogleProfile> {
   const { clientId } = requireGoogleConfig();
   const idToken = await exchangeCode(code, state);
-  const verified = await jwtVerify(idToken, googleKeys, { issuer: GOOGLE_ISSUERS, audience: clientId });
-  if (verified.payload.nonce !== state.nonce || verified.payload.email_verified !== true) throw new AppError(401, 'GOOGLE_IDENTITY_INVALID', 'No se pudo verificar la cuenta de Google.');
+  let verified: Awaited<ReturnType<typeof jwtVerify>>;
+  try { verified = await jwtVerify(idToken, googleKeys, { issuer: GOOGLE_ISSUERS, audience: clientId }); } catch (error) { throw new GoogleOAuthDiagnosticError('id_token_validation', 'token_invalid', error); }
+  if (verified.payload.nonce !== state.nonce || verified.payload.email_verified !== true) throw new GoogleOAuthDiagnosticError('id_token_validation', 'token_invalid', new AppError(401, 'GOOGLE_IDENTITY_INVALID', 'No se pudo verificar la cuenta de Google.'));
   const subject = claimString(verified.payload, 'sub');
   const email = claimString(verified.payload, 'email')?.trim().toLocaleLowerCase('en-US');
-  if (!subject || !email) throw new AppError(401, 'GOOGLE_IDENTITY_INVALID', 'No se pudo verificar la cuenta de Google.');
+  if (!subject || !email) throw new GoogleOAuthDiagnosticError('id_token_validation', 'token_invalid', new AppError(401, 'GOOGLE_IDENTITY_INVALID', 'No se pudo verificar la cuenta de Google.'));
   return { subject, email, displayName: claimString(verified.payload, 'name')?.trim() || email.split('@')[0], avatarUrl: claimString(verified.payload, 'picture') ?? null };
 }
 

@@ -29,10 +29,10 @@ export default function VerifyEmail() {
     if (inFlight.current) return;
     inFlight.current = true;
     confirmEmail(token)
-      .then(async () => {
+      .then(async (result) => {
         setState("success");
         setMessage("Tu correo se verificó correctamente.");
-        if (isAuthenticated) {
+        if (result.autoLogin || isAuthenticated) {
           try {
             await reloadUser();
             navigate("/profile", { replace: true });
@@ -57,5 +57,11 @@ export default function VerifyEmail() {
     finally { setResending(false); }
   }
 
-  return <main className="recover-page"><SiteHeader active="home" /><div className="recover-layout"><section className="recover-story"><span>SEGURIDAD DE TU CUENTA</span><h1>Confirma que tu correo es tuyo.</h1><p>El enlace se procesa mediante una solicitud segura de un solo uso. Los escáneres que solo leen el enlace no consumen tu token.</p></section><section className="recover-card"><div className="recover-heading"><h2>{state === "loading" ? "Verificando correo" : state === "success" ? "Correo verificado" : pending ? "Verifica tu correo electrónico" : "No pudimos verificarlo"}</h2>{state !== "success" && <p>{message}</p>}</div>{state === "success" && <div className="verification-success" role="status"><span className="verification-success__icon" aria-hidden="true">✓</span><h3>¡Correo verificado correctamente!</h3><p>Tu cuenta de WIT está lista. Inicia sesión para comenzar a explorar</p><Link to="/register?mode=login&next=%2Fprofile">Iniciar sesión</Link></div>}{state === "error" && <form onSubmit={resend} className="recover-form"><label>Correo electrónico<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" placeholder="tu@correo.com" /></label><button type="submit" disabled={resending}>{resending ? "Enviando…" : "Enviar nuevo enlace"}</button>{resent && <p className="recover-status" role="status">Si la cuenta es elegible, recibirás un nuevo enlace.</p>}</form>}<Link className="recover-back" to="/register?mode=login">← Volver a iniciar sesión</Link></section></div></main>;
+  const story = state === "success"
+    ? { eyebrow: "XAMUKO ESTÁ CONTIGO", title: "¡Todo listo para descubrir!", body: "Tu correo electrónico ha sido verificado correctamente. Ahora puedes iniciar sesión en XAMUKO y descubrir negocios, productos y servicios cerca de ti." }
+    : state === "loading"
+      ? { eyebrow: "UN MOMENTO", title: "Estamos verificando tu correo.", body: "En breve podrás continuar descubriendo todo lo que XAMUKO tiene para ti." }
+      : { eyebrow: "ACTIVA TU CUENTA", title: "Completemos la verificación.", body: "Solicita un nuevo enlace para confirmar tu correo y comenzar a usar XAMUKO." };
+
+  return <main className="recover-page"><SiteHeader active="home" /><div className="recover-layout"><section className="recover-story"><span>{story.eyebrow}</span><h1>{story.title}</h1><p>{story.body}</p></section><section className="recover-card"><div className="recover-heading"><h2>{state === "loading" ? "Verificando correo" : state === "success" ? "¡Tu correo está verificado!" : pending ? "Verifica tu correo electrónico" : "No pudimos verificarlo"}</h2>{state !== "success" && <p>{message}</p>}</div>{state === "success" && <div className="verification-success" role="status"><span className="verification-success__icon" aria-hidden="true">✓</span><h3>¡Correo verificado correctamente!</h3><p>Tu cuenta de XAMUKO está lista para comenzar.</p><Link to="/register?mode=login&next=%2Fprofile">Iniciar sesión</Link></div>}{state === "error" && <form onSubmit={resend} className="recover-form"><label>Correo electrónico<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" placeholder="tu@correo.com" /></label><button type="submit" disabled={resending}>{resending ? "Enviando…" : "Enviar nuevo enlace"}</button>{resent && <p className="recover-status" role="status">Si la cuenta es elegible, recibirás un nuevo enlace.</p>}</form>}<Link className="recover-back" to="/register?mode=login">← Volver al inicio de sesión</Link></section></div></main>;
 }

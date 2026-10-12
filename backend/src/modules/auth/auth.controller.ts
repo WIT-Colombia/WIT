@@ -10,6 +10,8 @@ import argon2 from 'argon2';
 import { clearRefreshCookie, getRefreshToken, setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
 import { env } from '../../config/env.js';
 import { createGoogleAuthorization, clearGoogleStateCookie, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode } from './google-oauth.service.js';
+import { createGoogleDiagnostic, logGoogleDiagnostic, type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
+import { GoogleOAuthDiagnosticError } from './google-oauth.service.js';
 
 function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ path: PropertyKey[] }> } } }, value: unknown): T {
   const result = schema.safeParse(value);
@@ -35,7 +37,8 @@ function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; d
 const meta = (request: Parameters<RequestHandler>[0]) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
 
 function googleErrorCode(error: unknown): string {
-  return error instanceof AppError && ['GOOGLE_NOT_CONFIGURED', 'GOOGLE_STATE_INVALID', 'GOOGLE_PROVIDER_ERROR', 'GOOGLE_IDENTITY_INVALID', 'GOOGLE_LINK_REQUIRED', 'GOOGLE_CONSENT_REQUIRED', 'GOOGLE_IDENTITY_IN_USE', 'GOOGLE_EMAIL_IN_USE'].includes(error.code) ? error.code : 'GOOGLE_AUTH_FAILED';
+  const publicError = error instanceof GoogleOAuthDiagnosticError ? error.publicError : error;
+  return publicError instanceof AppError && ['GOOGLE_NOT_CONFIGURED', 'GOOGLE_STATE_INVALID', 'GOOGLE_PROVIDER_ERROR', 'GOOGLE_IDENTITY_INVALID', 'GOOGLE_LINK_REQUIRED', 'GOOGLE_CONSENT_REQUIRED', 'GOOGLE_IDENTITY_IN_USE', 'GOOGLE_EMAIL_IN_USE'].includes(publicError.code) ? publicError.code : 'GOOGLE_AUTH_FAILED';
 }
 
 function googleCallbackUrl(query: Record<string, string>): string {
@@ -63,25 +66,39 @@ export const googleLinkStartController: RequestHandler = (request, response, nex
 
 export const googleCallbackController: RequestHandler = async (request, response) => {
   let stateReturnTo = '/home';
+  let stage: GoogleDiagnosticStage = 'state';
+  let category: GoogleDiagnosticCategory = 'unknown';
   try {
     const state = getGoogleState(request);
     stateReturnTo = state.returnTo;
     const code = typeof request.query.code === 'string' ? request.query.code : '';
-    if (!code) throw new AppError(400, 'GOOGLE_AUTH_CANCELLED', 'La autenticación con Google fue cancelada.');
+    if (!code) { category = 'client_cancelled'; throw new AppError(400, 'GOOGLE_AUTH_CANCELLED', 'La autenticación con Google fue cancelada.'); }
+    stage = 'code_exchange';
     const profile = await verifyGoogleCode(code, state);
     if (state.flow === 'link') {
       const refreshToken = getRefreshToken(request);
       const linkedUserId = refreshToken ? await findSessionUserId(refreshToken) : undefined;
       if (!linkedUserId || linkedUserId !== state.userId) throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
     }
-    const resolved = await resolveGoogleUser(profile, state);
+    stage = 'user_resolution';
+    let resolved: Awaited<ReturnType<typeof resolveGoogleUser>>;
+    try { resolved = await resolveGoogleUser(profile, state); } catch (error) { throw new GoogleOAuthDiagnosticError('user_resolution', error instanceof AppError ? 'application_rejected' : 'database_failure', error); }
     if (state.flow === 'login') {
-      const session = await issueSession(resolved.userId, meta(request));
+      stage = 'session_creation';
+      let session: Awaited<ReturnType<typeof issueSession>>;
+      try { session = await issueSession(resolved.userId, meta(request)); } catch (error) { throw new GoogleOAuthDiagnosticError('session_creation', 'session_failure', error); }
       setRefreshCookie(response, session.refreshToken, state.rememberMe);
     }
     clearGoogleStateCookie(response);
     response.redirect(googleCallbackUrl({ next: safeGoogleReturnTo(state.returnTo), linked: state.flow === 'link' ? '1' : '0' }));
   } catch (error) {
+    if (error instanceof GoogleOAuthDiagnosticError) {
+      stage = error.stage;
+      category = error.category;
+    } else if (error instanceof AppError && error.code === 'GOOGLE_STATE_INVALID') {
+      category = 'state_invalid';
+    }
+    logGoogleDiagnostic(createGoogleDiagnostic(stage, category));
     clearGoogleStateCookie(response);
     response.redirect(googleCallbackUrl({ error: googleErrorCode(error), next: safeGoogleReturnTo(stateReturnTo) }));
   }
@@ -93,7 +110,20 @@ export const refreshController: RequestHandler = async (request, response, next)
 export const logoutController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (token) await logout(token); clearRefreshCookie(response); response.status(204).send(); } catch (error) { next(error); } };
 export const meController: RequestHandler = async (request, response, next) => { try { response.status(200).json({ user: await getCurrentUser((request as AuthenticatedRequest).auth.userId) }); } catch (error) { next(error); } };
 export const requestVerificationController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US')); response.status(202).json({ message: 'Si la cuenta es elegible, recibirás un correo.' }); } catch (error) { next(error); } };
-export const confirmEmailController: RequestHandler = async (request, response, next) => { try { await confirmEmail(parse(emailTokenSchema, request.body).token); response.status(204).send(); } catch (error) { next(error); } };
+export const confirmEmailController: RequestHandler = async (request, response, next) => {
+  try {
+    const userId = await confirmEmail(parse(emailTokenSchema, request.body).token);
+    const user = await getCurrentUser(userId);
+    try {
+      const session = await issueSession(userId, meta(request));
+      setRefreshCookie(response, session.refreshToken, false);
+      response.status(200).json({ user, accessToken: session.accessToken, autoLogin: true });
+    } catch {
+      clearRefreshCookie(response);
+      response.status(200).json({ user, autoLogin: false });
+    }
+  } catch (error) { next(error); }
+};
 export const requestPasswordResetController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendPasswordResetRequest(email.trim().toLocaleLowerCase('en-US')); response.status(202).json({ message: 'Si la cuenta existe, recibirás instrucciones para continuar.' }); } catch (error) { next(error); } };
 export const confirmPasswordResetController: RequestHandler = async (request, response, next) => {
   try {
