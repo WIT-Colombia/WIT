@@ -37,6 +37,10 @@ export default function LocationMap() {
           resolve(selection?.coordinates ?? DEFAULT_CENTER);
           return;
         }
+        if (!maps.Geocoder) {
+          reject(new Error("GOOGLE_MAPS_GEOCODER_UNAVAILABLE"));
+          return;
+        }
         new maps.Geocoder().geocode({ address: cityAddress }, (results, geocodeStatus) => {
           const location = results?.[0]?.geometry?.location;
           if (geocodeStatus !== "OK" || !location) {
@@ -62,7 +66,10 @@ export default function LocationMap() {
         setPoint(next);
       });
       setStatus("ready");
-    }).catch(() => { if (active) setStatus("error"); });
+    }).catch((error: unknown) => {
+      if (import.meta.env.DEV) console.error("[XAMUKO Usuario] Error al cargar el selector de ubicación", error);
+      if (active) setStatus("error");
+    });
     return () => { active = false; markerRef.current?.setMap(null); mapRef.current = null; };
   }, [selection]);
 

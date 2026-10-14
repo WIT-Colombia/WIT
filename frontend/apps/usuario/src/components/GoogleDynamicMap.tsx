@@ -9,6 +9,7 @@ type GoogleDynamicMapProps = { businesses: Business[]; center: Coordinates | nul
 export function GoogleDynamicMap({ businesses, center, radiusKm, onBusinessSelect }: GoogleDynamicMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GoogleMapInstance | null>(null);
+  const mapsRef = useRef<Awaited<ReturnType<typeof loadGoogleMaps>> | null>(null);
   const markersRef = useRef<GoogleMarkerInstance[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "missing-key" | "error">("loading");
 
@@ -22,24 +23,32 @@ export function GoogleDynamicMap({ businesses, center, radiusKm, onBusinessSelec
     let active = true;
     void loadGoogleMaps().then((maps) => {
       if (!active || !containerRef.current) return;
+      mapsRef.current = maps;
       mapRef.current = new maps.Map(containerRef.current, { center, zoom: radiusKm && radiusKm <= 3 ? 14 : 12, mapTypeControl: false, streetViewControl: false, fullscreenControl: true, gestureHandling: "greedy" });
       setState("ready");
-    }).catch((error: unknown) => { if (active) setState(error instanceof Error && error.message === "GOOGLE_MAPS_JS_KEY_MISSING" ? "missing-key" : "error"); });
+    }).catch((error: unknown) => {
+      if (import.meta.env.DEV) console.error("[XAMUKO Usuario] Error al inicializar el mapa", error);
+      if (active) setState(error instanceof Error && error.message === "GOOGLE_MAPS_JS_KEY_MISSING" ? "missing-key" : "error");
+    });
     return () => { active = false; };
   }, [center, radiusKm]);
 
   useEffect(() => {
-    if (!mapRef.current || !window.google?.maps) return;
+    if (!mapRef.current || !mapsRef.current) return;
     for (const marker of markersRef.current) marker.setMap(null);
     markersRef.current = [];
     for (const business of businesses) {
       const position = getBusinessCoordinates(business);
       if (!position) continue;
-      const marker = new window.google.maps.Marker({ map: mapRef.current, position, title: business.name });
-      marker.addListener("click", () => onBusinessSelect?.(business));
-      markersRef.current.push(marker);
+      try {
+        const marker = new mapsRef.current.Marker({ map: mapRef.current, position, title: business.name });
+        marker.addListener("click", () => onBusinessSelect?.(business));
+        markersRef.current.push(marker);
+      } catch (error) {
+        if (import.meta.env.DEV) console.error("[XAMUKO Usuario] Error al crear marcador", error);
+      }
     }
-  }, [businesses, onBusinessSelect]);
+  }, [businesses, onBusinessSelect, state]);
 
   if (!center) return <div className="dynamic-map dynamic-map-fallback" role="status"><b>Ubicación no disponible</b><p>Necesitamos una ubicación confirmada para mostrar el mapa.</p></div>;
   if (state === "missing-key") return <div className="dynamic-map dynamic-map-fallback" role="status"><b>Mapa interactivo pendiente de configuración</b><p>Configura una clave de Maps JavaScript API restringida para este entorno.</p></div>;

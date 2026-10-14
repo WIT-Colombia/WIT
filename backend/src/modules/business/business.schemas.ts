@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const nullableText = (max: number) => z.string().trim().max(max).nullable().optional();
 const optionalUrl = (max: number) => z.string().trim().url().max(max).nullable().optional();
+const coordinate = (min: number, max: number) => z.union([z.number().finite().min(min).max(max), z.string().trim().regex(/^-?\d{1,3}(?:\.\d{1,8})?$/).transform(Number).pipe(z.number().finite().min(min).max(max))]).nullable().optional();
 
 const businessFields = {
   name: z.string().trim().min(2).max(180),
@@ -20,6 +21,8 @@ const businessFields = {
   zoneName: nullableText(160),
   address: nullableText(255),
   additionalAddressInfo: nullableText(200),
+  latitude: coordinate(-90, 90),
+  longitude: coordinate(-180, 180),
   postalCode: nullableText(32),
   timezone: z.string().trim().min(1).max(64).default('America/Bogota'),
 } as const;

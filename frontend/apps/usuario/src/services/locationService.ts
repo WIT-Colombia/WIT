@@ -108,8 +108,10 @@ function normalizeName(value: string): string {
 export async function resolveLocalityFromCoordinates(coordinates: Coordinates): Promise<Locality | null> {
   try {
     const maps = await loadGoogleMaps();
+    const Geocoder = maps.Geocoder;
+    if (!Geocoder) return null;
     return await new Promise<Locality | null>((resolve) => {
-      new maps.Geocoder().geocode({ location: coordinates }, (results, status) => {
+      new Geocoder().geocode({ location: coordinates }, (results, status) => {
         if (status !== "OK" || !results?.length) { resolve(null); return; }
         const components = results[0].address_components ?? [];
         const municipalityName = components.find((item) => item.types.includes("locality") || item.types.includes("administrative_area_level_2"))?.long_name;

@@ -36,6 +36,9 @@ export interface BusinessDetails {
   city: string;
   address: string;
   additionalAddressInfo?: string;
+  latitude?: number;
+  longitude?: number;
+  locationVisibility?: string;
   phone: string;
   whatsapp: string;
   email: string;

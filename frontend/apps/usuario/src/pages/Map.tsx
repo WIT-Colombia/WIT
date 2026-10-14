@@ -41,6 +41,10 @@ export default function Map() {
     setManualCenterState("loading");
     setManualCenterError("UNKNOWN");
     void loadGoogleMaps().then((maps) => new Promise<Coordinates>((resolve, reject) => {
+      if (!maps.Geocoder) {
+        reject(new Error("GOOGLE_MAPS_GEOCODER_UNAVAILABLE"));
+        return;
+      }
       const geocoder = new maps.Geocoder();
       geocoder.geocode({ address: manualAddress }, (results, status) => {
         const point = results?.[0]?.geometry?.location;

@@ -60,7 +60,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
           {register && <label>Confirmar contraseña<span className="auth-password-field"><input type={showPassword ? "text" : "password"} value={confirmation} onChange={event => setConfirmation(event.target.value)} required minLength={8} autoComplete="new-password" placeholder="Repite tu contraseña" /></span></label>}
           {register && <label className="auth-legal-check"><input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} /><span>Acepto los <Link to="/legal/terms?from=registro">Términos y condiciones</Link> y la <Link to="/legal/privacy?from=registro">Política de privacidad</Link>.</span></label>}
           {!register && <label className="auth-legal-check"><input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} /><span>Mantener mi sesión iniciada</span></label>}
-          {message && <p className="auth-status" role="status">{message}</p>}
+          {message && <p className={`auth-status${register ? "" : " auth-status-error"}`} role="status">{message}</p>}
           <button type="submit" className="action-button auth-submit" disabled={loading}>{loading ? "Conectando…" : register ? "Crear mi cuenta" : "Iniciar sesión"}</button>
         </form>
         {!register && <Link className="auth-forgot" to="/recuperar?mode=email">¿Olvidaste tu contraseña?</Link>}
