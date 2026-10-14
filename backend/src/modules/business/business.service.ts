@@ -12,6 +12,7 @@ const businessInclude = {
   category: true,
   secondaryCategories: { include: { category: true }, orderBy: { createdAt: 'asc' as const } },
   location: true,
+  photos: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] as any },
   memberships: { where: { status: 'ACTIVE' as const }, include: { permissions: true } },
   modalities: { include: { contact: true, hours: { orderBy: { dayOfWeek: 'asc' as const } } }, orderBy: { createdAt: 'asc' as const } },
 } as const;
@@ -75,6 +76,7 @@ function serialize(business: any, userId?: string) {
     publicId: business.publicId,
     businessAccountId: business.businessAccountId,
     name: business.name,
+    sede: business.sede,
     slug: business.slug,
     description: business.description,
     category: business.category?.code ?? null,
@@ -95,6 +97,13 @@ function serialize(business: any, userId?: string) {
     permissions: membership?.permissions?.filter((item: any) => item.allowed).map((item: any) => item.permission) ?? [],
     location: business.location ? { ...business.location, latitude: business.location.latitude?.toString() ?? null, longitude: business.location.longitude?.toString() ?? null } : null,
     modalities: business.modalities ?? [],
+    photos: (business.photos ?? []).map((photo: any) => ({
+      id: photo.id,
+      url: `/api/v1/businesses/${business.id}/photos/${photo.id}/content`,
+      altText: photo.altText,
+      sortOrder: photo.sortOrder,
+      isCover: photo.isCover,
+    })),
   };
 }
 
@@ -103,8 +112,37 @@ async function audit(db: Db, userId: string, businessId: string, action: string,
 }
 
 export async function listBusinesses(userId: string) {
-  const businesses = await prisma.business.findMany({ where: { businessAccount: { status: 'ACTIVE' }, memberships: { some: { userId, status: 'ACTIVE' } } }, include: businessInclude, orderBy: { updatedAt: 'desc' } });
+  const businesses = await prisma.business.findMany({ where: { businessAccount: { status: 'ACTIVE' }, deletionStatus: { not: 'DELETED' }, memberships: { some: { userId, status: 'ACTIVE' } } }, include: businessInclude, orderBy: { updatedAt: 'desc' } });
   return businesses.map((business) => serialize(business, userId));
+}
+
+async function assertBusinessOwner(userId: string, identifier: string) {
+  const current = await findBusiness(userId, identifier, prisma);
+  const membership = current.memberships.find((item: any) => item.userId === userId);
+  if (!membership || membership.role !== 'OWNER' && !membership.permissions.some((item: any) => item.permission === 'EDIT_BUSINESS' && item.allowed)) throw new AppError(403, 'BUSINESS_PERMISSION_DENIED', 'No tienes permisos para modificar la eliminación de este negocio.');
+  return current;
+}
+
+export async function requestBusinessDeletion(userId: string, identifier: string, meta?: RequestMeta) {
+  const current = await assertBusinessOwner(userId, identifier);
+  if (current.deletionStatus !== 'NONE') throw new AppError(409, 'BUSINESS_DELETION_INVALID_STATE', 'El negocio ya está en proceso de eliminación o fue eliminado.');
+  const updated = await prisma.$transaction(async (tx) => {
+    const business = await tx.business.update({ where: { id: current.id }, data: { deletionStatus: 'RECOVERY' }, include: businessInclude });
+    await audit(tx, userId, current.id, 'BUSINESS_DELETION_REQUESTED', { deletionStatus: current.deletionStatus }, { deletionStatus: business.deletionStatus }, meta);
+    return business;
+  });
+  return serialize(updated, userId);
+}
+
+export async function recoverBusiness(userId: string, identifier: string, meta?: RequestMeta) {
+  const current = await assertBusinessOwner(userId, identifier);
+  if (current.deletionStatus !== 'RECOVERY') throw new AppError(409, 'BUSINESS_RECOVERY_INVALID_STATE', 'El negocio no está disponible para recuperación.');
+  const updated = await prisma.$transaction(async (tx) => {
+    const business = await tx.business.update({ where: { id: current.id }, data: { deletionStatus: 'NONE' }, include: businessInclude });
+    await audit(tx, userId, current.id, 'BUSINESS_RECOVERED', { deletionStatus: current.deletionStatus }, { deletionStatus: business.deletionStatus }, meta);
+    return business;
+  });
+  return serialize(updated, userId);
 }
 
 export async function listCategories() {
@@ -120,7 +158,7 @@ export async function createBusiness(userId: string, input: BusinessCreateInput,
     const account = await tx.businessAccount.create({ data: { name: input.name, createdById: userId } });
     const existing = await tx.business.count({ where: { businessAccountId: account.id, slug: baseSlug } });
     const locationData = input.cityName ? { create: { countryCode: input.countryCode, regionCode: input.regionCode ?? null, regionName: input.regionName ?? null, cityName: input.cityName, zoneName: input.zoneName ?? null, address: input.address ?? '', additionalAddressInfo: input.additionalAddressInfo ?? null, latitude: input.latitude ?? null, longitude: input.longitude ?? null, visibility: visibilityForModalities(input.modalityTypes), postalCode: input.postalCode ?? null, timezone: input.timezone } } : undefined;
-    const business = await tx.business.create({ data: { businessAccountId: account.id, createdById: userId, name: input.name, slug: existing ? `${baseSlug}-${existing + 1}` : baseSlug, description: input.description ?? null, categoryId: category.id, email: input.email ?? null, website: input.website ?? null, instagram: input.instagram ?? null, phone: input.phone ?? null, whatsapp: input.whatsapp ?? null, memberships: { create: { userId, role: 'OWNER', status: 'ACTIVE', acceptedAt: new Date() } }, ...(locationData ? { location: locationData } : {}) }, include: businessInclude });
+    const business = await tx.business.create({ data: { businessAccountId: account.id, createdById: userId, name: input.name, sede: input.sede ?? null, slug: existing ? `${baseSlug}-${existing + 1}` : baseSlug, description: input.description ?? null, categoryId: category.id, email: input.email ?? null, website: input.website ?? null, instagram: input.instagram ?? null, phone: input.phone ?? null, whatsapp: input.whatsapp ?? null, memberships: { create: { userId, role: 'OWNER', status: 'ACTIVE', acceptedAt: new Date() } }, ...(locationData ? { location: locationData } : {}) }, include: businessInclude });
     if (secondaryCategories.length) await tx.businessSecondaryCategory.createMany({ data: secondaryCategories.map(item => ({ businessId: business.id, categoryId: item.id })) });
     await audit(tx, userId, business.id, 'BUSINESS_CREATED', null, { businessId: business.id, publicId: business.publicId }, meta);
     for (const type of input.modalityTypes ?? []) {
@@ -129,11 +167,13 @@ export async function createBusiness(userId: string, input: BusinessCreateInput,
       await audit(tx, userId, business.id, 'BUSINESS_MODALITY_CREATED', null, { modalityId: modality.id, type: modality.type, status: modality.status }, meta);
       if (configuration?.contact && Object.values(configuration.contact).some(value => value !== null && value !== undefined && value !== '')) await tx.businessModalityContact.create({ data: { modalityId: modality.id, email: configuration.contact.email ?? null, website: configuration.contact.website ?? null, phone: configuration.contact.phone ?? null, whatsapp: configuration.contact.whatsapp ?? null } });
       for (const hour of configuration?.hours ?? []) await tx.businessModalityHour.create({ data: { modalityId: modality.id, ...hour, opensAt: hour.opensAt ?? null, closesAt: hour.closesAt ?? null } });
-      const ready = await tx.businessModality.findUniqueOrThrow({ where: { id: modality.id }, include: { contact: true, hours: { orderBy: { dayOfWeek: 'asc' } }, business: { select: { email: true, website: true, instagram: true, phone: true, whatsapp: true, location: true } } } });
-      const blockers = modalityRules.activationBlockers(ready);
-      if (!blockers.length) {
-        const active = await tx.businessModality.update({ where: { id: modality.id }, data: { status: 'ACTIVE' }, include: { contact: true, hours: { orderBy: { dayOfWeek: 'asc' } } } });
-        await audit(tx, userId, business.id, 'BUSINESS_MODALITY_ACTIVATED', { modalityId: modality.id, type, status: 'CONFIGURING' }, { modalityId: active.id, type: active.type, status: active.status }, meta);
+      if (!input.startModalitiesConfiguring) {
+        const ready = await tx.businessModality.findUniqueOrThrow({ where: { id: modality.id }, include: { contact: true, hours: { orderBy: { dayOfWeek: 'asc' } }, business: { select: { email: true, website: true, instagram: true, phone: true, whatsapp: true, location: true } } } });
+        const blockers = modalityRules.activationBlockers(ready);
+        if (!blockers.length) {
+          const active = await tx.businessModality.update({ where: { id: modality.id }, data: { status: 'ACTIVE' }, include: { contact: true, hours: { orderBy: { dayOfWeek: 'asc' } } } });
+          await audit(tx, userId, business.id, 'BUSINESS_MODALITY_ACTIVATED', { modalityId: modality.id, type, status: 'CONFIGURING' }, { modalityId: active.id, type: active.type, status: active.status }, meta);
+        }
       }
     }
     return tx.business.findUniqueOrThrow({ where: { id: business.id }, include: businessInclude });
@@ -179,7 +219,7 @@ export async function updateBusiness(userId: string, identifier: string, input: 
       const paused = await tx.businessModality.update({ where: { id: item.modality.id }, data: { status: 'PAUSED' } });
       await audit(tx, userId, current.id, 'BUSINESS_MODALITY_PAUSED', { modalityId: item.modality.id, type: item.modality.type, status: item.modality.status }, { modalityId: item.modality.id, type: item.modality.type, status: paused.status }, meta);
     }
-    const business = await tx.business.update({ where: { id: current.id }, data: { ...(input.name !== undefined ? { name: input.name, slug: slugify(input.name) } : {}), ...(input.description !== undefined ? { description: input.description ?? null } : {}), ...(category ? { categoryId: category.id } : {}), ...(input.email !== undefined ? { email: input.email ?? null } : {}), ...(input.website !== undefined ? { website: input.website ?? null } : {}), ...(input.instagram !== undefined ? { instagram: input.instagram ?? null } : {}), ...(input.phone !== undefined ? { phone: input.phone ?? null } : {}), ...(input.whatsapp !== undefined ? { whatsapp: input.whatsapp ?? null } : {}) }, include: businessInclude });
+    const business = await tx.business.update({ where: { id: current.id }, data: { ...(input.name !== undefined ? { name: input.name, slug: slugify(input.name) } : {}), ...(input.sede !== undefined ? { sede: input.sede?.trim() || null } : {}), ...(input.description !== undefined ? { description: input.description ?? null } : {}), ...(category ? { categoryId: category.id } : {}), ...(input.email !== undefined ? { email: input.email ?? null } : {}), ...(input.website !== undefined ? { website: input.website ?? null } : {}), ...(input.instagram !== undefined ? { instagram: input.instagram ?? null } : {}), ...(input.phone !== undefined ? { phone: input.phone ?? null } : {}), ...(input.whatsapp !== undefined ? { whatsapp: input.whatsapp ?? null } : {}) }, include: businessInclude });
     if (secondaryCategories) {
       await tx.businessSecondaryCategory.deleteMany({ where: { businessId: business.id } });
       if (secondaryCategories.length) await tx.businessSecondaryCategory.createMany({ data: secondaryCategories.map(item => ({ businessId: business.id, categoryId: item.id })) });

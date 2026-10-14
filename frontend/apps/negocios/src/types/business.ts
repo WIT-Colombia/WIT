@@ -24,8 +24,10 @@ export interface BusinessDetails {
   permissions?: string[];
   ownerNickname?: string;
   name: string;
+  sede?: string;
   coverImage?: string;
   images?: string[];
+  photos?: Array<{ id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean }>;
   rating?: number;
   reviewCount?: number;
   tags?: string[];
@@ -45,6 +47,8 @@ export interface BusinessDetails {
   website: string;
   instagram: string;
   hours: string;
+  deletionStatus?: "NONE" | "RECOVERY" | "DELETED";
+  verificationStatus?: string;
   status: "Verificado" | "Pendiente" | "Requiere confirmación" | "Información incompleta" | "Eliminado";
   deletedAt?: string;
   recoveryUntil?: string;

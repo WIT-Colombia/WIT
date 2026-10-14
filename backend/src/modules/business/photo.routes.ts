@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import multer from 'multer';
+import { requireAuth } from '../../shared/middleware/require-auth.js';
+import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
+import { deletePhotoController, listPhotosController, photoContentController, setPhotoCoverController, uploadPhotoController } from './photo.controller.js';
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
+export const photoRouter = Router();
+photoRouter.use('/businesses/:businessId/photos', requireAuth);
+photoRouter.get('/businesses/:businessId/photos', listPhotosController);
+photoRouter.get('/businesses/:businessId/photos/:photoId/content', photoContentController);
+photoRouter.post('/businesses/:businessId/photos', requireTrustedOrigin, upload.single('file'), uploadPhotoController);
+photoRouter.delete('/businesses/:businessId/photos/:photoId', requireTrustedOrigin, deletePhotoController);
+photoRouter.post('/businesses/:businessId/photos/:photoId/cover', requireTrustedOrigin, setPhotoCoverController);

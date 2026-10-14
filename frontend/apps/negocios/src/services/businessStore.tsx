@@ -25,6 +25,11 @@ interface BusinessStore {
 
 const StoreContext = createContext<BusinessStore | null>(null);
 
+const isSameBusiness = (left: BusinessDetails, right: BusinessDetails) => {
+  if (left.id && right.id) return left.id === right.id;
+  return left === right;
+};
+
 function stored<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(`wit-negocios-demo:${key}`);
@@ -86,12 +91,12 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
     if (isOldDemo) setBusinesses(initialBusinesses);
   }, [businesses]);
   useEffect(() => {
-    if (!businesses.some(item => item.name === business.name)) setBusiness(businesses[0] ?? initialBusinesses[0]);
+    if (!businesses.some(item => isSameBusiness(item, business))) setBusiness(businesses[0] ?? initialBusinesses[0]);
   }, [business, businesses]);
   useEffect(() => {
     const normalized = businesses.map(item => ({ ...item, ownerNickname: item.ownerNickname ?? initialAccount.nickname, role: (item.ownerNickname ?? initialAccount.nickname) === initialAccount.nickname ? "Propietario" as const : (item.role === "Colaborador" ? "Colaborador" as const : "Propietario" as const), ...(item.status === "Información incompleta" ? { status: "Pendiente" as const } : {}) }));
     if (normalized.some((item, index) => item.status !== businesses[index].status || item.role !== businesses[index].role || item.ownerNickname !== businesses[index].ownerNickname)) setBusinesses(normalized);
-    const selected = normalized.find(item => item.name === business.name);
+    const selected = normalized.find(item => isSameBusiness(item, business));
     if (selected && selected.status !== business.status) setBusiness(selected);
   }, [business, businesses]);
   const [account, setAccount] = useStoredState("account", initialAccount);

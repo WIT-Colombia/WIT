@@ -53,7 +53,7 @@ export function buildApiUrl(path: string): string {
 async function requestJsonInternal<T>(path: string, init: RequestInit, retryUnauthorized: boolean): Promise<T> {
   const headers = new Headers(init.headers);
   if (!headers.has("Accept")) headers.set("Accept", "application/json");
-  if (init.body !== undefined && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  if (init.body !== undefined && !(init.body instanceof FormData) && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   if (!headers.has("Authorization")) {
     const token = accessTokenProvider?.();
     if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -107,11 +107,33 @@ export function requestJson<T>(path: string, init: RequestInit = {}): Promise<T>
   return requestJsonInternal(path, init, true);
 }
 
+export function requestMultipart<T>(path: string, body: FormData, method = "POST"): Promise<T> {
+  return requestJsonInternal<T>(path, { method, body }, true);
+}
+
+export async function requestPhotoBlob(path: string): Promise<Blob> {
+  const headers = new Headers();
+  const token = accessTokenProvider?.();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  let response = await fetch(buildApiUrl(path), { credentials: "include", headers });
+  if (response.status === 401 && unauthorizedHandler && await unauthorizedHandler()) {
+    const retryHeaders = new Headers();
+    const refreshedToken = accessTokenProvider?.();
+    if (refreshedToken) retryHeaders.set("Authorization", `Bearer ${refreshedToken}`);
+    response = await fetch(buildApiUrl(path), { credentials: "include", headers: retryHeaders });
+  }
+  if (!response.ok) throw new BusinessApiError(response.status, "PHOTO_LOAD_FAILED", "No se pudo cargar la fotografía.");
+  return response.blob();
+}
+
+export type RealPhoto = { id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean };
+
 export type RealBusiness = {
   id: string;
   publicId: string;
   businessAccountId: string;
   name: string;
+  sede: string | null;
   slug: string;
   description: string | null;
   category: string | null;
@@ -132,6 +154,7 @@ export type RealBusiness = {
   permissions: string[];
   location: { countryCode: string; regionCode: string | null; regionName: string | null; cityName: string; zoneName: string | null; address: string; additionalAddressInfo: string | null; postalCode: string | null; latitude: string | null; longitude: string | null; visibility: string } | null;
   modalities: RealModality[];
+  photos?: RealPhoto[];
 };
 
 export type ModalityType = "PHYSICAL" | "VIRTUAL" | "DELIVERY";
@@ -146,6 +169,8 @@ export const businessApi = {
   create: (input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>('/businesses', { method: 'POST', body: JSON.stringify(input) }),
   get: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}`),
   update: (businessId: string, input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
+  requestDeletion: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/request-deletion`, { method: 'POST' }),
+  recoverBusiness: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/recover`, { method: 'POST' }),
   listModalities: (businessId: string) => requestJson<{ modalities: RealModality[] }>(`/businesses/${encodeURIComponent(businessId)}/modalities`),
   createModality: (businessId: string, type: ModalityType) => requestJson<{ modality: RealModality }>(`/businesses/${encodeURIComponent(businessId)}/modalities`, { method: 'POST', body: JSON.stringify({ type }) }),
   updateModalityContact: (businessId: string, modalityId: string, input: Partial<ModalityContact>) => requestJson<{ modality: RealModality }>(`/businesses/${encodeURIComponent(businessId)}/modalities/${encodeURIComponent(modalityId)}/contact`, { method: 'PUT', body: JSON.stringify(input) }),
@@ -154,4 +179,9 @@ export const businessApi = {
   pauseModality: (businessId: string, modalityId: string) => requestJson<{ modality: RealModality }>(`/businesses/${encodeURIComponent(businessId)}/modalities/${encodeURIComponent(modalityId)}/pause`, { method: 'POST' }),
   reactivateModality: (businessId: string, modalityId: string) => requestJson<{ modality: RealModality }>(`/businesses/${encodeURIComponent(businessId)}/modalities/${encodeURIComponent(modalityId)}/reactivate`, { method: 'POST' }),
   retireModality: (businessId: string, modalityId: string) => requestJson<{ modality: RealModality }>(`/businesses/${encodeURIComponent(businessId)}/modalities/${encodeURIComponent(modalityId)}/retire`, { method: 'POST' }),
+  listPhotos: (businessId: string) => requestJson<{ photos: RealPhoto[] }>(`/businesses/${encodeURIComponent(businessId)}/photos`),
+  uploadPhoto: (businessId: string, file: File, cover = false) => { const form = new FormData(); form.append('file', file); form.append('cover', String(cover)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos`, form); },
+  deletePhoto: (businessId: string, photoId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}`, { method: 'DELETE' }),
+  setPhotoCover: (businessId: string, photoId: string) => requestJson<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}/cover`, { method: 'POST' }),
+  photoBlob: (url: string) => requestPhotoBlob(url),
 };

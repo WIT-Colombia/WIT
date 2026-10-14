@@ -24,6 +24,10 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _request, resp
     response.status(413).json({ error: { code: 'PAYLOAD_TOO_LARGE', message: 'El cuerpo supera el tamaño permitido.' } });
     return;
   }
+  if (error instanceof Error && 'code' in error && error.code === 'LIMIT_FILE_SIZE') {
+    response.status(413).json({ error: { code: 'PHOTO_TOO_LARGE', message: 'Cada fotografía puede pesar máximo 5 MB.' } });
+    return;
+  }
   console.error('Error no controlado:', error);
   response.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Error interno del servidor.' } });
 };

@@ -5,6 +5,18 @@ import "../styles/location-picker.css";
 type Coordinates = { lat: number; lng: number };
 type Props = { value: Coordinates | null; query?: string; onChange: (value: Coordinates) => void; onCancel?: () => void };
 
+export async function geocodeBusinessAddress(query: string): Promise<Coordinates | null> {
+  const maps = await loadGoogleMaps();
+  if (!maps.Geocoder) throw new Error("GOOGLE_MAPS_GEOCODER_UNAVAILABLE");
+  return new Promise(resolve => {
+    new maps.Geocoder!().geocode({ address: query }, (results, status) => {
+      const location = results?.[0]?.geometry?.location;
+      if (status !== "OK" || !location) { resolve(null); return; }
+      resolve({ lat: location.lat(), lng: location.lng() });
+    });
+  });
+}
+
 export function BusinessLocationPicker({ value, query = "", onChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GoogleMapInstance | null>(null);

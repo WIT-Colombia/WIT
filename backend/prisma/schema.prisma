@@ -234,6 +234,7 @@ model Business {
   businessAccountId   String                    @db.Char(36)
   createdById         String                    @db.Char(36)
   name                String                    @db.VarChar(180)
+  sede                String?                   @db.VarChar(160)
   slug                String                    @db.VarChar(180)
   description         String?                   @db.Text
   categoryId          String                    @db.Char(36)
