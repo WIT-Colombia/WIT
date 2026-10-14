@@ -6,6 +6,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import { createAccessToken, createRefreshToken, hashRefreshToken } from '../../shared/auth/tokens.js';
 import type { LoginInput, RegisterInput } from './auth.schemas.js';
 import { sendVerificationRequest } from './auth-token.service.js';
+import { shouldRequireEmailVerification } from './email-login-policy.js';
 
 const invalidCredentials = () => new AppError(401, 'INVALID_CREDENTIALS', 'Correo o contraseña incorrectos.');
 const unverifiedEmail = () => new AppError(403, 'EMAIL_NOT_VERIFIED', 'Verifica tu correo electrónico antes de iniciar sesión.');
@@ -68,7 +69,7 @@ export async function login(input: LoginInput, requestMeta?: { userAgent?: strin
   if (!identity?.passwordHash || identity.user.status !== 'ACTIVE') throw invalidCredentials();
   const valid = await argon2.verify(identity.passwordHash, input.password);
   if (!valid) throw invalidCredentials();
-  if (!identity.verifiedAt) throw unverifiedEmail();
+  if (shouldRequireEmailVerification(identity.verifiedAt, env.allowUnverifiedEmailLogin)) throw unverifiedEmail();
   await prisma.user.update({ where: { id: identity.user.id }, data: { lastLoginAt: new Date() } });
   return { user: await getCurrentUser(identity.user.id), ...(await issueSession(identity.user.id, requestMeta)) };
 }
@@ -79,7 +80,7 @@ export async function refresh(refreshToken: string, requestMeta?: { userAgent?: 
   const owner = await prisma.session.findUnique({ where: { tokenHash }, select: { id: true, userId: true, revokedAt: true, expiresAt: true, user: { select: { status: true } } } });
   if (!owner || owner.revokedAt || owner.expiresAt <= now || owner.user.status !== 'ACTIVE') throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.');
   const identities = await prisma.authIdentity.findMany({ where: { userId: owner.userId }, select: { verifiedAt: true } }).catch(() => []);
-  if (!identities.some((identity) => identity.verifiedAt !== null)) {
+  if (identities.every((identity) => shouldRequireEmailVerification(identity.verifiedAt, env.allowUnverifiedEmailLogin))) {
     await prisma.session.updateMany({ where: { id: owner.id, revokedAt: null }, data: { revokedAt: now } });
     throw unverifiedEmail();
   }

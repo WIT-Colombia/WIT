@@ -25,7 +25,7 @@ export default function Map() {
   const [favorites, setFavorites] = useState(getFavoriteIds);
   const [radiusIndex, setRadiusIndex] = useState(0);
   const { selection } = useLocationContext();
-  const location = selection?.mode === "manual" ? selection.locality : null;
+  const location = selection?.locality ?? null;
   const [manualCenter, setManualCenter] = useState<Coordinates | null>(null);
   const [manualCenterState, setManualCenterState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [manualCenterError, setManualCenterError] = useState("UNKNOWN");

@@ -21,7 +21,7 @@ export default function ManualLocation() {
   const { selection, setManualLocation, requestAutomaticLocation, isRequesting } = useLocationContext();
   const [params] = useSearchParams();
   const returnTo = params.get("returnTo") || "/home";
-  const current = selection?.mode === "manual" ? selection.locality : null;
+  const current = selection?.locality ?? null;
   const catalog = getColombianAdministrativeDivisions();
   const [departments] = useState<Department[]>(catalog.departments);
   const [municipalities] = useState<Locality[]>(catalog.municipalities);
@@ -70,6 +70,7 @@ export default function ManualLocation() {
     setMunicipalityId(municipality.id);
     setQuery(municipality.name);
     setShowMunicipalityOptions(false);
+    setManualLocation(municipality);
   }
 
   function continueWithLocation() {
@@ -94,7 +95,7 @@ export default function ManualLocation() {
         <p>Selecciona un departamento y luego tu ciudad o municipio. También puedes usar tu ubicación o explorar el mapa.</p>
       </div>
 
-      <div className="national-location-refine"><div><b>¿Quieres una búsqueda más precisa?</b><span>Usa tu ubicación actual o elige un punto en el mapa.</span>{automaticError && <small role="status">Permite el acceso a tu ubicación en el aviso del navegador y vuelve a intentarlo.</small>}</div><div><button className="national-location-auto-link" type="button" disabled={isRequesting} onClick={useCurrentLocation}><PinIcon/> {isRequesting ? "Solicitando permiso…" : "Usar mi ubicación"}</button><Link to="/location/map">Explorar en el mapa <span aria-hidden="true">↗</span></Link></div></div>
+      <div className="national-location-refine"><div><b>¿Quieres una búsqueda más precisa?</b><span>Usa tu ubicación actual o elige un punto en el mapa.</span>{automaticError && <small role="status">Permite el acceso a tu ubicación en el aviso del navegador y vuelve a intentarlo.</small>}</div><div><button className="national-location-auto-link" type="button" disabled={isRequesting} onClick={useCurrentLocation}><PinIcon/> {isRequesting ? "Solicitando permiso…" : "Usar mi ubicación"}</button><Link to={`/location/map?returnTo=${encodeURIComponent(returnTo)}`}>Explorar en el mapa <span aria-hidden="true">↗</span></Link></div></div>
 
       <div className="national-location-form">
         <label className="national-location-field" htmlFor="department-select"><span>1</span><span className="national-location-field__label">Departamento</span>

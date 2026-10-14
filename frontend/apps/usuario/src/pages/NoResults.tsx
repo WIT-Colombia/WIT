@@ -10,7 +10,7 @@ export default function NoResults() {
   const [params] = useSearchParams();
   const query = params.get("q");
   const { selection } = useLocationContext();
-  const location = selection?.mode === "manual" ? selection.locality : null;
+  const location = selection?.locality ?? null;
   if (!hasSampleCatalogForLocation(location)) {
     return <PageLayout active="explore" className="no-results-page"><LocationAvailabilityNotice location={location} query={query ?? ""}/></PageLayout>;
   }

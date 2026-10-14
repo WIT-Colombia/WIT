@@ -31,7 +31,7 @@ export default function Results() {
   const query = params.get("q") ?? "";
   const category = params.get("category") ?? "";
   const { selection } = useLocationContext();
-  const location = selection?.mode === "manual" ? selection.locality : null;
+  const location = selection?.locality ?? null;
   const hasSampleCatalog = hasSampleCatalogForLocation(location);
 
   useEffect(() => {

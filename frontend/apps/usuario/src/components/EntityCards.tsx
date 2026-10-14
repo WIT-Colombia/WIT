@@ -5,6 +5,7 @@ import { HeartIcon, ThumbsUpIcon } from "./ActionIcons";
 import { useAccountGate } from "../hooks/useAccountGate";
 import { getLikeCount } from "../services/userDataService";
 import { getBusinessPublicationState } from "../services/negociosPublicationService";
+import { getBusinessCoordinates } from "../utils/coordinates";
 import "./EntityCards.css";
 import "./EntityCardsEnhancements.css";
 
@@ -26,7 +27,7 @@ export function BusinessCard({ business, favorite = false, onFavorite, onContact
   return <article className={`entity-card entity-business-card${isFeatured ? " entity-business-card--featured" : ""}`} role="link" tabIndex={0} onClick={openBusiness} onKeyDown={openBusinessWithKeyboard}>
     <div className="entity-card__image"><img src={business.image} alt={business.name} loading="lazy"/>{(business.plan === "premium" || business.isFeatured) && <span className="entity-featured">Destacado</span>}<span className={`entity-open${business.isOpen ? " is-open" : ""}`}><i/>{business.isOpen ? "Abierto" : "Cerrado"}</span>{onFavorite && <button className={`entity-action entity-favorite${favorite ? " is-active" : ""}`} type="button" aria-label={favorite ? `Quitar ${business.name} de favoritos` : `Guardar ${business.name} en favoritos`} title={favorite ? "Quitar de favoritos" : "Guardar en favoritos"} aria-pressed={favorite} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.preventDefault(); event.stopPropagation(); requireAccount(onFavorite); }}><HeartIcon/></button>}</div>
     <div className="entity-card__content"><div className="entity-card__heading"><div><p>{business.category}</p>{publicationState === "pending" ? <span className="entity-verified entity-pending">• Verificación pendiente</span> : business.isVerified && <span className="entity-verified">✓ Verificado</span>}<h3>{business.name}</h3></div><span className="entity-rating">★ {business.rating.toFixed(1)} <small>({business.reviewCount})</small></span></div>
-      <p className="entity-address">⌖ {business.address}</p><p className="entity-business-description" title={business.description}>{business.description}</p><div className="entity-card__actions"><span>A {business.distanceKm.toFixed(1)} km</span><div>
+      <p className="entity-address">⌖ {business.address}</p><p className="entity-business-description" title={business.description}>{business.description}</p><div className="entity-card__actions">{getBusinessCoordinates(business) && Number.isFinite(business.distanceKm) ? <span>A {business.distanceKm.toFixed(1)} km</span> : <span>Sin distancia</span>}<div>
         {onContact ? <button className="entity-view" type="button" onClick={onContact}>Contactar <span>→</span></button> : <Link className="entity-view" to={`/business/${business.id}`} onClick={(event) => event.stopPropagation()}>Ver negocio <span>→</span></Link>}
       </div></div>
     </div>

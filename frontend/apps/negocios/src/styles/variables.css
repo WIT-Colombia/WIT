@@ -1,9 +1,29 @@
 :root {
-  --wit-primary: #2563eb; --wit-primary-dark: #1749b8; --wit-primary-light: #eaf2ff;
-  --wit-background: #f3f6fb; --wit-surface: #fff; --wit-text-primary: #14213c;
-  --wit-text-secondary: #61708b; --wit-text-muted: #8290a6; --wit-border: #dfe7f2;
-  --wit-divider: #edf1f6; --wit-success: #159a68; --wit-warning: #d88a12;
-  --wit-danger: #d64557; --wit-danger-dark: #b93447;
-  --wit-radius-sm: 10px; --wit-radius-md: 14px; --wit-radius-lg: 18px;
-  --wit-shadow: 0 5px 18px rgba(31, 61, 101, .06);
+  --xamuko-violet: #7b3ffb;
+  --xamuko-blue: #2563eb;
+  --xamuko-cyan: #22d3ee;
+  --xamuko-gradient: linear-gradient(135deg, #7b3ffb 0%, #2563eb 65%, #22d3ee 100%);
+  --wit-primary: #2563eb;
+  --wit-primary-dark: #1d4ed8;
+  --wit-primary-light: #eff6ff;
+  --wit-background: #f8fafc;
+  --wit-surface: #ffffff;
+  --wit-text-primary: #0f172a;
+  --wit-text-secondary: #64748b;
+  --wit-text-muted: #94a3b8;
+  --wit-border: #e2e8f0;
+  --wit-divider: #f1f5f9;
+  --wit-success: #22c55e;
+  --wit-warning: #f59e0b;
+  --wit-danger: #ef4444;
+  --wit-danger-dark: #dc2626;
+  --xamuko-text: #0f172a;
+  --xamuko-background: #ffffff;
+  --xamuko-surface-muted: #f8fafc;
+  --xamuko-text-muted: #64748b;
+  --xamuko-border: #e2e8f0;
+  --wit-radius-sm: 10px;
+  --wit-radius-md: 14px;
+  --wit-radius-lg: 18px;
+  --wit-shadow: 0 8px 24px rgba(15, 23, 42, .06);
 }

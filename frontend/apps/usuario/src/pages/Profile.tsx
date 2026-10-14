@@ -16,7 +16,7 @@ export default function Profile() {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
   const { selection } = useLocationContext();
-  const selectedLocation = selection?.mode === "manual" ? selection.locality : null;
+  const selectedLocation = selection?.locality ?? null;
 
   useEffect(() => {
     if (!user) return;

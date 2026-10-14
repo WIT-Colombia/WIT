@@ -17,7 +17,7 @@ export default function Welcome() {
   const navigate = useNavigate();
   const featured = businesses[0];
   const { selection } = useLocationContext();
-  const selectedLocation = selection?.mode === "manual" ? selection.locality : null;
+  const selectedLocation = selection?.locality ?? null;
 
   return <main className="welcome-page">
     <header className="welcome-header">

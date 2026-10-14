@@ -14,7 +14,7 @@ export default function RegisterNeed() {
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const { selection } = useLocationContext();
-  const location = selection?.mode === "manual" ? selection.locality : null;
+  const location = selection?.locality ?? null;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

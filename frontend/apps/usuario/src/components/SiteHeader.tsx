@@ -21,7 +21,7 @@ function UserIcon() {
 
 export function SiteHeader({ active, onProfile }: { active?: SiteSection; onProfile?: () => void }) {
   const { selection } = useLocationContext();
-  const location = selection?.mode === "manual" ? selection.locality : null;
+  const location = selection?.locality ?? null;
   const { user, isAuthenticated } = useAuth();
   const profile = getProfile();
   const profileName = user?.displayName.trim() || profile.name.trim() || "";

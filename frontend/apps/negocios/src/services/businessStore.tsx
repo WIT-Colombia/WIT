@@ -1,11 +1,16 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import { initialAccount, initialBusinesses, initialItems, initialNotifications, initialPreferences } from "../data/business.mock";
 import type { BusinessAccount, BusinessDetails, BusinessNotification, CatalogItem, Preferences } from "../types/business";
 import { DAY_IN_MS } from "./visibilityPolicy";
+import { useBusinessAuth } from "./businessAuthContext";
+import { businessApi } from "./businessApiClient";
+import { toBusinessDetails } from "./realBusinessAdapter";
 
 interface BusinessStore {
   business: BusinessDetails;
   businesses: BusinessDetails[];
+  businessesReady: boolean;
   account: BusinessAccount;
   items: CatalogItem[];
   notifications: BusinessNotification[];
@@ -37,7 +42,44 @@ function useStoredState<T>(key: string, fallback: T): [T, (value: T) => void] {
 
 export function BusinessStoreProvider({ children }: { children: ReactNode }) {
   const [business, setBusiness] = useStoredState("business", initialBusinesses[0]);
-  const [businesses, setBusinesses] = useStoredState("businesses", initialBusinesses);
+  const location = useLocation();
+  const isPreview = location.pathname === "/preview" || location.pathname.startsWith("/preview/");
+  const [businesses, setBusinesses] = useState<BusinessDetails[]>(() => isPreview ? stored("businesses", initialBusinesses) : []);
+  const [businessesReady, setBusinessesReady] = useState(isPreview);
+  const auth = useBusinessAuth();
+  const wasPreview = useRef(isPreview);
+  useEffect(() => {
+    if (!isPreview && wasPreview.current) setBusinesses([]);
+    wasPreview.current = isPreview;
+  }, [isPreview]);
+  useEffect(() => {
+    if (isPreview) {
+      setBusinessesReady(true);
+      return;
+    }
+    if (auth.state.status !== "authenticated") {
+      setBusinessesReady(auth.state.status === "unauthenticated");
+      return;
+    }
+    let active = true;
+    setBusinessesReady(false);
+    businessApi.list().then(({ businesses: values }) => {
+      if (!active) return;
+      const next = values.map(toBusinessDetails);
+      setBusinesses(next);
+      if (next[0]) setBusiness(next[0]);
+    }).catch(() => {
+      // La página de negocios muestra el error detallado; aquí solo evitamos
+      // bloquear la restauración de la URL si la API no está disponible.
+    }).finally(() => {
+      if (active) setBusinessesReady(true);
+    });
+    return () => { active = false; };
+  }, [auth.state.status, isPreview]);
+  useEffect(() => {
+    if (businesses.length === 0 && !isPreview) return;
+    try { localStorage.setItem("wit-negocios-demo:businesses", JSON.stringify(businesses)); } catch { /* La aplicación sigue funcionando sin almacenamiento local. */ }
+  }, [businesses, isPreview]);
   useEffect(() => {
     const oldDemo = ["Café del Barrio", "Casa Verde", "Taller Nómada"];
     const isOldDemo = businesses.length === 3 && businesses.every(item => oldDemo.includes(item.name));
@@ -84,7 +126,7 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       return daysLeft > 0 && daysLeft <= 39 && !notifications.some(note => note.id === `visibility-reminder-${item.name}`) ? item : null;
     }).filter((item): item is BusinessDetails => Boolean(item));
     if (!reminders.length) return;
-    const additions = reminders.map(item => ({ id: `visibility-reminder-${item.name}`, title: "Mantén visible tu negocio", description: `A tu negocio ${item.name} le quedan pocos días de visibilidad. Renueva ahora para que las personas sigan encontrándolo en WIT.`, date: "Ahora", createdAt: new Date().toISOString(), type: "admin" as const, read: false, businessName: item.name, businessId: item.name }));
+    const additions = reminders.map(item => ({ id: `visibility-reminder-${item.name}`, title: "Mantén visible tu negocio", description: `A tu negocio ${item.name} le quedan pocos días de visibilidad. Renueva ahora para que las personas sigan encontrándolo en XAMUKO.`, date: "Ahora", createdAt: new Date().toISOString(), type: "admin" as const, read: false, businessName: item.name, businessId: item.name }));
     setNotifications([...notifications, ...additions]);
   }, [businesses, preferences, notifications]);
   useEffect(() => {
@@ -97,7 +139,7 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       }
     } catch { /* La demostración continúa con la fecha guardada. */ }
   }, []);
-  return <StoreContext.Provider value={{ business, businesses, account, items, notifications, preferences, setBusiness, setBusinesses, setAccount, setItems, setNotifications, setPreferences }}>{children}</StoreContext.Provider>;
+  return <StoreContext.Provider value={{ business, businesses, businessesReady, account, items, notifications, preferences, setBusiness, setBusinesses, setAccount, setItems, setNotifications, setPreferences }}>{children}</StoreContext.Provider>;
 }
 
 export function useBusinessStore() {

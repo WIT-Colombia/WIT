@@ -6,10 +6,11 @@ import { businessCatalog } from "../data/business.mock";
 import { useBusinessStore } from "../services/businessStore";
 
 export function DashboardPage() {
-  const { account, business, items, businesses, preferences } = useBusinessStore();
+  const { account, business, businesses, preferences } = useBusinessStore();
   const firstName = account.name.split(" ")[0];
-  const personalBusiness = businesses.length === 0 || business.isNew || !businessCatalog[business.name];
-  const businessItems = business.catalog ?? (businessCatalog[business.name] ?? (personalBusiness ? [] : items));
+  const demoBusiness = Boolean(businessCatalog[business.name]);
+  const personalBusiness = businesses.length === 0 || business.isNew || !demoBusiness;
+  const businessItems = demoBusiness ? (business.catalog ?? businessCatalog[business.name] ?? []) : (business.catalog ?? []);
   const products = businessItems.filter(item => item.kind === "product" && item.active && item.interest > 0).sort((a,b) => b.interest-a.interest).slice(0,3);
   const services = businessItems.filter(item => item.kind === "service" && item.active && item.interest > 0).sort((a,b) => b.interest-a.interest).slice(0,3);
   const dashboardMetrics = personalBusiness ? metrics.map(metric => ({ ...metric, value: "0", trend: "0%" })) : metrics;
@@ -20,8 +21,8 @@ export function DashboardPage() {
   const visibilityActive = Boolean((businessVisibility?.profileVisible ?? preferences.profileVisible) && visibilityUntil && visibilityUntil.getTime() > Date.now());
   const visibilityDaysLeft = visibilityUntil ? Math.ceil((visibilityUntil.getTime() - Date.now()) / (24 * 60 * 60 * 1000)) : null;
   const visibilityUrgency = visibilityDaysLeft !== null && visibilityActive ? (visibilityDaysLeft <= 3 ? "critical" : visibilityDaysLeft <= 7 ? "warning" : "") : "";
-  const statusLabel = !visibilityActive ? "No visible en WIT" : business.status === "Pendiente" ? "Verificación pendiente" : business.status;
-  const statusHint = !visibilityActive ? "Activa la visibilidad desde Configuración" : visibilityUntil ? `${visibilityDaysLeft !== null && visibilityDaysLeft <= 7 ? `Vence en ${visibilityDaysLeft} ${visibilityDaysLeft === 1 ? "día" : "días"} · ` : ""}Visible hasta el ${visibilityUntil.toLocaleDateString("es-CO", { day: "numeric", month: "short" })}` : "Estado de tu negocio en WIT";
+  const statusLabel = !visibilityActive ? "No visible en XAMUKO" : business.status === "Pendiente" ? "Verificación pendiente" : business.status;
+  const statusHint = !visibilityActive ? "Activa la visibilidad desde Configuración" : visibilityUntil ? `${visibilityDaysLeft !== null && visibilityDaysLeft <= 7 ? `Vence en ${visibilityDaysLeft} ${visibilityDaysLeft === 1 ? "día" : "días"} · ` : ""}Visible hasta el ${visibilityUntil.toLocaleDateString("es-CO", { day: "numeric", month: "short" })}` : "Estado de tu negocio en XAMUKO";
   const businessIndex = Math.max(0, businesses.findIndex(item => item.name === business.name));
   const completionChecks: [string, string | number | undefined][] = [["Nombre comercial", business.name], ["Categoría", business.category], ["Descripción", business.description], ["Ciudad", business.city], ["Dirección", business.address], ["Teléfono", business.phone], ["Horario de atención", business.hours], ["Fotos de tu negocio", business.coverImage || business.images?.length]];
   const missingFields = completionChecks.filter(([, value]) => !value).map(([label]) => label);

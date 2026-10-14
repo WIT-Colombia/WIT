@@ -16,7 +16,12 @@ export interface CatalogItem {
 }
 
 export interface BusinessDetails {
+  id?: string;
+  publicId?: string;
+  businessAccountId?: string;
+  source?: "real" | "demo";
   role: BusinessRole;
+  permissions?: string[];
   ownerNickname?: string;
   name: string;
   coverImage?: string;
@@ -26,9 +31,11 @@ export interface BusinessDetails {
   tags?: string[];
   isOpen?: boolean;
   category: string;
+  secondaryCategories?: string[];
   description: string;
   city: string;
   address: string;
+  additionalAddressInfo?: string;
   phone: string;
   whatsapp: string;
   email: string;

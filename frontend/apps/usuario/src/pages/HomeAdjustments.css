@@ -162,6 +162,20 @@
   .home-page .special-offer-card{flex-basis:calc((100% - 48px)/4)}
 }
 
+/* At intermediate widths, keep enough room for the business card content. */
+@media(min-width:851px) and (max-width:1199px){
+  .home-page .home-featured-section .entity-business-card,
+  .home-page .home-nearby-section .entity-business-card{
+    flex-basis:calc((100% - 32px)/3);
+  }
+  .home-page .special-offer-card{flex-basis:calc((100% - 32px)/3)}
+  .home-page .new-products__list{grid-auto-columns:calc((100% - 32px)/3)}
+}
+
+@media(min-width:1200px){
+  .home-page .new-products__list{grid-auto-columns:calc((100% - 48px)/4)}
+}
+
 /* Separación uniforme respecto a los banners publicitarios. */
 .home-page .home-featured-section { padding-top:24px; }
 .home-page .need-banner { margin-top:24px; }

@@ -28,7 +28,7 @@ export function MobileNavigation() {
   const empty = businesses.length === 0;
   const unread = notifications.filter((item) => !item.read).length;
   const roleForAccount = (item: typeof business) => item.ownerNickname === account.nickname ? "Propietario" : item.collaborators?.some((collaborator) => collaborator.active && ((collaborator.nickname && collaborator.nickname === account.nickname) || (collaborator.email && collaborator.email.toLowerCase() === account.email.toLowerCase()))) ? "Colaborador" : item.role;
-  const destination = (link: MobileLink) => empty && link.label !== "Mi cuenta" ? "/sin-negocio" : link.label === "Mi cuenta" && empty ? "/perfil?empty=1" : link.to;
+  const destination = (link: MobileLink) => link.label === "Mi cuenta" && empty ? "/perfil?empty=1" : link.to;
   useEffect(() => setMoreOpen(false), [location.pathname]);
   useEffect(() => {
     if (!businessesOpen) return;
@@ -42,18 +42,18 @@ export function MobileNavigation() {
   const activeBusiness = empty ? undefined : (business ?? businesses[0]);
   return <>
     <header className="mobile-topbar">
-      <button type="button" className="mobile-menu-button" aria-label={moreOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={moreOpen} onClick={() => { setMoreOpen((value) => !value); setBusinessesOpen(false); }}><span /><span /><span /></button>
+      <button type="button" className="mobile-menu-button" aria-label={moreOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={moreOpen} aria-controls="business-mobile-menu" onClick={() => { setMoreOpen((value) => !value); setBusinessesOpen(false); }}><span /><span /><span /></button>
       <div className="mobile-business-wrap" ref={businessWrapRef}>
-        <button type="button" className={`mobile-business-picker${businessesOpen ? " active" : ""}`} onClick={() => { setBusinessesOpen((value) => !value); setMoreOpen(false); }} aria-expanded={businessesOpen}>
+        <button type="button" className={`mobile-business-picker${businessesOpen ? " active" : ""}`} onClick={() => { if (empty) { navigate("/mis-negocios"); return; } setBusinessesOpen((value) => !value); setMoreOpen(false); }} aria-expanded={businessesOpen} aria-label={empty ? "Ir a Mis negocios" : "Cambiar de negocio"}>
           <span className="mobile-business-avatar">{activeBusiness?.coverImage ? <img src={activeBusiness.coverImage} alt="" /> : activeBusiness?.name?.charAt(0) ?? "W"}</span>
-          <span className="mobile-business-copy"><strong>{activeBusiness?.name ?? "Crea tu negocio"}</strong><small>{activeBusiness ? `${activeBusiness.category} · ${activeBusiness.city}` : "Empieza en WIT Negocios"}</small></span><span className="mobile-business-chevron">⌄</span>
+          <span className="mobile-business-copy"><strong>{activeBusiness?.name ?? "Crea tu negocio"}</strong><small>{activeBusiness ? `${activeBusiness.category} · ${activeBusiness.city}` : "Empieza en XAMUKO Business"}</small></span><span className="mobile-business-chevron">⌄</span>
         </button>
-        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{businesses.map((item, index) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate("/"); }}><span className="mobile-business-avatar">{item.coverImage ? <img src={item.coverImage} alt="" /> : item.name.charAt(0)}</span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{item.category} · {item.city}</small><em className="business-role-badge">{roleForAccount(item)}</em></span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}<button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button></div>}
+        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{businesses.map((item, index) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate(`/mi-negocio/detalle/${index}`); }}><span className="mobile-business-avatar">{item.coverImage ? <img src={item.coverImage} alt="" /> : item.name.charAt(0)}</span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{item.category} · {item.city}</small><em className="business-role-badge">{roleForAccount(item)}</em></span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}<button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button></div>}
       </div>
-      <NavLink className="mobile-notification-button" to={empty ? "/sin-negocio" : "/notificaciones"} aria-label="Notificaciones"><SidebarIcon name="bell" />{!empty && unread > 0 && <span className="mobile-topbar-dot">{unread}</span>}</NavLink>
+      <NavLink className="mobile-notification-button" to="/notificaciones" aria-label="Notificaciones"><SidebarIcon name="bell" />{unread > 0 && <span className="mobile-topbar-dot">{unread}</span>}</NavLink>
     </header>
     <nav className={`mobile-nav${moreOpen ? " is-open" : ""}`} aria-label="Navegación principal móvil">
-      {moreOpen && <div className="mobile-more-panel"><div className="mobile-more-header"><div><strong>Menú</strong><small>Todo lo que necesitas para gestionar tu negocio</small></div><button type="button" className="mobile-more-close" aria-label="Cerrar menú" onClick={() => setMoreOpen(false)}>×</button></div><div className="mobile-more-list">{moreLinks.map((link) => renderLink(link, true))}</div></div>}
+      {moreOpen && <div id="business-mobile-menu" className="mobile-more-panel"><div className="mobile-more-header"><div><strong>Menú</strong><small>Todo lo que necesitas para gestionar tu negocio</small></div><button type="button" className="mobile-more-close" aria-label="Cerrar menú" onClick={() => setMoreOpen(false)}>×</button></div><div className="mobile-more-list">{moreLinks.map((link) => renderLink(link, true))}</div></div>}
       <div className="mobile-nav-scroll">{primaryLinks.map((link) => renderLink(link))}</div>
     </nav>
   </>;

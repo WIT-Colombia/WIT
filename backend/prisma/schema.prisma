@@ -33,6 +33,23 @@ enum BusinessAccountStatus {
   CLOSED
 }
 
+enum BusinessModalityType {
+  PHYSICAL
+  VIRTUAL
+  DELIVERY
+}
+
+enum BusinessModalityStatus {
+  CONFIGURING
+  ACTIVE
+  PAUSED
+}
+
+enum BusinessLocationVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 enum BusinessLifecycleStatus {
   DRAFT
   ACTIVE
@@ -236,7 +253,9 @@ model Business {
   businessAccount     BusinessAccount           @relation(fields: [businessAccountId], references: [id])
   createdBy           User                       @relation("BusinessCreator", fields: [createdById], references: [id])
   category            Category                   @relation(fields: [categoryId], references: [id])
+  secondaryCategories BusinessSecondaryCategory[]
   memberships         BusinessMembership[]
+  modalities          BusinessModality[]
   offers              BusinessOffer[]
   location            BusinessLocation?
   hours               BusinessHour[]
@@ -249,6 +268,49 @@ model Business {
   @@index([publicationStatus, visibilityStatus, deletionStatus])
   @@index([categoryId, lifecycleStatus])
   @@index([createdById])
+}
+
+model BusinessModality {
+  id         String                 @id @default(uuid()) @db.Char(36)
+  businessId String                 @db.Char(36)
+  type       BusinessModalityType
+  status     BusinessModalityStatus @default(CONFIGURING)
+  createdAt  DateTime               @default(now()) @db.DateTime(3)
+  updatedAt  DateTime               @updatedAt @db.DateTime(3)
+  business   Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact    BusinessModalityContact?
+  hours      BusinessModalityHour[]
+
+  @@unique([businessId, type])
+  @@index([businessId, status])
+  @@index([type, status])
+}
+
+model BusinessModalityContact {
+  id         String          @id @default(uuid()) @db.Char(36)
+  modalityId String          @unique @db.Char(36)
+  email      String?         @db.VarChar(320)
+  website    String?         @db.VarChar(2048)
+  phone      String?         @db.VarChar(32)
+  whatsapp   String?         @db.VarChar(32)
+  createdAt  DateTime        @default(now()) @db.DateTime(3)
+  updatedAt  DateTime        @updatedAt @db.DateTime(3)
+  modality   BusinessModality @relation(fields: [modalityId], references: [id], onDelete: Cascade)
+}
+
+model BusinessModalityHour {
+  id         String           @id @default(uuid()) @db.Char(36)
+  modalityId String           @db.Char(36)
+  dayOfWeek  Int
+  isClosed   Boolean          @default(false)
+  opensAt    String?          @db.VarChar(5)
+  closesAt   String?          @db.VarChar(5)
+  timezone   String           @default("UTC") @db.VarChar(64)
+  updatedAt  DateTime         @updatedAt @db.DateTime(3)
+  modality   BusinessModality @relation(fields: [modalityId], references: [id], onDelete: Cascade)
+
+  @@unique([modalityId, dayOfWeek])
+  @@index([modalityId, isClosed])
 }
 
 model BusinessMembership {
@@ -308,8 +370,20 @@ model Category {
   createdAt    DateTime              @default(now()) @db.DateTime(3)
   updatedAt    DateTime              @updatedAt @db.DateTime(3)
   businesses   Business[]
+  secondaryBusinesses BusinessSecondaryCategory[]
   offers       BusinessOffer[]
   translations CategoryTranslation[]
+}
+
+model BusinessSecondaryCategory {
+  businessId String   @db.Char(36)
+  categoryId String   @db.Char(36)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@id([businessId, categoryId])
+  @@index([categoryId, businessId])
 }
 
 model CategoryTranslation {
@@ -357,11 +431,13 @@ model BusinessLocation {
   cityName      String    @db.VarChar(160)
   zoneName      String?   @db.VarChar(160)
   address       String    @db.VarChar(255)
+  additionalAddressInfo String? @db.VarChar(200)
   postalCode    String?   @db.VarChar(32)
   latitude      Decimal?  @db.Decimal(9, 6)
   longitude     Decimal?  @db.Decimal(9, 6)
   googlePlaceId String?   @db.VarChar(255)
   geocodeSource String?   @db.VarChar(64)
+  visibility    BusinessLocationVisibility @default(PRIVATE)
   timezone      String    @default("UTC") @db.VarChar(64)
   createdAt     DateTime  @default(now()) @db.DateTime(3)
   updatedAt     DateTime  @updatedAt @db.DateTime(3)

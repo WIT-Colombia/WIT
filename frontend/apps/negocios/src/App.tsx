@@ -3,6 +3,7 @@ import { AppShell } from "./components/layout/AppShell";
 import { DashboardPage } from "./pages/DashboardPage";
 import { BusinessStoreProvider } from "./services/businessStore";
 import { BusinessDetailPage } from "./pages/BusinessDetailPage";
+import { BusinessModalitiesPage } from "./pages/BusinessModalitiesPage";
 import { SelectedBusinessPage } from "./pages/SelectedBusinessPage";
 import { BusinessPage } from "./pages/BusinessPage";
 import { BusinessCreatePage } from "./pages/BusinessCreatePage";
@@ -19,15 +20,17 @@ import { RecoveryPage } from "./pages/RecoveryPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { NoBusinessPage } from "./pages/NoBusinessPage";
 import { HelpPage } from "./pages/HelpPage";
+import { BusinessAuthProvider } from "./services/businessAuthContext";
 
 export default function App() {
-  return <BusinessStoreProvider><Routes>
+  return <BusinessAuthProvider><BusinessStoreProvider><Routes>
     <Route path="/login" element={<AuthPage mode="login" />} />
     <Route path="/registro" element={<AuthPage mode="register" />} />
     <Route path="/recuperar" element={<RecoveryPage />} />
     <Route path="/bienvenida" element={<WelcomePage />} />
     <Route path="/sin-negocio" element={<NoBusinessPage />} />
     <Route path="/legal/:page" element={<LegalPage />} />
+    <Route path="/preview" element={<AppShell demoMode />}><Route index element={<DashboardPage />} /></Route>
     <Route element={<AppShell />}>
       <Route path="/" element={<DashboardPage />} />
       <Route path="/mi-negocio" element={<SelectedBusinessPage />} />
@@ -35,6 +38,8 @@ export default function App() {
       <Route path="/mis-negocios/nuevo" element={<BusinessCreatePage />} />
       <Route path="/mis-negocios/editar/:index" element={<BusinessCreatePage />} />
       <Route path="/mi-negocio/detalle/:index" element={<BusinessDetailPage />} />
+      <Route path="/mi-negocio/modalidades" element={<BusinessModalitiesPage />} />
+      <Route path="/mi-negocio/modalidades/:index" element={<BusinessModalitiesPage />} />
       <Route path="/productos" element={<CatalogPage kind="product" />} />
       <Route path="/servicios" element={<CatalogPage kind="service" />} />
       <Route path="/opiniones" element={<ReviewsPage />} />
@@ -46,5 +51,5 @@ export default function App() {
       <Route path="/ayuda" element={<HelpPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes></BusinessStoreProvider>;
+  </Routes></BusinessStoreProvider></BusinessAuthProvider>;
 }

@@ -30,11 +30,12 @@ type GoogleMapsNamespace = {
 };
 
 export type GoogleGeocoder = {
-  geocode: (request: { address: string }, callback: (results: GoogleGeocoderResult[] | null, status: string) => void) => void;
+  geocode: (request: { address?: string; location?: { lat: number; lng: number } }, callback: (results: GoogleGeocoderResult[] | null, status: string) => void) => void;
 };
 
 export type GoogleGeocoderResult = {
   geometry?: { location?: { lat: () => number; lng: () => number } };
+  address_components?: Array<{ long_name: string; types: string[] }>;
 };
 
 declare global {

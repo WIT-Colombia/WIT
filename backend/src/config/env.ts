@@ -1,4 +1,5 @@
 import { loadEnvFile } from 'node:process';
+import { isUnverifiedEmailLoginExceptionAllowed } from '../modules/auth/email-login-policy.js';
 
 try {
   loadEnvFile();
@@ -37,12 +38,17 @@ const authCookieSameSite = process.env.AUTH_COOKIE_SAMESITE?.trim().toLowerCase(
 if (!['lax', 'strict', 'none'].includes(authCookieSameSite) || (authCookieSameSite === 'none' && nodeEnv !== 'production')) {
   throw new Error('AUTH_COOKIE_SAMESITE debe ser lax, strict o none; none solo está permitido en producción.');
 }
-const defaultTrustedOrigins = nodeEnv === 'development' ? 'http://127.0.0.1:5173,http://localhost:5173' : '';
+const allowUnverifiedEmailLogin = process.env.AUTH_ALLOW_UNVERIFIED_EMAIL_LOGIN?.trim().toLowerCase() === 'true';
+if (!isUnverifiedEmailLoginExceptionAllowed(nodeEnv, allowUnverifiedEmailLogin) && allowUnverifiedEmailLogin) {
+  throw new Error('AUTH_ALLOW_UNVERIFIED_EMAIL_LOGIN no está permitido en producción.');
+}
+const defaultTrustedOrigins = nodeEnv === 'development'
+  ? 'http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:5174,http://localhost:5174'
+  : '';
 const trustedOrigins = (process.env.AUTH_TRUSTED_ORIGINS ?? defaultTrustedOrigins).split(',').map((origin) => origin.trim()).filter(Boolean);
 if (nodeEnv === 'production' && trustedOrigins.length === 0) {
   throw new Error('AUTH_TRUSTED_ORIGINS debe configurarse en producción.');
 }
-
 const emailMode = process.env.EMAIL_MODE?.trim() ?? 'development';
 if (!['development', 'resend'].includes(emailMode)) {
   throw new Error('EMAIL_MODE debe ser development o resend.');
@@ -82,6 +88,7 @@ export const env = Object.freeze({
   accessTokenTtlSeconds,
   refreshTokenTtlDays,
   authCookieSameSite: authCookieSameSite as 'lax' | 'strict' | 'none',
+  allowUnverifiedEmailLogin,
   trustedOrigins,
   emailMode,
   emailFrom,
