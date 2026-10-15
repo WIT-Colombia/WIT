@@ -1,8 +1,8 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { SidebarIcon, formatSedeLabel, type SidebarIconName } from "./Sidebar";
+import { BusinessCoverThumbnail, BusinessIndicatorRow, SidebarIcon, formatSedeLabel, type SidebarIconName } from "./Sidebar";
 import { useBusinessStore } from "../../services/businessStore";
-import { formatCategoryName, visibleBusinessStatus } from "../../services/realBusinessAdapter";
+import { formatCategoryName } from "../../services/realBusinessAdapter";
 
 type MobileLink = { label: string; icon: SidebarIconName; to: string; end?: boolean };
 const primaryLinks: MobileLink[] = [
@@ -47,10 +47,10 @@ export function MobileNavigation() {
       <button type="button" className="mobile-menu-button" aria-label={moreOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={moreOpen} aria-controls="business-mobile-menu" onClick={() => { setMoreOpen((value) => !value); setBusinessesOpen(false); }}><span /><span /><span /></button>
       <div className="mobile-business-wrap" ref={businessWrapRef}>
         <button type="button" className={`mobile-business-picker${businessesOpen ? " active" : ""}`} onClick={() => { if (empty) { navigate("/mis-negocios"); return; } setBusinessesOpen((value) => !value); setMoreOpen(false); }} aria-expanded={businessesOpen} aria-label={empty ? "Ir a Mis negocios" : `Cambiar de negocio${activeBusiness?.deletionStatus === "RECOVERY" ? ". Eliminación pendiente" : ""}`}>
-          <span className="mobile-business-avatar">{activeBusiness?.coverImage ? <img src={activeBusiness.coverImage} alt="" /> : activeBusiness?.name?.charAt(0) ?? "W"}</span>
-          <span className="mobile-business-copy"><strong>{activeBusiness?.name ?? "Crea tu negocio"}</strong><small>{activeBusiness ? mobileBusinessMeta(activeBusiness) : "Empieza en XAMUKO Business"}</small></span><span className="mobile-business-chevron">⌄</span>
+          <span className="mobile-business-avatar">{activeBusiness ? <BusinessCoverThumbnail business={activeBusiness} /> : "W"}</span>
+          <span className="mobile-business-copy"><strong>{activeBusiness?.name ?? "Crea tu negocio"}</strong><small>{activeBusiness ? mobileBusinessMeta(activeBusiness) : "Empieza en XAMUKO Business"}</small>{activeBusiness && <BusinessIndicatorRow business={activeBusiness} />}</span><span className="mobile-business-chevron">⌄</span>
         </button>
-        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{selectableBusinesses.map(({ item, index }) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate(`/mi-negocio/detalle/${index}`); }}><span className="mobile-business-avatar">{item.coverImage ? <img src={item.coverImage} alt="" /> : item.name.charAt(0)}</span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{mobileBusinessMeta(item)}</small>{visibleBusinessStatus(item) && <em className={`business-state-badge ${visibleBusinessStatus(item) === "Eliminado" ? "deleted" : "verified"}`}>{visibleBusinessStatus(item) === "Verificado" ? "✓ Verificado" : "Eliminado"}</em>}</span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}<button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button></div>}
+        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{selectableBusinesses.map(({ item, index }) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate(`/mi-negocio/detalle/${index}`); }}><span className="mobile-business-avatar"><BusinessCoverThumbnail business={item} /></span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{mobileBusinessMeta(item)}</small><BusinessIndicatorRow business={item} /></span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}<button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button></div>}
       </div>
       <NavLink className="mobile-notification-button" to="/notificaciones" aria-label="Notificaciones"><SidebarIcon name="bell" />{unread > 0 && <span className="mobile-topbar-dot">{unread}</span>}</NavLink>
     </header>

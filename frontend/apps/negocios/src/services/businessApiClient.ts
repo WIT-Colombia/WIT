@@ -134,6 +134,7 @@ export type RealBusiness = {
   businessAccountId: string;
   name: string;
   sede: string | null;
+  adultOnly: boolean;
   slug: string;
   description: string | null;
   category: string | null;

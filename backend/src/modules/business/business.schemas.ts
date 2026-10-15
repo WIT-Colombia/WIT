@@ -7,6 +7,7 @@ const coordinate = (min: number, max: number) => z.union([z.number().finite().mi
 const businessFields = {
   name: z.string().trim().min(2).max(180),
   sede: nullableText(160),
+  adultOnly: z.boolean(),
   description: nullableText(5000),
   categoryId: z.string().uuid().optional(),
   categoryCode: z.string().trim().min(1).max(100).optional(),
@@ -35,7 +36,7 @@ const modalityConfigurationSchema = z.object({ type: modalityTypeSchema, contact
 const secondaryCategoryCodesSchema = z.array(z.string().trim().min(1).max(100)).max(32).optional();
 const contactValue = (value: unknown) => typeof value === 'string' && value.trim() ? value.trim() : null;
 
-export const businessCreateSchema = z.object({ ...businessFields, startModalitiesConfiguring: z.boolean().optional(), locationVisibility: z.enum(['PUBLIC', 'PRIVATE']).default('PRIVATE'), modalityTypes: z.array(modalityTypeSchema).min(1).max(3).optional(), modalityConfigurations: z.array(modalityConfigurationSchema).max(3).optional(), secondaryCategoryCodes: secondaryCategoryCodesSchema }).strict().superRefine((value, context) => {
+export const businessCreateSchema = z.object({ ...businessFields, adultOnly: z.boolean().default(false), startModalitiesConfiguring: z.boolean().optional(), locationVisibility: z.enum(['PUBLIC', 'PRIVATE']).default('PRIVATE'), modalityTypes: z.array(modalityTypeSchema).min(1).max(3).optional(), modalityConfigurations: z.array(modalityConfigurationSchema).max(3).optional(), secondaryCategoryCodes: secondaryCategoryCodesSchema }).strict().superRefine((value, context) => {
   if (!value.categoryId && !value.categoryCode) context.addIssue({ code: 'custom', path: ['categoryId'], message: 'Selecciona una categoría.' });
   if (value.secondaryCategoryCodes) {
     if (new Set(value.secondaryCategoryCodes).size !== value.secondaryCategoryCodes.length) context.addIssue({ code: 'custom', path: ['secondaryCategoryCodes'], message: 'No repitas categorías secundarias.' });

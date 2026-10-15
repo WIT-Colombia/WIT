@@ -25,6 +25,7 @@ export interface BusinessDetails {
   ownerNickname?: string;
   name: string;
   sede?: string;
+  adultOnly?: boolean;
   coverImage?: string;
   images?: string[];
   photos?: Array<{ id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean }>;

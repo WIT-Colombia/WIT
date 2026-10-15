@@ -13,6 +13,7 @@ export function toBusinessDetails(value: RealBusiness): BusinessDetails {
     permissions: value.permissions,
     name: value.name,
     sede: value.sede ?? '',
+    adultOnly: value.adultOnly,
     category: value.category ?? 'Sin categoría',
     secondaryCategories: value.secondaryCategories?.map(item => item.code) ?? [],
     description: value.description ?? '',

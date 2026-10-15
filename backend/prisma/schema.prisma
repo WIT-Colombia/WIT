@@ -235,6 +235,7 @@ model Business {
   createdById         String                    @db.Char(36)
   name                String                    @db.VarChar(180)
   sede                String?                   @db.VarChar(160)
+  adultOnly           Boolean                   @default(false)
   slug                String                    @db.VarChar(180)
   description         String?                   @db.Text
   categoryId          String                    @db.Char(36)
