@@ -2,6 +2,21 @@ import { z } from 'zod';
 
 const nullableText = (max: number) => z.string().trim().max(max).nullable().optional();
 const optionalUrl = (max: number) => z.string().trim().url().max(max).nullable().optional();
+const isOfficialSocialHost = (hostname: string, domains: readonly string[]) => domains.some(domain => hostname === domain || hostname.endsWith(`.${domain}`));
+const socialUrl = (platform: string, domains: readonly string[]) => z.string().trim().max(2048).transform((value, context) => {
+  if (!value) return null;
+  const candidate = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  try {
+    const parsed = new URL(candidate);
+    const hostname = parsed.hostname.toLowerCase();
+    if (parsed.protocol !== 'https:' || parsed.username || parsed.password || !isOfficialSocialHost(hostname, domains)) throw new Error('invalid social url');
+    const pathname = parsed.pathname === '/' ? '' : parsed.pathname.replace(/\/+$/, '');
+    return `https://${hostname}${pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    context.addIssue({ code: 'custom', message: `Ingresa un enlace válido de ${platform}.` });
+    return z.NEVER;
+  }
+}).nullable().optional();
 const coordinate = (min: number, max: number) => z.union([z.number().finite().min(min).max(max), z.string().trim().regex(/^-?\d{1,3}(?:\.\d{1,8})?$/).transform(Number).pipe(z.number().finite().min(min).max(max))]).nullable().optional();
 
 const businessFields = {
@@ -13,9 +28,15 @@ const businessFields = {
   categoryCode: z.string().trim().min(1).max(100).optional(),
   email: z.string().trim().email().max(320).nullable().optional(),
   website: optionalUrl(2048),
-  instagram: nullableText(255),
+  instagram: socialUrl('Instagram', ['instagram.com']),
+  facebookUrl: socialUrl('Facebook', ['facebook.com', 'fb.com']),
+  xUrl: socialUrl('X', ['x.com', 'twitter.com']),
+  tiktokUrl: socialUrl('TikTok', ['tiktok.com']),
   phone: nullableText(32),
   whatsapp: nullableText(32),
+  phonePublic: z.boolean().optional(),
+  whatsappPublic: z.boolean().optional(),
+  emailPublic: z.boolean().optional(),
   countryCode: z.string().trim().length(2).default('CO'),
   regionCode: nullableText(32),
   regionName: nullableText(160),
@@ -36,7 +57,7 @@ const modalityConfigurationSchema = z.object({ type: modalityTypeSchema, contact
 const secondaryCategoryCodesSchema = z.array(z.string().trim().min(1).max(100)).max(32).optional();
 const contactValue = (value: unknown) => typeof value === 'string' && value.trim() ? value.trim() : null;
 
-export const businessCreateSchema = z.object({ ...businessFields, adultOnly: z.boolean().default(false), startModalitiesConfiguring: z.boolean().optional(), locationVisibility: z.enum(['PUBLIC', 'PRIVATE']).default('PRIVATE'), modalityTypes: z.array(modalityTypeSchema).min(1).max(3).optional(), modalityConfigurations: z.array(modalityConfigurationSchema).max(3).optional(), secondaryCategoryCodes: secondaryCategoryCodesSchema }).strict().superRefine((value, context) => {
+export const businessCreateSchema = z.object({ ...businessFields, adultOnly: z.boolean().default(false), phonePublic: z.boolean().default(false), whatsappPublic: z.boolean().default(false), emailPublic: z.boolean().default(false), startModalitiesConfiguring: z.boolean().optional(), locationVisibility: z.enum(['PUBLIC', 'PRIVATE']).default('PRIVATE'), modalityTypes: z.array(modalityTypeSchema).min(1).max(3).optional(), modalityConfigurations: z.array(modalityConfigurationSchema).max(3).optional(), secondaryCategoryCodes: secondaryCategoryCodesSchema }).strict().superRefine((value, context) => {
   if (!value.categoryId && !value.categoryCode) context.addIssue({ code: 'custom', path: ['categoryId'], message: 'Selecciona una categoría.' });
   if (value.secondaryCategoryCodes) {
     if (new Set(value.secondaryCategoryCodes).size !== value.secondaryCategoryCodes.length) context.addIssue({ code: 'custom', path: ['secondaryCategoryCodes'], message: 'No repitas categorías secundarias.' });

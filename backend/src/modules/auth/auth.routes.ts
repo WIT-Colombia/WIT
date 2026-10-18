@@ -4,7 +4,7 @@ import rateLimit from 'express-rate-limit';
 import { env } from '../../config/env.js';
 import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
-import { changePasswordController, confirmEmailController, confirmPasswordResetController, googleCallbackController, googleLinkStartController, googleStartController, loginController, logoutController, meController, refreshController, registerController, requestPasswordResetController, requestVerificationController, updateProfileController } from './auth.controller.js';
+import { changePasswordController, confirmEmailController, confirmPasswordResetController, googleCallbackController, googleLinkStartController, googleStartController, loginController, logoutController, meController, refreshController, registerController, requestPasswordResetController, requestVerificationController, updateAdultContentPreferenceController, updateProfileController } from './auth.controller.js';
 
 export const authRouter = Router();
 const authRateLimitWindowMs = env.nodeEnv === 'development' ? 60 * 1000 : 15 * 60 * 1000;
@@ -25,6 +25,7 @@ authRouter.post('/refresh', authRateLimit, requireTrustedOrigin, refreshControll
 authRouter.post('/logout', authRateLimit, requireTrustedOrigin, logoutController);
 authRouter.get('/me', requireAuth, meController);
 authRouter.patch('/me', requireAuth, requireTrustedOrigin, updateProfileController);
+authRouter.patch('/me/adult-content', requireAuth, requireTrustedOrigin, updateAdultContentPreferenceController);
 authRouter.post('/change-password', requireAuth, requireTrustedOrigin, authRateLimit, changePasswordController);
 const verificationIpLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false, handler: (_req, res) => { res.setHeader('Retry-After', '900'); res.status(429).json({ error: { code: 'AUTH_RATE_LIMITED', message: 'Demasiadas solicitudes de verificación. Intenta más tarde.' } }); } });
 const verificationAddressLimit = rateLimit({ windowMs: 60 * 1000, limit: 1, standardHeaders: 'draft-8', legacyHeaders: false, keyGenerator: (req) => createHash('sha256').update(typeof req.body?.email === 'string' ? req.body.email.trim().toLocaleLowerCase('en-US') : '').digest('hex'), handler: (_req, res) => { res.setHeader('Retry-After', '60'); res.status(429).json({ error: { code: 'AUTH_RATE_LIMITED', message: 'Espera un minuto antes de solicitar otro enlace.' } }); } });

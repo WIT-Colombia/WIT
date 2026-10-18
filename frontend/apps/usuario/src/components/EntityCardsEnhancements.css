@@ -52,6 +52,12 @@
   color:var(--xamuko-violet);
 }
 .entity-like-count{color:var(--xamuko-muted);font-size:10px}
+.entity-favorite svg,
+.business-favorite-action svg{transition:fill .2s ease,stroke .2s ease,opacity .2s ease}
+.entity-favorite.is-active,
+.business-favorite-action.is-active{color:#E11D48}
+.entity-favorite.is-active svg,
+.business-favorite-action.is-active svg{fill:#E11D48;stroke:#E11D48;opacity:1}
 @media(max-width:700px){
   .entity-offer-card{border-radius:17px}
   .entity-offer-card .entity-card__image{height:155px;flex-basis:155px}

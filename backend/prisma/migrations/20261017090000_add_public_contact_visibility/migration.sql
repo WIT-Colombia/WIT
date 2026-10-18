@@ -1,0 +1,4 @@
+ALTER TABLE `Business`
+  ADD COLUMN `phonePublic` BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN `whatsappPublic` BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN `emailPublic` BOOLEAN NOT NULL DEFAULT false;

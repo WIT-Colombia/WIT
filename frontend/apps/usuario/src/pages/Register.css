@@ -19,8 +19,8 @@
 @media(max-width:600px){.register-brand{gap:0}.register-brand>span{display:none}}
 
 /* XAMUKO identity for account access */
-.register-page{background:linear-gradient(145deg,#f8faff 0%,#fff 52%,#f4f8ff 100%);color:var(--xamuko-navy)}
-.register-shell{position:relative;gap:clamp(42px,7vw,96px);width:min(calc(100% - 40px),1120px);margin:clamp(34px,7vh,76px) auto}
+.register-page{display:flex;min-height:100dvh;flex-direction:column;background:linear-gradient(145deg,#f8faff 0%,#fff 52%,#f4f8ff 100%);color:var(--xamuko-navy)}
+.register-shell{position:relative;display:flex;flex:1;gap:clamp(42px,7vw,96px);width:min(calc(100% - 40px),1120px);margin:clamp(34px,7vh,76px) auto}
 .register-shell::before{position:absolute;z-index:0;top:-80px;left:-130px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#7b3ffb1a 0%,transparent 70%);content:"";pointer-events:none}
 .register-side-panel,.register-shell .register-panel{position:relative;z-index:1}
 .register-side-panel{width:min(100%,440px);padding:22px 0}
@@ -44,11 +44,7 @@
 
 /* Responsive containment: the shared header must not widen the auth page. */
 .register-page{width:100%;max-width:100%;overflow-x:visible}
-.register-page .site-header{min-width:0}
-.register-page .site-header .brand{min-width:0;flex:1 1 auto}
-.register-page .site-header .brand-logo{max-width:100%}
-.register-page .site-header .location-pill{min-width:0;flex:0 1 auto}
-.register-page .site-header .location-pill>span:nth-child(2){min-width:0;overflow:hidden;text-overflow:ellipsis}
+.register-page>.site-footer{flex:0 0 auto;margin-top:auto;padding-bottom:24px}
 @media(max-width:800px){
   .register-shell{display:grid;place-items:center;width:100%;max-width:100%;padding-inline:16px}
   .register-shell .register-panel{width:100%;max-width:490px;margin-inline:auto}
@@ -58,4 +54,3 @@
   .register-side-panel{display:none}
   .register-shell .register-panel{width:100%;max-width:490px;margin-inline:auto}
 }
-@media(max-width:700px){.register-page .site-header .brand-logo{width:clamp(112px,40vw,143px)}}

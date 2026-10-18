@@ -70,3 +70,27 @@
  .settings-page .user-page-heading h1{font-size:30px;letter-spacing:-.8px}
  .settings-page .settings-panel{border-radius:15px;padding:16px}
 }
+
+/* Adult-content preference: server-backed and intentionally separate from local settings. */
+.settings-page .settings-adult-content-panel{padding:20px}
+.settings-adult-content-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.settings-adult-content-heading h2{margin:0 0 7px}
+.settings-adult-content-heading p{max-width:590px;margin:0;color:var(--xamuko-muted);font-size:11px;line-height:1.55}
+.settings-adult-switch{position:relative;flex:0 0 auto;width:44px;height:24px;margin-top:1px;padding:2px;border:0;border-radius:999px;background:#cbd5e1;cursor:pointer;transition:background .2s ease,opacity .2s ease}
+.settings-adult-switch span{display:block;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(15,23,42,.22);transition:transform .2s ease}
+.settings-adult-switch.is-enabled{background:var(--xamuko-violet)}
+.settings-adult-switch.is-enabled span{transform:translateX(20px)}
+.settings-adult-switch:disabled{cursor:not-allowed;opacity:.55}
+.settings-adult-switch:focus-visible{outline:3px solid rgba(123,63,251,.22);outline-offset:3px}
+.settings-adult-login-note,.settings-adult-feedback{margin:14px 0 0!important;color:var(--xamuko-muted)!important;font-size:11px!important}
+.settings-adult-feedback{color:#087d67!important;font-weight:700}
+.settings-adult-consent{margin-top:16px;padding:14px;border:1px solid #ddd2ff;border-radius:12px;background:#faf8ff}
+.settings-adult-consent h3{margin:0 0 9px;color:var(--xamuko-navy);font-size:12px}
+.settings-adult-consent label{display:flex;align-items:flex-start;gap:9px;color:var(--xamuko-navy);font-size:11px;line-height:1.5;cursor:pointer}
+.settings-adult-consent input{flex:0 0 auto;margin-top:2px;accent-color:var(--xamuko-violet)}
+.settings-adult-consent p{margin:10px 0 0;color:var(--xamuko-muted);font-size:10px;line-height:1.5}
+@media(max-width:520px){
+ .settings-page .settings-adult-content-panel{padding:16px}
+ .settings-adult-content-heading{gap:12px}
+ .settings-adult-content-heading p{font-size:10px}
+}

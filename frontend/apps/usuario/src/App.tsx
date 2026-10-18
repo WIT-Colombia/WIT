@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Home from "./pages/Home";
 import ManualLocation from "./pages/ManualLocation";
 import Location from "./pages/Location";
@@ -28,12 +28,23 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import GoogleCallback from "./pages/GoogleCallback";
 import { RequireAccount } from "./components/RequireAccount";
+import { SiteFooter } from "./components/SiteFooter";
 
 function ScrollToTop() {
   const location = useLocation();
+  const previousLocation = useRef<{ pathname: string; search: string } | null>(null);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const previous = previousLocation.current;
+    const isSameBusiness = previous?.pathname === location.pathname && location.pathname.startsWith("/business/");
+    const previousParams = new URLSearchParams(previous?.search ?? "");
+    const currentParams = new URLSearchParams(location.search);
+    previousParams.delete("tab");
+    currentParams.delete("tab");
+    const changedOnlyTab = isSameBusiness && previousParams.toString() === currentParams.toString();
+
+    if (!changedOnlyTab) window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    previousLocation.current = { pathname: location.pathname, search: location.search };
   }, [location.pathname, location.search]);
 
   return null;
@@ -47,6 +58,12 @@ function SearchRedirect() {
 function ManualLocationRedirect() {
   const location = useLocation();
   return <Navigate to={`/location${location.search}${location.hash}`} replace />;
+}
+
+function StandaloneFooter() {
+  const { pathname } = useLocation();
+  const authPages = ["/recover-password", "/reset-password", "/verify-email", "/auth/google/callback"];
+  return authPages.includes(pathname) ? <SiteFooter /> : null;
 }
 
 export default function App() {
@@ -83,8 +100,8 @@ export default function App() {
     <Route path="/likes" element={<RequireAccount><Likes /></RequireAccount>} />
     <Route path="/reviews" element={<Reviews />} />
     <Route path="/profile" element={<RequireAccount><Profile /></RequireAccount>} />
-    <Route path="/settings" element={<RequireAccount><Settings /></RequireAccount>} />
+    <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<Navigate to="/home" replace />} />
-  </Routes></>;
+  </Routes><StandaloneFooter /></>;
 }

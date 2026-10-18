@@ -15,12 +15,15 @@ export const initialBusiness: BusinessDetails = {
   email: "hola@cafedelbarrio.example",
   website: "cafedelbarrio.example",
   instagram: "@cafedelbarrio.demo",
+  facebookUrl: "",
+  xUrl: "",
+  tiktokUrl: "",
   hours: "Lun–Vie 8:00 a. m.–7:00 p. m. · Sáb–Dom 9:00 a. m.–6:00 p. m.",
   status: "Verificado",
 };
 
 export const initialBusinesses: BusinessDetails[] = [
-  { ...initialBusiness, name: "La Arepería de Majo", category: "Restaurantes", description: "Arepas hechas al momento y sabores de casa para empezar bien el día.", city: "Palmira", address: "Calle 30 # 28-16, Palmira", coverImage: "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?auto=format&fit=crop&w=900&q=85", rating: 4.8, reviewCount: 126, tags: ["Comida típica", "Desayunos"], isOpen: true, phone: "+57 000 000 0003", whatsapp: "+57 000 000 0003", email: "", website: "", instagram: "", hours: "", status: "Verificado" },
+  { ...initialBusiness, name: "La Arepería de Majo", category: "Restaurantes", description: "Arepas hechas al momento y sabores de casa para empezar bien el día.", city: "Palmira", address: "Calle 30 # 28-16, Palmira", coverImage: "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?auto=format&fit=crop&w=900&q=85", rating: 4.8, reviewCount: 126, tags: ["Comida típica", "Desayunos"], isOpen: true, phone: "+57 000 000 0003", whatsapp: "+57 000 000 0003", email: "", website: "", instagram: "", facebookUrl: "", xUrl: "", tiktokUrl: "", hours: "", status: "Verificado" },
   { ...initialBusiness, ownerNickname: "@carlos.garcia", role: "Colaborador", name: "Droguería San Jorge", category: "Droguerías", description: "Un lugar cercano para encontrar productos de cuidado personal y bienestar.", city: "Palmira", address: "Carrera 29 # 31-42, Palmira", coverImage: "https://images.unsplash.com/photo-1576602976047-174e57a47881?auto=format&fit=crop&w=900&q=85", tags: ["Salud", "Cuidado personal"], isOpen: true, status: "Verificado" },
   { ...initialBusiness, name: "Casa del Tornillo", category: "Ferreterías", description: "Herramientas y soluciones para esos arreglos que tienes pendientes.", city: "Palmira", address: "Calle 32 # 25-08, Palmira", coverImage: "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=900&q=85", tags: ["Herramientas", "Construcción"], isOpen: true, status: "Pendiente" },
 ];

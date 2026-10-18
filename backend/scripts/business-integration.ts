@@ -108,6 +108,15 @@ async function businessFlow() {
   const persisted = await prisma.business.findUnique({ where: { id: businessId }, include: { location: true } });
   assert(persisted?.name.endsWith('Editado') && persisted.location?.cityName === 'Cali', 'La edición no persistió.');
   pass('edición y persistencia de negocio', '200');
+  const socialNetworks = await request(`/businesses/${businessId}`, { method: 'PATCH', headers: { Origin: origin }, body: JSON.stringify({ facebookUrl: 'https://facebook.com/xamuko', instagram: 'https://instagram.com/xamuko', xUrl: 'https://x.com/xamuko', tiktokUrl: 'https://tiktok.com/@xamuko' }) });
+  assert(socialNetworks.response.status === 200 && socialNetworks.body?.business?.facebookUrl === 'https://facebook.com/xamuko' && socialNetworks.body?.business?.tiktokUrl === 'https://tiktok.com/@xamuko', `redes sociales respondió ${socialNetworks.response.status}.`);
+  const storedSocialNetworks = await prisma.business.findUnique({ where: { id: businessId }, select: { facebookUrl: true, instagram: true, xUrl: true, tiktokUrl: true } });
+  assert(storedSocialNetworks?.facebookUrl === 'https://facebook.com/xamuko' && storedSocialNetworks.instagram === 'https://instagram.com/xamuko' && storedSocialNetworks.xUrl === 'https://x.com/xamuko' && storedSocialNetworks.tiktokUrl === 'https://tiktok.com/@xamuko', 'Las redes sociales no se persistieron correctamente.');
+  const clearedSocialNetworks = await request(`/businesses/${businessId}`, { method: 'PATCH', headers: { Origin: origin }, body: JSON.stringify({ facebookUrl: null, instagram: null, xUrl: null, tiktokUrl: null }) });
+  assert(clearedSocialNetworks.response.status === 200, `eliminación de redes sociales respondió ${clearedSocialNetworks.response.status}.`);
+  const clearedSocialValues = await prisma.business.findUnique({ where: { id: businessId }, select: { facebookUrl: true, instagram: true, xUrl: true, tiktokUrl: true } });
+  assert(clearedSocialValues?.facebookUrl === null && clearedSocialValues.instagram === null && clearedSocialValues.xUrl === null && clearedSocialValues.tiktokUrl === null, 'Las redes sociales no se eliminaron correctamente.');
+  pass('redes sociales creadas, recuperadas y eliminadas en MySQL', '200');
   const invalidOwner = await request('/businesses', { method: 'POST', headers: { Origin: origin }, body: JSON.stringify({ ...payload, ownerId: '00000000-0000-0000-0000-000000000000' }) });
   assert(invalidOwner.response.status === 400, `ownerId arbitrario respondió ${invalidOwner.response.status}.`);
   pass('ownerId arbitrario rechazado', '400');

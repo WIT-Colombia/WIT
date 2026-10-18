@@ -2,7 +2,7 @@ import argon2 from 'argon2';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { getCurrentUser } from './auth.service.js';
-import type { ChangePasswordInput, ProfileUpdateInput } from './auth.schemas.js';
+import type { AdultContentPreferenceInput, ChangePasswordInput, ProfileUpdateInput } from './auth.schemas.js';
 
 export async function updateProfile(userId: string, input: ProfileUpdateInput) {
   await prisma.user.update({
@@ -12,6 +12,18 @@ export async function updateProfile(userId: string, input: ProfileUpdateInput) {
     },
   });
   return getCurrentUser(userId);
+}
+
+export async function updateAdultContentPreference(userId: string, input: AdultContentPreferenceInput) {
+  const now = new Date();
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: input.enabled
+      ? { adultContentEnabled: true, adultContentAcceptedAt: now, adultContentAcceptedVersion: input.conditionsVersion, adultContentRevokedAt: null }
+      : { adultContentEnabled: false, adultContentRevokedAt: now },
+    select: { adultContentEnabled: true, adultContentAcceptedAt: true, adultContentAcceptedVersion: true, adultContentRevokedAt: true },
+  });
+  return { enabled: user.adultContentEnabled, acceptedAt: user.adultContentAcceptedAt, conditionsVersion: user.adultContentAcceptedVersion, revokedAt: user.adultContentRevokedAt, ageVerified: false };
 }
 
 export async function changePassword(userId: string, currentSessionId: string, input: ChangePasswordInput): Promise<void> {

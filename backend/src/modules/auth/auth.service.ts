@@ -108,8 +108,9 @@ export async function logout(refreshToken: string): Promise<void> {
 }
 
 export async function getCurrentUser(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, publicId: true, displayName: true, emailNormalized: true, avatarUrl: true, locale: true, status: true, authIdentities: { select: { provider: true, verifiedAt: true } } } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, publicId: true, displayName: true, emailNormalized: true, avatarUrl: true, locale: true, status: true, adultContentEnabled: true, adultContentAcceptedAt: true, adultContentAcceptedVersion: true, adultContentRevokedAt: true, authIdentities: { select: { provider: true, verifiedAt: true } } } });
   if (!user || user.status !== 'ACTIVE') throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
   const { authIdentities, ...publicUser } = user;
-  return { ...publicUser, authProviders: authIdentities.map((identity) => identity.provider), emailVerified: authIdentities.some((identity) => identity.verifiedAt !== null) };
+  const { adultContentEnabled, adultContentAcceptedAt, adultContentAcceptedVersion, adultContentRevokedAt, ...userData } = publicUser;
+  return { ...userData, authProviders: authIdentities.map((identity) => identity.provider), emailVerified: authIdentities.some((identity) => identity.verifiedAt !== null), adultContentPreference: { enabled: adultContentEnabled, acceptedAt: adultContentAcceptedAt, conditionsVersion: adultContentAcceptedVersion, revokedAt: adultContentRevokedAt, ageVerified: false } };
 }

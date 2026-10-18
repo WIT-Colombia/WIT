@@ -2,7 +2,8 @@ import { useLocationContext } from "../context/LocationContext";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@wit/ui";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
+import { SiteHeader } from "../components/SiteHeader";
+import { SiteFooter } from "../components/SiteFooter";
 import "./Location.css";
 
 type LocationState = "ready" | "loading" | "granted" | "denied" | "unavailable" | "error";
@@ -35,12 +36,8 @@ export default function Location() {
   } as const;
   const message = state in feedback ? feedback[state as keyof typeof feedback] : null;
 
-  return <main className="location-page">
-    <header className="location-header">
-      <Link className="location-back" to="/home" aria-label="Volver al inicio"><span aria-hidden="true">←</span><span>Volver</span></Link>
-      <Link className="location-logo" to="/home" aria-label="XAMUKO, inicio"><img src={xamukoLogo} alt="XAMUKO · Descubre · Apoya · Disfruta" /></Link>
-      <span className="location-progress">PASO <b>1</b> DE 2</span>
-    </header>
+  return <div className="location-page">
+    <SiteHeader active="explore" />
 
     <section className="location-content" aria-labelledby="location-title">
       <div className="location-copy">
@@ -68,6 +65,6 @@ export default function Location() {
       <aside className="location-visual location-google-map" aria-label="Mapa de tu ubicación">{coordinates ? <iframe title="Mapa de tu ubicación" src={`https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=16&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div className="location-map-placeholder">Activa tu ubicación o elige una zona para verla en el mapa.</div>}</aside>
     </section>
 
-    <footer className="location-footer"><span><img src={xamukoLogo} alt="XAMUKO" /> <i /> Tu ubicación, a tu manera.</span><Link to="/home">Explorar negocios</Link></footer>
-  </main>;
+    <SiteFooter />
+  </div>;
 }

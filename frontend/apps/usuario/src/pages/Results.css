@@ -149,8 +149,15 @@
 .results-back-link{display:inline-flex;min-height:34px;align-items:center;padding:0 12px;border:1px solid #ddd2ff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font:inherit;font-weight:700;cursor:pointer;box-shadow:0 5px 16px rgba(123,63,251,.07);transition:background .2s ease,transform .2s ease}
 .results-back-link:hover{background:#f4efff;transform:translateY(-1px)}
 .results-topline strong{color:var(--xamuko-navy)}
-.results-main .search-bar{border-color:#e2d9ff;box-shadow:0 8px 22px rgba(123,63,251,.08)}
-.results-heading{margin-top:34px}
+.results-main>.search-bar{min-height:47px;padding:0 13px;border-color:#e2d9ff;border-radius:16px;box-shadow:0 8px 22px rgba(123,63,251,.08)}
+.results-main>.search-bar>svg{color:var(--xamuko-violet)}
+.results-main>.search-bar input{height:31px;font-size:13px}
+.results-main>.results-topline{order:1}
+.results-main>.results-heading{order:2;margin-top:0;margin-bottom:20px}
+.results-main>.search-bar{order:3}
+.results-main>.results-category-chips{order:4}
+.results-main>.results-list{order:5}
+.results-main>.admob-banner{order:6}
 .results-heading h1{color:var(--xamuko-navy);font-weight:800}
 .results-heading-links a{border-color:#d8ccff;border-radius:12px;background:#fff;color:var(--xamuko-violet);box-shadow:0 5px 14px rgba(123,63,251,.06);transition:background .2s ease,border-color .2s ease,transform .2s ease}
 .results-heading-links a:hover{border-color:#bfaeff;background:#f7f4ff;color:var(--xamuko-violet);transform:translateY(-1px)}
@@ -210,6 +217,8 @@
   .results-page .results-offer-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 }
 @media(max-width:620px){
+  .results-main>.search-bar{min-height:47px;padding:0 13px;border-radius:16px}
+  .results-main>.search-bar input{height:38px;font-size:16px}
   .results-category-chips{margin:11px 0 18px;gap:7px}
   .results-category-chips button{min-height:34px;padding:0 11px;font-size:10px}
   .results-page .entity-card{height:320px;border-radius:16px}
@@ -254,35 +263,8 @@
   .results-page .results-offers .results-offer-grid .entity-offer-card{display:flex;flex:0 0 calc((100% - 12px)/2);height:238px;min-height:238px;max-height:238px}
 }
 
-/* El pie de Resultados usa las mismas medidas que Inicio y el resto de páginas. */
-.results-page .site-footer{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  width:min(100% - 48px,1180px);
-  margin:0 auto;
-  padding:20px 0 0;
-  border-top:1px solid var(--xamuko-border);
-}
-.results-page .site-footer__brand{color:var(--xamuko-violet);font-size:20px;letter-spacing:-.04em}
-.results-page .site-footer>span,.results-page .site-footer small{color:var(--xamuko-muted);font-size:11px}
-.results-page .site-footer small{margin-left:auto}
-@media(max-width:700px){
-  .results-page .site-footer{
-    width:calc(100% - 32px);
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:4px 8px;
-    padding:14px 0 16px;
-    text-align:center;
-  }
-  .results-page .site-footer__brand{font-size:16px}
-  .results-page .site-footer>span{font-size:9px}
-  .results-page .site-footer small{width:100%;margin-left:0;font-size:9px}
-}
-
 /* El banner y el cierre de Resultados respetan el mismo contenedor que Inicio. */
-.results-page{padding-bottom:32px}
+.results-page{padding-bottom:24px}
 .results-page .admob-banner{
   box-sizing:border-box;
   width:min(100%,728px);

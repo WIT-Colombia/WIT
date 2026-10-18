@@ -3,6 +3,7 @@ type GoogleMapOptions = {
   zoom: number;
   mapTypeId?: string;
   mapTypeControl?: boolean;
+  zoomControl?: boolean;
   streetViewControl?: boolean;
   fullscreenControl?: boolean;
   gestureHandling?: string;
@@ -11,6 +12,8 @@ type GoogleMapOptions = {
 export type GoogleMapInstance = {
   setCenter: (center: { lat: number; lng: number }) => void;
   setZoom: (zoom: number) => void;
+  getZoom?: () => number | undefined;
+  setMapTypeId?: (mapTypeId: string) => void;
   addListener: (event: string, handler: (payload: { latLng?: { lat: () => number; lng: () => number } }) => void) => void;
   fitBounds?: (bounds: GoogleBounds) => void;
 };
@@ -22,10 +25,15 @@ export type GoogleMarkerInstance = {
 };
 
 export type GoogleBounds = { extend: (point: { lat: number; lng: number }) => void };
+export type GoogleCircleInstance = { setMap: (map: GoogleMapInstance | null) => void };
+type GoogleMarkerIcon = { path: unknown; scale: number; fillColor: string; fillOpacity: number; strokeColor: string; strokeWeight: number };
+type GoogleCircleOptions = { map: GoogleMapInstance; center: { lat: number; lng: number }; radius: number; fillColor: string; fillOpacity: number; strokeColor: string; strokeOpacity: number; strokeWeight: number; clickable: boolean };
 
 type GoogleMapsNamespace = {
   Map: new (element: HTMLElement, options: GoogleMapOptions) => GoogleMapInstance;
-  Marker: new (options: { map: GoogleMapInstance; position: { lat: number; lng: number }; title: string }) => GoogleMarkerInstance;
+  Marker: new (options: { map: GoogleMapInstance; position: { lat: number; lng: number }; title: string; icon?: GoogleMarkerIcon }) => GoogleMarkerInstance;
+  Circle?: new (options: GoogleCircleOptions) => GoogleCircleInstance;
+  SymbolPath?: { CIRCLE: unknown };
   LatLngBounds: new () => GoogleBounds;
   Geocoder?: new () => GoogleGeocoder;
 };

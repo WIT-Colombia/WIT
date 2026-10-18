@@ -1,4 +1,4 @@
-import { businesses, products, services, type Review } from "../data/mockData";
+import { products, services, type Review } from "../data/mockData";
 
 const FAVORITES_KEY = "wit-favorites";
 const LIKES_KEY = "wit-likes";
@@ -17,7 +17,6 @@ function readIds(key: string): string[] {
   } catch { return []; }
 }
 
-const businessIds = new Set(businesses.map((business) => business.id));
 const productIds = new Set(products.map((product) => product.id));
 const likeableIds = new Set([...productIds, ...services.map((service) => service.id)]);
 
@@ -28,7 +27,9 @@ function keepKnownIds(key: string, known: Set<string>): string[] {
   return filtered;
 }
 
-export function getFavoriteIds(): string[] { return keepKnownIds(FAVORITES_KEY, businessIds); }
+// Public businesses use server-issued UUIDs and are not present in the local demo catalog.
+// Keep the existing localStorage mechanism, but do not discard valid public identifiers.
+export function getFavoriteIds(): string[] { return readIds(FAVORITES_KEY); }
 export function getLikeIds(): string[] { return keepKnownIds(LIKES_KEY, likeableIds); }
 
 function toggleId(key: string, id: string): string[] {
@@ -38,7 +39,7 @@ function toggleId(key: string, id: string): string[] {
   return next;
 }
 
-export function toggleFavorite(id: string): string[] { return businessIds.has(id) ? toggleId(FAVORITES_KEY, id) : getFavoriteIds(); }
+export function toggleFavorite(id: string): string[] { return toggleId(FAVORITES_KEY, id); }
 export function toggleLike(id: string): string[] { return likeableIds.has(id) ? toggleId(LIKES_KEY, id) : getLikeIds(); }
 export function getLikeCount(id: string, baseCount = 0): number { return Math.max(0, baseCount) + (getLikeIds().includes(id) ? 1 : 0); }
 

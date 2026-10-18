@@ -2,9 +2,9 @@ import type { RequestHandler } from 'express';
 import { AppError } from '../../shared/errors/app-error.js';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 import { getCurrentUser, issueSession, login, logout, refresh, register } from './auth.service.js';
-import { changePassword, updateProfile } from './account.service.js';
+import { changePassword, updateAdultContentPreference, updateProfile } from './account.service.js';
 import { loginSchema, registerSchema } from './auth.schemas.js';
-import { changePasswordSchema, emailRequestSchema, emailTokenSchema, passwordResetConfirmSchema, profileUpdateSchema, sessionPreferenceSchema } from './auth.schemas.js';
+import { adultContentPreferenceSchema, changePasswordSchema, emailRequestSchema, emailTokenSchema, passwordResetConfirmSchema, profileUpdateSchema, sessionPreferenceSchema } from './auth.schemas.js';
 import { confirmEmail, resetPassword, sendPasswordResetRequest, sendVerificationRequest } from './auth-token.service.js';
 import argon2 from 'argon2';
 import { clearRefreshCookie, getRefreshToken, setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
@@ -142,4 +142,5 @@ export const confirmPasswordResetController: RequestHandler = async (request, re
 };
 
 export const updateProfileController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; const user = await updateProfile(auth.userId, parse(profileUpdateSchema, request.body)); response.status(200).json({ user }); } catch (error) { next(error); } };
+export const updateAdultContentPreferenceController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; const preference = await updateAdultContentPreference(auth.userId, parse(adultContentPreferenceSchema, request.body)); response.status(200).json({ preference }); } catch (error) { next(error); } };
 export const changePasswordController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; await changePassword(auth.userId, auth.sessionId, parse(changePasswordSchema, request.body)); response.status(204).send(); } catch (error) { next(error); } };

@@ -1,0 +1,58 @@
+/* Page-local container; the six original card faces keep all their own styles. */
+.business-card-panel{min-width:0;padding:20px;border:1px solid #e7edf5;border-radius:13px;background:#fff;box-shadow:0 3px 14px #0f274705}
+.business-card-panel-heading{display:flex;align-items:flex-start;gap:10px;margin-bottom:18px}
+.business-card-panel-heading>span{display:grid;place-items:center;flex:0 0 34px;height:36px;border-radius:9px;background:#eff6ff;color:#2563eb}
+.business-card-panel-heading>div{min-width:0}
+.business-card-panel-heading h2{margin:0;color:#0f172a;font-size:16px;font-weight:750;letter-spacing:-.025em;line-height:1.4}
+.business-card-panel-heading p{margin:5px 0 0;color:#64748b;font-size:11px;line-height:1.6}
+.business-card-panel-content{display:grid;gap:16px;max-width:420px;margin:0 auto;min-width:0}
+.business-card-panel-reference{margin:0;color:#64748b;font-size:10px;line-height:1.5;text-align:center}
+.business-card-panel-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0;padding:14px 0;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
+.business-card-panel-stats>div{display:grid;gap:5px;min-width:0}
+.business-card-panel-stats>div+div{padding-left:12px;border-left:1px solid #e2e8f0}
+.business-card-panel-stats dt{color:#64748b;font-size:10px;line-height:1.5}
+.business-card-panel-stats dd{margin:0;color:#0f2747;font-size:13px;font-weight:650;line-height:1.4;overflow-wrap:anywhere}
+.business-card-panel-progress>div{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;color:#64748b;font-size:11px}
+.business-card-panel-progress strong{color:#2563eb;font-size:11px}
+.business-card-panel-progress progress{display:block;width:100%;height:6px;overflow:hidden;border:0;border-radius:99px;background:#e2e8f0;accent-color:#2563eb}
+.business-card-panel-progress progress::-webkit-progress-bar{border-radius:99px;background:#e2e8f0}
+.business-card-panel-progress progress::-webkit-progress-value{border-radius:99px;background:#2563eb}
+.business-card-panel-progress progress::-moz-progress-bar{border-radius:99px;background:#2563eb}
+.business-card-panel-pending,.business-card-panel-notice,.business-card-panel-message{margin:0;color:#64748b;font-size:11px;line-height:1.6}
+.business-card-panel-notice{padding:11px 12px;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;color:#526b8a}
+.business-card-panel-actions{display:grid;gap:8px;min-width:0}
+.business-card-panel-actions>button{display:flex;align-items:center;justify-content:center;width:100%;min-height:40px;margin:0;padding:9px 12px;border-radius:7px;font-size:12px;line-height:1.4}
+.business-card-panel-actions>button:disabled{border:1px solid #e2e8f0;background:#f1f5f9;color:#64748b;box-shadow:none;cursor:not-allowed;opacity:1}
+.business-card-panel-benefits-note{color:#64748b;font-size:10px;line-height:1.5;text-align:center}
+.business-card-benefits-overlay{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;padding:20px;background:#0f172a80}
+.business-card-benefits-dialog{display:grid;gap:18px;width:min(100%,390px);max-height:calc(100dvh - 40px);overflow:auto;padding:22px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;box-shadow:0 24px 55px #0f172a40}
+.business-card-benefits-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.business-card-benefits-heading p{margin:0 0 4px;color:#64748b;font-size:11px;line-height:1.4}
+.business-card-benefits-heading h3{margin:0;color:#0f172a;font-size:18px;line-height:1.3}
+.business-card-benefits-close{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:0;border:1px solid #e2e8f0;border-radius:50%;background:#fff;color:#475569;cursor:pointer}
+.business-card-benefits-close svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round}
+.business-card-benefits-close:hover{border-color:#bfdbfe;background:#eff6ff;color:#2563eb}
+.business-card-benefits-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.business-card-benefits-list li{display:grid;gap:4px;padding:12px;border:1px solid #e2e8f0;border-radius:9px;background:#f8fafc}
+.business-card-benefits-list strong{color:#0f172a;font-size:13px;line-height:1.4}
+.business-card-benefits-list p,.business-card-benefits-list small{margin:0;color:#64748b;font-size:11px;line-height:1.5}
+.business-card-benefits-pending{margin:0;color:#64748b;font-size:13px;line-height:1.6}
+.business-card-level-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.business-card-level-tabs button{display:grid;gap:3px;min-width:0;padding:9px 10px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#475569;text-align:left;cursor:pointer}
+.business-card-level-tabs button:hover,.business-card-level-tabs button.selected{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8}
+.business-card-level-tabs button.is-current{box-shadow:inset 0 0 0 1px #2563eb}
+.business-card-level-tabs span{overflow:hidden;font-size:11px;font-weight:700;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+.business-card-level-tabs small{overflow:hidden;color:#64748b;font-size:9px;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+.business-card-level-detail{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #dbeafe;border-radius:10px;background:#f8fbff}
+.business-card-level-detail p{margin:0 0 3px;color:#64748b;font-size:10px;line-height:1.4}
+.business-card-level-detail h4{margin:0;color:#0f172a;font-size:14px;line-height:1.3}
+.business-card-level-detail>span{flex:0 0 auto;padding:4px 7px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap}
+.business-card-level-detail .is-unlocked{background:#dcfce7;color:#15803d}
+.business-card-level-detail .is-locked{background:#f1f5f9;color:#64748b}
+.business-card-level-detail .is-pending{background:#fef3c7;color:#92400e}
+.business-card-benefits-list ul{display:grid;gap:5px;margin:2px 0 0;padding:0;list-style:none}
+.business-card-benefits-list ul li{padding:0;border:0;background:transparent;color:#475569;font-size:11px;line-height:1.45}
+.business-card-benefits-list ul li::before{content:"✓";margin-right:6px;color:#16a34a;font-weight:800}
+.business-card-benefits-list ul.is-pending li::before{content:"🔒";color:inherit;font-size:9px}
+.business-card-next-level{margin:0;padding:10px 12px;border-radius:9px;background:#f8fafc;color:#475569;font-size:11px;line-height:1.55}
+@media(max-width:600px){.business-card-panel{padding:18px 16px;border-radius:12px}.business-card-panel-heading h2{font-size:16px}}

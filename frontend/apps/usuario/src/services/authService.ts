@@ -11,6 +11,15 @@ export type AuthUser = {
   avatarUrl: string | null;
   locale: string;
   status: "ACTIVE" | "SUSPENDED" | "DELETED";
+  adultContentPreference?: AdultContentPreference;
+};
+
+export type AdultContentPreference = {
+  enabled: boolean;
+  acceptedAt: string | null;
+  conditionsVersion: string | null;
+  revokedAt: string | null;
+  ageVerified: boolean;
 };
 
 type AuthResponse = { user: AuthUser; accessToken: string };
@@ -48,6 +57,11 @@ function withAuthorization(init: RequestInit = {}): RequestInit {
   const headers = new Headers(init.headers);
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
   return { ...init, headers };
+}
+
+/** Uses the in-memory session token when one is available; it never persists it. */
+export function requestWithSession<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return requestJson<T>(path, withAuthorization(init));
 }
 
 export async function register(name: string, credentials: Credentials): Promise<AuthUser> {
@@ -99,6 +113,16 @@ export type ProfileUpdate = { name: string };
 export async function updateProfile(input: ProfileUpdate): Promise<AuthUser> {
   const result = await requestJson<{ user: AuthUser }>("/api/v1/auth/me", { method: "PATCH", body: JSON.stringify(input), ...withAuthorization() });
   return result.user;
+}
+
+const ADULT_CONTENT_CONDITIONS_VERSION = "2026-10-17";
+
+export async function updateAdultContentPreference(enabled: boolean, conditionsVersion = ADULT_CONTENT_CONDITIONS_VERSION): Promise<AdultContentPreference> {
+  const result = await requestWithSession<{ preference: AdultContentPreference }>("/api/v1/auth/me/adult-content", {
+    method: "PATCH",
+    body: JSON.stringify({ enabled, conditionsVersion }),
+  });
+  return result.preference;
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {

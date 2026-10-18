@@ -1,0 +1,11 @@
+.site-footer { display:flex; box-sizing:border-box; align-items:center; gap:14px; width:min(1280px, calc(100vw - 48px)); margin:0 auto; padding:18px 0 0; border-top:1px solid #e5e6f4; }
+.site-footer__brand { color:#6325e5; font-size:20px; letter-spacing:-.04em; }
+.site-footer > span,.site-footer small { color:var(--xamuko-muted); font-size:11px; }
+.site-footer small { margin-left:auto; }
+
+@media(max-width:700px) {
+  .site-footer { width:calc(100vw - 32px); flex-wrap:wrap; justify-content:center; gap:5px 8px; padding:16px 0 4px; text-align:center; }
+  .site-footer__brand { font-size:18px; }
+  .site-footer > span { font-size:10px; }
+  .site-footer small { width:100%; margin-left:0; font-size:10px; }
+}

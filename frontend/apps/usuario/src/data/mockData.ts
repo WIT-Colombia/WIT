@@ -11,6 +11,7 @@ export type Business = {
   address: string;
   image: string;
   gallery?: string[];
+  logo?: string;
   tags: string[];
   description?: string;
   isFeatured?: boolean;
@@ -19,6 +20,14 @@ export type Business = {
   createdAt?: string;
   phone?: string;
   whatsapp?: string;
+  email?: string;
+  website?: string;
+  city?: string;
+  regionName?: string;
+  additionalAddressInfo?: string;
+  secondaryCategories?: string[];
+  weeklyHours?: { day: string; hours: string; isClosed: boolean }[];
+  socialNetworks?: { instagram?: string | null; facebook?: string | null; tiktok?: string | null; x?: string | null };
   coordinates?: { lat: number; lng: number };
   /** Only true when the coordinates were verified by the business or platform. */
   coordinatesVerified?: boolean;

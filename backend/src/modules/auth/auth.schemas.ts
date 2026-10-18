@@ -23,6 +23,13 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 export const profileUpdateSchema = z.object({ name: z.string().trim().min(2).max(120) }).strict();
 
+export const adultContentPreferenceSchema = z.object({
+  enabled: z.boolean(),
+  conditionsVersion: z.string().trim().min(1).max(32),
+}).strict();
+
+export type AdultContentPreferenceInput = z.infer<typeof adultContentPreferenceSchema>;
+
 export const changePasswordSchema = z.object({
   currentPassword: password,
   newPassword: password,

@@ -11,8 +11,19 @@ test('valida contactos y rechaza correo inválido', () => {
 });
 test('valida horarios HH:mm y coherencia', () => {
   assert.equal(modalityHourSchema.safeParse({ dayOfWeek: 1, isClosed: false, opensAt: '08:00', closesAt: '17:00' }).success, true);
-  assert.equal(modalityHourSchema.safeParse({ dayOfWeek: 1, isClosed: false, opensAt: '17:00', closesAt: '08:00' }).success, false);
   assert.equal(modalityHourSchema.safeParse({ dayOfWeek: 1, isClosed: true, opensAt: null, closesAt: null }).success, true);
+});
+test('acepta horarios normales, días cerrados y atención 24 horas', () => {
+  const weeklyHours = [
+    ...[1, 2, 3, 4, 5].map(dayOfWeek => ({ dayOfWeek, isClosed: false, opensAt: '08:00', closesAt: '18:00' })),
+    { dayOfWeek: 6, isClosed: false, opensAt: '08:00', closesAt: '12:00' },
+    { dayOfWeek: 0, isClosed: true, opensAt: null, closesAt: null },
+  ];
+  assert.equal(hoursSchema.safeParse({ hours: weeklyHours }).success, true);
+  assert.equal(modalityHourSchema.safeParse({ dayOfWeek: 1, isClosed: false, opensAt: '00:00', closesAt: '23:59' }).success, true);
+});
+test('rechaza horarios que terminan al día siguiente porque el modelo no los admite', () => {
+  assert.equal(modalityHourSchema.safeParse({ dayOfWeek: 1, isClosed: false, opensAt: '17:00', closesAt: '08:00' }).success, false);
 });
 test('rechaza días duplicados y más de siete entradas', () => {
   assert.equal(hoursSchema.safeParse({ hours: [{ dayOfWeek: 1 }, { dayOfWeek: 1 }] }).success, false);

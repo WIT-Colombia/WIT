@@ -1,6 +1,8 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { MobileNavigation } from "./MobileNavigation";
 import { Sidebar } from "./Sidebar";
+import { BusinessDesktopHeader } from "./BusinessDesktopHeader";
+import "./BusinessShell.css";
 import { useBusinessStore } from "../../services/businessStore";
 import { useBusinessAuth } from "../../services/businessAuthContext";
 import type { ReactNode } from "react";
@@ -10,7 +12,7 @@ export function AppShell({ demoMode = false }: { demoMode?: boolean }) {
   const { businesses, businessesReady } = useBusinessStore();
   const auth = useBusinessAuth();
   const emptyAccount = businesses.length === 0 || (location.pathname === "/perfil" && new URLSearchParams(location.search).get("empty") === "1");
-  const renderLayout = (content: ReactNode) => <div className="business-app"><div className="app-content"><div className="body-layout"><Sidebar empty={emptyAccount} /><main className="page-content">{content}</main></div></div><MobileNavigation /></div>;
+  const renderLayout = (content: ReactNode) => <div className="business-app"><div className="app-content"><div className="body-layout"><Sidebar empty={emptyAccount} /><div className="business-shell-workspace"><BusinessDesktopHeader /><main className="page-content">{content}</main><footer className="business-institutional-footer"><div><strong>XAMUKO</strong><span>Lo que necesitas, está más cerca.</span></div><small>© 2026 XAMUKO · Palmira, Colombia</small></footer></div></div></div><MobileNavigation /></div>;
   if (demoMode) return renderLayout(<Outlet />);
   if (auth.state.status === "unchecked") return <main className="auth-page"><p className="auth-status">Comprobando tu sesión…</p></main>;
   if (auth.state.status === "unauthenticated") return <Navigate to={`/login?next=${encodeURIComponent(location.pathname)}`} replace />;

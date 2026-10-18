@@ -20,6 +20,7 @@ import { RecoveryPage } from "./pages/RecoveryPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { NoBusinessPage } from "./pages/NoBusinessPage";
 import { HelpPage } from "./pages/HelpPage";
+import BusinessPublicPreviewPage from "./pages/BusinessPublicPreviewPage";
 import { BusinessAuthProvider } from "./services/businessAuthContext";
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
       <Route path="/mis-negocios/nuevo" element={<BusinessCreatePage />} />
       <Route path="/mis-negocios/editar/:index" element={<BusinessCreatePage />} />
       <Route path="/mi-negocio/detalle/:index" element={<BusinessDetailPage />} />
+      <Route path="/mi-negocio/preview/:id" element={<BusinessPublicPreviewPage />} />
       <Route path="/mi-negocio/modalidades" element={<BusinessModalitiesPage />} />
       <Route path="/mi-negocio/modalidades/:index" element={<BusinessModalitiesPage />} />
       <Route path="/productos" element={<CatalogPage kind="product" />} />

@@ -5,6 +5,7 @@ import type { Department, Locality } from "../data/locations";
 import { getColombianAdministrativeDivisions } from "../services/administrativeDivisionService";
 import { useLocationContext } from "../context/LocationContext";
 import { SiteHeader } from "../components/SiteHeader";
+import { SiteFooter } from "../components/SiteFooter";
 import "./ManualLocation.css";
 import "../components/PageLayout.css";
 
@@ -119,6 +120,6 @@ export default function ManualLocation() {
 
     </section>
 
-    <footer className="site-footer"><strong className="site-footer__brand">XAMUKO</strong><span>Lo que necesitas, está más cerca.</span><small>© 2026 XAMUKO · Palmira, Colombia</small></footer>
+    <SiteFooter />
   </main>;
 }

@@ -8,7 +8,7 @@ import "./BusinessDigitalCard.css";
 export type BusinessCardLevel = "BASIC" | "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND";
 
 const levelLabels: Record<BusinessCardLevel, string> = {
-  BASIC: "Básico", BRONZE: "Bronce", SILVER: "Plata", GOLD: "Oro", PLATINUM: "Platino", DIAMOND: "Diamante",
+  BASIC: "Principiante", BRONZE: "Bronce", SILVER: "Plata", GOLD: "Oro", PLATINUM: "Platino", DIAMOND: "Diamante",
 };
 const themeColors: Record<BusinessCardLevel, [string, string, string]> = {
   BASIC: ["#793bff", "#2858ff", "#23c6ff"],
@@ -134,11 +134,12 @@ export function BusinessCardFace({ business, level = "BASIC", publicUrl = null, 
   const sede = business.sede?.trim();
   const sedeLabel = sede ? (/^sede\b/i.test(sede) ? sede : `Sede ${sede}`) : null;
   const hasFounder = Number.isInteger(founderNumber) && founderNumber! >= 1 && founderNumber! <= 20;
+  const businessImage = business.profilePhotoId ? business.profileImage : undefined;
   return <article className={`business-digital-card business-digital-card--${level.toLowerCase()}${business.name.length > 25 ? " business-digital-card--long-name" : ""}`} aria-label={`Tarjeta XAMUKO de ${business.name}`}>
     <CardArtwork level={level} />
     <div className="business-digital-card__brand"><img className="business-digital-card__logo" src={xamukoLogo} alt="XAMUKO · Descubre · Apoya · Disfruta" /><img className="business-digital-card__logo business-digital-card__logo--light" src={xamukoLogo} alt="" aria-hidden="true" /></div>
     {level !== "BASIC" && <LevelMedal level={level} />}
-    <CardAvatar key={`${business.id ?? ""}:${business.coverImage ?? ""}`} src={business.coverImage} />
+    <CardAvatar key={`${business.id ?? ""}:${business.profilePhotoId ?? ""}`} src={businessImage} />
     <div className="business-digital-card__identity">
       <h3 title={business.name}>{business.name}</h3>
       {sedeLabel && <p>{sedeLabel}</p>}

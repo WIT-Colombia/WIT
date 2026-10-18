@@ -1,5 +1,5 @@
-import { businesses, products, reviews, services, type Business, type Product, type Review, type Service } from "../data/mockData";
-import { isBusinessPublished, isOfferPublished } from "./negociosPublicationService";
+import { type Business, type Product, type Review, type Service } from "../data/mockData";
+import { listPublicBusinesses, getPublicBusiness, listPublicProducts, listPublicServices } from "./publicBusinessApi";
 
 export type BusinessFilters = { query?: string; category?: string };
 
@@ -45,17 +45,13 @@ function matchesQuery(query: string | undefined, fields: string[]): boolean {
   });
 }
 
-function isOfferVisible(businessId: string, offerName: string): boolean {
-  const business = businesses.find((item) => item.id === businessId);
-  return Boolean(business && isBusinessPublished(business.name) && isOfferPublished(business.name, offerName));
-}
-
 export async function getBusinesses(filters: BusinessFilters = {}): Promise<Business[]> {
-  return businesses.filter((business) => {
-    if (!isBusinessPublished(business.name)) return false;
+  let publicBusinesses: Business[];
+  try { publicBusinesses = await listPublicBusinesses(); } catch { publicBusinesses = []; }
+  return publicBusinesses.filter((business) => {
     const matchesCategory = !filters.category || business.category === filters.category;
-    const businessProducts = products.filter((product) => product.businessId === business.id && isOfferVisible(product.businessId, product.name)).flatMap((product) => [product.name, product.description]);
-    const businessServices = services.filter((service) => service.businessId === business.id && isOfferVisible(service.businessId, service.name)).flatMap((service) => [service.name, service.description]);
+    const businessProducts: string[] = [];
+    const businessServices: string[] = [];
     const searchableFields = [business.name, business.category, business.address, business.description ?? "", ...business.tags, ...businessProducts, ...businessServices];
     return matchesCategory && matchesQuery(filters.query, searchableFields);
   });
@@ -63,48 +59,41 @@ export async function getBusinesses(filters: BusinessFilters = {}): Promise<Busi
 
 export async function getMatchingProducts(filters: BusinessFilters = {}): Promise<Product[]> {
   if (!filters.query?.trim() && !filters.category) return [];
-  const matchedBusinesses = new Set((await getBusinesses(filters)).map((business) => business.id));
-  return products.filter((product) => {
-    const business = businesses.find((item) => item.id === product.businessId);
-    if (!business || !isOfferVisible(product.businessId, product.name)) return false;
-    const matchesCategory = !filters.category || business?.category === filters.category;
-    return matchesCategory && (matchesQuery(filters.query, [product.name, product.description]) || (Boolean(filters.query) && matchedBusinesses.has(product.businessId)));
-  });
+  const businesses = await getBusinesses(filters); const results = await Promise.all(businesses.map(item => listPublicProducts(item.id).catch(() => [])));
+  return results.flat().filter(product => !filters.query || matchesQuery(filters.query, [product.name, product.description]));
 }
 
 export async function getMatchingServices(filters: BusinessFilters = {}): Promise<Service[]> {
   if (!filters.query?.trim() && !filters.category) return [];
-  const matchedBusinesses = new Set((await getBusinesses(filters)).map((business) => business.id));
-  return services.filter((service) => {
-    const business = businesses.find((item) => item.id === service.businessId);
-    if (!business || !isOfferVisible(service.businessId, service.name)) return false;
-    const matchesCategory = !filters.category || business?.category === filters.category;
-    return matchesCategory && (matchesQuery(filters.query, [service.name, service.description]) || (Boolean(filters.query) && matchedBusinesses.has(service.businessId)));
-  });
+  const businesses = await getBusinesses(filters); const results = await Promise.all(businesses.map(item => listPublicServices(item.id).catch(() => [])));
+  return results.flat().filter(service => !filters.query || matchesQuery(filters.query, [service.name, service.description]));
 }
 
 export async function getBusinessById(id: string): Promise<Business | undefined> {
-  return businesses.find((business) => business.id === id && isBusinessPublished(business.name));
+  const result = await getPublicBusiness(id); return result?.business;
 }
 
 export async function getProductsByBusinessId(businessId: string): Promise<Product[]> {
-  return products.filter((product) => product.businessId === businessId && isOfferVisible(product.businessId, product.name));
+  return listPublicProducts(businessId);
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-  const product = products.find((item) => item.id === id);
-  return product && isOfferVisible(product.businessId, product.name) ? product : undefined;
+  const publicBusinesses = await listPublicBusinesses();
+  const productsByBusiness = await Promise.all(publicBusinesses.map(item => listPublicProducts(item.id).catch(() => [])));
+  return productsByBusiness.flat().find(item => item.id === id);
 }
 
 export async function getServicesByBusinessId(businessId: string): Promise<Service[]> {
-  return services.filter((service) => service.businessId === businessId && isOfferVisible(service.businessId, service.name));
+  return listPublicServices(businessId);
 }
 
 export async function getServiceById(id: string): Promise<Service | undefined> {
-  const service = services.find((item) => item.id === id);
-  return service && isOfferVisible(service.businessId, service.name) ? service : undefined;
+  const publicBusinesses = await listPublicBusinesses();
+  const servicesByBusiness = await Promise.all(publicBusinesses.map(item => listPublicServices(item.id).catch(() => [])));
+  return servicesByBusiness.flat().find(item => item.id === id);
 }
 
 export async function getReviewsByBusinessId(businessId: string): Promise<Review[]> {
-  return reviews.filter((review) => review.businessId === businessId);
+  void businessId;
+  return [];
 }

@@ -13,6 +13,7 @@ export interface CatalogItem {
   priceNegotiable?: boolean;
   active: boolean;
   interest: number;
+  adultOnly?: boolean;
 }
 
 export interface BusinessDetails {
@@ -27,6 +28,11 @@ export interface BusinessDetails {
   sede?: string;
   adultOnly?: boolean;
   coverImage?: string;
+  profileImage?: string;
+  coverPhotoId?: string | null;
+  profilePhotoId?: string | null;
+  coverImagePosition?: { x: number; y: number };
+  profileImagePosition?: { x: number; y: number };
   images?: string[];
   photos?: Array<{ id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean }>;
   rating?: number;
@@ -37,6 +43,8 @@ export interface BusinessDetails {
   secondaryCategories?: string[];
   description: string;
   city: string;
+  countryCode?: string;
+  regionName?: string;
   address: string;
   additionalAddressInfo?: string;
   latitude?: number;
@@ -44,12 +52,22 @@ export interface BusinessDetails {
   locationVisibility?: string;
   phone: string;
   whatsapp: string;
+  phonePublic?: boolean;
+  whatsappPublic?: boolean;
+  emailPublic?: boolean;
   email: string;
   website: string;
   instagram: string;
+  facebookUrl: string;
+  xUrl: string;
+  tiktokUrl: string;
   hours: string;
   deletionStatus?: "NONE" | "RECOVERY" | "DELETED";
   verificationStatus?: string;
+  lifecycleStatus?: string;
+  publicationStatus?: string;
+  visibilityStatus?: string;
+  publicationReadiness?: { ready: boolean; blockers: string[] };
   status: "Verificado" | "Pendiente" | "Requiere confirmación" | "Información incompleta" | "Eliminado";
   deletedAt?: string;
   recoveryUntil?: string;

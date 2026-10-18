@@ -127,6 +127,9 @@ export async function requestPhotoBlob(path: string): Promise<Blob> {
 }
 
 export type RealPhoto = { id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean };
+export type BusinessReferralLevel = 'BASIC' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND';
+export type BusinessReferralSummary = { referredUsers: number; currentLevel: BusinessReferralLevel; nextLevel: BusinessReferralLevel | null; nextLevelMinimum: number | null };
+export type RealOffer = { id: string; businessId: string; kind: 'PRODUCT' | 'SERVICE'; name: string; description: string | null; priceAmount: string | null; currency: string | null; priceText: string | null; negotiable: boolean; active: boolean; adultOnly: boolean; publicationStatus: 'UNPUBLISHED' | 'PUBLISHED' | 'REVIEW'; photos: RealPhoto[] };
 
 export type RealBusiness = {
   id: string;
@@ -143,19 +146,32 @@ export type RealBusiness = {
   email: string | null;
   website: string | null;
   instagram: string | null;
+  facebookUrl: string | null;
+  xUrl: string | null;
+  tiktokUrl: string | null;
   phone: string | null;
   whatsapp: string | null;
+  phonePublic: boolean;
+  whatsappPublic: boolean;
+  emailPublic: boolean;
+  coverPhotoId: string | null;
+  profilePhotoId: string | null;
+  coverImagePosition: { x: number; y: number };
+  profileImagePosition: { x: number; y: number };
   completeness: number;
   lifecycleStatus: string;
   publicationStatus: string;
   visibilityStatus: string;
   verificationStatus: string;
   deletionStatus: string;
+  publicationReadiness?: { ready: boolean; blockers: string[] };
   role: string | null;
   permissions: string[];
   location: { countryCode: string; regionCode: string | null; regionName: string | null; cityName: string; zoneName: string | null; address: string; additionalAddressInfo: string | null; postalCode: string | null; latitude: string | null; longitude: string | null; visibility: string } | null;
   modalities: RealModality[];
   photos?: RealPhoto[];
+  coverPhoto?: RealPhoto | null;
+  profilePhoto?: RealPhoto | null;
 };
 
 export type ModalityType = "PHYSICAL" | "VIRTUAL" | "DELIVERY";
@@ -169,7 +185,12 @@ export const businessApi = {
   categories: () => requestJson<{ categories: Array<{ id: string; code: string; translations: Array<{ name: string }> }> }>('/business-categories'),
   create: (input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>('/businesses', { method: 'POST', body: JSON.stringify(input) }),
   get: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}`),
+  getReferralSummary: (businessId: string) => requestJson<{ referralSummary: BusinessReferralSummary }>(`/businesses/${encodeURIComponent(businessId)}/referral-summary`),
+  listOffers: (businessId: string, kind?: 'PRODUCT' | 'SERVICE') => requestJson<{ offers: RealOffer[] }>(`/businesses/${encodeURIComponent(businessId)}/offers${kind ? `?kind=${kind}` : ''}`),
+  createOffer: (businessId: string, input: Record<string, unknown>) => requestJson<{ offer: RealOffer }>(`/businesses/${encodeURIComponent(businessId)}/offers`, { method: 'POST', body: JSON.stringify(input) }),
+  updateOffer: (businessId: string, offerId: string, input: Record<string, unknown>) => requestJson<{ offer: RealOffer }>(`/businesses/${encodeURIComponent(businessId)}/offers/${encodeURIComponent(offerId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
   update: (businessId: string, input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
+  publishBusiness: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/publish`, { method: 'POST' }),
   requestDeletion: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/request-deletion`, { method: 'POST' }),
   recoverBusiness: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/recover`, { method: 'POST' }),
   listModalities: (businessId: string) => requestJson<{ modalities: RealModality[] }>(`/businesses/${encodeURIComponent(businessId)}/modalities`),
@@ -182,6 +203,8 @@ export const businessApi = {
   retireModality: (businessId: string, modalityId: string) => requestJson<{ modality: RealModality }>(`/businesses/${encodeURIComponent(businessId)}/modalities/${encodeURIComponent(modalityId)}/retire`, { method: 'POST' }),
   listPhotos: (businessId: string) => requestJson<{ photos: RealPhoto[] }>(`/businesses/${encodeURIComponent(businessId)}/photos`),
   uploadPhoto: (businessId: string, file: File, cover = false) => { const form = new FormData(); form.append('file', file); form.append('cover', String(cover)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos`, form); },
+  uploadCoverPhoto: (businessId: string, file: File, position: { x: number; y: number }) => { const form = new FormData(); form.append('file', file); form.append('positionX', String(position.x)); form.append('positionY', String(position.y)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/cover-photo`, form); },
+  setProfilePhoto: (businessId: string, photoId: string, position: { x: number; y: number }) => requestJson<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/profile-photo`, { method: 'PUT', body: JSON.stringify({ photoId, positionX: position.x, positionY: position.y }) }),
   deletePhoto: (businessId: string, photoId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}`, { method: 'DELETE' }),
   setPhotoCover: (businessId: string, photoId: string) => requestJson<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}/cover`, { method: 'POST' }),
   photoBlob: (url: string) => requestPhotoBlob(url),

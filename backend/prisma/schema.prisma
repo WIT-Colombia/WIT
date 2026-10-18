@@ -142,6 +142,21 @@ enum AuditEntityType {
   OFFER
   PHOTO
   VISIBILITY_PERIOD
+  ADMIN_SECURITY
+}
+
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum AdminPermissionCode {
+  BUSINESSES_READ
+  CATALOG_READ
+  REPORTS_REVIEW
+  CONTENT_MODERATE
+  AUDIT_READ
+  ADMINS_MANAGE
 }
 
 model User {
@@ -152,6 +167,10 @@ model User {
   avatarUrl                  String?                   @db.VarChar(2048)
   locale                     String                    @default("es-CO") @db.VarChar(16)
   status                     UserStatus                @default(ACTIVE)
+  adultContentEnabled        Boolean                   @default(false)
+  adultContentAcceptedAt    DateTime?                 @db.DateTime(3)
+  adultContentAcceptedVersion String?                 @db.VarChar(32)
+  adultContentRevokedAt     DateTime?                 @db.DateTime(3)
   lastLoginAt                DateTime?                 @db.DateTime(3)
   createdAt                  DateTime                  @default(now()) @db.DateTime(3)
   updatedAt                  DateTime                  @updatedAt @db.DateTime(3)
@@ -166,8 +185,44 @@ model User {
   requestedVisibilityPeriods BusinessVisibilityPeriod[] @relation("VisibilityRequester")
   uploadedPhotos             Photo[]                    @relation("PhotoUploader")
   auditLogs                  AuditLog[]                 @relation("AuditActor")
+  businessReferrals          BusinessReferral[]         @relation("BusinessReferralUser")
+  adminRoleAssignments      AdminRoleAssignment[]      @relation("AdminRoleUser")
+  assignedAdminRoles         AdminRoleAssignment[]      @relation("AdminRoleAssigner")
+  adminPermissionGrants     AdminPermissionGrant[]     @relation("AdminPermissionUser")
+  grantedAdminPermissions   AdminPermissionGrant[]     @relation("AdminPermissionGranter")
 
   @@index([status])
+}
+
+model AdminRoleAssignment {
+  id          String       @id @default(uuid()) @db.Char(36)
+  userId      String       @db.Char(36)
+  role        AdminRole
+  active      Boolean      @default(true)
+  assignedById String?     @db.Char(36)
+  revokedAt   DateTime?    @db.DateTime(3)
+  createdAt   DateTime     @default(now()) @db.DateTime(3)
+  updatedAt   DateTime     @updatedAt @db.DateTime(3)
+  user        User         @relation("AdminRoleUser", fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy  User?        @relation("AdminRoleAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+  @@unique([userId, role])
+  @@index([userId, active])
+  @@index([role, active])
+}
+
+model AdminPermissionGrant {
+  id          String               @id @default(uuid()) @db.Char(36)
+  userId      String               @db.Char(36)
+  permission  AdminPermissionCode
+  granted     Boolean              @default(true)
+  grantedById String?              @db.Char(36)
+  revokedAt   DateTime?            @db.DateTime(3)
+  createdAt   DateTime             @default(now()) @db.DateTime(3)
+  updatedAt   DateTime             @updatedAt @db.DateTime(3)
+  user        User                 @relation("AdminPermissionUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy   User?                @relation("AdminPermissionGranter", fields: [grantedById], references: [id], onDelete: SetNull)
+  @@unique([userId, permission])
+  @@index([userId, granted])
 }
 
 model AuthIdentity {
@@ -242,8 +297,20 @@ model Business {
   email               String?                   @db.VarChar(320)
   website             String?                   @db.VarChar(2048)
   instagram           String?                   @db.VarChar(255)
+  facebookUrl         String?                   @db.VarChar(2048)
+  xUrl                String?                   @db.VarChar(2048)
+  tiktokUrl           String?                   @db.VarChar(2048)
   phone               String?                   @db.VarChar(32)
+  phonePublic         Boolean                   @default(false)
   whatsapp            String?                   @db.VarChar(32)
+  whatsappPublic      Boolean                   @default(false)
+  emailPublic         Boolean                   @default(false)
+  coverPhotoId        String?                   @unique @db.Char(36)
+  profilePhotoId      String?                   @unique @db.Char(36)
+  coverImagePositionX Int                       @default(50) @db.UnsignedTinyInt
+  coverImagePositionY Int                       @default(50) @db.UnsignedTinyInt
+  profileImagePositionX Int                     @default(50) @db.UnsignedTinyInt
+  profileImagePositionY Int                     @default(50) @db.UnsignedTinyInt
   completeness        Int                       @default(0)
   lifecycleStatus     BusinessLifecycleStatus  @default(DRAFT)
   publicationStatus   BusinessPublicationStatus @default(UNPUBLISHED)
@@ -261,15 +328,40 @@ model Business {
   offers              BusinessOffer[]
   location            BusinessLocation?
   hours               BusinessHour[]
-  photos              Photo[]
+  photos              Photo[]                   @relation("BusinessGalleryPhotos")
+  coverPhoto          Photo?                    @relation("BusinessCoverPhoto", fields: [coverPhotoId], references: [id], onDelete: SetNull)
+  profilePhoto        Photo?                    @relation("BusinessProfilePhoto", fields: [profilePhotoId], references: [id], onDelete: SetNull)
   visibilityPeriods   BusinessVisibilityPeriod[]
   ownershipTransfers  OwnershipTransfer[]
+  referralCounter     BusinessReferralCounter?
+  referrals           BusinessReferral[]
 
   @@unique([businessAccountId, slug])
   @@index([businessAccountId, lifecycleStatus])
   @@index([publicationStatus, visibilityStatus, deletionStatus])
   @@index([categoryId, lifecycleStatus])
   @@index([createdById])
+}
+
+model BusinessReferralCounter {
+  businessId         String   @id @db.Char(36)
+  validReferralCount Int      @default(0) @db.UnsignedInt
+  createdAt          DateTime @default(now()) @db.DateTime(3)
+  updatedAt          DateTime @updatedAt @db.DateTime(3)
+  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model BusinessReferral {
+  id             String   @id @default(uuid()) @db.Char(36)
+  businessId     String   @db.Char(36)
+  referredUserId String   @db.Char(36)
+  validatedAt    DateTime @default(now()) @db.DateTime(3)
+  createdAt      DateTime @default(now()) @db.DateTime(3)
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  referredUser   User     @relation("BusinessReferralUser", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, referredUserId])
+  @@index([referredUserId])
 }
 
 model BusinessModality {
@@ -405,6 +497,7 @@ model BusinessOffer {
   businessId        String                 @db.Char(36)
   categoryId        String?                @db.Char(36)
   kind              OfferKind
+  adultOnly         Boolean                @default(false)
   name              String                 @db.VarChar(180)
   description       String?                @db.Text
   priceAmount       Decimal?               @db.Decimal(12, 2)
@@ -474,9 +567,12 @@ model Photo {
   altText      String?        @db.VarChar(255)
   sortOrder    Int            @default(0)
   isCover      Boolean        @default(false)
+  isGallery    Boolean        @default(true)
   uploadedById String         @db.Char(36)
   createdAt    DateTime       @default(now()) @db.DateTime(3)
-  business     Business?      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business     Business?      @relation("BusinessGalleryPhotos", fields: [businessId], references: [id], onDelete: Cascade)
+  coverForBusiness Business?  @relation("BusinessCoverPhoto")
+  profileForBusiness Business? @relation("BusinessProfilePhoto")
   offer        BusinessOffer? @relation(fields: [offerId], references: [id], onDelete: Cascade)
   uploadedBy   User           @relation("PhotoUploader", fields: [uploadedById], references: [id])
 

@@ -6,8 +6,8 @@ import { hasSampleCatalogForLocation } from "../services/locationService";
 import { useLocationContext } from "../context/LocationContext";
 import { getBusinesses, prioritizeFeaturedByDistance } from "../services/businessService";
 import { LocationAvailabilityNotice } from "../components/LocationAvailabilityNotice";
-import { SearchBar } from "../components/SearchBar";
 import { SiteHeader } from "../components/SiteHeader";
+import { SiteFooter } from "../components/SiteFooter";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { BusinessCard } from "../components/EntityCards";
 import { NewProductsBanner } from "../components/NewProductsBanner";
@@ -20,6 +20,8 @@ import xamukoLocalHero from "../assets/xamuko-local-hero.png";
 import "./Home.css";
 import "./HomeChanges.css";
 import "./HomeAdjustments.css";
+import "./HomeV2.css";
+import "./HomeV2Cards.css";
 
 function Icon({ name }: { name: "pin" | "star" | "arrow" | "phone" | "map" }) {
   const paths = {
@@ -33,11 +35,11 @@ function Icon({ name }: { name: "pin" | "star" | "arrow" | "phone" | "map" }) {
 }
 
 const categoryIconPaths: Record<string, string> = {
-  "Restaurantes": "M6 3v8m0-4h4M6 11a2 2 0 0 0 2 2v8m8-18v7m0 0a3 3 0 1 0 3 3v-3m-3 0h-3m3 0h3M4 21h16",
+  "Restaurantes": "M4 3v6a3 3 0 0 0 6 0V3M7 3v18M18 3c-3 3-4 6-4 9h4M18 3v18",
   "Droguerías": "M12 4v16M4 12h16",
-  "Ferreterías": "m14.5 5.5 4 4M3 21l7.8-7.8m-2.3-4.7a5 5 0 0 0 6.5 6.5l2.2 2.2a2 2 0 1 0 2.8-2.8l-2.2-2.2A5 5 0 0 0 11.3 6L8 9.3",
-  "Talleres": "m14 6 4-4 4 4-4 4m-4-4 4 4M4 20l8.5-8.5M3 21h4l9-9-4-4-9 9v4Z",
-  "Barberías": "M8 4 4 8m0 0 4 4m-4-4 8 8m4-12 4 4m0 0-4 4m4-4-8 8M8 4l12 12",
+  "Ferreterías": "M14 5a5 5 0 0 0-6 6L3 16a3 3 0 0 0 4 4l5-5a5 5 0 0 0 6-6l-3 3-3-3 3-3-1-1Z",
+  "Talleres": "M4 10 6 4h12l2 6M3 10h18v8H3zM5 18v3M19 18v3M6 14h2M16 14h2",
+  "Barberías": "M9 8 20 19M9 16 20 5M6 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM6 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
   "Tecnología": "M6 3h12v18H6zM9 6h6M10 18h4",
   "Cafeterías": "M5 8h13v5a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8Zm13 2h1a3 3 0 0 1 0 6h-2M8 21h10M11 3v3m4-3v3",
   "Panaderías y reposterías": "M4 12a8 8 0 0 1 16 0v7H4v-7Zm4 0v7m4-7v7m4-7v7M4 16h16",
@@ -134,12 +136,28 @@ export default function Home() {
   const hasSampleCatalog = hasSampleCatalogForLocation(selectedLocation);
   const [message, setMessage] = useState(() => typeof navigationMessage === "string" ? navigationMessage : "");
 
+  function distanceBetween(origin: { lat: number; lng: number } | undefined, target: { lat: number; lng: number } | undefined): number {
+    if (!origin || !target) return Number.POSITIVE_INFINITY;
+    const radians = (value: number) => value * Math.PI / 180;
+    const earthRadiusKm = 6371;
+    const dLat = radians(target.lat - origin.lat);
+    const dLng = radians(target.lng - origin.lng);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(origin.lat)) * Math.cos(radians(target.lat)) * Math.sin(dLng / 2) ** 2;
+    return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
   useEffect(() => {
     if (typeof navigationMessage !== "string") return;
     navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
   }, [location.pathname, location.search, navigate, navigationMessage]);
 
-  useEffect(() => { void getBusinesses({ query, category }).then(setItems); }, [query, category]);
+  useEffect(() => {
+    const userCoordinates = selection?.coordinates;
+    void getBusinesses({ query, category }).then((businesses) => setItems(businesses.map((business) => ({
+      ...business,
+      distanceKm: distanceBetween(userCoordinates, business.coordinates),
+    }))));
+  }, [query, category, selection]);
   useEffect(() => {
     if (!message) return;
     const timeout = window.setTimeout(() => setMessage(""), 3200);
@@ -463,48 +481,45 @@ export default function Home() {
     if (ignoreOffersClickRef.current) window.setTimeout(() => { ignoreOffersClickRef.current = false; }, 0);
   }
 
-  return <div className="home-page">
-    <SiteHeader active="home" />
+  return <div className="home-page home-v2">
+    <div className="home-topbar">
+      <SiteHeader active="home" onSearchChange={setQuery} />
+    </div>
 
     <main id="inicio">
-      <section className="hero-section">
-        <div className="hero-copy"><span className="hero-kicker"><span className="pulse-dot" /> Descubre lo local</span><h1>Lo que necesitas,<br /><em>está más cerca.</em></h1><p>Encuentra negocios, productos y servicios en tu zona. Todo empieza con una búsqueda.</p>
-          <SearchBar hideSubmit onSearch={setQuery} onSubmitSearch={(value) => navigate(`/results${value.trim() ? `?q=${encodeURIComponent(value.trim())}` : ""}`)} />
-        </div>
-      </section>
 
-      {bannerBusinesses.length > 0 && <section className="home-business-banner home-business-banner--below-hero" aria-label="Descubre negocios"><div className="home-business-banner__heading"><h2>Descubre negocios</h2><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div><div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}><div className="home-business-banner__track">{[0, 1].map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__copy"><small>{business.plan === "premium" || business.isFeatured ? "Destacado" : isRecentlyAdded(business.createdAt) ? "Nuevo en tu ciudad" : "Cerca de ti"}</small><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}</div></div></section>}
+      <section className="home-city-banner-section" aria-label={`Descubre negocios cerca de ${locationLabel}`}><div className="home-city-banner"><img src={xamukoLocalHero} alt="Comercios locales de la ciudad"/><div className="home-city-banner__shade"/><span className="home-city-banner__location"><Icon name="pin"/>{cityName}</span><p className="home-city-banner__signature" aria-hidden="true">Nuestra gente,<br/>nuestra ciudad.</p><div className="home-city-banner__copy"><span>EXPLORA TU CIUDAD</span><h2>Lo local está<br/><em>más cerca</em> de ti</h2><p>Encuentra negocios, productos y servicios que hacen especial a tu comunidad.</p><Link to="/map" className="home-city-banner__action"><Icon name="map"/>Explorar negocios</Link></div></div></section>
 
       <section className="category-section" id="explorar" aria-labelledby="category-title">
-        <div className="section-heading"><div><h2 id="category-title">Explora por categoría</h2></div><button className="text-link category-toggle" type="button" aria-expanded={showAllCategories} aria-controls="home-category-list" onClick={() => setShowAllCategories((current) => !current)}>{showAllCategories ? "Ver menos" : `Ver más (${categories.length})`} <Icon name="arrow" /></button></div>
+        <div className="section-heading"><div className="home-section-intro"><h2 id="category-title"><span className="home-section-symbol home-section-symbol--round" aria-hidden="true">+</span>Explora por categoría</h2></div><button className="text-link category-toggle" type="button" aria-expanded={showAllCategories} aria-controls="home-category-list" onClick={() => setShowAllCategories((current) => !current)}>{showAllCategories ? "Ver menos" : `Ver más (${categories.length})`} <Icon name="arrow" /></button></div>
         <div className={`category-list${showAllCategories ? " is-expanded" : ""}`} id="home-category-list" ref={categoryListRef} onScroll={() => { const list = categoryListRef.current; if (list) setCategoryScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startCategoryDrag} onPointerMove={moveCategoryDrag} onPointerUp={endCategoryDrag} onPointerCancel={endCategoryDrag} onClickCapture={(event) => { if (ignoreCategoryClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{visibleCategories.map((item, index) => <button key={item.name} type="button" className={`category-tile${category === item.name ? " selected" : ""}`} aria-pressed={category === item.name} onClick={() => selectCategory(item.name, index)}><span className="category-icon"><CategoryIcon name={item.name}/></span><span>{item.name}</span></button>)}</div>
         {showAllCategories && categoryScroll.max > 0 && <div className="category-scroll-control"><input type="range" min="0" max={categoryScroll.max} step="1" value={Math.min(categoryScroll.left, categoryScroll.max)} aria-label="Desplazar categorías" onChange={(event) => { const left = Number(event.target.value); if (categoryListRef.current) categoryListRef.current.scrollLeft = left; setCategoryScroll((current) => ({ ...current, left })); }} /></div>}
       </section>
 
-      <section className="home-city-banner-section" aria-label={`Descubre negocios cerca de ${locationLabel}`}><div className="home-city-banner"><img src={xamukoLocalHero} alt="Comercios locales de la ciudad"/><div className="home-city-banner__shade"/><div className="home-city-banner__copy"><span>EXPLORA TU CIUDAD</span><h2>Lo local está<br/>más cerca de ti</h2><p>Encuentra negocios, productos y servicios que hacen especial a tu comunidad.</p><Link to="/map" className="home-city-banner__action"><Icon name="map"/>Explorar negocios</Link></div></div></section>
+      {bannerBusinesses.length > 0 && <section className="home-business-banner home-business-banner--below-hero" aria-label="Descubre negocios"><div className="home-business-banner__heading"><div className="home-section-intro"><h2><span className="home-section-symbol" aria-hidden="true"><Icon name="star"/></span>Descubre negocios</h2><p>Negocios de tu ciudad, nuevas historias por descubrir.</p></div><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div><div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}><div className="home-business-banner__track">{[0, 1].map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__badge"><Icon name="star"/><small>{business.plan === "premium" || business.isFeatured ? "Destacado" : isRecentlyAdded(business.createdAt) ? "Nuevo en tu ciudad" : "Cerca de ti"}</small></span><span className="home-business-banner__copy"><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}</div></div></section>}
 
       <div className="admob-banner-slot admob-banner-slot--home-inline"><AdMobBanner /></div>
 
-      {featuredItems.length > 0 && <section className="business-section home-featured-section" aria-labelledby="featured-title"><div className="section-heading businesses-heading"><div><h2 id="featured-title">Negocios destacados</h2></div>{allFeaturedItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllFeatured} aria-controls="featured-business-list" onClick={() => setShowAllFeatured((current) => !current)}>{showAllFeatured ? "Ver menos" : `Ver más (${allFeaturedItems.length})`} <Icon name="arrow" /></button>}</div><div className="business-grid" id="featured-business-list" ref={featuredListRef} onScroll={() => { const list = featuredListRef.current; if (list) setFeaturedScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startFeaturedDrag} onPointerMove={moveFeaturedDrag} onPointerUp={endFeaturedDrag} onPointerCancel={endFeaturedDrag} onClickCapture={(event) => { if (ignoreFeaturedClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{featuredItems.map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => saveFavorite(business.id)} />)}</div>{showAllFeatured && featuredScroll.max > 0 && <div className="featured-scroll-control"><input type="range" min="0" max={featuredScroll.max} step="1" value={Math.min(featuredScroll.left, featuredScroll.max)} aria-label="Desplazar negocios destacados" onChange={(event) => { const left = Number(event.target.value); if (featuredListRef.current) featuredListRef.current.scrollLeft = left; setFeaturedScroll((current) => ({ ...current, left })); }} /></div>}</section>}
+      {featuredItems.length > 0 && <section className="business-section home-featured-section" aria-labelledby="featured-title"><div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="featured-title"><span className="home-section-symbol" aria-hidden="true">◇</span>Negocios destacados</h2><p>Descubre y apoya los negocios de tu comunidad.</p></div>{allFeaturedItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllFeatured} aria-controls="featured-business-list" onClick={() => setShowAllFeatured((current) => !current)}>{showAllFeatured ? "Ver menos" : `Ver más (${allFeaturedItems.length})`} <Icon name="arrow" /></button>}</div><div className="business-grid" id="featured-business-list" ref={featuredListRef} onScroll={() => { const list = featuredListRef.current; if (list) setFeaturedScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startFeaturedDrag} onPointerMove={moveFeaturedDrag} onPointerUp={endFeaturedDrag} onPointerCancel={endFeaturedDrag} onClickCapture={(event) => { if (ignoreFeaturedClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{featuredItems.map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => saveFavorite(business.id)} />)}</div>{showAllFeatured && featuredScroll.max > 0 && <div className="featured-scroll-control"><input type="range" min="0" max={featuredScroll.max} step="1" value={Math.min(featuredScroll.left, featuredScroll.max)} aria-label="Desplazar negocios destacados" onChange={(event) => { const left = Number(event.target.value); if (featuredListRef.current) featuredListRef.current.scrollLeft = left; setFeaturedScroll((current) => ({ ...current, left })); }} /></div>}</section>}
 
       {newProducts.length > 0 && <NewProductsBanner products={newProducts} likedIds={likes} onLike={saveLike}/>}
 
       <section className="business-section home-nearby-section" id="lugares" aria-labelledby="business-title">
-        <div className="section-heading businesses-heading"><div><h2 id="business-title">{resultsLabel}</h2></div>{nearbyItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllNearby} aria-controls="nearby-business-list" onClick={() => setShowAllNearby((current) => !current)}>{showAllNearby ? "Ver menos" : `Ver más (${nearbyItems.length})`} <Icon name="arrow" /></button>}</div>
+        <div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="business-title"><span className="home-section-symbol" aria-hidden="true"><Icon name="pin"/></span>{resultsLabel}</h2><p>Encuentra ese lugar que estás buscando.</p></div>{nearbyItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllNearby} aria-controls="nearby-business-list" onClick={() => setShowAllNearby((current) => !current)}>{showAllNearby ? "Ver menos" : `Ver más (${nearbyItems.length})`} <Icon name="arrow" /></button>}</div>
           {!hasSampleCatalog ? <LocationAvailabilityNotice location={selectedLocation} query={query}/> : visibleItems.length ? <><div className="business-grid" id="nearby-business-list" ref={nearbyListRef} onScroll={() => { const list = nearbyListRef.current; if (list) setNearbyScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startNearbyDrag} onPointerMove={moveNearbyDrag} onPointerUp={endNearbyDrag} onPointerCancel={endNearbyDrag} onClickCapture={(event) => { if (ignoreNearbyClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllNearby ? nearbyItems : nearbyItems.slice(0, 4)).map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => saveFavorite(business.id)} />)}</div>{showAllNearby && nearbyScroll.max > 0 && <div className="nearby-scroll-control"><input type="range" min="0" max={nearbyScroll.max} step="1" value={Math.min(nearbyScroll.left, nearbyScroll.max)} aria-label="Desplazar lugares cerca de ti" onChange={(event) => { const left = Number(event.target.value); if (nearbyListRef.current) nearbyListRef.current.scrollLeft = left; setNearbyScroll((current) => ({ ...current, left })); }} /></div>}</> : <NoResultsState term={query || category} locationName={cityName}/>}
       </section>
 
       {hasSampleCatalog && <section className="special-offers" aria-labelledby="special-offers-title">
-        <div className="section-heading"><h2 id="special-offers-title">Ofertas especiales</h2>{specialOffers.length > 4 && <button className="text-link" type="button" aria-expanded={showAllOffers} aria-controls="special-offers-list" onClick={() => setShowAllOffers((current) => !current)}>{showAllOffers ? "Ver menos" : `Ver más (${specialOffers.length})`} <Icon name="arrow" /></button>}</div>
+        <div className="section-heading"><div className="home-section-intro"><h2 id="special-offers-title"><span className="home-section-symbol home-section-symbol--round" aria-hidden="true">%</span>Ofertas especiales</h2><p>Descubre las ofertas de los negocios locales.</p></div>{specialOffers.length > 4 && <button className="text-link" type="button" aria-expanded={showAllOffers} aria-controls="special-offers-list" onClick={() => setShowAllOffers((current) => !current)}>{showAllOffers ? "Ver menos" : `Ver más (${specialOffers.length})`} <Icon name="arrow" /></button>}</div>
         <div className={`special-offers__list${showAllOffers ? " is-expanded" : ""}`} id="special-offers-list" ref={offersListRef} onScroll={() => { const list = offersListRef.current; if (list) setOffersScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startOffersDrag} onPointerMove={moveOffersDrag} onPointerUp={endOffersDrag} onPointerCancel={endOffersDrag} onClickCapture={(event) => { if (ignoreOffersClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllOffers ? specialOffers : specialOffers.slice(0, 4)).map(({ product, discount, deadline }) => { const business = sampleBusinesses.find((item) => item.id === product.businessId); return <article className="special-offer-card" key={product.id}><Link className="special-offer-card__link" to={`/product/${product.id}`} aria-label={`Ver ${product.name}`}><div className="special-offer-card__image"><img src={product.image} alt="" loading="lazy"/><span className="special-offer-card__discount">{discount}</span></div><div className="special-offer-card__content"><strong>{product.name}</strong><span>{business?.category ?? "Negocio local"}</span><small>✣ <b>{deadline}</b></small></div></Link><button className="special-offer-card__like" type="button" aria-label={likes.includes(product.id) ? `Quitar me gusta a ${product.name}` : `Me gusta ${product.name}`} aria-pressed={likes.includes(product.id)} onClick={(event) => { event.preventDefault(); event.stopPropagation(); requireAccount(() => saveLike(product.id)); }}><ThumbsUpIcon/></button></article>; })}</div>
         {showAllOffers && offersScroll.max > 0 && <div className="offers-scroll-control"><input type="range" min="0" max={offersScroll.max} step="1" value={Math.min(offersScroll.left, offersScroll.max)} aria-label="Desplazar ofertas especiales" onChange={(event) => { const left = Number(event.target.value); if (offersListRef.current) offersListRef.current.scrollLeft = left; setOffersScroll((current) => ({ ...current, left })); }} /></div>}
       </section>}
 
       <div className="admob-banner-slot admob-banner-slot--home-footer"><AdMobBanner slot="home-footer" /></div>
-      {hasSampleCatalog && <section className="need-banner"><div><span>¿No lo encontraste?</span><h2>Cuéntanos qué necesitas</h2><p>Ayúdanos a descubrir qué hace falta cerca de ti.</p></div><Button variant="outline" type="button" onClick={() => navigate("/register-need")}>Registrar una necesidad <Icon name="arrow" /></Button></section>}
+      {hasSampleCatalog && <section className="need-banner"><span className="home-need-symbol" aria-hidden="true"><Icon name="pin"/></span><div><span>¿No lo encontraste?</span><h2>Cuéntanos qué necesitas</h2><p>Ayúdanos a descubrir qué hace falta cerca de ti.</p></div><Button variant="outline" type="button" onClick={() => navigate("/register-need")}>Registrar una necesidad <Icon name="arrow" /></Button></section>}
     </main>
 
-    <footer className="site-footer"><strong className="site-footer__brand">XAMUKO</strong><span>Lo que necesitas, está más cerca.</span><small>© 2026 XAMUKO · Palmira, Colombia</small></footer>
+    <SiteFooter />
     {message && <div className="wit-toast" role="status">{message}</div>}
     <BottomNavigation />
   </div>;
