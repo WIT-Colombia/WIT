@@ -10,7 +10,8 @@ import { PageLayout } from "../components/PageLayout";
 import { getPublicBusinessUrl, shareLink } from "../utils/share";
 import { useAccountGate } from "../hooks/useAccountGate";
 import { useAuth } from "../context/AuthContext";
-import { getBusinessCoordinates } from "../utils/coordinates";
+import { useLocationContext } from "../context/LocationContext";
+import { distanceBetweenCoordinates, getBusinessCoordinates } from "../utils/coordinates";
 import { whatsappLink } from "../utils/whatsapp";
 import "./BusinessDetail.css";
 import "./BusinessDetailEnhancements.css";
@@ -61,6 +62,7 @@ export default function BusinessDetail() {
   const returnToParam = searchParams.get("returnTo");
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { selection } = useLocationContext();
   const [galleryOpen, setGalleryOpen] = useState(false); const [galleryIndex, setGalleryIndex] = useState(0); const [shareOpen, setShareOpen] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false); const [hoursExpanded, setHoursExpanded] = useState(false);
   const [productsVisibleCount, setProductsVisibleCount] = useState(12); const [servicesVisibleCount, setServicesVisibleCount] = useState(12);
@@ -146,6 +148,14 @@ export default function BusinessDetail() {
   const whatsappUrl = business.whatsapp ? whatsappLink(business.whatsapp) : null;
   const weeklyHours = business.weeklyHours ?? [];
   const locationLine = [business.city, business.regionName].filter(Boolean).join(", ") || "Ciudad no registrada";
+  const businessCoordinates = getBusinessCoordinates(business);
+  const selectedCoordinates = selection?.coordinates;
+  const businessDistanceKm = businessCoordinates && selectedCoordinates
+    ? distanceBetweenCoordinates(selectedCoordinates, businessCoordinates)
+    : Number.POSITIVE_INFINITY;
+  const businessDistanceLabel = Number.isFinite(businessDistanceKm)
+    ? `A ${businessDistanceKm < 1 ? `${Math.round(businessDistanceKm * 1000)} m` : `${businessDistanceKm.toFixed(1)} km`}`
+    : "Sin distancia";
   const socialNetworks = [
     { platform: "instagram" as const, label: "Instagram", url: business.socialNetworks?.instagram },
     { platform: "facebook" as const, label: "Facebook", url: business.socialNetworks?.facebook },
@@ -205,7 +215,7 @@ export default function BusinessDetail() {
       </div>
       <div className="business-detail-intro">
         <div className="business-header-identity">{business.logo && <img className="business-header-logo" src={business.logo} alt={`Logotipo de ${business.name}`} onError={event => { event.currentTarget.hidden = true; }}/>}<div><span className="business-detail-category">{business.category}</span><h1>{business.name}</h1>{business.tags.length > 0 && <small className="business-header-meta">{business.tags.join(" · ")}</small>}</div></div>
-        <div className="business-detail-rating"><span>{business.reviewCount > 0 ? <><b>★ {business.rating.toFixed(1)}</b> ({business.reviewCount} opiniones)</> : "Sin opiniones todavía"}</span>{getBusinessCoordinates(business) && Number.isFinite(business.distanceKm) && <span>· ⌖ {business.distanceKm < 1 ? `${Math.round(business.distanceKm * 1000)} m` : `${business.distanceKm.toFixed(1)} km`}</span>}{business.isVerified && <span className="business-verified">✓ Verificado</span>}</div>
+        <div className="business-detail-rating"><span>{business.reviewCount > 0 ? <><b>★ {business.rating.toFixed(1)}</b> ({business.reviewCount} opiniones)</> : "Sin opiniones todavía"}</span><span>· ⌖ {businessDistanceLabel}</span>{business.isVerified && <span className="business-verified">✓ Verificado</span>}</div>
         {business.description && <div className={`business-header-description${descriptionExpanded ? " is-expanded" : ""}`}><p>{business.description}</p><button type="button" onClick={() => setDescriptionExpanded((expanded) => !expanded)} aria-expanded={descriptionExpanded}>{descriptionExpanded ? "Ver menos" : "Leer más"}</button></div>}
         <div className="business-detail-actions">
           {business.phone && (isBusinessPreview ? <button type="button" className="business-header-call" disabled><PhoneIcon/>Llamar</button> : <a className="business-header-call" href={phoneLink(business.phone)}><PhoneIcon/>Llamar</a>)}

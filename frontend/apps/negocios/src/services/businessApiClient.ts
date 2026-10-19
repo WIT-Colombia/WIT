@@ -203,9 +203,11 @@ export const businessApi = {
   retireModality: (businessId: string, modalityId: string) => requestJson<{ modality: RealModality }>(`/businesses/${encodeURIComponent(businessId)}/modalities/${encodeURIComponent(modalityId)}/retire`, { method: 'POST' }),
   listPhotos: (businessId: string) => requestJson<{ photos: RealPhoto[] }>(`/businesses/${encodeURIComponent(businessId)}/photos`),
   uploadPhoto: (businessId: string, file: File, cover = false) => { const form = new FormData(); form.append('file', file); form.append('cover', String(cover)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos`, form); },
+  uploadOfferPhoto: (businessId: string, offerId: string, file: File) => { const form = new FormData(); form.append('file', file); form.append('offerId', offerId); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos`, form); },
   uploadCoverPhoto: (businessId: string, file: File, position: { x: number; y: number }) => { const form = new FormData(); form.append('file', file); form.append('positionX', String(position.x)); form.append('positionY', String(position.y)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/cover-photo`, form); },
-  setProfilePhoto: (businessId: string, photoId: string, position: { x: number; y: number }) => requestJson<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/profile-photo`, { method: 'PUT', body: JSON.stringify({ photoId, positionX: position.x, positionY: position.y }) }),
+  setProfilePhoto: (businessId: string, photoId: string | null, position: { x: number; y: number }) => requestJson<{ photo: RealPhoto | null }>(`/businesses/${encodeURIComponent(businessId)}/profile-photo`, { method: 'PUT', body: JSON.stringify({ photoId, positionX: position.x, positionY: position.y }) }),
   deletePhoto: (businessId: string, photoId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}`, { method: 'DELETE' }),
   setPhotoCover: (businessId: string, photoId: string) => requestJson<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}/cover`, { method: 'POST' }),
+  clearCoverPhoto: (businessId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/cover-photo`, { method: 'DELETE' }),
   photoBlob: (url: string) => requestPhotoBlob(url),
 };

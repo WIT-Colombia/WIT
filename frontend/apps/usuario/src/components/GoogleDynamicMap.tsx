@@ -34,6 +34,7 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
   const centerKey = center ? `${center.lat},${center.lng}` : "";
   const userLocationKey = userLocation ? `${userLocation.lat},${userLocation.lng}` : "";
   const selectedBusiness = useMemo(() => businesses.find((business) => business.id === selectedBusinessId) ?? null, [businesses, selectedBusinessId]);
+  const zoomForRadius = (radius: number | null) => radius === null ? 11 : radius <= 1 ? 15 : radius <= 3 ? 14 : 13;
 
   useEffect(() => {
     if (!center) { setState("ready"); return; }
@@ -42,7 +43,7 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
     void loadGoogleMaps().then((maps) => {
       if (!active || !containerRef.current) return;
       mapsRef.current = maps;
-      mapRef.current = new maps.Map(containerRef.current, { center, zoom: radiusKm && radiusKm <= 3 ? 14 : 12, mapTypeId: "roadmap", mapTypeControl: false, zoomControl: false, streetViewControl: false, fullscreenControl: false, gestureHandling: "greedy" });
+      mapRef.current = new maps.Map(containerRef.current, { center, zoom: zoomForRadius(radiusKm), mapTypeId: "roadmap", mapTypeControl: false, zoomControl: false, streetViewControl: false, fullscreenControl: false, gestureHandling: "greedy" });
       setState("ready");
     }).catch((error: unknown) => {
       if (import.meta.env.DEV) console.error("[XAMUKO Usuario] Error al inicializar el mapa", error);
@@ -52,6 +53,11 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
   }, [centerKey]);
 
   useEffect(() => {
+    if (!mapRef.current || state !== "ready") return;
+    mapRef.current.setZoom(zoomForRadius(radiusKm));
+  }, [radiusKm, state]);
+
+  useEffect(() => {
     if (!mapRef.current || !mapsRef.current) return;
     for (const marker of markersRef.current) marker.setMap(null);
     markersRef.current = [];
@@ -59,7 +65,7 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
       const position = getBusinessCoordinates(business);
       if (!position) continue;
       try {
-        const marker = new mapsRef.current.Marker({ map: mapRef.current, position, title: business.name, ...(mapsRef.current.SymbolPath ? { icon: { path: mapsRef.current.SymbolPath.CIRCLE, scale: 9, fillColor: "#7B3FFB", fillOpacity: 1, strokeColor: "#FFFFFF", strokeWeight: 3 } } : {}) });
+        const marker = new mapsRef.current.Marker({ map: mapRef.current, position, title: business.name, icon: { path: "M12 1.5C6.75 1.5 2.5 5.75 2.5 11c0 6.8 9.5 11.5 9.5 11.5S21.5 17.8 21.5 11C21.5 5.75 17.25 1.5 12 1.5Z", scale: 1.4, fillColor: "#7B3FFB", fillOpacity: 1, strokeColor: "#FFFFFF", strokeWeight: 2.5 } });
         marker.addListener("click", () => { setSelectedBusinessId(business.id); setNotice(null); });
         markersRef.current.push(marker);
       } catch (error) {
@@ -107,7 +113,7 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
   }
 
   function changeZoom(amount: number) {
-    const currentZoom = mapRef.current?.getZoom?.() ?? (radiusKm && radiusKm <= 3 ? 14 : 12);
+    const currentZoom = mapRef.current?.getZoom?.() ?? zoomForRadius(radiusKm);
     mapRef.current?.setZoom(Math.max(3, Math.min(20, currentZoom + amount)));
   }
 

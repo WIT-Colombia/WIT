@@ -31,7 +31,9 @@ function isCoordinates(value: unknown): value is Coordinates {
   if (!value || typeof value !== "object") return false;
   const coordinates = value as Partial<Coordinates>;
   return typeof coordinates.lat === "number" && Number.isFinite(coordinates.lat)
-    && typeof coordinates.lng === "number" && Number.isFinite(coordinates.lng);
+    && coordinates.lat >= -90 && coordinates.lat <= 90
+    && typeof coordinates.lng === "number" && Number.isFinite(coordinates.lng)
+    && coordinates.lng >= -180 && coordinates.lng <= 180;
 }
 
 function findCanonicalLocality(value: unknown): Locality | null {
@@ -94,6 +96,7 @@ export function saveSelectedLocation(location: Locality): void {
 }
 
 export function saveAutomaticLocation(coordinates: Coordinates, locality?: Locality, cityResolution: "pending" | "resolved" | "unavailable" = "pending"): void {
+  if (!isCoordinates(coordinates)) return;
   const current = getLocationSelection();
   const activeLocality = locality ?? current?.locality ?? defaultLocality();
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: "automatic", coordinates, cityResolution, ...(activeLocality ? { locality: activeLocality, country: "Colombia" } : {}) } satisfies LocationSelection));
@@ -145,4 +148,18 @@ export function subscribeToLocation(listener: () => void): () => void {
 /** The current mock business catalog contains listings for Palmira when its municipality is reliably known. */
 export function hasSampleCatalogForLocation(location: Locality | null): boolean {
   return location?.id === "76520";
+}
+
+/** Restores a server preference into the local LocationContext representation. */
+export function restorePreferredLocation(input: { city: string; region: string | null; latitude: number | null; longitude: number | null; mode: "MANUAL" | "GPS"; resolution: "PENDING" | "RESOLVED" | "UNAVAILABLE" }): boolean {
+  const municipalities = getColombianAdministrativeDivisions().municipalities;
+  const normalizedCity = normalizeName(input.city);
+  const normalizedRegion = normalizeName(input.region ?? "");
+  const locality = municipalities.find((item) => normalizeName(item.name) === normalizedCity && (!normalizedRegion || normalizeName(item.context) === normalizedRegion))
+    ?? municipalities.find((item) => normalizeName(item.name) === normalizedCity);
+  const coordinates = input.latitude != null && input.longitude != null && isCoordinates({ lat: input.latitude, lng: input.longitude }) ? { lat: input.latitude, lng: input.longitude } : undefined;
+  if (input.mode === "GPS" && coordinates) { saveAutomaticLocation(coordinates, locality ?? undefined, input.resolution.toLowerCase() as "pending" | "resolved" | "unavailable"); return true; }
+  if (locality) { saveSelectedLocation(locality); return true; }
+  if (coordinates) { saveAutomaticLocation(coordinates, undefined, input.resolution.toLowerCase() as "pending" | "resolved" | "unavailable"); return true; }
+  return false;
 }

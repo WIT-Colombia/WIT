@@ -4,8 +4,8 @@ import type { BusinessDetails } from '../types/business';
 export function toBusinessDetails(value: RealBusiness): BusinessDetails {
   const location = value.location;
   const photos = value.photos ?? [];
-  const coverPhoto = value.coverPhoto ?? photos.find(photo => photo.id === value.coverPhotoId) ?? photos.find(photo => photo.isCover) ?? photos[0];
-  const profilePhoto = value.profilePhoto ?? photos.find(photo => photo.id === value.profilePhotoId) ?? coverPhoto;
+  const coverPhoto = value.coverPhoto ?? photos.find(photo => photo.id === value.coverPhotoId) ?? photos.find(photo => photo.isCover);
+  const profilePhoto = value.profilePhoto ?? photos.find(photo => photo.id === value.profilePhotoId);
   const status = value.deletionStatus === 'DELETED' || value.deletionStatus === 'RECOVERY' ? 'Eliminado' : value.verificationStatus === 'APPROVED' ? 'Verificado' : value.verificationStatus === 'INFORMATION' ? 'Requiere confirmación' : 'Pendiente';
   return {
     id: value.id,

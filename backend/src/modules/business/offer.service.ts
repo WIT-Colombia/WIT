@@ -30,7 +30,7 @@ async function audit(db: Db, userId: string, offerId: string, action: string, pr
   await db.auditLog.create({ data: { actorUserId: userId, entityType: 'OFFER', entityId: offerId, action, previousState: previousState === null ? Prisma.JsonNull : previousState as Prisma.InputJsonValue, newState: newState === null ? Prisma.JsonNull : newState as Prisma.InputJsonValue, ipAddress: meta?.ipAddress ?? null } });
 }
 
-const offerInclude = { photos: { where: { isGallery: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] as any } } as const;
+const offerInclude = { photos: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] as any } } as const;
 
 export async function listOffers(userId: string, businessIdentifier: string, kind?: 'PRODUCT' | 'SERVICE') {
   const business = await findBusiness(userId, businessIdentifier, prisma);

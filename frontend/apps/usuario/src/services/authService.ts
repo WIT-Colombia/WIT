@@ -152,3 +152,12 @@ export async function requestVerification(email: string): Promise<string> {
 }
 
 export function clearAccessToken(): void { accessToken = null; }
+
+
+export type PreferredLocation = { city: string; region: string | null; country: string; name: string; latitude: number | null; longitude: number | null; mode: "MANUAL" | "GPS"; resolution: "PENDING" | "RESOLVED" | "UNAVAILABLE"; updatedAt: string | null };
+export async function getPreferredLocation(): Promise<PreferredLocation | null> {
+  return (await requestWithSession<{ location: PreferredLocation | null }>("/api/v1/auth/me/location")).location;
+}
+export async function savePreferredLocation(input: Omit<PreferredLocation, "updatedAt"> & { clientUpdatedAt?: number }): Promise<PreferredLocation | null> {
+  return (await requestWithSession<{ location: PreferredLocation | null }>("/api/v1/auth/me/location", { method: "PUT", body: JSON.stringify(input) })).location;
+}

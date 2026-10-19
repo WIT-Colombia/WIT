@@ -8,12 +8,14 @@ export interface CatalogItem {
   category: string;
   description: string;
   price: string;
+  currency?: string;
   image: string;
   images?: string[];
   priceNegotiable?: boolean;
   active: boolean;
   interest: number;
   adultOnly?: boolean;
+  publicationStatus?: "UNPUBLISHED" | "PUBLISHED" | "REVIEW";
 }
 
 export interface BusinessDetails {

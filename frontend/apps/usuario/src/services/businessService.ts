@@ -3,6 +3,10 @@ import { listPublicBusinesses, getPublicBusiness, listPublicProducts, listPublic
 
 export type BusinessFilters = { query?: string; category?: string };
 
+const BUSINESS_CACHE_TTL_MS = 30_000;
+const businessCache = new Map<string, { expiresAt: number; value: Business[] }>();
+const businessRequests = new Map<string, Promise<Business[]>>();
+
 export function prioritizeFeaturedByDistance(items: Business[], featuredLimit = 2): Business[] {
   const byDistance = (a: Business, b: Business) => a.distanceKm - b.distanceKm;
   const featured = items.filter((business) => business.plan === "premium" || business.isFeatured).sort(byDistance);
@@ -45,15 +49,34 @@ function matchesQuery(query: string | undefined, fields: string[]): boolean {
   });
 }
 
+function matchesCategory(value: string, selectedCategory: string): boolean {
+  return normalize(value) === normalize(selectedCategory);
+}
+
 export async function getBusinesses(filters: BusinessFilters = {}): Promise<Business[]> {
+  const cacheKey = `${normalize(filters.query ?? "")}::${normalize(filters.category ?? "")}`;
+  const cached = businessCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const pending = businessRequests.get(cacheKey);
+  if (pending) return pending;
+  const request = getBusinessesUncached(filters).then((value) => {
+    businessCache.set(cacheKey, { expiresAt: Date.now() + BUSINESS_CACHE_TTL_MS, value });
+    businessRequests.delete(cacheKey);
+    return value;
+  }).catch((error) => { businessRequests.delete(cacheKey); throw error; });
+  businessRequests.set(cacheKey, request);
+  return request;
+}
+
+async function getBusinessesUncached(filters: BusinessFilters = {}): Promise<Business[]> {
   let publicBusinesses: Business[];
   try { publicBusinesses = await listPublicBusinesses(); } catch { publicBusinesses = []; }
   return publicBusinesses.filter((business) => {
-    const matchesCategory = !filters.category || business.category === filters.category;
+    const categoryMatches = !filters.category || matchesCategory(business.category, filters.category);
     const businessProducts: string[] = [];
     const businessServices: string[] = [];
     const searchableFields = [business.name, business.category, business.address, business.description ?? "", ...business.tags, ...businessProducts, ...businessServices];
-    return matchesCategory && matchesQuery(filters.query, searchableFields);
+    return categoryMatches && matchesQuery(filters.query, searchableFields);
   });
 }
 

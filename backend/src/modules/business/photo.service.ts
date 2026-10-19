@@ -34,18 +34,22 @@ export async function listPhotos(userId: string, businessId: string) {
   return photos.map(photo => serializePhoto(businessId, photo));
 }
 
-export async function uploadPhoto(userId: string, businessId: string, file: UploadedPhoto | undefined, requestedCover: boolean) {
+export async function uploadPhoto(userId: string, businessId: string, file: UploadedPhoto | undefined, requestedCover: boolean, offerId?: string) {
   ensureFile(file);
   await findBusinessForPhotos(userId, businessId);
-  const count = await db.photo.count({ where: { businessId } });
-  if (count >= 10) throw new AppError(422, 'PHOTO_LIMIT_REACHED', 'Cada negocio puede tener máximo 10 fotografías.');
+  if (offerId) { const offer = await db.businessOffer.findFirst({ where: { id: offerId, businessId }, select: { id: true } }); if (!offer) throw new AppError(404, 'OFFER_NOT_FOUND', 'No encontramos ese producto.'); }
+  const count = offerId ? 0 : await db.photo.count({ where: { businessId, isGallery: true } });
+  if (!offerId && count >= 10) throw new AppError(422, 'PHOTO_LIMIT_REACHED', 'Cada negocio puede tener máximo 10 fotografías.');
   const business = await db.business.findUniqueOrThrow({ where: { id: businessId }, select: { coverPhotoId: true, profilePhotoId: true } });
+  const previousOfferPhotos = offerId ? await db.photo.findMany({ where: { businessId, offerId }, select: { id: true, storageKey: true } }) : [];
+  for (const previous of previousOfferPhotos) await removePhoto(previous.storageKey).catch(() => undefined);
   const stored = await savePhoto(businessId, file.buffer, file.mimetype);
   try {
     const photo = await db.$transaction(async tx => {
-      const shouldUseAsCover = requestedCover || !business.coverPhotoId;
+      const shouldUseAsCover = !offerId && (requestedCover || !business.coverPhotoId);
       if (shouldUseAsCover) await tx.photo.updateMany({ where: { businessId, isCover: true }, data: { isCover: false } });
-      const photo = await tx.photo.create({ data: { businessId, storageKey: stored.storageKey, url: null, source: 'NEGOCIOS', sortOrder: count, isCover: shouldUseAsCover, isGallery: true, uploadedById: userId } });
+      if (offerId && previousOfferPhotos.length) await tx.photo.deleteMany({ where: { id: { in: previousOfferPhotos.map(item => item.id) }, businessId, offerId } });
+      const photo = await tx.photo.create({ data: { businessId, offerId: offerId ?? null, storageKey: stored.storageKey, url: null, source: 'NEGOCIOS', sortOrder: count, isCover: shouldUseAsCover, isGallery: !offerId, uploadedById: userId } });
       if (shouldUseAsCover || !business.profilePhotoId) await tx.business.update({ where: { id: businessId }, data: { ...(shouldUseAsCover ? { coverPhotoId: photo.id } : {}), ...(!business.profilePhotoId ? { profilePhotoId: photo.id } : {}) } });
       return photo;
     });
@@ -77,6 +81,15 @@ export async function setPhotoCover(userId: string, businessId: string, photoId:
   return serializePhoto(businessId, updated);
 }
 
+export async function clearCoverPhoto(userId: string, businessId: string) {
+  await findBusinessForPhotos(userId, businessId);
+  const business = await db.business.findUniqueOrThrow({ where: { id: businessId }, select: { coverPhotoId: true } });
+  await db.$transaction(async tx => {
+    if (business.coverPhotoId) await tx.photo.updateMany({ where: { id: business.coverPhotoId, businessId, isGallery: true }, data: { isCover: false } });
+    await tx.business.update({ where: { id: businessId }, data: { coverPhotoId: null, coverImagePositionX: 50, coverImagePositionY: 50 } });
+  });
+}
+
 export async function uploadCoverPhoto(userId: string, businessId: string, file: UploadedPhoto | undefined, positionX?: number, positionY?: number) {
   ensureFile(file);
   await findBusinessForPhotos(userId, businessId);
@@ -98,6 +111,10 @@ export async function uploadCoverPhoto(userId: string, businessId: string, file:
 
 export async function setProfilePhoto(userId: string, businessId: string, photoId: unknown, positionX?: number, positionY?: number) {
   await findBusinessForPhotos(userId, businessId);
+  if (photoId === null) {
+    await db.business.update({ where: { id: businessId }, data: { profilePhotoId: null, profileImagePositionX: 50, profileImagePositionY: 50 } });
+    return null;
+  }
   if (typeof photoId !== 'string' || !photoId.trim()) {
     throw new AppError(400, 'PHOTO_ID_REQUIRED', 'Selecciona una fotografía de la galería para usarla como imagen del negocio.');
   }

@@ -176,3 +176,4 @@
 @media(max-width:600px){
   .offer-detail-back{min-height:34px;margin-bottom:14px;padding:0 11px;font-size:10px}
 }
+.offer-detail-contact-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.offer-detail-contact{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:10px;font-size:12px;font-weight:700;text-decoration:none}.offer-detail-contact.whatsapp{background:#18b86a;color:#fff}.offer-detail-contact.phone{border:1px solid var(--xamuko-border);background:#fff;color:var(--xamuko-navy)}

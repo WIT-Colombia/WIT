@@ -28,3 +28,27 @@
 
 /* El padding inferior general de PageLayout no debe separar el banner del footer. */
 .business-detail-page .user-content-main { padding-bottom:0 !important; }
+
+/* El bloque de acciones se adapta al ancho real de la columna, no solo al ancho de la ventana. */
+.business-detail-intro{container-type:inline-size}
+@container (max-width: 640px){
+  .business-detail-actions{align-items:stretch;gap:8px}
+  .business-social-actions,.business-contact-actions{width:100%}
+  .business-social-action,.business-contact-button{flex:1;min-width:0;padding-inline:9px}
+}
+@container (max-width: 640px){
+  .business-detail-actions > a,
+  .business-detail-actions > button{flex:1 1 0;min-width:0;justify-content:center;white-space:nowrap}
+}
+
+/* Acciones ordenadas cuando la columna entra en modo compacto. */
+@container (max-width: 640px){
+  .business-detail-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:9px}
+  .business-detail-actions > a,
+  .business-detail-actions > button{width:100%;box-sizing:border-box}
+}
+@media(max-width:600px){
+  .business-detail-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:9px}
+  .business-detail-actions > a,
+  .business-detail-actions > button{width:100%;box-sizing:border-box}
+}

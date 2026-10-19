@@ -1,6 +1,6 @@
 import type { RequestHandler } from 'express';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
-import { getPhotoContent, deletePhoto, listPhotos, setPhotoCover, setProfilePhoto, uploadCoverPhoto, uploadPhoto } from './photo.service.js';
+import { clearCoverPhoto, getPhotoContent, deletePhoto, listPhotos, setPhotoCover, setProfilePhoto, uploadCoverPhoto, uploadPhoto } from './photo.service.js';
 
 const userId = (request: Parameters<RequestHandler>[0]) => (request as AuthenticatedRequest).auth.userId;
 
@@ -11,7 +11,7 @@ export const listPhotosController: RequestHandler = async (req, res, next) => {
 export const uploadPhotoController: RequestHandler = async (req, res, next) => {
   try {
     const file = req.file;
-    const photo = await uploadPhoto(userId(req), req.params.businessId as string, file ? { buffer: file.buffer, mimetype: file.mimetype, size: file.size } : undefined, req.body?.cover === 'true');
+    const photo = await uploadPhoto(userId(req), req.params.businessId as string, file ? { buffer: file.buffer, mimetype: file.mimetype, size: file.size } : undefined, req.body?.cover === 'true', typeof req.body?.offerId === 'string' ? req.body.offerId : undefined);
     res.status(201).json({ photo });
   } catch (error) { next(error); }
 };
@@ -32,6 +32,10 @@ export const uploadCoverPhotoController: RequestHandler = async (req, res, next)
     const photo = await uploadCoverPhoto(userId(req), req.params.businessId as string, file ? { buffer: file.buffer, mimetype: file.mimetype, size: file.size } : undefined, positionX, positionY);
     res.status(201).json({ photo });
   } catch (error) { next(error); }
+};
+
+export const clearCoverPhotoController: RequestHandler = async (req, res, next) => {
+  try { await clearCoverPhoto(userId(req), req.params.businessId as string); res.status(204).send(); } catch (error) { next(error); }
 };
 
 export const setProfilePhotoController: RequestHandler = async (req, res, next) => {

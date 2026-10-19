@@ -12,6 +12,8 @@ import { env } from '../../config/env.js';
 import { createGoogleAuthorization, clearGoogleStateCookie, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode } from './google-oauth.service.js';
 import { createGoogleDiagnostic, logGoogleDiagnostic, type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
 import { GoogleOAuthDiagnosticError } from './google-oauth.service.js';
+import { getPreferredLocation, savePreferredLocation } from './location.service.js';
+import { preferredLocationSchema } from './location.schemas.js';
 
 function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ path: PropertyKey[] }> } } }, value: unknown): T {
   const result = schema.safeParse(value);
@@ -143,4 +145,6 @@ export const confirmPasswordResetController: RequestHandler = async (request, re
 
 export const updateProfileController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; const user = await updateProfile(auth.userId, parse(profileUpdateSchema, request.body)); response.status(200).json({ user }); } catch (error) { next(error); } };
 export const updateAdultContentPreferenceController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; const preference = await updateAdultContentPreference(auth.userId, parse(adultContentPreferenceSchema, request.body)); response.status(200).json({ preference }); } catch (error) { next(error); } };
+export const getPreferredLocationController: RequestHandler = async (request, response, next) => { try { response.status(200).json({ location: await getPreferredLocation((request as AuthenticatedRequest).auth.userId) }); } catch (error) { next(error); } };
+export const savePreferredLocationController: RequestHandler = async (request, response, next) => { try { const location = await savePreferredLocation((request as AuthenticatedRequest).auth.userId, parse(preferredLocationSchema, request.body)); response.status(200).json({ location }); } catch (error) { next(error); } };
 export const changePasswordController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; await changePassword(auth.userId, auth.sessionId, parse(changePasswordSchema, request.body)); response.status(204).send(); } catch (error) { next(error); } };

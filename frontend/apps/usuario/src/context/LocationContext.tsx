@@ -1,5 +1,7 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { getLocationSelection, resolveLocalityFromCoordinates, saveAutomaticLocation, saveSelectedLocation, subscribeToLocation, type Coordinates, type LocationSelection } from "../services/locationService";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useAuth } from "./AuthContext";
+import { getPreferredLocation, savePreferredLocation } from "../services/authService";
+import { clearSelectedLocation, getLocationSelection, resolveLocalityFromCoordinates, restorePreferredLocation, saveAutomaticLocation, saveSelectedLocation, subscribeToLocation, type Coordinates, type LocationSelection } from "../services/locationService";
 import type { Locality } from "../data/locations";
 
 type LocationContextValue = {
@@ -15,10 +17,37 @@ let pendingRequest: Promise<Coordinates> | null = null;
 const localityResolutionKeys = new Set<string>();
 
 export function LocationProvider({ children }: { children: ReactNode }) {
+  const { status } = useAuth();
   const [selection, setSelection] = useState<LocationSelection | null>(() => getLocationSelection());
+  const serverLoaded = useRef(false);
+  const lastSynced = useRef("");
+  const previousStatus = useRef(status);
   const [isRequesting, setIsRequesting] = useState(false);
 
   useEffect(() => subscribeToLocation(() => setSelection(getLocationSelection())), []);
+  useEffect(() => {
+    if (previousStatus.current === "authenticated" && status === "anonymous") { clearSelectedLocation(); setSelection(null); }
+    previousStatus.current = status;
+    if (status !== "authenticated") { serverLoaded.current = false; lastSynced.current = ""; return; }
+    let active = true;
+    getPreferredLocation().then((remote) => {
+      if (!active) return;
+      if (remote) restorePreferredLocation(remote);
+      serverLoaded.current = true;
+      setSelection(getLocationSelection());
+    }).catch(() => { if (active) serverLoaded.current = true; });
+    return () => { active = false; };
+  }, [status]);
+  useEffect(() => {
+    if (status !== "authenticated" || !serverLoaded.current || !selection) return;
+    const locality = selection.locality;
+    const coordinates = selection.coordinates ?? null;
+    const payload = { city: locality?.name ?? "Ubicación actual", region: locality?.context ?? null, country: "Colombia", name: locality ? `${locality.name}, ${locality.context}` : "Ubicación actual", latitude: coordinates?.lat ?? null, longitude: coordinates?.lng ?? null, mode: selection.mode === "automatic" ? "GPS" as const : "MANUAL" as const, resolution: selection.mode === "automatic" ? (selection.cityResolution === "resolved" ? "RESOLVED" as const : selection.cityResolution === "unavailable" ? "UNAVAILABLE" as const : "PENDING" as const) : "RESOLVED" as const, clientUpdatedAt: Date.now() };
+    const key = JSON.stringify({ ...payload, clientUpdatedAt: undefined });
+    if (lastSynced.current === key) return;
+    lastSynced.current = key;
+    void savePreferredLocation(payload).catch(() => { lastSynced.current = ""; });
+  }, [selection, status]);
   useEffect(() => {
     if (selection?.mode !== "automatic" || selection.cityResolution !== "pending") return;
     const coordinates = selection.coordinates;

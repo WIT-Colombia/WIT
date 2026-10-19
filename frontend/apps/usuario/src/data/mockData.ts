@@ -41,6 +41,7 @@ export type Product = {
   name: string;
   description: string;
   price?: number;
+  priceLabel?: string;
   image: string;
   createdAt?: string;
   likeCount?: number;
@@ -109,6 +110,8 @@ export const categories = [
   { name: "Eventos y entretenimiento", icon: "🎟️" },
   { name: "Belleza y cuidado personal", icon: "💅" },
 ];
+
+export const alphabeticalCategories = [...categories].sort((left, right) => left.name.localeCompare(right.name, "es", { sensitivity: "base" }));
 
 export const businesses: Business[] = [
   {

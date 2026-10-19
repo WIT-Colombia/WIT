@@ -39,7 +39,11 @@ function mapBusiness(value: PublicSummary): Business {
 
 function mapProduct(value: PublicOffer, businessId: string): Product {
   const image = value.photos[0]?.url ?? "";
-  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image, price: value.price.amount ? Number(value.price.amount) : undefined };
+  const amount = value.price.amount ? Number(value.price.amount) : undefined;
+  const currency = value.price.currency ?? "COP";
+  const formatAmount = (raw: number) => `${new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(raw).replace(/\u00a0/g, " ")} ${currency}`;
+  const priceLabel = value.price.negotiable ? "Precio a convenir" : amount !== undefined ? formatAmount(amount) : value.price.text && Number.isFinite(Number(value.price.text)) ? formatAmount(Number(value.price.text)) : "Consultar precio";
+  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image, price: amount, priceLabel };
 }
 
 function mapService(value: PublicOffer, businessId: string): Service {
