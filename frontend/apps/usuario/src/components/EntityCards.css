@@ -13,7 +13,7 @@
 .entity-business-card--featured .entity-card__heading p { color: #168653; font-weight: 700; }
 .entity-business-card--featured .entity-rating { color: #087449; }
 @media(max-width:700px) { .entity-card__image { height:165px; }.entity-card__content { padding:12px; }.entity-card__heading h3,.entity-offer-card h3 { font-size:13px; }.entity-address { margin:9px 0; font-size:9px; }.entity-card__actions { font-size:9px; }.entity-card__actions>div { gap:5px; }.entity-action { width:30px; height:30px; }.entity-view { font-size:10px; }.entity-offer-card .entity-card__image { height:140px; }.entity-offer-description { font-size:10px; } }
-.entity-favorite { color:#bd5a61; }.entity-favorite svg,.entity-product-like svg { display:block; width:17px; height:17px; }.entity-favorite.is-active { border-color:#f3d2d3; background:#fff3f3; color:#e5484d; }.entity-like { color:#42765f; }.entity-like.is-active { border-color:#79cda0; background:#d9f4e4; color:#087449; }
+.entity-favorite { color:#bd5a61; }.entity-favorite svg,.entity-product-like svg { display:block; width:17px; height:17px; }.entity-favorite.is-active { border-color:#f3d2d3; background:#fff3f3; color:#e5484d; }.entity-like { color:#42765f; }.entity-like.is-active { border-color:#d8ccff; background:#f0ebff; color:#7b3ffb; }.entity-offer-footer .entity-product-like.is-active,.offer-detail-actions .entity-product-like.is-active { border-color:#7b3ffb; background:#f0ebff; color:#7b3ffb; }
 .entity-action { padding:0; line-height:0; }
 .entity-offer-footer .entity-product-like { width:32px; height:32px; padding:0; border-radius:50%; }
 @media(max-width:700px) { .entity-offer-footer .entity-product-like { width:30px; height:30px; } }

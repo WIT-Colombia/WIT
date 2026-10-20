@@ -1,4 +1,4 @@
-export type StatisticsPeriod = "7d" | "30d" | "90d" | "12m";
+export type StatisticsPeriod = "day" | "week" | "month" | "year" | "all";
 
 export type StatisticsMetricId = "businessViews" | "searchAppearances" | "whatsappClicks" | "phoneClicks" | "favorites";
 
@@ -38,10 +38,11 @@ export type CommercialIntelligenceDefinition = {
 };
 
 export const statisticsPeriods: Array<{ id: StatisticsPeriod; label: string }> = [
-  { id: "7d", label: "7 días" },
-  { id: "30d", label: "30 días" },
-  { id: "90d", label: "90 días" },
-  { id: "12m", label: "12 meses" },
+  { id: "day", label: "Día" },
+  { id: "week", label: "Semana" },
+  { id: "month", label: "Mes" },
+  { id: "year", label: "Año" },
+  { id: "all", label: "Todo el tiempo" },
 ];
 
 export const freeStatistics: StatisticsMetricDefinition[] = [

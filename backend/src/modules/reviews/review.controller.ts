@@ -1,0 +1,16 @@
+import type { RequestHandler } from 'express';
+import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
+import { createReview, deleteReview, listReviews, listMyReviews, listAdminReviews, listReports, moderateReport, reportReview, updateReview, upsertResponse } from './review.service.js';
+import { AppError } from '../../shared/errors/app-error.js';
+const uid = (req: any) => (req as AuthenticatedRequest).auth.userId;
+const body = (req: any) => { const rating = Number(req.body?.rating); const comment = String(req.body?.comment ?? ''); if (!Number.isFinite(rating)) throw new AppError(400, 'INVALID_RATING', 'Calificación inválida.'); return { rating, comment }; };
+export const listReviewsController: RequestHandler = async (req,res,next)=>{try{res.json(await listReviews(String(req.params.businessId), Number(req.query.page)||1, Number(req.query.pageSize)||20));}catch(e){next(e)}};
+export const listMyReviewsController: RequestHandler = async (req,res,next)=>{try{res.json(await listMyReviews(uid(req), Number(req.query.page)||1, Number(req.query.pageSize)||20));}catch(e){next(e)}};
+export const createReviewController: RequestHandler = async (req,res,next)=>{try{const x=body(req);res.status(201).json({review:await createReview(uid(req),String(req.params.businessId),x.rating,x.comment)});}catch(e){next(e)}};
+export const updateReviewController: RequestHandler = async (req,res,next)=>{try{const x=body(req);res.json({review:await updateReview(uid(req),String(req.params.reviewId),x.rating,x.comment)});}catch(e){next(e)}};
+export const deleteReviewController: RequestHandler = async (req,res,next)=>{try{res.json(await deleteReview(uid(req),String(req.params.reviewId)));}catch(e){next(e)}};
+export const responseController: RequestHandler = async (req,res,next)=>{try{res.json({response:await upsertResponse(uid(req),String(req.params.reviewId),String(req.body?.body??''))});}catch(e){next(e)}};
+export const reportController: RequestHandler = async (req,res,next)=>{try{res.status(201).json({report:await reportReview(uid(req),String(req.params.reviewId),req.body?.reason,req.body?.description)});}catch(e){next(e)}};
+export const adminReviewsController: RequestHandler = async (req,res,next)=>{try{res.json(await listAdminReviews(Number(req.query.page)||1, Number(req.query.pageSize)||20));}catch(e){next(e)}};
+export const reportsController: RequestHandler = async (req,res,next)=>{try{res.json({reports:await listReports(req.query.status as any)});}catch(e){next(e)}};
+export const moderateController: RequestHandler = async (req,res,next)=>{try{res.json({report:await moderateReport(uid(req),String(req.params.reportId),req.body?.status,req.body?.decisionNote,req.body?.reviewStatus)});}catch(e){next(e)}};

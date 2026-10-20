@@ -42,6 +42,8 @@ export type Product = {
   description: string;
   price?: number;
   priceLabel?: string;
+  businessName?: string;
+  businessCoordinates?: { lat: number; lng: number };
   image: string;
   createdAt?: string;
   likeCount?: number;
@@ -59,6 +61,8 @@ export type Service = {
   name: string;
   description: string;
   priceLabel?: string;
+  businessName?: string;
+  businessCoordinates?: { lat: number; lng: number };
   image: string;
   likeCount?: number;
   isOffer?: boolean;
@@ -74,6 +78,7 @@ export type Review = {
   rating: number;
   date: string;
   comment: string;
+  response?: { body: string; createdAt: string; updatedAt: string } | null;
 };
 
 export const categories = [

@@ -38,6 +38,7 @@
 .entity-offer-card h3{color:var(--xamuko-navy);font-size:17px;letter-spacing:-.2px}
 .entity-offer-description{display:-webkit-box;min-height:3.1em;overflow:hidden;color:var(--xamuko-muted);font-size:11px;line-height:1.55;text-overflow:ellipsis;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .entity-establishment{color:var(--xamuko-violet);font-size:10px;font-weight:700}
+
 .entity-offer-footer{border-top-color:var(--xamuko-border)}
 .entity-offer-footer strong{color:var(--xamuko-navy);font-size:14px}
 .entity-offer-footer .entity-product-like{
@@ -65,3 +66,7 @@
   .entity-offer-card h3{font-size:15px}
   .entity-offer-description{font-size:10px}
 }
+.entity-favorite.is-active,
+.business-favorite-action.is-active{border:1.5px solid #EF4444!important;background:#FEE2E2!important;color:#DC2626!important}
+.entity-favorite.is-active svg,
+.business-favorite-action.is-active svg{fill:#DC2626!important;stroke:#DC2626!important}

@@ -72,7 +72,8 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       if (!active) return;
       const next = values.map(toBusinessDetails);
       setBusinesses(next);
-      if (next[0]) setBusiness(next[0]);
+      const preferred = next.find(item => item.publicationStatus === 'PUBLISHED' && item.visibilityStatus === 'VISIBLE') ?? next[0];
+      if (preferred) setBusiness(preferred);
     }).catch(() => {
       // La página de negocios muestra el error detallado; aquí solo evitamos
       // bloquear la restauración de la URL si la API no está disponible.

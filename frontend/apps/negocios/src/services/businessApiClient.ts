@@ -129,6 +129,9 @@ export async function requestPhotoBlob(path: string): Promise<Blob> {
 export type RealPhoto = { id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean };
 export type BusinessReferralLevel = 'BASIC' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND';
 export type BusinessReferralSummary = { referredUsers: number; currentLevel: BusinessReferralLevel; nextLevel: BusinessReferralLevel | null; nextLevelMinimum: number | null };
+export type CatalogLimits = { level: BusinessReferralLevel; plan: "BASIC" | "PRO"; products: { used: number; limit: number | null; available: number | null; unlimited: boolean }; services: { used: number; limit: number | null; available: number | null; unlimited: boolean } };
+export type BusinessReview = { id: string; businessId: string; userId: string; author: string; rating: number; comment: string; createdAt: string; updatedAt: string; response: { body: string; createdAt: string; updatedAt: string } | null };
+export type BusinessReviewsResponse = { reviews: BusinessReview[]; pagination: { page: number; pageSize: number; total: number; totalPages: number }; summary: { average: number | null; total: number; distribution: Record<string, number> } };
 export type RealOffer = { id: string; businessId: string; kind: 'PRODUCT' | 'SERVICE'; name: string; description: string | null; priceAmount: string | null; currency: string | null; priceText: string | null; negotiable: boolean; active: boolean; adultOnly: boolean; publicationStatus: 'UNPUBLISHED' | 'PUBLISHED' | 'REVIEW'; photos: RealPhoto[] };
 
 export type RealBusiness = {
@@ -186,9 +189,17 @@ export const businessApi = {
   create: (input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>('/businesses', { method: 'POST', body: JSON.stringify(input) }),
   get: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}`),
   getReferralSummary: (businessId: string) => requestJson<{ referralSummary: BusinessReferralSummary }>(`/businesses/${encodeURIComponent(businessId)}/referral-summary`),
+  getCatalogLimits: (businessId: string) => requestJson<CatalogLimits>(`/businesses/${encodeURIComponent(businessId)}/catalog-limits`),
+  getFavoriteCount: (businessId: string) => requestJson<{ count: number }>(`/businesses/${encodeURIComponent(businessId)}/favorites/count`),
+  getAnalytics: (businessId: string, period: string) => requestJson<{ metrics: { businessViews: number; searchAppearances: number; whatsappClicks: number; phoneClicks: number }; period: string; timezone: string }>(`/businesses/${encodeURIComponent(businessId)}/analytics?period=${encodeURIComponent(period)}`),
+  getOfferLikeCounts: (businessId: string) => requestJson<{ offers: Array<{ offerId: string; likeCount: number }> }>(`/businesses/${encodeURIComponent(businessId)}/offers/likes`),
+  listReviews: (businessId: string, page = 1, pageSize = 50) => requestJson<BusinessReviewsResponse>(`/public/businesses/${encodeURIComponent(businessId)}/reviews?page=${page}&pageSize=${pageSize}`),
+  saveReviewResponse: (reviewId: string, body: string, edit = false) => requestJson<{ response: BusinessReview['response'] }>(`/reviews/${encodeURIComponent(reviewId)}/response`, { method: edit ? 'PATCH' : 'POST', body: JSON.stringify({ body }) }),
+  reportReview: (reviewId: string, reason: string, description?: string) => requestJson<{ report: unknown }>(`/reviews/${encodeURIComponent(reviewId)}/reports`, { method: 'POST', body: JSON.stringify({ reason, description }) }),
   listOffers: (businessId: string, kind?: 'PRODUCT' | 'SERVICE') => requestJson<{ offers: RealOffer[] }>(`/businesses/${encodeURIComponent(businessId)}/offers${kind ? `?kind=${kind}` : ''}`),
   createOffer: (businessId: string, input: Record<string, unknown>) => requestJson<{ offer: RealOffer }>(`/businesses/${encodeURIComponent(businessId)}/offers`, { method: 'POST', body: JSON.stringify(input) }),
   updateOffer: (businessId: string, offerId: string, input: Record<string, unknown>) => requestJson<{ offer: RealOffer }>(`/businesses/${encodeURIComponent(businessId)}/offers/${encodeURIComponent(offerId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
+  deleteOffer: (businessId: string, offerId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/offers/${encodeURIComponent(offerId)}`, { method: 'DELETE' }),
   update: (businessId: string, input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
   publishBusiness: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/publish`, { method: 'POST' }),
   requestDeletion: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/request-deletion`, { method: 'POST' }),

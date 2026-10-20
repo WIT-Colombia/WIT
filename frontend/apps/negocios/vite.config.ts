@@ -6,7 +6,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
-      port: 5174,
+      host: '127.0.0.1',
+      port: Number(env.VITE_NEGOCIOS_PORT ?? 5176),
+      strictPort: true,
       proxy: {
         "/api/v1": {
           target: env.VITE_BUSINESS_BACKEND_URL ?? "http://127.0.0.1:3000",

@@ -12,7 +12,9 @@ export async function requestJson<T>(path: string, init: RequestInit = {}): Prom
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   const response = await fetch(path, {
     ...init,
-    credentials: "same-origin",
+    // The refresh cookie is issued by the isolated backend through the Vite
+    // proxy; include it explicitly so reload restores the real session.
+    credentials: "include",
     headers,
   });
   const text = await response.text();

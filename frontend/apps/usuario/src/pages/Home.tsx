@@ -4,7 +4,7 @@ import { Button } from "@wit/ui";
 import { businesses as sampleBusinesses, categories, products as sampleProducts, type Business } from "../data/mockData";
 import { hasSampleCatalogForLocation } from "../services/locationService";
 import { useLocationContext } from "../context/LocationContext";
-import { getBusinesses, prioritizeFeaturedByDistance } from "../services/businessService";
+import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
 import { LocationAvailabilityNotice } from "../components/LocationAvailabilityNotice";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
@@ -15,7 +15,8 @@ import { NoResultsState } from "../components/NoResultsState";
 import { AdMobBanner } from "../components/AdMobBanner";
 import { ThumbsUpIcon } from "../components/ActionIcons";
 import { useAccountGate } from "../hooks/useAccountGate";
-import { getFavoriteIds, getLikeIds, toggleFavorite, toggleLike } from "../services/userDataService";
+import { getLikeIds, toggleLike } from "../services/userDataService";
+import { useFavorites } from "../services/favoritesService";
 import xamukoLocalHero from "../assets/xamuko-local-hero.png";
 import "./Home.css";
 import "./HomeChanges.css";
@@ -107,7 +108,7 @@ export default function Home() {
   const [featuredScroll, setFeaturedScroll] = useState({ left: 0, max: 0 });
   const [nearbyScroll, setNearbyScroll] = useState({ left: 0, max: 0 });
   const [items, setItems] = useState<Business[]>([]);
-  const [favorites, setFavorites] = useState<string[]>(getFavoriteIds);
+  const { favorites, toggleFavorite: saveFavorite } = useFavorites();
   const [likes, setLikes] = useState<string[]>(getLikeIds);
   const [bannerPaused, setBannerPaused] = useState(false);
   const [bannerInteracting, setBannerInteracting] = useState(false);
@@ -152,11 +153,16 @@ export default function Home() {
   }, [location.pathname, location.search, navigate, navigationMessage]);
 
   useEffect(() => {
+    let current = true;
     const userCoordinates = selection?.coordinates;
-    void getBusinesses({ query, category }).then((businesses) => setItems(businesses.map((business) => ({
-      ...business,
-      distanceKm: distanceBetween(userCoordinates, business.coordinates),
-    }))));
+    void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng }).then(({ businesses }) => {
+      if (!current) return;
+      setItems(businesses.map((business) => ({
+        ...business,
+        distanceKm: distanceBetween(userCoordinates, business.coordinates),
+      })));
+    }).catch(() => { if (current) setItems([]); });
+    return () => { current = false; };
   }, [query, category, selection]);
   useEffect(() => {
     if (!message) return;
@@ -303,7 +309,6 @@ export default function Home() {
     return () => { window.cancelAnimationFrame(frame); observer.disconnect(); };
   }, [showAllOffers]);
 
-  function saveFavorite(id: string) { setFavorites(toggleFavorite(id)); }
   function saveLike(id: string) { setLikes(toggleLike(id)); }
 
   function pauseBannerForInteraction() {
@@ -500,13 +505,13 @@ export default function Home() {
 
       <div className="admob-banner-slot admob-banner-slot--home-inline"><AdMobBanner /></div>
 
-      {featuredItems.length > 0 && <section className="business-section home-featured-section" aria-labelledby="featured-title"><div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="featured-title"><span className="home-section-symbol" aria-hidden="true">◇</span>Negocios destacados</h2><p>Descubre y apoya los negocios de tu comunidad.</p></div>{allFeaturedItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllFeatured} aria-controls="featured-business-list" onClick={() => setShowAllFeatured((current) => !current)}>{showAllFeatured ? "Ver menos" : `Ver más (${allFeaturedItems.length})`} <Icon name="arrow" /></button>}</div><div className="business-grid" id="featured-business-list" ref={featuredListRef} onScroll={() => { const list = featuredListRef.current; if (list) setFeaturedScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startFeaturedDrag} onPointerMove={moveFeaturedDrag} onPointerUp={endFeaturedDrag} onPointerCancel={endFeaturedDrag} onClickCapture={(event) => { if (ignoreFeaturedClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{featuredItems.map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => saveFavorite(business.id)} />)}</div>{showAllFeatured && featuredScroll.max > 0 && <div className="featured-scroll-control"><input type="range" min="0" max={featuredScroll.max} step="1" value={Math.min(featuredScroll.left, featuredScroll.max)} aria-label="Desplazar negocios destacados" onChange={(event) => { const left = Number(event.target.value); if (featuredListRef.current) featuredListRef.current.scrollLeft = left; setFeaturedScroll((current) => ({ ...current, left })); }} /></div>}</section>}
+      {featuredItems.length > 0 && <section className="business-section home-featured-section" aria-labelledby="featured-title"><div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="featured-title"><span className="home-section-symbol" aria-hidden="true">◇</span>Negocios destacados</h2><p>Descubre y apoya los negocios de tu comunidad.</p></div>{allFeaturedItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllFeatured} aria-controls="featured-business-list" onClick={() => setShowAllFeatured((current) => !current)}>{showAllFeatured ? "Ver menos" : `Ver más (${allFeaturedItems.length})`} <Icon name="arrow" /></button>}</div><div className="business-grid" id="featured-business-list" ref={featuredListRef} onScroll={() => { const list = featuredListRef.current; if (list) setFeaturedScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startFeaturedDrag} onPointerMove={moveFeaturedDrag} onPointerUp={endFeaturedDrag} onPointerCancel={endFeaturedDrag} onClickCapture={(event) => { if (ignoreFeaturedClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{featuredItems.map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllFeatured && featuredScroll.max > 0 && <div className="featured-scroll-control"><input type="range" min="0" max={featuredScroll.max} step="1" value={Math.min(featuredScroll.left, featuredScroll.max)} aria-label="Desplazar negocios destacados" onChange={(event) => { const left = Number(event.target.value); if (featuredListRef.current) featuredListRef.current.scrollLeft = left; setFeaturedScroll((current) => ({ ...current, left })); }} /></div>}</section>}
 
       {newProducts.length > 0 && <NewProductsBanner products={newProducts} likedIds={likes} onLike={saveLike}/>}
 
       <section className="business-section home-nearby-section" id="lugares" aria-labelledby="business-title">
         <div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="business-title"><span className="home-section-symbol" aria-hidden="true"><Icon name="pin"/></span>{resultsLabel}</h2><p>Encuentra ese lugar que estás buscando.</p></div>{nearbyItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllNearby} aria-controls="nearby-business-list" onClick={() => setShowAllNearby((current) => !current)}>{showAllNearby ? "Ver menos" : `Ver más (${nearbyItems.length})`} <Icon name="arrow" /></button>}</div>
-          {!hasSampleCatalog ? <LocationAvailabilityNotice location={selectedLocation} query={query}/> : visibleItems.length ? <><div className="business-grid" id="nearby-business-list" ref={nearbyListRef} onScroll={() => { const list = nearbyListRef.current; if (list) setNearbyScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startNearbyDrag} onPointerMove={moveNearbyDrag} onPointerUp={endNearbyDrag} onPointerCancel={endNearbyDrag} onClickCapture={(event) => { if (ignoreNearbyClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllNearby ? nearbyItems : nearbyItems.slice(0, 4)).map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => saveFavorite(business.id)} />)}</div>{showAllNearby && nearbyScroll.max > 0 && <div className="nearby-scroll-control"><input type="range" min="0" max={nearbyScroll.max} step="1" value={Math.min(nearbyScroll.left, nearbyScroll.max)} aria-label="Desplazar lugares cerca de ti" onChange={(event) => { const left = Number(event.target.value); if (nearbyListRef.current) nearbyListRef.current.scrollLeft = left; setNearbyScroll((current) => ({ ...current, left })); }} /></div>}</> : <NoResultsState term={query || category} locationName={cityName}/>}
+          {!hasSampleCatalog ? <LocationAvailabilityNotice location={selectedLocation} query={query}/> : visibleItems.length ? <><div className="business-grid" id="nearby-business-list" ref={nearbyListRef} onScroll={() => { const list = nearbyListRef.current; if (list) setNearbyScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startNearbyDrag} onPointerMove={moveNearbyDrag} onPointerUp={endNearbyDrag} onPointerCancel={endNearbyDrag} onClickCapture={(event) => { if (ignoreNearbyClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllNearby ? nearbyItems : nearbyItems.slice(0, 4)).map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllNearby && nearbyScroll.max > 0 && <div className="nearby-scroll-control"><input type="range" min="0" max={nearbyScroll.max} step="1" value={Math.min(nearbyScroll.left, nearbyScroll.max)} aria-label="Desplazar lugares cerca de ti" onChange={(event) => { const left = Number(event.target.value); if (nearbyListRef.current) nearbyListRef.current.scrollLeft = left; setNearbyScroll((current) => ({ ...current, left })); }} /></div>}</> : <NoResultsState term={query || category} locationName={cityName}/>}
       </section>
 
       {hasSampleCatalog && <section className="special-offers" aria-labelledby="special-offers-title">

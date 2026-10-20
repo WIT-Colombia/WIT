@@ -128,7 +128,7 @@ export async function setProfilePhoto(userId: string, businessId: string, photoI
 
 export async function getPhotoContent(userId: string, businessId: string, photoId: string) {
   await findBusinessForPhotos(userId, businessId);
-  const photo = await db.photo.findFirst({ where: { id: photoId, businessId } });
+  const photo = await db.photo.findFirst({ where: { id: photoId, businessId, OR: [{ offerId: null }, { offer: { deletedAt: null } }] } });
   if (!photo) throw new AppError(404, 'PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
   return { path: photoStoragePath(photo.storageKey), mimeType: photo.storageKey.endsWith('.png') ? 'image/png' : photo.storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
 }

@@ -1,0 +1,17 @@
+import { Router } from 'express';
+import { requireAuth } from '../../shared/middleware/require-auth.js';
+import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
+import { requireAdmin } from '../admin/admin-auth.service.js';
+import { createReviewController, listMyReviewsController, adminReviewsController, updateReviewController, deleteReviewController, responseController, reportController, reportsController, moderateController } from './review.controller.js';
+export const reviewRouter = Router();
+reviewRouter.use(requireAuth);
+reviewRouter.get('/reviews/mine', listMyReviewsController);
+reviewRouter.post('/businesses/:businessId/reviews', requireTrustedOrigin, createReviewController);
+reviewRouter.patch('/reviews/:reviewId', requireTrustedOrigin, updateReviewController);
+reviewRouter.delete('/reviews/:reviewId', requireTrustedOrigin, deleteReviewController);
+reviewRouter.post('/reviews/:reviewId/response', requireTrustedOrigin, responseController);
+reviewRouter.patch('/reviews/:reviewId/response', requireTrustedOrigin, responseController);
+reviewRouter.post('/reviews/:reviewId/reports', requireTrustedOrigin, reportController);
+reviewRouter.get('/admin/reviews', requireAdmin('REPORTS_REVIEW'), adminReviewsController);
+reviewRouter.get('/admin/review-reports', requireAdmin('REPORTS_REVIEW'), reportsController);
+reviewRouter.patch('/admin/review-reports/:reportId', requireTrustedOrigin, requireAdmin('CONTENT_MODERATE'), moderateController);

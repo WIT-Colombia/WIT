@@ -11,6 +11,15 @@
   .business-detail-page .business-tabs { scrollbar-width: none; }
   .business-detail-page .business-tabs::-webkit-scrollbar { display: none; }
   .business-detail-page .business-detail-rating { row-gap: 5px; }
+  .business-detail-page .business-detail-columns { grid-template-columns: minmax(0, 1fr); }
+  .business-detail-page .business-about,
+  .business-detail-page .business-detail-aside { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .business-detail-page .business-review,
+  .business-detail-page .business-review > div,
+  .business-detail-page .business-review-stars { min-width: 0; max-width: 100%; }
+  .business-detail-page .business-review-stars { overflow-wrap: anywhere; word-break: break-all; white-space: normal; }
+  .business-detail-page .business-review b,
+  .business-detail-page .business-review p { overflow-wrap: anywhere; word-break: break-word; }
 }
 .business-favorite-action svg{transition:fill .2s ease,stroke .2s ease,opacity .2s ease}
 .business-favorite-action.is-active{color:#E11D48}
@@ -273,7 +282,7 @@
 .business-detail-page .business-popular-grid::-webkit-scrollbar{height:7px}
 .business-detail-page .business-popular-grid::-webkit-scrollbar-track{border-radius:999px;background:#eee9ff}
 .business-detail-page .business-popular-grid::-webkit-scrollbar-thumb{border-radius:999px;background:var(--xamuko-violet)}
-.business-detail-page .business-popular-grid>.entity-card{flex:0 0 calc((100% - 54px)/4);min-width:0;height:auto;align-self:stretch}
+.business-detail-page .business-popular-grid>.entity-offer-card{flex:0 0 calc((100% - 54px)/4);min-width:0;height:auto;align-self:stretch}
 .business-scroll-hint{color:var(--xamuko-muted);font-size:10px}
 .business-detail-page .business-products-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
 .business-products-more{
@@ -313,6 +322,8 @@
   .business-detail-page .business-detail-photo{min-height:280px;border-radius:17px}
 }
 @media(max-width:600px){
+  /* En móvil el horario se consulta desde el resumen desplegable de la cabecera. */
+  .business-detail-page .business-detail-aside > .business-aside-block:first-child{display:none}
   .business-detail-page .business-detail-hero{padding:0}
   .business-detail-page .business-detail-hero::before{width:72%;height:3px}
   .business-detail-page .business-detail-intro h1{margin-top:11px;font-size:30px}
@@ -322,7 +333,7 @@
   .business-detail-page .business-section-heading h2{font-size:19px}
   .business-detail-page .business-section-heading{align-items:center;flex-direction:row}
   .business-detail-page .business-popular-grid{margin-right:-16px;padding-right:16px}
-  .business-detail-page .business-popular-grid>.entity-card{flex-basis:calc((100% - 12px)/2)}
+  .business-detail-page .business-popular-grid>.entity-offer-card{flex-basis:calc((100% - 12px)/2)}
   .business-scroll-hint{font-size:9px}
   .business-detail-page .business-products-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .business-detail-page .business-offer-grid>.entity-offer-card{height:238px;min-height:238px;max-height:238px;border-radius:14px}
@@ -342,3 +353,55 @@
 .business-preview-notice{margin:0 0 12px;padding:10px 14px;border:1px solid #ddd2ff;border-radius:10px;background:#f8f5ff;color:#5d4a91;font-size:11px;line-height:1.4}
 .business-preview-mode button:disabled,.business-preview-mode .business-preview-disabled{cursor:not-allowed;opacity:.62}
 .business-preview-mode .business-social-links .business-social-link{display:flex;align-items:center;gap:8px;color:var(--wit-text-secondary);text-decoration:none}
+
+/* Catálogo dentro del panel principal: dos columnas legibles en escritorio. */
+.business-detail-page .business-about .business-products-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+.business-detail-page .business-about .entity-offer-card {
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .business-detail-page .business-about .business-products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* La columna del catálogo no debe estirarse por la barra lateral. */
+.business-detail-page .business-detail-columns {
+  align-items: start;
+}
+.business-detail-page .business-about .business-products-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1000px) {
+  .business-detail-page .business-about .business-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .business-detail-page .business-about .business-products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.business-detail-page .business-detail-columns.business-catalog-view {
+  grid-template-columns: 1fr;
+}
+.business-detail-page .business-catalog-view > .business-detail-aside {
+  display: none;
+}
+.business-detail-page .business-catalog-view .business-about .business-products-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  .business-detail-page .business-catalog-view .business-about .business-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .business-detail-page .business-catalog-view .business-about .business-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

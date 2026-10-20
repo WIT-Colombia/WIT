@@ -181,7 +181,7 @@
 .results-page .entity-view,.results-page .entity-establishment{color:var(--xamuko-violet)}
 .results-page .entity-action{border-color:var(--xamuko-border);color:var(--xamuko-violet)}
 .results-page .entity-favorite.is-active{border-color:#c7baff;background:#f1edff;color:var(--xamuko-violet)}
-.results-page .entity-like.is-active{border-color:#f3d2d3;background:#fff3f3;color:#e5484d}
+.results-page .entity-like.is-active{border-color:#7b3ffb;background:#f0ebff;color:#7b3ffb}
 .results-category-chips{display:flex;gap:8px;margin:14px 0 22px;overflow-x:auto;padding:2px 1px 5px;scrollbar-width:thin;scrollbar-color:#c7baff transparent}
 .results-category-chips button{flex-shrink:0;min-height:36px;padding:0 13px;border:1px solid #d8ccff;border-radius:999px;background:#fff;color:var(--xamuko-muted);font:inherit;font-size:11px;cursor:pointer;transition:.2s ease}
 .results-category-chips button:hover{border-color:#bfaeff;background:#f7f4ff;color:var(--xamuko-violet)}
@@ -330,3 +330,35 @@
 @media(max-width:620px){
   .results-context--active { max-width:100%; padding:8px 11px; font-size:13px !important; }
 }
+
+/* Presentación progresiva: cuadrícula uniforme para cada sección. */
+.results-page .results-businesses .results-grid,
+.results-page .results-offer-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media(max-width:700px){
+  .results-page .results-businesses .results-grid,
+  .results-page .results-offer-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-right:0; overflow:visible; padding:0; }
+  .results-page .results-businesses .results-grid .entity-business-card,
+  .results-page .results-offer-grid .entity-offer-card { display:flex; flex:initial; width:auto; height:auto; min-height:0; max-height:none; }
+  .results-page .results-businesses .results-grid .entity-card__image,
+  .results-page .results-offer-grid .entity-offer-card .entity-card__image { height:118px; min-height:118px; max-height:118px; flex:0 0 118px; }
+}
+
+.results-tabs{display:flex;gap:8px;width:100%;margin:0 0 22px;padding:5px;border:1px solid #d8ccff;border-radius:14px;background:#f7f4ff}
+.results-tabs button{display:flex;flex:1;min-height:42px;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--xamuko-muted);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.results-tabs button span{display:inline-grid;min-width:22px;height:22px;place-items:center;border-radius:999px;background:#fff;color:var(--xamuko-violet);font-size:10px}
+.results-tabs button.active{border-color:#c6b5ff;background:#fff;color:var(--xamuko-violet);box-shadow:0 4px 12px rgba(123,63,251,.12)}
+.results-tabs button:focus-visible{outline:3px solid rgba(123,63,251,.28);outline-offset:2px}
+@media(max-width:620px){.results-tabs{gap:4px;margin-bottom:18px;padding:4px}.results-tabs button{min-height:38px;font-size:10px;gap:4px}.results-tabs button span{min-width:19px;height:19px;font-size:9px}}
+
+/* Las pestañas acompañan directamente al contenido filtrado. */
+.results-main>.results-tabs{order:5}
+.results-main>.results-list{order:6}
+
+.results-page .results-offers h2{margin:4px 0 0;font-size:20px;letter-spacing:-.35px;font-weight:800;color:var(--xamuko-navy)}
+@media(max-width:620px){.results-page .results-offers h2{font-size:17px}}
+
+.results-page .results-offers.results-offer-group{margin-top:0}
+
+.results-page .results-offers.results-offer-group h2{margin:4px 0 13px}
+@media(max-width:620px){.results-page .results-offers.results-offer-group h2{margin:4px 0 13px}}
+.results-like-error { margin: 0 0 12px; color: #b42318; font-size: 13px; }

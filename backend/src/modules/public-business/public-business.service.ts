@@ -2,6 +2,7 @@ import { type Prisma, type PrismaClient } from '../../generated/prisma/client.js
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { photoStoragePath } from '../business/photo-storage.js';
+import { isSubscriptionEffective } from '../business/recognition.service.js';
 
 type PublicDb = Pick<PrismaClient, 'business' | 'businessOffer' | 'photo'> & { user?: PrismaClient['user'] };
 type PublicOfferKind = 'PRODUCT' | 'SERVICE';
@@ -10,6 +11,20 @@ export type PublicAccessContext = { userId?: string };
 export type PublicBusinessListInput = {
   page: number;
   pageSize: number;
+};
+
+export type PublicUniversalSearchInput = {
+  query: string;
+  category?: string;
+  latitude?: number;
+  longitude?: number;
+  radiusKm?: number;
+  businessPage: number;
+  businessPageSize: number;
+  productPage: number;
+  productPageSize: number;
+  servicePage: number;
+  servicePageSize: number;
 };
 
 const PUBLIC_BUSINESS_WHERE = {
@@ -84,6 +99,7 @@ const publicBusinessDetailSelect = {
   phone: true,
   whatsapp: true,
   category: { select: publicCategorySelect },
+  subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 },
   secondaryCategories: { include: { category: { select: publicCategorySelect } }, orderBy: { createdAt: 'asc' } },
   location: { select: publicLocationSelect },
   coverPhoto: { select: publicPhotoSelect },
@@ -98,7 +114,7 @@ const publicBusinessDetailSelect = {
     orderBy: { createdAt: 'asc' },
   },
   offers: {
-    where: { active: true, publicationStatus: 'PUBLISHED' },
+    where: { active: true, deletedAt: null, publicationStatus: 'PUBLISHED' },
     select: publicOfferSelect,
     orderBy: { updatedAt: 'desc' },
   },
@@ -186,6 +202,8 @@ function summary(value: any) {
     location: location(value.location),
     coverPhoto: photo(value.publicId, value.coverPhoto),
     profilePhoto: photo(value.publicId, value.profilePhoto),
+    isFeatured: (value.subscriptions ?? []).some((subscription: any) => isSubscriptionEffective(subscription)),
+    plan: (value.subscriptions ?? []).some((subscription: any) => isSubscriptionEffective(subscription)) ? 'premium' : 'free',
   };
 }
 
@@ -244,6 +262,34 @@ export function parsePublicBusinessListInput(query: Record<string, unknown>): Pu
   };
 }
 
+function optionalNumber(value: unknown, field: string) {
+  if (value === undefined || value === '') return undefined;
+  if (typeof value !== 'string' || !/^-?\d+(\.\d+)?$/.test(value)) throw new AppError(400, 'INVALID_PUBLIC_QUERY', `${field} debe ser un número válido.`);
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) throw new AppError(400, 'INVALID_PUBLIC_QUERY', `${field} debe ser un número válido.`);
+  return parsed;
+}
+
+export function parseUniversalSearchInput(query: Record<string, unknown>): PublicUniversalSearchInput {
+  const latitude = optionalNumber(query.latitude, 'latitude');
+  const longitude = optionalNumber(query.longitude, 'longitude');
+  const radiusKm = optionalNumber(query.radiusKm, 'radiusKm');
+  if (latitude !== undefined && (latitude < -90 || latitude > 90)) throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'latitude está fuera de rango.');
+  if (longitude !== undefined && (longitude < -180 || longitude > 180)) throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'longitude está fuera de rango.');
+  if (radiusKm !== undefined && (radiusKm <= 0 || radiusKm > 500)) throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'radiusKm está fuera de rango.');
+  return {
+    query: typeof query.q === 'string' ? query.q.trim() : '',
+    category: typeof query.category === 'string' && query.category.trim() ? query.category.trim() : undefined,
+    latitude, longitude, radiusKm,
+    businessPage: validatePositiveInteger(query.businessPage, 1, 1_000_000, 'businessPage'),
+    businessPageSize: validatePositiveInteger(query.businessPageSize, 12, 50, 'businessPageSize'),
+    productPage: validatePositiveInteger(query.productPage, 1, 1_000_000, 'productPage'),
+    productPageSize: validatePositiveInteger(query.productPageSize, 12, 50, 'productPageSize'),
+    servicePage: validatePositiveInteger(query.servicePage, 1, 1_000_000, 'servicePage'),
+    servicePageSize: validatePositiveInteger(query.servicePageSize, 12, 50, 'servicePageSize'),
+  };
+}
+
 async function findPublicBusinessId(publicId: string, db: PublicDb, canViewAdult: boolean) {
   const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: { id: true } });
   if (!business) throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
@@ -264,6 +310,7 @@ export async function listPublicBusinesses(input: PublicBusinessListInput, db: P
         adultOnly: true,
         description: true,
         category: { select: publicCategorySelect },
+        subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 },
         location: { select: publicLocationSelect },
         coverPhoto: { select: publicPhotoSelect },
         profilePhoto: { select: publicPhotoSelect },
@@ -279,6 +326,83 @@ export async function listPublicBusinesses(input: PublicBusinessListInput, db: P
   };
 }
 
+function distanceKm(latitude: number, longitude: number, value: any) {
+  const lat = value?.location?.latitude === null || value?.location?.latitude === undefined ? null : Number(value.location.latitude);
+  const lng = value?.location?.longitude === null || value?.location?.longitude === undefined ? null : Number(value.location.longitude);
+  if (lat === null || lng === null) return Number.POSITIVE_INFINITY;
+  const radians = (degrees: number) => degrees * Math.PI / 180;
+  const dLat = radians(lat - latitude); const dLng = radians(lng - longitude);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(latitude)) * Math.cos(radians(lat)) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function universalPagination<T>(items: T[], page: number, pageSize: number) {
+  const total = items.length;
+  return { items: items.slice((page - 1) * pageSize, page * pageSize), pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } };
+}
+
+function normalizeSearchText(value: unknown) {
+  return typeof value === 'string'
+    ? value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es-CO').replace(/[^\p{L}\p{N}\s]+/gu, ' ').replace(/\s+/g, ' ').trim()
+    : '';
+}
+
+function searchTerms(value: unknown) {
+  return normalizeSearchText(value).split(' ').filter(Boolean);
+}
+
+function matchesSearch(fields: unknown[], terms: string[]) {
+  if (!terms.length) return true;
+  const haystack = fields.map(normalizeSearchText).filter(Boolean).join(' ');
+  return terms.every(term => haystack.includes(term));
+}
+
+function searchRank(fields: { name?: unknown; category?: unknown; offer?: unknown; description?: unknown }, terms: string[]) {
+  if (!terms.length) return 0;
+  const name = normalizeSearchText(fields.name);
+  const category = normalizeSearchText(fields.category);
+  const offer = normalizeSearchText(fields.offer);
+  const description = normalizeSearchText(fields.description);
+  if (!matchesSearch([name, category, offer, description], terms)) return 0;
+  const query = terms.join(' ');
+  if (name === query) return 100;
+  if (name.includes(query)) return 80;
+  if (category.includes(query)) return 60;
+  if (offer.includes(query)) return 40;
+  return 20;
+}
+
+export async function searchPublicUniversal(input: PublicUniversalSearchInput, db: PublicDb = prisma, viewer?: PublicAccessContext) {
+  const canViewAdult = await canViewAdultContent(viewer, db);
+  const businessWhere = publicBusinessWhere(canViewAdult);
+  const terms = searchTerms(input.query);
+  const categoryTerms = searchTerms(input.category);
+  const offerWhere: any = {
+    active: true, deletedAt: null, publicationStatus: 'PUBLISHED',
+    business: businessWhere,
+    ...(canViewAdult ? {} : { adultOnly: false }),
+  };
+  const [businesses, products, services] = await Promise.all([
+    db.business.findMany({ where: businessWhere, select: { publicId: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect } }, orderBy: { updatedAt: 'desc' }, take: 500 }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' }, take: 500 }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' }, take: 500 }),
+  ]);
+  const categoryMatches = (item: any) => !categoryTerms.length || matchesSearch([item.category?.code, item.category?.translations?.[0]?.name], categoryTerms);
+  const inRadius = (value: any) => input.latitude !== undefined && input.longitude !== undefined && input.radiusKm !== undefined ? distanceKm(input.latitude, input.longitude, value) <= input.radiusKm : true;
+  const sortNearby = (a: any, b: any) => input.latitude !== undefined && input.longitude !== undefined ? distanceKm(input.latitude, input.longitude, a) - distanceKm(input.latitude, input.longitude, b) : 0;
+  const matchingOffers = [...products, ...services].filter((item: any) => categoryMatches(item) && (terms.length ? searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, offer: item.name, description: item.description }, terms) > 0 : true));
+  const matchingBusinessIds = new Set(matchingOffers.map((item: any) => item.business.publicId));
+  const businessItems = businesses.map((item: any) => ({ item, rank: searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, description: item.description }, terms) }));
+  const filteredBusinesses = businessItems.filter(({ item, rank }) => categoryMatches(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId))).sort((a, b) => b.rank - a.rank || sortNearby(a.item, b.item)).map(({ item }) => summary(item));
+  const mapOffer = (item: any) => ({ ...offer(item.business.publicId, item), business: { publicId: item.business.publicId, name: item.business.name, location: location(item.business.location) } });
+  const filteredProducts = products.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item)).sort(sortNearby).map(mapOffer);
+  const filteredServices = services.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item)).sort(sortNearby).map(mapOffer);
+  const businessResult = universalPagination(filteredBusinesses, input.businessPage, input.businessPageSize);
+  const productResult = universalPagination(filteredProducts, input.productPage, input.productPageSize);
+  const serviceResult = universalPagination(filteredServices, input.servicePage, input.servicePageSize);
+  return { businesses: businessResult.items, products: productResult.items, services: serviceResult.items, pagination: { businesses: businessResult.pagination, products: productResult.pagination, services: serviceResult.pagination } };
+}
+
 export async function getPublicBusiness(publicId: string, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
   const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: publicBusinessDetailSelect });
@@ -290,7 +414,7 @@ async function listPublicOffers(publicId: string, kind: PublicOfferKind, db: Pub
   const canViewAdult = await canViewAdultContent(viewer, db);
   const businessId = await findPublicBusinessId(publicId, db, canViewAdult);
   const offers = await db.businessOffer.findMany({
-    where: { businessId, kind, active: true, publicationStatus: 'PUBLISHED', ...(canViewAdult ? {} : { adultOnly: false }) },
+    where: { businessId, kind, active: true, deletedAt: null, publicationStatus: 'PUBLISHED', ...(canViewAdult ? {} : { adultOnly: false }) },
     select: publicOfferSelect,
     orderBy: { updatedAt: 'desc' },
   });
@@ -333,7 +457,7 @@ export async function getPublicPhotoContent(publicId: string, photoId: string, d
         { businessId, isGallery: true },
         { coverForBusiness: { id: businessId } },
         { profileForBusiness: { id: businessId } },
-        { offer: { businessId, active: true, publicationStatus: 'PUBLISHED', ...(canViewAdult ? {} : { adultOnly: false }) } },
+        { offer: { businessId, active: true, deletedAt: null, publicationStatus: 'PUBLISHED', ...(canViewAdult ? {} : { adultOnly: false }) } },
       ],
     },
     select: { storageKey: true },

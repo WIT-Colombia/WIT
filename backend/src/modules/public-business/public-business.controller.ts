@@ -8,6 +8,8 @@ import {
   listPublicProducts,
   listPublicServices,
   parsePublicBusinessListInput,
+  parseUniversalSearchInput,
+  searchPublicUniversal,
 } from './public-business.service.js';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 
@@ -15,6 +17,9 @@ const viewer = (request: Parameters<RequestHandler>[0]) => ({ userId: (request a
 
 export const listPublicBusinessesController: RequestHandler = async (req, res, next) => {
   try { res.json(await listPublicBusinesses(parsePublicBusinessListInput(req.query), undefined, viewer(req))); } catch (error) { next(error); }
+};
+export const searchPublicUniversalController: RequestHandler = async (req, res, next) => {
+  try { res.json(await searchPublicUniversal(parseUniversalSearchInput(req.query), undefined, viewer(req))); } catch (error) { next(error); }
 };
 export const getPublicBusinessController: RequestHandler = async (req, res, next) => {
   try { res.json({ business: await getPublicBusiness(req.params.publicId as string, undefined, viewer(req)) }); } catch (error) { next(error); }

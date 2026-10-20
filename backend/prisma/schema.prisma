@@ -82,6 +82,17 @@ enum BusinessDeletionStatus {
   DELETED
 }
 
+enum BusinessSubscriptionPlan {
+  PRO
+}
+
+enum BusinessSubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
+
 enum MembershipRole {
   OWNER
   COLLABORATOR
@@ -145,6 +156,13 @@ enum AuditEntityType {
   ADMIN_SECURITY
 }
 
+enum BusinessAnalyticsEventType {
+  BUSINESS_VIEW
+  SEARCH_IMPRESSION
+  WHATSAPP_CLICK
+  PHONE_CLICK
+}
+
 enum AdminRole {
   ADMIN
   SUPER_ADMIN
@@ -157,6 +175,27 @@ enum AdminPermissionCode {
   CONTENT_MODERATE
   AUDIT_READ
   ADMINS_MANAGE
+}
+
+enum BusinessReviewModerationStatus {
+  PUBLISHED
+  HIDDEN
+  REMOVED
+}
+
+enum BusinessReviewReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum BusinessReviewReportReason {
+  OFFENSIVE
+  SPAM
+  FALSE_INFORMATION
+  PERSONAL_DATA
+  OTHER
 }
 
 model User {
@@ -194,9 +233,16 @@ model User {
   requestedVisibilityPeriods BusinessVisibilityPeriod[] @relation("VisibilityRequester")
   uploadedPhotos             Photo[]                    @relation("PhotoUploader")
   auditLogs                  AuditLog[]                 @relation("AuditActor")
+  businessFavorites         BusinessFavorite[]
+  offerLikes                BusinessOfferLike[]
+  analyticsEvents           BusinessAnalyticsEvent[]    @relation("AnalyticsActor")
   businessReferrals          BusinessReferral[]         @relation("BusinessReferralUser")
   adminRoleAssignments      AdminRoleAssignment[]      @relation("AdminRoleUser")
   assignedAdminRoles         AdminRoleAssignment[]      @relation("AdminRoleAssigner")
+  businessReviews            BusinessReview[]
+  reviewReports              BusinessReviewReport[]    @relation("ReviewReportReporter")
+  moderatedReviewReports     BusinessReviewReport[]    @relation("ReviewReportModerator")
+  reviewResponses            BusinessReviewResponse[]
   adminPermissionGrants     AdminPermissionGrant[]     @relation("AdminPermissionUser")
   grantedAdminPermissions   AdminPermissionGrant[]     @relation("AdminPermissionGranter")
 
@@ -344,12 +390,35 @@ model Business {
   ownershipTransfers  OwnershipTransfer[]
   referralCounter     BusinessReferralCounter?
   referrals           BusinessReferral[]
+  subscriptions       BusinessSubscription[]
+  favorites           BusinessFavorite[]
+  analyticsEvents     BusinessAnalyticsEvent[]
+  reviews             BusinessReview[]
 
   @@unique([businessAccountId, slug])
   @@index([businessAccountId, lifecycleStatus])
   @@index([publicationStatus, visibilityStatus, deletionStatus])
   @@index([categoryId, lifecycleStatus])
   @@index([createdById])
+}
+
+model BusinessSubscription {
+  id                   String                      @id @default(uuid()) @db.Char(36)
+  businessId           String                      @db.Char(36)
+  plan                 BusinessSubscriptionPlan
+  status               BusinessSubscriptionStatus @default(PENDING)
+  startsAt             DateTime                    @db.DateTime(3)
+  expiresAt            DateTime?                   @db.DateTime(3)
+  autoRenew            Boolean                     @default(true)
+  specialActivation    Boolean                     @default(false)
+  revokedAt            DateTime?                   @db.DateTime(3)
+  revocationReason     String?                     @db.VarChar(255)
+  createdAt            DateTime                    @default(now()) @db.DateTime(3)
+  updatedAt            DateTime                    @updatedAt @db.DateTime(3)
+  business             Business                    @relation(fields: [businessId], references: [id], onDelete: Restrict)
+
+  @@index([businessId, status, startsAt, expiresAt])
+  @@index([businessId, plan, status])
 }
 
 model BusinessReferralCounter {
@@ -515,15 +584,82 @@ model BusinessOffer {
   negotiable        Boolean                @default(false)
   active            Boolean                @default(true)
   publicationStatus OfferPublicationStatus @default(UNPUBLISHED)
+  deletedAt         DateTime?
   createdAt         DateTime               @default(now()) @db.DateTime(3)
   updatedAt         DateTime               @updatedAt @db.DateTime(3)
   business          Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
   category          Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   photos            Photo[]
+  likes             BusinessOfferLike[]
 
   @@index([businessId, kind, active])
   @@index([categoryId, kind])
   @@index([publicationStatus])
+}
+
+model BusinessOfferLike {
+  id        String        @id @default(uuid()) @db.Char(36)
+  userId    String        @db.Char(36)
+  offerId   String        @db.Char(36)
+  createdAt DateTime      @default(now()) @db.DateTime(3)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  offer     BusinessOffer @relation(fields: [offerId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, offerId])
+  @@index([userId, createdAt])
+  @@index([offerId, createdAt])
+}
+
+model BusinessReview {
+  id             String                        @id @default(uuid()) @db.Char(36)
+  businessId     String                        @db.Char(36)
+  userId         String                        @db.Char(36)
+  rating         Int                           @db.UnsignedTinyInt
+  comment        String                        @db.Text
+  status         BusinessReviewModerationStatus @default(PUBLISHED)
+  response       BusinessReviewResponse?
+  reports        BusinessReviewReport[]
+  createdAt      DateTime                      @default(now()) @db.DateTime(3)
+  updatedAt      DateTime                      @updatedAt @db.DateTime(3)
+  business       Business                      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user           User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([businessId, userId])
+  @@index([businessId, status, createdAt])
+  @@index([userId, createdAt])
+}
+
+model BusinessReviewResponse {
+  id         String         @id @default(uuid()) @db.Char(36)
+  reviewId   String         @unique @db.Char(36)
+  ownerId    String         @db.Char(36)
+  body       String         @db.Text
+  createdAt  DateTime       @default(now()) @db.DateTime(3)
+  updatedAt  DateTime       @updatedAt @db.DateTime(3)
+  review     BusinessReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  owner      User           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([ownerId, updatedAt])
+}
+
+model BusinessReviewReport {
+  id           String                       @id @default(uuid()) @db.Char(36)
+  reviewId     String                       @db.Char(36)
+  reporterId   String                       @db.Char(36)
+  moderatorId  String?                      @db.Char(36)
+  reason       BusinessReviewReportReason
+  description  String?                      @db.VarChar(1000)
+  status       BusinessReviewReportStatus   @default(PENDING)
+  decisionNote String?                      @db.VarChar(1000)
+  createdAt    DateTime                     @default(now()) @db.DateTime(3)
+  updatedAt    DateTime                     @updatedAt @db.DateTime(3)
+  review       BusinessReview               @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reporter     User                         @relation("ReviewReportReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  moderator    User?                        @relation("ReviewReportModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+
+  @@unique([reviewId, reporterId, status])
+  @@index([status, createdAt])
+  @@index([reviewId, status])
 }
 
 model BusinessLocation {
@@ -623,4 +759,32 @@ model AuditLog {
 
   @@index([entityType, entityId, createdAt])
   @@index([actorUserId, createdAt])
+}
+
+model BusinessFavorite {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
+  businessId String   @db.Char(36)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, businessId])
+  @@index([userId, createdAt])
+  @@index([businessId, createdAt])
+}
+
+model BusinessAnalyticsEvent {
+  id           String                       @id @default(uuid()) @db.Char(36)
+  businessId   String                       @db.Char(36)
+  eventType    BusinessAnalyticsEventType
+  actorUserId  String?                      @db.Char(36)
+  dedupeKey    String?                      @unique @db.VarChar(191)
+  createdAt    DateTime                     @default(now()) @db.DateTime(3)
+  business     Business                     @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  actor        User?                        @relation("AnalyticsActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, eventType, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([dedupeKey])
 }

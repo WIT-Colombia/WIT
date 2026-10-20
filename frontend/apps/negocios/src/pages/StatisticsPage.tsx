@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BusinessProBenefitsDialog } from "../components/business/BusinessProBenefitsDialog";
 import { PageHeader } from "../components/common/PageHeader";
 import { advancedStatistics, commercialIntelligence, freeStatistics, statisticsPeriods, unavailableBusinessStatistics, type StatisticsMetricDefinition, type StatisticsMetricValue, type StatisticsPeriod } from "../config/businessStatistics";
 import { recognitionLevelFor, recognitionLevels } from "../config/businessRecognition";
 import { useBusinessStore } from "../services/businessStore";
+import { businessApi } from "../services/businessApiClient";
 
 function StatisticIcon({ icon }: Pick<StatisticsMetricDefinition, "icon">) {
   const common = { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
@@ -25,12 +26,56 @@ const validReferralCount = (value: unknown) => Number.isInteger(value) && typeof
 
 export function StatisticsPage() {
   const { business } = useBusinessStore();
-  const [period, setPeriod] = useState<StatisticsPeriod>("30d");
+  const [period, setPeriod] = useState<StatisticsPeriod>("month");
   const [proBenefitsOpen, setProBenefitsOpen] = useState(false);
+  const [favoriteCount, setFavoriteCount] = useState<number | null>(null);
+  const [favoriteError, setFavoriteError] = useState(false);
+  const [analytics, setAnalytics] = useState<{ businessViews: number; searchAppearances: number; whatsappClicks: number; phoneClicks: number } | null>(null);
+  const [analyticsError, setAnalyticsError] = useState(false);
+  const [analyticsRetry, setAnalyticsRetry] = useState(0);
+  const [commercialInfo, setCommercialInfo] = useState<import("../services/businessApiClient").CatalogLimits | null>(null);
+  const [commercialLoading, setCommercialLoading] = useState(false);
+  const [commercialError, setCommercialError] = useState(false);
+  const [referralInfo, setReferralInfo] = useState<import("../services/businessApiClient").BusinessReferralSummary | null>(null);
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [referralError, setReferralError] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setFavoriteCount(null); setFavoriteError(false);
+    if (!business.id) { setFavoriteError(true); return () => { active = false; }; }
+    void businessApi.getFavoriteCount(business.id).then((result) => { if (active) setFavoriteCount(result.count); }).catch(() => { if (active) setFavoriteError(true); });
+    return () => { active = false; };
+  }, [business.id]);
+  useEffect(() => {
+    let active = true;
+    setAnalytics(null); setAnalyticsError(false);
+    if (!business.id) { setAnalyticsError(true); return () => { active = false; }; }
+    void businessApi.getAnalytics(business.id, period).then((result) => { if (active) setAnalytics(result.metrics); }).catch(() => { if (active) setAnalyticsError(true); });
+    return () => { active = false; };
+  }, [business.id, period, analyticsRetry]);
+  useEffect(() => {
+    let active = true;
+    setCommercialInfo(null); setReferralInfo(null);
+    setCommercialError(false); setReferralError(false);
+    if (!business.id) { setCommercialError(true); setReferralError(true); return () => { active = false; }; }
+    setCommercialLoading(true); setReferralLoading(true);
+    void Promise.all([
+      businessApi.getCatalogLimits(business.id).then(value => { if (active) setCommercialInfo(value); }).catch(() => { if (active) setCommercialError(true); }).finally(() => { if (active) setCommercialLoading(false); }),
+      businessApi.getReferralSummary(business.id).then(value => { if (active) setReferralInfo(value.referralSummary); }).catch(() => { if (active) setReferralError(true); }).finally(() => { if (active) setReferralLoading(false); }),
+    ]);
+    return () => { active = false; };
+  }, [business.id]);
   const statistics = unavailableBusinessStatistics();
-  const planStatus = statistics.planStatus ?? "pending";
-  const referredUsers = validReferralCount(statistics.referredUsers);
-  const currentLevel = referredUsers === null ? null : recognitionLevelFor(referredUsers);
+  statistics.metrics.businessViews = analyticsError ? { status: "unavailable" } : analytics === null ? { status: "unavailable" } : analytics.businessViews === 0 ? { status: "no-events", value: 0 } : { status: "available", value: analytics.businessViews };
+  statistics.metrics.searchAppearances = analyticsError ? { status: "unavailable" } : analytics === null ? { status: "unavailable" } : analytics.searchAppearances === 0 ? { status: "no-events", value: 0 } : { status: "available", value: analytics.searchAppearances };
+  statistics.metrics.whatsappClicks = analyticsError ? { status: "unavailable" } : analytics === null ? { status: "unavailable" } : analytics.whatsappClicks === 0 ? { status: "no-events", value: 0 } : { status: "available", value: analytics.whatsappClicks };
+  statistics.metrics.phoneClicks = analyticsError ? { status: "unavailable" } : analytics === null ? { status: "unavailable" } : analytics.phoneClicks === 0 ? { status: "no-events", value: 0 } : { status: "available", value: analytics.phoneClicks };
+  const favoriteMetric = favoriteError ? { status: "unavailable" as const } : favoriteCount === null ? { status: "unavailable" as const } : favoriteCount === 0 ? { status: "no-events" as const, value: 0 } : { status: "available" as const, value: favoriteCount };
+  statistics.metrics.favorites = favoriteMetric;
+  const planStatus = commercialInfo?.plan === "PRO" ? "pro" : commercialInfo?.plan === "BASIC" ? "basic" : "pending";
+  const planName = commercialInfo?.plan === "PRO" ? "Business Pro" : commercialInfo?.plan === "BASIC" ? "Gratuito" : null;
+  const referredUsers = referralInfo && !referralError ? validReferralCount(referralInfo.referredUsers) : null;
+  const currentLevel = referralInfo?.currentLevel ? recognitionLevels.find(item => item.level === referralInfo.currentLevel) ?? null : referredUsers === null ? null : recognitionLevelFor(referredUsers);
   const currentLevelIndex = currentLevel ? recognitionLevels.findIndex(item => item.level === currentLevel.level) : -1;
   const proState = planStatus === "pro" ? "Datos pendientes de disponibilidad" : planStatus === "basic" ? "Disponible con Business Pro" : "Plan pendiente de verificación";
 
@@ -42,22 +87,27 @@ export function StatisticsPage() {
       action={<div className="statistics-period-tabs" role="group" aria-label="Período de estadísticas">{statisticsPeriods.map(item => <button type="button" className={period === item.id ? "selected" : ""} aria-pressed={period === item.id} onClick={() => setPeriod(item.id)} key={item.id}>{item.label}</button>)}</div>}
     />
 
+    {analyticsError && <div className="statistics-connection-error" role="alert">
+      <p>No pudimos cargar las estadísticas. Comprueba tu conexión e inténtalo nuevamente.</p>
+      <button type="button" className="outline-button" onClick={() => setAnalyticsRetry(value => value + 1)}>Reintentar</button>
+    </div>}
+
     <section className="statistics-context surface-card" aria-label="Contexto del negocio seleccionado">
       <div className="statistics-context-business"><span>NEGOCIO SELECCIONADO</span><strong>{business.name}</strong></div>
-      <div><span>PLAN COMERCIAL</span><strong>{statistics.planName ?? "Pendiente de sincronizar"}</strong></div>
-      <div><span>NIVEL DE RECONOCIMIENTO</span><strong>{statistics.recognitionLevelName ?? currentLevel?.name ?? "Pendiente de sincronizar"}</strong><small>{statistics.recognitionLevelName || currentLevel ? "Nivel conectado a referidos válidos" : "Referidos pendientes de sincronizar"}</small></div>
+      <div><span>PLAN COMERCIAL</span><strong>{commercialLoading ? "Cargando…" : commercialError ? "No disponible" : planName ?? "Sin información"}</strong></div>
+      <div><span>NIVEL DE RECONOCIMIENTO</span><strong>{referralLoading ? "Cargando…" : referralError ? "No disponible" : currentLevel?.name ?? "Sin información"}</strong></div>
     </section>
 
     <section className="statistics-free-section" aria-labelledby="free-statistics-title">
       <div className="statistics-section-heading"><div><span>INFORMACIÓN DISPONIBLE SIN COSTO</span><h2 id="free-statistics-title">Resumen de actividad</h2><p>Estas cinco métricas estarán disponibles para todos los negocios.</p></div><p className="statistics-period-copy">Período: <strong>{statisticsPeriods.find(item => item.id === period)?.label}</strong></p></div>
       <div className="statistics-free-grid">{freeStatistics.map(definition => {
         const state = metricState(statistics.metrics[definition.id]);
-        return <article className={`statistics-metric-card ${state.className}`} key={definition.id}>
+        return <article className={`statistics-metric-card ${state.className} ${definition.id === "favorites" ? "statistics-metric-card-favorites" : ""}`} key={definition.id}>
           <span className="statistics-metric-icon"><StatisticIcon icon={definition.icon} /></span>
           <p>{definition.label}</p>
           <strong>{state.value}</strong>
           <small>{definition.description}</small>
-          <span className="statistics-metric-state">{state.note}</span>
+          <span className="statistics-metric-state">{definition.id === "favorites" && !favoriteError && favoriteCount !== null ? "Total actual de usuarios que guardaron tu negocio" : state.note}</span>
         </article>;
       })}</div>
     </section>

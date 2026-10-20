@@ -70,11 +70,13 @@ test('las rutas públicas no requieren autenticación', () => {
     .map((layer: any) => `${Object.keys(layer.route.methods)[0].toUpperCase()} ${layer.route.path}`);
   assert.deepEqual(routes, [
     'GET /businesses',
+    'GET /search',
     'GET /businesses/:publicId/products',
     'GET /businesses/:publicId/services',
     'GET /businesses/:publicId/photos',
     'GET /businesses/:publicId/photos/:photoId/content',
     'GET /businesses/:publicId/offers',
+    'GET /businesses/:businessId/reviews',
     'GET /businesses/:publicId',
   ]);
   const handlers = (publicBusinessRouter as any).stack.flatMap((layer: any) => layer.route?.stack ?? []).map((layer: any) => layer.handle.name);
@@ -96,7 +98,7 @@ test('el contenido de fotos solo acepta galería, portada, perfil u oferta publi
     { businessId: publicBusiness.id, isGallery: true },
     { coverForBusiness: { id: publicBusiness.id } },
     { profileForBusiness: { id: publicBusiness.id } },
-    { offer: { businessId: publicBusiness.id, active: true, publicationStatus: 'PUBLISHED', adultOnly: false } },
+    { offer: { businessId: publicBusiness.id, active: true, deletedAt: null, publicationStatus: 'PUBLISHED', adultOnly: false } },
   ]);
 });
 
