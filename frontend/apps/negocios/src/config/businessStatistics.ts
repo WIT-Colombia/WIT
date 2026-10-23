@@ -23,12 +23,25 @@ export type BusinessStatisticsSnapshot = {
   metrics: Partial<Record<StatisticsMetricId, StatisticsMetricValue>>;
 };
 
+export type AdvancedStatisticsIndicatorId =
+  | "uniqueVisitors" | "visitEvolution" | "searchVisitRate" | "searchPosition" | "searchTerms"
+  | "mostViewedProducts" | "mostViewedServices" | "mostLikedOffers" | "leastLikedOffers"
+  | "directions" | "hourlyActivity" | "weekdayActivity" | "mapDiscoveries"
+  | "promotionViews" | "mostViewedPromotions" | "ratingEvolution" | "favoriteAcquisitions" | "shares";
+
+export type AdvancedStatisticsIndicator = {
+  id: AdvancedStatisticsIndicatorId;
+  name: string;
+  description: string;
+  pendingReason?: string;
+};
+
 export type AdvancedStatisticsCategory = {
   id: "visibility" | "catalog" | "behavior" | "reputation";
   label: string;
   description: string;
   icon: string;
-  indicators: Array<{ name: string; description: string }>;
+  indicators: AdvancedStatisticsIndicator[];
 };
 
 export type CommercialIntelligenceDefinition = {
@@ -46,39 +59,39 @@ export const statisticsPeriods: Array<{ id: StatisticsPeriod; label: string }> =
 ];
 
 export const freeStatistics: StatisticsMetricDefinition[] = [
-  { id: "businessViews", label: "Visualizaciones del negocio", description: "Personas que abrieron la ficha de tu negocio.", icon: "eye" },
+  { id: "businessViews", label: "Visualizaciones del negocio", description: "Aperturas registradas de la ficha de tu negocio; no visitantes únicos.", icon: "eye" },
   { id: "searchAppearances", label: "Apariciones en búsquedas", description: "Veces que tu negocio apareció en resultados.", icon: "search" },
-  { id: "whatsappClicks", label: "Clics en WhatsApp", description: "Personas que eligieron escribirte por WhatsApp.", icon: "whatsapp" },
-  { id: "phoneClicks", label: "Clics en llamar", description: "Personas que eligieron llamarte desde XAMUKO.", icon: "phone" },
+  { id: "whatsappClicks", label: "Clics en WhatsApp", description: "Clics registrados para escribirte por WhatsApp.", icon: "whatsapp" },
+  { id: "phoneClicks", label: "Clics en llamar", description: "Clics registrados para llamarte desde XAMUKO.", icon: "phone" },
   { id: "favorites", label: "Usuarios que te guardaron", description: "Usuarios que añadieron tu negocio a favoritos.", icon: "heart" },
 ];
 
 export const advancedStatistics: AdvancedStatisticsCategory[] = [
   { id: "visibility", label: "Visibilidad", description: "Cómo encuentran tu negocio dentro de XAMUKO.", icon: "◌", indicators: [
-    { name: "Usuarios únicos que visitaron el negocio", description: "Alcance de tu ficha." },
-    { name: "Evolución de visitas", description: "Tendencia por período." },
-    { name: "Tasa de visitas desde resultados", description: "Interés después de aparecer en búsquedas." },
-    { name: "Posición promedio en búsquedas", description: "Ubicación agregada en resultados." },
-    { name: "Palabras utilizadas para encontrar el negocio", description: "Términos agregados de búsqueda." },
+    { id: "uniqueVisitors", name: "Usuarios únicos que visitaron el negocio", description: "Alcance de tu ficha.", pendingReason: "Falta una identidad de visitante que permita deduplicar todas las visitas." },
+    { id: "visitEvolution", name: "Evolución de visitas", description: "Aperturas de la ficha por fecha; no visitantes únicos." },
+    { id: "searchVisitRate", name: "Tasa de visitas desde resultados", description: "Interés después de aparecer en búsquedas.", pendingReason: "Falta atribuir cada apertura a un resultado de búsqueda." },
+    { id: "searchPosition", name: "Posición promedio en búsquedas", description: "Ubicación agregada en resultados.", pendingReason: "No se registra la posición del negocio en los resultados." },
+    { id: "searchTerms", name: "Palabras utilizadas para encontrar el negocio", description: "Términos agregados de búsqueda.", pendingReason: "No hay un historial de términos de búsqueda por negocio." },
   ] },
   { id: "catalog", label: "Productos y servicios", description: "Interés en la oferta que publicas.", icon: "□", indicators: [
-    { name: "Productos más vistos", description: "Ranking por visualizaciones." },
-    { name: "Servicios más vistos", description: "Ranking por visualizaciones." },
-    { name: "Productos con más Me gusta", description: "Interacciones positivas de usuarios." },
-    { name: "Productos y servicios con menor interacción", description: "Oportunidades para mejorar tu oferta." },
+    { id: "mostViewedProducts", name: "Productos más vistos", description: "Ranking por visualizaciones.", pendingReason: "No se registran aperturas de productos con alcance completo." },
+    { id: "mostViewedServices", name: "Servicios más vistos", description: "Ranking por visualizaciones.", pendingReason: "No se registran aperturas de servicios con alcance completo." },
+    { id: "mostLikedOffers", name: "Publicaciones con más Me gusta", description: "Productos y servicios con Me gusta vigentes creados en el período." },
+    { id: "leastLikedOffers", name: "Publicaciones con menos Me gusta", description: "Productos y servicios actuales, con su fecha de creación y tiempo observado." },
   ] },
   { id: "behavior", label: "Comportamiento", description: "Acciones previas a una posible visita o contacto.", icon: "↗", indicators: [
-    { name: "Solicitudes de indicaciones", description: "Interés en llegar a tu ubicación." },
-    { name: "Horarios de mayor actividad", description: "Momentos con más interés agregado." },
-    { name: "Días de mayor actividad", description: "Días con mayor actividad agregada." },
-    { name: "Descubrimientos desde el mapa", description: "Vistas originadas desde el mapa." },
+    { id: "directions", name: "Solicitudes de indicaciones", description: "Interés en llegar a tu ubicación.", pendingReason: "No hay eventos persistidos de solicitudes de indicaciones." },
+    { id: "hourlyActivity", name: "Horarios de mayor actividad", description: "Distribución de aperturas de la ficha por hora." },
+    { id: "weekdayActivity", name: "Días de mayor actividad", description: "Distribución de aperturas de la ficha por día de la semana." },
+    { id: "mapDiscoveries", name: "Descubrimientos desde el mapa", description: "Vistas originadas desde el mapa.", pendingReason: "No se registra el origen mapa de las aperturas." },
   ] },
   { id: "reputation", label: "Promociones y reputación", description: "Respuesta a ofertas, favoritos y opiniones.", icon: "✦", indicators: [
-    { name: "Visualizaciones de ofertas", description: "Alcance de tus promociones." },
-    { name: "Ofertas con mayor interacción", description: "Promociones que generan más interés." },
-    { name: "Evolución de calificaciones", description: "Cambio agregado en la reputación." },
-    { name: "Evolución de favoritos", description: "Tendencia de usuarios que te guardan." },
-    { name: "Veces que compartieron el negocio", description: "Difusión de tu ficha pública." },
+    { id: "promotionViews", name: "Visualizaciones de ofertas", description: "Aperturas registradas de promociones, incluidas las finalizadas." },
+    { id: "mostViewedPromotions", name: "Promociones más vistas", description: "Ranking de visualizaciones; no clics ni conversiones." },
+    { id: "ratingEvolution", name: "Evolución de calificaciones", description: "Promedio actual de reseñas publicadas, agrupado por fecha de creación." },
+    { id: "favoriteAcquisitions", name: "Favoritos vigentes por fecha de alta", description: "Altas que siguen vigentes; no incluye favoritos eliminados." },
+    { id: "shares", name: "Veces que compartieron el negocio", description: "Difusión de tu ficha pública.", pendingReason: "No se registran eventos de compartir la ficha." },
   ] },
 ];
 
@@ -90,7 +103,7 @@ export const commercialIntelligence: CommercialIntelligenceDefinition[] = [
   { level: "DIAMOND", name: "Índice de oportunidades comerciales XAMUKO", description: "Indicador pendiente de cálculo con datos suficientes y agregados." },
 ];
 
-/** La analítica aún no expone un endpoint persistido. */
+/** Estado inicial sin cifras hasta recibir la respuesta del negocio seleccionado. */
 export function unavailableBusinessStatistics(): BusinessStatisticsSnapshot {
   return { metrics: {} };
 }

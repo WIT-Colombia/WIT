@@ -70,3 +70,22 @@
 .business-favorite-action.is-active{border:1.5px solid #EF4444!important;background:#FEE2E2!important;color:#DC2626!important}
 .entity-favorite.is-active svg,
 .business-favorite-action.is-active svg{fill:#DC2626!important;stroke:#DC2626!important}
+
+/* Me gusta: el estado activo conserva el violeta de XAMUKO y rellena el pulgar. */
+.entity-offer-card .entity-product-like,
+.offer-detail-actions .entity-product-like{
+  border-color:#d8ccff;
+  background:#fff;
+  color:var(--xamuko-violet,#7b3ffb);
+}
+.entity-offer-card .entity-product-like.is-active,
+.offer-detail-actions .entity-product-like.is-active{
+  border-color:#7b3ffb!important;
+  background:#f0ebff!important;
+  color:#7b3ffb!important;
+}
+.entity-offer-card .entity-product-like.is-active svg,
+.offer-detail-actions .entity-product-like.is-active svg{
+  fill:currentColor;
+  stroke:currentColor;
+}

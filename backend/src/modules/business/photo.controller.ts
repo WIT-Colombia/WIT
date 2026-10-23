@@ -21,7 +21,7 @@ export const deletePhotoController: RequestHandler = async (req, res, next) => {
 };
 
 export const setPhotoCoverController: RequestHandler = async (req, res, next) => {
-  try { res.json({ photo: await setPhotoCover(userId(req), req.params.businessId as string, req.params.photoId as string) }); } catch (error) { next(error); }
+  try { res.json({ photo: await setPhotoCover(userId(req), req.params.businessId as string, req.params.photoId as string, req.body?.positionX, req.body?.positionY) }); } catch (error) { next(error); }
 };
 
 export const uploadCoverPhotoController: RequestHandler = async (req, res, next) => {

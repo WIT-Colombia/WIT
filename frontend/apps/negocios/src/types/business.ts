@@ -3,6 +3,7 @@ export type BusinessRole = "Propietario" | "Colaborador";
 
 export interface CatalogItem {
   id: string;
+  internalCode?: string;
   kind: CatalogKind;
   name: string;
   category: string;
@@ -27,6 +28,7 @@ export interface BusinessDetails {
   permissions?: string[];
   ownerNickname?: string;
   name: string;
+  pioneerNumber?: number | null;
   sede?: string;
   adultOnly?: boolean;
   coverImage?: string;

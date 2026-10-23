@@ -19,9 +19,9 @@ const publicBusiness = {
 test('solo consulta establecimientos en estados públicos publicables', async () => {
   let query: any;
   const db = { business: { count: async ({ where }: any) => { query = where; return 1; }, findMany: async ({ where }: any) => { query = where; return [publicBusiness]; } } } as any;
-  const result = await listPublicBusinesses({ page: 2, pageSize: 5 }, db);
+  const result = await listPublicBusinesses({ page: 1, pageSize: 5 }, db);
   assert.deepEqual(query, { ...publicBusinessRules.PUBLIC_BUSINESS_WHERE, adultOnly: false });
-  assert.deepEqual(result.pagination, { page: 2, pageSize: 5, total: 1, totalPages: 1 });
+  assert.deepEqual(result.pagination, { page: 1, pageSize: 5, total: 1, totalPages: 1 });
   assert.equal(result.businesses[0].publicId, publicBusiness.publicId);
   assert.equal('createdById' in result.businesses[0], false);
   assert.equal('memberships' in result.businesses[0], false);
@@ -76,6 +76,7 @@ test('las rutas públicas no requieren autenticación', () => {
     'GET /businesses/:publicId/photos',
     'GET /businesses/:publicId/photos/:photoId/content',
     'GET /businesses/:publicId/offers',
+    'GET /businesses/:publicId/promotions',
     'GET /businesses/:businessId/reviews',
     'GET /businesses/:publicId',
   ]);

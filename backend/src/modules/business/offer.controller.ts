@@ -9,7 +9,7 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T { const result = sche
 const userId = (request: Parameters<RequestHandler>[0]) => (request as AuthenticatedRequest).auth.userId;
 const meta = (request: Parameters<RequestHandler>[0]) => ({ ipAddress: request.ip });
 
-export const listOffersController: RequestHandler = async (req, res, next) => { try { const kind = req.query.kind === 'PRODUCT' || req.query.kind === 'SERVICE' ? req.query.kind : undefined; res.json({ offers: await listOffers(userId(req), req.params.businessId as string, kind) }); } catch (error) { next(error); } };
+export const listOffersController: RequestHandler = async (req, res, next) => { try { const kind = req.query.kind === 'PRODUCT' || req.query.kind === 'SERVICE' ? req.query.kind : undefined; const query = typeof req.query.q === 'string' ? req.query.q : undefined; res.json({ offers: await listOffers(userId(req), req.params.businessId as string, kind, query) }); } catch (error) { next(error); } };
 export const catalogLimitsController: RequestHandler = async (req, res, next) => { try { res.json(await getCatalogLimits(userId(req), req.params.businessId as string)); } catch (error) { next(error); } };
 export const createOfferController: RequestHandler = async (req, res, next) => { try { res.status(201).json({ offer: await createOffer(userId(req), req.params.businessId as string, parse(offerCreateSchema, req.body), meta(req)) }); } catch (error) { next(error); } };
 export const updateOfferController: RequestHandler = async (req, res, next) => { try { res.json({ offer: await updateOffer(userId(req), req.params.businessId as string, req.params.offerId as string, parse(offerUpdateSchema, req.body), meta(req)) }); } catch (error) { next(error); } };

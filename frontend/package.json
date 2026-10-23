@@ -10,6 +10,7 @@
     "dev:usuario": "npm run dev --workspace=@wit/usuario",
     "dev:negocios": "npm run dev --workspace=@wit/negocios",
     "dev:admin": "npm run dev --workspace=@wit/admin",
+    "dev:all": "node scripts/dev-all.mjs",
     "test:e2e": "playwright test",
     "test:e2e:coordinator": "node e2e/coordinator.mjs",
     "build": "npm run build --workspaces --if-present",

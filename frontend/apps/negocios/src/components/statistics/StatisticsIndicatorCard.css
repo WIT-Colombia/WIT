@@ -1,0 +1,28 @@
+/* Only the data visualizations added inside the approved statistics cards. */
+.statistics-data-card .statistics-data-body{min-width:0;width:100%;grid-column:1/-1}
+.statistics-distribution{margin:0;width:100%;color:#15803d}
+.statistics-distribution svg{display:block;width:100%;max-height:155px;fill:currentColor;overflow:visible}
+.statistics-distribution-axis{stroke:#e2e8f0;stroke-width:1}
+.statistics-distribution svg text{fill:#64748b;font:10px Inter,sans-serif}
+.statistics-distribution figcaption{display:flex;justify-content:space-between;gap:10px;color:#64748b;font-size:10px;line-height:1.4}
+.statistics-data-card .statistics-data-details{width:100%;margin-top:9px;text-align:left;color:#64748b;font-size:10px;line-height:1.5}
+.statistics-data-details summary{cursor:pointer;color:#475569;overflow-wrap:anywhere}
+.statistics-data-details summary:focus-visible{outline:2px solid #2563eb;outline-offset:3px;border-radius:3px}
+.statistics-data-card .statistics-data-details p{margin:7px 0 0;font-size:inherit;line-height:1.5}
+.statistics-data-card .statistics-data-table-wrap{max-height:230px;overflow:auto;width:100%}
+.statistics-data-card .statistics-data-table-wrap table{border-collapse:collapse;width:100%;font-size:10px}
+.statistics-data-table-wrap caption{text-align:left;padding:6px 0}
+.statistics-data-table-wrap th,.statistics-data-table-wrap td{padding:5px 3px;border-bottom:1px solid #eef2f7;text-align:left;font-weight:400;vertical-align:top}
+.statistics-data-table-wrap thead th{font-weight:700}
+.statistics-data-card .statistics-data-ranking{display:grid;gap:0;margin:0;padding:0;list-style:none;text-align:left;width:100%}
+.statistics-data-card .statistics-data-ranking li{display:grid;grid-template-columns:minmax(0,1fr) auto;justify-items:stretch;gap:7px;text-align:left;padding:9px 0;min-height:0;border-top:1px solid #eef2f7}
+.statistics-data-ranking li:first-child{border-top:0}
+.statistics-data-card .statistics-data-ranking li span{min-width:0;overflow-wrap:anywhere}
+.statistics-data-card .statistics-data-ranking b{display:block;color:#334155;font-size:11px;font-weight:700;line-height:1.45}
+.statistics-data-card .statistics-data-ranking small{display:block;color:#64748b;font-size:9px;line-height:1.5}
+.statistics-data-card .statistics-data-ranking em{padding:0;border:0;background:none;align-self:start;color:#15803d;font-size:10px;line-height:1.5;font-style:normal;white-space:normal;text-align:right;max-width:70px}
+.statistics-data-card .statistics-data-caption{margin:0 0 8px;color:#64748b;font-size:11px;line-height:1.5}
+.statistics-data-card .statistics-data-empty{display:block;margin-bottom:5px;color:#64748b}
+.statistics-data-card[data-state="error"]>footer{color:#b91c1c}
+.statistics-data-card[data-state="loading"]>footer,.statistics-data-card[data-state="unavailable"]>footer{color:#64748b}
+@media(max-width:520px){.statistics-data-card .statistics-data-body{grid-row:3}.statistics-data-card.statistics-pro-metric>p{grid-row:4}.statistics-data-card.statistics-pro-metric>footer{grid-row:5}.statistics-data-card.is-like-ranking .statistics-pro-product-identification{grid-row:auto}}

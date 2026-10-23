@@ -5,6 +5,7 @@ import {
   getRememberedEmail,
   login,
   logout,
+  getMe,
   register,
   restoreSession,
 } from "./businessAuthService";
@@ -30,6 +31,21 @@ export function BusinessAuthProvider({ children }: { children: ReactNode }) {
     return next;
   }, []);
   useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    if (state.status !== "authenticated") return;
+    let active = true;
+    const synchronize = () => {
+      if (document.visibilityState !== "visible") return;
+      void getMe().then((user) => {
+        if (!active) return;
+        setState((current) => current.status === "authenticated" && current.user.avatarUrl !== user.avatarUrl ? { status: "authenticated", user } : current);
+      }).catch(() => {});
+    };
+    const interval = window.setInterval(synchronize, 3000);
+    window.addEventListener("focus", synchronize);
+    document.addEventListener("visibilitychange", synchronize);
+    return () => { active = false; window.clearInterval(interval); window.removeEventListener("focus", synchronize); document.removeEventListener("visibilitychange", synchronize); };
+  }, [state.status]);
 
   const value = useMemo<BusinessAuthContextValue>(() => ({
     state,

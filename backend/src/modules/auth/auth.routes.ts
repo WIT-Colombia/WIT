@@ -1,12 +1,15 @@
 import { createHash } from 'node:crypto';
 import { Router } from 'express';
+import multer from 'multer';
 import rateLimit from 'express-rate-limit';
 import { env } from '../../config/env.js';
 import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
-import { changePasswordController, confirmEmailController, confirmPasswordResetController, googleCallbackController, googleLinkStartController, googleStartController, loginController, logoutController, meController, refreshController, registerController, requestPasswordResetController, requestVerificationController, updateAdultContentPreferenceController, getPreferredLocationController, savePreferredLocationController, updateProfileController } from './auth.controller.js';
+import { changePasswordController, confirmEmailController, confirmPasswordResetController, googleCallbackController, googleLinkStartController, googleStartController, loginController, logoutController, meController, ownAvatarController, refreshController, registerController, requestPasswordResetController, requestVerificationController, updateAdultContentPreferenceController, getPreferredLocationController, savePreferredLocationController, updateProfileController, uploadAvatarController } from './auth.controller.js';
+import { LOGIN_ACCOUNT_WINDOW_SECONDS, LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from './auth-rate-limit-policy.js';
 
 export const authRouter = Router();
+const avatarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
 const authRateLimitWindowMs = env.nodeEnv === 'development' ? 60 * 1000 : 15 * 60 * 1000;
 const authRateLimitLimit = env.nodeEnv === 'development' ? 60 : 10;
 const authRateLimit = rateLimit({
@@ -19,11 +22,35 @@ const authRateLimit = rateLimit({
     response.status(429).json({ error: { code: 'AUTH_RATE_LIMITED', message: 'Demasiados intentos. Intenta de nuevo más tarde.' } });
   },
 });
+const loginRateLimitWindowMs = LOGIN_IP_WINDOW_SECONDS * 1000;
+const loginRateLimit = rateLimit({
+  windowMs: loginRateLimitWindowMs,
+  limit: LOGIN_RATE_LIMIT,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: (_request, response) => {
+    response.setHeader('Retry-After', String(Math.ceil(loginRateLimitWindowMs / 1000)));
+    response.status(429).json({ error: { code: 'AUTH_RATE_LIMITED', message: 'Demasiados intentos. Espera 60 segundos antes de intentar de nuevo.' } });
+  },
+});
+const loginAccountRateLimit = rateLimit({
+  windowMs: LOGIN_ACCOUNT_WINDOW_SECONDS * 1000,
+  limit: LOGIN_RATE_LIMIT,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  keyGenerator: (request) => createHash('sha256').update(typeof request.body?.email === 'string' ? request.body.email.trim().toLocaleLowerCase('en-US') : '').digest('hex'),
+  handler: (_request, response) => {
+    response.setHeader('Retry-After', String(LOGIN_ACCOUNT_WINDOW_SECONDS));
+    response.status(429).json({ error: { code: 'AUTH_RATE_LIMITED', message: 'Demasiados intentos para esta cuenta. Intenta más tarde.' } });
+  },
+});
 authRouter.post('/register', authRateLimit, requireTrustedOrigin, registerController);
-authRouter.post('/login', authRateLimit, requireTrustedOrigin, loginController);
+authRouter.post('/login', loginAccountRateLimit, loginRateLimit, requireTrustedOrigin, loginController);
 authRouter.post('/refresh', authRateLimit, requireTrustedOrigin, refreshController);
 authRouter.post('/logout', authRateLimit, requireTrustedOrigin, logoutController);
 authRouter.get('/me', requireAuth, meController);
+authRouter.get('/me/avatar', requireAuth, ownAvatarController);
+authRouter.post('/me/avatar', requireAuth, requireTrustedOrigin, avatarUpload.single('file'), uploadAvatarController);
 authRouter.patch('/me', requireAuth, requireTrustedOrigin, updateProfileController);
 authRouter.patch('/me/adult-content', requireAuth, requireTrustedOrigin, updateAdultContentPreferenceController);
 authRouter.get('/me/location', requireAuth, getPreferredLocationController);

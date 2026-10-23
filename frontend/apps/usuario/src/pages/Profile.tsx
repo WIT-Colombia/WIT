@@ -1,37 +1,37 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getNotifications, getProfile, saveProfile, type UserProfile } from "../services/userDataService";
+import { uploadAvatar } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 import { PageLayout } from "../components/PageLayout";
 import { BellIcon, HeartIcon, ReviewIcon, ThumbsUpIcon } from "../components/ActionIcons";
 import { EmailVerificationNotice } from "../components/EmailVerificationNotice";
 import { useLocationContext } from "../context/LocationContext";
+import { useAccountAvatar } from "../hooks/useAccountAvatar";
 import "./Profile.css";
 import "./ProfileEnhancements.css";
 
 export default function Profile() {
-  const [profile, setProfile] = useState<UserProfile>(getProfile);
+  const { logout, user, reloadUser } = useAuth();
+  const [profile, setProfile] = useState<UserProfile>(() => getProfile(user?.id));
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
   const { selection } = useLocationContext();
   const selectedLocation = selection?.locality ?? null;
+  const accountAvatar = useAccountAvatar(user?.avatarUrl);
 
   useEffect(() => {
     if (!user) return;
-    setProfile((current) => ({ ...current, name: user.displayName, email: user.emailNormalized ?? current.email }));
+    setProfile(() => ({ ...getProfile(user.id), name: user.displayName, email: user.emailNormalized ?? "" }));
   }, [user]);
+  useEffect(() => { const savedPhoto = profile.photo; if (!user || user.avatarUrl || !savedPhoto?.startsWith("data:image/")) return; void fetch(savedPhoto).then(response => response.blob()).then(blob => uploadAvatar(new File([blob], "perfil.jpg", { type: blob.type || "image/jpeg" }))).then(() => reloadUser()).catch(() => {}); }, [profile.photo, reloadUser, user]);
 
   function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
     const reader = new FileReader();
-    reader.onload = () => {
-      const next = { ...profile, photo: String(reader.result) };
-      setProfile(next);
-      saveProfile(next);
-    };
+    reader.onload = () => { const next = { ...profile, photo: String(reader.result) }; void uploadAvatar(file).then(() => { saveProfile(next, user?.id); setProfile(next); void reloadUser(); }).catch(() => {}); };
     reader.readAsDataURL(file);
   }
 
@@ -40,7 +40,7 @@ export default function Profile() {
       <EmailVerificationNotice />
       <div className="profile-welcome">
         <label className="profile-avatar-picker">
-          {profile.photo ? <img src={profile.photo} alt="Foto de perfil" /> : <span>{profile.name.trim().charAt(0).toUpperCase() || "D"}</span>}
+          {accountAvatar || profile.photo ? <img src={accountAvatar ?? profile.photo} alt="Foto de perfil" /> : <span>{profile.name.trim().charAt(0).toUpperCase() || "D"}</span>}
           <input type="file" accept="image/*" onChange={selectPhoto} />
           <em>Cambiar foto</em>
         </label>

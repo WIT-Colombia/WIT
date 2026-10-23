@@ -8,12 +8,37 @@ type Props = { value: Coordinates | null; query?: string; onChange: (value: Coor
 export async function geocodeBusinessAddress(query: string): Promise<Coordinates | null> {
   const maps = await loadGoogleMaps();
   if (!maps.Geocoder) throw new Error("GOOGLE_MAPS_GEOCODER_UNAVAILABLE");
-  return new Promise(resolve => {
-    new maps.Geocoder!().geocode({ address: query }, (results, status) => {
-      const location = results?.[0]?.geometry?.location;
-      if (status !== "OK" || !location) { resolve(null); return; }
-      resolve({ lat: location.lat(), lng: location.lng() });
-    });
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return null;
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error("GOOGLE_MAPS_GEOCODE_TIMEOUT"));
+    }, 10000);
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      callback();
+    };
+    try {
+      new maps.Geocoder!().geocode({ address: normalizedQuery }, (results, status) => {
+        const location = results?.[0]?.geometry?.location;
+        if (status === "OK" && location) {
+          finish(() => resolve({ lat: location.lat(), lng: location.lng() }));
+          return;
+        }
+        if (status === "ZERO_RESULTS") {
+          finish(() => resolve(null));
+          return;
+        }
+        finish(() => reject(new Error(`GOOGLE_MAPS_GEOCODE_${status || "UNKNOWN_ERROR"}`)));
+      });
+    } catch (error) {
+      finish(() => reject(error instanceof Error ? error : new Error("GOOGLE_MAPS_GEOCODE_UNKNOWN_ERROR")));
+    }
   });
 }
 

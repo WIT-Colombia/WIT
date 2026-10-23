@@ -4,15 +4,15 @@ import { BusinessProfileThumbnail, BusinessIndicatorRow, Sidebar, SidebarIcon, f
 import { useBusinessStore } from "../../services/businessStore";
 import { formatCategoryName } from "../../services/realBusinessAdapter";
 
-type MobileLink = { label: string; icon: SidebarIconName; to: string; end?: boolean };
+type MobileLink = { label: string; icon: SidebarIconName; to: string; end?: boolean; permission?: string; ownerOnly?: boolean };
 const primaryLinks: MobileLink[] = [
   { label: "Inicio", icon: "home", to: "/", end: true },
-  { label: "Mi negocio", icon: "store", to: "/mi-negocio" },
-  { label: "Productos", icon: "box", to: "/productos" },
-  { label: "Opiniones", icon: "star", to: "/opiniones" },
+  { label: "Mi negocio", icon: "store", to: "/mi-negocio", permission: "EDIT_BUSINESS" },
+  { label: "Productos", icon: "box", to: "/productos", permission: "MANAGE_CATALOG" },
+  { label: "Opiniones", icon: "star", to: "/opiniones", ownerOnly: true },
 ];
 export function MobileNavigation() {
-  const { businesses, business, notifications, setBusiness } = useBusinessStore();
+  const { businesses, business, notifications, persistentNotificationCount, setBusiness } = useBusinessStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -40,8 +40,9 @@ export function MobileNavigation() {
   }, [moreOpen]);
   const selectableBusinesses = businesses.map((item, index) => ({ item, index })).filter(({ item }) => item.deletionStatus !== "DELETED");
   const empty = selectableBusinesses.length === 0;
-  const unread = notifications.filter((item) => !item.read).length;
+  const unread = notifications.filter((item) => !item.read).length + persistentNotificationCount;
   const destination = (link: MobileLink) => link.label === "Mi cuenta" && empty ? "/perfil?empty=1" : link.to;
+  const visiblePrimaryLinks = primaryLinks.filter(link => business.role === "Propietario" || (!link.ownerOnly && (!link.permission || business.permissions?.includes(link.permission))));
   const mobileBusinessMeta = (item: { sede?: string; category: string; city: string }) => formatSedeLabel(item.sede) ? `${formatSedeLabel(item.sede)} · ${item.city}` : `${formatCategoryName(item.category)} · ${item.city}`;
   useEffect(() => setMoreOpen(false), [location.pathname]);
   useEffect(() => {
@@ -75,13 +76,13 @@ export function MobileNavigation() {
           <span className="mobile-business-avatar">{activeBusiness ? <BusinessProfileThumbnail business={activeBusiness} /> : "W"}</span>
           <span className="mobile-business-copy"><strong>{activeBusiness?.name ?? "Crea tu negocio"}</strong><small>{activeBusiness ? activeBusiness.role : "Empieza en XAMUKO Business"}</small>{activeBusiness && <BusinessIndicatorRow business={activeBusiness} />}</span><span className="mobile-business-chevron">⌄</span>
         </button>
-        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{selectableBusinesses.map(({ item, index }) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate(`/mi-negocio/detalle/${index}`); }}><span className="mobile-business-avatar"><BusinessProfileThumbnail business={item} /></span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{[mobileBusinessMeta(item), item.role].filter(Boolean).join(" · ")}</small><BusinessIndicatorRow business={item} /></span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}<button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button></div>}
+        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{selectableBusinesses.map(({ item, index }) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate(item.role === "Propietario" || item.permissions?.includes("EDIT_BUSINESS") ? `/mi-negocio/detalle/${index}` : "/"); }}><span className="mobile-business-avatar"><BusinessProfileThumbnail business={item} /></span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{[mobileBusinessMeta(item), item.role].filter(Boolean).join(" · ")}</small><BusinessIndicatorRow business={item} /></span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}<button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button></div>}
       </div>
       <NavLink className="mobile-notification-button" to="/notificaciones" aria-label="Notificaciones"><SidebarIcon name="bell" />{unread > 0 && <span className="mobile-topbar-dot">{unread}</span>}</NavLink>
     </header>
     {moreOpen && <div className="business-mobile-menu-layer"><button className="business-mobile-scrim" type="button" tabIndex={-1} aria-label="Cerrar menú" onClick={() => setMoreOpen(false)} /><div ref={drawerRef} id="business-mobile-menu" className="business-mobile-drawer" role="dialog" aria-modal="true" aria-label="Menú principal"><div className="business-mobile-drawer-heading"><strong>Menú</strong><button type="button" className="business-mobile-close" aria-label="Cerrar menú" onClick={() => { setMoreOpen(false); menuTriggerRef.current?.focus(); }}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button></div><Sidebar empty={empty} onNavigate={() => setMoreOpen(false)} /></div></div>}
     <nav className="mobile-nav" aria-label="Navegación principal móvil">
-      <div className="mobile-nav-scroll">{primaryLinks.map((link) => renderLink(link))}</div>
+      <div className="mobile-nav-scroll">{visiblePrimaryLinks.map((link) => renderLink(link))}</div>
     </nav>
   </>;
 }

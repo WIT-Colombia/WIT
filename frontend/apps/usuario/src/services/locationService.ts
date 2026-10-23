@@ -147,6 +147,9 @@ export function subscribeToLocation(listener: () => void): () => void {
 
 /** The current mock business catalog contains listings for Palmira when its municipality is reliably known. */
 export function hasSampleCatalogForLocation(location: Locality | null): boolean {
+  // E2E must reflect the API exactly, including its empty state. Demo catalog
+  // visibility is opt-in for normal development and is always disabled here.
+  if (import.meta.env.VITE_E2E_REAL_ONLY === "true") return false;
   return location?.id === "76520";
 }
 

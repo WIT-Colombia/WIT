@@ -10,12 +10,22 @@ import { adminRouter } from './modules/admin/admin.routes.js';
 import { favoriteRouter } from './modules/favorites/favorite.routes.js';
 import { analyticsRouter } from './modules/analytics/analytics.routes.js';
 import { reviewRouter } from './modules/reviews/review.routes.js';
+import { promotionRouter } from './modules/business/promotion.routes.js';
+import { collaboratorRouter } from './modules/business/collaborator.routes.js';
+import { verificationRouter } from './modules/business/verification.routes.js';
+import { ownershipTransferRouter } from './modules/business/ownership-transfer.routes.js';
 
 export const apiRouter = Router();
 apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/admin', adminRouter);
 apiRouter.use('/public', publicBusinessRouter);
+// This router contains both explicitly public read routes and individually
+// protected management routes, so mount it before routers with broad auth middleware.
+apiRouter.use('/', promotionRouter);
+apiRouter.use('/', collaboratorRouter);
+apiRouter.use('/', verificationRouter);
+apiRouter.use('/', ownershipTransferRouter);
 apiRouter.use('/', offerRouter);
 apiRouter.use('/', favoriteRouter);
 apiRouter.use('/', analyticsRouter);

@@ -24,18 +24,19 @@ function amount(value: unknown): Prisma.Decimal | null {
 }
 
 function serialize(offer: any, businessId: string) {
-  return { id: offer.id, businessId, kind: offer.kind, name: offer.name, description: offer.description, priceAmount: offer.priceAmount?.toString() ?? null, currency: offer.currency, priceText: offer.priceText, negotiable: offer.negotiable, active: offer.active, adultOnly: offer.adultOnly, publicationStatus: offer.publicationStatus, photos: (offer.photos ?? []).map((photo: any) => ({ id: photo.id, url: `/api/v1/businesses/${businessId}/photos/${photo.id}/content`, altText: photo.altText, sortOrder: photo.sortOrder, isCover: photo.isCover })) };
+  return { id: offer.id, businessId, internalCode: offer.internalCode, kind: offer.kind, name: offer.name, description: offer.description, category: offer.category?.translations?.[0]?.name ?? offer.category?.code ?? null, priceAmount: offer.priceAmount?.toString() ?? null, currency: offer.currency, priceText: offer.priceText, negotiable: offer.negotiable, active: offer.active, adultOnly: offer.adultOnly, publicationStatus: offer.publicationStatus, photos: (offer.photos ?? []).map((photo: any) => ({ id: photo.id, url: `/api/v1/businesses/${businessId}/photos/${photo.id}/content`, altText: photo.altText, sortOrder: photo.sortOrder, isCover: photo.isCover })) };
 }
 
 async function audit(db: Db, userId: string, offerId: string, action: string, previousState: unknown, newState: unknown, meta?: RequestMeta) {
   await db.auditLog.create({ data: { actorUserId: userId, entityType: 'OFFER', entityId: offerId, action, previousState: previousState === null ? Prisma.JsonNull : previousState as Prisma.InputJsonValue, newState: newState === null ? Prisma.JsonNull : newState as Prisma.InputJsonValue, ipAddress: meta?.ipAddress ?? null } });
 }
 
-const offerInclude = { photos: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] as any } } as const;
+const offerInclude = { photos: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] as any }, category: { include: { translations: { orderBy: { locale: 'asc' } } } } } as const;
 
-export async function listOffers(userId: string, businessIdentifier: string, kind?: 'PRODUCT' | 'SERVICE') {
+export async function listOffers(userId: string, businessIdentifier: string, kind?: 'PRODUCT' | 'SERVICE', query?: string) {
   const business = await findBusiness(userId, businessIdentifier, prisma);
-  const offers = await prisma.businessOffer.findMany({ where: { businessId: business.id, deletedAt: null, ...(kind ? { kind } : {}) }, include: offerInclude, orderBy: { updatedAt: 'desc' } });
+  const normalized = query?.trim();
+  const offers = await prisma.businessOffer.findMany({ where: { businessId: business.id, deletedAt: null, ...(kind ? { kind } : {}), ...(normalized ? { OR: [{ name: { contains: normalized } }, { internalCode: { contains: normalized } }] } : {}) }, include: offerInclude, orderBy: { updatedAt: 'desc' } });
   return offers.map(item => serialize(item, business.id));
 }
 
@@ -46,7 +47,10 @@ export async function createOffer(userId: string, businessIdentifier: string, in
     const limits = await catalogLimits(tx as any, business.id);
     const quota = limitForKind(input.kind, limits);
     if (!quota.unlimited && quota.limit !== null && quota.used >= quota.limit) throw new AppError(409, 'CATALOG_LIMIT_REACHED', `Has alcanzado el límite de ${quota.limit} ${input.kind === 'PRODUCT' ? 'productos' : 'servicios'} para tu nivel actual.`);
-    const offer = await tx.businessOffer.create({ data: { businessId: business.id, kind: input.kind, name: input.name, description: input.description ?? null, priceAmount: amount(input.priceAmount), currency: input.currency ?? null, priceText: input.priceText ?? null, negotiable: input.negotiable, active: input.active, adultOnly: input.adultOnly, publicationStatus: input.publicationStatus }, include: offerInclude });
+    const next = await tx.$queryRaw<Array<{ nextCode: bigint }>>`SELECT COALESCE(MAX(CAST(SUBSTRING(internalCode, 3) AS UNSIGNED)), 0) + 1 AS nextCode FROM BusinessOffer WHERE businessId = ${business.id} AND kind = ${input.kind}`;
+    const number = Number(next[0]?.nextCode ?? 1);
+    const internalCode = `${input.kind === 'PRODUCT' ? 'P' : 'S'}-${String(number).padStart(4, '0')}`;
+    const offer = await tx.businessOffer.create({ data: { businessId: business.id, internalCode, kind: input.kind, name: input.name, description: input.description ?? null, priceAmount: amount(input.priceAmount), currency: input.currency ?? null, priceText: input.priceText ?? null, negotiable: input.negotiable, active: input.active, adultOnly: input.adultOnly, publicationStatus: input.publicationStatus }, include: offerInclude });
     await audit(tx, userId, offer.id, 'OFFER_CREATED', null, { adultOnly: offer.adultOnly, kind: offer.kind }, meta);
     return offer;
   });

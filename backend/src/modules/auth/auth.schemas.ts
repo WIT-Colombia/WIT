@@ -21,7 +21,8 @@ export const passwordResetConfirmSchema = z.object({ token: z.string().min(32).m
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 
-export const profileUpdateSchema = z.object({ name: z.string().trim().min(2).max(120) }).strict();
+const nickname = z.string().trim().regex(/^@?[a-zA-Z0-9._-]{3,30}$/, 'El nickname debe tener entre 3 y 30 caracteres válidos.').transform((value) => value.startsWith('@') ? value : `@${value}`);
+export const profileUpdateSchema = z.object({ name: z.string().trim().min(2).max(120), nickname: nickname.optional(), avatarUrl: z.string().regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/).max(2048).nullable().optional() }).strict();
 
 export const adultContentPreferenceSchema = z.object({
   enabled: z.boolean(),

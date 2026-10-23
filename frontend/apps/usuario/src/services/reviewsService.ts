@@ -1,6 +1,6 @@
 import { requestWithSession } from './authService';
 
-export type PublicReview = { id: string; businessId: string; userId: string; author: string; rating: number; comment: string; createdAt: string; updatedAt: string; response: { body: string; createdAt: string; updatedAt: string } | null };
+export type PublicReview = { id: string; businessId: string; businessName?: string; userId: string; author: string; rating: number; comment: string; createdAt: string; updatedAt: string; response: { body: string; createdAt: string; updatedAt: string } | null };
 export type ReviewSummary = { average: number | null; total: number; distribution: Record<string, number> };
 export type ReviewsResponse = { reviews: PublicReview[]; pagination: { page: number; pageSize: number; total: number; totalPages: number }; summary?: ReviewSummary };
 

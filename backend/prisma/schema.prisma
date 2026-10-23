@@ -50,6 +50,20 @@ enum BusinessLocationVisibility {
   PRIVATE
 }
 
+enum BusinessBrandVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum BusinessClaimStatus {
+  UNCLAIMED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum BusinessLifecycleStatus {
   DRAFT
   ACTIVE
@@ -74,6 +88,26 @@ enum BusinessVerificationStatus {
   INFORMATION
   APPROVED
   REJECTED
+}
+
+enum BusinessVerificationRequestStatus {
+  PENDING
+  INFORMATION
+  APPROVED
+  REJECTED
+}
+
+enum VerificationDocumentDeletionStatus {
+  ACTIVE
+  PENDING
+  DELETED
+  FAILED
+}
+
+enum BusinessVerificationDecisionAction {
+  APPROVE
+  REQUEST_INFORMATION
+  REJECT
 }
 
 enum BusinessDeletionStatus {
@@ -101,12 +135,21 @@ enum MembershipRole {
 enum MembershipStatus {
   INVITED
   ACTIVE
+  SUSPENDED
   REJECTED
   REVOKED
 }
+
+enum BusinessNotificationType {
+  COLLABORATION_INVITATION
+  COLLABORATION_UPDATE
+}
+
 enum MembershipPermissionCode {
   EDIT_BUSINESS
   MANAGE_CATALOG
+  MANAGE_PROMOTIONS
+  READ_ANALYTICS
   MANAGE_PHOTOS
   MANAGE_HOURS
   READ_REVIEWS
@@ -116,6 +159,7 @@ enum MembershipPermissionCode {
   DELETE_BUSINESS
   TRANSFER_OWNERSHIP
 }
+
 enum OwnershipTransferStatus {
   PENDING
   ACCEPTED
@@ -135,6 +179,18 @@ enum OfferPublicationStatus {
   REVIEW
 }
 
+enum BusinessPromotionType {
+  OFFER
+  PROMOTION
+}
+
+enum BusinessPromotionRecurrence {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
 enum PhotoSource {
   NEGOCIOS
 }
@@ -144,6 +200,7 @@ enum VisibilityPeriodKind {
   MANUAL_EXTENSION
   RESTORE
 }
+
 enum AuditEntityType {
   USER
   BUSINESS_ACCOUNT
@@ -175,12 +232,14 @@ enum AdminPermissionCode {
   CONTENT_MODERATE
   AUDIT_READ
   ADMINS_MANAGE
+  PIONEER_MANAGE
 }
 
 enum BusinessReviewModerationStatus {
   PUBLISHED
   HIDDEN
   REMOVED
+  REMOVED_BY_AUTHOR
 }
 
 enum BusinessReviewReportStatus {
@@ -199,83 +258,94 @@ enum BusinessReviewReportReason {
 }
 
 model User {
-  id                         String                    @id @default(uuid()) @db.Char(36)
-  publicId                   String                    @unique @default(uuid()) @db.VarChar(64)
-  emailNormalized            String?                   @unique @db.VarChar(320)
-  displayName                String                    @db.VarChar(120)
-  avatarUrl                  String?                   @db.VarChar(2048)
-  locale                     String                    @default("es-CO") @db.VarChar(16)
-  status                     UserStatus                @default(ACTIVE)
-  adultContentEnabled        Boolean                   @default(false)
-  adultContentAcceptedAt    DateTime?                 @db.DateTime(3)
-  adultContentAcceptedVersion String?                 @db.VarChar(32)
-  adultContentRevokedAt     DateTime?                 @db.DateTime(3)
-  lastLoginAt                DateTime?                 @db.DateTime(3)
-  preferredLocationCity       String?                   @db.VarChar(160)
-  preferredLocationRegion     String?                   @db.VarChar(160)
-  preferredLocationCountry    String?                   @db.VarChar(80)
-  preferredLocationName       String?                   @db.VarChar(240)
-  preferredLocationLatitude   Decimal?                  @db.Decimal(10, 7)
-  preferredLocationLongitude  Decimal?                  @db.Decimal(10, 7)
-  preferredLocationMode       String?                   @db.VarChar(16)
-  preferredLocationResolution String?                   @db.VarChar(16)
-  preferredLocationUpdatedAt  DateTime?                 @db.DateTime(3)
-  createdAt                  DateTime                  @default(now()) @db.DateTime(3)
-  updatedAt                  DateTime                  @updatedAt @db.DateTime(3)
-  authIdentities             AuthIdentity[]
-  authTokens                 AuthToken[]
-  sessions                   Session[]
-  createdBusinessAccounts    BusinessAccount[]         @relation("BusinessAccountCreator")
-  createdBusinesses          Business[]                @relation("BusinessCreator")
-  memberships                BusinessMembership[]
-  requestedTransfers         OwnershipTransfer[]        @relation("TransferFromUser")
-  receivedTransfers          OwnershipTransfer[]        @relation("TransferToUser")
-  requestedVisibilityPeriods BusinessVisibilityPeriod[] @relation("VisibilityRequester")
-  uploadedPhotos             Photo[]                    @relation("PhotoUploader")
-  auditLogs                  AuditLog[]                 @relation("AuditActor")
-  businessFavorites         BusinessFavorite[]
-  offerLikes                BusinessOfferLike[]
-  analyticsEvents           BusinessAnalyticsEvent[]    @relation("AnalyticsActor")
-  businessReferrals          BusinessReferral[]         @relation("BusinessReferralUser")
-  adminRoleAssignments      AdminRoleAssignment[]      @relation("AdminRoleUser")
-  assignedAdminRoles         AdminRoleAssignment[]      @relation("AdminRoleAssigner")
-  businessReviews            BusinessReview[]
-  reviewReports              BusinessReviewReport[]    @relation("ReviewReportReporter")
-  moderatedReviewReports     BusinessReviewReport[]    @relation("ReviewReportModerator")
-  reviewResponses            BusinessReviewResponse[]
-  adminPermissionGrants     AdminPermissionGrant[]     @relation("AdminPermissionUser")
-  grantedAdminPermissions   AdminPermissionGrant[]     @relation("AdminPermissionGranter")
+  id                          String                     @id @default(uuid()) @db.Char(36)
+  publicId                    String                     @unique @default(uuid()) @db.VarChar(64)
+  emailNormalized             String?                    @unique @db.VarChar(320)
+  displayName                 String                     @db.VarChar(120)
+  nickname                    String?                    @unique @db.VarChar(32)
+  avatarUrl                   String?                    @db.VarChar(2048)
+  locale                      String                     @default("es-CO") @db.VarChar(16)
+  status                      UserStatus                 @default(ACTIVE)
+  adultContentEnabled         Boolean                    @default(false)
+  adultContentAcceptedAt      DateTime?                  @db.DateTime(3)
+  adultContentAcceptedVersion String?                    @db.VarChar(32)
+  adultContentRevokedAt       DateTime?                  @db.DateTime(3)
+  lastLoginAt                 DateTime?                  @db.DateTime(3)
+  preferredLocationCity       String?                    @db.VarChar(160)
+  preferredLocationRegion     String?                    @db.VarChar(160)
+  preferredLocationCountry    String?                    @db.VarChar(80)
+  preferredLocationName       String?                    @db.VarChar(240)
+  preferredLocationLatitude   Decimal?                   @db.Decimal(10, 7)
+  preferredLocationLongitude  Decimal?                   @db.Decimal(10, 7)
+  preferredLocationMode       String?                    @db.VarChar(16)
+  preferredLocationResolution String?                    @db.VarChar(16)
+  preferredLocationUpdatedAt  DateTime?                  @db.DateTime(3)
+  createdAt                   DateTime                   @default(now()) @db.DateTime(3)
+  updatedAt                   DateTime                   @updatedAt @db.DateTime(3)
+  authIdentities              AuthIdentity[]
+  authTokens                  AuthToken[]
+  sessions                    Session[]
+  createdBusinessAccounts     BusinessAccount[]          @relation("BusinessAccountCreator")
+  createdBusinesses           Business[]                 @relation("BusinessCreator")
+  memberships                 BusinessMembership[]
+  notifications               BusinessNotification[]
+  requestedTransfers          OwnershipTransfer[]        @relation("TransferFromUser")
+  receivedTransfers           OwnershipTransfer[]        @relation("TransferToUser")
+  requestedVisibilityPeriods  BusinessVisibilityPeriod[] @relation("VisibilityRequester")
+  uploadedPhotos              Photo[]                    @relation("PhotoUploader")
+  uploadedPromotionPhotos     BusinessPromotionPhoto[]   @relation("PromotionPhotoUploader")
+  auditLogs                   AuditLog[]                 @relation("AuditActor")
+  businessFavorites           BusinessFavorite[]
+  offerLikes                  BusinessOfferLike[]
+  analyticsEvents             BusinessAnalyticsEvent[]   @relation("AnalyticsActor")
+  businessReferrals           BusinessReferral[]         @relation("BusinessReferralUser")
+  adminRoleAssignments        AdminRoleAssignment[]      @relation("AdminRoleUser")
+  assignedAdminRoles          AdminRoleAssignment[]      @relation("AdminRoleAssigner")
+  businessReviews             BusinessReview[]
+  businessReviewCooldowns     BusinessReviewCooldown[]
+  businessClaims              BusinessClaim[]
+  reviewReports               BusinessReviewReport[]     @relation("ReviewReportReporter")
+  moderatedReviewReports      BusinessReviewReport[]     @relation("ReviewReportModerator")
+  reviewResponses             BusinessReviewResponse[]
+  adminPermissionGrants       AdminPermissionGrant[]     @relation("AdminPermissionUser")
+  verificationRequests        BusinessVerificationRequest[] @relation("VerificationRequester")
+  verificationDecisions       BusinessVerificationDecision[] @relation("VerificationDecider")
+  grantedAdminPermissions     AdminPermissionGrant[]     @relation("AdminPermissionGranter")
+  createdPioneerAssignments   PioneerAssignment[]        @relation("PioneerAssigner")
+  reviewedBrandClaims         BusinessClaim[]            @relation("BrandClaimReviewer")
 
   @@index([status])
 }
 
 model AdminRoleAssignment {
-  id          String       @id @default(uuid()) @db.Char(36)
-  userId      String       @db.Char(36)
-  role        AdminRole
-  active      Boolean      @default(true)
-  assignedById String?     @db.Char(36)
-  revokedAt   DateTime?    @db.DateTime(3)
-  createdAt   DateTime     @default(now()) @db.DateTime(3)
-  updatedAt   DateTime     @updatedAt @db.DateTime(3)
-  user        User         @relation("AdminRoleUser", fields: [userId], references: [id], onDelete: Cascade)
-  assignedBy  User?        @relation("AdminRoleAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+  id           String    @id @default(uuid()) @db.Char(36)
+  userId       String    @db.Char(36)
+  role         AdminRole
+  active       Boolean   @default(true)
+  assignedById String?   @db.Char(36)
+  revokedAt    DateTime? @db.DateTime(3)
+  createdAt    DateTime  @default(now()) @db.DateTime(3)
+  updatedAt    DateTime  @updatedAt @db.DateTime(3)
+  user         User      @relation("AdminRoleUser", fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy   User?     @relation("AdminRoleAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+
   @@unique([userId, role])
   @@index([userId, active])
   @@index([role, active])
 }
 
 model AdminPermissionGrant {
-  id          String               @id @default(uuid()) @db.Char(36)
-  userId      String               @db.Char(36)
+  id          String              @id @default(uuid()) @db.Char(36)
+  userId      String              @db.Char(36)
   permission  AdminPermissionCode
-  granted     Boolean              @default(true)
-  grantedById String?              @db.Char(36)
-  revokedAt   DateTime?            @db.DateTime(3)
-  createdAt   DateTime             @default(now()) @db.DateTime(3)
-  updatedAt   DateTime             @updatedAt @db.DateTime(3)
-  user        User                 @relation("AdminPermissionUser", fields: [userId], references: [id], onDelete: Cascade)
-  grantedBy   User?                @relation("AdminPermissionGranter", fields: [grantedById], references: [id], onDelete: SetNull)
+  granted     Boolean             @default(true)
+  grantedById String?             @db.Char(36)
+  revokedAt   DateTime?           @db.DateTime(3)
+  createdAt   DateTime            @default(now()) @db.DateTime(3)
+  updatedAt   DateTime            @updatedAt @db.DateTime(3)
+  user        User                @relation("AdminPermissionUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy   User?               @relation("AdminPermissionGranter", fields: [grantedById], references: [id], onDelete: SetNull)
+
   @@unique([userId, permission])
   @@index([userId, granted])
 }
@@ -325,6 +395,56 @@ model Session {
   @@index([revokedAt])
 }
 
+model BusinessBrand {
+  id              String                          @id @default(uuid()) @db.Char(36)
+  legalName       String                          @db.VarChar(180)
+  normalizedName  String                          @unique @db.VarChar(180)
+  verification    BusinessBrandVerificationStatus @default(UNVERIFIED)
+  evidenceSummary String?                         @db.Text
+  verifiedAt      DateTime?                       @db.DateTime(3)
+  verifiedById    String?                         @db.Char(36)
+  createdAt       DateTime                        @default(now()) @db.DateTime(3)
+  updatedAt       DateTime                        @updatedAt @db.DateTime(3)
+  businesses      Business[]
+  pioneer         PioneerAssignment?
+  claims          BusinessClaim[]
+
+  @@index([verification, updatedAt])
+}
+
+model BusinessClaim {
+  id           String              @id @default(uuid()) @db.Char(36)
+  businessId   String              @db.Char(36)
+  brandId      String?             @db.Char(36)
+  claimantId   String              @db.Char(36)
+  status       BusinessClaimStatus @default(PENDING)
+  evidenceType String              @db.VarChar(40)
+  evidenceNote String?             @db.Text
+  reviewedById String?             @db.Char(36)
+  reviewedAt   DateTime?           @db.DateTime(3)
+  createdAt    DateTime            @default(now()) @db.DateTime(3)
+  updatedAt    DateTime            @updatedAt @db.DateTime(3)
+  business     Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  brand        BusinessBrand?      @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  claimant     User                @relation(fields: [claimantId], references: [id], onDelete: Restrict)
+  reviewer     User?               @relation("BrandClaimReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([businessId, status])
+  @@index([brandId, status])
+}
+
+model PioneerAssignment {
+  id           String        @id @default(uuid()) @db.Char(36)
+  brandId      String        @unique @db.Char(36)
+  number       Int           @unique @db.UnsignedTinyInt
+  assignedById String        @db.Char(36)
+  assignedAt   DateTime      @default(now()) @db.DateTime(3)
+  brand        BusinessBrand @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  assignedBy   User          @relation("PioneerAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+
+  @@index([number])
+}
+
 model BusinessAccount {
   id          String                @id @default(uuid()) @db.Char(36)
   name        String                @db.VarChar(160)
@@ -339,61 +459,70 @@ model BusinessAccount {
 }
 
 model Business {
-  id                  String                    @id @default(uuid()) @db.Char(36)
-  publicId            String                    @unique @default(uuid()) @db.VarChar(64)
-  businessAccountId   String                    @db.Char(36)
-  createdById         String                    @db.Char(36)
-  name                String                    @db.VarChar(180)
-  sede                String?                   @db.VarChar(160)
-  adultOnly           Boolean                   @default(false)
-  slug                String                    @db.VarChar(180)
-  description         String?                   @db.Text
-  categoryId          String                    @db.Char(36)
-  email               String?                   @db.VarChar(320)
-  website             String?                   @db.VarChar(2048)
-  instagram           String?                   @db.VarChar(255)
-  facebookUrl         String?                   @db.VarChar(2048)
-  xUrl                String?                   @db.VarChar(2048)
-  tiktokUrl           String?                   @db.VarChar(2048)
-  phone               String?                   @db.VarChar(32)
-  phonePublic         Boolean                   @default(false)
-  whatsapp            String?                   @db.VarChar(32)
-  whatsappPublic      Boolean                   @default(false)
-  emailPublic         Boolean                   @default(false)
-  coverPhotoId        String?                   @unique @db.Char(36)
-  profilePhotoId      String?                   @unique @db.Char(36)
-  coverImagePositionX Int                       @default(50) @db.UnsignedTinyInt
-  coverImagePositionY Int                       @default(50) @db.UnsignedTinyInt
-  profileImagePositionX Int                     @default(50) @db.UnsignedTinyInt
-  profileImagePositionY Int                     @default(50) @db.UnsignedTinyInt
-  completeness        Int                       @default(0)
-  lifecycleStatus     BusinessLifecycleStatus  @default(DRAFT)
-  publicationStatus   BusinessPublicationStatus @default(UNPUBLISHED)
-  visibilityStatus    BusinessVisibilityStatus @default(REVIEW)
-  verificationStatus BusinessVerificationStatus @default(NONE)
-  deletionStatus      BusinessDeletionStatus   @default(NONE)
-  createdAt           DateTime                  @default(now()) @db.DateTime(3)
-  updatedAt           DateTime                  @updatedAt @db.DateTime(3)
-  businessAccount     BusinessAccount           @relation(fields: [businessAccountId], references: [id])
-  createdBy           User                       @relation("BusinessCreator", fields: [createdById], references: [id])
-  category            Category                   @relation(fields: [categoryId], references: [id])
-  secondaryCategories BusinessSecondaryCategory[]
-  memberships         BusinessMembership[]
-  modalities          BusinessModality[]
-  offers              BusinessOffer[]
-  location            BusinessLocation?
-  hours               BusinessHour[]
-  photos              Photo[]                   @relation("BusinessGalleryPhotos")
-  coverPhoto          Photo?                    @relation("BusinessCoverPhoto", fields: [coverPhotoId], references: [id], onDelete: SetNull)
-  profilePhoto        Photo?                    @relation("BusinessProfilePhoto", fields: [profilePhotoId], references: [id], onDelete: SetNull)
-  visibilityPeriods   BusinessVisibilityPeriod[]
-  ownershipTransfers  OwnershipTransfer[]
-  referralCounter     BusinessReferralCounter?
-  referrals           BusinessReferral[]
-  subscriptions       BusinessSubscription[]
-  favorites           BusinessFavorite[]
-  analyticsEvents     BusinessAnalyticsEvent[]
-  reviews             BusinessReview[]
+  id                    String                      @id @default(uuid()) @db.Char(36)
+  publicId              String                      @unique @default(uuid()) @db.VarChar(64)
+  businessAccountId     String                      @db.Char(36)
+  createdById           String                      @db.Char(36)
+  name                  String                      @db.VarChar(180)
+  sede                  String?                     @db.VarChar(160)
+  adultOnly             Boolean                     @default(false)
+  slug                  String                      @db.VarChar(180)
+  description           String?                     @db.Text
+  categoryId            String                      @db.Char(36)
+  email                 String?                     @db.VarChar(320)
+  website               String?                     @db.VarChar(2048)
+  instagram             String?                     @db.VarChar(255)
+  facebookUrl           String?                     @db.VarChar(2048)
+  xUrl                  String?                     @db.VarChar(2048)
+  tiktokUrl             String?                     @db.VarChar(2048)
+  phone                 String?                     @db.VarChar(32)
+  phonePublic           Boolean                     @default(false)
+  whatsapp              String?                     @db.VarChar(32)
+  whatsappPublic        Boolean                     @default(false)
+  emailPublic           Boolean                     @default(false)
+  coverPhotoId          String?                     @unique @db.Char(36)
+  profilePhotoId        String?                     @unique @db.Char(36)
+  coverImagePositionX   Int                         @default(50) @db.UnsignedTinyInt
+  coverImagePositionY   Int                         @default(50) @db.UnsignedTinyInt
+  profileImagePositionX Int                         @default(50) @db.UnsignedTinyInt
+  profileImagePositionY Int                         @default(50) @db.UnsignedTinyInt
+  completeness          Int                         @default(0)
+  lifecycleStatus       BusinessLifecycleStatus     @default(DRAFT)
+  publicationStatus     BusinessPublicationStatus   @default(UNPUBLISHED)
+  visibilityStatus      BusinessVisibilityStatus    @default(REVIEW)
+  verificationStatus    BusinessVerificationStatus  @default(NONE)
+  deletionStatus        BusinessDeletionStatus      @default(NONE)
+  createdAt             DateTime                    @default(now()) @db.DateTime(3)
+  updatedAt             DateTime                    @updatedAt @db.DateTime(3)
+  businessAccount       BusinessAccount             @relation(fields: [businessAccountId], references: [id])
+  createdBy             User                        @relation("BusinessCreator", fields: [createdById], references: [id])
+  category              Category                    @relation(fields: [categoryId], references: [id])
+  secondaryCategories   BusinessSecondaryCategory[]
+  memberships           BusinessMembership[]
+  notifications         BusinessNotification[]
+  modalities            BusinessModality[]
+  offers                BusinessOffer[]
+  promotions            BusinessPromotion[]
+  promotionPhotos       BusinessPromotionPhoto[]
+  promotionViews        BusinessPromotionView[]
+  location              BusinessLocation?
+  hours                 BusinessHour[]
+  photos                Photo[]                     @relation("BusinessGalleryPhotos")
+  coverPhoto            Photo?                      @relation("BusinessCoverPhoto", fields: [coverPhotoId], references: [id], onDelete: SetNull)
+  profilePhoto          Photo?                      @relation("BusinessProfilePhoto", fields: [profilePhotoId], references: [id], onDelete: SetNull)
+  visibilityPeriods     BusinessVisibilityPeriod[]
+  verificationRequests  BusinessVerificationRequest[]
+  ownershipTransfers    OwnershipTransfer[]
+  referralCounter       BusinessReferralCounter?
+  referrals             BusinessReferral[]
+  subscriptions         BusinessSubscription[]
+  favorites             BusinessFavorite[]
+  analyticsEvents       BusinessAnalyticsEvent[]
+  reviews               BusinessReview[]
+  brand                 BusinessBrand?              @relation(fields: [brandId], references: [id])
+  brandId               String?                     @db.Char(36)
+  reviewCooldowns       BusinessReviewCooldown[]
+  claims                BusinessClaim[]
 
   @@unique([businessAccountId, slug])
   @@index([businessAccountId, lifecycleStatus])
@@ -402,20 +531,59 @@ model Business {
   @@index([createdById])
 }
 
+model BusinessVerificationRequest {
+  id                 String                              @id @default(uuid()) @db.Char(36)
+  businessId         String                              @db.Char(36)
+  requesterId        String                              @db.Char(36)
+  status             BusinessVerificationRequestStatus  @default(PENDING)
+  businessNameAtRequest String                          @db.VarChar(180)
+  documentType       String                              @db.VarChar(80)
+  documentSizeBytes  Int                                 @db.UnsignedInt
+  documentSha256     String                              @db.Char(64)
+  documentStorageKey String                              @db.VarChar(512)
+  documentDeletionStatus VerificationDocumentDeletionStatus @default(ACTIVE)
+  activeKey          String?                             @db.Char(36)
+  requestedAt        DateTime                            @default(now()) @db.DateTime(3)
+  updatedAt          DateTime                            @updatedAt @db.DateTime(3)
+  resolvedAt         DateTime?                           @db.DateTime(3)
+  business           Business                            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  requester          User                                @relation("VerificationRequester", fields: [requesterId], references: [id], onDelete: Restrict)
+  decisions          BusinessVerificationDecision[]
+
+  @@unique([businessId, activeKey])
+  @@index([businessId, status, updatedAt])
+  @@index([requesterId, requestedAt])
+  @@index([documentDeletionStatus, updatedAt])
+}
+
+model BusinessVerificationDecision {
+  id          String                           @id @default(uuid()) @db.Char(36)
+  requestId   String                           @db.Char(36)
+  adminId     String                           @db.Char(36)
+  action      BusinessVerificationDecisionAction
+  reason      String?                          @db.Text
+  createdAt   DateTime                         @default(now()) @db.DateTime(3)
+  request     BusinessVerificationRequest     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  admin       User                            @relation("VerificationDecider", fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([requestId, createdAt])
+  @@index([adminId, createdAt])
+}
+
 model BusinessSubscription {
-  id                   String                      @id @default(uuid()) @db.Char(36)
-  businessId           String                      @db.Char(36)
-  plan                 BusinessSubscriptionPlan
-  status               BusinessSubscriptionStatus @default(PENDING)
-  startsAt             DateTime                    @db.DateTime(3)
-  expiresAt            DateTime?                   @db.DateTime(3)
-  autoRenew            Boolean                     @default(true)
-  specialActivation    Boolean                     @default(false)
-  revokedAt            DateTime?                   @db.DateTime(3)
-  revocationReason     String?                     @db.VarChar(255)
-  createdAt            DateTime                    @default(now()) @db.DateTime(3)
-  updatedAt            DateTime                    @updatedAt @db.DateTime(3)
-  business             Business                    @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  id                String                     @id @default(uuid()) @db.Char(36)
+  businessId        String                     @db.Char(36)
+  plan              BusinessSubscriptionPlan
+  status            BusinessSubscriptionStatus @default(PENDING)
+  startsAt          DateTime                   @db.DateTime(3)
+  expiresAt         DateTime?                  @db.DateTime(3)
+  autoRenew         Boolean                    @default(true)
+  specialActivation Boolean                    @default(false)
+  revokedAt         DateTime?                  @db.DateTime(3)
+  revocationReason  String?                    @db.VarChar(255)
+  createdAt         DateTime                   @default(now()) @db.DateTime(3)
+  updatedAt         DateTime                   @updatedAt @db.DateTime(3)
+  business          Business                   @relation(fields: [businessId], references: [id], onDelete: Restrict)
 
   @@index([businessId, status, startsAt, expiresAt])
   @@index([businessId, plan, status])
@@ -443,13 +611,13 @@ model BusinessReferral {
 }
 
 model BusinessModality {
-  id         String                 @id @default(uuid()) @db.Char(36)
-  businessId String                 @db.Char(36)
+  id         String                   @id @default(uuid()) @db.Char(36)
+  businessId String                   @db.Char(36)
   type       BusinessModalityType
-  status     BusinessModalityStatus @default(CONFIGURING)
-  createdAt  DateTime               @default(now()) @db.DateTime(3)
-  updatedAt  DateTime               @updatedAt @db.DateTime(3)
-  business   Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status     BusinessModalityStatus   @default(CONFIGURING)
+  createdAt  DateTime                 @default(now()) @db.DateTime(3)
+  updatedAt  DateTime                 @updatedAt @db.DateTime(3)
+  business   Business                 @relation(fields: [businessId], references: [id], onDelete: Cascade)
   contact    BusinessModalityContact?
   hours      BusinessModalityHour[]
 
@@ -459,14 +627,14 @@ model BusinessModality {
 }
 
 model BusinessModalityContact {
-  id         String          @id @default(uuid()) @db.Char(36)
-  modalityId String          @unique @db.Char(36)
-  email      String?         @db.VarChar(320)
-  website    String?         @db.VarChar(2048)
-  phone      String?         @db.VarChar(32)
-  whatsapp   String?         @db.VarChar(32)
-  createdAt  DateTime        @default(now()) @db.DateTime(3)
-  updatedAt  DateTime        @updatedAt @db.DateTime(3)
+  id         String           @id @default(uuid()) @db.Char(36)
+  modalityId String           @unique @db.Char(36)
+  email      String?          @db.VarChar(320)
+  website    String?          @db.VarChar(2048)
+  phone      String?          @db.VarChar(32)
+  whatsapp   String?          @db.VarChar(32)
+  createdAt  DateTime         @default(now()) @db.DateTime(3)
+  updatedAt  DateTime         @updatedAt @db.DateTime(3)
   modality   BusinessModality @relation(fields: [modalityId], references: [id], onDelete: Cascade)
 }
 
@@ -486,65 +654,86 @@ model BusinessModalityHour {
 }
 
 model BusinessMembership {
-  id          String           @id @default(uuid()) @db.Char(36)
-  businessId  String           @db.Char(36)
-  userId      String           @db.Char(36)
+  id          String                         @id @default(uuid()) @db.Char(36)
+  businessId  String                         @db.Char(36)
+  userId      String                         @db.Char(36)
   role        MembershipRole
-  status      MembershipStatus @default(INVITED)
-  invitedAt   DateTime         @default(now()) @db.DateTime(3)
-  acceptedAt  DateTime?        @db.DateTime(3)
-  revokedAt   DateTime?        @db.DateTime(3)
-  createdAt   DateTime         @default(now()) @db.DateTime(3)
-  updatedAt   DateTime         @updatedAt @db.DateTime(3)
-  business    Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      MembershipStatus               @default(INVITED)
+  invitedAt   DateTime                       @default(now()) @db.DateTime(3)
+  acceptedAt  DateTime?                      @db.DateTime(3)
+  revokedAt   DateTime?                      @db.DateTime(3)
+  expiresAt   DateTime?                      @db.DateTime(3)
+  createdAt   DateTime                       @default(now()) @db.DateTime(3)
+  updatedAt   DateTime                       @updatedAt @db.DateTime(3)
+  business    Business                       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user        User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
   permissions BusinessMembershipPermission[]
+  notifications BusinessNotification[]
 
   @@unique([businessId, userId])
   @@index([userId, status])
   @@index([businessId, role, status])
 }
 
+model BusinessNotification {
+  id           String                   @id @default(uuid()) @db.Char(36)
+  userId       String                   @db.Char(36)
+  businessId   String                   @db.Char(36)
+  membershipId String?                  @db.Char(36)
+  type         BusinessNotificationType
+  title        String                   @db.VarChar(180)
+  message      String                   @db.VarChar(500)
+  readAt       DateTime?                @db.DateTime(3)
+  createdAt    DateTime                 @default(now()) @db.DateTime(3)
+  user         User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business     Business                 @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  membership   BusinessMembership?      @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt, createdAt])
+  @@index([businessId, type, createdAt])
+  @@index([membershipId])
+}
+
 model BusinessMembershipPermission {
-  id           String                  @id @default(uuid()) @db.Char(36)
-  membershipId String                  @db.Char(36)
+  id           String                   @id @default(uuid()) @db.Char(36)
+  membershipId String                   @db.Char(36)
   permission   MembershipPermissionCode
-  allowed      Boolean                 @default(true)
-  createdAt    DateTime                @default(now()) @db.DateTime(3)
-  membership   BusinessMembership      @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  allowed      Boolean                  @default(true)
+  createdAt    DateTime                 @default(now()) @db.DateTime(3)
+  membership   BusinessMembership       @relation(fields: [membershipId], references: [id], onDelete: Cascade)
 
   @@unique([membershipId, permission])
 }
 
 model OwnershipTransfer {
-  id          String                 @id @default(uuid()) @db.Char(36)
-  businessId  String                 @db.Char(36)
-  fromUserId  String                 @db.Char(36)
-  toUserId    String                 @db.Char(36)
+  id          String                  @id @default(uuid()) @db.Char(36)
+  businessId  String                  @db.Char(36)
+  fromUserId  String                  @db.Char(36)
+  toUserId    String                  @db.Char(36)
   status      OwnershipTransferStatus @default(PENDING)
-  requestedAt DateTime               @default(now()) @db.DateTime(3)
-  respondedAt DateTime?              @db.DateTime(3)
-  expiresAt   DateTime?              @db.DateTime(3)
-  reason      String?                @db.Text
-  business    Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  fromUser    User                   @relation("TransferFromUser", fields: [fromUserId], references: [id])
-  toUser      User                   @relation("TransferToUser", fields: [toUserId], references: [id])
+  requestedAt DateTime                @default(now()) @db.DateTime(3)
+  respondedAt DateTime?               @db.DateTime(3)
+  expiresAt   DateTime?               @db.DateTime(3)
+  reason      String?                 @db.Text
+  business    Business                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  fromUser    User                    @relation("TransferFromUser", fields: [fromUserId], references: [id])
+  toUser      User                    @relation("TransferToUser", fields: [toUserId], references: [id])
 
   @@index([businessId, status])
   @@index([toUserId, status])
 }
 
 model Category {
-  id           String                @id @default(uuid()) @db.Char(36)
-  code         String                @unique @db.VarChar(100)
-  active       Boolean               @default(true)
-  sortOrder    Int                   @default(0)
-  createdAt    DateTime              @default(now()) @db.DateTime(3)
-  updatedAt    DateTime              @updatedAt @db.DateTime(3)
-  businesses   Business[]
+  id                  String                      @id @default(uuid()) @db.Char(36)
+  code                String                      @unique @db.VarChar(100)
+  active              Boolean                     @default(true)
+  sortOrder           Int                         @default(0)
+  createdAt           DateTime                    @default(now()) @db.DateTime(3)
+  updatedAt           DateTime                    @updatedAt @db.DateTime(3)
+  businesses          Business[]
   secondaryBusinesses BusinessSecondaryCategory[]
-  offers       BusinessOffer[]
-  translations CategoryTranslation[]
+  offers              BusinessOffer[]
+  translations        CategoryTranslation[]
 }
 
 model BusinessSecondaryCategory {
@@ -573,6 +762,7 @@ model CategoryTranslation {
 model BusinessOffer {
   id                String                 @id @default(uuid()) @db.Char(36)
   businessId        String                 @db.Char(36)
+  internalCode      String                 @db.VarChar(7)
   categoryId        String?                @db.Char(36)
   kind              OfferKind
   adultOnly         Boolean                @default(false)
@@ -591,10 +781,71 @@ model BusinessOffer {
   category          Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   photos            Photo[]
   likes             BusinessOfferLike[]
+  promotions        BusinessPromotion[]
 
   @@index([businessId, kind, active])
   @@index([categoryId, kind])
   @@index([publicationStatus])
+  @@unique([businessId, internalCode])
+}
+
+model BusinessPromotion {
+  id                 String                      @id @default(uuid()) @db.Char(36)
+  businessId         String                      @db.Char(36)
+  relatedOfferId     String?                     @db.Char(36)
+  idempotencyKey     String?                     @unique @db.Char(36)
+  type               BusinessPromotionType
+  title              String                      @db.VarChar(120)
+  description        String                      @db.VarChar(500)
+  conditions         String?                     @db.VarChar(500)
+  category           String?                     @db.VarChar(100)
+  originalPrice      Decimal?                    @db.Decimal(12, 2)
+  promotionalPrice   Decimal?                    @db.Decimal(12, 2)
+  startsAt           DateTime                    @db.DateTime(3)
+  endsAt             DateTime                    @db.DateTime(3)
+  recurrence         BusinessPromotionRecurrence @default(NONE)
+  recurrenceUntil    DateTime?                   @db.DateTime(3)
+  active             Boolean                     @default(true)
+  deletedAt          DateTime?                   @db.DateTime(3)
+  createdAt          DateTime                    @default(now()) @db.DateTime(3)
+  updatedAt          DateTime                    @updatedAt @db.DateTime(3)
+  business           Business                    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  relatedOffer       BusinessOffer?              @relation(fields: [relatedOfferId], references: [id], onDelete: SetNull)
+  photos             BusinessPromotionPhoto[]
+  views              BusinessPromotionView[]
+
+  @@index([businessId, active, startsAt, endsAt])
+  @@index([businessId, deletedAt, updatedAt])
+  @@index([relatedOfferId])
+}
+
+model BusinessPromotionPhoto {
+  id           String            @id @default(uuid()) @db.Char(36)
+  businessId   String            @db.Char(36)
+  promotionId  String            @db.Char(36)
+  storageKey   String            @db.VarChar(1024)
+  sortOrder    Int               @default(0)
+  uploadedById String            @db.Char(36)
+  createdAt    DateTime          @default(now()) @db.DateTime(3)
+  business     Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  promotion    BusinessPromotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  uploadedBy   User              @relation("PromotionPhotoUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@index([businessId, promotionId, sortOrder])
+  @@index([uploadedById])
+}
+
+model BusinessPromotionView {
+  id          String            @id @default(uuid()) @db.Char(36)
+  businessId  String            @db.Char(36)
+  promotionId String            @db.Char(36)
+  dedupeKey   String?           @unique @db.VarChar(191)
+  createdAt   DateTime          @default(now()) @db.DateTime(3)
+  business    Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  promotion   BusinessPromotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@index([promotionId, createdAt])
 }
 
 model BusinessOfferLike {
@@ -611,51 +862,64 @@ model BusinessOfferLike {
 }
 
 model BusinessReview {
-  id             String                        @id @default(uuid()) @db.Char(36)
-  businessId     String                        @db.Char(36)
-  userId         String                        @db.Char(36)
-  rating         Int                           @db.UnsignedTinyInt
-  comment        String                        @db.Text
-  status         BusinessReviewModerationStatus @default(PUBLISHED)
-  response       BusinessReviewResponse?
-  reports        BusinessReviewReport[]
-  createdAt      DateTime                      @default(now()) @db.DateTime(3)
-  updatedAt      DateTime                      @updatedAt @db.DateTime(3)
-  business       Business                      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  user           User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  id         String                         @id @default(uuid()) @db.Char(36)
+  businessId String                         @db.Char(36)
+  userId     String                         @db.Char(36)
+  rating     Int                            @db.UnsignedTinyInt
+  comment    String                         @db.Text
+  status     BusinessReviewModerationStatus @default(PUBLISHED)
+  response   BusinessReviewResponse?
+  reports    BusinessReviewReport[]
+  createdAt  DateTime                       @default(now()) @db.DateTime(3)
+  updatedAt  DateTime                       @updatedAt @db.DateTime(3)
+  business   Business                       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user       User                           @relation(fields: [userId], references: [id], onDelete: Restrict)
 
-  @@unique([businessId, userId])
   @@index([businessId, status, createdAt])
   @@index([userId, createdAt])
 }
 
+model BusinessReviewCooldown {
+  id              String   @id @default(uuid()) @db.Char(36)
+  businessId      String   @db.Char(36)
+  userId          String   @db.Char(36)
+  lastPublishedAt DateTime @db.DateTime(3)
+  createdAt       DateTime @default(now()) @db.DateTime(3)
+  updatedAt       DateTime @updatedAt @db.DateTime(3)
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([businessId, userId])
+  @@index([userId, lastPublishedAt])
+}
+
 model BusinessReviewResponse {
-  id         String         @id @default(uuid()) @db.Char(36)
-  reviewId   String         @unique @db.Char(36)
-  ownerId    String         @db.Char(36)
-  body       String         @db.Text
-  createdAt  DateTime       @default(now()) @db.DateTime(3)
-  updatedAt  DateTime       @updatedAt @db.DateTime(3)
-  review     BusinessReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  owner      User           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  id        String         @id @default(uuid()) @db.Char(36)
+  reviewId  String         @unique @db.Char(36)
+  ownerId   String         @db.Char(36)
+  body      String         @db.Text
+  createdAt DateTime       @default(now()) @db.DateTime(3)
+  updatedAt DateTime       @updatedAt @db.DateTime(3)
+  review    BusinessReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  owner     User           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
 
   @@index([ownerId, updatedAt])
 }
 
 model BusinessReviewReport {
-  id           String                       @id @default(uuid()) @db.Char(36)
-  reviewId     String                       @db.Char(36)
-  reporterId   String                       @db.Char(36)
-  moderatorId  String?                      @db.Char(36)
+  id           String                     @id @default(uuid()) @db.Char(36)
+  reviewId     String                     @db.Char(36)
+  reporterId   String                     @db.Char(36)
+  moderatorId  String?                    @db.Char(36)
   reason       BusinessReviewReportReason
-  description  String?                      @db.VarChar(1000)
-  status       BusinessReviewReportStatus   @default(PENDING)
-  decisionNote String?                      @db.VarChar(1000)
-  createdAt    DateTime                     @default(now()) @db.DateTime(3)
-  updatedAt    DateTime                     @updatedAt @db.DateTime(3)
-  review       BusinessReview               @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  reporter     User                         @relation("ReviewReportReporter", fields: [reporterId], references: [id], onDelete: Restrict)
-  moderator    User?                        @relation("ReviewReportModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  description  String?                    @db.VarChar(1000)
+  status       BusinessReviewReportStatus @default(PENDING)
+  decisionNote String?                    @db.VarChar(1000)
+  createdAt    DateTime                   @default(now()) @db.DateTime(3)
+  updatedAt    DateTime                   @updatedAt @db.DateTime(3)
+  review       BusinessReview             @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reporter     User                       @relation("ReviewReportReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  moderator    User?                      @relation("ReviewReportModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
 
   @@unique([reviewId, reporterId, status])
   @@index([status, createdAt])
@@ -663,25 +927,25 @@ model BusinessReviewReport {
 }
 
 model BusinessLocation {
-  id            String    @id @default(uuid()) @db.Char(36)
-  businessId    String    @unique @db.Char(36)
-  countryCode   String    @db.Char(2)
-  regionCode    String?   @db.VarChar(32)
-  regionName    String?   @db.VarChar(160)
-  cityName      String    @db.VarChar(160)
-  zoneName      String?   @db.VarChar(160)
-  address       String    @db.VarChar(255)
-  additionalAddressInfo String? @db.VarChar(200)
-  postalCode    String?   @db.VarChar(32)
-  latitude      Decimal?  @db.Decimal(9, 6)
-  longitude     Decimal?  @db.Decimal(9, 6)
-  googlePlaceId String?   @db.VarChar(255)
-  geocodeSource String?   @db.VarChar(64)
-  visibility    BusinessLocationVisibility @default(PRIVATE)
-  timezone      String    @default("UTC") @db.VarChar(64)
-  createdAt     DateTime  @default(now()) @db.DateTime(3)
-  updatedAt     DateTime  @updatedAt @db.DateTime(3)
-  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  id                    String                     @id @default(uuid()) @db.Char(36)
+  businessId            String                     @unique @db.Char(36)
+  countryCode           String                     @db.Char(2)
+  regionCode            String?                    @db.VarChar(32)
+  regionName            String?                    @db.VarChar(160)
+  cityName              String                     @db.VarChar(160)
+  zoneName              String?                    @db.VarChar(160)
+  address               String                     @db.VarChar(255)
+  additionalAddressInfo String?                    @db.VarChar(200)
+  postalCode            String?                    @db.VarChar(32)
+  latitude              Decimal?                   @db.Decimal(9, 6)
+  longitude             Decimal?                   @db.Decimal(9, 6)
+  googlePlaceId         String?                    @db.VarChar(255)
+  geocodeSource         String?                    @db.VarChar(64)
+  visibility            BusinessLocationVisibility @default(PRIVATE)
+  timezone              String                     @default("UTC") @db.VarChar(64)
+  createdAt             DateTime                   @default(now()) @db.DateTime(3)
+  updatedAt             DateTime                   @updatedAt @db.DateTime(3)
+  business              Business                   @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([countryCode, regionCode, cityName])
   @@index([latitude, longitude])
@@ -703,23 +967,23 @@ model BusinessHour {
 }
 
 model Photo {
-  id           String         @id @default(uuid()) @db.Char(36)
-  businessId   String?        @db.Char(36)
-  offerId      String?        @db.Char(36)
-  storageKey   String         @db.VarChar(1024)
-  url          String?        @db.VarChar(2048)
-  source       PhotoSource    @default(NEGOCIOS)
-  altText      String?        @db.VarChar(255)
-  sortOrder    Int            @default(0)
-  isCover      Boolean        @default(false)
-  isGallery    Boolean        @default(true)
-  uploadedById String         @db.Char(36)
-  createdAt    DateTime       @default(now()) @db.DateTime(3)
-  business     Business?      @relation("BusinessGalleryPhotos", fields: [businessId], references: [id], onDelete: Cascade)
-  coverForBusiness Business?  @relation("BusinessCoverPhoto")
-  profileForBusiness Business? @relation("BusinessProfilePhoto")
-  offer        BusinessOffer? @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  uploadedBy   User           @relation("PhotoUploader", fields: [uploadedById], references: [id])
+  id                 String         @id @default(uuid()) @db.Char(36)
+  businessId         String?        @db.Char(36)
+  offerId            String?        @db.Char(36)
+  storageKey         String         @db.VarChar(1024)
+  url                String?        @db.VarChar(2048)
+  source             PhotoSource    @default(NEGOCIOS)
+  altText            String?        @db.VarChar(255)
+  sortOrder          Int            @default(0)
+  isCover            Boolean        @default(false)
+  isGallery          Boolean        @default(true)
+  uploadedById       String         @db.Char(36)
+  createdAt          DateTime       @default(now()) @db.DateTime(3)
+  business           Business?      @relation("BusinessGalleryPhotos", fields: [businessId], references: [id], onDelete: Cascade)
+  coverForBusiness   Business?      @relation("BusinessCoverPhoto")
+  profileForBusiness Business?      @relation("BusinessProfilePhoto")
+  offer              BusinessOffer? @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  uploadedBy         User           @relation("PhotoUploader", fields: [uploadedById], references: [id])
 
   @@index([businessId, sortOrder])
   @@index([offerId, sortOrder])
@@ -727,17 +991,17 @@ model Photo {
 }
 
 model BusinessVisibilityPeriod {
-  id            String              @id @default(uuid()) @db.Char(36)
-  businessId    String              @db.Char(36)
+  id            String               @id @default(uuid()) @db.Char(36)
+  businessId    String               @db.Char(36)
   kind          VisibilityPeriodKind
-  startsAt      DateTime            @db.DateTime(3)
-  expiresAt     DateTime            @db.DateTime(3)
-  requestedAt   DateTime            @default(now()) @db.DateTime(3)
-  requestedById String?             @db.Char(36)
-  reason        String?             @db.Text
-  createdAt     DateTime            @default(now()) @db.DateTime(3)
-  business      Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  requestedBy   User?               @relation("VisibilityRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+  startsAt      DateTime             @db.DateTime(3)
+  expiresAt     DateTime             @db.DateTime(3)
+  requestedAt   DateTime             @default(now()) @db.DateTime(3)
+  requestedById String?              @db.Char(36)
+  reason        String?              @db.Text
+  createdAt     DateTime             @default(now()) @db.DateTime(3)
+  business      Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  requestedBy   User?                @relation("VisibilityRequester", fields: [requestedById], references: [id], onDelete: SetNull)
 
   @@index([businessId, startsAt, expiresAt])
   @@index([expiresAt])
@@ -775,14 +1039,14 @@ model BusinessFavorite {
 }
 
 model BusinessAnalyticsEvent {
-  id           String                       @id @default(uuid()) @db.Char(36)
-  businessId   String                       @db.Char(36)
-  eventType    BusinessAnalyticsEventType
-  actorUserId  String?                      @db.Char(36)
-  dedupeKey    String?                      @unique @db.VarChar(191)
-  createdAt    DateTime                     @default(now()) @db.DateTime(3)
-  business     Business                     @relation(fields: [businessId], references: [id], onDelete: Restrict)
-  actor        User?                        @relation("AnalyticsActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  id          String                     @id @default(uuid()) @db.Char(36)
+  businessId  String                     @db.Char(36)
+  eventType   BusinessAnalyticsEventType
+  actorUserId String?                    @db.Char(36)
+  dedupeKey   String?                    @unique @db.VarChar(191)
+  createdAt   DateTime                   @default(now()) @db.DateTime(3)
+  business    Business                   @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  actor       User?                      @relation("AnalyticsActor", fields: [actorUserId], references: [id], onDelete: SetNull)
 
   @@index([businessId, eventType, createdAt])
   @@index([actorUserId, createdAt])

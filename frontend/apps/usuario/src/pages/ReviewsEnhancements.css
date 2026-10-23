@@ -41,8 +41,12 @@
 .reviews-page .review-date{flex:0 0 auto;color:#94a3b8;font-size:10px;white-space:nowrap}
 .reviews-page .review-stars{display:block;margin-top:3px;color:#f5aa18;font-size:14px;letter-spacing:1px;line-height:1}
 .reviews-page .review-row p{margin:8px 0 0;color:var(--xamuko-muted);font-size:12px;line-height:1.55}
-.reviews-page .review-delete-button{margin-top:11px;padding:5px 0;border:0;border-radius:0;background:transparent;color:#94a3b8;font-size:10px;font-weight:600;text-decoration:underline;text-decoration-color:#cbd5e1;text-underline-offset:3px;transition:color .2s ease,text-decoration-color .2s ease}
-.reviews-page .review-delete-button:hover{border:0;background:transparent;color:#b4535b;text-decoration-color:#efb8bd}
+.reviews-page .review-window-remaining{display:block;margin-top:11px;color:#7183a2;font-size:10px;line-height:1.4}.reviews-page .review-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:13px}
+.reviews-page .review-actions a,.reviews-page .review-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:0 13px;border-radius:9px;font:inherit;font-size:10px;font-weight:700;cursor:pointer;text-decoration:none;transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease}
+.reviews-page .review-edit-button{border:1px solid #d7c7ff;background:#f7f3ff;color:var(--xamuko-violet)}
+.reviews-page .review-edit-button:hover{border-color:var(--xamuko-violet);background:#eee8ff;transform:translateY(-1px)}
+.reviews-page .review-actions .review-delete-button{margin:0;border:1px solid #f0c5c8;border-radius:9px;background:#fff7f7;color:#b4535b;text-decoration:none}
+.reviews-page .review-actions .review-delete-button:hover{border-color:#d88b92;background:#ffeded;color:#963f48;transform:translateY(-1px)}
 .reviews-page .review-delete-confirm{margin-left:8px;color:var(--xamuko-muted)}
 .reviews-page .review-delete-confirm button{border-color:var(--xamuko-border);color:var(--xamuko-violet)}
 .reviews-page .review-delete-confirm button:first-of-type{border-color:#efb8bd;color:#b14b56}

@@ -1,16 +1,17 @@
 import argon2 from 'argon2';
+import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { getCurrentUser } from './auth.service.js';
 import type { AdultContentPreferenceInput, ChangePasswordInput, ProfileUpdateInput } from './auth.schemas.js';
 
 export async function updateProfile(userId: string, input: ProfileUpdateInput) {
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      displayName: input.name.trim(),
-    },
-  });
+  try {
+    await prisma.user.update({ where: { id: userId }, data: { displayName: input.name.trim(), ...(input.nickname === undefined ? {} : { nickname: input.nickname }), ...(input.avatarUrl === undefined ? {} : { avatarUrl: input.avatarUrl }) } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw new AppError(409, 'NICKNAME_UNAVAILABLE', 'Ese nickname ya está registrado.');
+    throw error;
+  }
   return getCurrentUser(userId);
 }
 

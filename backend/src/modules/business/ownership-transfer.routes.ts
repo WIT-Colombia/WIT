@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import { requireAuth } from '../../shared/middleware/require-auth.js';
+import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
+import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
+import { cancelTransfer, listReceivedTransfers, listSentTransfers, requestTransfer, resolveTransferRecipient, respondTransfer } from './ownership-transfer.service.js';
+export const ownershipTransferRouter = Router(); const uid = (req: any) => (req as AuthenticatedRequest).auth.userId;
+ownershipTransferRouter.post('/businesses/:businessId/ownership-transfers/resolve', requireAuth, requireTrustedOrigin, async (req,res,next) => { try { res.json({ recipient: await resolveTransferRecipient(uid(req), String(req.params.businessId), String(req.body?.nickname ?? '')) }); } catch(e){ next(e); } });
+ownershipTransferRouter.post('/businesses/:businessId/ownership-transfers', requireAuth, requireTrustedOrigin, async (req,res,next) => { try { res.status(201).json({ transfer: await requestTransfer(uid(req), String(req.params.businessId), String(req.body?.recipientId ?? '')) }); } catch(e){ next(e); } });
+ownershipTransferRouter.get('/ownership-transfers/received', requireAuth, async (req,res,next) => { try { res.json({ transfers: await listReceivedTransfers(uid(req)) }); } catch(e){ next(e); } });
+ownershipTransferRouter.get('/businesses/:businessId/ownership-transfers/sent', requireAuth, async (req,res,next) => { try { res.json({ transfers: await listSentTransfers(uid(req), String(req.params.businessId)) }); } catch(e){ next(e); } });
+ownershipTransferRouter.post('/ownership-transfers/:transferId/respond', requireAuth, requireTrustedOrigin, async (req,res,next) => { try { res.json({ transfer: await respondTransfer(uid(req), String(req.params.transferId), req.body?.accept === true) }); } catch(e){ next(e); } });
+ownershipTransferRouter.post('/ownership-transfers/:transferId/cancel', requireAuth, requireTrustedOrigin, async (req,res,next) => { try { res.json({ transfer: await cancelTransfer(uid(req), String(req.params.transferId)) }); } catch(e){ next(e); } });

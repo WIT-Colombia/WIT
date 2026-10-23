@@ -10,6 +10,7 @@ import Filters from "./pages/Filters";
 import BusinessDetail from "./pages/BusinessDetail";
 import { BusinessProducts, BusinessServices } from "./pages/BusinessOffers";
 import { ProductDetail, ServiceDetail } from "./pages/OfferDetail";
+import SpecialPromotionDetail from "./pages/SpecialPromotionDetail";
 import Directions from "./pages/Directions";
 import NoResults from "./pages/NoResults";
 import RegisterNeed from "./pages/RegisterNeed";
@@ -84,6 +85,7 @@ export default function App() {
     <Route path="/business/:id/services" element={<BusinessServices />} />
     <Route path="/product/:id" element={<ProductDetail />} />
     <Route path="/service/:id" element={<ServiceDetail />} />
+    <Route path="/promociones/:id" element={<SpecialPromotionDetail />} />
     <Route path="/directions" element={<Directions />} />
     <Route path="/no-results" element={<NoResults />} />
     <Route path="/register-need" element={<RegisterNeed />} />

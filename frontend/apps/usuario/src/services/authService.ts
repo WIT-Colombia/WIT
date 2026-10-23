@@ -7,6 +7,7 @@ export type AuthUser = {
   id: string;
   publicId: string;
   displayName: string;
+  nickname: string | null;
   emailNormalized: string | null;
   avatarUrl: string | null;
   locale: string;
@@ -64,6 +65,22 @@ export function requestWithSession<T>(path: string, init: RequestInit = {}): Pro
   return requestJson<T>(path, withAuthorization(init));
 }
 
+export async function requestBlobWithSession(path: string): Promise<Blob> {
+  const send = () => fetch(path, { credentials: "include", headers: withAuthorization().headers });
+  let response = await send();
+  if (response.status === 401) {
+    try {
+      await refreshSession();
+      response = await send();
+    } catch {
+      // The image can be public to guests; keep the original 401 if there is
+      // no restorable session instead of turning it into an unhandled error.
+    }
+  }
+  if (!response.ok) throw new ApiError(response.status, "PHOTO_LOAD_FAILED", "No se pudo cargar la fotografía.");
+  return response.blob();
+}
+
 export async function register(name: string, credentials: Credentials): Promise<AuthUser> {
   const result = await requestJson<RegisterResponse>("/api/v1/auth/register", { method: "POST", body: JSON.stringify({ name, ...credentials }) });
   return result.user;
@@ -108,11 +125,16 @@ export async function logout(): Promise<void> {
   }
 }
 
-export type ProfileUpdate = { name: string };
+export type ProfileUpdate = { name: string; avatarUrl?: string | null };
 
 export async function updateProfile(input: ProfileUpdate): Promise<AuthUser> {
   const result = await requestJson<{ user: AuthUser }>("/api/v1/auth/me", { method: "PATCH", body: JSON.stringify(input), ...withAuthorization() });
   return result.user;
+}
+export async function uploadAvatar(file: File): Promise<void> {
+  const form = new FormData(); form.append("file", file);
+  const response = await fetch("/api/v1/auth/me/avatar", { method: "POST", body: form, credentials: "include", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined });
+  if (!response.ok) throw new Error("No se pudo guardar la foto de perfil.");
 }
 
 const ADULT_CONTENT_CONDITIONS_VERSION = "2026-10-17";

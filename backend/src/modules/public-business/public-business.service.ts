@@ -27,13 +27,18 @@ export type PublicUniversalSearchInput = {
   servicePageSize: number;
 };
 
-const PUBLIC_BUSINESS_WHERE = {
+const PUBLIC_BUSINESS_BASE_WHERE: Prisma.BusinessWhereInput = {
   businessAccount: { status: 'ACTIVE' },
   lifecycleStatus: 'ACTIVE',
   publicationStatus: 'PUBLISHED',
   visibilityStatus: 'VISIBLE',
   deletionStatus: 'NONE',
-} as const;
+};
+
+function publicBusinessWhereWithCurrentPeriod(): Prisma.BusinessWhereInput {
+  const now = new Date();
+  return { ...PUBLIC_BUSINESS_BASE_WHERE, OR: [{ visibilityPeriods: { none: {} } }, { visibilityPeriods: { some: { startsAt: { lte: now }, expiresAt: { gt: now } } } }] };
+}
 
 const publicCategorySelect = {
   id: true,
@@ -70,6 +75,7 @@ const publicLocationSelect = {
 const publicOfferSelect = {
   id: true,
   kind: true,
+  createdAt: true,
   adultOnly: true,
   name: true,
   description: true,
@@ -79,13 +85,16 @@ const publicOfferSelect = {
   negotiable: true,
   category: { select: publicCategorySelect },
   photos: { select: publicPhotoSelect, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+  promotions: { where: { active: true, deletedAt: null, startsAt: { lte: new Date() }, endsAt: { gte: new Date() } }, orderBy: { startsAt: 'asc' }, take: 1, select: { id: true, type: true, conditions: true, originalPrice: true, promotionalPrice: true, startsAt: true, endsAt: true, photos: { select: { id: true, sortOrder: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } } },
 } satisfies Prisma.BusinessOfferSelect;
 
 // Select only the commercial fields used by the public contract. Besides avoiding
 // accidental exposure when the Business model grows, this keeps the public query
 // independent from administrative-only scalar fields.
 const publicBusinessDetailSelect = {
+  brand: { select: { pioneer: { select: { number: true } } } },
   publicId: true,
+  createdAt: true,
   name: true,
   sede: true,
   adultOnly: true,
@@ -127,7 +136,8 @@ async function canViewAdultContent(viewer: PublicAccessContext | undefined, db: 
 }
 
 function publicBusinessWhere(canViewAdult: boolean) {
-  return canViewAdult ? PUBLIC_BUSINESS_WHERE : { ...PUBLIC_BUSINESS_WHERE, adultOnly: false };
+  const where = publicBusinessWhereWithCurrentPeriod();
+  return canViewAdult ? where : { ...where, adultOnly: false };
 }
 
 function asNumber(value: unknown) {
@@ -148,6 +158,7 @@ function photo(publicId: string, value: any) {
   if (!value) return null;
   return {
     id: value.id,
+    createdAt: value.createdAt,
     url: `/api/v1/public/businesses/${encodeURIComponent(publicId)}/photos/${value.id}/content`,
     altText: value.altText ?? null,
     sortOrder: value.sortOrder,
@@ -175,25 +186,36 @@ function location(value: any) {
 }
 
 function offer(publicId: string, value: any) {
+  const promotion = value.promotions?.[0] ?? null;
+  const promotionPrice = promotion?.promotionalPrice === null || promotion?.promotionalPrice === undefined ? null : String(promotion.promotionalPrice);
   return {
     id: value.id,
+    createdAt: value.createdAt,
     adultOnly: Boolean(value.adultOnly),
     name: value.name,
     description: value.description ?? null,
     category: category(value.category),
     price: {
-      amount: value.priceAmount === null || value.priceAmount === undefined ? null : String(value.priceAmount),
+      amount: promotionPrice ?? (value.priceAmount === null || value.priceAmount === undefined ? null : String(value.priceAmount)),
       currency: value.currency ?? null,
       text: value.priceText ?? null,
       negotiable: value.negotiable,
     },
-    photos: (value.photos ?? []).map((item: any) => photo(publicId, item)),
+    originalPrice: promotion?.originalPrice === null || promotion?.originalPrice === undefined ? null : String(promotion.originalPrice),
+    isOffer: Boolean(promotion),
+    offerLabel: promotion?.type === 'OFFER' ? 'OFERTA' : promotion ? 'PROMOCIÓN' : null,
+    discount: promotion?.originalPrice && promotion?.promotionalPrice ? `${Math.round((1 - Number(promotion.promotionalPrice) / Number(promotion.originalPrice)) * 100)}% dto.` : null,
+    offerDeadline: promotion ? promotion.endsAt.toISOString() : null,
+    promotion: promotion ? { id: promotion.id, type: promotion.type, conditions: promotion.conditions, startsAt: promotion.startsAt, endsAt: promotion.endsAt, photos: promotion.photos.map((item: any) => ({ id: item.id, sortOrder: item.sortOrder, url: `/api/v1/public/promotions/${promotion.id}/photos/${item.id}` })) } : null,
+    photos: promotion?.photos?.length ? promotion.photos.map((item: any) => ({ id: item.id, sortOrder: item.sortOrder, url: `/api/v1/public/promotions/${promotion.id}/photos/${item.id}`, altText: null, isCover: item.sortOrder === 0 })) : (value.photos ?? []).map((item: any) => photo(publicId, item)),
   };
 }
 
 function summary(value: any) {
   return {
     publicId: value.publicId,
+    createdAt: value.createdAt,
+    pioneerNumber: Number.isInteger(value.brand?.pioneer?.number) && value.brand.pioneer.number >= 1 && value.brand.pioneer.number <= 20 ? value.brand.pioneer.number : null,
     name: value.name,
     sede: value.sede ?? null,
     adultOnly: value.adultOnly,
@@ -241,7 +263,7 @@ function detail(value: any, canViewAdult: boolean) {
     modalities,
     products,
     services,
-    // Products and services are represented by BusinessOffer. A separate promotions model does not exist yet.
+    // Active promotions are overlaid at serialization time; the original offer remains unchanged.
     offers: [],
     rating: null,
   };
@@ -296,6 +318,10 @@ async function findPublicBusinessId(publicId: string, db: PublicDb, canViewAdult
   return business.id;
 }
 
+function pioneerPriority(value: any) { return Number.isInteger(value?.brand?.pioneer?.number) && value.brand.pioneer.number >= 1 && value.brand.pioneer.number <= 20 ? 1 : 0; }
+function featuredPriority(value: any) { return (value?.subscriptions ?? []).some((subscription: any) => isSubscriptionEffective(subscription)) ? 1 : 0; }
+function prioritizeBusinesses<T extends { id?: string; publicId?: string }>(items: T[]) { return [...items].sort((a: any, b: any) => pioneerPriority(b) - pioneerPriority(a) || featuredPriority(b) - featuredPriority(a) || String(a.publicId ?? a.id ?? '').localeCompare(String(b.publicId ?? b.id ?? ''))); }
+
 export async function listPublicBusinesses(input: PublicBusinessListInput, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
   const where = publicBusinessWhere(canViewAdult);
@@ -305,23 +331,24 @@ export async function listPublicBusinesses(input: PublicBusinessListInput, db: P
       where,
       select: {
         publicId: true,
+        createdAt: true,
         name: true,
         sede: true,
         adultOnly: true,
         description: true,
         category: { select: publicCategorySelect },
+        modalities: { where: { status: 'ACTIVE' }, select: { type: true }, orderBy: { createdAt: 'asc' } },
         subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 },
         location: { select: publicLocationSelect },
         coverPhoto: { select: publicPhotoSelect },
         profilePhoto: { select: publicPhotoSelect },
+        brand: { select: { pioneer: { select: { number: true } } } },
       },
       orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
-      skip: (input.page - 1) * input.pageSize,
-      take: input.pageSize,
     }),
   ]);
   return {
-    businesses: businesses.map(summary),
+    businesses: prioritizeBusinesses(businesses).map(summary).slice((input.page - 1) * input.pageSize, input.page * input.pageSize),
     pagination: { page: input.page, pageSize: input.pageSize, total, totalPages: Math.ceil(total / input.pageSize) },
   };
 }
@@ -383,9 +410,9 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
     ...(canViewAdult ? {} : { adultOnly: false }),
   };
   const [businesses, products, services] = await Promise.all([
-    db.business.findMany({ where: businessWhere, select: { publicId: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect } }, orderBy: { updatedAt: 'desc' }, take: 500 }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' }, take: 500 }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' }, take: 500 }),
+    db.business.findMany({ where: businessWhere, select: { publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
   ]);
   const categoryMatches = (item: any) => !categoryTerms.length || matchesSearch([item.category?.code, item.category?.translations?.[0]?.name], categoryTerms);
   const inRadius = (value: any) => input.latitude !== undefined && input.longitude !== undefined && input.radiusKm !== undefined ? distanceKm(input.latitude, input.longitude, value) <= input.radiusKm : true;
@@ -393,7 +420,10 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   const matchingOffers = [...products, ...services].filter((item: any) => categoryMatches(item) && (terms.length ? searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, offer: item.name, description: item.description }, terms) > 0 : true));
   const matchingBusinessIds = new Set(matchingOffers.map((item: any) => item.business.publicId));
   const businessItems = businesses.map((item: any) => ({ item, rank: searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, description: item.description }, terms) }));
-  const filteredBusinesses = businessItems.filter(({ item, rank }) => categoryMatches(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId))).sort((a, b) => b.rank - a.rank || sortNearby(a.item, b.item)).map(({ item }) => summary(item));
+  // Cuando el usuario solicita un radio, los negocios sin coordenadas públicas
+  // verificables quedan fuera (distanceKm devuelve Infinity). Sin radio, se
+  // conserva el comportamiento actual y no se aplica ningún filtro geográfico.
+  const filteredBusinesses = businessItems.filter(({ item, rank }) => categoryMatches(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId))).sort((a, b) => pioneerPriority(b.item) - pioneerPriority(a.item) || featuredPriority(b.item) - featuredPriority(a.item) || b.rank - a.rank || sortNearby(a.item, b.item) || String(a.item.publicId).localeCompare(String(b.item.publicId))).map(({ item }) => summary(item));
   const mapOffer = (item: any) => ({ ...offer(item.business.publicId, item), business: { publicId: item.business.publicId, name: item.business.name, location: location(item.business.location) } });
   const filteredProducts = products.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item)).sort(sortNearby).map(mapOffer);
   const filteredServices = services.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item)).sort(sortNearby).map(mapOffer);
@@ -469,4 +499,4 @@ export async function getPublicPhotoContent(publicId: string, photoId: string, d
   };
 }
 
-export const publicBusinessRules = { PUBLIC_BUSINESS_WHERE, summary, detail };
+export const publicBusinessRules = { PUBLIC_BUSINESS_WHERE: PUBLIC_BUSINESS_BASE_WHERE, summary, detail };

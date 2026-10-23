@@ -15,6 +15,7 @@ export function toBusinessDetails(value: RealBusiness): BusinessDetails {
     role: value.role === 'OWNER' ? 'Propietario' : 'Colaborador',
     permissions: value.permissions,
     name: value.name,
+    pioneerNumber: value.pioneerNumber,
     sede: value.sede ?? '',
     adultOnly: value.adultOnly,
     category: value.category ?? 'Sin categoría',

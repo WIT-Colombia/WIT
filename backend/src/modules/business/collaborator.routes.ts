@@ -1,0 +1,18 @@
+import { Router } from 'express';
+import { requireAuth } from '../../shared/middleware/require-auth.js';
+import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
+import { acceptController, cancelController, collaboratorsController, inviteController, leaveController, notificationsController, permissionsController, readNotificationController, reactivateController, rejectController, resolveCollaboratorController, revokeController, suspendController } from './collaborator.controller.js';
+export const collaboratorRouter=Router(); collaboratorRouter.use(requireAuth);
+collaboratorRouter.get('/businesses/:businessId/collaborators',collaboratorsController);
+collaboratorRouter.post('/businesses/:businessId/collaborators/resolve',requireTrustedOrigin,resolveCollaboratorController);
+collaboratorRouter.post('/businesses/:businessId/collaborators/invitations',requireTrustedOrigin,inviteController);
+collaboratorRouter.post('/businesses/:businessId/leave',requireTrustedOrigin,leaveController);
+collaboratorRouter.post('/memberships/:membershipId/accept',requireTrustedOrigin,acceptController);
+collaboratorRouter.post('/memberships/:membershipId/reject',requireTrustedOrigin,rejectController);
+collaboratorRouter.post('/memberships/:membershipId/cancel',requireTrustedOrigin,cancelController);
+collaboratorRouter.post('/memberships/:membershipId/suspend',requireTrustedOrigin,suspendController);
+collaboratorRouter.post('/memberships/:membershipId/reactivate',requireTrustedOrigin,reactivateController);
+collaboratorRouter.post('/memberships/:membershipId/revoke',requireTrustedOrigin,revokeController);
+collaboratorRouter.put('/memberships/:membershipId/permissions',requireTrustedOrigin,permissionsController);
+collaboratorRouter.get('/notifications',notificationsController);
+collaboratorRouter.post('/notifications/:notificationId/read',requireTrustedOrigin,readNotificationController);

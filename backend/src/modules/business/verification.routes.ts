@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import multer from 'multer';
+import { requireAuth } from '../../shared/middleware/require-auth.js';
+import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
+import { getVerificationController, replaceVerificationController, submitVerificationController } from './verification.controller.js';
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
+const uploadVerification = (req: any, res: any, next: any) => upload.single('file')(req, res, (error: any) => { if (error?.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: { code: 'VERIFICATION_DOCUMENT_TOO_LARGE', message: 'El documento puede pesar máximo 10 MB.' } }); next(error); });
+export const verificationRouter = Router();
+verificationRouter.get('/businesses/:businessId/verification', requireAuth, getVerificationController);
+verificationRouter.post('/businesses/:businessId/verification', requireAuth, requireTrustedOrigin, uploadVerification, submitVerificationController);
+verificationRouter.put('/businesses/:businessId/verification/document', requireAuth, requireTrustedOrigin, uploadVerification, replaceVerificationController);

@@ -15,6 +15,18 @@ function normalizeEmail(email: string): string {
   return email.trim().toLocaleLowerCase('en-US');
 }
 
+async function createUniqueNickname(displayName: string): Promise<string> {
+  const base = displayName.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('en-US').replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '').slice(0, 24) || 'usuario';
+  let candidate = `@${base}`;
+  let suffix = 2;
+  while (await prisma.user.findUnique({ where: { nickname: candidate }, select: { id: true } })) {
+    const suffixText = `.${suffix}`;
+    candidate = `@${base.slice(0, 32 - suffixText.length - 1)}${suffixText}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
 function refreshExpiresAt(): Date {
   return new Date(Date.now() + env.refreshTokenTtlDays * 24 * 60 * 60 * 1000);
 }
@@ -36,10 +48,12 @@ export async function issueSession(userId: string, requestMeta?: { userAgent?: s
 export async function register(input: RegisterInput, _requestMeta?: { userAgent?: string; ipAddress?: string }) {
   const emailNormalized = normalizeEmail(input.email);
   const passwordHash = await argon2.hash(input.password, { type: argon2.argon2id });
+  const nickname = await createUniqueNickname(input.name.trim());
   try {
     const user = await prisma.user.create({
       data: {
         displayName: input.name.trim(),
+        nickname,
         emailNormalized,
         authIdentities: {
           create: { provider: 'EMAIL', providerSubject: emailNormalized, passwordHash },
@@ -108,9 +122,11 @@ export async function logout(refreshToken: string): Promise<void> {
 }
 
 export async function getCurrentUser(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, publicId: true, displayName: true, emailNormalized: true, avatarUrl: true, locale: true, status: true, adultContentEnabled: true, adultContentAcceptedAt: true, adultContentAcceptedVersion: true, adultContentRevokedAt: true, authIdentities: { select: { provider: true, verifiedAt: true } } } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, publicId: true, displayName: true, nickname: true, emailNormalized: true, avatarUrl: true, locale: true, status: true, adultContentEnabled: true, adultContentAcceptedAt: true, adultContentAcceptedVersion: true, adultContentRevokedAt: true, authIdentities: { select: { provider: true, verifiedAt: true } } } });
   if (!user || user.status !== 'ACTIVE') throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
   const { authIdentities, ...publicUser } = user;
   const { adultContentEnabled, adultContentAcceptedAt, adultContentAcceptedVersion, adultContentRevokedAt, ...userData } = publicUser;
-  return { ...userData, authProviders: authIdentities.map((identity) => identity.provider), emailVerified: authIdentities.some((identity) => identity.verifiedAt !== null), adultContentPreference: { enabled: adultContentEnabled, acceptedAt: adultContentAcceptedAt, conditionsVersion: adultContentAcceptedVersion, revokedAt: adultContentRevokedAt, ageVerified: false } };
+  const privateAvatarKey = userData.avatarUrl?.startsWith('private-avatar:') ? userData.avatarUrl.slice('private-avatar:'.length) : null;
+  const avatarVersion = privateAvatarKey?.split('/').at(-1)?.replace(/\.(jpg|png|webp)$/i, '');
+  return { ...userData, avatarUrl: privateAvatarKey ? `/api/v1/auth/me/avatar?v=${encodeURIComponent(avatarVersion ?? privateAvatarKey)}` : userData.avatarUrl, authProviders: authIdentities.map((identity) => identity.provider), emailVerified: authIdentities.some((identity) => identity.verifiedAt !== null), adultContentPreference: { enabled: adultContentEnabled, acceptedAt: adultContentAcceptedAt, conditionsVersion: adultContentAcceptedVersion, revokedAt: adultContentRevokedAt, ageVerified: false } };
 }

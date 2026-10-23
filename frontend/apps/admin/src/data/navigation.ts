@@ -1,8 +1,10 @@
 export const navigation = [
 { path: '/dashboard', label: 'Inicio', icon: 'home', description: 'Una visión general del ecosistema WIT.' },
+{ path: '/verifications', label: 'Verificaciones', icon: 'shield', description: 'Revisión documental de negocios.' },
 { path: '/businesses', label: 'Negocios', icon: 'store', description: 'Verificación, reclamaciones, visibilidad y recuperación de establecimientos.' },
 { path: '/users', label: 'Usuarios', icon: 'users', description: 'Perfiles, actividad y estados de las cuentas.' },
 { path: '/content', label: 'Productos y servicios', icon: 'box', description: 'Supervisión del contenido publicado por los negocios.' },
+{ path: '/pioneers', label: 'Negocios Pioneros', icon: 'star', description: 'Gestiona los 20 reconocimientos permanentes de XAMUKO.' },
 { path: '/reviews', label: 'Opiniones', icon: 'message', description: 'Calificaciones y opiniones escritas, independientes entre sí.' },
 { path: '/reports', label: 'Reportes', icon: 'flag', description: 'Revisión de reportes y prioridades de moderación. El contenido nunca se elimina automáticamente.' },
 { path: '/needs', label: 'Necesidades', icon: 'search', description: 'Demanda no satisfecha por ciudad, zona, categoría y término.' },

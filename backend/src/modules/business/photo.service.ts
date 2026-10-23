@@ -1,7 +1,7 @@
 import type { PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { findBusinessForPhotos } from './photo-access.js';
+import { findBusinessForPhotoRead, findBusinessForPhotoWrite, requireBusinessPhotoPermission } from './photo-access.js';
 import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, photoStoragePath, removePhoto, savePhoto } from './photo-storage.js';
 
 const db: PrismaClient = prisma;
@@ -29,14 +29,14 @@ function ensurePosition(value: number | undefined, field: string) {
 }
 
 export async function listPhotos(userId: string, businessId: string) {
-  await findBusinessForPhotos(userId, businessId);
+  await findBusinessForPhotoRead(userId, businessId);
   const photos = await db.photo.findMany({ where: { businessId, isGallery: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] });
   return photos.map(photo => serializePhoto(businessId, photo));
 }
 
 export async function uploadPhoto(userId: string, businessId: string, file: UploadedPhoto | undefined, requestedCover: boolean, offerId?: string) {
   ensureFile(file);
-  await findBusinessForPhotos(userId, businessId);
+  await findBusinessForPhotoWrite(userId, businessId, offerId ? 'MANAGE_CATALOG' : 'EDIT_BUSINESS');
   if (offerId) { const offer = await db.businessOffer.findFirst({ where: { id: offerId, businessId }, select: { id: true } }); if (!offer) throw new AppError(404, 'OFFER_NOT_FOUND', 'No encontramos ese producto.'); }
   const count = offerId ? 0 : await db.photo.count({ where: { businessId, isGallery: true } });
   if (!offerId && count >= 10) throw new AppError(422, 'PHOTO_LIMIT_REACHED', 'Cada negocio puede tener máximo 10 fotografías.');
@@ -50,7 +50,9 @@ export async function uploadPhoto(userId: string, businessId: string, file: Uplo
       if (shouldUseAsCover) await tx.photo.updateMany({ where: { businessId, isCover: true }, data: { isCover: false } });
       if (offerId && previousOfferPhotos.length) await tx.photo.deleteMany({ where: { id: { in: previousOfferPhotos.map(item => item.id) }, businessId, offerId } });
       const photo = await tx.photo.create({ data: { businessId, offerId: offerId ?? null, storageKey: stored.storageKey, url: null, source: 'NEGOCIOS', sortOrder: count, isCover: shouldUseAsCover, isGallery: !offerId, uploadedById: userId } });
-      if (shouldUseAsCover || !business.profilePhotoId) await tx.business.update({ where: { id: businessId }, data: { ...(shouldUseAsCover ? { coverPhotoId: photo.id } : {}), ...(!business.profilePhotoId ? { profilePhotoId: photo.id } : {}) } });
+      // Gallery uploads may become the cover, but never become the profile
+      // image implicitly. The profile photo is selected explicitly.
+      if (shouldUseAsCover) await tx.business.update({ where: { id: businessId }, data: { coverPhotoId: photo.id } });
       return photo;
     });
     return serializePhoto(businessId, photo);
@@ -61,28 +63,31 @@ export async function uploadPhoto(userId: string, businessId: string, file: Uplo
 }
 
 export async function deletePhoto(userId: string, businessId: string, photoId: string) {
-  await findBusinessForPhotos(userId, businessId);
+  const access = await findBusinessForPhotoRead(userId, businessId);
   const photo = await db.photo.findFirst({ where: { id: photoId, businessId } });
   if (!photo) throw new AppError(404, 'PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
+  requireBusinessPhotoPermission(access, photo.offerId ? 'MANAGE_CATALOG' : 'EDIT_BUSINESS');
   await removePhoto(photo.storageKey).catch(() => { throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo eliminar el archivo de fotografía.'); });
   await db.$transaction(async tx => { await tx.photo.delete({ where: { id: photo.id } }); });
 }
 
-export async function setPhotoCover(userId: string, businessId: string, photoId: string) {
-  await findBusinessForPhotos(userId, businessId);
+export async function setPhotoCover(userId: string, businessId: string, photoId: string, positionX?: number, positionY?: number) {
+  await findBusinessForPhotoWrite(userId, businessId, 'EDIT_BUSINESS');
   const photo = await db.photo.findFirst({ where: { id: photoId, businessId } });
   if (!photo) throw new AppError(404, 'PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
+  const x = ensurePosition(positionX, 'la portada');
+  const y = ensurePosition(positionY, 'la portada');
   const updated = await db.$transaction(async tx => {
     await tx.photo.updateMany({ where: { businessId, isCover: true }, data: { isCover: false } });
     const selected = await tx.photo.update({ where: { id: photo.id }, data: { isCover: true } });
-    await tx.business.update({ where: { id: businessId }, data: { coverPhotoId: selected.id } });
+    await tx.business.update({ where: { id: businessId }, data: { coverPhotoId: selected.id, coverImagePositionX: x, coverImagePositionY: y } });
     return selected;
   });
   return serializePhoto(businessId, updated);
 }
 
 export async function clearCoverPhoto(userId: string, businessId: string) {
-  await findBusinessForPhotos(userId, businessId);
+  await findBusinessForPhotoWrite(userId, businessId, 'EDIT_BUSINESS');
   const business = await db.business.findUniqueOrThrow({ where: { id: businessId }, select: { coverPhotoId: true } });
   await db.$transaction(async tx => {
     if (business.coverPhotoId) await tx.photo.updateMany({ where: { id: business.coverPhotoId, businessId, isGallery: true }, data: { isCover: false } });
@@ -92,7 +97,7 @@ export async function clearCoverPhoto(userId: string, businessId: string) {
 
 export async function uploadCoverPhoto(userId: string, businessId: string, file: UploadedPhoto | undefined, positionX?: number, positionY?: number) {
   ensureFile(file);
-  await findBusinessForPhotos(userId, businessId);
+  await findBusinessForPhotoWrite(userId, businessId, 'EDIT_BUSINESS');
   const x = ensurePosition(positionX, 'la portada');
   const y = ensurePosition(positionY, 'la portada');
   const stored = await savePhoto(businessId, file.buffer, file.mimetype);
@@ -110,7 +115,7 @@ export async function uploadCoverPhoto(userId: string, businessId: string, file:
 }
 
 export async function setProfilePhoto(userId: string, businessId: string, photoId: unknown, positionX?: number, positionY?: number) {
-  await findBusinessForPhotos(userId, businessId);
+  await findBusinessForPhotoWrite(userId, businessId, 'EDIT_BUSINESS');
   if (photoId === null) {
     await db.business.update({ where: { id: businessId }, data: { profilePhotoId: null, profileImagePositionX: 50, profileImagePositionY: 50 } });
     return null;
@@ -127,7 +132,22 @@ export async function setProfilePhoto(userId: string, businessId: string, photoI
 }
 
 export async function getPhotoContent(userId: string, businessId: string, photoId: string) {
-  await findBusinessForPhotos(userId, businessId);
+  try {
+    await findBusinessForPhotoRead(userId, businessId);
+  } catch (error) {
+    // A notification recipient may view only the business's current profile photo.
+    // Gallery and product photos remain private, including after access is revoked.
+    const notificationProfilePhoto = await db.business.findFirst({
+      where: {
+        id: businessId,
+        profilePhotoId: photoId,
+        businessAccount: { status: 'ACTIVE' },
+        notifications: { some: { userId, businessId } },
+      },
+      select: { id: true },
+    });
+    if (!notificationProfilePhoto) throw error;
+  }
   const photo = await db.photo.findFirst({ where: { id: photoId, businessId, OR: [{ offerId: null }, { offer: { deletedAt: null } }] } });
   if (!photo) throw new AppError(404, 'PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
   return { path: photoStoragePath(photo.storageKey), mimeType: photo.storageKey.endsWith('.png') ? 'image/png' : photo.storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };

@@ -1,0 +1,18 @@
+import type { RequestHandler } from 'express';
+import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
+import { acceptInvitation, cancelInvitation, inviteCollaborator, leaveBusiness, listCollaborators, listNotifications, markNotificationRead, reactivateCollaborator, rejectInvitation, resolveCollaboratorRecipient, revokeCollaborator, setPermissions, suspendCollaborator } from './collaborator.service.js';
+const uid=(req:any)=>(req as AuthenticatedRequest).auth.userId;
+const run=(fn:(req:any)=>Promise<unknown>,status=200):RequestHandler=>async(req,res,next)=>{try{res.status(status).json(await fn(req));}catch(error){next(error);}};
+export const collaboratorsController=run(async req=>({memberships:await listCollaborators(uid(req),req.params.businessId)}));
+export const resolveCollaboratorController=run(async req=>({recipient:await resolveCollaboratorRecipient(uid(req),req.params.businessId,String(req.body?.nickname??''))}));
+export const inviteController=run(async req=>({membership:await inviteCollaborator(uid(req),req.params.businessId,String(req.body?.identifier??''),Array.isArray(req.body?.permissions)?req.body.permissions:[])}),201);
+export const acceptController=run(async req=>({membership:await acceptInvitation(uid(req),req.params.membershipId)}));
+export const rejectController=run(async req=>({membership:await rejectInvitation(uid(req),req.params.membershipId)}));
+export const cancelController=run(async req=>({membership:await cancelInvitation(uid(req),req.params.membershipId)}));
+export const suspendController=run(async req=>({membership:await suspendCollaborator(uid(req),req.params.membershipId)}));
+export const reactivateController=run(async req=>({membership:await reactivateCollaborator(uid(req),req.params.membershipId)}));
+export const revokeController=run(async req=>({membership:await revokeCollaborator(uid(req),req.params.membershipId)}));
+export const permissionsController=run(async req=>({result:await setPermissions(uid(req),req.params.membershipId,Array.isArray(req.body?.permissions)?req.body.permissions:[])}));
+export const leaveController=run(async req=>({membership:await leaveBusiness(uid(req),req.params.businessId)}));
+export const notificationsController=run(async req=>({notifications:await listNotifications(uid(req))}));
+export const readNotificationController=run(async req=>markNotificationRead(uid(req),req.params.notificationId));

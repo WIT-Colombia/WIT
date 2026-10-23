@@ -3,7 +3,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 
-export const adminPermissions = ['BUSINESSES_READ', 'CATALOG_READ', 'REPORTS_REVIEW', 'CONTENT_MODERATE', 'AUDIT_READ', 'ADMINS_MANAGE'] as const;
+export const adminPermissions = ['BUSINESSES_READ', 'CATALOG_READ', 'REPORTS_REVIEW', 'CONTENT_MODERATE', 'AUDIT_READ', 'ADMINS_MANAGE', 'PIONEER_MANAGE'] as const;
 export type AdminPermission = typeof adminPermissions[number];
 export type AdminRole = 'ADMIN' | 'SUPER_ADMIN';
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -42,7 +42,9 @@ export async function adminSession(userId: string) {
   if (!context) throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'No tienes acceso administrativo.');
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, publicId: true, displayName: true, emailNormalized: true, avatarUrl: true, locale: true } });
   if (!user) throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
-  return { user, role: context.role, permissions: context.permissions };
+  const privateAvatarKey = user.avatarUrl?.startsWith('private-avatar:') ? user.avatarUrl.slice('private-avatar:'.length) : null;
+  const avatarVersion = privateAvatarKey?.split('/').at(-1)?.replace(/\.(jpg|png|webp)$/i, '');
+  return { user: { ...user, avatarUrl: privateAvatarKey ? `/api/v1/auth/me/avatar?v=${encodeURIComponent(avatarVersion ?? privateAvatarKey)}` : user.avatarUrl }, role: context.role, permissions: context.permissions };
 }
 
 async function audit(userId: string, action: string, entityId: string, previousState: unknown, newState: unknown, reason?: string) {

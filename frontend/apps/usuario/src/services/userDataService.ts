@@ -114,10 +114,13 @@ export function deleteNotification(id: string): UserNotification[] {
 }
 
 export type UserProfile = { name: string; email: string; city: string; photo?: string };
-export function getProfile(): UserProfile {
-  try { return { name: "Danilo Jaramillo", email: "danilo.jaramillo@hotmail.com", city: "", ...JSON.parse(localStorage.getItem(PROFILE_KEY) ?? "{}") as Partial<UserProfile> }; } catch { return { name: "Danilo Jaramillo", email: "danilo.jaramillo@hotmail.com", city: "" }; }
+function profileKey(userId?: string | null): string {
+  return userId ? `${PROFILE_KEY}:${userId}` : PROFILE_KEY;
 }
-export function saveProfile(profile: UserProfile): void { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }
+export function getProfile(userId?: string | null): UserProfile {
+  try { return { name: "", email: "", city: "", ...JSON.parse(localStorage.getItem(profileKey(userId)) ?? "{}") as Partial<UserProfile> }; } catch { return { name: "", email: "", city: "" }; }
+}
+export function saveProfile(profile: UserProfile, userId?: string | null): void { localStorage.setItem(profileKey(userId), JSON.stringify(profile)); }
 export type UserSettings = { nearbyUpdates: boolean; availabilityUpdates: boolean; reducedMotion: boolean };
 const defaultSettings: UserSettings = { nearbyUpdates: true, availabilityUpdates: true, reducedMotion: false };
 export function getSettings(): UserSettings {

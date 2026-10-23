@@ -55,7 +55,7 @@
 .home-page.home-v2 .search-bar { min-height: 44px; padding: 3px 6px 3px 15px; border: 1px solid #e9edf8; border-radius: 999px; background: #edf0f8; box-shadow: none; }
 .home-page.home-v2 .search-bar > svg { width: 19px; height: 19px; flex-basis: 19px; color: #252772; }
 .home-page.home-v2 .search-bar input { height: 36px; padding: 0 10px; font-size: 13px; }
-.home-page.home-v2 .search-bar:focus-within { border-color: #ac94fa; background: #fff; box-shadow: 0 0 0 3px #7b3ffb14; }
+.home-page.home-v2 .search-bar:focus-within { border-color: #7b3ffb; background: #fff; box-shadow: 0 0 0 3px #7b3ffb30; }
 
 /* Photographic hero with the same local asset and map destination as V1. */
 .home-page.home-v2 .home-city-banner-section { order: 1; margin: 0; }
@@ -182,6 +182,7 @@
 .home-page.home-v2 .user-bottom-nav a.is-active { color: #671df4; }
 .home-page.home-v2 .user-bottom-nav a.is-active::before { position: absolute; top: 0; width: 40px; height: 3px; border-radius: 0 0 4px 4px; background: #7023fd; content: ""; }
 .home-page.home-v2 :where(a, button, input):focus-visible { outline: 3px solid #8454fb; outline-offset: 3px; }
+.home-page.home-v2 .site-header-search .search-bar input:focus-visible { outline: none; }
 
 @media (min-width: 701px) and (max-width: 1080px) {
   .home-page.home-v2 .home-topbar { grid-template-columns: 124px minmax(110px, 1fr) auto auto 32px 32px; gap: 12px; }

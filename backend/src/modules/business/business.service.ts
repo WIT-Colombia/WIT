@@ -3,6 +3,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import type { BusinessCreateInput, BusinessUpdateInput } from './business.schemas.js';
 import { modalityRules } from './modality.service.js';
+import { ensureInitialVisibilityPeriod } from './visibility.service.js';
 
 type Db = PrismaClient | Prisma.TransactionClient;
 type RequestMeta = { ipAddress?: string };
@@ -32,6 +33,7 @@ function referralSummary(validReferralCount: number) {
 
 const businessInclude = {
   businessAccount: true,
+  brand: { include: { pioneer: true } },
   category: true,
   secondaryCategories: { include: { category: true }, orderBy: { createdAt: 'asc' as const } },
   location: true,
@@ -134,6 +136,33 @@ function canPublishAutomatically(business: any) {
     && publicationReadiness(business).ready;
 }
 
+const AUTO_PIONEER_LIMIT = 20;
+const AUTO_PIONEER_LOCK = 'xamuko:auto-pioneer-assignment';
+
+/** Assigns the next permanent pioneer number while serializing concurrent publications. */
+async function assignAutomaticPioneer(tx: Prisma.TransactionClient, business: any, userId: string) {
+  if (business.brand?.pioneer) return business;
+  const lockRows = await tx.$queryRaw<Array<{ acquired: number }>>`SELECT GET_LOCK(${AUTO_PIONEER_LOCK}, 10) AS acquired`;
+  if (Number(lockRows[0]?.acquired) !== 1) throw new AppError(503, 'PIONEER_ASSIGNMENT_UNAVAILABLE', 'No fue posible reservar el reconocimiento Pionero. Intenta nuevamente.');
+  try {
+    const count = await tx.pioneerAssignment.count();
+    if (count >= AUTO_PIONEER_LIMIT) return business;
+    const last = await tx.pioneerAssignment.findFirst({ orderBy: { number: 'desc' }, select: { number: true } });
+    const number = (last?.number ?? 0) + 1;
+    if (number > AUTO_PIONEER_LIMIT) return business;
+    const brand = business.brandId
+      ? await tx.businessBrand.findUnique({ where: { id: business.brandId } })
+      : await tx.businessBrand.create({ data: { legalName: business.name, normalizedName: `${business.slug}-${business.id}` } });
+    if (!brand) return business;
+    if (!business.brandId) await tx.business.update({ where: { id: business.id }, data: { brandId: brand.id } });
+    await tx.pioneerAssignment.create({ data: { brandId: brand.id, number, assignedById: userId } });
+    await audit(tx, userId, business.id, 'PIONEER_ASSIGNED_AUTOMATICALLY', null, { number, brandId: brand.id });
+    return { ...business, brandId: brand.id, brand: { ...brand, pioneer: { number } } };
+  } finally {
+    await tx.$queryRaw`SELECT RELEASE_LOCK(${AUTO_PIONEER_LOCK})`;
+  }
+}
+
 async function resolveCategory(input: { categoryId?: string; categoryCode?: string }, db: Db) {
   let category = input.categoryId
     ? await db.category.findUnique({ where: { id: input.categoryId } })
@@ -172,6 +201,7 @@ function serialize(business: any, userId?: string) {
     publicId: business.publicId,
     businessAccountId: business.businessAccountId,
     name: business.name,
+    pioneerNumber: Number.isInteger(business.brand?.pioneer?.number) && business.brand.pioneer.number >= 1 && business.brand.pioneer.number <= 20 ? business.brand.pioneer.number : null,
     sede: business.sede,
     adultOnly: business.adultOnly,
     slug: business.slug,
@@ -247,13 +277,17 @@ export async function publishBusiness(userId: string, identifier: string, meta?:
   if (!readiness.ready) {
     throw new AppError(422, 'BUSINESS_PUBLICATION_INCOMPLETE', 'Completa los requisitos antes de publicar el negocio.', { requirements: JSON.stringify(readiness.blockers) });
   }
-  if (isPublished(current)) return serialize(current, userId);
+  if (isPublished(current)) {
+    const assigned = await prisma.$transaction(async (tx) => assignAutomaticPioneer(tx, current, userId));
+    return serialize(assigned, userId);
+  }
   if (!isInitiallyUnpublished(current)) {
     throw new AppError(409, 'BUSINESS_PUBLICATION_MANAGED', 'El estado administrativo actual no permite publicación automática.');
   }
   const updated = await prisma.$transaction(async (tx) => {
-    const business = await tx.business.update({ where: { id: current.id }, data: publishedBusinessState, include: businessInclude });
+    let business = await tx.business.update({ where: { id: current.id }, data: publishedBusinessState, include: businessInclude });
     await audit(tx, userId, current.id, 'BUSINESS_PUBLISHED', stateOf(current), stateOf(business), meta);
+    business = await assignAutomaticPioneer(tx, business, userId);
     return business;
   });
   return serialize(updated, userId);
@@ -295,6 +329,7 @@ export async function createBusiness(userId: string, input: BusinessCreateInput,
     const existing = await tx.business.count({ where: { businessAccountId: account.id, slug: baseSlug } });
     const locationData = input.cityName ? { create: { countryCode: input.countryCode, regionCode: input.regionCode ?? null, regionName: input.regionName ?? null, cityName: input.cityName, zoneName: input.zoneName ?? null, address: input.address ?? '', additionalAddressInfo: input.additionalAddressInfo ?? null, latitude: input.latitude ?? null, longitude: input.longitude ?? null, visibility: visibilityForModalities(input.modalityTypes), postalCode: input.postalCode ?? null, timezone: input.timezone } } : undefined;
     const business = await tx.business.create({ data: { businessAccountId: account.id, createdById: userId, name: input.name, sede: input.sede ?? null, adultOnly: input.adultOnly ?? false, slug: existing ? `${baseSlug}-${existing + 1}` : baseSlug, description: input.description ?? null, categoryId: category.id, email: input.email ?? null, website: input.website ?? null, instagram: input.instagram ?? null, facebookUrl: input.facebookUrl ?? null, xUrl: input.xUrl ?? null, tiktokUrl: input.tiktokUrl ?? null, phone: input.phone ?? null, whatsapp: input.whatsapp ?? null, phonePublic: input.phonePublic ?? false, whatsappPublic: input.whatsappPublic ?? false, emailPublic: input.emailPublic ?? false, memberships: { create: { userId, role: 'OWNER', status: 'ACTIVE', acceptedAt: new Date() } }, referralCounter: { create: {} }, ...(locationData ? { location: locationData } : {}) }, include: businessInclude });
+    await ensureInitialVisibilityPeriod(tx, business.id, business.createdAt);
     if (secondaryCategories.length) await tx.businessSecondaryCategory.createMany({ data: secondaryCategories.map(item => ({ businessId: business.id, categoryId: item.id })) });
     await audit(tx, userId, business.id, 'BUSINESS_CREATED', null, { businessId: business.id, publicId: business.publicId }, meta);
     for (const type of input.modalityTypes ?? []) {
@@ -314,8 +349,9 @@ export async function createBusiness(userId: string, input: BusinessCreateInput,
     }
     const created = await tx.business.findUniqueOrThrow({ where: { id: business.id }, include: businessInclude });
     if (!canPublishAutomatically(created)) return created;
-    const published = await tx.business.update({ where: { id: created.id }, data: publishedBusinessState, include: businessInclude });
+    let published = await tx.business.update({ where: { id: created.id }, data: publishedBusinessState, include: businessInclude });
     await audit(tx, userId, created.id, 'BUSINESS_PUBLISHED_AUTOMATICALLY', stateOf(created), stateOf(published), meta);
+    published = await assignAutomaticPioneer(tx, published, userId);
     return published;
   });
   return serialize(result, userId);

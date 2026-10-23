@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@wit/ui";
 import { businesses as sampleBusinesses, categories, products as sampleProducts, type Business } from "../data/mockData";
-import { hasSampleCatalogForLocation } from "../services/locationService";
 import { useLocationContext } from "../context/LocationContext";
 import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
-import { LocationAvailabilityNotice } from "../components/LocationAvailabilityNotice";
+import { listPublicBusinesses, listPublicProducts, listPublicPromotions, listPublicServices } from "../services/publicBusinessApi";
+import { requestBlobWithSession } from "../services/authService";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
 import { BottomNavigation } from "../components/BottomNavigation";
@@ -13,10 +13,9 @@ import { BusinessCard } from "../components/EntityCards";
 import { NewProductsBanner } from "../components/NewProductsBanner";
 import { NoResultsState } from "../components/NoResultsState";
 import { AdMobBanner } from "../components/AdMobBanner";
-import { ThumbsUpIcon } from "../components/ActionIcons";
-import { useAccountGate } from "../hooks/useAccountGate";
 import { getLikeIds, toggleLike } from "../services/userDataService";
 import { useFavorites } from "../services/favoritesService";
+import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import xamukoLocalHero from "../assets/xamuko-local-hero.png";
 import "./Home.css";
 import "./HomeChanges.css";
@@ -33,6 +32,22 @@ function Icon({ name }: { name: "pin" | "star" | "arrow" | "phone" | "map" }) {
     map: <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15m6-12v15"/></>,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+}
+
+function SpecialOfferImage({ src, alt }: { src: string; alt: string }) {
+  const [imageUrl, setImageUrl] = useState("");
+  useEffect(() => {
+    let active = true;
+    let objectUrl = "";
+    if (!src) { setImageUrl(""); return; }
+    void requestBlobWithSession(src).then(blob => {
+      if (!active) return;
+      objectUrl = URL.createObjectURL(blob);
+      setImageUrl(objectUrl);
+    }).catch(() => { if (active) setImageUrl(""); });
+    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [src]);
+  return imageUrl ? <img src={imageUrl} alt={alt} loading="lazy"/> : null;
 }
 
 const categoryIconPaths: Record<string, string> = {
@@ -78,7 +93,9 @@ function CategoryIcon({ name }: { name: string }) {
 const NEW_BUSINESS_WINDOW_DAYS = 7;
 const NEW_PRODUCT_WINDOW_DAYS = 7;
 
-const specialOffers = [
+type HomeSpecialOffer = { product: typeof sampleProducts[number]; discount: string; deadline: string; promotionId?: string };
+
+const specialOffers: HomeSpecialOffer[] = [
   { product: sampleProducts[0], discount: "-20%", deadline: "Hasta 31 oct." },
   { product: sampleProducts[1], discount: "-15%", deadline: "Hasta 30 oct." },
   { product: sampleProducts[3], discount: "-30%", deadline: "Hasta 15 oct." },
@@ -96,7 +113,6 @@ function isRecentlyAdded(createdAt?: string): boolean {
 
 export default function Home() {
   const navigate = useNavigate();
-  const requireAccount = useAccountGate();
   const location = useLocation();
   const navigationMessage = (location.state as { toast?: unknown } | null)?.toast;
   const [query, setQuery] = useState(() => new URLSearchParams(location.search).get("q") ?? "");
@@ -108,6 +124,8 @@ export default function Home() {
   const [featuredScroll, setFeaturedScroll] = useState({ left: 0, max: 0 });
   const [nearbyScroll, setNearbyScroll] = useState({ left: 0, max: 0 });
   const [items, setItems] = useState<Business[]>([]);
+  const [catalogProducts, setCatalogProducts] = useState<typeof sampleProducts>([]);
+  const [realPromotions, setRealPromotions] = useState<HomeSpecialOffer[]>([]);
   const { favorites, toggleFavorite: saveFavorite } = useFavorites();
   const [likes, setLikes] = useState<string[]>(getLikeIds);
   const [bannerPaused, setBannerPaused] = useState(false);
@@ -134,7 +152,9 @@ export default function Home() {
   const ignoreOffersClickRef = useRef(false);
   const { selection } = useLocationContext();
   const selectedLocation = selection?.locality ?? null;
-  const hasSampleCatalog = hasSampleCatalogForLocation(selectedLocation);
+  // Inicio siempre usa el catálogo público del backend; los datos demo no se
+  // deben mostrar cuando existe una conexión con la base real.
+  const hasSampleCatalog = false;
   const [message, setMessage] = useState(() => typeof navigationMessage === "string" ? navigationMessage : "");
 
   function distanceBetween(origin: { lat: number; lng: number } | undefined, target: { lat: number; lng: number } | undefined): number {
@@ -155,8 +175,9 @@ export default function Home() {
   useEffect(() => {
     let current = true;
     const userCoordinates = selection?.coordinates;
-    void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng }).then(({ businesses }) => {
+    void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng }).then(({ businesses, products }) => {
       if (!current) return;
+      setCatalogProducts(products);
       setItems(businesses.map((business) => ({
         ...business,
         distanceKm: distanceBetween(userCoordinates, business.coordinates),
@@ -176,30 +197,21 @@ export default function Home() {
     return "Lugares cerca de ti";
   }, [query, category]);
 
-  const visibleItems = hasSampleCatalog ? items : [];
+  // Demo sections are opt-in; real API results must remain visible in E2E/production.
+  const visibleItems = items;
   const bannerBusinesses = useMemo(() => {
-    if (!hasSampleCatalog) return [];
-    const nearby = [...sampleBusinesses].sort((a, b) => a.distanceKm - b.distanceKm);
-    const withinFiveKm = nearby.filter((business) => business.distanceKm <= 5);
-    const withinTenKm = nearby.filter((business) => business.distanceKm <= 10);
-    const isFeatured = (business: Business) => business.plan === "premium" || business.isFeatured;
-    const allFeaturedIds = new Set(nearby.filter(isFeatured).map((business) => business.id));
-
-    const featured = withinFiveKm.filter(isFeatured).slice(0, 3);
-    const featuredIds = new Set(featured.map((business) => business.id));
-    featured.push(...withinTenKm.filter((business) => isFeatured(business) && !featuredIds.has(business.id)).slice(0, 3 - featured.length));
-
-    const newBusinesses = withinFiveKm.filter((business) => isRecentlyAdded(business.createdAt) && !allFeaturedIds.has(business.id)).slice(0, 2);
-    const newIds = new Set(newBusinesses.map((business) => business.id));
-    newBusinesses.push(...withinTenKm.filter((business) => isRecentlyAdded(business.createdAt) && !allFeaturedIds.has(business.id) && !newIds.has(business.id)).slice(0, 2 - newBusinesses.length));
-
-    if (featured.length && newBusinesses.length) return [...featured, ...newBusinesses];
-    if (featured.length) return featured;
-    if (newBusinesses.length) return newBusinesses.slice(0, 5);
-    return (withinFiveKm.length ? withinFiveKm : withinTenKm).slice(0, 5);
-  }, [hasSampleCatalog]);
+    const source = hasSampleCatalog ? sampleBusinesses : items;
+    const nearby = [...source].sort((a, b) => a.distanceKm - b.distanceKm);
+    const recent = nearby.filter((business) => isRecentlyAdded(business.createdAt));
+    const featured = nearby.filter((business) => business.plan === "premium" || business.isFeatured);
+    return [...recent, ...featured.filter((business) => !recent.some((item) => item.id === business.id))].slice(0, 6);
+  }, [hasSampleCatalog, items]);
   const newProducts = useMemo(() => {
-    if (!hasSampleCatalog) return [];
+    if (!hasSampleCatalog) return catalogProducts.filter((product) => {
+      if (!product.createdAt) return false;
+      const ageDays = (Date.now() - Date.parse(product.createdAt)) / (1000 * 60 * 60 * 24);
+      return ageDays >= 0 && ageDays < NEW_PRODUCT_WINDOW_DAYS;
+    });
     const distances = new Map(sampleBusinesses.map((business) => [business.id, business.distanceKm]));
     return [...sampleProducts]
       .filter((product) => {
@@ -209,6 +221,34 @@ export default function Home() {
       })
       .sort((a, b) => (distances.get(a.businessId) ?? Number.POSITIVE_INFINITY) - (distances.get(b.businessId) ?? Number.POSITIVE_INFINITY)
         || Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""));
+  }, [catalogProducts, hasSampleCatalog]);
+  const newProductIds = useMemo(() => newProducts.map((product) => product.id), [newProducts]);
+  const { get: getOfferLike, toggle: toggleOfferLike } = useOfferLikes(newProductIds);
+  const visibleSpecialOffers = useMemo<HomeSpecialOffer[]>(() => hasSampleCatalog ? specialOffers : realPromotions.length ? realPromotions : catalogProducts.filter((product) => product.isOffer).map((product) => ({ product, discount: product.discount ?? product.offerLabel ?? "Oferta", deadline: product.offerDeadline ?? "" })), [catalogProducts, hasSampleCatalog, realPromotions]);
+  useEffect(() => {
+    if (hasSampleCatalog) return;
+    let active = true;
+    void listPublicBusinesses().then(async businesses => {
+      const grouped = await Promise.all(businesses.map(async business => {
+        const [promotions, products, services] = await Promise.all([
+          listPublicPromotions(business.id).catch(() => []),
+          listPublicProducts(business.id).catch(() => []),
+          listPublicServices(business.id).catch(() => []),
+        ]);
+        const catalogById = new Map([...products, ...services].map(item => [item.id, item]));
+        return promotions.map(promotion => {
+          const linkedOffer = promotion.relatedOfferId ? catalogById.get(promotion.relatedOfferId) : undefined;
+          const linkedImage = linkedOffer?.image?.replace(
+            /\/api\/v1\/public\/businesses\/[^/]+\/photos\//,
+            `/api/v1/public/businesses/${business.id}/photos/`,
+          );
+          return ({ product: { id: promotion.relatedOfferId ?? `promotion-${promotion.id}`, businessId: business.id, name: promotion.title, description: promotion.description, image: linkedImage ?? promotion.photos[0]?.url ?? "", businessName: business.name } as typeof sampleProducts[number], discount: promotion.type === "OFFER" && promotion.originalPrice && promotion.promotionalPrice ? `${Math.round((1 - Number(promotion.promotionalPrice) / Number(promotion.originalPrice)) * 100)}% dto.` : "PROMOCIÓN", deadline: new Date(promotion.endsAt).toLocaleDateString("es-CO"), ...(promotion.type === "PROMOTION" ? { promotionId: promotion.id } : {}) });
+        });
+      }));
+      const rows = grouped.flat();
+      if (active) setRealPromotions(rows);
+    });
+    return () => { active = false; };
   }, [hasSampleCatalog]);
   useEffect(() => {
     const viewport = bannerViewportRef.current;
@@ -309,7 +349,10 @@ export default function Home() {
     return () => { window.cancelAnimationFrame(frame); observer.disconnect(); };
   }, [showAllOffers]);
 
-  function saveLike(id: string) { setLikes(toggleLike(id)); }
+  function saveLike(id: string) {
+    if (isRealOfferId(id)) return toggleOfferLike(id).catch(() => { setMessage("No pudimos actualizar el Me gusta. Intenta nuevamente."); });
+    setLikes(toggleLike(id));
+  }
 
   function pauseBannerForInteraction() {
     if (bannerResumeTimerRef.current !== null) window.clearTimeout(bannerResumeTimerRef.current);
@@ -501,24 +544,24 @@ export default function Home() {
         {showAllCategories && categoryScroll.max > 0 && <div className="category-scroll-control"><input type="range" min="0" max={categoryScroll.max} step="1" value={Math.min(categoryScroll.left, categoryScroll.max)} aria-label="Desplazar categorías" onChange={(event) => { const left = Number(event.target.value); if (categoryListRef.current) categoryListRef.current.scrollLeft = left; setCategoryScroll((current) => ({ ...current, left })); }} /></div>}
       </section>
 
-      {bannerBusinesses.length > 0 && <section className="home-business-banner home-business-banner--below-hero" aria-label="Descubre negocios"><div className="home-business-banner__heading"><div className="home-section-intro"><h2><span className="home-section-symbol" aria-hidden="true"><Icon name="star"/></span>Descubre negocios</h2><p>Negocios de tu ciudad, nuevas historias por descubrir.</p></div><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div><div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}><div className="home-business-banner__track">{[0, 1].map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__badge"><Icon name="star"/><small>{business.plan === "premium" || business.isFeatured ? "Destacado" : isRecentlyAdded(business.createdAt) ? "Nuevo en tu ciudad" : "Cerca de ti"}</small></span><span className="home-business-banner__copy"><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}</div></div></section>}
+      {bannerBusinesses.length > 0 && <section className="home-business-banner home-business-banner--below-hero" aria-label="Descubre negocios"><div className="home-business-banner__heading"><div className="home-section-intro"><h2><span className="home-section-symbol" aria-hidden="true"><Icon name="star"/></span>Descubre negocios</h2><p>Negocios de tu ciudad, nuevas historias por descubrir.</p></div><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div><div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}><div className="home-business-banner__track">{(bannerBusinesses.length > 1 ? [0, 1] : [0]).map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__badge"><Icon name="star"/><small>{business.plan === "premium" || business.isFeatured ? "Destacado" : isRecentlyAdded(business.createdAt) ? "Nuevo en tu ciudad" : "Cerca de ti"}</small></span><span className="home-business-banner__copy"><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}</div></div></section>}
 
       <div className="admob-banner-slot admob-banner-slot--home-inline"><AdMobBanner /></div>
 
       {featuredItems.length > 0 && <section className="business-section home-featured-section" aria-labelledby="featured-title"><div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="featured-title"><span className="home-section-symbol" aria-hidden="true">◇</span>Negocios destacados</h2><p>Descubre y apoya los negocios de tu comunidad.</p></div>{allFeaturedItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllFeatured} aria-controls="featured-business-list" onClick={() => setShowAllFeatured((current) => !current)}>{showAllFeatured ? "Ver menos" : `Ver más (${allFeaturedItems.length})`} <Icon name="arrow" /></button>}</div><div className="business-grid" id="featured-business-list" ref={featuredListRef} onScroll={() => { const list = featuredListRef.current; if (list) setFeaturedScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startFeaturedDrag} onPointerMove={moveFeaturedDrag} onPointerUp={endFeaturedDrag} onPointerCancel={endFeaturedDrag} onClickCapture={(event) => { if (ignoreFeaturedClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{featuredItems.map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllFeatured && featuredScroll.max > 0 && <div className="featured-scroll-control"><input type="range" min="0" max={featuredScroll.max} step="1" value={Math.min(featuredScroll.left, featuredScroll.max)} aria-label="Desplazar negocios destacados" onChange={(event) => { const left = Number(event.target.value); if (featuredListRef.current) featuredListRef.current.scrollLeft = left; setFeaturedScroll((current) => ({ ...current, left })); }} /></div>}</section>}
 
-      {newProducts.length > 0 && <NewProductsBanner products={newProducts} likedIds={likes} onLike={saveLike}/>}
+      <NewProductsBanner products={newProducts} likedIds={newProducts.filter((product) => isRealOfferId(product.id) ? getOfferLike(product.id).liked : likes.includes(product.id)).map((product) => product.id)} onLike={saveLike} getLikeCount={(id, fallback) => isRealOfferId(id) ? getOfferLike(id).count : fallback ?? 0}/>
 
       <section className="business-section home-nearby-section" id="lugares" aria-labelledby="business-title">
         <div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="business-title"><span className="home-section-symbol" aria-hidden="true"><Icon name="pin"/></span>{resultsLabel}</h2><p>Encuentra ese lugar que estás buscando.</p></div>{nearbyItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllNearby} aria-controls="nearby-business-list" onClick={() => setShowAllNearby((current) => !current)}>{showAllNearby ? "Ver menos" : `Ver más (${nearbyItems.length})`} <Icon name="arrow" /></button>}</div>
-          {!hasSampleCatalog ? <LocationAvailabilityNotice location={selectedLocation} query={query}/> : visibleItems.length ? <><div className="business-grid" id="nearby-business-list" ref={nearbyListRef} onScroll={() => { const list = nearbyListRef.current; if (list) setNearbyScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startNearbyDrag} onPointerMove={moveNearbyDrag} onPointerUp={endNearbyDrag} onPointerCancel={endNearbyDrag} onClickCapture={(event) => { if (ignoreNearbyClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllNearby ? nearbyItems : nearbyItems.slice(0, 4)).map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllNearby && nearbyScroll.max > 0 && <div className="nearby-scroll-control"><input type="range" min="0" max={nearbyScroll.max} step="1" value={Math.min(nearbyScroll.left, nearbyScroll.max)} aria-label="Desplazar lugares cerca de ti" onChange={(event) => { const left = Number(event.target.value); if (nearbyListRef.current) nearbyListRef.current.scrollLeft = left; setNearbyScroll((current) => ({ ...current, left })); }} /></div>}</> : <NoResultsState term={query || category} locationName={cityName}/>}
+          {visibleItems.length ? <><div className="business-grid" id="nearby-business-list" ref={nearbyListRef} onScroll={() => { const list = nearbyListRef.current; if (list) setNearbyScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startNearbyDrag} onPointerMove={moveNearbyDrag} onPointerUp={endNearbyDrag} onPointerCancel={endNearbyDrag} onClickCapture={(event) => { if (ignoreNearbyClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllNearby ? nearbyItems : nearbyItems.slice(0, 4)).map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllNearby && nearbyScroll.max > 0 && <div className="nearby-scroll-control"><input type="range" min="0" max={nearbyScroll.max} step="1" value={Math.min(nearbyScroll.left, nearbyScroll.max)} aria-label="Desplazar lugares cerca de ti" onChange={(event) => { const left = Number(event.target.value); if (nearbyListRef.current) nearbyListRef.current.scrollLeft = left; setNearbyScroll((current) => ({ ...current, left })); }} /></div>}</> : <NoResultsState term={query || category} locationName={cityName}/>}
       </section>
 
-      {hasSampleCatalog && <section className="special-offers" aria-labelledby="special-offers-title">
-        <div className="section-heading"><div className="home-section-intro"><h2 id="special-offers-title"><span className="home-section-symbol home-section-symbol--round" aria-hidden="true">%</span>Ofertas especiales</h2><p>Descubre las ofertas de los negocios locales.</p></div>{specialOffers.length > 4 && <button className="text-link" type="button" aria-expanded={showAllOffers} aria-controls="special-offers-list" onClick={() => setShowAllOffers((current) => !current)}>{showAllOffers ? "Ver menos" : `Ver más (${specialOffers.length})`} <Icon name="arrow" /></button>}</div>
-        <div className={`special-offers__list${showAllOffers ? " is-expanded" : ""}`} id="special-offers-list" ref={offersListRef} onScroll={() => { const list = offersListRef.current; if (list) setOffersScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startOffersDrag} onPointerMove={moveOffersDrag} onPointerUp={endOffersDrag} onPointerCancel={endOffersDrag} onClickCapture={(event) => { if (ignoreOffersClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllOffers ? specialOffers : specialOffers.slice(0, 4)).map(({ product, discount, deadline }) => { const business = sampleBusinesses.find((item) => item.id === product.businessId); return <article className="special-offer-card" key={product.id}><Link className="special-offer-card__link" to={`/product/${product.id}`} aria-label={`Ver ${product.name}`}><div className="special-offer-card__image"><img src={product.image} alt="" loading="lazy"/><span className="special-offer-card__discount">{discount}</span></div><div className="special-offer-card__content"><strong>{product.name}</strong><span>{business?.category ?? "Negocio local"}</span><small>✣ <b>{deadline}</b></small></div></Link><button className="special-offer-card__like" type="button" aria-label={likes.includes(product.id) ? `Quitar me gusta a ${product.name}` : `Me gusta ${product.name}`} aria-pressed={likes.includes(product.id)} onClick={(event) => { event.preventDefault(); event.stopPropagation(); requireAccount(() => saveLike(product.id)); }}><ThumbsUpIcon/></button></article>; })}</div>
+      <section className="special-offers" aria-labelledby="special-offers-title">
+        <div className="section-heading"><div className="home-section-intro"><h2 id="special-offers-title"><span className="home-section-symbol home-section-symbol--round" aria-hidden="true">%</span>Ofertas especiales</h2><p>Descubre las ofertas de los negocios locales.</p></div>{visibleSpecialOffers.length > 4 && <button className="text-link" type="button" aria-expanded={showAllOffers} aria-controls="special-offers-list" onClick={() => setShowAllOffers((current) => !current)}>{showAllOffers ? "Ver menos" : `Ver más (${visibleSpecialOffers.length})`} <Icon name="arrow" /></button>}</div>
+        {visibleSpecialOffers.length ? <div className={`special-offers__list${showAllOffers ? " is-expanded" : ""}`} id="special-offers-list" ref={offersListRef} onScroll={() => { const list = offersListRef.current; if (list) setOffersScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startOffersDrag} onPointerMove={moveOffersDrag} onPointerUp={endOffersDrag} onPointerCancel={endOffersDrag} onClickCapture={(event) => { if (ignoreOffersClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllOffers ? visibleSpecialOffers : visibleSpecialOffers.slice(0, 4)).map(({ product, discount, deadline, promotionId }) => { const business = sampleBusinesses.find((item) => item.id === product.businessId); const isSpecialEvent = Boolean(promotionId); return <article className={`special-offer-card${isSpecialEvent ? " special-offer-card--event" : ""}`} key={promotionId ?? product.id}><Link className="special-offer-card__link" to={promotionId ? `/promociones/${promotionId}` : `/product/${product.id}`} aria-label={promotionId ? `Ver promoción especial ${product.name}` : `Ver ${product.name}`}><div className="special-offer-card__image"><SpecialOfferImage src={product.image} alt=""/><span className="special-offer-card__discount">{isSpecialEvent ? "PROMOCIÓN ESPECIAL" : discount}</span></div><div className="special-offer-card__content"><strong>{product.name}</strong><span>{isSpecialEvent ? product.businessName ?? business?.name ?? "Negocio local" : business?.category ?? product.businessName ?? "Negocio local"}</span><small>✣ <b>{deadline}</b></small></div></Link></article>; })}</div> : <p className="home-empty-offers">Aún no hay promociones activas cerca de ti.</p>}
         {showAllOffers && offersScroll.max > 0 && <div className="offers-scroll-control"><input type="range" min="0" max={offersScroll.max} step="1" value={Math.min(offersScroll.left, offersScroll.max)} aria-label="Desplazar ofertas especiales" onChange={(event) => { const left = Number(event.target.value); if (offersListRef.current) offersListRef.current.scrollLeft = left; setOffersScroll((current) => ({ ...current, left })); }} /></div>}
-      </section>}
+      </section>
 
       <div className="admob-banner-slot admob-banner-slot--home-footer"><AdMobBanner slot="home-footer" /></div>
       {hasSampleCatalog && <section className="need-banner"><span className="home-need-symbol" aria-hidden="true"><Icon name="pin"/></span><div><span>¿No lo encontraste?</span><h2>Cuéntanos qué necesitas</h2><p>Ayúdanos a descubrir qué hace falta cerca de ti.</p></div><Button variant="outline" type="button" onClick={() => navigate("/register-need")}>Registrar una necesidad <Icon name="arrow" /></Button></section>}

@@ -4,10 +4,15 @@ import { requestWithSession } from "./authService";
 
 type PublicPhoto = { id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean };
 type PublicCategory = { id: string; code: string; name: string; iconKey: string | null } | null;
-type PublicSummary = { isFeatured?: boolean; plan?: "free" | "premium"; publicId: string; name: string; sede: string | null; adultOnly: boolean; description: string | null; category: PublicCategory; secondaryCategories?: PublicCategory[]; location: { cityName: string; regionName: string | null; additionalAddressInfo?: string | null; address: string | null; latitude: number | null; longitude: number | null; visibility: string } | null; coverPhoto: PublicPhoto | null; profilePhoto: PublicPhoto | null };
+type PublicSummary = { pioneerNumber?: number | null; isFeatured?: boolean; plan?: "free" | "premium"; createdAt?: string; publicId: string; name: string; sede: string | null; adultOnly: boolean; description: string | null; category: PublicCategory; secondaryCategories?: PublicCategory[]; modalities?: { type: string }[]; location: { cityName: string; regionName: string | null; additionalAddressInfo?: string | null; address: string | null; latitude: number | null; longitude: number | null; visibility: string } | null; coverPhoto: PublicPhoto | null; profilePhoto: PublicPhoto | null };
 type PublicDetail = PublicSummary & { gallery: PublicPhoto[]; contacts: { email: string | null; phone: string | null; whatsapp: string | null; website: string | null }; socialNetworks?: { instagram: string | null; facebook: string | null; x: string | null; tiktok: string | null }; modalities?: { type: string; hours: { dayOfWeek: string; isClosed: boolean; opensAt: string | null; closesAt: string | null }[] }[]; products: PublicOffer[]; services: PublicOffer[] };
-type PublicOffer = { id: string; name: string; description: string | null; category: PublicCategory; price: { amount: string | null; currency: string | null; text: string | null; negotiable: boolean }; photos: PublicPhoto[] };
+type PublicOffer = { id: string; name: string; description: string | null; createdAt?: string; isOffer?: boolean; offerLabel?: string | null; discount?: string | null; offerDeadline?: string | null; promotion?: { id: string } | null; category: PublicCategory; price: { amount: string | null; currency: string | null; text: string | null; negotiable: boolean }; photos: PublicPhoto[] };
 type UniversalOffer = PublicOffer & { business: { publicId: string } };
+export type PublicPromotion = { id: string; businessId: string; title: string; description: string; originalPrice: string | null; promotionalPrice: string | null; startsAt: string; endsAt: string; photos: PublicPhoto[]; relatedOfferId: string | null; type: 'OFFER' | 'PROMOTION'; state?: 'ACTIVE' | 'SCHEDULED' | 'FINISHED'; business?: { publicId: string; name: string; category: string | null } };
+
+function formatOfferDeadline(value?: string | null): string | undefined {
+  return value ? value.slice(0, 10) : undefined;
+}
 
 function mapBusiness(value: PublicSummary): Business {
   const rawCategory = value.category?.name ?? value.category?.code ?? "Sin categoría";
@@ -16,6 +21,7 @@ function mapBusiness(value: PublicSummary): Business {
   const cover = value.coverPhoto?.url ?? value.profilePhoto?.url ?? "";
   return {
     id: value.publicId,
+    createdAt: value.createdAt,
     name: value.name,
     category,
     rating: 0,
@@ -27,6 +33,7 @@ function mapBusiness(value: PublicSummary): Business {
     regionName: location?.regionName ?? undefined,
     additionalAddressInfo: location?.additionalAddressInfo ?? undefined,
     secondaryCategories: (value.secondaryCategories ?? []).filter((item): item is Exclude<PublicCategory, null> => Boolean(item)).map((item) => item.name),
+    modalityTypes: (value.modalities ?? []).map((item) => item.type),
     socialNetworks: undefined,
     image: cover,
     logo: value.profilePhoto?.url,
@@ -35,6 +42,7 @@ function mapBusiness(value: PublicSummary): Business {
     description: value.description ?? "",
     coordinates: location?.latitude != null && location?.longitude != null ? { lat: location.latitude, lng: location.longitude } : undefined,
     coordinatesVerified: location?.latitude != null && location?.longitude != null,
+    pioneerNumber: typeof value.pioneerNumber === "number" && Number.isInteger(value.pioneerNumber) && value.pioneerNumber >= 1 && value.pioneerNumber <= 20 ? value.pioneerNumber : null,
     isFeatured: Boolean(value.isFeatured),
     plan: value.plan === "premium" ? "premium" : "free",
   };
@@ -47,7 +55,8 @@ function mapProduct(value: PublicOffer, businessId: string): Product {
   const formatAmount = (raw: number) => `${new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(raw).replace(/\u00a0/g, " ")} ${currency}`;
   const priceLabel = value.price.negotiable ? "Precio a convenir" : amount !== undefined ? formatAmount(amount) : value.price.text && Number.isFinite(Number(value.price.text)) ? formatAmount(Number(value.price.text)) : "Consultar precio";
   const business = (value as PublicOffer & { business?: { name?: string; location?: { latitude: number | null; longitude: number | null } | null } }).business;
-  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image, price: amount, priceLabel, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
+  const original = (value as PublicOffer & { originalPrice?: string | null }).originalPrice;
+  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image, price: amount, priceLabel, originalPriceLabel: original ? formatAmount(Number(original)) : undefined, createdAt: value.createdAt, isOffer: Boolean(value.isOffer), offerLabel: value.offerLabel ?? undefined, discount: value.discount ?? undefined, offerDeadline: formatOfferDeadline(value.offerDeadline), promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
 }
 
 function formatServicePrice(value: PublicOffer): string {
@@ -61,7 +70,10 @@ function formatServicePrice(value: PublicOffer): string {
 
 function mapService(value: PublicOffer, businessId: string): Service {
   const business = (value as PublicOffer & { business?: { name?: string; location?: { latitude: number | null; longitude: number | null } | null } }).business;
-  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: value.photos[0]?.url ?? "", priceLabel: formatServicePrice(value), businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
+  const original = (value as PublicOffer & { originalPrice?: string | null }).originalPrice;
+  const currency = value.price.currency ?? "COP";
+  const originalPriceLabel = original ? `${new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(original)).replace(/\u00a0/g, " ")} ${currency}` : undefined;
+  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: value.photos[0]?.url ?? "", priceLabel: formatServicePrice(value), originalPriceLabel, promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
 }
 
 export async function listPublicBusinesses(): Promise<Business[]> {
@@ -102,6 +114,20 @@ export async function listPublicProducts(id: string): Promise<Product[]> {
 export async function listPublicServices(id: string): Promise<Service[]> {
   const response = await requestWithSession<{ services: PublicOffer[] }>(`/api/v1/public/businesses/${encodeURIComponent(id)}/services`);
   return response.services.map(item => mapService(item, id));
+}
+
+export async function listPublicPromotions(id: string): Promise<PublicPromotion[]> {
+  const response = await requestWithSession<{ promotions: PublicPromotion[] }>(`/api/v1/public/businesses/${encodeURIComponent(id)}/promotions`);
+  return response.promotions;
+}
+
+export async function getPublicPromotion(id: string): Promise<PublicPromotion> {
+  const response = await requestWithSession<{ promotion: PublicPromotion }>(`/api/v1/public/promotions/${encodeURIComponent(id)}`);
+  return response.promotion;
+}
+
+export async function recordPublicPromotionView(id: string, dedupeKey: string): Promise<void> {
+  await requestWithSession(`/api/v1/public/promotions/${encodeURIComponent(id)}/views`, { method: "POST", body: JSON.stringify({ dedupeKey }) });
 }
 
 export async function searchPublicUniversal(params: Record<string, string | number | undefined>): Promise<{ businesses: Business[]; products: Product[]; services: Service[]; pagination: any }> {

@@ -4,22 +4,26 @@
 .favorites-page .user-page-heading h1{margin:8px 0 6px;color:var(--xamuko-navy);font-family:Inter,system-ui,sans-serif;font-size:clamp(30px,3.5vw,38px);font-weight:700;letter-spacing:-.8px;line-height:1.12}
 .favorites-page .user-page-heading p{max-width:620px;color:var(--xamuko-muted);font-family:Inter,system-ui,sans-serif;font-size:13px;font-weight:450;line-height:1.6}
 .favorites-page .user-card-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
-.favorites-page .entity-card{height:400px;border-color:var(--xamuko-border);border-radius:20px;box-shadow:0 10px 26px rgba(15,23,42,.06)}
+.favorites-page .entity-card{height:auto;min-height:326px;border-color:var(--xamuko-border);border-radius:12px;box-shadow:0 5px 16px rgba(48,47,121,.07)}
 .favorites-page .entity-card:hover{border-color:#c8b8ff;box-shadow:0 16px 32px rgba(123,63,251,.13)}
-.favorites-page .entity-card__image{height:190px;background:#edf1ff}
-.favorites-page .entity-card__content{padding:15px 16px 14px;background:#fff}
-.favorites-page .entity-card__heading p{color:var(--xamuko-violet);font-weight:700}
-.favorites-page .entity-card__heading h3{font-size:16px;font-weight:750;letter-spacing:-.25px}
+.favorites-page .entity-business-card .entity-card__image{height:140px;min-height:140px;max-height:140px;flex:0 0 140px;background:#edf1ff}
+.favorites-page .entity-business-card .entity-card__content{display:flex;flex:1;min-height:0;flex-direction:column;padding:11px 12px 10px;background:#fff}
+.favorites-page .entity-business-card .entity-card__heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:4px 6px}
+.favorites-page .entity-business-card .entity-card__heading>div{display:contents}
+.favorites-page .entity-business-card .entity-card__heading p{grid-column:1;grid-row:2;margin:0;color:var(--xamuko-violet);font-size:11px;font-weight:700;line-height:1.2}
+.favorites-page .entity-business-card .entity-rating{grid-column:2;grid-row:2;font-size:11px;white-space:nowrap}
+.favorites-page .entity-business-card .entity-verified{grid-column:1/-1;grid-row:3}
+.favorites-page .entity-business-card .entity-card__heading h3{grid-column:1/-1;grid-row:1;display:-webkit-box;min-height:2.4em;max-height:2.4em;overflow:hidden;font-size:16px;font-weight:750;line-height:1.2;letter-spacing:-.25px;white-space:normal;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .favorites-page .entity-featured{border-color:#d8ccff;background:#f1edff;color:var(--xamuko-violet)}
 .favorites-page .entity-card h3 a{color:var(--xamuko-navy)}
 .favorites-page .entity-card h3 a:hover{color:var(--xamuko-violet)}
 .favorites-page .entity-rating{color:var(--xamuko-navy)}
 .favorites-page .entity-rating small{color:#94a3b8}
-.favorites-page .entity-address{color:var(--xamuko-muted)}
-.favorites-page .entity-card__actions{font-weight:600}
-.favorites-page .entity-card__actions{border-color:var(--xamuko-border)}
-.favorites-page .entity-view{color:var(--xamuko-violet)}
-.favorites-page .entity-business-card .entity-favorite{position:absolute;z-index:5;top:12px;right:12px;width:34px;height:34px;border-color:#fff;background:#fff;color:#e5484d;pointer-events:auto;box-shadow:0 4px 12px rgba(15,23,42,.14)}
+.favorites-page .entity-business-card .entity-address{margin:7px 0;color:var(--xamuko-muted);font-size:11px}
+.favorites-page .entity-business-card .entity-business-description{height:2.8em;min-height:2.8em;margin:0 0 8px;font-size:11px;line-height:1.4}
+.favorites-page .entity-business-card .entity-card__actions{min-height:34px;margin-top:auto;padding-top:7px;border-color:var(--xamuko-border);font-size:11px;font-weight:600}
+.favorites-page .entity-business-card .entity-view{min-height:29px;padding:0 9px;border-radius:999px;background:#f2edff;color:var(--xamuko-violet);font-size:11px}
+.favorites-page .entity-business-card .entity-favorite{position:absolute;z-index:5;top:8px;right:8px;width:31px;height:31px;border-color:#fff;background:#fff;color:#e5484d;pointer-events:auto;box-shadow:0 4px 12px rgba(15,23,42,.14)}
 .favorites-page .entity-business-card .entity-favorite:hover,.favorites-page .entity-business-card .entity-favorite.is-active{border-color:#fff;background:#fff;color:#e5484d}
 .favorites-page .favorites-more{display:flex;min-height:42px;align-items:center;justify-content:center;margin:22px auto 0;padding:0 22px;border:1px solid #d8ccff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font:inherit;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(123,63,251,.08)}
 .favorites-page .favorites-more:hover{border-color:#bfaeff;background:#f7f4ff;transform:translateY(-1px)}
@@ -31,6 +35,26 @@
 .favorites-page .user-empty-state a{color:var(--xamuko-violet)}
 .favorites-page .favorites-search-link{display:inline-flex;align-items:center;gap:10px;min-height:42px;margin-top:12px;padding:0 18px;border-radius:999px;background:linear-gradient(135deg,var(--xamuko-violet),var(--xamuko-blue));box-shadow:0 8px 18px rgba(123,63,251,.2);color:#fff!important;font-size:12px!important;font-weight:800!important;text-decoration:none!important;transition:transform .2s ease,box-shadow .2s ease}
 .favorites-page .favorites-search-link:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(123,63,251,.26)}
-@media(max-width:1100px){.favorites-page .user-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:900px){.favorites-page .user-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:700px){.favorites-page .user-content-main{padding-top:18px}.favorites-page .user-page-heading{margin:14px 0 18px}.favorites-page .user-page-heading h1{font-size:29px}.favorites-page .user-card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.favorites-page .entity-card{height:320px;border-radius:16px}.favorites-page .entity-card__image{height:138px}.favorites-page .entity-card__content{padding:10px}.favorites-page .entity-card__heading{display:block}.favorites-page .entity-card__heading h3{font-size:12px}.favorites-page .entity-card__heading p{font-size:9px}.favorites-page .entity-address{margin:7px 0;font-size:8px}.favorites-page .entity-card__actions{font-size:8px}.favorites-page .entity-view{font-size:9px}.favorites-page .entity-action{width:27px;height:27px;font-size:15px}.favorites-page .entity-business-card .entity-favorite{top:10px;right:10px;width:30px;height:30px}}
+@media(min-width:701px) and (max-width:1024px){.favorites-page .user-card-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}}
+@media(max-width:700px){
+  .favorites-page .user-content-main{padding-top:18px}
+  .favorites-page .user-page-heading{margin:14px 0 18px}
+  .favorites-page .user-page-heading h1{font-size:29px}
+  .favorites-page .user-card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}
+  .favorites-page .entity-business-card{height:auto;min-height:264px;max-height:none;border-radius:12px}
+  .favorites-page .entity-business-card .entity-card__image{height:118px;min-height:118px;max-height:118px;flex-basis:118px}
+  .favorites-page .entity-business-card .entity-card__content{padding:10px 9px 9px}
+  .favorites-page .entity-business-card .entity-card__heading{gap:4px}
+  .favorites-page .entity-business-card .entity-card__heading p,.favorites-page .entity-business-card .entity-rating{font-size:10px}
+  .favorites-page .entity-business-card .entity-rating small{font-size:9px}
+  .favorites-page .entity-business-card .entity-verified{font-size:10px}
+  .favorites-page .entity-business-card .entity-card__heading h3{min-height:2.4em;max-height:2.4em;font-size:13px;line-height:1.2;white-space:normal}
+  .favorites-page .entity-business-card .entity-address{margin:7px 0;font-size:10px}
+  .favorites-page .entity-business-card .entity-business-description{display:none}
+  .favorites-page .entity-business-card .entity-card__actions{flex-wrap:nowrap;gap:4px;min-height:35px;padding-top:6px;font-size:10px}
+  .favorites-page .entity-business-card .entity-card__actions>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .favorites-page .entity-business-card .entity-view{min-height:29px;gap:3px;padding:0;background:transparent;font-size:10px}
+  .favorites-page .entity-business-card .entity-view span{font-size:14px}
+  .favorites-page .entity-business-card .entity-favorite{top:7px;right:7px;width:29px;height:29px}
+  .favorites-page .entity-business-card .entity-open{bottom:7px;left:7px;font-size:9px}
+}

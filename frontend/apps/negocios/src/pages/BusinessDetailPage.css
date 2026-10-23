@@ -14,8 +14,9 @@
 /* Keep the management header independent from the public preview's global styles. */
 .business-detail-page .business-management-hero{position:relative;z-index:1;display:grid;grid-template-columns:160px minmax(0,1fr) auto;align-items:start;gap:20px 24px;min-height:0;padding:14px 24px 24px 32px;border:0;background:transparent}
 .business-detail-page .business-identity-photo{position:relative;z-index:1;width:160px;height:160px;margin-top:-48px;border:6px solid #fff;border-radius:20px;background:#fff;box-shadow:0 8px 22px #0f274714}
-.business-detail-page .business-identity-photo .business-detail-image,.business-detail-page .business-identity-photo .business-logo{display:grid;place-items:center;width:100%;height:100%;margin:0;border:0;border-radius:14px;object-fit:cover;background:#fff;color:#2563eb;font-size:38px;font-weight:750}
+.business-detail-page .business-identity-photo .business-detail-image,.business-detail-page .business-identity-photo .business-logo{display:block;width:100%;height:100%;min-width:0;min-height:0;aspect-ratio:1 / 1;margin:0;border:0;border-radius:14px;object-fit:cover;object-position:center;background:#fff;color:#2563eb;font-size:38px;font-weight:750}
 .business-detail-page .business-identity-photo .business-logo--default{background:linear-gradient(145deg,#eff6ff,#f8fbff);color:#2563eb}
+.business-detail-page .business-identity-photo .business-logo--default{display:grid;place-items:center}
 .business-detail-page .business-identity-photo .business-logo--default svg{width:48px;height:48px;stroke-width:1.45}
 .business-detail-page .business-identity-photo>button{position:absolute;top:-9px;right:-9px;display:grid;place-items:center;width:31px;height:31px;padding:0;border:3px solid #fff;border-radius:50%;background:#2563eb;color:#fff;box-shadow:0 2px 6px #0f274726}
 .business-detail-page .business-identity-photo>button svg{width:17px;height:17px}
@@ -272,16 +273,17 @@
 .business-image-crop-preview--profile{width:min(100%,250px);aspect-ratio:1;margin-inline:auto}
 .business-image-crop-preview img{display:block;width:100%;height:100%;object-fit:cover}
 .business-image-crop-controls{display:grid;gap:12px}
+.business-image-crop-controls{display:none}
 .business-image-crop-controls label{display:grid;gap:7px;color:#334155;font-size:12px;font-weight:650}
 .business-image-crop-controls input{width:100%;accent-color:#2563eb}
-.business-profile-photo-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-height:280px;overflow:auto;padding:3px}
-.business-profile-photo-options>button{aspect-ratio:1;padding:0;overflow:hidden;border:2px solid transparent;border-radius:12px;background:#eff6ff;cursor:pointer;box-shadow:0 2px 8px #0f274712;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+.business-profile-photo-options{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));grid-auto-flow:column;grid-auto-columns:190px;gap:10px;max-height:410px;overflow-x:auto;overflow-y:hidden;padding:3px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.business-profile-photo-options>button{width:100%;height:100%;min-height:0;padding:2px;overflow:hidden;border:2px solid transparent;border-radius:12px;background:#eff6ff;cursor:pointer;box-shadow:0 2px 8px #0f274712;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease;scroll-snap-align:start}
 .business-profile-photo-options>button:hover{transform:translateY(-1px);box-shadow:0 5px 12px #0f27471c}
 .business-profile-photo-options>button.selected{border-color:#2563eb;box-shadow:0 0 0 3px #dbeafe}
 .business-profile-photo-options img{display:block;width:100%;height:100%;object-fit:cover}
 .business-image-crop-preview--profile{width:min(100%,220px);border-radius:14px;box-shadow:0 8px 20px #0f274714}
-.business-cover-photo-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-height:280px;overflow:auto;padding:3px}
-.business-cover-photo-options>button{aspect-ratio:16/9;padding:0;overflow:hidden;border:2px solid transparent;border-radius:11px;background:#eff6ff;cursor:pointer;box-shadow:0 2px 8px #0f274712;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+.business-cover-photo-options{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));grid-auto-flow:column;grid-auto-columns:190px;gap:10px;max-height:410px;overflow-x:auto;overflow-y:hidden;padding:3px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.business-cover-photo-options>button{width:100%;height:100%;min-height:0;padding:2px;overflow:hidden;border:2px solid transparent;border-radius:11px;background:#eff6ff;cursor:pointer;box-shadow:0 2px 8px #0f274712;transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease;scroll-snap-align:start}
 .business-cover-photo-options>button:hover{transform:translateY(-1px);box-shadow:0 5px 12px #0f27471c}
 .business-cover-photo-options>button.selected{border-color:#2563eb;box-shadow:0 0 0 3px #dbeafe}
 .business-cover-photo-options img{display:block;width:100%;height:100%;object-fit:cover}
@@ -289,5 +291,6 @@
 .business-cover-preview img{display:block;width:100%;height:100%;object-fit:cover}
 .business-profile-photo-empty{display:grid;gap:8px;padding:16px;border:1px dashed #cbd5e1;border-radius:10px;background:#f8fafc}
 .business-profile-photo-empty p{margin:0;color:#64748b;font-size:13px;line-height:1.5}
-@media(max-width:600px){.business-header-image-overlay{padding:12px}.business-header-image-modal{gap:16px;max-height:calc(100dvh - 24px);padding:18px;border-radius:12px}.business-header-image-heading h2{font-size:17px}.business-profile-photo-options{grid-template-columns:repeat(3,minmax(0,1fr));max-height:230px}.business-cover-photo-options{grid-template-columns:repeat(2,minmax(0,1fr));max-height:250px}.business-cover-preview{aspect-ratio:16/8}}
+@media(max-width:600px){.business-header-image-overlay{padding:12px}.business-header-image-modal{gap:16px;max-height:calc(100dvh - 24px);padding:18px;border-radius:12px}.business-header-image-heading h2{font-size:17px}.business-profile-photo-options,.business-cover-photo-options{grid-auto-columns:110px;max-height:240px;gap:8px}.business-cover-preview{aspect-ratio:16/8}}
 @media(max-width:600px){.business-detail-page .business-photo-limit-alert{padding:9px 11px;font-size:12px;line-height:1.35}.business-detail-page .business-photo-limit-alert+.business-detail-gallery,.business-detail-page .business-photo-limit-alert+.business-gallery-thumbnails,.business-detail-page .business-photo-limit-alert+.business-detail-empty{margin-top:12px}}
+.business-detail-hero-copy>.business-pioneer-badge{margin:7px auto 0;}

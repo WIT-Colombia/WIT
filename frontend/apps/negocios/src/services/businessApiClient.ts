@@ -131,14 +131,53 @@ export type BusinessReferralLevel = 'BASIC' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PL
 export type BusinessReferralSummary = { referredUsers: number; currentLevel: BusinessReferralLevel; nextLevel: BusinessReferralLevel | null; nextLevelMinimum: number | null };
 export type CatalogLimits = { level: BusinessReferralLevel; plan: "BASIC" | "PRO"; products: { used: number; limit: number | null; available: number | null; unlimited: boolean }; services: { used: number; limit: number | null; available: number | null; unlimited: boolean } };
 export type BusinessReview = { id: string; businessId: string; userId: string; author: string; rating: number; comment: string; createdAt: string; updatedAt: string; response: { body: string; createdAt: string; updatedAt: string } | null };
+export type AnalyticsOfferRanking = {
+  offerId: string;
+  code: string | null;
+  name: string;
+  kind: 'PRODUCT' | 'SERVICE' | null;
+  value: number;
+  photoUrl?: string | null;
+};
+export type BusinessAnalyticsSummary = {
+  period: string;
+  timezone: string;
+  window: { start: string | null; end: string };
+  metrics: {
+    businessViews: number;
+    searchAppearances: number;
+    whatsappClicks: number;
+    phoneClicks: number;
+    promotionViews: number;
+    currentFavorites: number;
+    reviewsCount: number;
+    averageRating: number | null;
+  };
+  series: {
+    visits: Array<{ date: string; value: number }>;
+    hourlyActivity: Array<{ hour: number; value: number }>;
+    weekdayActivity: Array<{ weekday: number; value: number }>;
+    ratings: Array<{ date: string; average: number | null; count: number }>;
+    favoriteAcquisitions: Array<{ date: string; value: number }>;
+  };
+  rankings: {
+    offerLikes: AnalyticsOfferRanking[];
+    leastLikedOffers: Array<AnalyticsOfferRanking & { createdAt: string; eligibleSince: string; observedDays: number }>;
+    mostViewedPromotions: Array<{ promotionId: string; title: string; value: number }>;
+  };
+  definitions: Record<'visits' | 'activity' | 'ratings' | 'favorites' | 'offerLikes' | 'leastLikedOffers' | 'promotionViews', string>;
+};
 export type BusinessReviewsResponse = { reviews: BusinessReview[]; pagination: { page: number; pageSize: number; total: number; totalPages: number }; summary: { average: number | null; total: number; distribution: Record<string, number> } };
-export type RealOffer = { id: string; businessId: string; kind: 'PRODUCT' | 'SERVICE'; name: string; description: string | null; priceAmount: string | null; currency: string | null; priceText: string | null; negotiable: boolean; active: boolean; adultOnly: boolean; publicationStatus: 'UNPUBLISHED' | 'PUBLISHED' | 'REVIEW'; photos: RealPhoto[] };
+export type RealOffer = { id: string; businessId: string; internalCode: string; kind: 'PRODUCT' | 'SERVICE'; name: string; description: string | null; category: string | null; priceAmount: string | null; currency: string | null; priceText: string | null; negotiable: boolean; active: boolean; adultOnly: boolean; publicationStatus: 'UNPUBLISHED' | 'PUBLISHED' | 'REVIEW'; photos: RealPhoto[] };
+export type BusinessPromotion = { id: string; businessId: string; type: 'OFFER' | 'PROMOTION'; title: string; description: string; conditions: string | null; category: string | null; relatedOfferId: string | null; originalPrice: string | null; promotionalPrice: string | null; startsAt: string; endsAt: string; recurrence: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY'; recurrenceUntil: string | null; active: boolean; state: 'SCHEDULED' | 'ACTIVE' | 'FINISHED'; viewCount: number; photos: Array<{ id: string; url: string; sortOrder: number }> };
+export type PromotionLimits = { plan: 'BASIC' | 'PRO'; maxActive: number; activeCount: number; maxPhotos: number; canSchedule: boolean; canRecur: boolean; summary: { active: number; scheduled: number; finished: number; totalViews: number }; detailedAnalytics: boolean };
 
 export type RealBusiness = {
   id: string;
   publicId: string;
   businessAccountId: string;
   name: string;
+  pioneerNumber: number | null;
   sede: string | null;
   adultOnly: boolean;
   slug: string;
@@ -177,13 +216,30 @@ export type RealBusiness = {
   profilePhoto?: RealPhoto | null;
 };
 
+export type BusinessMembership = { id:string; businessId:string; userId:string; role:'OWNER'|'COLLABORATOR'; status:'INVITED'|'ACTIVE'|'SUSPENDED'|'REJECTED'|'REVOKED'|'EXPIRED'; invitedAt:string; acceptedAt:string|null; expiresAt:string|null; user:{id:string;displayName:string;nickname:string|null;emailNormalized:string|null;avatarUrl:string|null;lastLoginAt:string|null}; permissions:Array<{permission:string;allowed:boolean}> };
+export type ResolvedCollaboratorRecipient = { publicId:string; displayName:string; nickname:string; avatarUrl:string|null };
+export type PersistedBusinessNotification = {id:string;userId:string;businessId:string;membershipId:string|null;type:'COLLABORATION_INVITATION'|'COLLABORATION_UPDATE';title:string;message:string;readAt:string|null;createdAt:string;business:{id:string;name:string;profilePhoto:{url:string}|null;memberships:Array<{user:{displayName:string}}>};membership:{id:string;status:string;expiresAt:string|null;permissions:Array<{permission:string;allowed:boolean}>}|null};
+
 export type ModalityType = "PHYSICAL" | "VIRTUAL" | "DELIVERY";
 export type ModalityStatus = "CONFIGURING" | "ACTIVE" | "PAUSED";
 export type ModalityContact = { email: string | null; website: string | null; phone: string | null; whatsapp: string | null; instagram?: string | null };
 export type ModalityHour = { dayOfWeek: number; isClosed: boolean; opensAt: string | null; closesAt: string | null; timezone: string };
 export type RealModality = { id: string; businessId: string; type: ModalityType; status: ModalityStatus; contact: ModalityContact | null; effectiveContact?: ModalityContact; blockers?: string[]; hours: ModalityHour[] };
+export type BusinessVisibility = { businessId: string; publicId: string; visibilityStatus: string; createdAt: string; isWithinPeriod: boolean; period: { id: string; kind: string; startsAt: string; expiresAt: string; requestedAt: string } | null };
 
 export const businessApi = {
+  listCollaborators: (businessId:string) => requestJson<{memberships:BusinessMembership[]}>(`/businesses/${encodeURIComponent(businessId)}/collaborators`),
+  resolveCollaboratorRecipient: (businessId:string, nickname:string) => requestJson<{recipient:ResolvedCollaboratorRecipient}>(`/businesses/${encodeURIComponent(businessId)}/collaborators/resolve`,{method:'POST',body:JSON.stringify({nickname})}),
+  inviteCollaborator: (businessId:string, identifier:string, permissions:string[]) => requestJson<{membership:BusinessMembership}>(`/businesses/${encodeURIComponent(businessId)}/collaborators/invitations`,{method:'POST',body:JSON.stringify({identifier,permissions})}),
+  updateCollaboratorPermissions: (membershipId:string,permissions:string[]) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/permissions`,{method:'PUT',body:JSON.stringify({permissions})}),
+  suspendCollaborator: (membershipId:string) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/suspend`,{method:'POST'}),
+  reactivateCollaborator: (membershipId:string) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/reactivate`,{method:'POST'}),
+  revokeCollaborator: (membershipId:string) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/revoke`,{method:'POST'}),
+  cancelCollaboratorInvitation: (membershipId:string) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/cancel`,{method:'POST'}),
+  leaveBusiness: (businessId:string) => requestJson(`/businesses/${encodeURIComponent(businessId)}/leave`,{method:'POST'}),
+  respondCollaboratorInvitation: (membershipId:string,accept:boolean) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/${accept?'accept':'reject'}`,{method:'POST'}),
+  listBusinessNotifications: () => requestJson<{notifications:PersistedBusinessNotification[]}>('/notifications'),
+  markBusinessNotificationRead: (id:string) => requestJson(`/notifications/${encodeURIComponent(id)}/read`,{method:'POST'}),
   list: () => requestJson<{ businesses: RealBusiness[] }>('/businesses'),
   categories: () => requestJson<{ categories: Array<{ id: string; code: string; translations: Array<{ name: string }> }> }>('/business-categories'),
   create: (input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>('/businesses', { method: 'POST', body: JSON.stringify(input) }),
@@ -191,17 +247,27 @@ export const businessApi = {
   getReferralSummary: (businessId: string) => requestJson<{ referralSummary: BusinessReferralSummary }>(`/businesses/${encodeURIComponent(businessId)}/referral-summary`),
   getCatalogLimits: (businessId: string) => requestJson<CatalogLimits>(`/businesses/${encodeURIComponent(businessId)}/catalog-limits`),
   getFavoriteCount: (businessId: string) => requestJson<{ count: number }>(`/businesses/${encodeURIComponent(businessId)}/favorites/count`),
-  getAnalytics: (businessId: string, period: string) => requestJson<{ metrics: { businessViews: number; searchAppearances: number; whatsappClicks: number; phoneClicks: number }; period: string; timezone: string }>(`/businesses/${encodeURIComponent(businessId)}/analytics?period=${encodeURIComponent(period)}`),
+  getAnalytics: (businessId: string, period: string, signal?: AbortSignal) => requestJson<BusinessAnalyticsSummary>(`/businesses/${encodeURIComponent(businessId)}/analytics?period=${encodeURIComponent(period)}`, { signal }),
   getOfferLikeCounts: (businessId: string) => requestJson<{ offers: Array<{ offerId: string; likeCount: number }> }>(`/businesses/${encodeURIComponent(businessId)}/offers/likes`),
   listReviews: (businessId: string, page = 1, pageSize = 50) => requestJson<BusinessReviewsResponse>(`/public/businesses/${encodeURIComponent(businessId)}/reviews?page=${page}&pageSize=${pageSize}`),
   saveReviewResponse: (reviewId: string, body: string, edit = false) => requestJson<{ response: BusinessReview['response'] }>(`/reviews/${encodeURIComponent(reviewId)}/response`, { method: edit ? 'PATCH' : 'POST', body: JSON.stringify({ body }) }),
   reportReview: (reviewId: string, reason: string, description?: string) => requestJson<{ report: unknown }>(`/reviews/${encodeURIComponent(reviewId)}/reports`, { method: 'POST', body: JSON.stringify({ reason, description }) }),
-  listOffers: (businessId: string, kind?: 'PRODUCT' | 'SERVICE') => requestJson<{ offers: RealOffer[] }>(`/businesses/${encodeURIComponent(businessId)}/offers${kind ? `?kind=${kind}` : ''}`),
+  listOffers: (businessId: string, kind?: 'PRODUCT' | 'SERVICE', query?: string) => requestJson<{ offers: RealOffer[] }>(`/businesses/${encodeURIComponent(businessId)}/offers?${new URLSearchParams({ ...(kind ? { kind } : {}), ...(query ? { q: query } : {}) }).toString()}`),
   createOffer: (businessId: string, input: Record<string, unknown>) => requestJson<{ offer: RealOffer }>(`/businesses/${encodeURIComponent(businessId)}/offers`, { method: 'POST', body: JSON.stringify(input) }),
   updateOffer: (businessId: string, offerId: string, input: Record<string, unknown>) => requestJson<{ offer: RealOffer }>(`/businesses/${encodeURIComponent(businessId)}/offers/${encodeURIComponent(offerId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
   deleteOffer: (businessId: string, offerId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/offers/${encodeURIComponent(offerId)}`, { method: 'DELETE' }),
+  listPromotions: (businessId: string) => requestJson<{ promotions: BusinessPromotion[]; limits: PromotionLimits }>(`/businesses/${encodeURIComponent(businessId)}/promotions`),
+  createPromotion: (businessId: string, input: Record<string, unknown>) => requestJson<{ promotion: BusinessPromotion }>(`/businesses/${encodeURIComponent(businessId)}/promotions`, { method: 'POST', body: JSON.stringify(input) }),
+  updatePromotion: (businessId: string, promotionId: string, input: Record<string, unknown>) => requestJson<{ promotion: BusinessPromotion }>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
+  finishPromotion: (businessId: string, promotionId: string) => requestJson<{ promotion: BusinessPromotion }>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}/finish`, { method: 'POST' }),
+  deletePromotion: (businessId: string, promotionId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}`, { method: 'DELETE' }),
+  uploadPromotionPhoto: (businessId: string, promotionId: string, file: File) => { const form = new FormData(); form.append('file', file); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}/photos`, form); },
+  deletePromotionPhoto: (businessId: string, promotionId: string, photoId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}/photos/${encodeURIComponent(photoId)}`, { method: 'DELETE' }),
   update: (businessId: string, input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
   publishBusiness: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/publish`, { method: 'POST' }),
+  getVisibility: (businessId: string) => requestJson<{ visibility: BusinessVisibility }>(`/businesses/${encodeURIComponent(businessId)}/visibility`),
+  renewVisibility: (businessId: string) => requestJson<{ visibility: BusinessVisibility }>(`/businesses/${encodeURIComponent(businessId)}/visibility/renew`, { method: 'POST' }),
+  setVisibility: (businessId: string, visible: boolean) => requestJson<{ visibility: BusinessVisibility }>(`/businesses/${encodeURIComponent(businessId)}/visibility`, { method: 'POST', body: JSON.stringify({ visible }) }),
   requestDeletion: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/request-deletion`, { method: 'POST' }),
   recoverBusiness: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/recover`, { method: 'POST' }),
   listModalities: (businessId: string) => requestJson<{ modalities: RealModality[] }>(`/businesses/${encodeURIComponent(businessId)}/modalities`),
@@ -218,7 +284,16 @@ export const businessApi = {
   uploadCoverPhoto: (businessId: string, file: File, position: { x: number; y: number }) => { const form = new FormData(); form.append('file', file); form.append('positionX', String(position.x)); form.append('positionY', String(position.y)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/cover-photo`, form); },
   setProfilePhoto: (businessId: string, photoId: string | null, position: { x: number; y: number }) => requestJson<{ photo: RealPhoto | null }>(`/businesses/${encodeURIComponent(businessId)}/profile-photo`, { method: 'PUT', body: JSON.stringify({ photoId, positionX: position.x, positionY: position.y }) }),
   deletePhoto: (businessId: string, photoId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}`, { method: 'DELETE' }),
-  setPhotoCover: (businessId: string, photoId: string) => requestJson<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}/cover`, { method: 'POST' }),
+  setPhotoCover: (businessId: string, photoId: string, position: { x: number; y: number }) => requestJson<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}/cover`, { method: 'POST', body: JSON.stringify({ positionX: position.x, positionY: position.y }) }),
+  resolveTransferRecipient: (businessId: string, nickname: string) => requestJson<{ recipient: { id: string; nickname: string; displayName: string } }>(`/businesses/${encodeURIComponent(businessId)}/ownership-transfers/resolve`, { method: 'POST', body: JSON.stringify({ nickname }) }),
+  requestOwnershipTransfer: (businessId: string, recipientId: string) => requestJson<{ transfer: { id: string; expiresAt: string | null } }>(`/businesses/${encodeURIComponent(businessId)}/ownership-transfers`, { method: 'POST', body: JSON.stringify({ recipientId }) }),
+  listReceivedOwnershipTransfers: () => requestJson<{ transfers: Array<{ id: string; status: string; expiresAt: string | null; requestedAt: string; business: { id: string; name: string }; fromUser: { displayName: string; nickname: string | null } }> }>('/ownership-transfers/received'),
+  listSentOwnershipTransfers: (businessId: string) => requestJson<{ transfers: Array<{ id: string; status: string; expiresAt: string | null; requestedAt: string; toUser: { displayName: string; nickname: string | null } }> }>(`/businesses/${encodeURIComponent(businessId)}/ownership-transfers/sent`),
+  respondOwnershipTransfer: (transferId: string, accept: boolean) => requestJson(`/ownership-transfers/${encodeURIComponent(transferId)}/respond`, { method: 'POST', body: JSON.stringify({ accept }) }),
+  cancelOwnershipTransfer: (transferId: string) => requestJson(`/ownership-transfers/${encodeURIComponent(transferId)}/cancel`, { method: 'POST' }),
   clearCoverPhoto: (businessId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/cover-photo`, { method: 'DELETE' }),
+  getVerification: (businessId: string) => requestJson<{ verification: { businessId: string; status: string; businessNameAtRequest?: string; documentSizeBytes?: number; documentDeletionStatus?: string; requestedAt?: string; updatedAt?: string; resolvedAt?: string | null } }>(`/businesses/${encodeURIComponent(businessId)}/verification`),
+  submitVerification: (businessId: string, file: File) => { const form = new FormData(); form.append('file', file); return requestMultipart<{ verification: unknown }>(`/businesses/${encodeURIComponent(businessId)}/verification`, form); },
+  replaceVerification: (businessId: string, file: File) => { const form = new FormData(); form.append('file', file); return requestMultipart<{ verification: unknown }>(`/businesses/${encodeURIComponent(businessId)}/verification/document`, form, 'PUT'); },
   photoBlob: (url: string) => requestPhotoBlob(url),
 };

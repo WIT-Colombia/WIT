@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useLocationContext } from "../context/LocationContext";
 import { useAuth } from "../context/AuthContext";
+import { useAccountAvatar } from "../hooks/useAccountAvatar";
 import { getNotifications, getProfile } from "../services/userDataService";
 import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
 import { SearchBar } from "./SearchBar";
@@ -27,10 +28,11 @@ export function SiteHeader({ active, onProfile, onSearchChange }: { active?: Sit
   const { selection } = useLocationContext();
   const location = selection?.locality ?? null;
   const { user, isAuthenticated } = useAuth();
-  const profile = getProfile();
+  const profile = getProfile(user?.id);
+  const accountAvatar = useAccountAvatar(user?.avatarUrl);
   const profileName = user?.displayName.trim() || profile.name.trim() || "";
   const profileInitial = profileName.charAt(0).toLocaleUpperCase("es-CO") || "D";
-  const profilePhoto = profile.photo || "";
+  const profilePhoto = (accountAvatar ?? profile.photo) || "";
   const profileTarget = isAuthenticated ? "/profile" : "/register?mode=login";
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
   const profileContent = isAuthenticated

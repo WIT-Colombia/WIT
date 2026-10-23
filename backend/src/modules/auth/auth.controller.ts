@@ -14,6 +14,7 @@ import { createGoogleDiagnostic, logGoogleDiagnostic, type GoogleDiagnosticCateg
 import { GoogleOAuthDiagnosticError } from './google-oauth.service.js';
 import { getPreferredLocation, savePreferredLocation } from './location.service.js';
 import { preferredLocationSchema } from './location.schemas.js';
+import { readOwnAvatar, uploadAvatar } from './avatar.service.js';
 
 function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ path: PropertyKey[] }> } } }, value: unknown): T {
   const result = schema.safeParse(value);
@@ -144,6 +145,8 @@ export const confirmPasswordResetController: RequestHandler = async (request, re
 };
 
 export const updateProfileController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; const user = await updateProfile(auth.userId, parse(profileUpdateSchema, request.body)); response.status(200).json({ user }); } catch (error) { next(error); } };
+export const uploadAvatarController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; await uploadAvatar(auth.userId, request.file ? { buffer: request.file.buffer, mimetype: request.file.mimetype, size: request.file.size } : undefined); response.status(204).send(); } catch (error) { next(error); } };
+export const ownAvatarController: RequestHandler = async (request, response, next) => { try { const avatar = await readOwnAvatar((request as AuthenticatedRequest).auth.userId); response.setHeader('Cache-Control', 'private, no-store'); response.type(avatar.mimeType).send(avatar.content); } catch (error) { next(error); } };
 export const updateAdultContentPreferenceController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; const preference = await updateAdultContentPreference(auth.userId, parse(adultContentPreferenceSchema, request.body)); response.status(200).json({ preference }); } catch (error) { next(error); } };
 export const getPreferredLocationController: RequestHandler = async (request, response, next) => { try { response.status(200).json({ location: await getPreferredLocation((request as AuthenticatedRequest).auth.userId) }); } catch (error) { next(error); } };
 export const savePreferredLocationController: RequestHandler = async (request, response, next) => { try { const location = await savePreferredLocation((request as AuthenticatedRequest).auth.userId, parse(preferredLocationSchema, request.body)); response.status(200).json({ location }); } catch (error) { next(error); } };

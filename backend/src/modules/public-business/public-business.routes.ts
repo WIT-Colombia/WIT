@@ -2,6 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { env } from '../../config/env.js';
 import { optionalAuth } from '../../shared/middleware/optional-auth.js';
+import { listPublicPromotionsController } from '../business/promotion.controller.js';
 import {
   getPublicBusinessController,
   listPublicBusinessesController,
@@ -34,5 +35,6 @@ publicBusinessRouter.get('/businesses/:publicId/services', listPublicServicesCon
 publicBusinessRouter.get('/businesses/:publicId/photos', listPublicPhotosController);
 publicBusinessRouter.get('/businesses/:publicId/photos/:photoId/content', publicPhotoContentController);
 publicBusinessRouter.get('/businesses/:publicId/offers', listPublicOffersController);
+publicBusinessRouter.get('/businesses/:publicId/promotions', listPublicPromotionsController);
 publicBusinessRouter.get('/businesses/:businessId/reviews', listReviewsController);
 publicBusinessRouter.get('/businesses/:publicId', getPublicBusinessController);

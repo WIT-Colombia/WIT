@@ -30,7 +30,7 @@ export function StatisticsPage() {
   const [proBenefitsOpen, setProBenefitsOpen] = useState(false);
   const [favoriteCount, setFavoriteCount] = useState<number | null>(null);
   const [favoriteError, setFavoriteError] = useState(false);
-  const [analytics, setAnalytics] = useState<{ businessViews: number; searchAppearances: number; whatsappClicks: number; phoneClicks: number } | null>(null);
+  const [analytics, setAnalytics] = useState<{ businessViews: number; searchAppearances: number; whatsappClicks: number; phoneClicks: number; promotionViews: number; rankings: { offerLikes: Array<{ offerId: string; code: string | null; name: string; kind: 'PRODUCT' | 'SERVICE' | null; value: number }> } } | null>(null);
   const [analyticsError, setAnalyticsError] = useState(false);
   const [analyticsRetry, setAnalyticsRetry] = useState(0);
   const [commercialInfo, setCommercialInfo] = useState<import("../services/businessApiClient").CatalogLimits | null>(null);
@@ -50,7 +50,7 @@ export function StatisticsPage() {
     let active = true;
     setAnalytics(null); setAnalyticsError(false);
     if (!business.id) { setAnalyticsError(true); return () => { active = false; }; }
-    void businessApi.getAnalytics(business.id, period).then((result) => { if (active) setAnalytics(result.metrics); }).catch(() => { if (active) setAnalyticsError(true); });
+    void businessApi.getAnalytics(business.id, period).then((result) => { if (active) setAnalytics({ ...result.metrics, rankings: result.rankings }); }).catch(() => { if (active) setAnalyticsError(true); });
     return () => { active = false; };
   }, [business.id, period, analyticsRetry]);
   useEffect(() => {
@@ -73,17 +73,18 @@ export function StatisticsPage() {
   const favoriteMetric = favoriteError ? { status: "unavailable" as const } : favoriteCount === null ? { status: "unavailable" as const } : favoriteCount === 0 ? { status: "no-events" as const, value: 0 } : { status: "available" as const, value: favoriteCount };
   statistics.metrics.favorites = favoriteMetric;
   const planStatus = commercialInfo?.plan === "PRO" ? "pro" : commercialInfo?.plan === "BASIC" ? "basic" : "pending";
-  const planName = commercialInfo?.plan === "PRO" ? "Business Pro" : commercialInfo?.plan === "BASIC" ? "Gratuito" : null;
+  const planName = commercialInfo?.plan === "PRO" ? "Business Pro" : commercialInfo?.plan === "BASIC" ? "Básico" : null;
   const referredUsers = referralInfo && !referralError ? validReferralCount(referralInfo.referredUsers) : null;
   const currentLevel = referralInfo?.currentLevel ? recognitionLevels.find(item => item.level === referralInfo.currentLevel) ?? null : referredUsers === null ? null : recognitionLevelFor(referredUsers);
   const currentLevelIndex = currentLevel ? recognitionLevels.findIndex(item => item.level === currentLevel.level) : -1;
-  const proState = planStatus === "pro" ? "Datos pendientes de disponibilidad" : planStatus === "basic" ? "Disponible con Business Pro" : "Plan pendiente de verificación";
+  const proState = planStatus === "pro" ? "Pendiente de instrumentación" : planStatus === "basic" ? "Disponible con Business Pro" : "Plan pendiente de verificación";
+  const mappedIndicators = 2;
 
   return <div className="statistics-page">
     <PageHeader
       eyebrow="ANÁLISIS COMERCIAL"
-      title="Estadísticas"
-      description="Conoce cómo los usuarios descubren e interactúan con tu negocio en XAMUKO."
+      title="Estadísticas PRO"
+      description="Panel de rendimiento de tu negocio en XAMUKO."
       action={<div className="statistics-period-tabs" role="group" aria-label="Período de estadísticas">{statisticsPeriods.map(item => <button type="button" className={period === item.id ? "selected" : ""} aria-pressed={period === item.id} onClick={() => setPeriod(item.id)} key={item.id}>{item.label}</button>)}</div>}
     />
 
@@ -119,7 +120,8 @@ export function StatisticsPage() {
 
     <section className="statistics-advanced-section" aria-labelledby="advanced-statistics-title">
       <div className="statistics-section-heading statistics-advanced-heading"><div><span>BUSINESS PRO</span><h2 id="advanced-statistics-title">Análisis avanzado — Business Pro</h2><p>18 indicadores para entender la visibilidad, el catálogo y la respuesta de los usuarios.</p></div><div className={`statistics-access-state ${planStatus}`}><span aria-hidden="true">{planStatus === "pro" ? "✓" : "⌾"}</span><p>{proState}</p>{planStatus !== "pro" && <button type="button" className="outline-button" onClick={() => setProBenefitsOpen(true)}>Conocer Business Pro</button>}</div></div>
-      <div className="statistics-advanced-grid">{advancedStatistics.map(category => <section className="statistics-advanced-category surface-card" key={category.id} aria-labelledby={`advanced-${category.id}`}><header><span className="statistics-advanced-category-icon" aria-hidden="true">{category.icon}</span><div><h3 id={`advanced-${category.id}`}>{category.label}</h3><p>{category.description}</p></div><small>{category.indicators.length} indicadores</small></header><ul>{category.indicators.map(indicator => <li key={indicator.name}><div><strong>{indicator.name}</strong><span>{indicator.description}</span></div><em>{proState}</em></li>)}</ul></section>)}</div>
+      <div className="statistics-progress" aria-label={`${mappedIndicators} de 18 indicadores conectados`}><div><strong>Avance de indicadores</strong><span>{mappedIndicators} de 18 conectados</span></div><i><b style={{ width: `${mappedIndicators / 18 * 100}%` }} /></i><small>Conectados significa que existe una fuente real disponible; no implica que haya actividad en el período.</small></div>
+      <div className="statistics-advanced-grid">{advancedStatistics.map(category => <section className="statistics-advanced-category surface-card" key={category.id} aria-labelledby={`advanced-${category.id}`}><header><span className="statistics-advanced-category-icon" aria-hidden="true">{category.icon}</span><div><h3 id={`advanced-${category.id}`}>{category.label}</h3><p>{category.description}</p></div><small>{category.indicators.length} indicadores</small></header><div className="statistics-pro-metric-grid">{category.indicators.map(indicator => { const isPromotionViews = indicator.name === "Visualizaciones de ofertas"; const isTopLikes = indicator.name === "Productos con más Me gusta"; const promotionValue = analytics?.promotionViews ?? 0; const topLike = analytics?.rankings.offerLikes[0]; const isConnected = isPromotionViews || isTopLikes; const value = isPromotionViews && analytics ? promotionValue.toLocaleString("es-CO") : isTopLikes && topLike ? topLike.value.toLocaleString("es-CO") : null; const stateLabel = analyticsError ? "Error al cargar" : analytics === null ? "Cargando…" : isConnected ? value === null ? "Sin actividad en el período" : "Dato real del período" : proState; const icon = isTopLikes ? "♥" : category.id === "visibility" ? "◉" : category.id === "catalog" ? "◇" : category.id === "behavior" ? "↗" : "✦"; return <article key={indicator.name} className={`statistics-pro-metric ${isConnected ? "is-connected" : "is-pending"} ${isTopLikes ? "is-like-ranking" : ""}`}><span className="statistics-pro-metric-icon" aria-hidden="true">{icon}</span><h4>{indicator.name}</h4><strong>{value ?? "—"}{isPromotionViews && value !== null ? <small> vistas</small> : null}</strong>{isTopLikes && topLike && <div className="statistics-pro-product-identification"><span>{topLike.kind === "PRODUCT" ? "Producto" : "Servicio"}</span><strong>{topLike.code ?? "Código no disponible"}</strong><b>{topLike.name}</b></div>}{!isTopLikes && <p>{indicator.description}</p>}{category.id !== "catalog" && !isTopLikes && <footer>{stateLabel}</footer>}</article>; })}</div></section>)}</div>
     </section>
 
     <section className="statistics-intelligence-section" aria-labelledby="intelligence-statistics-title">

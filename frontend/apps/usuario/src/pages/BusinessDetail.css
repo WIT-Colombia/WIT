@@ -54,5 +54,63 @@
 }
 
 .business-header-badges{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:7px}
+.business-header-identity .pioneer-badge{margin-top:8px;}
 .business-featured-badge{display:inline-flex;align-items:center;gap:5px;width:max-content;max-width:100%;padding:5px 10px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:linear-gradient(110deg,#7b3ffb,#2563eb);color:#fff;font-size:11px;font-weight:700;line-height:1.1;box-shadow:0 4px 10px rgba(73,42,180,.18)}
 @media(max-width:600px){.business-featured-badge{padding:5px 8px;font-size:10px}}
+
+/* Cabecera más ligera: la insignia acompaña al nombre sin competir con él. */
+.business-detail-hero .business-header-identity > div > .pioneer-badge {
+  margin-top: 8px;
+  padding: 4px 9px;
+  border-color: rgba(123, 63, 251, .22);
+  background: #f5f1ff;
+  color: #6d35e8;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: none;
+}
+.business-detail-hero .business-header-identity > div > .pioneer-badge .pioneer-badge__icon {
+  width: 15px;
+  height: 15px;
+}
+.business-detail-hero .business-header-badges {
+  margin-top: 6px;
+}
+
+/* La ficha pública comparte exactamente el tratamiento visual de la tarjeta. */
+.business-detail-hero .business-header-identity > div > .pioneer-badge {
+  margin-top: 8px;
+  padding: 6px 9px;
+  border: 1px solid #c7baff;
+  border-radius: 999px;
+  background: #f0edff;
+  color: var(--xamuko-violet, #7b3ffb);
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: none;
+}
+.business-detail-hero .business-header-identity > div > .pioneer-badge .pioneer-badge__icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.business-detail-hero .business-header-identity > div > .pioneer-badge { border: 0; }
+
+.business-detail-hero .business-header-identity > div > .pioneer-badge { border: 0 !important; }
+
+.business-detail-hero .pioneer-badge { box-shadow: none !important; filter: none !important; }
+
+/* En la ficha pública la insignia queda plana, sin efecto de tarjeta. */
+.business-detail-hero .business-header-identity > div > .pioneer-badge {
+  padding: 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.business-info-columns .business-about { grid-column: 2; }
+.business-info-columns .business-detail-aside { grid-column: 1; grid-row: 1; }
+.business-info-placeholder { display:none; }
+@media(max-width:800px){.business-info-columns .business-about,.business-info-columns .business-detail-aside{grid-column:1;grid-row:auto}.business-info-columns .business-about{order:2}.business-info-columns .business-detail-aside{order:1}}

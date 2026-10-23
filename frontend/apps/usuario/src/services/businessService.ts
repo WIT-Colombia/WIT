@@ -38,17 +38,23 @@ const BUSINESS_CACHE_TTL_MS = 30_000;
 const businessCache = new Map<string, { expiresAt: number; value: Business[] }>();
 const businessRequests = new Map<string, Promise<Business[]>>();
 
-export function prioritizeFeaturedByDistance(items: Business[], featuredLimit = 2): Business[] {
-  const byDistance = (a: Business, b: Business) => a.distanceKm - b.distanceKm;
-  const featured = items.filter((business) => business.plan === "premium" || business.isFeatured).sort(byDistance);
-  // Rotate the eligible Pro businesses by day so the premium slots are not permanent.
+export function prioritizeFeaturedByDistance(items: Business[], featuredLimit = 3): Business[] {
+  const byDistance = (a: Business, b: Business) => a.distanceKm - b.distanceKm || a.id.localeCompare(b.id);
+  const nearbyPioneers = items
+    .filter((business) => typeof business.pioneerNumber === "number" && business.distanceKm <= 3)
+    .sort(byDistance);
+  const pioneerIds = new Set(items.filter((business) => typeof business.pioneerNumber === "number").map((business) => business.id));
+  const eligibleFeatured = items
+    .filter((business) => !pioneerIds.has(business.id) && (business.plan === "premium" || business.isFeatured))
+    .sort(byDistance);
+  // Rotate the eligible highlighted businesses by day so the privileged slots are shared fairly.
   const dayIndex = Math.floor(Date.now() / 86_400_000);
-  const offset = featured.length ? dayIndex % featured.length : 0;
-  const rotated = featured.length ? [...featured.slice(offset), ...featured.slice(0, offset)] : featured;
-  const prioritized = rotated.slice(0, featuredLimit);
+  const offset = eligibleFeatured.length ? dayIndex % eligibleFeatured.length : 0;
+  const rotatedFeatured = eligibleFeatured.length ? [...eligibleFeatured.slice(offset), ...eligibleFeatured.slice(0, offset)] : eligibleFeatured;
+  const prioritized = [...nearbyPioneers, ...rotatedFeatured.slice(0, featuredLimit)];
   const prioritizedIds = new Set(prioritized.map((business) => business.id));
-  const nearby = items.filter((business) => !prioritizedIds.has(business.id)).sort(byDistance);
-  return [...prioritized, ...nearby];
+  const remaining = items.filter((business) => !prioritizedIds.has(business.id)).sort(byDistance);
+  return [...prioritized, ...remaining];
 }
 
 function normalize(value: string): string {

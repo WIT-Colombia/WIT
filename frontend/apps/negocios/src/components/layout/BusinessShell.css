@@ -1,6 +1,6 @@
 /* Shared Business frame. Page-specific layouts and existing breakpoints stay local. */
 .business-shell-workspace{display:flex;flex-direction:column;min-height:100vh;min-width:0;width:100%}
-.business-app .business-shell-sidebar{z-index:120;gap:0;overflow-y:auto;overflow-x:hidden;padding:20px 13px 16px;border:0;background:radial-gradient(ellipse at 105% 45%,#075c9d66,transparent 60%),radial-gradient(ellipse at 0 95%,#351c8c44,transparent 45%),#0f2747;color:#fff;scrollbar-width:thin;scrollbar-color:#3c5b7b transparent}
+.business-app .business-shell-sidebar{z-index:120;display:flex;flex-direction:column;gap:0;overflow-y:auto;overflow-x:hidden;padding:20px 13px 16px;border:0;background:radial-gradient(ellipse at 105% 45%,#075c9d66,transparent 60%),radial-gradient(ellipse at 0 95%,#351c8c44,transparent 45%),#0f2747;color:#fff;scrollbar-width:thin;scrollbar-color:#3c5b7b transparent}
 .business-app .sidebar-brand{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:54px;margin:0 7px 22px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .business-app .sidebar-brand-artwork{position:relative;display:block;width:172px;height:58px}
 .business-app .sidebar-brand-artwork img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;object-position:left center;filter:none}
@@ -24,11 +24,11 @@
 .business-app .sidebar-pro-card p{margin:8px 0;color:#e6f2ff;font-size:11px;line-height:1.4}
 .business-app .sidebar-pro-card button{display:flex;align-items:center;justify-content:center;width:100%;min-height:32px;padding:6px;border:1px solid #22d3ee;border-radius:7px;background:#22d3ee;color:#082f49;font-size:10px;font-weight:700}
 .business-app .sidebar-pro-card button:hover{background:#67e8f9;border-color:#67e8f9}
-.business-app .sidebar-support{display:grid;gap:3px;margin:0 0 18px;padding:10px 8px;border:1px solid #ffffff12;border-radius:10px;background:#061d382e}
+.business-app .sidebar-support{display:grid;gap:3px;margin: auto 0 18px;padding:10px 8px;border:1px solid #ffffff12;border-radius:10px;background:#061d382e}
 .business-app .sidebar-support>a{display:flex;align-items:center;gap:12px;min-height:39px;padding:8px 7px;border-radius:6px;color:#edf4ff;font-size:11px;text-decoration:none}
 .business-app .sidebar-support .sidebar-icon{width:20px;height:20px}
 .business-app .sidebar-support>a:hover{background:#ffffff0c;color:#67e8f9}
-.business-app .sidebar-account-link{display:flex;align-items:center;gap:10px;min-height:65px;margin:auto -13px -16px;padding:16px 19px;border-top:1px solid #ffffff14;border-radius:0;background:#081c363d;color:#fff;text-decoration:none;box-shadow:none}
+.business-app .sidebar-account-link{display:flex;align-items:center;gap:10px;min-height:65px;margin:0 -13px -16px;padding:16px 19px;border-top:1px solid #ffffff14;border-radius:0;background:#081c363d;color:#fff;text-decoration:none;box-shadow:none}
 .business-app .sidebar-account-link:hover{background:#0a3456}
 .business-app .sidebar-account-avatar{display:grid;place-items:center;flex:0 0 39px;width:39px;height:39px;overflow:hidden;border:1px solid #9fa8ff44;border-radius:50%;background:#7b3ffb;color:#fff;font-size:15px;font-weight:600}
 .business-app .sidebar-account-avatar img{width:100%;height:100%;object-fit:cover}

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { InterestList } from "../components/dashboard/InterestList";
 import { MetricCard } from "../components/dashboard/MetricCard";
 import { metrics } from "../data/dashboard.mock";
@@ -7,8 +7,10 @@ import { useBusinessStore } from "../services/businessStore";
 
 export function DashboardPage() {
   const { account, business, businesses, preferences } = useBusinessStore();
+  const location = useLocation();
+  const isPreview = location.pathname === "/preview" || location.pathname.startsWith("/preview/");
   const firstName = account.name.split(" ")[0];
-  const demoBusiness = Boolean(businessCatalog[business.name]);
+  const demoBusiness = isPreview && Boolean(businessCatalog[business.name]);
   const personalBusiness = businesses.length === 0 || business.isNew || !demoBusiness;
   const businessItems = demoBusiness ? (business.catalog ?? businessCatalog[business.name] ?? []) : (business.catalog ?? []);
   const products = businessItems.filter(item => item.kind === "product" && item.active && item.interest > 0).sort((a,b) => b.interest-a.interest).slice(0,3);

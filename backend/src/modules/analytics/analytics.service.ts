@@ -36,10 +36,28 @@ export async function recordAnalyticsEvent(input: { businessId: string; eventTyp
 }
 
 export async function getBusinessAnalytics(userId: string, identifier: string, period: AnalyticsPeriod) {
-  const business = await prisma.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }], memberships: { some: { userId, status: 'ACTIVE', role: 'OWNER' } } }, select: { id: true, publicId: true } });
-  if (!business) throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese negocio o no tienes autorización.');
+  const business = await prisma.business.findFirst({
+    where: { OR: [{ id: identifier }, { publicId: identifier }], memberships: { some: { userId, status: 'ACTIVE' } } },
+    select: { id: true, publicId: true, memberships: { where: { userId, status: 'ACTIVE' }, include: { permissions: true }, take: 1 } },
+  });
+  if (!business) throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese negocio.');
+  const membership = business.memberships[0];
+  if (!membership || (membership.role !== 'OWNER' && !membership.permissions.some(item => item.permission === 'READ_ANALYTICS' && item.allowed))) {
+    throw new AppError(403, 'BUSINESS_PERMISSION_DENIED', 'No tienes permiso para consultar las estadísticas de este negocio.');
+  }
   const start = periodStart(period);
   const rows = await prisma.businessAnalyticsEvent.groupBy({ by: ['eventType'], where: { businessId: business.id, ...(start ? { createdAt: { gte: start } } : {}) }, _count: { _all: true } });
   const counts = Object.fromEntries(rows.map((row) => [row.eventType, row._count._all]));
-  return { period, timezone: 'America/Bogota', metrics: { businessViews: counts.BUSINESS_VIEW ?? 0, searchAppearances: counts.SEARCH_IMPRESSION ?? 0, whatsappClicks: counts.WHATSAPP_CLICK ?? 0, phoneClicks: counts.PHONE_CLICK ?? 0 } };
+  const [promotionViews, promotionRanking, offerLikes] = await Promise.all([
+    prisma.businessPromotionView.count({ where: { businessId: business.id, ...(start ? { createdAt: { gte: start } } : {}) } }),
+    prisma.businessPromotionView.groupBy({ by: ['promotionId'], where: { businessId: business.id, promotion: { deletedAt: null }, ...(start ? { createdAt: { gte: start } } : {}) }, _count: { _all: true }, orderBy: { _count: { promotionId: 'desc' } }, take: 10 }),
+    prisma.businessOfferLike.groupBy({ by: ['offerId'], where: { offer: { businessId: business.id, deletedAt: null }, ...(start ? { createdAt: { gte: start } } : {}) }, _count: { _all: true }, orderBy: { _count: { offerId: 'desc' } }, take: 10 }),
+  ]);
+  const offerIds = offerLikes.map((row) => row.offerId);
+  const promotionIds = promotionRanking.map((row) => row.promotionId);
+  const offers = offerIds.length ? await prisma.businessOffer.findMany({ where: { id: { in: offerIds } }, select: { id: true, internalCode: true, name: true, kind: true, photos: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }], take: 1, select: { id: true } } } }) : [];
+  const promotions = promotionIds.length ? await prisma.businessPromotion.findMany({ where: { id: { in: promotionIds } }, select: { id: true, title: true } }) : [];
+  const offerNames = new Map(offers.map((offer) => [offer.id, offer]));
+  const promotionNames = new Map(promotions.map((promotion) => [promotion.id, promotion.title]));
+  return { period, timezone: 'America/Bogota', metrics: { businessViews: counts.BUSINESS_VIEW ?? 0, searchAppearances: counts.SEARCH_IMPRESSION ?? 0, whatsappClicks: counts.WHATSAPP_CLICK ?? 0, phoneClicks: counts.PHONE_CLICK ?? 0, promotionViews }, rankings: { offerLikes: offerLikes.map((row) => { const offer = offerNames.get(row.offerId); const photoId = offer?.photos[0]?.id; return { offerId: row.offerId, code: offer?.internalCode ?? null, name: offer?.name ?? 'Publicación', kind: offer?.kind ?? null, photoUrl: photoId ? `/api/v1/businesses/${business.id}/photos/${photoId}/content` : null, value: row._count._all }; }), mostViewedPromotions: promotionRanking.map(row => ({ promotionId: row.promotionId, title: promotionNames.get(row.promotionId) ?? 'Promoción', value: row._count._all })) } };
 }

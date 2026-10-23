@@ -1,0 +1,42 @@
+/* Public preview uses the same BASIC card proportions and artwork as Business. */
+.public-digital-card {
+  --card-ink: #091632;
+  --card-secondary: #445778;
+  --card-accent: #7b3ffb;
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+  box-sizing: border-box;
+  width: min(100%, 264px);
+  aspect-ratio: 264 / 414;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid #e4e9f5;
+  border-radius: 19px;
+  background: #fff;
+  color: var(--card-ink);
+  box-shadow: 0 10px 23px #5264a126, 0 2px 5px #344a6910;
+  text-align: center;
+}
+.public-digital-card__artwork { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
+.public-digital-card__brand { position: absolute; z-index: 1; top: 4.4%; left: 20%; width: 60%; height: 10.5%; }
+.public-digital-card__brand img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.public-digital-card__avatar { position: absolute; z-index: 1; top: 16.7%; left: 37.5%; width: 25%; aspect-ratio: 1; overflow: hidden; border: 1.5px solid #ffffffa6; border-radius: 50%; background: #101820; box-shadow: 0 1px 3px #0002; }
+.public-digital-card__avatar > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.public-digital-card__avatar > span { display: grid; position: absolute; inset: 0; place-items: center; background: radial-gradient(circle at 32% 24%, #293943, #0c141a 75%); color: #fff; }
+.public-digital-card__avatar svg { width: 50%; height: 50%; }
+.public-digital-card__identity { position: absolute; z-index: 1; top: 34.4%; right: 5%; left: 5%; }
+.public-digital-card .public-digital-card__identity h3 { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; margin: 0; color: var(--card-ink); font-size: 6.7cqw; font-weight: 750; letter-spacing: -.035em; line-height: 1.16; overflow-wrap: anywhere; }
+.public-digital-card--long-name .public-digital-card__identity { top: 33.8%; }
+.public-digital-card--long-name .public-digital-card__identity h3 { font-size: 5.65cqw; line-height: 1.1; }
+.public-digital-card .public-digital-card__identity .pioneer-badge { display: inline-flex; margin: 7px auto 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #7b3ffb; font-size: 3.8cqw; line-height: 1.2; }
+.public-digital-card__meta { position: absolute; z-index: 1; top: 46.6%; right: 6%; left: 6%; display: flex; justify-content: center; align-items: center; gap: 5%; color: var(--card-secondary); font-size: 4.25cqw; line-height: 1.4; }
+.public-digital-card__meta > span { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.public-digital-card__meta svg { flex: 0 0 auto; width: 5.4cqw; height: 5.4cqw; color: var(--card-accent); }
+.public-digital-card__meta-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.public-digital-card__qr { position: absolute; z-index: 1; top: 52.7%; left: 29%; display: grid; place-items: center; box-sizing: border-box; width: 42%; aspect-ratio: 1; padding: 7px; border: 1px solid #e7eaf3; border-radius: 9px; background: #fff; color: #8794ad; box-shadow: 0 2px 7px #263f7610; }
+.public-digital-card__qr-placeholder { display: grid; justify-items: center; gap: 5px; }
+.public-digital-card__qr-placeholder > span { font-size: 10cqw; font-weight: 800; letter-spacing: .06em; }
+.public-digital-card__qr-placeholder small { font-size: 3.2cqw; font-weight: 500; }
+.public-digital-card__scan { position: absolute; z-index: 1; top: 80.4%; right: 19%; left: 19%; color: var(--card-ink); font-size: 3.7cqw; font-weight: 700; line-height: 1.13; }
+.public-digital-card__footer { position: absolute; z-index: 1; right: 5%; bottom: 3.7%; left: 5%; color: #fff; font-size: 4.6cqw; font-weight: 500; letter-spacing: .015em; line-height: 1.3; text-shadow: 0 1px 2px #0003; }

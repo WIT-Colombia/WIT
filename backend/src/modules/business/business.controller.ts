@@ -4,6 +4,7 @@ import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { createBusiness, getBusiness, getBusinessReferralSummary, listBusinesses, listCategories, updateBusiness, requestBusinessDeletion, recoverBusiness, publishBusiness } from './business.service.js';
 import { businessCreateSchema, businessUpdateSchema } from './business.schemas.js';
+import { getVisibility, renewVisibility, setVisibility } from './visibility.service.js';
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T { const result = schema.safeParse(value); if (!result.success) throw new AppError(400, 'INVALID_INPUT', 'Revisa los datos ingresados.'); return result.data; }
 const userId = (request: Parameters<RequestHandler>[0]) => (request as AuthenticatedRequest).auth.userId;
@@ -18,3 +19,6 @@ export const updateBusinessController: RequestHandler = async (req, res, next) =
 export const requestDeletionController: RequestHandler = async (req, res, next) => { try { res.json({ business: await requestBusinessDeletion(userId(req), req.params.businessId as string, meta(req)) }); } catch (error) { next(error); } };
 export const recoverBusinessController: RequestHandler = async (req, res, next) => { try { res.json({ business: await recoverBusiness(userId(req), req.params.businessId as string, meta(req)) }); } catch (error) { next(error); } };
 export const publishBusinessController: RequestHandler = async (req, res, next) => { try { res.json({ business: await publishBusiness(userId(req), req.params.businessId as string, meta(req)) }); } catch (error) { next(error); } };
+export const getVisibilityController: RequestHandler = async (req, res, next) => { try { res.json({ visibility: await getVisibility(userId(req), req.params.businessId as string) }); } catch (error) { next(error); } };
+export const renewVisibilityController: RequestHandler = async (req, res, next) => { try { res.json({ visibility: await renewVisibility(userId(req), req.params.businessId as string) }); } catch (error) { next(error); } };
+export const setVisibilityController: RequestHandler = async (req, res, next) => { try { res.json({ visibility: await setVisibility(userId(req), req.params.businessId as string, Boolean(req.body?.visible)) }); } catch (error) { next(error); } };

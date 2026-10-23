@@ -1,0 +1,3 @@
+export const LOGIN_RATE_LIMIT = 10;
+export const LOGIN_IP_WINDOW_SECONDS = 60;
+export const LOGIN_ACCOUNT_WINDOW_SECONDS = 15 * 60;

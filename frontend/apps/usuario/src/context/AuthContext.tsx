@@ -31,9 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status !== "authenticated") return;
     let active = true;
-    const update = () => { getMe().then((next) => { if (active) setUser(next); }).catch(() => {}); };
+    const update = () => { getMe().then((next) => { if (active) setUser((current) => current?.avatarUrl === next.avatarUrl && current.displayName === next.displayName && current.nickname === next.nickname ? current : next); }).catch(() => {}); };
+    const refreshWhenVisible = () => { if (document.visibilityState === "visible") update(); };
+    const interval = window.setInterval(refreshWhenVisible, 3000);
     window.addEventListener("focus", update);
-    return () => { active = false; window.removeEventListener("focus", update); };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => { active = false; window.clearInterval(interval); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", refreshWhenVisible); };
   }, [status]);
 
   const value = useMemo<AuthContextValue>(() => ({

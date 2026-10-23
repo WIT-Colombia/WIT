@@ -4,3 +4,80 @@
 .offer-detail-actions .entity-like.is-active{border-color:#7b3ffb;background:#f0ebff;color:#7b3ffb}
 .offer-detail-label{font-size:13px;letter-spacing:.04em}.offer-detail-actions .entity-action{width:45px;height:45px}.offer-detail-actions .entity-action svg{width:20px;height:20px}.offer-detail-report{margin-top:12px;color:var(--wit-text-muted);font-size:10px;text-decoration:underline;text-underline-offset:3px}
 .offer-like-error { display: block; margin-top: 8px; color: #b42318; font-size: 12px; }
+
+/* The promotional price can contain the original value and discount label.
+   Let that information wrap cleanly instead of clipping on narrow layouts. */
+.offer-detail-price {
+  display: block;
+  max-width: 100%;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.offer-detail-price-current { color: var(--wit-text-primary); }
+.offer-detail-price-original { color: var(--wit-text-secondary); font-size: .62em; font-weight: 500; text-decoration: line-through; }
+.offer-detail-discount { display: inline-flex; align-items: center; padding: .28em .55em; border-radius: 999px; background: #e8f8ef; color: #14804a; font-size: .48em; font-weight: 800; white-space: nowrap; }
+
+@media (min-width: 751px) {
+  .offer-detail-price { font-size: clamp(20px, 2.2vw, 30px); }
+}
+
+@media (max-width: 750px) {
+  .offer-detail-price { margin-bottom: 15px; font-size: clamp(18px, 6vw, 24px); }
+}
+
+/* Discounted product detail: make the savings immediately visible on the photo,
+   while the amount remains easy to scan alongside the previous price. */
+.offer-detail-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 14px;
+  width: 100%;
+  margin: 22px 0 18px;
+}
+
+.offer-detail-price-current {
+  flex: 0 0 100%;
+  color: var(--wit-text-primary);
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.08;
+  white-space: nowrap;
+}
+
+.offer-detail-price-original {
+  color: var(--wit-text-secondary);
+  font-size: clamp(14px, 1.25vw, 18px);
+  font-weight: 600;
+  text-decoration: line-through;
+  white-space: nowrap;
+}
+
+.offer-detail-image .offer-detail-kind { z-index: 2; }
+
+.offer-detail-image .offer-detail-image-discount {
+  position: absolute;
+  z-index: 2;
+  top: 18px;
+  right: 18px;
+  left: auto;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #ff356a;
+  box-shadow: 0 10px 22px rgba(255, 53, 106, .32);
+  color: #fff;
+  font-size: clamp(13px, 1.15vw, 17px);
+  font-weight: 800;
+  line-height: 1;
+}
+
+@media (max-width: 750px) {
+  .offer-detail-image .offer-detail-image-discount {
+    top: 12px;
+    right: 12px;
+    padding: 8px 11px;
+  }
+
+  .offer-detail-price-current { font-size: clamp(25px, 8vw, 34px); }
+}

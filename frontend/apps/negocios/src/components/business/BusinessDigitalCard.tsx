@@ -3,6 +3,7 @@ import xamukoLogo from "../../assets/XAMUKO-V1-transparent.png";
 import type { BusinessDetails } from "../../types/business";
 import { formatCategoryName } from "../../services/realBusinessAdapter";
 import { PersistedPhoto } from "../common/PersistedPhoto";
+import { PioneerBadge } from "../PioneerBadge";
 import "./BusinessDigitalCard.css";
 
 export type BusinessCardLevel = "BASIC" | "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND";
@@ -142,6 +143,7 @@ export function BusinessCardFace({ business, level = "BASIC", publicUrl = null, 
     <CardAvatar key={`${business.id ?? ""}:${business.profilePhotoId ?? ""}`} src={businessImage} />
     <div className="business-digital-card__identity">
       <h3 title={business.name}>{business.name}</h3>
+      <PioneerBadge pioneerNumber={business.pioneerNumber} />
       {sedeLabel && <p>{sedeLabel}</p>}
     </div>
     <div className="business-digital-card__meta">

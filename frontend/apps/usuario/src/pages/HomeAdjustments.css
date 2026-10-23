@@ -199,3 +199,4 @@
   .home-page .special-offers__list { padding-bottom:0; }
   .home-page .admob-banner-slot--home-footer { margin-top:24px; }
 }
+.home-page .home-empty-offers{margin:0;padding:18px 0;color:var(--xamuko-muted);font-size:13px}

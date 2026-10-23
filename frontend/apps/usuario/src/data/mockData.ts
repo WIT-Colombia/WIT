@@ -17,6 +17,7 @@ export type Business = {
   isFeatured?: boolean;
   isVerified?: boolean;
   plan?: "free" | "premium";
+  pioneerNumber?: number | null;
   createdAt?: string;
   phone?: string;
   whatsapp?: string;
@@ -26,6 +27,7 @@ export type Business = {
   regionName?: string;
   additionalAddressInfo?: string;
   secondaryCategories?: string[];
+  modalityTypes?: string[];
   weeklyHours?: { day: string; hours: string; isClosed: boolean }[];
   socialNetworks?: { instagram?: string | null; facebook?: string | null; tiktok?: string | null; x?: string | null };
   coordinates?: { lat: number; lng: number };
@@ -42,6 +44,7 @@ export type Product = {
   description: string;
   price?: number;
   priceLabel?: string;
+  originalPriceLabel?: string;
   businessName?: string;
   businessCoordinates?: { lat: number; lng: number };
   image: string;
@@ -51,6 +54,7 @@ export type Product = {
   offerLabel?: string;
   discount?: string;
   offerDeadline?: string;
+  promotionId?: string;
 };
 
 const sampleProductPublished = (daysAgo: number) => new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
@@ -61,6 +65,7 @@ export type Service = {
   name: string;
   description: string;
   priceLabel?: string;
+  originalPriceLabel?: string;
   businessName?: string;
   businessCoordinates?: { lat: number; lng: number };
   image: string;
@@ -69,6 +74,7 @@ export type Service = {
   offerLabel?: string;
   discount?: string;
   offerDeadline?: string;
+  promotionId?: string;
 };
 
 export type Review = {
@@ -118,7 +124,7 @@ export const categories = [
 
 export const alphabeticalCategories = [...categories].sort((left, right) => left.name.localeCompare(right.name, "es", { sensitivity: "base" }));
 
-export const businesses: Business[] = [
+const demoBusinessData: Business[] = [
   {
     id: "arepa-majo", name: "La Arepería de Majo", category: "Restaurantes", rating: 4.8,
     reviewCount: 126, distanceKm: 0.4, isOpen: true, address: "Calle 30 # 28-16, Palmira",
@@ -167,13 +173,13 @@ export const businesses: Business[] = [
 ];
 
 // Marca diez negocios de muestra como destacados para probar la sección y su acción "Ver todos".
-businesses.slice(0, 10).forEach((business) => {
+demoBusinessData.slice(0, 10).forEach((business) => {
   business.isFeatured = true;
   business.plan = "premium";
 });
 
-export const products: Product[] = [
-  { id: "arepa-queso", businessId: "arepa-majo", name: "Arepa con queso", description: "Arepa de maíz dorada en plancha con queso derretido.", price: 6500, image: businesses[0].image, createdAt: sampleProductPublished(1), likeCount: 24, isOffer: true, offerLabel: "Oferta", discount: "-20%", offerDeadline: "31 oct." },
+const demoProductData: Product[] = [
+  { id: "arepa-queso", businessId: "arepa-majo", name: "Arepa con queso", description: "Arepa de maíz dorada en plancha con queso derretido.", price: 6500, image: demoBusinessData[0].image, createdAt: sampleProductPublished(1), likeCount: 24, isOffer: true, offerLabel: "Oferta", discount: "-20%", offerDeadline: "31 oct." },
   { id: "desayuno-campesino", businessId: "arepa-majo", name: "Desayuno campesino", description: "Arepa, huevos al gusto, bebida caliente y fruta del día.", price: 18000, image: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=85", likeCount: 42, isOffer: true, offerLabel: "Oferta", discount: "-15%", offerDeadline: "30 oct." },
   { id: "calentado-campesino", businessId: "arepa-majo", name: "Calentado campesino", description: "Arroz, fríjol, huevo y acompañamiento de la casa para empezar con energía.", price: 16000, image: "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=85", likeCount: 16, isOffer: true, offerLabel: "Oferta", discount: "-10%", offerDeadline: "28 oct." },
   { id: "chocolate-con-queso", businessId: "arepa-majo", name: "Chocolate con queso", description: "Chocolate caliente servido con queso y pan recién horneado.", price: 9000, image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=900&q=85", likeCount: 60 },
@@ -181,7 +187,7 @@ export const products: Product[] = [
   ...Array.from({ length: 35 }, (_, index) => {
     const number = index + 6;
     const sampleNames = ["Arepa de chocolo", "Huevos pericos", "Arepa paisa", "Jugo natural", "Café de la casa", "Tostadas con aguacate", "Caldo campesino"];
-    const sampleImages = [businesses[0].image, "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=85"];
+    const sampleImages = [demoBusinessData[0].image, "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=85"];
     return {
       id: `arepa-majo-producto-${number}`,
       businessId: "arepa-majo",
@@ -192,33 +198,38 @@ export const products: Product[] = [
       likeCount: 10 + ((index * 7) % 28),
     };
   }),
-  { id: "vitaminas", businessId: "drogueria-central", name: "Vitaminas y bienestar", description: "Opciones de cuidado diario. Consulta disponibilidad en el establecimiento.", image: businesses[1].image, createdAt: sampleProductPublished(3) },
-  { id: "kit-herramientas", businessId: "casa-tornillo", name: "Kit básico de herramientas", description: "Una selección práctica para pequeñas reparaciones del hogar.", price: 45900, image: businesses[2].image, createdAt: sampleProductPublished(5) },
-  { id: "cera-cabello", businessId: "distrito-23", name: "Cera para peinar", description: "Fijación flexible para completar tu rutina de cuidado.", price: 22000, image: businesses[3].image },
-  { id: "soporte-celular", businessId: "tecno-palmira", name: "Soporte para celular", description: "Soporte ajustable para escritorio y videollamadas.", price: 28000, image: businesses[5].image, createdAt: sampleProductPublished(7) },
-  { id: "combo-cuidado-diario", businessId: "drogueria-central", name: "Combo de cuidado diario", description: "Selección práctica para acompañar tu rutina de cuidado personal.", price: 32000, image: businesses[1].image, createdAt: sampleProductPublished(1) },
+  { id: "vitaminas", businessId: "drogueria-central", name: "Vitaminas y bienestar", description: "Opciones de cuidado diario. Consulta disponibilidad en el establecimiento.", image: demoBusinessData[1].image, createdAt: sampleProductPublished(3) },
+  { id: "kit-herramientas", businessId: "casa-tornillo", name: "Kit básico de herramientas", description: "Una selección práctica para pequeñas reparaciones del hogar.", price: 45900, image: demoBusinessData[2].image, createdAt: sampleProductPublished(5) },
+  { id: "cera-cabello", businessId: "distrito-23", name: "Cera para peinar", description: "Fijación flexible para completar tu rutina de cuidado.", price: 22000, image: demoBusinessData[3].image },
+  { id: "soporte-celular", businessId: "tecno-palmira", name: "Soporte para celular", description: "Soporte ajustable para escritorio y videollamadas.", price: 28000, image: demoBusinessData[5].image, createdAt: sampleProductPublished(7) },
+  { id: "combo-cuidado-diario", businessId: "drogueria-central", name: "Combo de cuidado diario", description: "Selección práctica para acompañar tu rutina de cuidado personal.", price: 32000, image: demoBusinessData[1].image, createdAt: sampleProductPublished(1) },
   ...demoProducts,
 ];
 
-export const services: Service[] = [
-  { id: "mantenimiento-moto", businessId: "moto-express", name: "Mantenimiento general de moto", description: "Revisión básica de puntos esenciales y recomendaciones para tu moto.", priceLabel: "Cotiza en el taller", image: businesses[4].image },
-  { id: "cambio-aceite", businessId: "moto-express", name: "Cambio de aceite", description: "Servicio de cambio de aceite con revisión visual de rutina.", image: businesses[4].image },
-  { id: "corte-clasico", businessId: "distrito-23", name: "Corte clásico", description: "Corte personalizado con asesoría según tu estilo.", priceLabel: "Desde $25.000", image: businesses[3].image },
-  { id: "barba", businessId: "distrito-23", name: "Arreglo de barba", description: "Perfilado y cuidado para mantener tu estilo.", priceLabel: "Desde $18.000", image: businesses[3].image },
-  { id: "diagnostico-celular", businessId: "tecno-palmira", name: "Diagnóstico de celular", description: "Revisión inicial del equipo para identificar qué puede estar pasando.", priceLabel: "Consulta disponibilidad", image: businesses[5].image },
-  { id: "asesoria-ferretera", businessId: "casa-tornillo", name: "Asesoría para tu proyecto", description: "Orientación para elegir herramientas y materiales adecuados.", image: businesses[2].image },
+const demoServiceData: Service[] = [
+  { id: "mantenimiento-moto", businessId: "moto-express", name: "Mantenimiento general de moto", description: "Revisión básica de puntos esenciales y recomendaciones para tu moto.", priceLabel: "Cotiza en el taller", image: demoBusinessData[4].image },
+  { id: "cambio-aceite", businessId: "moto-express", name: "Cambio de aceite", description: "Servicio de cambio de aceite con revisión visual de rutina.", image: demoBusinessData[4].image },
+  { id: "corte-clasico", businessId: "distrito-23", name: "Corte clásico", description: "Corte personalizado con asesoría según tu estilo.", priceLabel: "Desde $25.000", image: demoBusinessData[3].image },
+  { id: "barba", businessId: "distrito-23", name: "Arreglo de barba", description: "Perfilado y cuidado para mantener tu estilo.", priceLabel: "Desde $18.000", image: demoBusinessData[3].image },
+  { id: "diagnostico-celular", businessId: "tecno-palmira", name: "Diagnóstico de celular", description: "Revisión inicial del equipo para identificar qué puede estar pasando.", priceLabel: "Consulta disponibilidad", image: demoBusinessData[5].image },
+  { id: "asesoria-ferretera", businessId: "casa-tornillo", name: "Asesoría para tu proyecto", description: "Orientación para elegir herramientas y materiales adecuados.", image: demoBusinessData[2].image },
   ...Array.from({ length: 40 }, (_, index) => ({
     id: `arepa-majo-servicio-${index + 7}`,
     businessId: "arepa-majo",
     name: ["Desayuno para llevar", "Servicio de domicilio", "Catering para eventos", "Menú personalizado", "Reserva de mesa", "Combo familiar"][index % 6] + ` ${index + 7}`,
     description: "Una atención cercana y preparada según lo que necesitas.",
     priceLabel: index % 3 === 0 ? "Desde $12.000" : "Consulta disponibilidad",
-    image: [businesses[0].image, "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=85"][index % 3],
+    image: [demoBusinessData[0].image, "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=85"][index % 3],
     likeCount: 8 + ((index * 5) % 26),
     ...(index < 3 ? { isOffer: true, offerLabel: "Oferta", discount: index === 0 ? "-20%" : index === 1 ? "-15%" : "-10%", offerDeadline: index === 0 ? "31 oct." : index === 1 ? "30 oct." : "28 oct." } : {}),
   })),
   ...demoServices,
 ];
+
+const E2E_REAL_ONLY = import.meta.env.VITE_E2E_REAL_ONLY === "true";
+export const businesses: Business[] = E2E_REAL_ONLY ? [] : demoBusinessData;
+export const products: Product[] = E2E_REAL_ONLY ? [] : demoProductData;
+export const services: Service[] = E2E_REAL_ONLY ? [] : demoServiceData;
 
 export const reviews: Review[] = [
   { id: "review-arepa-1", businessId: "arepa-majo", author: "Mariana G.", rating: 5, date: "2026-08-14", comment: "La arepa estaba recién hecha y la atención fue muy querida." },
