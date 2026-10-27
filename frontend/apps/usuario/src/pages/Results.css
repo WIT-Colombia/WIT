@@ -387,3 +387,4 @@
 .results-like-error { margin: 0 0 12px; color: #b42318; font-size: 13px; }
 @media(max-width:700px){.results-page .results-main{padding-top:8px}}
 @media(min-width:701px) and (max-width:1100px){.results-page .results-main{padding-top:8px}.results-page .results-heading{margin-top:12px}}
+.results-main > .search-bar { display: none; }

@@ -3,8 +3,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { alphabeticalCategories, businesses as demoBusinesses, type Business, type Product, type Service } from "../data/mockData";
 import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
 import { useLocationContext } from "../context/LocationContext";
-import { SearchBar } from "../components/SearchBar";
 import { SiteHeader } from "../components/SiteHeader";
+import { SearchBar, createSearchId } from "../components/SearchBar";
 import { SiteFooter } from "../components/SiteFooter";
 import { BottomNavigation } from "../components/BottomNavigation";
 import { BusinessCard, ProductCard, ServiceCard } from "../components/EntityCards";
@@ -44,6 +44,7 @@ export default function Results() {
   const [pages, setPages] = useState({ businesses: 1, products: 1, services: 1 });
   const [totalPages, setTotalPages] = useState({ businesses: 1, products: 1, services: 1 });
   const [resultTotals, setResultTotals] = useState({ businesses: 0, products: 0, services: 0 });
+  const [loadedSearchKey, setLoadedSearchKey] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"businesses" | "products" | "services">("businesses");
   const manualTabSelection = useRef(false);
   const loadingSection = useRef<"businesses" | "products" | "services" | null>(null);
@@ -58,12 +59,15 @@ export default function Results() {
   // Real searches must always reach the public API. The previous location/demo
   // gate skipped the request in E2E and made every search appear empty.
   const canShowCatalog = true;
+  const searchKey = params.toString();
 
   useEffect(() => {
+    let current = true;
     if (demoMode) {
       const demo = createDemoResults();
       setItems(demo.businesses); setMatchingProducts(demo.products); setMatchingServices(demo.services);
       setResultTotals({ businesses: 50, products: 50, services: 50 }); setTotalPages({ businesses: 1, products: 1, services: 1 }); setPages({ businesses: 1, products: 1, services: 1 });
+      setLoadedSearchKey(searchKey);
       return;
     }
     if (!canShowCatalog) {
@@ -72,11 +76,10 @@ export default function Results() {
       setMatchingServices([]);
       setResultTotals({ businesses: 0, products: 0, services: 0 });
       setTotalPages({ businesses: 1, products: 1, services: 1 });
+      setLoadedSearchKey(searchKey);
       return;
     }
-    let current = true;
     manualTabSelection.current = false;
-    setResultTotals({ businesses: 0, products: 0, services: 0 });
     searchUniversal({ query, category, latitude: selection?.coordinates?.lat, longitude: selection?.coordinates?.lng, businessPageSize: 50, productPageSize: 50, servicePageSize: 50 })
       .then(({ businesses: foundBusinesses, products: foundProducts, services: foundServices, pagination }) => {
         if (!current) return;
@@ -88,20 +91,25 @@ export default function Results() {
         setTotalPages({ businesses: pagination?.businesses?.totalPages ?? 1, products: pagination?.products?.totalPages ?? 1, services: pagination?.services?.totalPages ?? 1 });
         const totals = { businesses: pagination?.businesses?.total ?? foundBusinesses.length, products: pagination?.products?.total ?? foundProducts.length, services: pagination?.services?.total ?? foundServices.length };
         setResultTotals(totals);
+        setLoadedSearchKey(searchKey);
         // Choose the first non-empty category only when this search response
         // completes. Manual tab changes remain untouched until the next search.
         if (!manualTabSelection.current) setActiveTab(totals.businesses > 0 ? "businesses" : totals.products > 0 ? "products" : "services");
-      }).catch(() => { if (current) { setItems([]); setMatchingProducts([]); setMatchingServices([]); setResultTotals({ businesses: 0, products: 0, services: 0 }); } });
+      }).catch(() => { if (current) { setItems([]); setMatchingProducts([]); setMatchingServices([]); setResultTotals({ businesses: 0, products: 0, services: 0 }); setLoadedSearchKey(searchKey); } });
     return () => { current = false; };
-  }, [query, category, canShowCatalog, selection, demoMode]);
+  }, [query, category, canShowCatalog, selection, demoMode, searchKey]);
 
   const orderedItems = useMemo(() => prioritizeFeaturedByDistance(items, 3), [items]);
   const visibleBusinesses = orderedItems.slice(0, businessesVisibleCount);
   const visibleProducts = matchingProducts.slice(0, productsVisibleCount);
   const visibleServices = matchingServices.slice(0, servicesVisibleCount);
-  useEffect(() => { visibleBusinesses.forEach((business) => recordBusinessEvent(business.id, "SEARCH_IMPRESSION", `${query}|${category}|${visibleBusinesses.map((item) => item.id).join(",")}`)); }, [visibleBusinesses, query, category]);
-  const searchKey = params.toString();
-
+  const confirmedSearchId = params.get("searchId");
+  const impressionScope = confirmedSearchId ?? "";
+  const visibleBusinessIds = visibleBusinesses.map((business) => business.id).join(",");
+  useEffect(() => {
+    if (!confirmedSearchId || loadedSearchKey !== searchKey) return;
+    visibleBusinesses.forEach((business) => recordBusinessEvent(business.id, "SEARCH_IMPRESSION", impressionScope));
+  }, [visibleBusinessIds, impressionScope, confirmedSearchId, loadedSearchKey, searchKey]);
   useEffect(() => {
     setBusinessesVisibleCount(8);
     setProductsVisibleCount(8);
@@ -129,8 +137,17 @@ export default function Results() {
       setVisible(visible + 8);
     } finally { loadingSection.current = null; }
   }
-  function updateQuery(value: string) { setParams((current) => { const next = new URLSearchParams(current); next.delete("category"); value.trim() ? next.set("q", value.trim()) : next.delete("q"); return next; }); }
-  function updateCategory(value: string) { setParams((current) => { const next = new URLSearchParams(current); value ? next.set("category", value) : next.delete("category"); return next; }); }
+  function updateQuery(value: string) { setParams((current) => { const next = new URLSearchParams(current); next.delete("category"); next.delete("searchId"); value.trim() ? next.set("q", value.trim()) : next.delete("q"); return next; }); }
+  function confirmSearch(value: string, searchId = createSearchId()) { setParams((current) => { const next = new URLSearchParams(current); next.delete("category"); value.trim() ? next.set("q", value.trim()) : next.delete("q"); next.set("searchId", searchId); return next; }); }
+  useEffect(() => {
+    const handleConfirmedSearch = (event: Event) => {
+      const detail = (event as CustomEvent<{ value?: string; searchId?: string }>).detail;
+      confirmSearch(detail?.value ?? "", detail?.searchId);
+    };
+    window.addEventListener("xamuko:search-confirmed", handleConfirmedSearch);
+    return () => window.removeEventListener("xamuko:search-confirmed", handleConfirmedSearch);
+  }, [setParams]);
+  function updateCategory(value: string) { setParams((current) => { const next = new URLSearchParams(current); next.delete("searchId"); value ? next.set("category", value) : next.delete("category"); return next; }); }
   const locationName = location?.name ?? (selection?.mode === "automatic" ? "tu ubicación" : "esta zona");
   const resultsContext = category
     ? `Mostrando resultados de la categoría “${category}” para ${locationName}${query ? ` · búsqueda: “${query}”` : ""}.`

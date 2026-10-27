@@ -13,6 +13,8 @@ import { PioneerBadge } from "../components/PioneerBadge";
 import { BusinessCardPanel } from "../components/business/BusinessCardPanel";
 import { getBusinessOpeningState } from "../services/businessPresentation";
 import { getPublicBusinessUrl } from "../config/publicApp";
+import { developmentReferralTestFor } from "../config/businessRecognition";
+import { recognitionLevelFor, recognitionLevels } from "../config/businessRecognition";
 import { shareLink } from "../../../usuario/src/utils/share";
 import "./BusinessDetailPage.css";
 
@@ -81,6 +83,14 @@ const modalityLabels: Record<ModalityType, string> = { PHYSICAL: "Física", VIRT
 const sectionLabels: Record<Exclude<EditableSection, null>, string> = { general: "la información comercial", sede: "la sede", description: "la descripción", location: "la ubicación", contact: "el contacto", hours: "el horario" };
 const categoryLabel = (value: string) => categories.find(item => categoryCodeFromLabel(item) === categoryCodeFromLabel(value)) ?? value;
 const verificationStatusLabel = (business: BusinessDetails) => business.verificationStatus === "APPROVED" ? "Verificado" : business.verificationStatus === "INFORMATION" ? "Requiere confirmación" : business.verificationStatus === "REJECTED" ? "Rechazado" : business.status === "Verificado" ? "Verificado" : business.status === "Requiere confirmación" ? "Requiere confirmación" : "Pendiente";
+function BusinessRatingSummary({ average, count }: { average: number | null; count: number }) {
+  const hasRatings = count > 0 && average !== null && Number.isFinite(average);
+  const normalizedAverage = hasRatings ? Math.min(5, Math.max(0, average!)) : 0;
+  return <span className="business-rating-summary" aria-label={hasRatings ? `${normalizedAverage.toFixed(1)} de 5, ${count} ${count === 1 ? "opinión" : "opiniones"}` : "Aún no hay calificaciones"}>
+    <span className="business-rating-stars" aria-hidden="true"><span>★★★★★</span>{hasRatings && <b style={{ width: `${normalizedAverage / 5 * 100}%` }}>★★★★★</b>}</span>
+    {hasRatings && <><strong>{normalizedAverage.toFixed(1)}</strong><small>({count} {count === 1 ? "opinión" : "opiniones"})</small></>}
+  </span>;
+}
 function DetailSectionIcon({ title }: { title: string }) {
   const paths: Record<string, ReactNode> = {
     "Cámara": <><path d="M8 5 10 3h4l2 2h5v16H3V5h5Z" /><circle cx="12" cy="12" r="4" /></>,
@@ -227,6 +237,7 @@ export function BusinessDetailPage() {
   const [modalityConfirmationError, setModalityConfirmationError] = useState("");
   const [referralSummary, setReferralSummary] = useState<BusinessReferralSummary | null>(null);
   const [referralState, setReferralState] = useState<'loading' | 'available' | 'unavailable'>('loading');
+  const [reviewSummary, setReviewSummary] = useState<{ average: number | null; count: number }>({ average: null, count: 0 });
   const [shareMessage, setShareMessage] = useState("");
   const [sharing, setSharing] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -241,6 +252,15 @@ export function BusinessDetailPage() {
   const modalities = modalitiesBusinessId === (business?.id ?? null) ? modalityRecords : [];
   const [draft, setDraft] = useState(business);
   const [draftSecondaryCategories, setDraftSecondaryCategories] = useState<string[]>(business?.secondaryCategories ?? []);
+  useEffect(() => {
+    let cancelled = false;
+    setReviewSummary({ average: null, count: 0 });
+    if (!business?.publicId) return () => { cancelled = true; };
+    void businessApi.listReviews(business.publicId, 1, 1).then(({ summary }) => {
+      if (!cancelled) setReviewSummary({ average: summary.average, count: summary.total });
+    }).catch(() => { if (!cancelled) setReviewSummary({ average: null, count: 0 }); });
+    return () => { cancelled = true; };
+  }, [business?.publicId]);
   useEffect(() => {
     if (!business) return;
     setBusiness(business);
@@ -301,6 +321,15 @@ export function BusinessDetailPage() {
     let cancelled = false;
     setReferralSummary(null);
     setReferralState('loading');
+    const testReferrals = developmentReferralTestFor(business.name);
+    if (testReferrals !== null) {
+      const current = recognitionLevelFor(testReferrals);
+      const currentIndex = recognitionLevels.findIndex(item => item.level === current.level);
+      const next = recognitionLevels[currentIndex + 1] ?? null;
+      setReferralSummary({ referredUsers: testReferrals, currentLevel: current.level, nextLevel: next?.level ?? null, nextLevelMinimum: next?.min ?? null });
+      setReferralState('available');
+      return () => { cancelled = true; };
+    }
     businessApi.getReferralSummary(business.id).then(response => {
       if (!cancelled) { setReferralSummary(response.referralSummary); setReferralState('available'); }
     }).catch(() => {
@@ -746,7 +775,7 @@ export function BusinessDetailPage() {
               <h1>{business.name}{verificationStatusLabel(business) === "Verificado" && <span className="business-verified-check" aria-label="Verificado">✓</span>}</h1>
               <PioneerBadge pioneerNumber={business.pioneerNumber} />
               <p className="business-detail-place">{sedeLabel && <span><DetailSectionIcon title="Nombre y sede" />{sedeLabel}</span>}{business.city && <span><DetailSectionIcon title="Ubicación y dirección" />{Array.from(new Set([business.city, business.regionName].filter(Boolean))).join(", ")}</span>}</p>
-              <div className="business-detail-reputation">{business.reviewCount && business.rating ? <span className="business-detail-rating">★ <b>{business.rating.toFixed(1)}</b> <span>({business.reviewCount} opiniones)</span></span> : <span className="business-no-reviews">Sin opiniones todavía</span>}<span className={`business-opening-state ${openingState.isOpen === true ? "is-open" : openingState.isOpen === false ? "is-closed" : "is-unknown"}`}>{openingState.label}</span>{verificationStatusLabel(business) !== "Verificado" && <span className="business-verification-status business-verification-status-pending">Verificación: {verificationStatusLabel(business)}</span>}</div>
+              <div className="business-detail-reputation"><BusinessRatingSummary average={reviewSummary.average} count={reviewSummary.count} /><span className={`business-opening-state ${openingState.isOpen === true ? "is-open" : openingState.isOpen === false ? "is-closed" : "is-unknown"}`}>{openingState.label}</span>{verificationStatusLabel(business) !== "Verificado" && <span className="business-verification-status business-verification-status-pending">Verificación: {verificationStatusLabel(business)}</span>}</div>
               <div className="business-detail-category-chips">{businessCategories.map(value => <span key={value}>{value}</span>)}{business.adultOnly && <span className="adult-only-badge">+18</span>}</div>
               <div className="business-detail-identity-badges">{business.deletionStatus === "RECOVERY" && <span className="business-deletion-status">Eliminación pendiente</span>}{business.deletionStatus === "DELETED" && <span className="business-deletion-status">Eliminado</span>}</div>
             </div>

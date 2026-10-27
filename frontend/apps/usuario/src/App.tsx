@@ -25,7 +25,6 @@ import Register from "./pages/Register";
 import Legal from "./pages/Legal";
 import PasswordRecovery from "./pages/PasswordRecovery";
 import RecoverPassword from "./pages/RecoverPassword";
-import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import GoogleCallback from "./pages/GoogleCallback";
 import { RequireAccount } from "./components/RequireAccount";
@@ -92,7 +91,7 @@ export default function App() {
     <Route path="/report" element={<Report />} />
     <Route path="/register" element={<Register />} />
     <Route path="/recover-password" element={<RecoverPassword />} />
-    <Route path="/reset-password" element={<ResetPassword />} />
+    <Route path="/reset-password" element={<PasswordRecovery />} />
     <Route path="/verify-email" element={<VerifyEmail />} />
     <Route path="/auth/google/callback" element={<GoogleCallback />} />
     <Route path="/change-password" element={<RequireAccount><PasswordRecovery /></RequireAccount>} />

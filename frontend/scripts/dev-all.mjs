@@ -9,8 +9,9 @@ const npmCli = process.env.npm_execpath;
 const baseEnv = { ...process.env, FORCE_COLOR: "1" };
 const services = [
   { name: "Backend", cwd: backend, args: ["run", "dev"], env: { PORT: "3000", HOST: "127.0.0.1" }, port: 3000 },
-  { name: "Usuario", cwd: root, args: ["run", "dev", "--workspace=@wit/usuario"], env: { VITE_USUARIO_PORT: "5174", VITE_USUARIO_BACKEND_URL: "http://127.0.0.1:3000" }, port: 5174 },
-  { name: "Business", cwd: root, args: ["run", "dev", "--workspace=@wit/negocios"], env: { VITE_NEGOCIOS_PORT: "5175", VITE_BUSINESS_BACKEND_URL: "http://127.0.0.1:3000" }, port: 5175 },
+  { name: "Usuario", cwd: root, args: ["run", "dev", "--workspace=@wit/usuario"], env: { VITE_USUARIO_PORT: "5173", VITE_USUARIO_BACKEND_URL: "http://127.0.0.1:3000" }, port: 5173 },
+  { name: "Business", cwd: root, args: ["run", "dev", "--workspace=@wit/negocios"], env: { VITE_NEGOCIOS_PORT: "5174", VITE_BUSINESS_BACKEND_URL: "http://127.0.0.1:3000" }, port: 5174 },
+  { name: "Landing", cwd: root, args: ["run", "dev", "--workspace=@wit/landing"], env: {}, port: 5175 },
   { name: "Admin", cwd: root, args: ["run", "dev", "--workspace=@wit/admin"], env: { VITE_ADMIN_PORT: "5176", VITE_ADMIN_BACKEND_URL: "http://127.0.0.1:3000" }, port: 5176 },
 ];
 function portFree(port) { return new Promise((resolve) => { const s = net.createServer().once("error", () => resolve(false)).once("listening", () => s.close(() => resolve(true))).listen(port, "127.0.0.1"); }); }

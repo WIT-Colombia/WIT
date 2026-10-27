@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { BusinessDetails } from "../../types/business";
 import { BusinessCardFace, type BusinessCardLevel } from "./BusinessDigitalCard";
-import { recognitionLevelFor, recognitionLevels, recognitionRange } from "../../config/businessRecognition";
+import { developmentReferralTestFor, recognitionLevelFor, recognitionLevels, recognitionRange } from "../../config/businessRecognition";
 import { getPublicBusinessUrl } from "../../config/publicApp";
 import { shareLink } from "../../../../usuario/src/utils/share";
 import "./BusinessCardPanel.css";
@@ -26,10 +26,11 @@ export function BusinessCardPanel({ business, cardData }: Props) {
   const [selectedLevel, setSelectedLevel] = useState<BusinessCardLevel>("BASIC");
   const closeBenefitsRef = useRef<HTMLButtonElement>(null);
   const referralState = cardData?.referralState ?? 'unavailable';
-  const referredUsers = referralState === 'available' ? validReferralCount(cardData?.referredUsers) : null;
+  const testReferrals = developmentReferralTestFor(business.name);
+  const referredUsers = referralState === 'available' ? validReferralCount(testReferrals ?? cardData?.referredUsers) : null;
   const hasReferralData = referredUsers !== null;
   const reportedLevel = recognitionLevels.find(item => item.level === cardData?.currentLevel);
-  const currentLevel = hasReferralData ? reportedLevel ?? recognitionLevelFor(referredUsers) : recognitionLevels[0];
+  const currentLevel = hasReferralData ? (testReferrals !== null ? recognitionLevelFor(referredUsers) : reportedLevel ?? recognitionLevelFor(referredUsers)) : recognitionLevels[0];
   const currentIndex = recognitionLevels.findIndex(item => item.level === currentLevel.level);
   const nextLevel = recognitionLevels[currentIndex + 1] ?? null;
   const progressPercent = nextLevel && referredUsers !== null ? Math.min(100, Math.round((referredUsers / nextLevel.min) * 100)) : null;
@@ -59,7 +60,7 @@ export function BusinessCardPanel({ business, cardData }: Props) {
   }, [benefitsOpen, currentLevel?.level]);
 
   return <aside className="business-card-panel" aria-labelledby="business-card-panel-title">
-    <div className="business-card-panel-heading"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M3 9h18M7 14h4M7 17h7" /></svg></span><div><h2 id="business-card-panel-title">Mi tarjeta XAMUKO</h2><p>Comparte tu negocio con la comunidad.</p></div></div>
+    <div className="business-card-panel-heading"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M3 9h18M7 14h4M7 17h7" /></svg></span><div><h2 id="business-card-panel-title">Mi tarjeta XAMUKO {testReferrals !== null && <small>MODO PRUEBA</small>}</h2><p>Comparte tu negocio con la comunidad.</p></div></div>
     <div className="business-card-panel-content">
       {referralState === 'loading' && <p className="business-card-panel-reference">Consultando referidos válidos…</p>}
       <BusinessCardFace business={business} level={currentLevel?.level} publicUrl={publicUrl} qrImageUrl={qrImageUrl} />

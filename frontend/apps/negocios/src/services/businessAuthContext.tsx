@@ -38,7 +38,14 @@ export function BusinessAuthProvider({ children }: { children: ReactNode }) {
       if (document.visibilityState !== "visible") return;
       void getMe().then((user) => {
         if (!active) return;
-        setState((current) => current.status === "authenticated" && current.user.avatarUrl !== user.avatarUrl ? { status: "authenticated", user } : current);
+        setState((current) => {
+          if (current.status !== "authenticated") return current;
+          const unchanged = current.user.avatarUrl === user.avatarUrl
+            && current.user.displayName === user.displayName
+            && current.user.nickname === user.nickname
+            && current.user.emailNormalized === user.emailNormalized;
+          return unchanged ? current : { status: "authenticated", user };
+        });
       }).catch(() => {});
     };
     const interval = window.setInterval(synchronize, 3000);

@@ -1,5 +1,7 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
+import { readFile } from 'node:fs/promises';
+import { photoStoragePath } from './photo-storage.js';
 
 const allowedPermissions = ['MANAGE_CATALOG', 'MANAGE_PROMOTIONS', 'READ_ANALYTICS', 'EDIT_BUSINESS'] as const;
 type Permission = typeof allowedPermissions[number];
@@ -23,7 +25,20 @@ export async function listCollaborators(actorId: string, businessId: string) {
   await owner(actorId, businessId);
   const rows = await prisma.businessMembership.findMany({ where: { businessId }, include: { user: { select: { id: true, publicId: true, displayName: true, nickname: true, emailNormalized: true, avatarUrl: true, lastLoginAt: true } }, permissions: true }, orderBy: [{ role: 'asc' }, { createdAt: 'asc' }] });
   const now = new Date();
-  return rows.map(row => row.status === 'INVITED' && row.expiresAt && row.expiresAt <= now ? { ...row, status: 'EXPIRED' as const } : row);
+  return rows.map(row => {
+    const status = row.status === 'INVITED' && row.expiresAt && row.expiresAt <= now ? 'EXPIRED' as const : row.status;
+    const canShowAvatar = status === 'ACTIVE' || status === 'SUSPENDED';
+    const avatarUrl = canShowAvatar && row.user.avatarUrl?.startsWith('private-avatar:') ? `/api/v1/businesses/${businessId}/collaborators/${row.user.id}/avatar` : canShowAvatar ? row.user.avatarUrl : null;
+    return { ...row, status, user: { ...row.user, avatarUrl } };
+  });
+}
+
+export async function readCollaboratorAvatar(actorId: string, businessId: string, targetUserId: string) {
+  await owner(actorId, businessId);
+  const membership = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId: targetUserId } }, select: { status: true, user: { select: { avatarUrl: true } } } });
+  const storageKey = membership?.status === 'ACTIVE' && membership.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
+  if (!storageKey || !/^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(storageKey)) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
+  return { content: await readFile(photoStoragePath(storageKey)), mimeType: storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
 }
 async function findCollaboratorRecipient(actorId: string, businessId: string, identifier: string) {
   await owner(actorId, businessId);

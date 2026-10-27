@@ -196,6 +196,23 @@ export async function logout(): Promise<void> {
   }
 }
 
+export async function requestPasswordReset(email: string): Promise<string> {
+  const result = await requestJson<{ message: string }>("/auth/password-reset/request", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+  return result.message;
+}
+
+export async function confirmPasswordReset(token: string, password: string, rememberMe = false): Promise<{ autoLogin: boolean }> {
+  const result = await requestJson<{ accessToken?: string; autoLogin?: boolean }>("/auth/password-reset/confirm", {
+    method: "POST",
+    body: JSON.stringify({ token, password, rememberMe }),
+  });
+  if (result.accessToken) accessToken = result.accessToken;
+  return { autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
+}
+
 export function clearAccessToken(): void {
   accessToken = null;
   sessionState = { status: "unauthenticated" };

@@ -51,6 +51,7 @@
 .settings-page .settings-account-fields label small{color:var(--xamuko-muted)}
 .settings-page .settings-account-fields input{border-color:var(--xamuko-border);border-radius:10px;color:var(--xamuko-navy);transition:border-color .2s ease,box-shadow .2s ease}
 .settings-page .settings-account-fields input:focus{border-color:var(--xamuko-violet);box-shadow:0 0 0 3px rgba(123,63,251,.12);outline:0}
+.settings-nickname-field{display:flex;align-items:stretch;gap:8px}.settings-nickname-field input{flex:1;min-width:0}.settings-nickname-copy{min-width:76px;padding:0 12px;border:1px solid #ddd2ff;border-radius:10px;background:#fff;color:var(--xamuko-violet);font:inherit;font-size:11px;font-weight:700;cursor:pointer}.settings-nickname-copy:hover:not(:disabled){background:#f7f3ff;border-color:#b9a2ff}.settings-nickname-copy:disabled{opacity:.55;cursor:not-allowed}
 .settings-page .settings-account-fields input[readonly]{background:#f1f5f9;color:#94a3b8}
 .settings-page .settings-account-actions .settings-save-button{background:var(--xamuko-gradient);box-shadow:0 6px 15px rgba(123,63,251,.2);transition:transform .2s ease,box-shadow .2s ease}
 .settings-page .settings-account-actions .settings-save-button:hover{box-shadow:0 9px 20px rgba(123,63,251,.28);transform:translateY(-1px)}
@@ -61,6 +62,7 @@
 .settings-page .settings-row small{color:var(--xamuko-muted);font-size:10px}
 .settings-page .settings-row input{accent-color:var(--xamuko-violet)}
 .settings-page .settings-notification-panel{min-height:84px}
+.settings-page .settings-notification-panel{display:none}
 .settings-page .settings-saved-message{border:1px solid #b9eedf;border-radius:9px;background:#ecfffa;color:#087d67!important;padding:8px 11px;font-size:10px}
 
 @media(max-width:700px){
@@ -93,4 +95,38 @@
  .settings-page .settings-adult-content-panel{padding:16px}
  .settings-adult-content-heading{gap:12px}
  .settings-adult-content-heading p{font-size:10px}
+}
+
+/* Account fields match the approved Usuario reference. */
+.settings-page .settings-sections{width:min(100%,1120px)}
+.settings-page .settings-account-panel{padding:24px}
+.settings-page .settings-account-fields{max-width:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.settings-page .settings-account-fields label{align-content:start;gap:7px;font-size:12px;font-weight:700}
+.settings-page .settings-account-fields label>span{color:var(--xamuko-navy)}
+.settings-page .settings-account-fields label>span b{color:#ef4444}
+.settings-page .settings-account-fields label small{font-size:10px}
+.settings-page .settings-account-fields label:nth-child(3){grid-column:1}
+.settings-page .settings-account-fields input{min-height:43px;padding:10px 12px;border-radius:9px;font-size:13px;font-weight:700}
+.settings-page .settings-nickname-field{gap:8px}
+.settings-page .settings-nickname-copy{min-width:76px;padding:0 16px;border:1px solid #e2e8f0;border-radius:9px;color:#2563eb;font-size:11px}
+.settings-page .settings-account-actions{display:grid;grid-template-columns:max-content max-content;max-width:none;gap:25px 10px;margin-top:25px}
+.settings-page .settings-account-actions .settings-save-button{grid-column:1 / -1;justify-self:start;min-width:150px;min-height:42px;border-radius:10px;font-size:12px}
+.settings-page .settings-account-actions .settings-password-link,.settings-page .settings-account-actions .settings-legal-button{min-width:150px;min-height:42px;padding:0 17px;border-radius:10px;font-size:12px}
+.settings-page .settings-saved-message{margin-top:14px!important;font-size:12px}
+@media(max-width:760px){
+ .settings-page .settings-account-panel{padding:22px}
+ .settings-page .settings-account-fields{grid-template-columns:1fr;gap:18px}
+ .settings-page .settings-account-fields label:nth-child(3){grid-column:auto}
+ .settings-page .settings-account-actions{display:grid;grid-template-columns:1fr 1fr;gap:25px 10px;margin-top:25px}
+ .settings-page .settings-account-actions .settings-save-button{grid-column:1 / -1}
+ .settings-page .settings-account-actions .settings-password-link,.settings-page .settings-account-actions .settings-legal-button{width:auto;padding:0 13px;font-size:12px}
+}
+@media(max-width:480px){
+ .settings-page .settings-account-panel{padding:18px}
+ .settings-page .settings-account-fields input{min-height:43px;padding:10px 12px;font-size:13px}
+ .settings-page .settings-nickname-field{gap:8px}
+ .settings-page .settings-nickname-copy{min-width:76px;padding:0 10px;font-size:11px}
+ .settings-page .settings-account-actions{align-items:stretch;flex-direction:column}
+ .settings-page .settings-account-actions .settings-save-button{min-width:0;min-height:42px;font-size:12px}
+ .settings-page .settings-account-actions .settings-password-link,.settings-page .settings-account-actions .settings-legal-button{width:100%;min-height:38px}
 }

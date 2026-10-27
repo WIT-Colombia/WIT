@@ -1,9 +1,10 @@
 import type { RequestHandler } from 'express';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
-import { acceptInvitation, cancelInvitation, inviteCollaborator, leaveBusiness, listCollaborators, listNotifications, markNotificationRead, reactivateCollaborator, rejectInvitation, resolveCollaboratorRecipient, revokeCollaborator, setPermissions, suspendCollaborator } from './collaborator.service.js';
+import { acceptInvitation, cancelInvitation, inviteCollaborator, leaveBusiness, listCollaborators, listNotifications, markNotificationRead, reactivateCollaborator, readCollaboratorAvatar, rejectInvitation, resolveCollaboratorRecipient, revokeCollaborator, setPermissions, suspendCollaborator } from './collaborator.service.js';
 const uid=(req:any)=>(req as AuthenticatedRequest).auth.userId;
 const run=(fn:(req:any)=>Promise<unknown>,status=200):RequestHandler=>async(req,res,next)=>{try{res.status(status).json(await fn(req));}catch(error){next(error);}};
 export const collaboratorsController=run(async req=>({memberships:await listCollaborators(uid(req),req.params.businessId)}));
+export const collaboratorAvatarController: RequestHandler = async (req, res, next) => { try { const avatar = await readCollaboratorAvatar(uid(req), String(req.params.businessId), String(req.params.userId)); res.setHeader('Cache-Control', 'private, no-store'); res.type(avatar.mimeType).send(avatar.content); } catch (error) { next(error); } };
 export const resolveCollaboratorController=run(async req=>({recipient:await resolveCollaboratorRecipient(uid(req),req.params.businessId,String(req.body?.nickname??''))}));
 export const inviteController=run(async req=>({membership:await inviteCollaborator(uid(req),req.params.businessId,String(req.body?.identifier??''),Array.isArray(req.body?.permissions)?req.body.permissions:[])}),201);
 export const acceptController=run(async req=>({membership:await acceptInvitation(uid(req),req.params.membershipId)}));

@@ -167,6 +167,31 @@ export type BusinessAnalyticsSummary = {
   };
   definitions: Record<'visits' | 'activity' | 'ratings' | 'favorites' | 'offerLikes' | 'leastLikedOffers' | 'promotionViews', string>;
 };
+export type BusinessStatisticsDashboard = {
+  period: 'day' | 'week' | 'month' | 'year' | 'all';
+  timezone: string;
+  window: { start: string | null; end: string };
+  access: { referralCount: number; referralGoal: number; nextLevel: string | null; nextLevelMinimum: number | null; unlockedReferralStatistics: number; referralsUnlocked: boolean; proUnlocked: boolean };
+  metrics: { businessViews: number; searchAppearances: number; whatsappClicks: number; phoneClicks: number; directionsClicks: number; currentFavorites: number };
+  previous: { businessViews: number; searchAppearances: number; whatsappClicks: number; phoneClicks: number; directionsClicks: number } | null;
+  trends: Record<'businessViews' | 'searchAppearances' | 'whatsappClicks' | 'phoneClicks' | 'directionsClicks', Array<{ label: string; value: number }>>;
+  referral?: { offerLikes?: number; reviewsCount?: number; averageRating?: number | null; ratingCount?: number };
+  pro?: {
+    contactRate: number | null;
+    hourlyActivity: Array<{ label: string; value: number }>;
+    weekdayActivity: Array<{ label: string; value: number }>;
+    promotionViews: number;
+    mostViewedPromotions: Array<{ id: string; title: string; value: number }>;
+    ratingEvolution: Array<{ label: string; value: number }>;
+    favoriteAcquisitions: Array<{ label: string; value: number }>;
+  };
+};
+export type OfferViewRanking = {
+  period: 'day' | 'week' | 'month' | 'year' | 'all';
+  timezone: string;
+  window: { start: string | null; end: string };
+  offers: Array<{ offerId: string; name: string; kind: 'PRODUCT' | 'SERVICE'; value: number }>;
+};
 export type BusinessReviewsResponse = { reviews: BusinessReview[]; pagination: { page: number; pageSize: number; total: number; totalPages: number }; summary: { average: number | null; total: number; distribution: Record<string, number> } };
 export type RealOffer = { id: string; businessId: string; internalCode: string; kind: 'PRODUCT' | 'SERVICE'; name: string; description: string | null; category: string | null; priceAmount: string | null; currency: string | null; priceText: string | null; negotiable: boolean; active: boolean; adultOnly: boolean; publicationStatus: 'UNPUBLISHED' | 'PUBLISHED' | 'REVIEW'; photos: RealPhoto[] };
 export type BusinessPromotion = { id: string; businessId: string; type: 'OFFER' | 'PROMOTION'; title: string; description: string; conditions: string | null; category: string | null; relatedOfferId: string | null; originalPrice: string | null; promotionalPrice: string | null; startsAt: string; endsAt: string; recurrence: 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY'; recurrenceUntil: string | null; active: boolean; state: 'SCHEDULED' | 'ACTIVE' | 'FINISHED'; viewCount: number; photos: Array<{ id: string; url: string; sortOrder: number }> };
@@ -247,7 +272,8 @@ export const businessApi = {
   getReferralSummary: (businessId: string) => requestJson<{ referralSummary: BusinessReferralSummary }>(`/businesses/${encodeURIComponent(businessId)}/referral-summary`),
   getCatalogLimits: (businessId: string) => requestJson<CatalogLimits>(`/businesses/${encodeURIComponent(businessId)}/catalog-limits`),
   getFavoriteCount: (businessId: string) => requestJson<{ count: number }>(`/businesses/${encodeURIComponent(businessId)}/favorites/count`),
-  getAnalytics: (businessId: string, period: string, signal?: AbortSignal) => requestJson<BusinessAnalyticsSummary>(`/businesses/${encodeURIComponent(businessId)}/analytics?period=${encodeURIComponent(period)}`, { signal }),
+  getStatisticsDashboard: (businessId: string, period: string, signal?: AbortSignal) => requestJson<BusinessStatisticsDashboard>(`/businesses/${encodeURIComponent(businessId)}/analytics?period=${encodeURIComponent(period)}`, { signal }),
+  getOfferViewRanking: (businessId: string, period: string, signal?: AbortSignal) => requestJson<OfferViewRanking>(`/businesses/${encodeURIComponent(businessId)}/analytics/offer-views?period=${encodeURIComponent(period)}`, { signal }),
   getOfferLikeCounts: (businessId: string) => requestJson<{ offers: Array<{ offerId: string; likeCount: number }> }>(`/businesses/${encodeURIComponent(businessId)}/offers/likes`),
   listReviews: (businessId: string, page = 1, pageSize = 50) => requestJson<BusinessReviewsResponse>(`/public/businesses/${encodeURIComponent(businessId)}/reviews?page=${page}&pageSize=${pageSize}`),
   saveReviewResponse: (reviewId: string, body: string, edit = false) => requestJson<{ response: BusinessReview['response'] }>(`/reviews/${encodeURIComponent(reviewId)}/response`, { method: edit ? 'PATCH' : 'POST', body: JSON.stringify({ body }) }),

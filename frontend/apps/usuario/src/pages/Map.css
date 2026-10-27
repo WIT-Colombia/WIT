@@ -149,3 +149,4 @@
   .map-page .user-content-main{width:calc(100% - 20px)}
   .map-canvas{height:330px;min-height:330px}
 }
+.map-controls { display: none; }

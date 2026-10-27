@@ -15,5 +15,9 @@ const adapter = new PrismaMariaDb({
   password: decodeURIComponent(databaseUrl.password),
   database: decodeURIComponent(databaseUrl.pathname.replace(/^\//, '')),
   connectionLimit: 10,
+  // MySQL 8.4 accounts using caching_sha2_password need the server RSA key
+  // during local password authentication. This only affects the driver
+  // handshake; it does not change credentials or database contents.
+  allowPublicKeyRetrieval: true,
 });
 export const prisma = new PrismaClient({ adapter });

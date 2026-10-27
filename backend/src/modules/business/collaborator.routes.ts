@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
-import { acceptController, cancelController, collaboratorsController, inviteController, leaveController, notificationsController, permissionsController, readNotificationController, reactivateController, rejectController, resolveCollaboratorController, revokeController, suspendController } from './collaborator.controller.js';
+import { acceptController, cancelController, collaboratorAvatarController, collaboratorsController, inviteController, leaveController, notificationsController, permissionsController, readNotificationController, reactivateController, rejectController, resolveCollaboratorController, revokeController, suspendController } from './collaborator.controller.js';
 export const collaboratorRouter=Router(); collaboratorRouter.use(requireAuth);
 collaboratorRouter.get('/businesses/:businessId/collaborators',collaboratorsController);
+collaboratorRouter.get('/businesses/:businessId/collaborators/:userId/avatar',collaboratorAvatarController);
 collaboratorRouter.post('/businesses/:businessId/collaborators/resolve',requireTrustedOrigin,resolveCollaboratorController);
 collaboratorRouter.post('/businesses/:businessId/collaborators/invitations',requireTrustedOrigin,inviteController);
 collaboratorRouter.post('/businesses/:businessId/leave',requireTrustedOrigin,leaveController);

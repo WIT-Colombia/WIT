@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { businesses, products, services, type Product, type Service } from "../data/mockData";
 import { getBusinessById, getProductById, getServiceById } from "../services/businessService";
 import { recordPublicPromotionView } from "../services/publicBusinessApi";
@@ -8,7 +8,7 @@ import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { PageLayout } from "../components/PageLayout";
 import { ThumbsUpIcon } from "../components/ActionIcons";
 import { useAccountGate } from "../hooks/useAccountGate";
-import { recordBusinessEvent } from "../services/analyticsService";
+import { createAnalyticsInteractionId, recordBusinessEvent } from "../services/analyticsService";
 import "./OfferDetail.css";
 import "./OfferDetailEnhancements.css";
 
@@ -23,6 +23,7 @@ export function ServiceDetail() {
 function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { get: getOfferLike, toggle: toggleOfferLike } = useOfferLikes([id]);
   const [likeError, setLikeError] = useState<string | null>(null);
   const requireAccount = useAccountGate();
@@ -33,7 +34,16 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
     businesses.find((item) => item.id === offer?.businessId),
   );
   const trackedPromotionRef = useRef("");
+  const trackedOfferViewRef = useRef("");
+  const offerViewIdRef = useRef<string | null>(typeof (location.state as { offerViewId?: unknown } | null)?.offerViewId === "string" ? (location.state as { offerViewId: string }).offerViewId : null);
   const isProduct = kind === "product";
+
+  useEffect(() => {
+    if (offerViewIdRef.current) return;
+    const offerViewId = createAnalyticsInteractionId();
+    offerViewIdRef.current = offerViewId;
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: { ...(location.state as object | null ?? {}), offerViewId } });
+  }, [location.pathname, location.search, location.state, navigate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +55,15 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
       if (cancelled || !loaded) return;
 
       setOffer(loaded);
+      if (isRealOfferId(loaded.id)) {
+        const offerViewId = offerViewIdRef.current ?? createAnalyticsInteractionId();
+        offerViewIdRef.current = offerViewId;
+        const trackingKey = `${kind}:${loaded.businessId}:${loaded.id}:${offerViewId}`;
+        if (trackedOfferViewRef.current !== trackingKey) {
+          trackedOfferViewRef.current = trackingKey;
+          recordBusinessEvent(loaded.businessId, "OFFER_VIEW", offerViewId, loaded.id);
+        }
+      }
       if (loaded.promotionId) {
         const trackingKey = `${kind}:${id}:${loaded.promotionId}`;
         if (trackedPromotionRef.current !== trackingKey) {

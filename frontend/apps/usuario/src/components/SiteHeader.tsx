@@ -55,8 +55,13 @@ export function SiteHeader({ active, onProfile, onSearchChange }: { active?: Sit
     });
   }
 
-  function submitSearch(value: string) {
-    if (!isResultsPage) navigate(`/results${value.trim() ? `?q=${encodeURIComponent(value.trim())}` : ""}`);
+  function submitSearch(value: string, searchId: string) {
+    if (!isResultsPage) {
+      const params = new URLSearchParams();
+      if (value.trim()) params.set("q", value.trim());
+      params.set("searchId", searchId);
+      navigate(`/results?${params.toString()}`);
+    }
   }
 
   return <header className="site-header">

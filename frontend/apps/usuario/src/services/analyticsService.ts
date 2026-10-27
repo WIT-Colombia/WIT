@@ -1,33 +1,52 @@
 import { requestWithSession } from './authService';
 
-export type PublicAnalyticsEvent = 'BUSINESS_VIEW' | 'SEARCH_IMPRESSION' | 'WHATSAPP_CLICK' | 'PHONE_CLICK';
+export type PublicAnalyticsEvent = 'BUSINESS_VIEW' | 'SEARCH_IMPRESSION' | 'WHATSAPP_CLICK' | 'PHONE_CLICK' | 'DIRECTIONS_CLICK' | 'OFFER_VIEW';
 
-export function recordBusinessEvent(businessId: string, eventType: PublicAnalyticsEvent, scope: string): void {
+const pendingDedupeKeys = new Set<string>();
+const completedDedupeKeys = new Set<string>();
+
+export function createAnalyticsInteractionId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+export function recordBusinessEvent(businessId: string, eventType: PublicAnalyticsEvent, scope: string, offerId?: string): void {
   // Contact actions are independent interactions. A permanent `click` key would
   // suppress every later WhatsApp/phone click in the same browser session.
-  const isContactAction = eventType === 'WHATSAPP_CLICK' || eventType === 'PHONE_CLICK';
+  const isContactAction = eventType === 'WHATSAPP_CLICK' || eventType === 'PHONE_CLICK' || eventType === 'DIRECTIONS_CLICK';
   // Cada montaje real de la ficha representa una nueva apertura. El efecto
   // de BusinessDetail se ejecuta una sola vez por montaje, así que BUSINESS_VIEW
   // no necesita la deduplicación de sessionStorage que impediría aperturas
   // posteriores del mismo visitante durante el mismo día.
   const isBusinessView = eventType === 'BUSINESS_VIEW';
+  const isSearchImpression = eventType === 'SEARCH_IMPRESSION';
+  const isOfferView = eventType === 'OFFER_VIEW';
+  if (isOfferView && !offerId) return;
   const interactionId = isContactAction || isBusinessView
     ? (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`)
     : scope;
-  const dedupeKey = `xamuko-analytics:${eventType}:${businessId}:${interactionId}`;
-  const storageKey = `xamuko-analytics:${eventType}:${businessId}:${scope}`;
+  const offerScope = offerId ?? 'business';
+  const dedupeKey = `xamuko-analytics:${eventType}:${businessId}:${offerScope}:${interactionId}`;
+  const storageKey = `xamuko-analytics:${eventType}:${businessId}:${offerScope}:${scope}`;
 
   // Views and impressions retain their existing render-level deduplication. A
   // contact click is never suppressed by a previous click from this session.
-  if (!isContactAction && !isBusinessView) {
+  if (isSearchImpression) {
+    if (completedDedupeKeys.has(dedupeKey) || pendingDedupeKeys.has(dedupeKey)) return;
+    pendingDedupeKeys.add(dedupeKey);
+  } else if (!isContactAction && !isBusinessView) {
     try {
       if (sessionStorage.getItem(storageKey)) return;
     } catch { /* La deduplicación es opcional si el almacenamiento está bloqueado. */ }
+    if (pendingDedupeKeys.has(dedupeKey)) return;
+    pendingDedupeKeys.add(dedupeKey);
   }
 
-  const body = JSON.stringify({ businessId, eventType, dedupeKey });
+  const body = JSON.stringify({ businessId, eventType, ...(offerId ? { offerId } : {}), dedupeKey });
   const endpoint = '/api/v1/public/analytics/events';
 
+  // Navigation actions may unload the document immediately. Dispatch the
+  // beacon synchronously so opening the directions page/app cannot drop the
+  // event; the server-side unique dedupeKey still protects against repeats.
   // Keepalive lets the request finish while a contact link opens a new tab.
   // Beacon is used only if fetch cannot be dispatched (for example during an
   // actual document unload); using it first would bypass the Vite same-origin
@@ -37,10 +56,13 @@ export function recordBusinessEvent(businessId: string, eventType: PublicAnalyti
     body,
     keepalive: true,
   }).then(() => {
-    if (!isContactAction && !isBusinessView) {
+    if (!isContactAction && !isBusinessView && !isSearchImpression) {
       try { sessionStorage.setItem(storageKey, '1'); } catch { /* optional storage */ }
     }
+    pendingDedupeKeys.delete(dedupeKey);
+    if (isSearchImpression) completedDedupeKeys.add(dedupeKey);
   }).catch(() => {
+    pendingDedupeKeys.delete(dedupeKey);
     if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
       navigator.sendBeacon(endpoint, new Blob([body], { type: 'application/json' }));
     }

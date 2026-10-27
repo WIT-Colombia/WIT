@@ -20,6 +20,9 @@ apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/admin', adminRouter);
 apiRouter.use('/public', publicBusinessRouter);
+// Public analytics events must be reachable by anonymous visitors before
+// routers that apply broad authentication middleware.
+apiRouter.use('/', analyticsRouter);
 // This router contains both explicitly public read routes and individually
 // protected management routes, so mount it before routers with broad auth middleware.
 apiRouter.use('/', promotionRouter);
@@ -28,7 +31,6 @@ apiRouter.use('/', verificationRouter);
 apiRouter.use('/', ownershipTransferRouter);
 apiRouter.use('/', offerRouter);
 apiRouter.use('/', favoriteRouter);
-apiRouter.use('/', analyticsRouter);
 apiRouter.use('/', reviewRouter);
 apiRouter.use('/', businessCrudRouter);
 apiRouter.use('/', photoRouter);

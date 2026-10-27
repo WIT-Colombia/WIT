@@ -218,6 +218,8 @@ enum BusinessAnalyticsEventType {
   SEARCH_IMPRESSION
   WHATSAPP_CLICK
   PHONE_CLICK
+  DIRECTIONS_CLICK
+  OFFER_VIEW
 }
 
 enum AdminRole {
@@ -782,6 +784,7 @@ model BusinessOffer {
   photos            Photo[]
   likes             BusinessOfferLike[]
   promotions        BusinessPromotion[]
+  analyticsEvents   BusinessAnalyticsEvent[] @relation("OfferAnalyticsEvents")
 
   @@index([businessId, kind, active])
   @@index([categoryId, kind])
@@ -1041,14 +1044,17 @@ model BusinessFavorite {
 model BusinessAnalyticsEvent {
   id          String                     @id @default(uuid()) @db.Char(36)
   businessId  String                     @db.Char(36)
+  offerId     String?                    @db.Char(36)
   eventType   BusinessAnalyticsEventType
   actorUserId String?                    @db.Char(36)
   dedupeKey   String?                    @unique @db.VarChar(191)
   createdAt   DateTime                   @default(now()) @db.DateTime(3)
   business    Business                   @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  offer       BusinessOffer?             @relation("OfferAnalyticsEvents", fields: [offerId], references: [id], onDelete: SetNull)
   actor       User?                      @relation("AnalyticsActor", fields: [actorUserId], references: [id], onDelete: SetNull)
 
   @@index([businessId, eventType, createdAt])
+  @@index([businessId, eventType, offerId, createdAt], map: "BusinessAnalyticsEvent_biz_evt_offer_created_idx")
   @@index([actorUserId, createdAt])
   @@index([dedupeKey])
 }

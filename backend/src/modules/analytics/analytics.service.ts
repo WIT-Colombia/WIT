@@ -3,7 +3,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 
 const PUBLIC_BUSINESS = { businessAccount: { status: 'ACTIVE' }, lifecycleStatus: 'ACTIVE', publicationStatus: 'PUBLISHED', visibilityStatus: 'VISIBLE', deletionStatus: 'NONE' } as const;
-const EVENT_TYPES = ['BUSINESS_VIEW', 'SEARCH_IMPRESSION', 'WHATSAPP_CLICK', 'PHONE_CLICK'] as const;
+const EVENT_TYPES = ['BUSINESS_VIEW', 'SEARCH_IMPRESSION', 'WHATSAPP_CLICK', 'PHONE_CLICK', 'DIRECTIONS_CLICK', 'OFFER_VIEW'] as const;
 export type AnalyticsEventType = typeof EVENT_TYPES[number];
 export type AnalyticsPeriod = 'day' | 'week' | 'month' | 'year' | 'all';
 
@@ -23,12 +23,22 @@ function periodStart(period: AnalyticsPeriod, now = new Date()): Date | null {
   return new Date(date.getTime() + 5 * 60 * 60 * 1000);
 }
 
-export async function recordAnalyticsEvent(input: { businessId: string; eventType: string; dedupeKey?: string; actorUserId?: string }) {
+export async function recordAnalyticsEvent(input: { businessId: string; eventType: string; offerId?: string; dedupeKey?: string; actorUserId?: string }) {
   if (!EVENT_TYPES.includes(input.eventType as AnalyticsEventType)) throw new AppError(400, 'INVALID_ANALYTICS_EVENT', 'Tipo de evento no permitido.');
   const business = await publicBusiness(input.businessId);
   if (!business) throw new AppError(404, 'BUSINESS_NOT_AVAILABLE', 'El establecimiento no está disponible.');
+  let offerId: string | undefined;
+  if (input.eventType === 'OFFER_VIEW') {
+    if (!input.offerId) throw new AppError(400, 'OFFER_REQUIRED', 'Debes indicar el producto o servicio consultado.');
+    const offer = await prisma.businessOffer.findFirst({
+      where: { id: input.offerId, businessId: business.id, deletedAt: null, active: true, publicationStatus: 'PUBLISHED' },
+      select: { id: true },
+    });
+    if (!offer) throw new AppError(404, 'OFFER_NOT_AVAILABLE', 'El producto o servicio no está disponible.');
+    offerId = offer.id;
+  }
   try {
-    await prisma.businessAnalyticsEvent.create({ data: { businessId: business.id, eventType: input.eventType as AnalyticsEventType, actorUserId: input.actorUserId, dedupeKey: input.dedupeKey?.slice(0, 191) || undefined } });
+    await prisma.businessAnalyticsEvent.create({ data: { businessId: business.id, offerId, eventType: input.eventType as AnalyticsEventType, actorUserId: input.actorUserId, dedupeKey: input.dedupeKey?.slice(0, 191) || undefined } });
   } catch (error) {
     if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error;
   }

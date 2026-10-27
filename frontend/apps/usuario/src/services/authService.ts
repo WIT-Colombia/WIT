@@ -156,8 +156,8 @@ export async function requestPasswordReset(email: string): Promise<string> {
   return result.message;
 }
 
-export async function confirmPasswordReset(token: string, password: string): Promise<{ user: AuthUser; autoLogin: boolean }> {
-  const result = await requestJson<PasswordResetResponse>("/api/v1/auth/password-reset/confirm", { method: "POST", body: JSON.stringify({ token, password, rememberMe: readRememberSession() }) });
+export async function confirmPasswordReset(token: string, password: string, rememberMeOverride?: boolean): Promise<{ user: AuthUser; autoLogin: boolean }> {
+  const result = await requestJson<PasswordResetResponse>("/api/v1/auth/password-reset/confirm", { method: "POST", body: JSON.stringify({ token, password, rememberMe: rememberMeOverride ?? readRememberSession() }) });
   if (result.accessToken) accessToken = result.accessToken;
   return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
