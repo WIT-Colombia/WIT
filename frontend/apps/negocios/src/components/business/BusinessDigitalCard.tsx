@@ -128,9 +128,9 @@ function CardAvatar({ src }: { src?: string }) {
   </div>;
 }
 
-type Props = { business: BusinessDetails; level?: BusinessCardLevel; publicUrl?: string | null; qrImageUrl?: string | null; founderNumber?: number | null };
+type Props = { business: BusinessDetails; level?: BusinessCardLevel; publicUrl?: string | null; qrImageUrl?: string | null; qrIsPermanent?: boolean; founderNumber?: number | null };
 
-export function BusinessCardFace({ business, level = "BASIC", publicUrl = null, qrImageUrl = null, founderNumber = null }: Props) {
+export function BusinessCardFace({ business, level = "BASIC", publicUrl = null, qrImageUrl = null, qrIsPermanent = false, founderNumber = null }: Props) {
   const hasPublicDestination = Boolean(publicUrl?.trim() && qrImageUrl?.trim());
   const sede = business.sede?.trim();
   const sedeLabel = sede ? (/^sede\b/i.test(sede) ? sede : `Sede ${sede}`) : null;
@@ -150,8 +150,8 @@ export function BusinessCardFace({ business, level = "BASIC", publicUrl = null, 
       {business.category && <span title={formatCategoryName(business.category)}><CardIcon name={/barber|peluquer/i.test(business.category) ? "scissors" : "store"} /><span className="business-digital-card__meta-text">{formatCategoryName(business.category)}</span></span>}
       {business.city && <span title={business.city}><CardIcon name="pin" /><span className="business-digital-card__meta-text">{business.city}</span></span>}
     </div>
-    <div className={`business-digital-card__qr${hasPublicDestination ? " is-ready" : ""}`} aria-label={hasPublicDestination ? "Código QR de la ficha pública" : "Código QR pendiente de publicación"}>
-      {hasPublicDestination ? <img src={qrImageUrl!} alt="Código QR de la ficha pública" /> : <span className="business-digital-card__qr-placeholder"><span>QR</span><small>Próximamente</small></span>}
+    <div className={`business-digital-card__qr${hasPublicDestination ? " is-ready" : ""}`} aria-label={hasPublicDestination ? qrIsPermanent ? "Código QR permanente de la ficha pública" : "Código QR de prueba local" : "Código QR pendiente de generación"}>
+      {hasPublicDestination ? <><img src={qrImageUrl!} alt={qrIsPermanent ? "Código QR de la ficha pública" : "Código QR de prueba local"} />{!qrIsPermanent && <small className="business-digital-card__qr-local">Vista local</small>}</> : <span className="business-digital-card__qr-placeholder"><span>QR</span><small>Generando…</small></span>}
     </div>
     <strong className="business-digital-card__scan">Escanéame y descubre<br />nuestro negocio</strong>
     {hasFounder && <span className="business-digital-card__founder">FUNDADOR #{String(founderNumber).padStart(3, "0")}</span>}

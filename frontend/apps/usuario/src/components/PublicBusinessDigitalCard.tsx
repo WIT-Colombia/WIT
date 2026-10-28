@@ -1,8 +1,9 @@
-import { useId } from "react";
+import { useEffect, useId, useState } from "react";
 import type { Business } from "../data/mockData";
 import { PioneerBadge } from "./PioneerBadge";
 import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
 import "./PublicBusinessDigitalCard.css";
+import { generatePublicBusinessQrPng } from "../utils/publicBusinessQr";
 
 function CardArtwork() {
   const id = useId().replace(/:/g, "");
@@ -35,6 +36,20 @@ function CardIcon({ name }: { name: "store" | "pin" }) {
 }
 
 export function PublicBusinessDigitalCard({ business }: { business: Business }) {
+  const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
+  const [qrError, setQrError] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setQrImageUrl(null);
+    setQrError(false);
+    void generatePublicBusinessQrPng(business.id).then((image) => {
+      if (!cancelled) setQrImageUrl(image);
+    }).catch(() => {
+      if (!cancelled) setQrError(true);
+    });
+    return () => { cancelled = true; };
+  }, [business.id]);
+  const qrReady = Boolean(qrImageUrl);
   return <article className={`public-digital-card${business.name.length > 25 ? " public-digital-card--long-name" : ""}`} aria-label={`Tarjeta XAMUKO de ${business.name}`}>
     <CardArtwork />
     <div className="public-digital-card__brand"><img src={xamukoLogo} alt="XAMUKO · Descubre · Apoya · Disfruta" /></div>
@@ -46,7 +61,7 @@ export function PublicBusinessDigitalCard({ business }: { business: Business }) 
       {business.category && <span title={business.category}><CardIcon name="store" /><span className="public-digital-card__meta-text">{business.category}</span></span>}
       {business.city && <span title={business.city}><CardIcon name="pin" /><span className="public-digital-card__meta-text">{business.city}</span></span>}
     </div>
-    <div className="public-digital-card__qr" aria-label="Código QR pendiente de publicación"><span className="public-digital-card__qr-placeholder"><span>QR</span><small>Próximamente</small></span></div>
+    <div className={`public-digital-card__qr${qrReady ? " is-ready" : ""}`} aria-label={qrReady ? "Código QR de la ficha pública" : "Código QR en preparación"}>{qrReady ? <img src={qrImageUrl!} alt="Código QR de la ficha pública" /> : <span className="public-digital-card__qr-placeholder"><span>QR</span><small>{qrError ? "No disponible" : "Generando…"}</small></span>}</div>
     <strong className="public-digital-card__scan">Escanéame y descubre<br />nuestro negocio</strong>
     <div className="public-digital-card__footer">Descubre · Apoya · Disfruta</div>
   </article>;
