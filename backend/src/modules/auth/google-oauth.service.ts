@@ -14,12 +14,14 @@ const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
 const googleKeys = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 
 export type GoogleFlow = 'login' | 'link';
+export type GoogleApplication = 'usuario' | 'negocios';
 export type GoogleState = {
   state: string;
   nonce: string;
   verifier: string;
   returnTo: string;
   flow: GoogleFlow;
+  application: GoogleApplication;
   rememberMe: boolean;
   consent: boolean;
   userId?: string;
@@ -80,7 +82,9 @@ function unpackState(value: string): GoogleState {
   if (typeof candidate.state !== 'string' || typeof candidate.nonce !== 'string' || typeof candidate.verifier !== 'string' || typeof candidate.returnTo !== 'string' || (candidate.flow !== 'login' && candidate.flow !== 'link')) {
     throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
   }
-  return candidate as GoogleState;
+  const application = candidate.application === undefined ? 'usuario' : candidate.application;
+  if (application !== 'usuario' && application !== 'negocios') throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
+  return { ...candidate, application } as GoogleState;
 }
 
 export function safeGoogleReturnTo(value: unknown): string {
@@ -102,7 +106,7 @@ export function getGoogleState(request: Request): GoogleState {
   return unpackState(raw);
 }
 
-export function createGoogleAuthorization(requested: { flow: GoogleFlow; returnTo?: unknown; rememberMe?: boolean; consent?: boolean; userId?: string }): { state: GoogleState; url: string } {
+export function createGoogleAuthorization(requested: { flow: GoogleFlow; application?: GoogleApplication; returnTo?: unknown; rememberMe?: boolean; consent?: boolean; userId?: string }): { state: GoogleState; url: string } {
   const { clientId, redirectUri } = requireGoogleConfig();
   const state: GoogleState = {
     state: randomBytes(32).toString('base64url'),
@@ -110,6 +114,7 @@ export function createGoogleAuthorization(requested: { flow: GoogleFlow; returnT
     verifier: randomBytes(32).toString('base64url'),
     returnTo: safeGoogleReturnTo(requested.returnTo),
     flow: requested.flow,
+    application: requested.application ?? 'usuario',
     rememberMe: requested.rememberMe === true,
     consent: requested.consent === true,
     ...(requested.userId ? { userId: requested.userId } : {}),

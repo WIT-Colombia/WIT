@@ -53,10 +53,12 @@ const emailMode = process.env.EMAIL_MODE?.trim() ?? 'development';
 if (!['development', 'resend'].includes(emailMode)) {
   throw new Error('EMAIL_MODE debe ser development o resend.');
 }
-const emailFrom = process.env.EMAIL_FROM?.trim() ?? 'no-reply@wit.local';
+const emailFrom = process.env.EMAIL_FROM?.trim() ?? 'XAMUKO <notificaciones@xamuko.com>';
 const emailVerificationUrl = process.env.EMAIL_VERIFICATION_URL?.trim() ?? 'http://localhost:5173/verify-email';
 const passwordResetUrl = process.env.PASSWORD_RESET_URL?.trim() ?? 'http://localhost:5173/reset-password';
-const emailApiKey = process.env.EMAIL_API_KEY?.trim();
+// RESEND_API_KEY is the canonical name. EMAIL_API_KEY remains a backwards-compatible fallback
+// for existing local environments and is never logged or exposed.
+const resendApiKey = process.env.RESEND_API_KEY?.trim() ?? process.env.EMAIL_API_KEY?.trim();
 const emailApiUrl = process.env.EMAIL_API_URL?.trim() ?? 'https://api.resend.com/emails';
 const emailLogoUrl = process.env.EMAIL_LOGO_URL?.trim();
 if (!emailFrom || !emailVerificationUrl || !passwordResetUrl) {
@@ -70,14 +72,20 @@ if (emailLogoUrl) {
     throw new Error('EMAIL_LOGO_URL debe ser una URL HTTPS válida.');
   }
 }
-if (emailMode === 'resend' && !emailApiKey) {
-  throw new Error('EMAIL_API_KEY es obligatorio cuando EMAIL_MODE=resend.');
+if (emailMode === 'resend' && !resendApiKey) {
+  throw new Error('RESEND_API_KEY es obligatorio cuando EMAIL_MODE=resend.');
 }
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI?.trim() ?? 'http://localhost:3000/api/v1/auth/google/callback';
 const googleFrontendUrl = process.env.GOOGLE_FRONTEND_URL?.trim() ?? 'http://localhost:5173';
+const googleFrontendUrls = Object.freeze({
+  usuario: process.env.GOOGLE_FRONTEND_URL_USUARIO?.trim() ?? googleFrontendUrl,
+  negocios: process.env.GOOGLE_FRONTEND_URL_NEGOCIOS?.trim() ?? 'http://localhost:5174',
+  staging: process.env.GOOGLE_FRONTEND_URL_STAGING?.trim() ?? 'https://staging.xamuko.com',
+});
+const googleBackendUrl = process.env.GOOGLE_BACKEND_URL?.trim() ?? 'http://localhost:3000';
 
 export const env = Object.freeze({
   nodeEnv,
@@ -94,7 +102,7 @@ export const env = Object.freeze({
   emailFrom,
   emailVerificationUrl,
   passwordResetUrl,
-  emailApiKey,
+  resendApiKey,
   emailApiUrl,
   emailLogoUrl,
   smtpHost: process.env.SMTP_HOST?.trim(),
@@ -104,4 +112,6 @@ export const env = Object.freeze({
   googleClientSecret,
   googleRedirectUri,
   googleFrontendUrl,
+  googleFrontendUrls,
+  googleBackendUrl,
 });

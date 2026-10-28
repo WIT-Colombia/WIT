@@ -12,8 +12,19 @@ test('Google OAuth state is signed, bound to the flow and recoverable only from 
   const recovered = getGoogleState(request);
   assert.equal(recovered.state, authorization.state.state);
   assert.equal(recovered.flow, 'login');
+  assert.equal(recovered.application, 'usuario');
   assert.equal(recovered.rememberMe, false);
   assert.match(headers[0], /HttpOnly/);
+});
+
+test('Google OAuth state preserves the explicit Business application', () => {
+  const authorization = createGoogleAuthorization({ application: 'negocios', flow: 'login', returnTo: '/mis-negocios', consent: true });
+  const headers: string[] = [];
+  setGoogleStateCookie({ appendHeader: (_name: string, value: string) => headers.push(value) } as never, authorization.state);
+  const cookie = headers[0].split(';', 1)[0];
+  const recovered = getGoogleState({ headers: { cookie } } as never);
+  assert.equal(recovered.application, 'negocios');
+  assert.equal(recovered.returnTo, '/mis-negocios');
 });
 
 test('Google OAuth return paths cannot redirect outside WIT', () => {

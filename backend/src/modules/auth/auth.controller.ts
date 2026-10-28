@@ -9,7 +9,7 @@ import { confirmEmail, resetPassword, sendPasswordResetRequest, sendVerification
 import argon2 from 'argon2';
 import { clearRefreshCookie, getRefreshToken, setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
 import { env } from '../../config/env.js';
-import { createGoogleAuthorization, clearGoogleStateCookie, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode } from './google-oauth.service.js';
+import { createGoogleAuthorization, clearGoogleStateCookie, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode, type GoogleApplication } from './google-oauth.service.js';
 import { createGoogleDiagnostic, logGoogleDiagnostic, type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
 import { GoogleOAuthDiagnosticError } from './google-oauth.service.js';
 import { getPreferredLocation, savePreferredLocation } from './location.service.js';
@@ -41,18 +41,24 @@ const meta = (request: Parameters<RequestHandler>[0]) => ({ userAgent: request.g
 
 function googleErrorCode(error: unknown): string {
   const publicError = error instanceof GoogleOAuthDiagnosticError ? error.publicError : error;
-  return publicError instanceof AppError && ['GOOGLE_NOT_CONFIGURED', 'GOOGLE_STATE_INVALID', 'GOOGLE_PROVIDER_ERROR', 'GOOGLE_IDENTITY_INVALID', 'GOOGLE_LINK_REQUIRED', 'GOOGLE_CONSENT_REQUIRED', 'GOOGLE_IDENTITY_IN_USE', 'GOOGLE_EMAIL_IN_USE'].includes(publicError.code) ? publicError.code : 'GOOGLE_AUTH_FAILED';
+  return publicError instanceof AppError && ['GOOGLE_NOT_CONFIGURED', 'GOOGLE_STATE_INVALID', 'GOOGLE_APPLICATION_INVALID', 'GOOGLE_PROVIDER_ERROR', 'GOOGLE_IDENTITY_INVALID', 'GOOGLE_LINK_REQUIRED', 'GOOGLE_CONSENT_REQUIRED', 'GOOGLE_IDENTITY_IN_USE', 'GOOGLE_EMAIL_IN_USE'].includes(publicError.code) ? publicError.code : 'GOOGLE_AUTH_FAILED';
 }
 
-function googleCallbackUrl(query: Record<string, string>): string {
-  const url = new URL('/auth/google/callback', env.googleFrontendUrl);
+function googleApplication(value: unknown): GoogleApplication {
+  if (value === undefined || value === '') return 'usuario';
+  if (value === 'usuario' || value === 'negocios') return value;
+  throw new AppError(400, 'GOOGLE_APPLICATION_INVALID', 'La aplicación de inicio de sesión no es válida.');
+}
+
+function googleCallbackUrl(application: GoogleApplication, query: Record<string, string>): string {
+  const url = new URL('/auth/google/callback', env.googleFrontendUrls[application]);
   for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
   return url.toString();
 }
 
 export const googleStartController: RequestHandler = (request, response, next) => {
   try {
-    const authorization = createGoogleAuthorization({ flow: 'login', returnTo: request.query.next, rememberMe: request.query.rememberMe === '1', consent: request.query.consent === '1' });
+    const authorization = createGoogleAuthorization({ application: googleApplication(request.query.application), flow: 'login', returnTo: request.query.next, rememberMe: request.query.rememberMe === '1', consent: request.query.consent === '1' });
     setGoogleStateCookie(response, authorization.state);
     response.redirect(authorization.url);
   } catch (error) { next(error); }
@@ -61,7 +67,7 @@ export const googleStartController: RequestHandler = (request, response, next) =
 export const googleLinkStartController: RequestHandler = (request, response, next) => {
   try {
     const auth = (request as AuthenticatedRequest).auth;
-    const authorization = createGoogleAuthorization({ flow: 'link', userId: auth.userId, returnTo: request.body?.next ?? '/settings', consent: true });
+    const authorization = createGoogleAuthorization({ application: 'usuario', flow: 'link', userId: auth.userId, returnTo: request.body?.next ?? '/settings', consent: true });
     setGoogleStateCookie(response, authorization.state);
     response.status(200).json({ url: authorization.url });
   } catch (error) { next(error); }
@@ -69,11 +75,13 @@ export const googleLinkStartController: RequestHandler = (request, response, nex
 
 export const googleCallbackController: RequestHandler = async (request, response) => {
   let stateReturnTo = '/home';
+  let stateApplication: GoogleApplication = 'usuario';
   let stage: GoogleDiagnosticStage = 'state';
   let category: GoogleDiagnosticCategory = 'unknown';
   try {
     const state = getGoogleState(request);
     stateReturnTo = state.returnTo;
+    stateApplication = state.application;
     const code = typeof request.query.code === 'string' ? request.query.code : '';
     if (!code) { category = 'client_cancelled'; throw new AppError(400, 'GOOGLE_AUTH_CANCELLED', 'La autenticación con Google fue cancelada.'); }
     stage = 'code_exchange';
@@ -93,7 +101,7 @@ export const googleCallbackController: RequestHandler = async (request, response
       setRefreshCookie(response, session.refreshToken, state.rememberMe);
     }
     clearGoogleStateCookie(response);
-    response.redirect(googleCallbackUrl({ next: safeGoogleReturnTo(state.returnTo), linked: state.flow === 'link' ? '1' : '0' }));
+    response.redirect(googleCallbackUrl(state.application, { next: safeGoogleReturnTo(state.returnTo), linked: state.flow === 'link' ? '1' : '0' }));
   } catch (error) {
     if (error instanceof GoogleOAuthDiagnosticError) {
       stage = error.stage;
@@ -103,7 +111,7 @@ export const googleCallbackController: RequestHandler = async (request, response
     }
     logGoogleDiagnostic(createGoogleDiagnostic(stage, category));
     clearGoogleStateCookie(response);
-    response.redirect(googleCallbackUrl({ error: googleErrorCode(error), next: safeGoogleReturnTo(stateReturnTo) }));
+    response.redirect(googleCallbackUrl(stateApplication, { error: googleErrorCode(error), next: safeGoogleReturnTo(stateReturnTo) }));
   }
 };
 
