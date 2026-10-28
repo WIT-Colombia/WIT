@@ -108,8 +108,8 @@ export default function Results() {
   const visibleBusinessIds = visibleBusinesses.map((business) => business.id).join(",");
   useEffect(() => {
     if (!confirmedSearchId || loadedSearchKey !== searchKey) return;
-    visibleBusinesses.forEach((business) => recordBusinessEvent(business.id, "SEARCH_IMPRESSION", impressionScope));
-  }, [visibleBusinessIds, impressionScope, confirmedSearchId, loadedSearchKey, searchKey]);
+    visibleBusinesses.forEach((business, index) => recordBusinessEvent(business.id, "SEARCH_IMPRESSION", impressionScope, undefined, { source: 'search', searchTerm: query, searchPosition: index + 1, category: business.category, isFeatured: business.plan === 'premium' || business.isFeatured }));
+  }, [visibleBusinessIds, impressionScope, confirmedSearchId, loadedSearchKey, searchKey, query]);
   useEffect(() => {
     setBusinessesVisibleCount(8);
     setProductsVisibleCount(8);

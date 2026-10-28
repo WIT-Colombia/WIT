@@ -47,6 +47,7 @@
 .stats-v1-number small{font-size:10px;font-weight:800;letter-spacing:0}
 .stats-v1-number small.up{color:#079b58}.stats-v1-number small.down{color:#c5454c}
 .stats-v1-card>p{margin:auto 0 0;color:#71829d;font-size:10px;line-height:1.45}
+.stats-v1-description{display:-webkit-box;min-height:29px;margin:6px 0 5px!important;overflow:hidden;color:#71829d;font-size:10px;line-height:1.45;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 .stats-v1-sparkline{width:100%;height:43px;margin:1px 0 7px;overflow:visible}
 .stats-v1-no-chart{display:flex;align-items:center;height:43px;color:#9aa9c0;font-size:10px}
 .stats-v1-data{margin-top:7px;color:#526b9c;font-size:10px}
@@ -65,12 +66,17 @@
 .stats-v1-offer-ranking{display:grid;gap:5px;min-width:0;margin:10px 0 0;padding:0;list-style:none}
 .stats-v1-offer-ranking li{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0;color:#263758;font-size:10px}
 .stats-v1-offer-ranking span{display:grid;min-width:0;gap:1px}.stats-v1-offer-ranking b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stats-v1-offer-ranking small{color:#8291aa;font-size:9px}.stats-v1-offer-ranking strong{flex:none;color:#5c32e5;font-size:12px}
+.stats-v1-rating-distribution{display:grid;gap:7px;margin:7px 0 0}.stats-v1-rating-row{display:grid;grid-template-columns:27px minmax(0,1fr) 48px;align-items:center;gap:6px;color:#53637d;font-size:10px;line-height:1}.stats-v1-rating-row>span{color:#5631ce;font-weight:700;white-space:nowrap}.stats-v1-rating-row>i{display:block;height:8px;overflow:hidden;border-radius:999px;background:#ede9fe}.stats-v1-rating-row>i>b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#7c3aed,#9a6cff)}.stats-v1-rating-row>small{color:#71829d;font-size:10px;text-align:right;white-space:nowrap}.stats-v1-rating-empty{display:flex;align-items:center;min-height:58px;margin:7px 0 0;color:#71829d;font-size:11px;line-height:1.45}.stats-v1-rating-card{min-height:190px}
 .stats-v1-card.locked .stats-v1-number,.stats-v1-card.locked>strong{color:#8997b1}
 .stats-v1-pro-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
 .stats-v1-pro-card{min-height:175px}
 .stats-v1-pro-card h3{min-height:30px;font-size:12px}
 .stats-v1-pro-card>strong{display:block;margin:9px 0;color:#101936;font-size:23px;line-height:1.2}
 .stats-v1-pro-card>p{margin:auto 0 0;padding-top:9px;color:#71829d;font-size:10px;line-height:1.4}
+.stats-v1-pro-card>.stats-v1-description{margin:6px 0 5px!important;padding-top:0}
+.stats-v1-pro-ranking-card{min-height:190px}.stats-v1-pro-ranking{display:grid;gap:7px;margin-top:7px}.stats-v1-pro-ranking-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(42px,1.6fr) 28px;align-items:center;gap:6px;color:#53637d;font-size:10px;line-height:1}.stats-v1-pro-ranking-row>span{overflow:hidden;color:#5631ce;font-weight:700;text-overflow:ellipsis;white-space:nowrap}.stats-v1-pro-ranking-row>i{display:block;height:8px;overflow:hidden;border-radius:999px;background:#ede9fe}.stats-v1-pro-ranking-row>i>b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#7c3aed,#9a6cff)}.stats-v1-pro-ranking-row>small{color:#71829d;font-size:10px;text-align:right;white-space:nowrap}.stats-v1-pro-ranking-empty{display:flex;align-items:center;min-height:63px!important;margin:7px 0 0!important;color:#71829d!important;font-size:11px!important;line-height:1.45}.stats-v1-commercial-index>strong{font-size:16px;line-height:1.25}
+.stats-v1-contextual-history{display:inline-flex;align-self:flex-start;margin-top:2px;padding:3px 6px;border-radius:999px;background:#fff5d8;color:#8a5a00;font-size:9px;line-height:1.25;font-weight:700}
+.stats-v1-history-note{display:inline-flex;align-self:flex-start;margin-top:2px;color:#71829d;font-size:9px;line-height:1.25;font-weight:700}
 .stats-v1-bars{display:flex;align-items:end;gap:2px;height:58px;padding:3px 2px;border-bottom:1px solid #dce5f4}
 .stats-v1-bars span{flex:1;display:flex;align-items:end;height:100%}
 .stats-v1-bars i{display:block;width:100%;min-height:2px;border-radius:3px 3px 0 0;background:linear-gradient(0deg,#9459f8,#4b6efa)}

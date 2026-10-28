@@ -178,12 +178,21 @@ export type BusinessStatisticsDashboard = {
   referral?: { offerLikes?: number; reviewsCount?: number; averageRating?: number | null; ratingCount?: number };
   pro?: {
     contactRate: number | null;
+    interactionRate: number | null;
+    navigationRate: number | null;
     hourlyActivity: Array<{ label: string; value: number }>;
     weekdayActivity: Array<{ label: string; value: number }>;
     promotionViews: number;
     mostViewedPromotions: Array<{ id: string; title: string; value: number }>;
     ratingEvolution: Array<{ label: string; value: number }>;
     favoriteAcquisitions: Array<{ label: string; value: number }>;
+    uniqueVisitors: number;
+    repeatVisitors: number;
+    visitOrigins: Array<{ label: string; value: number }>;
+    keywords: Array<{ label: string; value: number }>;
+    averagePosition: number | null;
+    categoryPerformance: Array<{ label: string; value: number }>;
+    featuredPerformance: { views: number; interactions: number; interactionRate: number | null };
   };
 };
 export type OfferViewRanking = {
@@ -191,6 +200,8 @@ export type OfferViewRanking = {
   timezone: string;
   window: { start: string | null; end: string };
   offers: Array<{ offerId: string; name: string; kind: 'PRODUCT' | 'SERVICE'; value: number }>;
+  productOffers: Array<{ offerId: string; name: string; kind: 'PRODUCT'; value: number }>;
+  serviceOffers: Array<{ offerId: string; name: string; kind: 'SERVICE'; value: number }>;
 };
 export type BusinessReviewsResponse = { reviews: BusinessReview[]; pagination: { page: number; pageSize: number; total: number; totalPages: number }; summary: { average: number | null; total: number; distribution: Record<string, number> } };
 export type RealOffer = { id: string; businessId: string; internalCode: string; kind: 'PRODUCT' | 'SERVICE'; name: string; description: string | null; category: string | null; priceAmount: string | null; currency: string | null; priceText: string | null; negotiable: boolean; active: boolean; adultOnly: boolean; publicationStatus: 'UNPUBLISHED' | 'PUBLISHED' | 'REVIEW'; photos: RealPhoto[] };

@@ -41,7 +41,8 @@ function DataTable({ points }: { points: Point[] }) {
 }
 async function countPublishedReviewsInWindow(businessId: string, start: string | null, end: string) {
   const firstPage = await businessApi.listReviews(businessId, 1, 50);
-  if (!start) return { periodCount: firstPage.summary.total, total: firstPage.summary.total, average: firstPage.summary.average };
+  const distribution = [1, 2, 3, 4, 5].map(rating => ({ rating, count: firstPage.summary.distribution[String(rating)] ?? 0 }));
+  if (!start) return { periodCount: firstPage.summary.total, total: firstPage.summary.total, distribution };
   const remainingPages = firstPage.pagination.totalPages > 1
     ? await Promise.all(Array.from({ length: firstPage.pagination.totalPages - 1 }, (_, index) => businessApi.listReviews(businessId, index + 2, 50)))
     : [];
@@ -53,18 +54,46 @@ async function countPublishedReviewsInWindow(businessId: string, start: string |
       const publishedAt = new Date(review.createdAt).getTime();
       return publishedAt >= startTime && publishedAt < endTime;
     }).length;
-  return { periodCount, total: firstPage.summary.total, average: firstPage.summary.average };
+  return { periodCount, total: firstPage.summary.total, distribution };
+}
+function RatingDistribution({ distribution, total }: { distribution: Array<{ rating: number; count: number }>; total: number }) {
+  if (total === 0) return <p className="stats-v1-rating-empty">Aún no tienes opiniones publicadas.</p>;
+  return <div className="stats-v1-rating-distribution" role="img" aria-label={distribution.map(row => `${row.rating} estrellas: ${row.count} opiniones`).join('; ')}>{[...distribution].reverse().map(row => {
+    const percentage = Math.round(row.count / total * 100);
+    return <div className="stats-v1-rating-row" key={row.rating}><span>{row.rating} ★</span><i><b style={{ width: `${percentage}%` }} /></i><small>{row.count} · {percentage}%</small></div>;
+  })}</div>;
+}
+function HorizontalRanking({ points, emptyMessage }: { points: Point[]; emptyMessage: string }) {
+  const rows = points.slice(0, 5);
+  if (!rows.length) return <p className="stats-v1-pro-ranking-empty">{emptyMessage}</p>;
+  const max = Math.max(...rows.map(row => row.value), 1);
+  return <div className="stats-v1-pro-ranking" role="img" aria-label={rows.map(row => `${row.label}: ${number(row.value)}`).join('; ')}>{rows.map(row => <div className="stats-v1-pro-ranking-row" key={row.label} title={row.label}><span>{row.label}</span><i><b style={{ width: `${row.value / max * 100}%` }} /></i><small>{number(row.value)}</small></div>)}</div>;
+}
+function proRanking(key: string, data: BusinessStatisticsDashboard, offerViews: OfferViewRanking | null): Point[] | null {
+  if (!data.pro) return null;
+  if (key === 'keywords') return data.pro.keywords;
+  if (key === 'categoryPerformance') return data.pro.categoryPerformance;
+  if (key === 'topProducts') return (offerViews?.productOffers ?? []).map(row => ({ label: row.name, value: row.value }));
+  if (key === 'topServices') return (offerViews?.serviceOffers ?? []).map(row => ({ label: row.name, value: row.value }));
+  return null;
 }
 function proContent(key: string, data: BusinessStatisticsDashboard) {
   const pro = data.pro;
   if (!pro) return null;
   if (key === 'viewEvolution') return { value: number(data.metrics.businessViews), points: data.trends.businessViews, kind: 'line' };
   if (key === 'searchEvolution') return { value: number(data.metrics.searchAppearances), points: data.trends.searchAppearances, kind: 'line' };
+  if (key === 'uniqueVisitors') return { value: number(pro.uniqueVisitors) };
+  if (key === 'repeatVisitors') return { value: number(pro.repeatVisitors) };
   if (key === 'contactRate') return pro.contactRate === null ? null : { value: `${number(pro.contactRate)} %` };
+  if (key === 'interactionRate') return pro.interactionRate === null ? null : { value: `${number(pro.interactionRate)} %` };
+  if (key === 'navigationRate') return pro.navigationRate === null ? null : { value: `${number(pro.navigationRate)} %` };
   if (key === 'hourlyActivity') return { value: number(data.metrics.businessViews), points: pro.hourlyActivity, kind: 'bar' };
   if (key === 'weekdayActivity') return { value: number(data.metrics.businessViews), points: pro.weekdayActivity, kind: 'bar' };
+  if (key === 'visitOrigins') return { value: number(pro.visitOrigins.reduce((sum, point) => sum + point.value, 0)), points: pro.visitOrigins, kind: 'bar' };
+  if (key === 'averagePosition') return pro.averagePosition === null ? null : { value: `#${number(pro.averagePosition)}` };
   if (key === 'favoriteEvolution') return { value: number(pro.favoriteAcquisitions.reduce((sum, point) => sum + point.value, 0)), points: pro.favoriteAcquisitions, kind: 'line' };
   if (key === 'ratingEvolution') return pro.ratingEvolution.length ? { value: `${number(pro.ratingEvolution.at(-1)!.value)} / 5`, points: pro.ratingEvolution, kind: 'line' } : null;
+  if (key === 'featuredPerformance') return { value: pro.featuredPerformance.interactionRate === null ? number(pro.featuredPerformance.views) : `${number(pro.featuredPerformance.interactionRate)} %` };
   if (key === 'periodComparison') {
     const difference = change(data.metrics.businessViews, data.previous?.businessViews);
     return difference === null ? null : { value: `${difference > 0 ? '+' : ''}${difference} %`, points: data.trends.businessViews, kind: 'line' };
@@ -80,7 +109,7 @@ export function StatisticsDashboardV1() {
   const [data, setData] = useState<BusinessStatisticsDashboard | null>(null);
   const [favoriteCount, setFavoriteCount] = useState<number | null>(null);
   const [offerLikeCount, setOfferLikeCount] = useState<number | null>(null);
-  const [reviewStatistics, setReviewStatistics] = useState<{ periodCount: number; total: number; average: number | null } | null>(null);
+  const [reviewStatistics, setReviewStatistics] = useState<{ periodCount: number; total: number; distribution: Array<{ rating: number; count: number }> } | null>(null);
   const [reviewCountError, setReviewCountError] = useState(false);
   const [offerViewRanking, setOfferViewRanking] = useState<OfferViewRanking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -187,8 +216,9 @@ export function StatisticsDashboardV1() {
         return <article className="stats-v1-card" key={key} aria-busy={loading}>
           <div className="stats-v1-card-top"><span className="stats-v1-card-icon"><FreeCardIcon metric={key} icon={card.icon} /></span><h3>{card.label}</h3></div>
           <div className="stats-v1-number">{loading ? '…' : value === undefined ? '—' : number(value)}{delta !== null && <small className={delta >= 0 ? 'up' : 'down'}>{delta > 0 ? '+' : ''}{delta} %</small>}</div>
+          <p className="stats-v1-description">{card.caption}</p>
           <Sparkline points={points} color={key === 'whatsappClicks' ? '#16a34a' : '#7b3ffb'} />
-          <p>{card.caption}</p><DataTable points={points} />
+          <DataTable points={points} />
         </article>;
       })}</div>
     </section>
@@ -203,27 +233,27 @@ export function StatisticsDashboardV1() {
         const isCurrentFavorites = cardIndex === 0;
         const isCurrentOfferLikes = cardIndex === 1;
         const isPeriodReviewCount = cardIndex === 2;
-        const isCurrentAverageRating = cardIndex === 3;
+        const isRatingDistribution = cardIndex === 3;
         const isOfferViews = cardIndex === 4;
         const currentFavorites = favoriteCount ?? data?.metrics.currentFavorites;
         const currentOfferLikes = offerLikeCount ?? data?.referral?.offerLikes;
         const periodReviewCount = reviewStatistics?.periodCount ?? data?.referral?.reviewsCount;
-        const currentAverageRating = reviewStatistics?.average ?? data?.referral?.averageRating;
-        const currentRatingCount = reviewStatistics?.total ?? data?.referral?.ratingCount;
-        const currentStateMetric = isCurrentFavorites || isCurrentOfferLikes || isPeriodReviewCount || isCurrentAverageRating;
-        const currentStateValue = isCurrentFavorites ? currentFavorites : isCurrentOfferLikes ? currentOfferLikes : isPeriodReviewCount ? periodReviewCount : currentAverageRating;
-        const metricUnavailable = (isPeriodReviewCount || isCurrentAverageRating) && reviewCountError && currentStateValue === undefined;
-        const currentStateLabel = isCurrentAverageRating
-          ? currentRatingCount === 0 ? 'Sin calificaciones' : currentStateValue === null || currentStateValue === undefined ? 'Cargando…' : `${number(currentStateValue)} / 5`
-          : number(currentStateValue ?? 0);
+        const currentStateMetric = isCurrentFavorites || isCurrentOfferLikes || isPeriodReviewCount;
+        const currentStateValue = isCurrentFavorites ? currentFavorites : isCurrentOfferLikes ? currentOfferLikes : periodReviewCount;
+        const metricUnavailable = isPeriodReviewCount && reviewCountError && currentStateValue === undefined;
+        const currentStateLabel = number(currentStateValue ?? 0);
         if (isOfferViews) return <article className={`stats-v1-card stats-v1-referral-card stats-v1-offer-views ${unlocked ? '' : 'locked'}`} key={card.key}>
           <div className="stats-v1-card-top"><span className="stats-v1-card-icon">{unlocked ? '◉' : '♙'}</span><h3>{card.label}</h3></div>
-          {!unlocked ? <><div className="stats-v1-number">Bloqueada</div><p>Requiere nivel {card.requiredLevel} ({card.requiredMinimum} referidos válidos).</p></> : loading || !offerViewRanking ? <><div className="stats-v1-number">Cargando…</div><p>Consultas de productos y servicios durante el período seleccionado.</p></> : offerViewRanking.offers.length === 0 ? <><div className="stats-v1-number">0</div><p>Sin consultas registradas durante el período seleccionado.</p></> : <><ol className="stats-v1-offer-ranking">{offerViewRanking.offers.map((offer, index) => <li key={offer.offerId}><span><b>{index + 1}. {offer.name}</b><small>{offer.kind === 'PRODUCT' ? 'Producto' : 'Servicio'}</small></span><strong>{number(offer.value)}</strong></li>)}</ol><p>Consultas deliberadas de productos y servicios durante el período seleccionado.</p></>}
+          {!unlocked ? <><div className="stats-v1-number">Bloqueada</div><p className="stats-v1-description">Requiere nivel {card.requiredLevel} ({card.requiredMinimum} referidos válidos).</p></> : loading || !offerViewRanking ? <><div className="stats-v1-number">Cargando…</div><p className="stats-v1-description">Aperturas de productos y servicios durante el período elegido.</p></> : offerViewRanking.offers.length === 0 ? <><div className="stats-v1-number">0</div><p className="stats-v1-description">Aperturas de productos y servicios durante el período elegido.</p></> : <><p className="stats-v1-description">Productos y servicios que más personas abrieron para ver su detalle.</p><ol className="stats-v1-offer-ranking">{offerViewRanking.offers.map((offer, index) => <li key={offer.offerId}><span><b>{index + 1}. {offer.name}</b><small>{offer.kind === 'PRODUCT' ? 'Producto' : 'Servicio'}</small></span><strong>{number(offer.value)}</strong></li>)}</ol></>}
+        </article>;
+        if (isRatingDistribution) return <article className={`stats-v1-card stats-v1-referral-card stats-v1-rating-card ${unlocked ? '' : 'locked'}`} key={card.key}>
+          <div className="stats-v1-card-top"><span className="stats-v1-card-icon">{unlocked ? '◉' : '♙'}</span><h3>{card.label}</h3></div>
+          {!unlocked ? <><div className="stats-v1-number">Bloqueada</div><p className="stats-v1-description">Requiere nivel {card.requiredLevel} ({card.requiredMinimum} referidos válidos).</p></> : loading || !reviewStatistics ? <><div className="stats-v1-number">Cargando…</div><p className="stats-v1-description">Opiniones públicas vigentes, agrupadas por la puntuación que recibiste.</p></> : reviewCountError ? <><div className="stats-v1-number">No disponible</div><p className="stats-v1-description">No pudimos consultar tus opiniones públicas en este momento.</p></> : <><p className="stats-v1-description">Opiniones públicas vigentes, agrupadas por la puntuación que recibiste.</p><RatingDistribution distribution={reviewStatistics.distribution} total={reviewStatistics.total} /></>}
         </article>;
         return <article className={`stats-v1-card stats-v1-referral-card ${unlocked ? '' : 'locked'}`} key={card.key}>
           <div className="stats-v1-card-top"><span className="stats-v1-card-icon">{unlocked ? '◉' : '♙'}</span><h3>{card.label}</h3></div>
-          <div className="stats-v1-number">{loading || (currentStateMetric && currentStateValue === undefined && currentRatingCount !== 0 && !metricUnavailable) ? 'Cargando…' : error || metricUnavailable ? 'No disponible' : !unlocked ? 'Bloqueada' : currentStateMetric ? currentStateLabel : 'Medición pendiente'}</div>
-          <p>{!unlocked ? `Requiere nivel ${card.requiredLevel} (${card.requiredMinimum} referidos válidos).` : isCurrentFavorites ? 'Usuarios que actualmente tienen guardado tu negocio.' : isCurrentOfferLikes ? 'Me gusta activos recibidos en tus productos y servicios.' : isPeriodReviewCount ? 'Opiniones publicadas sobre tu negocio.' : isCurrentAverageRating ? `${currentRatingCount ?? 0} calificaciones activas utilizadas. Promedio vigente de todas las opiniones publicadas.` : 'Medición pendiente hasta que exista instrumentación para esta estadística.'}</p>
+          <div className="stats-v1-number">{loading || (currentStateMetric && currentStateValue === undefined && !metricUnavailable) ? 'Cargando…' : error || metricUnavailable ? 'No disponible' : !unlocked ? 'Bloqueada' : currentStateMetric ? currentStateLabel : 'Medición pendiente'}</div>
+          <p className="stats-v1-description">{!unlocked ? `Requiere nivel ${card.requiredLevel} (${card.requiredMinimum} referidos válidos).` : isCurrentFavorites ? 'Personas que actualmente tienen guardado tu negocio.' : isCurrentOfferLikes ? 'Me gusta activos en tus productos y servicios.' : isPeriodReviewCount ? 'Opiniones publicadas recibidas durante el período elegido.' : 'Aún no tiene una medición disponible.'}</p>
         </article>;
       })}</div>
     </section>
@@ -232,13 +262,30 @@ export function StatisticsDashboardV1() {
       <div className="stats-v1-section-head"><div><span className="stats-v1-section-icon">♛</span><div><h2 id="stats-v1-pro-title">Estadísticas PRO <small>20 estadísticas exclusivas</small></h2><p>Análisis avanzado respaldado por datos reales, con fuentes pendientes claramente marcadas.</p></div></div>{!loading && !error && !availablePro && <button type="button" onClick={() => setProHelp(true)}>Ver Business PRO →</button>}</div>
       <div className="stats-v1-pro-grid">{proCards.map(card => {
         const content = availablePro && data ? proContent(card.key, data) : null;
+        const ranking = availablePro && data ? proRanking(card.key, data, offerViewRanking) : null;
+        const isRanking = ranking !== null;
+        const isCommercialIndex = card.key === 'commercialIndex';
+        const hasNoRatingHistory = card.key === 'ratingEvolution' && availablePro && data && content === null;
         const points = content && 'points' in content ? content.points : undefined;
+        if (isRanking) return <article className={`stats-v1-card stats-v1-pro-card stats-v1-pro-ranking-card ${availablePro ? '' : 'locked'}`} key={card.key}>
+          <h3>{card.label}</h3>
+          <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
+          {!availablePro ? <strong>Bloqueada</strong> : <HorizontalRanking points={ranking} emptyMessage={card.key === 'keywords' ? 'Aún no hay búsquedas registradas.' : card.key === 'categoryPerformance' ? 'Aún no hay actividad por categoría.' : 'Aún no hay aperturas registradas.'} />}
+          {availablePro && card.contextualHistory && <span className="stats-v1-contextual-history">Disponible desde la activación de la analítica contextual</span>}
+        </article>;
+        if (isCommercialIndex) return <article className={`stats-v1-card stats-v1-pro-card stats-v1-commercial-index ${availablePro ? '' : 'locked'}`} key={card.key}>
+          <h3>{card.label}</h3>
+          <strong>{loading ? 'Cargando…' : error ? 'No disponible' : !availablePro ? 'Bloqueada' : 'Aún no hay datos comparables suficientes'}</strong>
+          <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
+        </article>;
         return <article className={`stats-v1-card stats-v1-pro-card ${availablePro ? '' : 'locked'}`} key={card.key}>
           <h3>{card.label}</h3>
-          <strong>{loading ? 'Cargando…' : error ? 'No disponible' : !availablePro ? 'Bloqueada' : content ? content.value : 'Medición pendiente'}</strong>
+          <strong>{loading ? 'Cargando…' : error ? 'No disponible' : !availablePro ? 'Bloqueada' : hasNoRatingHistory ? 'Sin calificaciones en este período' : content ? content.value : 'Medición pendiente'}</strong>
+          <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
           {points && content && ('kind' in content && content.kind === 'bar' ? <Bars points={points} /> : <Sparkline points={points} />)}
           {points && <DataTable points={points} />}
-          <p>{!availablePro ? 'Requiere una suscripción Business PRO vigente.' : card.source}</p>
+          {availablePro && card.key === 'ratingEvolution' && data?.period === 'all' && <span className="stats-v1-history-note">Todo el tiempo muestra los últimos 24 meses.</span>}
+          {availablePro && card.contextualHistory && <span className="stats-v1-contextual-history">Disponible desde la activación de la analítica contextual</span>}
         </article>;
       })}</div>
     </section>

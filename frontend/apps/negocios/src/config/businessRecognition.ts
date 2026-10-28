@@ -18,7 +18,7 @@ export const recognitionLevels: RecognitionLevelDefinition[] = [
   { level: "BRONZE", name: "Bronce", min: 20, max: 49, productLimit: 25, serviceLimit: 25, proDiscount: 5, exclusiveStatistic: "Usuarios que te guardaron" },
   { level: "SILVER", name: "Plata", min: 50, max: 99, productLimit: 30, serviceLimit: 30, proDiscount: 10, exclusiveStatistic: "Me gusta recibidos" },
   { level: "GOLD", name: "Oro", min: 100, max: 249, productLimit: 40, serviceLimit: 40, proDiscount: 20, exclusiveStatistic: "Opiniones recibidas" },
-  { level: "PLATINUM", name: "Platino", min: 250, max: 499, productLimit: 50, serviceLimit: 50, proDiscount: 30, exclusiveStatistic: "Calificación promedio" },
+  { level: "PLATINUM", name: "Platino", min: 250, max: 499, productLimit: 50, serviceLimit: 50, proDiscount: 30, exclusiveStatistic: "Distribución de calificaciones" },
   { level: "DIAMOND", name: "Diamante", min: 500, productLimit: 75, serviceLimit: 75, proDiscount: 40, exclusiveStatistic: "Productos y servicios más consultados" },
 ];
 

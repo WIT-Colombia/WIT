@@ -1047,6 +1047,12 @@ model BusinessAnalyticsEvent {
   offerId     String?                    @db.Char(36)
   eventType   BusinessAnalyticsEventType
   actorUserId String?                    @db.Char(36)
+  visitorKey  String?                    @db.Char(64)
+  source      String?                    @db.VarChar(32)
+  searchTerm  String?                    @db.VarChar(120)
+  searchPosition Int?
+  category    String?                    @db.VarChar(120)
+  isFeatured  Boolean?                   @default(false)
   dedupeKey   String?                    @unique @db.VarChar(191)
   createdAt   DateTime                   @default(now()) @db.DateTime(3)
   business    Business                   @relation(fields: [businessId], references: [id], onDelete: Restrict)
@@ -1055,6 +1061,9 @@ model BusinessAnalyticsEvent {
 
   @@index([businessId, eventType, createdAt])
   @@index([businessId, eventType, offerId, createdAt], map: "BusinessAnalyticsEvent_biz_evt_offer_created_idx")
+  @@index([businessId, eventType, visitorKey, createdAt], map: "BusinessAnalyticsEvent_biz_evt_visitor_created_idx")
+  @@index([businessId, eventType, source, createdAt], map: "BusinessAnalyticsEvent_biz_evt_source_created_idx")
+  @@index([businessId, eventType, searchTerm, createdAt], map: "BusinessAnalyticsEvent_biz_evt_term_created_idx")
   @@index([actorUserId, createdAt])
   @@index([dedupeKey])
 }

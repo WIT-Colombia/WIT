@@ -17,7 +17,7 @@ import { useLocationContext } from "../context/LocationContext";
 import { distanceBetweenCoordinates, getBusinessCoordinates } from "../utils/coordinates";
 import { whatsappLink } from "../utils/whatsapp";
 import { PublicBusinessDigitalCard } from "../components/PublicBusinessDigitalCard";
-import { recordBusinessEvent } from "../services/analyticsService";
+import { activeBusinessContext, consumeBusinessVisitContext, recordBusinessEvent } from "../services/analyticsService";
 import { listPublicReviews, type PublicReview } from "../services/reviewsService";
 import registrationInvitePerson from "../assets/registration-invite-person.png";
 import "./BusinessDetail.css";
@@ -147,7 +147,16 @@ export default function BusinessDetail() {
       .catch(() => { if (!cancelled) { setBusiness(null); setBusinessProducts([]); setBusinessServices([]); setLoadState("error"); } });
     return () => { cancelled = true; };
   }, [id]);
-  useEffect(() => { if (loadState === "ready" && business?.id && !isBusinessPreview) recordBusinessEvent(currentBusiness.id, "BUSINESS_VIEW", new Date().toISOString().slice(0, 10)); }, [business?.id, isBusinessPreview, loadState]);
+  useEffect(() => {
+    if (loadState !== "ready" || !business?.id || isBusinessPreview) return;
+    const inheritedContext = consumeBusinessVisitContext(currentBusiness.id);
+    const context = {
+      ...inheritedContext,
+      category: inheritedContext.category ?? business.category,
+      isFeatured: inheritedContext.isFeatured ?? Boolean(business.plan === 'premium' || business.isFeatured),
+    };
+    recordBusinessEvent(currentBusiness.id, "BUSINESS_VIEW", new Date().toISOString().slice(0, 10), undefined, context);
+  }, [business, isBusinessPreview, loadState]);
   useEffect(() => {
     let cancelled = false;
     if (loadState !== "ready" || !id) { setReviewSummary({ average: null, count: 0 }); return () => { cancelled = true; }; }
@@ -193,7 +202,9 @@ export default function BusinessDetail() {
   if (loadState === "not-found" || !business) return <PageLayout><div className="business-not-found"><h1>No encontramos este negocio</h1><p>Puede que el enlace ya no esté disponible o no esté publicado.</p><Link to="/home">Volver a explorar</Link></div></PageLayout>;
   const currentBusiness = business;
   const goBack = () => { if (isBusinessPreview && previewContext.returnTo) { window.location.assign(previewContext.returnTo); return; } if (window.history.length > 1) navigate(-1); else navigate("/home"); };
-  const whatsappUrl = business.whatsapp ? whatsappLink(business.whatsapp) : null;
+  const whatsappUrl = business.whatsapp
+    ? whatsappLink(business.whatsapp, `¡Hola, ${business.name}! 👋 Vi tu perfil en XAMUKO y quisiera recibir más información. ¡Gracias!`)
+    : null;
   const weeklyHours = business.weeklyHours ?? [];
   const locationLine = [business.city, business.regionName].filter(Boolean).join(", ") || "Ciudad no registrada";
   const businessCoordinates = getBusinessCoordinates(business);
@@ -267,9 +278,9 @@ export default function BusinessDetail() {
         {business.description && <div className={`business-header-description${descriptionExpanded ? " is-expanded" : ""}`}><p>{business.description}</p><button type="button" onClick={() => setDescriptionExpanded((expanded) => !expanded)} aria-expanded={descriptionExpanded}>{descriptionExpanded ? "Ver menos" : "Leer más"}</button></div>}
         {attentionModalities.length > 0 && <div className="business-attention-modalities"><strong>Modalidades de atención</strong><div>{attentionModalities.map((label) => <span key={label}>{label}</span>)}</div></div>}
         <div className="business-detail-actions">
-          {business.phone && (isBusinessPreview ? <button type="button" className="business-header-call" disabled><PhoneIcon/>Llamar</button> : <a className="business-header-call" href={phoneLink(business.phone)} onClick={() => recordBusinessEvent(currentBusiness.id, "PHONE_CLICK", "click")}><PhoneIcon/>Llamar</a>)}
-          {whatsappUrl && (isBusinessPreview ? <button type="button" className="business-header-whatsapp" disabled><WhatsAppIcon/>WhatsApp</button> : <a className="business-header-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => recordBusinessEvent(currentBusiness.id, "WHATSAPP_CLICK", "click")}><WhatsAppIcon/>WhatsApp</a>)}
-          {businessCoordinates && (isBusinessPreview ? <button type="button" className="business-primary-action" disabled>➤ Cómo llegar</button> : <Link className="business-primary-action" to={`/directions?businessId=${encodeURIComponent(currentBusiness.id)}`} onClick={() => recordBusinessEvent(currentBusiness.id, "DIRECTIONS_CLICK", "click")}>➤ Cómo llegar</Link>)}
+          {business.phone && (isBusinessPreview ? <button type="button" className="business-header-call" disabled><PhoneIcon/>Llamar</button> : <a className="business-header-call" href={phoneLink(business.phone)} onClick={() => recordBusinessEvent(currentBusiness.id, "PHONE_CLICK", "click", undefined, activeBusinessContext(currentBusiness.id))}><PhoneIcon/>Llamar</a>)}
+          {whatsappUrl && (isBusinessPreview ? <button type="button" className="business-header-whatsapp" disabled><WhatsAppIcon/>WhatsApp</button> : <a className="business-header-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => recordBusinessEvent(currentBusiness.id, "WHATSAPP_CLICK", "click", undefined, activeBusinessContext(currentBusiness.id))}><WhatsAppIcon/>WhatsApp</a>)}
+          {businessCoordinates && (isBusinessPreview ? <button type="button" className="business-primary-action" disabled>➤ Cómo llegar</button> : <Link className="business-primary-action" to={`/directions?businessId=${encodeURIComponent(currentBusiness.id)}`} onClick={() => recordBusinessEvent(currentBusiness.id, "DIRECTIONS_CLICK", "click", undefined, activeBusinessContext(currentBusiness.id))}>➤ Cómo llegar</Link>)}
           <button type="button" className={`business-social-action business-favorite-action${favorites.includes(currentBusiness.id) ? " is-active" : ""}`} disabled={isBusinessPreview} aria-pressed={favorites.includes(currentBusiness.id)} onClick={() => requireAccount(() => { void toggleFavorite(currentBusiness.id); })}><HeartIcon/><span className="business-favorite-full-label">{favorites.includes(currentBusiness.id) ? "En favoritos" : "Favoritos"}</span><span className="business-favorite-mobile-label">Favoritos</span></button>
         </div>
         {showRegistrationInvite && <aside className="business-registration-invite" aria-label={`Invitación de ${currentBusiness.name} a XAMUKO`}>

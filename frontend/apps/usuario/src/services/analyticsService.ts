@@ -1,15 +1,50 @@
 import { requestWithSession } from './authService';
 
 export type PublicAnalyticsEvent = 'BUSINESS_VIEW' | 'SEARCH_IMPRESSION' | 'WHATSAPP_CLICK' | 'PHONE_CLICK' | 'DIRECTIONS_CLICK' | 'OFFER_VIEW';
+export type AnalyticsContext = { source?: 'search' | 'map' | 'direct' | 'featured'; searchTerm?: string; searchPosition?: number; category?: string; isFeatured?: boolean };
 
 const pendingDedupeKeys = new Set<string>();
 const completedDedupeKeys = new Set<string>();
+const activeBusinessContexts = new Map<string, AnalyticsContext>();
 
 export function createAnalyticsInteractionId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function recordBusinessEvent(businessId: string, eventType: PublicAnalyticsEvent, scope: string, offerId?: string): void {
+const visitorStorageKey = 'xamuko:analytics:visitor';
+const visitContextKey = (businessId: string) => `xamuko:analytics:visit-context:${businessId}`;
+function visitorId(): string {
+  try {
+    const existing = localStorage.getItem(visitorStorageKey);
+    if (existing) return existing;
+    const created = createAnalyticsInteractionId();
+    localStorage.setItem(visitorStorageKey, created);
+    return created;
+  } catch { return createAnalyticsInteractionId(); }
+}
+export function rememberBusinessVisitContext(businessId: string, context: AnalyticsContext): void {
+  try { sessionStorage.setItem(visitContextKey(businessId), JSON.stringify(context)); } catch { /* Context is optional. */ }
+}
+export function consumeBusinessVisitContext(businessId: string): AnalyticsContext {
+  try {
+    const raw = sessionStorage.getItem(visitContextKey(businessId));
+    sessionStorage.removeItem(visitContextKey(businessId));
+    const context: AnalyticsContext = raw ? JSON.parse(raw) as AnalyticsContext : { source: 'direct' };
+    activeBusinessContexts.set(businessId, context);
+    return context;
+  } catch {
+    const context = { source: 'direct' } as const;
+    activeBusinessContexts.set(businessId, context);
+    return context;
+  }
+}
+
+/** Context remains available while the visitor continues through this SPA flow. */
+export function activeBusinessContext(businessId: string): AnalyticsContext {
+  return activeBusinessContexts.get(businessId) ?? { source: 'direct' };
+}
+
+export function recordBusinessEvent(businessId: string, eventType: PublicAnalyticsEvent, scope: string, offerId?: string, context: AnalyticsContext = {}): void {
   // Contact actions are independent interactions. A permanent `click` key would
   // suppress every later WhatsApp/phone click in the same browser session.
   const isContactAction = eventType === 'WHATSAPP_CLICK' || eventType === 'PHONE_CLICK' || eventType === 'DIRECTIONS_CLICK';
@@ -41,7 +76,11 @@ export function recordBusinessEvent(businessId: string, eventType: PublicAnalyti
     pendingDedupeKeys.add(dedupeKey);
   }
 
-  const body = JSON.stringify({ businessId, eventType, ...(offerId ? { offerId } : {}), dedupeKey });
+  // Contacts and offer details can follow the initial business view. Reuse its
+  // in-memory context when the control itself has no richer context.
+  const resolvedContext = Object.keys(context).length ? context : activeBusinessContext(businessId);
+  activeBusinessContexts.set(businessId, resolvedContext);
+  const body = JSON.stringify({ businessId, eventType, ...(offerId ? { offerId } : {}), dedupeKey, context: { ...resolvedContext, visitorId: visitorId() } });
   const endpoint = '/api/v1/public/analytics/events';
 
   // Navigation actions may unload the document immediately. Dispatch the

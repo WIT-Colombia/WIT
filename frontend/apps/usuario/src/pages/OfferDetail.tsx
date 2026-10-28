@@ -8,7 +8,8 @@ import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { PageLayout } from "../components/PageLayout";
 import { ThumbsUpIcon } from "../components/ActionIcons";
 import { useAccountGate } from "../hooks/useAccountGate";
-import { createAnalyticsInteractionId, recordBusinessEvent } from "../services/analyticsService";
+import { activeBusinessContext, createAnalyticsInteractionId, recordBusinessEvent, type AnalyticsContext } from "../services/analyticsService";
+import { whatsappLink } from "../utils/whatsapp";
 import "./OfferDetail.css";
 import "./OfferDetailEnhancements.css";
 
@@ -36,6 +37,8 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const trackedPromotionRef = useRef("");
   const trackedOfferViewRef = useRef("");
   const offerViewIdRef = useRef<string | null>(typeof (location.state as { offerViewId?: unknown } | null)?.offerViewId === "string" ? (location.state as { offerViewId: string }).offerViewId : null);
+  const routeContext = (location.state as { analyticsContext?: AnalyticsContext } | null)?.analyticsContext;
+  const analyticsContextRef = useRef<AnalyticsContext>(routeContext ?? { source: 'direct' });
   const isProduct = kind === "product";
 
   useEffect(() => {
@@ -55,13 +58,22 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
       if (cancelled || !loaded) return;
 
       setOffer(loaded);
+      const loadedBusiness = await getBusinessById(loaded.businessId).catch(() => undefined);
+      if (cancelled) return;
+      const inheritedContext = routeContext ?? activeBusinessContext(loaded.businessId);
+      const analyticsContext: AnalyticsContext = {
+        ...inheritedContext,
+        category: inheritedContext.category ?? loadedBusiness?.category,
+        isFeatured: inheritedContext.isFeatured ?? Boolean(loadedBusiness?.plan === 'premium' || loadedBusiness?.isFeatured),
+      };
+      analyticsContextRef.current = analyticsContext;
       if (isRealOfferId(loaded.id)) {
         const offerViewId = offerViewIdRef.current ?? createAnalyticsInteractionId();
         offerViewIdRef.current = offerViewId;
         const trackingKey = `${kind}:${loaded.businessId}:${loaded.id}:${offerViewId}`;
         if (trackedOfferViewRef.current !== trackingKey) {
           trackedOfferViewRef.current = trackingKey;
-          recordBusinessEvent(loaded.businessId, "OFFER_VIEW", offerViewId, loaded.id);
+          recordBusinessEvent(loaded.businessId, "OFFER_VIEW", offerViewId, loaded.id, analyticsContext);
         }
       }
       if (loaded.promotionId) {
@@ -72,14 +84,13 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           void recordPublicPromotionView(loaded.promotionId, dedupeKey).catch(() => undefined);
         }
       }
-      const loadedBusiness = await getBusinessById(loaded.businessId).catch(() => undefined);
       if (!cancelled && loadedBusiness) setBusiness(loadedBusiness);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [id, kind]);
+  }, [id, kind, routeContext]);
 
   if (!offer || !business) {
     return <PageLayout><div className="business-not-found"><h1>No encontramos {isProduct ? "este producto" : "este servicio"}</h1><Link to="/home">Volver a explorar</Link></div></PageLayout>;
@@ -98,9 +109,9 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
       <span className="offer-detail-price-original">Antes {product.originalPriceLabel}</span>
     </>
   ) : price;
-  const whatsapp = business.whatsapp?.replace(/\D/g, "");
   const phone = business.phone;
-  const contactMessage = encodeURIComponent(`Hola, vi el producto ${item.name} en XAMUKO y quisiera obtener más información.`);
+  const whatsappMessage = `¡Hola! 👋 Vi el ${isProduct ? "producto" : "servicio"} «${item.name}» en tu perfil de XAMUKO y quisiera recibir más información. ¡Gracias!`;
+  const whatsappUrl = business.whatsapp ? whatsappLink(business.whatsapp, whatsappMessage) : null;
   const handleLike = () => {
     setLikeError(null);
     void toggleOfferLike(item.id).catch(() => setLikeError("No pudimos actualizar el Me gusta. Intenta nuevamente."));
@@ -135,8 +146,8 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
             <i>→</i>
           </Link>
           <div className="offer-detail-contact-actions">
-            {whatsapp && <a className="offer-detail-contact whatsapp" href={`https://wa.me/${whatsapp}?text=${contactMessage}`} target="_blank" rel="noreferrer" onClick={() => recordBusinessEvent(business.id, "WHATSAPP_CLICK", "click")}>WhatsApp</a>}
-            {phone && <a className="offer-detail-contact phone" href={`tel:${phone}`} onClick={() => recordBusinessEvent(business.id, "PHONE_CLICK", "click")}>Llamar</a>}
+            {whatsappUrl && <a className="offer-detail-contact whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => recordBusinessEvent(business.id, "WHATSAPP_CLICK", "click", undefined, analyticsContextRef.current)}>WhatsApp</a>}
+            {phone && <a className="offer-detail-contact phone" href={`tel:${phone}`} onClick={() => recordBusinessEvent(business.id, "PHONE_CLICK", "click", undefined, analyticsContextRef.current)}>Llamar</a>}
           </div>
           <div className="offer-detail-actions">
             <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`entity-action entity-like entity-product-like${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}><ThumbsUpIcon /></button>

@@ -68,27 +68,37 @@ export async function getOfferViewRanking(userId: string, identifier: string, pe
   const now = new Date();
   const window = statisticsWindow(period, now);
   const createdAt = { ...(window.start ? { gte: window.start } : {}), lt: now };
-  const grouped = await prisma.businessAnalyticsEvent.groupBy({
+  const rank = (kind: 'PRODUCT' | 'SERVICE') => prisma.businessAnalyticsEvent.groupBy({
     by: ['offerId'],
-    where: { businessId: business.id, eventType: 'OFFER_VIEW', offerId: { not: null }, createdAt },
+    where: { businessId: business.id, eventType: 'OFFER_VIEW', offerId: { not: null }, createdAt, offer: { kind, deletedAt: null } },
     _count: { _all: true },
     orderBy: [{ _count: { offerId: 'desc' } }, { offerId: 'asc' }],
     take: 5,
   });
-  const offerIds = grouped.flatMap(row => row.offerId ? [row.offerId] : []);
+  // Each category is ranked before limiting. A popular service can therefore
+  // never push a product out of the product top five (or vice versa).
+  const [productRows, serviceRows] = await Promise.all([rank('PRODUCT'), rank('SERVICE')]);
+  const offerIds = [...productRows, ...serviceRows].flatMap(row => row.offerId ? [row.offerId] : []);
   const offers = offerIds.length ? await prisma.businessOffer.findMany({
     where: { id: { in: offerIds }, businessId: business.id, deletedAt: null },
     select: { id: true, name: true, kind: true },
   }) : [];
   const byId = new Map(offers.map(offer => [offer.id, offer]));
+  const rows = (ranking: typeof productRows) => ranking.flatMap(row => {
+    const offer = row.offerId ? byId.get(row.offerId) : undefined;
+    return offer ? [{ offerId: offer.id, name: offer.name, kind: offer.kind, value: row._count._all }] : [];
+  });
+  const productOffers = rows(productRows);
+  const serviceOffers = rows(serviceRows);
   return {
     period,
     timezone: STATISTICS_TIMEZONE,
     window: { start: window.start?.toISOString() ?? null, end: now.toISOString() },
-    offers: grouped.flatMap(row => {
-      const offer = row.offerId ? byId.get(row.offerId) : undefined;
-      return offer ? [{ offerId: offer.id, name: offer.name, kind: offer.kind, value: row._count._all }] : [];
-    }),
+    // `offers` stays available for the pre-existing referral card; PRO cards
+    // consume the independent rankings below.
+    offers: [...productOffers, ...serviceOffers],
+    productOffers,
+    serviceOffers,
   };
 }
 
@@ -139,11 +149,17 @@ export async function getBusinessStatistics(userId: string, identifier: string, 
     trends: typeof trends;
     referral?: { offerLikes: number; reviewsCount: number; averageRating: number | null; ratingCount: number };
     pro?: {
-      contactRate: number | null; hourlyActivity: Array<{ label: string; value: number }>;
+      contactRate: number | null; interactionRate: number | null; navigationRate: number | null; hourlyActivity: Array<{ label: string; value: number }>;
       weekdayActivity: Array<{ label: string; value: number }>; promotionViews: number;
       mostViewedPromotions: Array<{ id: string; title: string; value: number }>;
       ratingEvolution: Array<{ label: string; value: number }>;
       favoriteAcquisitions: Array<{ label: string; value: number }>;
+      uniqueVisitors: number; repeatVisitors: number;
+      visitOrigins: Array<{ label: string; value: number }>;
+      keywords: Array<{ label: string; value: number }>;
+      averagePosition: number | null;
+      categoryPerformance: Array<{ label: string; value: number }>;
+      featuredPerformance: { views: number; interactions: number; interactionRate: number | null };
     };
   } = {
     period, timezone: STATISTICS_TIMEZONE,
@@ -169,7 +185,7 @@ export async function getBusinessStatistics(userId: string, identifier: string, 
     } as typeof result.referral;
   }
   if (proUnlocked) {
-    const [activity, promotionViews, promotionRanking, ratingRows, favoriteRows] = await Promise.all([
+    const [activity, promotionViews, promotionRanking, ratingRows, favoriteRows, uniqueVisitorRows, repeatVisitorRows, origins, keywords, positions, categories, featured] = await Promise.all([
       prisma.$queryRaw<Array<{ hour: number; weekday: number; total: bigint }>>(Prisma.sql`
         SELECT HOUR(DATE_SUB(createdAt, INTERVAL 5 HOUR)) AS hour, WEEKDAY(DATE_SUB(createdAt, INTERVAL 5 HOUR)) AS weekday, COUNT(*) AS total
         FROM BusinessAnalyticsEvent WHERE businessId = ${business.id} AND eventType = 'BUSINESS_VIEW'
@@ -188,18 +204,36 @@ export async function getBusinessStatistics(userId: string, identifier: string, 
         FROM BusinessFavorite WHERE businessId = ${business.id} AND createdAt >= ${trendStart} AND createdAt < ${now}
         GROUP BY bucket ORDER BY bucket
       `),
+      prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`SELECT COUNT(DISTINCT visitorKey) AS total FROM BusinessAnalyticsEvent WHERE businessId = ${business.id} AND eventType = 'BUSINESS_VIEW' AND visitorKey IS NOT NULL AND createdAt >= ${window.start ?? new Date(0)} AND createdAt < ${now}`),
+      prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`SELECT COUNT(*) AS total FROM (SELECT visitorKey FROM BusinessAnalyticsEvent WHERE businessId = ${business.id} AND eventType = 'BUSINESS_VIEW' AND visitorKey IS NOT NULL AND createdAt >= ${window.start ?? new Date(0)} AND createdAt < ${now} GROUP BY visitorKey HAVING COUNT(*) > 1) AS repeatVisitors`),
+      prisma.$queryRaw<Array<{ label: string; total: bigint }>>(Prisma.sql`SELECT source AS label, COUNT(*) AS total FROM BusinessAnalyticsEvent WHERE businessId = ${business.id} AND eventType = 'BUSINESS_VIEW' AND source IS NOT NULL AND source <> '' AND createdAt >= ${window.start ?? new Date(0)} AND createdAt < ${now} GROUP BY source ORDER BY total DESC, label ASC LIMIT 5`),
+      prisma.$queryRaw<Array<{ label: string; total: bigint }>>(Prisma.sql`SELECT searchTerm AS label, COUNT(*) AS total FROM BusinessAnalyticsEvent WHERE businessId = ${business.id} AND eventType = 'SEARCH_IMPRESSION' AND searchTerm IS NOT NULL AND searchTerm <> '' AND createdAt >= ${window.start ?? new Date(0)} AND createdAt < ${now} GROUP BY searchTerm ORDER BY total DESC, label ASC LIMIT 10`),
+      prisma.$queryRaw<Array<{ average: number | null }>>(Prisma.sql`SELECT AVG(searchPosition) AS average FROM BusinessAnalyticsEvent WHERE businessId = ${business.id} AND eventType = 'SEARCH_IMPRESSION' AND searchPosition IS NOT NULL AND createdAt >= ${window.start ?? new Date(0)} AND createdAt < ${now}`),
+      prisma.$queryRaw<Array<{ label: string; total: bigint }>>(Prisma.sql`SELECT category AS label, COUNT(*) AS total FROM BusinessAnalyticsEvent WHERE businessId = ${business.id} AND eventType = 'BUSINESS_VIEW' AND category IS NOT NULL AND category <> '' AND createdAt >= ${window.start ?? new Date(0)} AND createdAt < ${now} GROUP BY category ORDER BY total DESC, label ASC LIMIT 8`),
+      prisma.$queryRaw<Array<{ views: bigint; interactions: bigint }>>(Prisma.sql`SELECT SUM(eventType = 'BUSINESS_VIEW') AS views, SUM(eventType IN ('WHATSAPP_CLICK', 'PHONE_CLICK', 'DIRECTIONS_CLICK', 'OFFER_VIEW')) AS interactions FROM BusinessAnalyticsEvent WHERE businessId = ${business.id} AND isFeatured = true AND createdAt >= ${window.start ?? new Date(0)} AND createdAt < ${now}`),
     ]);
     const ids = promotionRanking.map(row => row.promotionId);
     const promotionNames = ids.length ? await prisma.businessPromotion.findMany({ where: { id: { in: ids } }, select: { id: true, title: true } }) : [];
     const byId = new Map(promotionNames.map(row => [row.id, row.title]));
     result.pro = {
       contactRate: counts.businessViews ? Math.round((counts.whatsappClicks + counts.phoneClicks) / counts.businessViews * 1000) / 10 : null,
+      // Includes every deliberate interaction tracked inside XAMUKO. It is an
+      // interest rate, not a conversion or sales rate.
+      interactionRate: counts.businessViews ? Math.round((counts.whatsappClicks + counts.phoneClicks + counts.directionsClicks + (events.find(row => row.eventType === 'OFFER_VIEW')?._count._all ?? 0)) / counts.businessViews * 1000) / 10 : null,
+      navigationRate: counts.businessViews ? Math.round(counts.directionsClicks / counts.businessViews * 1000) / 10 : null,
       hourlyActivity: Array.from({ length: 24 }, (_, hour) => ({ label: `${String(hour).padStart(2, '0')}:00`, value: activity.filter(row => row.hour === hour).reduce((sum, row) => sum + toNumber(row.total), 0) })),
       weekdayActivity: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((label, weekday) => ({ label, value: activity.filter(row => row.weekday === weekday).reduce((sum, row) => sum + toNumber(row.total), 0) })),
       promotionViews,
       mostViewedPromotions: promotionRanking.map(row => ({ id: row.promotionId, title: byId.get(row.promotionId) ?? 'Promoción', value: row._count._all })),
       ratingEvolution: ratingRows.map(row => ({ label: row.bucket, value: Number(row.average) })),
       favoriteAcquisitions: series(favoriteRows),
+      uniqueVisitors: toNumber(uniqueVisitorRows[0]?.total ?? 0),
+      repeatVisitors: toNumber(repeatVisitorRows[0]?.total ?? 0),
+      visitOrigins: origins.map(row => ({ label: row.label, value: toNumber(row.total) })),
+      keywords: keywords.map(row => ({ label: row.label, value: toNumber(row.total) })),
+      averagePosition: positions[0]?.average === null || positions[0]?.average === undefined ? null : Math.round(Number(positions[0].average) * 10) / 10,
+      categoryPerformance: categories.map(row => ({ label: row.label, value: toNumber(row.total) })),
+      featuredPerformance: (() => { const row = featured[0]; const views = toNumber(row?.views ?? 0); const interactions = toNumber(row?.interactions ?? 0); return { views, interactions, interactionRate: views ? Math.round(interactions / views * 1000) / 10 : null }; })(),
     };
   }
   return result;

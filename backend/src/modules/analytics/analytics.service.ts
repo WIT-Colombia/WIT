@@ -1,4 +1,5 @@
 import { Prisma } from '../../generated/prisma/client.js';
+import { createHash } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 
@@ -6,6 +7,14 @@ const PUBLIC_BUSINESS = { businessAccount: { status: 'ACTIVE' }, lifecycleStatus
 const EVENT_TYPES = ['BUSINESS_VIEW', 'SEARCH_IMPRESSION', 'WHATSAPP_CLICK', 'PHONE_CLICK', 'DIRECTIONS_CLICK', 'OFFER_VIEW'] as const;
 export type AnalyticsEventType = typeof EVENT_TYPES[number];
 export type AnalyticsPeriod = 'day' | 'week' | 'month' | 'year' | 'all';
+export type AnalyticsContext = { visitorId?: string; source?: string; searchTerm?: string; searchPosition?: number; category?: string; isFeatured?: boolean };
+
+const normalizeText = (value: string | undefined, max: number) => {
+  const normalized = value?.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-CO');
+  return normalized ? normalized.slice(0, max) : undefined;
+};
+const visitorHash = (value: string | undefined) => value && /^[a-zA-Z0-9-]{16,120}$/.test(value)
+  ? createHash('sha256').update(value).digest('hex') : undefined;
 
 function publicBusiness(identifier: string) {
   return prisma.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }], ...PUBLIC_BUSINESS }, select: { id: true, publicId: true } });
@@ -23,7 +32,7 @@ function periodStart(period: AnalyticsPeriod, now = new Date()): Date | null {
   return new Date(date.getTime() + 5 * 60 * 60 * 1000);
 }
 
-export async function recordAnalyticsEvent(input: { businessId: string; eventType: string; offerId?: string; dedupeKey?: string; actorUserId?: string }) {
+export async function recordAnalyticsEvent(input: { businessId: string; eventType: string; offerId?: string; dedupeKey?: string; actorUserId?: string; context?: AnalyticsContext }) {
   if (!EVENT_TYPES.includes(input.eventType as AnalyticsEventType)) throw new AppError(400, 'INVALID_ANALYTICS_EVENT', 'Tipo de evento no permitido.');
   const business = await publicBusiness(input.businessId);
   if (!business) throw new AppError(404, 'BUSINESS_NOT_AVAILABLE', 'El establecimiento no está disponible.');
@@ -37,8 +46,16 @@ export async function recordAnalyticsEvent(input: { businessId: string; eventTyp
     if (!offer) throw new AppError(404, 'OFFER_NOT_AVAILABLE', 'El producto o servicio no está disponible.');
     offerId = offer.id;
   }
+  const source = normalizeText(input.context?.source, 32);
+  const searchTerm = normalizeText(input.context?.searchTerm, 120);
+  const category = normalizeText(input.context?.category, 120);
+  const searchPosition = Number.isInteger(input.context?.searchPosition) && input.context!.searchPosition! > 0 && input.context!.searchPosition! <= 1000 ? input.context!.searchPosition : undefined;
   try {
-    await prisma.businessAnalyticsEvent.create({ data: { businessId: business.id, offerId, eventType: input.eventType as AnalyticsEventType, actorUserId: input.actorUserId, dedupeKey: input.dedupeKey?.slice(0, 191) || undefined } });
+    await prisma.businessAnalyticsEvent.create({ data: {
+      businessId: business.id, offerId, eventType: input.eventType as AnalyticsEventType, actorUserId: input.actorUserId,
+      visitorKey: visitorHash(input.context?.visitorId), source, searchTerm, searchPosition, category,
+      isFeatured: input.context?.isFeatured === true, dedupeKey: input.dedupeKey?.slice(0, 191) || undefined,
+    } });
   } catch (error) {
     if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error;
   }
