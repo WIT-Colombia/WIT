@@ -177,6 +177,7 @@ export async function restoreSession(): Promise<BusinessSessionState> {
 
 export function startGoogleLogin(options: { returnTo?: string; consent?: boolean; rememberMe?: boolean } = {}): void {
   const params = new URLSearchParams({
+    application: "negocios",
     rememberMe: options.rememberMe ? "1" : "0",
     consent: options.consent ? "1" : "0",
   });

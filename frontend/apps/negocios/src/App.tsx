@@ -26,6 +26,7 @@ import { NoBusinessPage } from "./pages/NoBusinessPage";
 import { HelpPage } from "./pages/HelpPage";
 import BusinessPublicPreviewPage from "./pages/BusinessPublicPreviewPage";
 import { BusinessAuthProvider } from "./services/businessAuthContext";
+import GoogleCallback from "./pages/GoogleCallback";
 
 function BusinessPermissionRoute({ children, permission, ownerOnly = false }: { children: ReactNode; permission?: string; ownerOnly?: boolean }) {
   const { business, businessesReady } = useBusinessStore();
@@ -43,6 +44,7 @@ export default function App() {
   return <BusinessAuthProvider><BusinessStoreProvider><Routes>
     <Route path="/login" element={<AuthPage mode="login" />} />
     <Route path="/registro" element={<AuthPage mode="register" />} />
+    <Route path="/auth/google/callback" element={<GoogleCallback />} />
     <Route path="/recuperar" element={<RecoveryPage />} />
     <Route path="/bienvenida" element={<WelcomePage />} />
     <Route path="/sin-negocio" element={<NoBusinessPage />} />

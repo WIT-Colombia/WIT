@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useBusinessStore } from "../services/businessStore";
 import { useBusinessAuth } from "../services/businessAuthContext";
 import { BusinessApiError } from "../services/businessApiClient";
-import { getRememberedEmail, resolveBusinessNext } from "../services/businessAuthService";
+import { getRememberedEmail, resolveBusinessNext, startGoogleLogin } from "../services/businessAuthService";
 import { BusinessHeader } from "../components/layout/BusinessHeader";
 import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
 
@@ -73,7 +73,10 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
       setLoading(false);
     }
   };
-  const providerMessage = () => setMessage("Google Business requiere completar el retorno OAuth antes de activarse.");
+  const startGoogle = () => {
+    if (register && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; }
+    startGoogleLogin({ returnTo: resolveBusinessNext(new URLSearchParams(window.location.search).get("next")), consent: register ? accepted : true, rememberMe });
+  };
   return <main className="auth-page">
     <BusinessHeader />
     <div className="auth-layout">
@@ -87,7 +90,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
       </section>
       <section className="auth-form-card">
         <div className="auth-form-heading"><h2>{register ? "Crea tu cuenta en XAMUKO Business" : "Inicia sesión en XAMUKO Business"}</h2><p>{register ? "Crea la cuenta del propietario y añade tus negocios después." : "Ingresa para administrar tu negocio."}</p></div>
-        <div className="auth-social-options">{providers.map(({ name: provider, Icon }) => <button key={provider} type="button" className="auth-provider-button" onClick={providerMessage} disabled><Icon /><span>Continuar con {provider}</span></button>)}</div>
+        <div className="auth-social-options">{providers.map(({ name: provider, Icon }) => <button key={provider} type="button" className="auth-provider-button" onClick={startGoogle}><Icon /><span>Continuar con {provider}</span></button>)}</div>
         <div className="auth-divider"><span>o con tu correo</span></div>
         <form onSubmit={submit} className="auth-form">
           {register && <label>Nombre completo<input value={name} onChange={event => setName(event.target.value)} required maxLength={60} autoComplete="name" placeholder="Tu nombre completo" /></label>}
