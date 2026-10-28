@@ -1,7 +1,7 @@
 import { requestWithSession } from './authService';
 
 export type PublicAnalyticsEvent = 'BUSINESS_VIEW' | 'SEARCH_IMPRESSION' | 'WHATSAPP_CLICK' | 'PHONE_CLICK' | 'DIRECTIONS_CLICK' | 'OFFER_VIEW';
-export type AnalyticsContext = { source?: 'search' | 'map' | 'direct' | 'featured'; searchTerm?: string; searchPosition?: number; category?: string; isFeatured?: boolean };
+export type AnalyticsContext = { source?: 'search' | 'map' | 'direct' | 'featured' | 'qr'; searchTerm?: string; searchPosition?: number; category?: string; isFeatured?: boolean };
 
 const pendingDedupeKeys = new Set<string>();
 const completedDedupeKeys = new Set<string>();

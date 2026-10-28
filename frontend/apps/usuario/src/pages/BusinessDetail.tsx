@@ -8,7 +8,7 @@ import { getBusinessById, getProductsByBusinessId, getServicesByBusinessId } fro
 import { ProductCard, ServiceCard } from "../components/EntityCards";
 import { PioneerBadge } from "../components/PioneerBadge";
 import { AdMobBanner } from "../components/AdMobBanner";
-import { HeartIcon } from "../components/ActionIcons";
+import { HeartIcon, PhoneIcon } from "../components/ActionIcons";
 import { PageLayout } from "../components/PageLayout";
 import { getPublicBusinessUrl, shareLink } from "../utils/share";
 import { useAccountGate } from "../hooks/useAccountGate";
@@ -60,7 +60,6 @@ function BusinessRatingSummary({ average, count }: { average: number | null; cou
     {hasRatings && <><strong>{normalizedAverage.toFixed(1)}</strong><small>({count} {count === 1 ? "opinión" : "opiniones"})</small></>}
   </span>;
 }
-function PhoneIcon() { return <svg className="business-contact-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M7.1 3.2 4.9 4.5a2.5 2.5 0 0 0-1.1 2.8c1.8 6.2 5.7 10.1 11.9 11.9a2.5 2.5 0 0 0 2.8-1.1l1.3-2.2a1.9 1.9 0 0 0-.6-2.6l-2.7-1.7a1.9 1.9 0 0 0-2.5.4l-.8 1a11.9 11.9 0 0 1-3.7-3.7l1-.8a1.9 1.9 0 0 0 .4-2.5L9.7 3.8a1.9 1.9 0 0 0-2.6-.6Z"/></svg>; }
 function WhatsAppIcon() { return <svg className="business-contact-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.2a8.8 8.8 0 0 0-7.63 13.2L3 21l4.78-1.34A8.8 8.8 0 1 0 12 3.2Zm0 15.9a7.06 7.06 0 0 1-3.6-.99l-.26-.16-2.84.8.81-2.76-.17-.28A7.07 7.07 0 1 1 12 19.1Zm3.88-5.3c-.21-.11-1.23-.61-1.42-.68-.19-.07-.33-.11-.47.11-.14.21-.54.68-.66.82-.12.14-.24.16-.45.05-.21-.11-.89-.33-1.69-1.05-.63-.56-1.05-1.25-1.17-1.46-.12-.21-.01-.33.09-.44.1-.1.21-.24.31-.36.1-.12.14-.21.21-.35.07-.14.04-.26-.02-.37-.05-.11-.47-1.13-.65-1.55-.17-.4-.34-.35-.47-.36h-.4c-.14 0-.37.05-.56.26-.19.21-.74.72-.74 1.76s.76 2.04.87 2.18c.11.14 1.5 2.29 3.64 3.21.51.22.91.35 1.22.45.51.16.98.14 1.35.08.41-.06 1.23-.5 1.4-.98.17-.48.17-.9.12-.98-.05-.09-.19-.14-.4-.25Z"/></svg>; }
 type SocialNetworkPlatform = "facebook" | "instagram" | "x" | "tiktok";
 function SocialNetworkIcon({ platform }: { platform: SocialNetworkPlatform }) {
@@ -73,6 +72,7 @@ function SocialNetworkIcon({ platform }: { platform: SocialNetworkPlatform }) {
 export default function BusinessDetail() {
   const { id = "" } = useParams(); const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab"); const tab: Tab = validTabs.includes(tabParam as Tab) ? tabParam as Tab : "info";
+  const qrVisit = searchParams.get("source") === "qr";
   const previewRequested = searchParams.get("preview") === "business";
   const returnToParam = searchParams.get("returnTo");
   const navigate = useNavigate();
@@ -152,11 +152,12 @@ export default function BusinessDetail() {
     const inheritedContext = consumeBusinessVisitContext(currentBusiness.id);
     const context = {
       ...inheritedContext,
+      ...(qrVisit ? { source: "qr" as const } : {}),
       category: inheritedContext.category ?? business.category,
       isFeatured: inheritedContext.isFeatured ?? Boolean(business.plan === 'premium' || business.isFeatured),
     };
     recordBusinessEvent(currentBusiness.id, "BUSINESS_VIEW", new Date().toISOString().slice(0, 10), undefined, context);
-  }, [business, isBusinessPreview, loadState]);
+  }, [business, isBusinessPreview, loadState, qrVisit]);
   useEffect(() => {
     let cancelled = false;
     if (loadState !== "ready" || !id) { setReviewSummary({ average: null, count: 0 }); return () => { cancelled = true; }; }
@@ -203,7 +204,7 @@ export default function BusinessDetail() {
   const currentBusiness = business;
   const goBack = () => { if (isBusinessPreview && previewContext.returnTo) { window.location.assign(previewContext.returnTo); return; } if (window.history.length > 1) navigate(-1); else navigate("/home"); };
   const whatsappUrl = business.whatsapp
-    ? whatsappLink(business.whatsapp, `¡Hola, ${business.name}! 👋 Vi tu perfil en XAMUKO y quisiera recibir más información. ¡Gracias!`)
+    ? whatsappLink(business.whatsapp, `¡Hola! ${business.name}, vi tu perfil en XAMUKO y quisiera recibir más información. ¡Gracias!`)
     : null;
   const weeklyHours = business.weeklyHours ?? [];
   const locationLine = [business.city, business.regionName].filter(Boolean).join(", ") || "Ciudad no registrada";

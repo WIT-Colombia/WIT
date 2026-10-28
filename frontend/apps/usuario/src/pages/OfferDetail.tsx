@@ -6,7 +6,7 @@ import { recordPublicPromotionView } from "../services/publicBusinessApi";
 import { getLikeCount } from "../services/userDataService";
 import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { PageLayout } from "../components/PageLayout";
-import { ThumbsUpIcon } from "../components/ActionIcons";
+import { PhoneIcon, ThumbsUpIcon } from "../components/ActionIcons";
 import { useAccountGate } from "../hooks/useAccountGate";
 import { activeBusinessContext, createAnalyticsInteractionId, recordBusinessEvent, type AnalyticsContext } from "../services/analyticsService";
 import { whatsappLink } from "../utils/whatsapp";
@@ -110,7 +110,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
     </>
   ) : price;
   const phone = business.phone;
-  const whatsappMessage = `¡Hola! 👋 Vi el ${isProduct ? "producto" : "servicio"} «${item.name}» en tu perfil de XAMUKO y quisiera recibir más información. ¡Gracias!`;
+  const whatsappMessage = `¡Hola! Vi el ${isProduct ? "producto" : "servicio"} ${item.name} en tu perfil de XAMUKO y quisiera recibir más información. ¡Gracias!`;
   const whatsappUrl = business.whatsapp ? whatsappLink(business.whatsapp, whatsappMessage) : null;
   const handleLike = () => {
     setLikeError(null);
@@ -147,7 +147,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           </Link>
           <div className="offer-detail-contact-actions">
             {whatsappUrl && <a className="offer-detail-contact whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => recordBusinessEvent(business.id, "WHATSAPP_CLICK", "click", undefined, analyticsContextRef.current)}>WhatsApp</a>}
-            {phone && <a className="offer-detail-contact phone" href={`tel:${phone}`} onClick={() => recordBusinessEvent(business.id, "PHONE_CLICK", "click", undefined, analyticsContextRef.current)}>Llamar</a>}
+            {phone && <a className="offer-detail-contact phone" href={`tel:${phone}`} onClick={() => recordBusinessEvent(business.id, "PHONE_CLICK", "click", undefined, analyticsContextRef.current)}><PhoneIcon />Llamar</a>}
           </div>
           <div className="offer-detail-actions">
             <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`entity-action entity-like entity-product-like${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}><ThumbsUpIcon /></button>
