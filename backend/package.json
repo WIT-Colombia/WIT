@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",
-    "@prisma/client": "^7.10.0",
+    "@prisma/client": "^7.10.1",
     "argon2": "^0.45.1",
     "cookie": "^2.0.1",
     "express": "^5.2.1",
@@ -39,5 +39,11 @@
   },
   "overrides": {
     "mariadb": "$mariadb"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.10.1": true,
+    "argon2@0.45.1": true,
+    "esbuild@0.28.2": true,
+    "prisma@7.10.1": true
   }
 }

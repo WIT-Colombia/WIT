@@ -20,7 +20,13 @@ test('solo consulta establecimientos en estados públicos publicables', async ()
   let query: any;
   const db = { business: { count: async ({ where }: any) => { query = where; return 1; }, findMany: async ({ where }: any) => { query = where; return [publicBusiness]; } } } as any;
   const result = await listPublicBusinesses({ page: 1, pageSize: 5 }, db);
-  assert.deepEqual(query, { ...publicBusinessRules.PUBLIC_BUSINESS_WHERE, adultOnly: false });
+  assert.deepEqual(
+    { ...query, OR: undefined },
+    { ...publicBusinessRules.PUBLIC_BUSINESS_WHERE, adultOnly: false, OR: undefined }
+  );
+  assert.deepEqual(query.OR[0], { visibilityPeriods: { none: {} } });
+  assert.ok(query.OR[1].visibilityPeriods.some.startsAt.lte instanceof Date);
+  assert.ok(query.OR[1].visibilityPeriods.some.expiresAt.gt instanceof Date);
   assert.deepEqual(result.pagination, { page: 1, pageSize: 5, total: 1, totalPages: 1 });
   assert.equal(result.businesses[0].publicId, publicBusiness.publicId);
   assert.equal('createdById' in result.businesses[0], false);

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { PrismaClient } from '../generated/prisma/client.js';
 import { env } from './env.js';
@@ -15,6 +16,14 @@ const adapter = new PrismaMariaDb({
   password: decodeURIComponent(databaseUrl.password),
   database: decodeURIComponent(databaseUrl.pathname.replace(/^\//, '')),
   connectionLimit: 10,
+  ssl: {
+    ca: readFileSync(
+      process.env.DATABASE_SSL_CA_PATH ||
+        '/opt/xamuko/certs/rds-global-bundle.pem',
+      'utf8',
+    ),
+    rejectUnauthorized: true,
+  },
   // MySQL 8.4 accounts using caching_sha2_password need the server RSA key
   // during local password authentication. This only affects the driver
   // handshake; it does not change credentials or database contents.
