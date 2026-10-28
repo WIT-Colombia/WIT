@@ -4,3 +4,11 @@ dist/
 .env*
 !.env.example
 *.tsbuildinfo
+
+# Local caches, test output and temporary integration artifacts.
+.vite/
+.pnpm-store/
+e2e-results/
+**/e2e/*-snapshots/
+backend/node
+backend/tmp-backup.mjs
