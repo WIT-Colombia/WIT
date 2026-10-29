@@ -6,10 +6,34 @@ export AWS_PAGER=
 base=/opt/xamuko/deploy
 action=${1:-}
 sha=${2:-}
+started_ms=$(date +%s%3N)
+status_file=$base/status.json
 [[ $EUID == 0 && $action =~ ^(deploy|rollback)$ ]] || exit 64
 [[ $sha =~ ^[0-9a-f]{40}$ || ( $action == rollback && $sha == bootstrap ) ]] || exit 64
 exec 9>/run/lock/xamuko-deploy.lock
 flock -n 9 || { echo 'Another deployment is running'; exit 75; }
+write_status() {
+  local result=$1 error=${2:-} finished_ms duration active_sha
+  [[ -d $base ]] || return 0
+  finished_ms=$(date +%s%3N)
+  duration=$((finished_ms - started_ms))
+  active_sha=$(readlink -f "$base/current" 2>/dev/null | sed 's#.*/##' || true)
+  local tmp="$base/.status.json.$$"
+  printf '{"finishedAt":"%s","requestedAction":"%s","requestedSha":"%s","activeRelease":"%s","result":"%s","durationMs":%s,"error":"%s"}\n' \
+    "$(date -u +%FT%TZ)" "$action" "$sha" "$active_sha" "$result" "$duration" "$error" > "$tmp"
+  chmod 0640 "$tmp"
+  mv -f "$tmp" "$status_file"
+}
+on_exit() {
+  local code=$?
+  local result=success
+  [[ $code -eq 0 ]] || result=failure
+  write_status "$result" "$([[ $code -eq 0 ]] || echo 'see journalctl -u xamuko-poll.service')"
+  if [[ -d $base ]]; then
+    printf '%s %s %s %s\n' "$(date -u +%FT%TZ)" "$action" "$sha" "$result" >> "$base/history.log"
+  fi
+}
+trap on_exit EXIT
 [[ -f $base/READY && -L $base/current ]] || { echo 'Bootstrap required'; exit 78; }
 old=$(readlink -f "$base/current")
 release=$base/releases/$sha
@@ -33,6 +57,7 @@ switch_to() {
 nginx -t
 health
 curl --max-time 15 -fsS https://xamuko.com/ >/dev/null
+curl --max-time 15 -fsS https://xamuko.com/api/v1/public/businesses >/dev/null
 if [[ $action == deploy ]]; then
   [[ ! -e $release ]] || { echo 'Release exists; use rollback to reactivate it'; exit 65; }
   [[ $(df --output=avail -k "$base" | tail -1) -gt 4194304 ]] || { echo 'Need at least 4 GiB free'; exit 74; }
@@ -118,8 +143,8 @@ systemctl restart xamuko-api
 health
 curl --max-time 15 -fsS https://xamuko.com/ >/dev/null
 curl --max-time 15 -fsS https://xamuko.com/api/v1/health >/dev/null
+curl --max-time 15 -fsS https://xamuko.com/api/v1/public/businesses >/dev/null
 ln -s "$old" "$base/.previous-next"
 mv -Tf "$base/.previous-next" "$base/previous"
-printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$action" "$sha" >> "$base/history.log"
 trap - ERR INT TERM
 echo "Activated $sha"
