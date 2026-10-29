@@ -1,7 +1,8 @@
+import { finishPasswordReset } from './password-reset.js';
 import type { RequestHandler } from 'express';
 import { AppError } from '../../shared/errors/app-error.js';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
-import { getCurrentUser, issueSession, login, logout, refresh, register } from './auth.service.js';
+import { getCurrentUser, issuePasswordResetSession, issueSession, login, logout, refresh, register } from './auth.service.js';
 import { changePassword, updateAdultContentPreference, updateProfile } from './account.service.js';
 import { loginSchema, registerSchema } from './auth.schemas.js';
 import { adultContentPreferenceSchema, changePasswordSchema, emailRequestSchema, emailTokenSchema, passwordResetConfirmSchema, profileUpdateSchema, sessionPreferenceSchema } from './auth.schemas.js';
@@ -140,14 +141,13 @@ export const confirmPasswordResetController: RequestHandler = async (request, re
   try {
     const input = parse(passwordResetConfirmSchema, request.body);
     const userId = await resetPassword(input.token, await argon2.hash(input.password, { type: argon2.argon2id }));
-    const user = await getCurrentUser(userId);
-    try {
-      const session = await issueSession(userId, meta(request));
-      setRefreshCookie(response, session.refreshToken, input.rememberMe);
-      response.status(200).json({ user, accessToken: session.accessToken });
-    } catch {
+    const result = await finishPasswordReset(userId, () => getCurrentUser(userId), () => issuePasswordResetSession(userId, meta(request)));
+    if (result.session) {
+      setRefreshCookie(response, result.session.refreshToken, input.rememberMe);
+      response.status(200).json({ user: result.user, accessToken: result.session.accessToken });
+    } else {
       clearRefreshCookie(response);
-      response.status(200).json({ user, autoLogin: false });
+      response.status(200).json({ user: result.user, autoLogin: false });
     }
   } catch (error) { next(error); }
 };
