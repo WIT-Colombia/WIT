@@ -27,6 +27,14 @@ test('Google OAuth state preserves the explicit Business application', () => {
   assert.equal(recovered.returnTo, '/mis-negocios');
 });
 
+test('Google OAuth uses the callback configured for the selected application', () => {
+  const usuario = createGoogleAuthorization({ application: 'usuario', flow: 'login', consent: true });
+  const negocios = createGoogleAuthorization({ application: 'negocios', flow: 'login', consent: true });
+  const fallback = process.env.GOOGLE_REDIRECT_URI ?? 'http://localhost:3000/api/v1/auth/google/callback';
+  assert.equal(new URL(usuario.url).searchParams.get('redirect_uri'), process.env.GOOGLE_REDIRECT_URI_USUARIO ?? fallback);
+  assert.equal(new URL(negocios.url).searchParams.get('redirect_uri'), process.env.GOOGLE_REDIRECT_URI_NEGOCIOS ?? fallback);
+});
+
 test('Google OAuth return paths cannot redirect outside WIT', () => {
   assert.equal(safeGoogleReturnTo('https://evil.example'), '/home');
   assert.equal(safeGoogleReturnTo('//evil.example'), '/home');
