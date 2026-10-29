@@ -4,7 +4,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 
 export const adminPermissions = ['BUSINESSES_READ', 'CATALOG_READ', 'REPORTS_REVIEW', 'CONTENT_MODERATE', 'AUDIT_READ', 'ADMINS_MANAGE', 'PIONEER_MANAGE'] as const;
-export type AdminPermission = typeof adminPermissions[number];
+export type AdminPermission = typeof adminPermissions[number] | 'FINANCE_READ' | 'FINANCE_MANAGE';
 export type AdminRole = 'ADMIN' | 'SUPER_ADMIN';
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -15,8 +15,9 @@ export async function getAdminContext(userId: string, db: Db = prisma): Promise<
   if (!assignments.length) return null;
   const role: AdminRole = assignments.some(item => item.role === 'SUPER_ADMIN') ? 'SUPER_ADMIN' : 'ADMIN';
   const grants = await db.adminPermissionGrant.findMany({ where: { userId, granted: true, revokedAt: null }, select: { permission: true } });
-  const permissions = role === 'SUPER_ADMIN' ? [...adminPermissions] : grants.map(item => item.permission as AdminPermission);
-  return { userId, role, permissions: [...new Set(permissions)] };
+  const financeGrants = await db.financialPermissionGrant?.findMany({ where: { userId, granted: true, revokedAt: null }, select: { permission: true } }) ?? [];
+  const permissions = role === 'SUPER_ADMIN' ? [...adminPermissions, 'FINANCE_READ', 'FINANCE_MANAGE'] : [...grants.map(item => item.permission as AdminPermission), ...financeGrants.map(item => item.permission as AdminPermission)];
+  return { userId, role, permissions: [...new Set(permissions)] as AdminPermission[] };
 }
 
 export function requireAdmin(permission?: AdminPermission) {
@@ -82,6 +83,11 @@ export async function revokeRole(context: AdminContext, targetUserId: string, ro
 export async function setPermission(context: AdminContext, targetUserId: string, permission: AdminPermission, granted: boolean, reason: string) {
   assertSuperAdmin(context);
   if (targetUserId === context.userId) throw new AppError(409, 'ADMIN_SELF_ESCALATION', 'No puedes cambiar tus propios permisos.');
+  if (permission === 'FINANCE_READ' || permission === 'FINANCE_MANAGE') {
+    const grant = await prisma.financialPermissionGrant.upsert({ where: { userId_permission: { userId: targetUserId, permission } }, create: { userId: targetUserId, permission, granted, grantedById: context.userId, revokedAt: granted ? null : new Date() }, update: { granted, revokedAt: granted ? null : new Date(), grantedById: context.userId } });
+    await audit(context.userId, granted ? 'FINANCE_PERMISSION_GRANTED' : 'FINANCE_PERMISSION_REVOKED', grant.id, null, { userId: targetUserId, permission, granted }, reason);
+    return grant;
+  }
   const grant = await prisma.adminPermissionGrant.upsert({ where: { userId_permission: { userId: targetUserId, permission } }, create: { userId: targetUserId, permission, granted, grantedById: context.userId, revokedAt: granted ? null : new Date() }, update: { granted, revokedAt: granted ? null : new Date(), grantedById: context.userId } });
   await audit(context.userId, granted ? 'ADMIN_PERMISSION_GRANTED' : 'ADMIN_PERMISSION_REVOKED', grant.id, null, { userId: targetUserId, permission, granted }, reason);
   return grant;

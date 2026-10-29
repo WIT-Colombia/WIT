@@ -1,0 +1,368 @@
+import { useCallback, useEffect, useState } from "react";
+import {
+  acknowledgeFinanceAlert,
+  getFinanceAudit,
+  getAwsFreeTierUsage,
+  getFinanceRecords,
+  getFinanceSummary,
+  updateFinanceBudget,
+  updateFinanceConsumption,
+  updateFinanceInvoice,
+  updateFinancePayment,
+  updateFinanceProvider,
+  type FinanceSummary,
+  type FreeTierUsage,
+} from "../services/adminApiClient";
+import { can, getSession } from "../services/adminService";
+import { financeCsv, financeXlsx } from "../utils/financeExport";
+import { AwsFreeTierPanel } from "../components/AwsFreeTierPanel";
+const cop = new Intl.NumberFormat("es-CO", {
+  style: "currency",
+  currency: "COP",
+  maximumFractionDigits: 0,
+});
+type Entity =
+  "providers" | "budgets" | "consumptions" | "invoices" | "payments";
+export function FinancialManagementPage() {
+  const admin = getSession();
+  const [tab, setTab] = useState<Entity | "audit" | "alerts">("providers");
+  const [records, setRecords] = useState<any>({
+    providers: [],
+    budgets: [],
+    consumptions: [],
+    invoices: [],
+    payments: [],
+    alerts: [],
+  });
+  const [summary, setSummary] = useState<FinanceSummary | null>(null);
+  const [audit, setAudit] = useState<any[]>([]);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [freeTier, setFreeTier] = useState<{ state: "loading" | "available" | "empty" | "unconfigured" | "error"; usages: FreeTierUsage[]; updatedAt: string | null; error?: string }>({ state: "loading", usages: [], updatedAt: null });
+  const load = async () => {
+    const [r, s, a] = await Promise.all([
+      getFinanceRecords(),
+      getFinanceSummary(),
+      getFinanceAudit(),
+    ]);
+    setRecords(r);
+    setSummary(s);
+    setAudit(a.entries);
+  };
+  useEffect(() => {
+    void load().catch(() => setError("No se pudieron cargar los registros."));
+  }, []);
+  const loadFreeTier = useCallback(async () => {
+    setFreeTier((previous) => ({ ...previous, state: "loading", error: undefined }));
+    try {
+      const result = await getAwsFreeTierUsage();
+      setFreeTier({ state: result.available ? (result.usages.length ? "available" : "empty") : "unconfigured", usages: result.usages, updatedAt: result.lastUpdatedAt });
+    } catch (cause) {
+      setFreeTier((previous) => ({ ...previous, state: "error", error: cause instanceof Error ? cause.message : "No se pudo consultar Free Tier." }));
+    }
+  }, []);
+  useEffect(() => {
+    if (admin && can(admin, "finance:read")) void loadFreeTier();
+    // getSession() returns a fresh object on each render; do not include it in
+    // dependencies or the refresh request would loop indefinitely.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadFreeTier]);
+  if (!admin || !can(admin, "finance:read"))
+    return (
+      <section className="finance-page">
+        <div className="state-panel">
+          <h1>Acceso restringido</h1>
+        </div>
+      </section>
+    );
+  const manage = can(admin, "finance:manage");
+  const fields = (entity: Entity) => {
+    if (entity === "providers") return ["name", "currency"];
+    if (entity === "budgets") return ["name", "amountCop", "amountUsd"];
+    if (entity === "consumptions") return ["amountCop", "amountUsd"];
+    if (entity === "invoices") return ["amountCop", "amountUsd", "documentUrl"];
+    return ["amountCop", "status", "reference"];
+  };
+  const openEdit = (entity: Entity, row: any) => {
+    if (entity === "consumptions" && row.dataKind !== "MANUAL") return;
+    setEditing({ entity, row });
+    const next: Record<string, string> = {};
+    for (const k of fields(entity))
+      next[k] = row[k] === undefined ? "" : String(row[k]);
+    setForm(next);
+    setMessage("");
+    setError("");
+  };
+  const save = async () => {
+    if (!editing || !form.reason?.trim()) {
+      setError("El motivo de la modificación es obligatorio.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const { entity, row } = editing;
+      const input = {
+        ...form,
+        amountCop:
+          form.amountCop === undefined ? undefined : Number(form.amountCop),
+        amountUsd:
+          form.amountUsd === undefined ? undefined : Number(form.amountUsd),
+        reason: form.reason,
+      };
+      if (entity === "providers") await updateFinanceProvider(row.id, input);
+      if (entity === "budgets") await updateFinanceBudget(row.id, input);
+      if (entity === "consumptions")
+        await updateFinanceConsumption(row.id, input);
+      if (entity === "invoices") await updateFinanceInvoice(row.id, input);
+      if (entity === "payments") await updateFinancePayment(row.id, input);
+      setEditing(null);
+      setMessage("Cambios guardados y auditados.");
+      await load();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "No se pudieron guardar los cambios.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  const rows =
+    tab === "providers"
+      ? records.providers
+      : tab === "budgets"
+        ? records.budgets
+        : tab === "invoices"
+          ? records.invoices
+          : tab === "payments"
+            ? records.payments
+            : (records.consumptions ?? []);
+  const exportRows = (summary?.consumptions ?? []).map((i) => ({
+    provider: i.provider.name,
+    service: i.service?.name ?? "General",
+    period: i.periodStart,
+    kind: i.dataKind,
+    usd: Number(i.amountUsd) - Number(i.creditsUsd),
+    cop: Number(i.amountCop),
+  }));
+  const download = (kind: "csv" | "xlsx") => {
+    const blob = new Blob(
+      [kind === "csv" ? financeCsv(exportRows) : financeXlsx(exportRows)],
+      { type: "application/octet-stream" },
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `gastos.${kind}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  return (
+    <section className="finance-page">
+      <header className="page-heading">
+        <div>
+          <p className="eyebrow">FINANZAS · GASTOS TECNOLÓGICOS</p>
+          <h1>
+            Control financiero<span className="heading-dot">.</span>
+          </h1>
+          <p>Edición controlada y trazabilidad.</p>
+        </div>
+        <div>
+          <button className="secondary-button" onClick={() => download("csv")}>
+            CSV
+          </button>
+          <button className="secondary-button" onClick={() => download("xlsx")}>
+            XLSX
+          </button>
+        </div>
+      </header>
+      {message && (
+        <p className="success-message" role="status">
+          {message}
+        </p>
+      )}
+      {error && (
+        <p className="error-message" role="alert">
+          {error}
+        </p>
+      )}
+      <AwsFreeTierPanel state={freeTier.state} usages={freeTier.usages} updatedAt={freeTier.updatedAt} error={freeTier.error} />
+      <button className="secondary-button" onClick={() => void loadFreeTier()}>Actualizar Free Tier</button>
+      <nav className="finance-tabs">
+        {(
+          [
+            "providers",
+            "budgets",
+            "consumptions",
+            "invoices",
+            "payments",
+            "alerts",
+            "audit",
+          ] as const
+        ).map((item) => (
+          <button
+            className={tab === item ? "active" : ""}
+            key={item}
+            onClick={() => setTab(item)}
+          >
+            {item === "providers"
+              ? "Proveedores"
+              : item === "budgets"
+                ? "Presupuestos"
+                : item === "consumptions"
+                  ? "Consumos"
+                  : item === "invoices"
+                    ? "Facturas"
+                    : item === "payments"
+                      ? "Pagos"
+                      : item === "alerts"
+                        ? "Alertas"
+                        : "Historial de cambios"}
+          </button>
+        ))}
+      </nav>
+      {tab === "alerts" && (
+        <div className="finance-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Umbral</th>
+                <th>Mensaje</th>
+                <th>Estado</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {records.alerts.map((a: any) => (
+                <tr key={a.id}>
+                  <td>{a.threshold}%</td>
+                  <td>{a.message}</td>
+                  <td>{a.acknowledgedAt ? "Revisada" : "Pendiente"}</td>
+                  <td>
+                    {!a.acknowledgedAt && (
+                      <button
+                        disabled={!manage}
+                        onClick={() =>
+                          void acknowledgeFinanceAlert(a.id).then(load)
+                        }
+                      >
+                        Revisar
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {tab === "audit" && (
+        <div className="finance-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Entidad</th>
+                <th>Acción</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {audit.map((a) => (
+                <tr key={a.id}>
+                  <td>{new Date(a.createdAt).toLocaleString("es-CO")}</td>
+                  <td>{a.entityType}</td>
+                  <td>{a.action}</td>
+                  <td>{a.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {tab !== "alerts" && tab !== "audit" && (
+        <div className="finance-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Identificador</th>
+                <th>Importe</th>
+                <th>Estado/tipo</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row: any) => (
+                <tr key={row.id}>
+                  <td>{row.name ?? row.externalId ?? row.id}</td>
+                  <td>
+                    {row.amountCop === undefined
+                      ? "—"
+                      : cop.format(Number(row.amountCop))}
+                  </td>
+                  <td>{row.dataKind ?? row.status ?? row.currency ?? "—"}</td>
+                  <td>
+                    {manage &&
+                    !(tab === "consumptions" && row.dataKind !== "MANUAL") ? (
+                      <button
+                        className="secondary-button"
+                        onClick={() => openEdit(tab as Entity, row)}
+                      >
+                        Editar
+                      </button>
+                    ) : (
+                      <span>Solo lectura</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {editing && (
+        <div className="modal-backdrop">
+          <form
+            className="finance-edit-modal"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void save();
+            }}
+          >
+            <h2>Editar {editing.entity}</h2>
+            {fields(editing.entity).map((name) => (
+              <label key={name}>
+                {name}
+                <input
+                  value={form[name] ?? ""}
+                  type={name.includes("amount") ? "number" : "text"}
+                  onChange={(e) => setForm({ ...form, [name]: e.target.value })}
+                  required={name !== "documentUrl"}
+                />
+              </label>
+            ))}
+            <label>
+              Motivo de la modificación
+              <textarea
+                value={form.reason ?? ""}
+                required
+                onChange={(e) => setForm({ ...form, reason: e.target.value })}
+              />
+            </label>
+            <div>
+              <button type="button" onClick={() => setEditing(null)}>
+                Cancelar
+              </button>
+              <button className="primary-button" disabled={busy}>
+                {busy ? "Guardando…" : "Guardar cambios"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </section>
+  );
+}

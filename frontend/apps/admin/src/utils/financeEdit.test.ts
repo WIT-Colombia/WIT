@@ -1,0 +1,3 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { buildFinancePatch, editableFinanceRecord } from './financeEdit.js';
+test('solo consumos manuales son editables',()=>{assert.equal(editableFinanceRecord('consumptions',{dataKind:'MANUAL'}),true);assert.equal(editableFinanceRecord('consumptions',{dataKind:'REAL'}),false);});
+test('motivo obligatorio y precarga preservada',()=>{assert.throws(()=>buildFinancePatch({amountCop:'10',reason:''}));assert.deepEqual(buildFinancePatch({amountCop:'10',amountUsd:'2',reason:'Corrección'}),{amountCop:10,amountUsd:2,reason:'Corrección'});});

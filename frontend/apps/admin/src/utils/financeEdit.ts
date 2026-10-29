@@ -1,0 +1,2 @@
+export function editableFinanceRecord(kind: string, record: { dataKind?: string }) { return kind !== 'consumptions' || record.dataKind === 'MANUAL'; }
+export function buildFinancePatch(values: Record<string, string>) { if (!values.reason?.trim()) throw new Error('FINANCE_REASON_REQUIRED'); return { ...values, amountCop: values.amountCop === undefined ? undefined : Number(values.amountCop), amountUsd: values.amountUsd === undefined ? undefined : Number(values.amountUsd) }; }
