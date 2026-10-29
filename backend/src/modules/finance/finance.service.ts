@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import type { AdminContext } from '../admin/admin-auth.service.js';
+import { reconcileAwsBilling } from './aws-cost-explorer.js';
 
 const defaultBudgets = [
   ['AWS', 150000], ['Google Maps', 20000], ['Resend', 10000], ['Reserva', 20000],
@@ -19,7 +20,19 @@ export async function financeSummary(start: Date, end: Date) {
   ]);
   const totalUsd = consumptions.reduce((sum, item) => sum + Number(item.amountUsd) - Number(item.creditsUsd), 0);
   const totalCop = consumptions.reduce((sum, item) => sum + Number(item.amountCop), 0);
-  return { period: { start, end }, totals: { usd: totalUsd, cop: totalCop }, budgets, providers, consumptions, lastSync };
+  const awsLines = consumptions
+    .filter(item => item.provider.name === 'AWS' && item.metadata && typeof item.metadata === 'object')
+    .map(item => {
+      const metadata = item.metadata as Record<string, unknown>;
+      return {
+        service: item.service?.name ?? 'AWS', date: item.periodStart.toISOString().slice(0, 10),
+        unblendedUsd: Number(metadata.unblendedUsd ?? item.amountUsd),
+        netUnblendedUsd: Number(metadata.netUnblendedUsd ?? item.amountUsd),
+        metricDifferenceUsd: Number(metadata.metricDifferenceUsd ?? 0), currency: String(metadata.currency ?? 'USD'),
+        provisional: metadata.provisional !== false,
+      };
+    });
+  return { period: { start, end }, totals: { usd: totalUsd, cop: totalCop }, billing: reconcileAwsBilling(awsLines, awsLines.length ? new Date().toISOString() : null), budgets, providers, consumptions, lastSync };
 }
 
 export async function ensureDefaultBudgets() {

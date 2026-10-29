@@ -3,6 +3,7 @@ import { createAwsCostExplorerReader, syncAwsDailyCosts } from './aws-cost-explo
 import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireAdmin, adminFromRequest } from '../admin/admin-auth.service.js';
 import { financeSummary, createManualConsumption, createProvider, createBudget, createInvoice, createPayment, listFinanceRecords, acknowledgeAlert, updateManualConsumption, reconcileFinancials, updateProvider, updateBudget, updateInvoice, updatePayment, listFinancialAudit } from './finance.service.js';
+import { createAwsFreeTierReader, fetchFreeTierUsage, type FreeTierUsage } from './aws-free-tier.js';
 
 export const financeRouter = Router();
 let awsSyncRunning = false;
@@ -17,6 +18,16 @@ financeRouter.get('/summary', requireAdmin('FINANCE_READ'), async (req, res, nex
   } catch (error) { next(error); }
 });
 financeRouter.get('/records', requireAdmin('FINANCE_READ'), async (req, res, next) => { try { res.json(await listFinanceRecords(Number(req.query.page) || 1, Number(req.query.pageSize) || 50)); } catch (error) { next(error); } });
+financeRouter.get('/aws/free-tier', requireAdmin('FINANCE_READ'), async (req, res, next) => {
+  try {
+    // The reader is intentionally injected only when a future deployment wires
+    // the official SDK with a temporary read-only role. Never fabricate usage.
+    const reader = (req.app.locals.awsFreeTierReader as undefined | ((input: { Filter?: unknown }) => Promise<{ freeTierUsages?: Array<Record<string, unknown>> }>)) ?? (process.env.AWS_FREE_TIER_ENABLED === 'true' ? createAwsFreeTierReader() : undefined);
+    if (!reader) return res.json({ available: false, reason: 'AWS_FREE_TIER_NOT_CONFIGURED', usages: [], lastUpdatedAt: null });
+    const usages: FreeTierUsage[] = await fetchFreeTierUsage(reader, typeof req.query.service === 'string' ? req.query.service : undefined);
+    res.json({ available: true, usages, lastUpdatedAt: new Date().toISOString() });
+  } catch (error) { next(error); }
+});
 
 financeRouter.post('/consumptions/manual', requireAdmin('FINANCE_MANAGE'), async (req, res, next) => {
   try {

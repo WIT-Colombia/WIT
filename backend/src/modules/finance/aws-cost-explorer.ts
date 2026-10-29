@@ -3,6 +3,33 @@ import { prisma } from '../../config/prisma.js';
 
 export type CostExplorerReader = (input: GetCostAndUsageCommandInput) => Promise<GetCostAndUsageCommandOutput>;
 export type AwsCostLine = { service: string; date: string; unblendedUsd: number; netUnblendedUsd: number; metricDifferenceUsd: number; currency: string; provisional: boolean };
+export type AwsBillingReconciliation = {
+  costExplorer: { unblendedUsd: number; netUnblendedUsd: number; lastUpdatedAt: string | null; provisional: boolean };
+  projectEstimate: { usd: number; lastUpdatedAt: string } | null;
+  promotionalCredits: { usedUsd: number; remainingUsd: number; lastUpdatedAt: string } | null;
+  amountDue: { usd: number; lastUpdatedAt: string } | null;
+  notes: string[];
+};
+
+/** Builds a source-aware summary. Values not returned by Cost Explorer remain null. */
+export function reconcileAwsBilling(lines: AwsCostLine[], lastUpdatedAt: string | null): AwsBillingReconciliation {
+  return {
+    costExplorer: {
+      unblendedUsd: lines.reduce((sum, line) => sum + line.unblendedUsd, 0),
+      netUnblendedUsd: lines.reduce((sum, line) => sum + line.netUnblendedUsd, 0),
+      lastUpdatedAt,
+      provisional: lines.some(line => line.provisional),
+    },
+    projectEstimate: null,
+    promotionalCredits: null,
+    amountDue: null,
+    notes: [
+      'UnblendedCost y NetUnblendedCost son métricas independientes; no se suman entre sí.',
+      'La diferencia entre métricas no se clasifica automáticamente como crédito confirmado.',
+      'Cost Explorer no proporciona por sí solo el consumo estimado del proyecto, el saldo promocional ni el importe pendiente de pago.',
+    ],
+  };
+}
 
 export function createAwsCostExplorerReader(): CostExplorerReader {
   const client = new CostExplorerClient({});
