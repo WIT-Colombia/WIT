@@ -1,13 +1,12 @@
+import { landingDestinations } from "./destinations";
+
 const logo = "/assets/xamuko-logo.png";
 const reference = "/assets/xamuko-reference.png";
 
-const destinations = {
-  businessLogin: "http://127.0.0.1:5174/login",
-  businessRegister: "http://127.0.0.1:5174/registro",
-  userLogin: "http://127.0.0.1:5173/register?mode=login",
-  userRegister: "http://127.0.0.1:5173/register",
-  explore: "http://127.0.0.1:5173/home",
-} as const;
+const destinations = landingDestinations(import.meta.env.DEV, {
+  user: import.meta.env.VITE_USUARIO_PUBLIC_URL,
+  business: import.meta.env.VITE_BUSINESS_PUBLIC_URL,
+});
 
 function CardPhoto({ viewBox, className = '' }: { viewBox: string; className?: string }) {
   return <svg className={`responsive-card-photo ${className}`} viewBox={viewBox} preserveAspectRatio="xMidYMid slice" aria-hidden="true">

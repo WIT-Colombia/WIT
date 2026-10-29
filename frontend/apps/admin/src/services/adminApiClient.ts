@@ -1,3 +1,4 @@
+import { postPasswordOperation } from "@wit/utils";
 export class AdminApiError extends Error { readonly status:number; readonly code:string; constructor(status:number,code:string,message:string){super(message);this.name='AdminApiError';this.status=status;this.code=code;} }
 export type AdminPermission = 'BUSINESSES_READ' | 'CATALOG_READ' | 'REPORTS_REVIEW' | 'CONTENT_MODERATE' | 'AUDIT_READ' | 'ADMINS_MANAGE' | 'PIONEER_MANAGE';
 export type RealAdmin = { user: { id: string; publicId: string; displayName: string; emailNormalized: string | null; avatarUrl: string | null; locale: string }; role: 'ADMIN' | 'SUPER_ADMIN'; permissions: AdminPermission[] };
@@ -11,7 +12,16 @@ function headers(init: RequestInit = {}) { const value = new Headers(init.header
 async function request<T>(path: string, init: RequestInit = {}) { const response = await fetch(`${API_BASE}${path}`, headers(init)); const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } & T; if (!response.ok) { const code=payload?.error?.code ?? 'UNKNOWN_ERROR'; const message=payload?.error?.message ?? 'No se pudo completar la solicitud.'; throw new AdminApiError(response.status, code, message); } return payload; }
 export async function adminLogin(email: string, password: string, rememberMe: boolean) { const result = await request<{ user: RealAdmin['user']; accessToken: string }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password, rememberMe }) }); accessToken = result.accessToken; return adminMe(); }
 export async function adminMe() { return (await request<{ admin: RealAdmin }>('/admin/me')).admin; }
-export async function adminRefresh() { const result = await request<{ user: RealAdmin['user']; accessToken: string }>('/auth/refresh', { method: 'POST', body: JSON.stringify({ rememberMe: false }) }); accessToken = result.accessToken; return adminMe(); }
+let refreshInFlight: Promise<RealAdmin> | null = null;
+export function adminRefresh(): Promise<RealAdmin> {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    const result = await request<{ user: RealAdmin['user']; accessToken: string }>('/auth/refresh', { method: 'POST', body: JSON.stringify({ rememberMe: false }) });
+    accessToken = result.accessToken;
+    return adminMe();
+  })().finally(() => { refreshInFlight = null; });
+  return refreshInFlight;
+}
 export async function adminLogout() { try { await request('/auth/logout', { method: 'POST', body: '{}' }); } finally { accessToken = null; } }
 export function listReviewReports(status = '') { return request<{ reports: AdminReviewReport[] }>(`/admin/review-reports${status ? `?status=${encodeURIComponent(status)}` : ''}`); }
 export function moderateReviewReport(reportId: string, status: string, reviewStatus: string, decisionNote: string) { return request(`/admin/review-reports/${encodeURIComponent(reportId)}`, { method: 'PATCH', body: JSON.stringify({ status, reviewStatus, decisionNote }) }); }
@@ -30,3 +40,10 @@ export function listVerificationRequests() { return request<{ requests: AdminVer
 export function decideVerification(requestId: string, action: 'APPROVE' | 'REQUEST_INFORMATION' | 'REJECT', reason: string, nameConfirmed: boolean) { return request<{ verification: AdminVerificationRequest }>(`/admin/verifications/${encodeURIComponent(requestId)}/decision`, { method: 'POST', body: JSON.stringify({ action, reason, nameConfirmed }) }); }
 export function verificationDocumentUrl(requestId: string) { return `${API_BASE}/admin/verifications/${encodeURIComponent(requestId)}/document`; }
 export async function fetchVerificationDocument(requestId: string) { const response = await fetch(verificationDocumentUrl(requestId), headers({})); if (!response.ok) throw new AdminApiError(response.status, 'DOCUMENT_UNAVAILABLE', 'El documento ya no está disponible.'); return response.blob(); }
+
+export function adminRequestPasswordReset(email: string) {
+  return postPasswordOperation<{ message: string }>(`${API_BASE}/auth/password-reset/request`, { email }, 'request');
+}
+export function adminChangePassword(currentPassword: string, newPassword: string) {
+  return postPasswordOperation<void>(`${API_BASE}/auth/change-password`, { currentPassword, newPassword }, 'change', accessToken ?? undefined);
+}

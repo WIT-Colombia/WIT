@@ -1,3 +1,4 @@
+import { useAuth } from "./context/AuthContext";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import Home from "./pages/Home";
@@ -66,9 +67,17 @@ function StandaloneFooter() {
   return authPages.includes(pathname) ? <SiteFooter /> : null;
 }
 
+function UserEntry() {
+  const { status } = useAuth();
+  // Preserve the existing catalog entry on the currently published origin.
+  if (window.location.hostname !== 'user.xamuko.com') return <Navigate to="/home" replace />;
+  if (status === 'loading') return <main aria-live="polite">Comprobando tu sesión…</main>;
+  return <Navigate to={status === 'authenticated' ? '/home' : '/register'} replace />;
+}
+
 export default function App() {
   return <><ScrollToTop /><Routes>
-    <Route path="/" element={<Navigate to="/home" replace />} />
+    <Route path="/" element={<UserEntry />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Navigate to="/home" replace />} />
     <Route path="/location" element={<ManualLocation />} />

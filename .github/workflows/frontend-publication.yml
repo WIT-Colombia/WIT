@@ -1,0 +1,32 @@
+name: Four-app publication packages
+on:
+  pull_request:
+    branches: [staging]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-publication.yml'
+permissions:
+  contents: read
+jobs:
+  packages:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+        working-directory: frontend
+      - run: npm run test:publication
+        working-directory: frontend
+      - run: npm run typecheck && npm run package:publication
+        working-directory: frontend
+      - name: Install isolated browser test runtime
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Build and test entry screens and authentication with mocked API
+        run: npm run build && npm run test:publication:browser
+        working-directory: frontend

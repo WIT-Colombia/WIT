@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import {
   type BusinessAuthUser,
   type BusinessSessionState,
+  clearAccessToken,
   getRememberedEmail,
   login,
   logout,
@@ -16,6 +17,7 @@ type BusinessAuthContextValue = {
   signIn: (email: string, password: string, rememberMe: boolean) => Promise<BusinessAuthUser>;
   signUp: (name: string, email: string, password: string) => Promise<BusinessAuthUser>;
   signOut: () => Promise<void>;
+  clearSession: () => void;
   rememberedEmail: string;
   refresh: () => Promise<BusinessSessionState>;
 };
@@ -56,6 +58,7 @@ export function BusinessAuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<BusinessAuthContextValue>(() => ({
     state,
+    clearSession: () => { clearAccessToken(); setState({ status: "unauthenticated" }); },
     user: state.status === "authenticated" ? state.user : null,
     signIn: async (email, password, rememberMe) => {
       const user = await login(email, password, rememberMe);
