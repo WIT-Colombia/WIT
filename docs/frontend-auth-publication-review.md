@@ -92,12 +92,9 @@ requiere autorización explícita previa. Esta revisión no lo realiza ni lo aut
 
 ## Hallazgos existentes que necesitan una decisión de alcance
 
-- Admin PasswordRecoveryPage y ChangePasswordPage simulan la confirmación localmente
-  sin petición de recuperación/cambio. Business RecoveryPage tiene submitChange
-  local, aunque la recuperación por token utiliza servicios reales. No considerar
-  estos cambios de contraseña como funcionales ni realizar pruebas con cuentas reales.
-  Corregirlos merece una revisión específica de contratos y destinos de correo;
-  no se modifican esos flujos existentes en este PR.
+- Las simulaciones de recuperación/cambio detectadas inicialmente se corrigieron
+  mediante los endpoints existentes. Ver [auditoría de contraseña](password-recovery-audit.md)
+  para contratos, pruebas y un hallazgo de backend que queda detenido, pendiente de autorización.
 - Admin adminRefresh envía rememberMe=false aunque login ofrece Recordar sesión:
   verificar la duración esperada en servidor y navegador tras una recarga.
 - El callback Google de Business no limita explícitamente su espera si refresh nunca

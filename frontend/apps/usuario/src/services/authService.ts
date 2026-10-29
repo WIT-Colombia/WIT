@@ -1,3 +1,4 @@
+import { postPasswordOperation } from "@wit/utils";
 import { ApiError, requestJson } from "./httpClient";
 
 export type AuthUser = {
@@ -148,16 +149,16 @@ export async function updateAdultContentPreference(enabled: boolean, conditionsV
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  await requestJson<void>("/api/v1/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }), ...withAuthorization() });
+  await postPasswordOperation<void>("/api/v1/auth/change-password", { currentPassword, newPassword }, "change", accessToken ?? undefined);
 }
 
 export async function requestPasswordReset(email: string): Promise<string> {
-  const result = await requestJson<MessageResponse>("/api/v1/auth/password-reset/request", { method: "POST", body: JSON.stringify({ email }) });
+  const result = await postPasswordOperation<MessageResponse>("/api/v1/auth/password-reset/request", { email }, "request");
   return result.message;
 }
 
 export async function confirmPasswordReset(token: string, password: string, rememberMeOverride?: boolean): Promise<{ user: AuthUser; autoLogin: boolean }> {
-  const result = await requestJson<PasswordResetResponse>("/api/v1/auth/password-reset/confirm", { method: "POST", body: JSON.stringify({ token, password, rememberMe: rememberMeOverride ?? readRememberSession() }) });
+  const result = await postPasswordOperation<PasswordResetResponse>("/api/v1/auth/password-reset/confirm", { token, password, rememberMe: rememberMeOverride ?? readRememberSession() }, "reset");
   if (result.accessToken) accessToken = result.accessToken;
   return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }

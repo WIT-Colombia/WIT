@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ApiError } from "../services/httpClient";
-import { getMe, login, logout, refreshSession, register, restoreSession, type AuthUser } from "../services/authService";
+import { clearAccessToken, getMe, login, logout, refreshSession, register, restoreSession, type AuthUser } from "../services/authService";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -11,6 +11,7 @@ type AuthContextValue = {
   reloadUser: () => Promise<void>;
   restoreSession: () => Promise<void>;
   logout: () => Promise<void>;
+  clearSession: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
+    clearSession: () => { clearAccessToken(); setUser(null); setStatus("anonymous"); },
     reloadUser: async () => { const next = await getMe(); setUser(next); setStatus("authenticated"); },
     restoreSession: async () => { const next = await restoreSession(); setUser(next); setStatus("authenticated"); },
     status,

@@ -1,4 +1,4 @@
-import { safeAppReturn } from "@wit/utils";
+import { postPasswordOperation, safeAppReturn } from "@wit/utils";
 import { BusinessApiError, buildApiUrl, configureAccessTokenProvider, configureUnauthorizedHandler, requestJson } from "./businessApiClient";
 
 export type BusinessAuthUser = {
@@ -192,18 +192,12 @@ export async function logout(): Promise<void> {
 }
 
 export async function requestPasswordReset(email: string): Promise<string> {
-  const result = await requestJson<{ message: string }>("/auth/password-reset/request", {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  });
+  const result = await postPasswordOperation<{ message: string }>(buildApiUrl("/auth/password-reset/request"), { email }, "request");
   return result.message;
 }
 
 export async function confirmPasswordReset(token: string, password: string, rememberMe = false): Promise<{ autoLogin: boolean }> {
-  const result = await requestJson<{ accessToken?: string; autoLogin?: boolean }>("/auth/password-reset/confirm", {
-    method: "POST",
-    body: JSON.stringify({ token, password, rememberMe }),
-  });
+  const result = await postPasswordOperation<{ accessToken?: string; autoLogin?: boolean }>(buildApiUrl("/auth/password-reset/confirm"), { token, password, rememberMe }, "reset");
   if (result.accessToken) accessToken = result.accessToken;
   return { autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
@@ -211,4 +205,8 @@ export async function confirmPasswordReset(token: string, password: string, reme
 export function clearAccessToken(): void {
   accessToken = null;
   sessionState = { status: "unauthenticated" };
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await postPasswordOperation<void>(buildApiUrl('/auth/change-password'), { currentPassword, newPassword }, 'change', accessToken ?? undefined);
 }

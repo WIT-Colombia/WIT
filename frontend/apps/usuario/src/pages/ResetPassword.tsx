@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
-import { ApiError } from "../services/httpClient";
 import { confirmPasswordReset } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 import "./Register.css";
@@ -9,7 +8,7 @@ import "./RecoverPassword.css";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
-  const token = params.get("token")?.trim() ?? "";
+  const [token] = useState(() => params.get("token")?.trim() ?? "");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -17,7 +16,7 @@ export default function ResetPassword() {
   const [autoLoginFailed, setAutoLoginFailed] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { reloadUser } = useAuth();
+  const { reloadUser, clearSession } = useAuth();
 
   useEffect(() => {
     if (token) window.history.replaceState({}, document.title, window.location.pathname);
@@ -40,16 +39,16 @@ export default function ResetPassword() {
           navigate("/home", { replace: true, state: { toast: "¡Contraseña actualizada correctamente!" } });
           return;
         } catch {
-          setAutoLoginFailed(true);
+          clearSession(); setAutoLoginFailed(true);
         }
       } else {
-        setAutoLoginFailed(true);
+        clearSession(); setAutoLoginFailed(true);
       }
       setCompleted(true);
       setPassword("");
       setConfirmation("");
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : "No se pudo actualizar la contraseña.");
+      setError(caught instanceof Error ? caught.message : "No se pudo actualizar la contraseña.");
     } finally {
       setSubmitting(false);
     }

@@ -11,7 +11,7 @@ const user = { id: 'fixture-user', publicId: 'fixture-public', displayName: 'Pru
 let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
-async function fixture(t, authenticated = false, isAdmin = true, legacyUser = false) {
+async function fixture(t, authenticated = false, isAdmin = true, legacyUser = false, passwordOptions = {}) {
   const context = await browser.newContext({ serviceWorkers: 'block' });
   t.after(() => context.close());
   const requests = [];
@@ -25,6 +25,18 @@ async function fixture(t, authenticated = false, isAdmin = true, legacyUser = fa
     if (url.pathname.startsWith('/api/v1/')) {
       requests.push({ url, method: request.method(), headers: request.headers(), body: request.postDataJSON() });
       const json = (body, status = 200) => route.fulfill({ status, json: body });
+      const operation = url.pathname.endsWith('/password-reset/request') ? 'request'
+        : url.pathname.endsWith('/password-reset/confirm') ? 'reset'
+        : url.pathname.endsWith('/change-password') ? 'change' : null;
+      if (operation) {
+        if (passwordOptions.gate) await passwordOptions.gate;
+        const configured = passwordOptions.response;
+        if (configured?.network) return route.abort();
+        if (configured?.html) return route.fulfill({ status: 200, contentType: 'text/html', body: '<html>SPA fallback</html>' });
+        if (configured) return json(configured.body, configured.status);
+        if (operation === 'change') return route.fulfill({ status: 204, body: '' });
+        return operation === 'request' ? json({ message: 'Si la cuenta existe, recibirás instrucciones para continuar.' }, 202) : json({ user, autoLogin: false });
+      }
       if (url.pathname.endsWith('/google/start')) return route.fulfill({ contentType: 'text/html', body: '<p>OAuth start intercepted</p>' });
       if (url.pathname.endsWith('/auth/register')) return json({ user, verificationEmailSent: true }, 201);
       if (url.pathname.endsWith('/auth/login')) { authenticated = true; return json({ user, accessToken: 'fixture-access-token' }); }
@@ -182,4 +194,117 @@ for (const [host, path, destination] of [
   const { page } = await fixture(t);
   await login(page, `https://${host}`, `${path}${path.includes('?') ? '&' : '?'}next=%2F%5Cevil.test`);
   await page.waitForURL(`https://${host}${destination}`);
+});
+
+const passwordApps = [
+  ['Usuario', 'user.xamuko.com', '/recover-password', '/change-password'],
+  ['Business', 'business.xamuko.com', '/recuperar?mode=email', '/recuperar'],
+  ['Admin', 'admin.xamuko.com', '/recover-password', '/change-password'],
+];
+for (const [app, host, recovery, change] of passwordApps) {
+  test(`${app} recovery accepts an entered email and reports only generic acceptance after 202`, async t => {
+    let release; const gate = new Promise(resolve => { release = resolve; }); t.after(() => release());
+    const { page, requests } = await fixture(t, false, true, false, { gate });
+    await page.goto(`https://${host}${recovery}`);
+    await page.locator('input[type=email]').fill('recovery@example.test');
+    await page.getByRole('button', { name: /Enviar enlace de recuperación/ }).click();
+    assert.equal(await page.getByText(/Si la cuenta existe y puede recuperar/).count(), 0);
+    release();
+    await page.getByText(/Si la cuenta existe y puede recuperar/).waitFor();
+    const request = requests.find(r => r.url.pathname.endsWith('/password-reset/request'));
+    assert.equal(request.method, 'POST'); assert.equal(request.body.email, 'recovery@example.test');
+    assert.equal(await page.getByText(/Te enviamos un enlace/).count(), 0);
+  });
+  for (const [name, response] of [
+    ['rate limit', { status: 429, body: { error: { code: 'AUTH_RATE_LIMITED', message: 'Espera antes de reintentar.' } } }],
+    ['server error', { status: 500, body: { error: { message: 'Servicio no disponible.' } } }],
+    ['network failure', { network: true }], ['HTML 200', { html: true }],
+  ]) test(`${app} recovery does not confirm ${name}`, async t => {
+    const { page } = await fixture(t, false, true, false, { response });
+    await page.goto(`https://${host}${recovery}`);
+    await page.locator('input[type=email]').fill('recovery@example.test');
+    await page.getByRole('button', { name: /Enviar enlace de recuperación/ }).click();
+    await page.getByRole('alert').first().waitFor();
+    assert.equal(await page.getByText(/Si la cuenta existe y puede recuperar/).count(), 0);
+  });
+  for (const success of [false, true]) test(`${app} password change ${success ? 'confirms 204 only' : 'rejects a wrong current password without success'}`, async t => {
+    let release; const gate = new Promise(resolve => { release = resolve; }); t.after(() => release());
+    const response = success ? undefined : { status: 400, body: { error: { code: 'INVALID_CURRENT_PASSWORD', message: 'La contraseña actual no es correcta.' } } };
+    const { page, requests } = await fixture(t, true, true, false, { response, gate });
+    await page.goto(`https://${host}${change}`);
+    const fields = page.locator('input[type=password]');
+    await fields.nth(0).fill('old-password-123'); await fields.nth(1).fill('new-password-123'); await fields.nth(2).fill('new-password-123');
+    await page.getByRole('button', { name: 'Guardar nueva contraseña', exact: true }).click();
+    assert.equal(await page.getByText(/Contraseña actualizada|contraseña se actualizó|actualizada correctamente/).count(), 0);
+    release();
+    if (success) await page.getByText(/Contraseña actualizada|contraseña se actualizó|actualizada correctamente/).first().waitFor();
+    else { await page.getByRole('alert').first().waitFor(); assert.equal(await page.getByText(/Contraseña actualizada|contraseña se actualizó|actualizada correctamente/).count(), 0); }
+    const request = requests.find(r => r.url.pathname.endsWith('/change-password'));
+    assert.deepEqual(request.body, { currentPassword: 'old-password-123', newPassword: 'new-password-123' });
+    assert.equal(request.headers.authorization, 'Bearer fixture-access-token');
+  });
+}
+for (const [app, host, path] of [['Usuario', 'user.xamuko.com', '/reset-password'], ['Business', 'business.xamuko.com', '/recuperar']]) {
+  for (const success of [false, true]) test(`${app} token reset ${success ? 'preserves token in memory and confirms backend success' : 'shows expired or reused token without success'}`, async t => {
+    const response = success ? undefined : { status: 400, body: { error: { code: 'INVALID_AUTH_TOKEN', message: 'El enlace no es válido o ya expiró.' } } };
+    const { page, requests } = await fixture(t, false, true, false, { response });
+    const token = 'synthetic-reset-token-'.repeat(3);
+    await page.goto(`https://${host}${path}?token=${token}&next=https://evil.test`);
+    await page.waitForURL(`https://${host}${path}`);
+    const fields = page.locator('input[type=password]');
+    await fields.nth(0).fill('new-password-123'); await fields.nth(1).fill('new-password-123');
+    await page.getByRole('button', { name: 'Guardar nueva contraseña', exact: true }).click();
+    if (success) await page.getByText(/Contraseña actualizada|contraseña se actualizó|actualizada correctamente/).first().waitFor();
+    else { await page.getByRole('alert').first().waitFor(); assert.equal(await page.getByText(/Contraseña actualizada|contraseña se actualizó|actualizada correctamente/).count(), 0); }
+    assert.equal(requests.find(r => r.url.pathname.endsWith('/password-reset/confirm')).body.token, token);
+    if (!success) {
+      if (app === 'Business') await page.getByRole('button', { name: '¿No recuerdas tu contraseña? Recupérala por correo' }).click();
+      else await page.getByRole('link', { name: 'Solicitar un enlace de recuperación' }).click();
+      await page.locator('input[type=email]').waitFor();
+    }
+  });
+}
+for (const [app, host, , change] of passwordApps) {
+  for (const [name, response] of [
+    ['expired session', { status: 401, body: { error: { message: 'Sesión expirada.' } } }],
+    ['forbidden', { status: 403, body: { error: { message: 'Origen no autorizado.' } } }],
+    ['server error', { status: 500, body: { error: { message: 'Error interno.' } } }],
+    ['network failure', { network: true }], ['HTML fallback', { html: true }],
+  ]) test(`${app} password change never confirms ${name}`, async t => {
+    const { page } = await fixture(t, true, true, false, { response });
+    await page.goto(`https://${host}${change}`);
+    const fields = page.locator('input[type=password]');
+    await fields.nth(0).fill('old-password-123'); await fields.nth(1).fill('new-password-123'); await fields.nth(2).fill('new-password-123');
+    await page.getByRole('button', { name: 'Guardar nueva contraseña', exact: true }).click();
+    await page.getByRole('alert').first().waitFor();
+    assert.equal(await page.getByText(/Contraseña actualizada|contraseña se actualizó|actualizada correctamente/).count(), 0);
+  });
+}
+for (const [app, host, path] of [['Usuario', 'user.xamuko.com', '/reset-password'], ['Business', 'business.xamuko.com', '/recuperar']]) {
+  test(`${app} missing token prevents a reset API call`, async t => {
+    const { page, requests } = await fixture(t);
+    await page.goto(`https://${host}${path}?token=`);
+    await page.getByText(/Falta el token/).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Guardar nueva contraseña', exact: true }).isDisabled(), true);
+    assert(!requests.some(r => r.url.pathname.endsWith('/password-reset/confirm')));
+  });
+  test(`${app} confirmed reset stays successful when automatic session restoration fails`, async t => {
+    const { page } = await fixture(t, false, true, false, { response: { status: 200, body: { user, accessToken: 'synthetic-reset-access-token' } } });
+    await page.goto(`https://${host}${path}?token=${'synthetic-token-'.repeat(4)}`);
+    const fields = page.locator('input[type=password]');
+    await fields.nth(0).fill('new-password-123'); await fields.nth(1).fill('new-password-123');
+    await page.getByRole('button', { name: 'Guardar nueva contraseña', exact: true }).click();
+    await page.getByText(/Contraseña actualizada|contraseña se actualizó|actualizada correctamente/).first().waitFor();
+    assert.equal(await page.getByRole('alert').count(), 0);
+  });
+}
+for (const [app, host, , change] of passwordApps) test(`${app} mismatched passwords never call the change endpoint`, async t => {
+  const { page, requests } = await fixture(t, true);
+  await page.goto(`https://${host}${change}`);
+  const fields = page.locator('input[type=password]');
+  await fields.nth(0).fill('old-password-123'); await fields.nth(1).fill('new-password-123'); await fields.nth(2).fill('different-password-123');
+  const button = page.getByRole('button', { name: 'Guardar nueva contraseña', exact: true });
+  if (!await button.isDisabled()) { await button.click(); await page.getByRole('alert').first().waitFor(); }
+  assert(!requests.some(r => r.url.pathname.endsWith('/change-password')));
+  assert.equal(await page.getByText(/Contraseña actualizada|contraseña se actualizó|actualizada correctamente/).count(), 0);
 });

@@ -14,3 +14,5 @@ export function safeAppReturn(value: string | null | undefined, fallback: string
     return `${url.pathname}${url.search}${url.hash}`;
   } catch { return fallback; }
 }
+
+export * from './passwordOperations.ts';
