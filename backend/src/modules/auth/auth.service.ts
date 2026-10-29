@@ -1,3 +1,4 @@
+import { lockActivePasswordResetUser } from './password-reset.js';
 import argon2 from 'argon2';
 import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
@@ -32,9 +33,9 @@ function refreshExpiresAt(): Date {
   return new Date(Date.now() + env.refreshTokenTtlDays * 24 * 60 * 60 * 1000);
 }
 
-export async function issueSession(userId: string, requestMeta?: { userAgent?: string; ipAddress?: string }) {
+export async function issueSession(userId: string, requestMeta?: { userAgent?: string; ipAddress?: string }, store: Pick<Prisma.TransactionClient, 'session'> = prisma) {
   const refreshToken = createRefreshToken();
-  const session = await prisma.session.create({
+  const session = await store.session.create({
     data: {
       userId,
       tokenHash: hashRefreshToken(refreshToken),
@@ -44,6 +45,14 @@ export async function issueSession(userId: string, requestMeta?: { userAgent?: s
     },
   });
   return { accessToken: await createAccessToken({ userId, sessionId: session.id }), refreshToken };
+}
+
+/** Serialize optional reset-session issuance with account suspension/deletion. */
+export async function issuePasswordResetSession(userId: string, requestMeta?: { userAgent?: string; ipAddress?: string }) {
+  return prisma.$transaction(async (transaction) => {
+    await lockActivePasswordResetUser(transaction, userId);
+    return issueSession(userId, requestMeta, transaction);
+  });
 }
 
 export async function register(input: RegisterInput, _requestMeta?: { userAgent?: string; ipAddress?: string }) {
