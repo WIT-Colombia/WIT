@@ -79,6 +79,19 @@ if (emailMode === 'resend' && !resendApiKey) {
 const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI?.trim() ?? 'http://localhost:3000/api/v1/auth/google/callback';
+const googleRedirectUris = Object.freeze({
+  usuario: process.env.GOOGLE_REDIRECT_URI_USUARIO?.trim() ?? googleRedirectUri,
+  negocios: process.env.GOOGLE_REDIRECT_URI_NEGOCIOS?.trim() ?? googleRedirectUri,
+});
+if (nodeEnv === 'production') {
+  for (const redirectUri of Object.values(googleRedirectUris)) {
+    let parsed: URL;
+    try { parsed = new URL(redirectUri); } catch { throw new Error('Las URI de callback de Google deben ser URLs válidas.'); }
+    if (parsed.protocol !== 'https:' || parsed.pathname !== '/api/v1/auth/google/callback' || parsed.search || parsed.hash) {
+      throw new Error('Las URI de callback de Google en producción deben usar HTTPS y la ruta exacta de callback.');
+    }
+  }
+}
 const googleFrontendUrl = process.env.GOOGLE_FRONTEND_URL?.trim() ?? 'http://localhost:5173';
 const googleFrontendUrls = Object.freeze({
   usuario: process.env.GOOGLE_FRONTEND_URL_USUARIO?.trim() ?? googleFrontendUrl,
@@ -111,6 +124,7 @@ export const env = Object.freeze({
   googleClientId,
   googleClientSecret,
   googleRedirectUri,
+  googleRedirectUris,
   googleFrontendUrl,
   googleFrontendUrls,
   googleBackendUrl,
