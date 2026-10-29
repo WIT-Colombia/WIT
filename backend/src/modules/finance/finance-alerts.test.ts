@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { pendingBudgetAlerts } from './finance-alerts.js';
+test('emite umbrales una sola vez por presupuesto', () => { const first = pendingBudgetAlerts('b1', 900, 1000, new Set(['b1:50'])); assert.deepEqual(first.map(a => a.threshold), [75, 90]); const second = pendingBudgetAlerts('b1', 1000, 1000, new Set(['b1:50','b1:75','b1:90','b1:100'])); assert.equal(second.length, 0); });

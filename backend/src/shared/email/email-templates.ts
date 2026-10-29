@@ -2,6 +2,7 @@ import type { EmailMessage } from './email-sender.js';
 import { emailBrandFor, type EmailApplication } from './email-brand.js';
 
 type TemplateInput = { to: string; token: string; baseUrl: string; displayName?: string; logoUrl?: string };
+type NoticeInput = { to: string; displayName?: string; application?: EmailApplication };
 
 function escapeHtml(value: string): string {
   const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
@@ -91,4 +92,26 @@ export function renderPasswordResetEmail(input: TemplateInput, application: Emai
   const url = linkFor(input.baseUrl, input.token);
   const brand = emailBrandFor(application);
   return { to: input.to, subject: `Recupera tu contraseña de ${brand.name}`, ...renderBase('Recupera tu contraseña', `Solicitaste cambiar la contraseña de tu cuenta de ${brand.name}.`, 'Restablecer contraseña', url, '30 minutos', input.displayName, application, input.logoUrl) };
+}
+
+function renderNotice(input: NoticeInput, title: string, intro: string, subject: string): EmailMessage {
+  const application = input.application ?? 'usuario';
+  const brand = emailBrandFor(application);
+  const safeName = input.displayName?.trim() ? escapeHtml(input.displayName.trim()) : 'ahí';
+  const safeTitle = escapeHtml(title);
+  const safeIntro = escapeHtml(intro);
+  return {
+    to: input.to,
+    subject: `${subject} · ${brand.name}`,
+    html: `<html lang="es"><body style="font-family:Arial,Helvetica,sans-serif;background:#f1f4f2;padding:32px;color:#17211d"><main style="max-width:600px;margin:auto;background:#fff;padding:36px;border:1px solid #e0e8e3;border-radius:16px"><p>Hola, ${safeName}.</p><h1>${safeTitle}</h1><p>${safeIntro}</p><p style="color:#69766f">Si no reconoces esta actividad, cambia tu contraseña y contacta a soporte.</p><p>${brand.name}</p></main></body></html>`,
+    text: `Hola, ${input.displayName?.trim() || 'ahí'}.\n\n${title}\n\n${intro}\n\nSi no reconoces esta actividad, cambia tu contraseña y contacta a soporte.\n\n${brand.name}`,
+  };
+}
+
+export function renderWelcomeEmail(input: NoticeInput): EmailMessage {
+  return renderNotice(input, 'Te damos la bienvenida a XAMUKO', 'Tu cuenta ya está creada. Verifica tu correo para empezar a descubrir lo que necesitas cerca.', 'Bienvenido a XAMUKO');
+}
+
+export function renderSecurityNotificationEmail(input: NoticeInput, action = 'Se actualizó la seguridad de tu cuenta'): EmailMessage {
+  return renderNotice(input, action, 'Te avisamos de este cambio para que puedas mantener el control de tu cuenta.', 'Aviso de seguridad');
 }

@@ -237,6 +237,37 @@ enum AdminPermissionCode {
   PIONEER_MANAGE
 }
 
+enum FinancePermissionCode {
+  FINANCE_READ
+  FINANCE_MANAGE
+}
+
+enum FinancialDataKind {
+  REAL
+  ESTIMATED
+  PROJECTED
+  MANUAL
+}
+
+enum FinancialProviderKind {
+  AWS
+  GOOGLE_MAPS
+  RESEND
+  OTHER
+}
+
+enum FinancialSyncStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum FinancialPaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
 enum BusinessReviewModerationStatus {
   PUBLISHED
   HIDDEN
@@ -1024,6 +1055,177 @@ model AuditLog {
   createdAt     DateTime        @default(now()) @db.DateTime(3)
   actor         User?           @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
 
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model FinancialPermissionGrant {
+  id          String               @id @default(uuid()) @db.Char(36)
+  userId      String               @db.Char(36)
+  permission  FinancePermissionCode
+  granted     Boolean              @default(true)
+  grantedById String?              @db.Char(36)
+  revokedAt   DateTime?            @db.DateTime(3)
+  createdAt   DateTime             @default(now()) @db.DateTime(3)
+  updatedAt   DateTime             @updatedAt @db.DateTime(3)
+  @@unique([userId, permission])
+  @@index([userId, granted])
+}
+
+model FinancialProvider {
+  id          String               @id @default(uuid()) @db.Char(36)
+  name        String               @db.VarChar(120)
+  kind        FinancialProviderKind
+  currency    String               @default("USD") @db.VarChar(3)
+  active      Boolean              @default(true)
+  createdAt   DateTime             @default(now()) @db.DateTime(3)
+  updatedAt   DateTime             @updatedAt @db.DateTime(3)
+  services    FinancialService[]
+  budgets     FinancialBudget[]
+  consumptions FinancialConsumption[]
+  invoices    FinancialInvoice[]
+  credits     FinancialCredit[]
+  syncRuns    FinancialSyncRun[]
+  @@unique([name])
+}
+
+model FinancialService {
+  id          String               @id @default(uuid()) @db.Char(36)
+  providerId  String               @db.Char(36)
+  name        String               @db.VarChar(160)
+  sku         String?              @db.VarChar(160)
+  active      Boolean              @default(true)
+  provider    FinancialProvider    @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  consumptions FinancialConsumption[]
+  @@unique([providerId, name])
+  @@index([providerId, active])
+}
+
+model FinancialBudget {
+  id          String               @id @default(uuid()) @db.Char(36)
+  providerId  String?              @db.Char(36)
+  name        String               @db.VarChar(160)
+  amountCop   Decimal              @db.Decimal(14, 2)
+  amountUsd   Decimal?             @db.Decimal(14, 4)
+  periodStart DateTime             @db.Date
+  periodEnd   DateTime             @db.Date
+  active      Boolean              @default(true)
+  provider    FinancialProvider?   @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  createdAt   DateTime             @default(now()) @db.DateTime(3)
+  updatedAt   DateTime             @updatedAt @db.DateTime(3)
+  @@index([periodStart, periodEnd, active])
+}
+
+model FinancialConsumption {
+  id            String               @id @default(uuid()) @db.Char(36)
+  providerId    String               @db.Char(36)
+  serviceId     String?              @db.Char(36)
+  externalId    String               @db.VarChar(255)
+  periodStart   DateTime             @db.Date
+  periodEnd     DateTime             @db.Date
+  amountUsd     Decimal              @db.Decimal(14, 4)
+  amountCop     Decimal              @db.Decimal(14, 2)
+  creditsUsd    Decimal              @default(0) @db.Decimal(14, 4)
+  dataKind      FinancialDataKind
+  region        String?              @db.VarChar(80)
+  metadata      Json?
+  provider      FinancialProvider    @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  service       FinancialService?    @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  createdAt     DateTime             @default(now()) @db.DateTime(3)
+  updatedAt     DateTime             @updatedAt @db.DateTime(3)
+  @@unique([providerId, externalId, periodStart, periodEnd])
+  @@index([providerId, periodStart, periodEnd])
+  @@index([serviceId, periodStart])
+}
+
+model FinancialInvoice {
+  id            String               @id @default(uuid()) @db.Char(36)
+  providerId    String               @db.Char(36)
+  externalId    String               @db.VarChar(255)
+  invoiceNumber String?              @db.VarChar(120)
+  periodStart   DateTime             @db.Date
+  periodEnd     DateTime             @db.Date
+  amountUsd     Decimal              @db.Decimal(14, 4)
+  amountCop     Decimal              @db.Decimal(14, 2)
+  dataKind      FinancialDataKind    @default(REAL)
+  documentUrl   String?              @db.VarChar(2048)
+  provider      FinancialProvider    @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  payments      FinancialPayment[]
+  createdAt     DateTime             @default(now()) @db.DateTime(3)
+  updatedAt     DateTime             @updatedAt @db.DateTime(3)
+  @@unique([providerId, externalId])
+  @@index([periodStart, periodEnd])
+}
+
+model FinancialPayment {
+  id          String                  @id @default(uuid()) @db.Char(36)
+  invoiceId   String                  @db.Char(36)
+  amountCop   Decimal                 @db.Decimal(14, 2)
+  paidAt      DateTime?               @db.DateTime(3)
+  status      FinancialPaymentStatus
+  reference   String?                 @db.VarChar(160)
+  invoice     FinancialInvoice       @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  createdAt   DateTime                @default(now()) @db.DateTime(3)
+  @@index([invoiceId, status])
+}
+
+model FinancialCredit {
+  id          String               @id @default(uuid()) @db.Char(36)
+  providerId  String               @db.Char(36)
+  externalId  String               @db.VarChar(255)
+  description String               @db.VarChar(255)
+  amountUsd   Decimal              @db.Decimal(14, 4)
+  expiresAt   DateTime?            @db.Date
+  provider    FinancialProvider    @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  createdAt   DateTime             @default(now()) @db.DateTime(3)
+  @@unique([providerId, externalId])
+  @@index([expiresAt])
+}
+
+model ExchangeRate {
+  id          String   @id @default(uuid()) @db.Char(36)
+  fromCurrency String  @db.VarChar(3)
+  toCurrency   String  @db.VarChar(3)
+  rate        Decimal  @db.Decimal(18, 8)
+  effectiveAt DateTime @db.Date
+  source      String   @db.VarChar(80)
+  createdAt   DateTime @default(now()) @db.DateTime(3)
+  @@unique([fromCurrency, toCurrency, effectiveAt])
+}
+
+model FinancialSyncRun {
+  id          String               @id @default(uuid()) @db.Char(36)
+  providerId  String               @db.Char(36)
+  status      FinancialSyncStatus
+  startedAt   DateTime             @default(now()) @db.DateTime(3)
+  finishedAt  DateTime?            @db.DateTime(3)
+  attempts    Int                  @default(0)
+  error       String?              @db.Text
+  provider    FinancialProvider    @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  @@index([providerId, startedAt])
+}
+
+model FinancialAlert {
+  id          String   @id @default(uuid()) @db.Char(36)
+  budgetId    String?  @db.Char(36)
+  dedupeKey   String   @unique @db.VarChar(255)
+  threshold   Int
+  message     String   @db.Text
+  acknowledgedAt DateTime? @db.DateTime(3)
+  createdAt   DateTime @default(now()) @db.DateTime(3)
+  @@index([budgetId, createdAt])
+}
+
+model FinancialAuditEntry {
+  id          String   @id @default(uuid()) @db.Char(36)
+  actorUserId String?  @db.Char(36)
+  entityType  String   @db.VarChar(80)
+  entityId    String   @db.Char(36)
+  action      String   @db.VarChar(100)
+  beforeState Json?
+  afterState  Json?
+  reason      String?  @db.Text
+  createdAt   DateTime @default(now()) @db.DateTime(3)
   @@index([entityType, entityId, createdAt])
   @@index([actorUserId, createdAt])
 }

@@ -1,0 +1,85 @@
+name: XAMUKO Finance MySQL integration
+
+on:
+  pull_request:
+    branches: [staging]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  finance-mysql:
+    name: Prisma migration and finance persistence (isolated)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: xamuko_finance_ci
+          MYSQL_USER: ci
+          MYSQL_PASSWORD: ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: mysql://ci:ci@127.0.0.1:3306/xamuko_finance_ci
+      AUTH_ACCESS_TOKEN_SECRET: ci-finance-secret-not-for-production-0123456789
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run prisma:generate
+      - name: Apply all migrations to the ephemeral database
+        run: npx prisma migrate deploy
+      - name: Verify financial schema constraints and idempotency
+        run: |
+          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uci -pci xamuko_finance_ci <<'SQL'
+          SELECT COUNT(*) = 1 AS migration_table_present FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '_prisma_migrations';
+          SELECT COUNT(*) = 1 AS provider_table_present FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'FinancialProvider';
+          SELECT COUNT(*) = 1 AS payment_fk_present FROM information_schema.referential_constraints WHERE constraint_schema = DATABASE() AND table_name = 'FinancialPayment' AND referenced_table_name = 'FinancialInvoice';
+          SELECT COUNT(*) = 1 AS consumption_unique_present FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'FinancialConsumption' AND index_name = 'FinancialConsumption_external_key';
+          SELECT COUNT(*) = 1 AS alert_unique_present FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'FinancialAlert' AND index_name = 'FinancialAlert_dedupeKey_key';
+          SQL
+      - name: Exercise financial writes on the ephemeral database
+        run: |
+          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uci -pci xamuko_finance_ci <<'SQL'
+          START TRANSACTION;
+          SET @provider = UUID(); SET @budget = UUID(); SET @consumption = UUID(); SET @invoice = UUID(); SET @payment = UUID(); SET @alert = UUID(); SET @audit = UUID();
+          INSERT INTO FinancialProvider (id,name,kind,currency,active,createdAt,updatedAt) VALUES (@provider,'CI MySQL Provider','OTHER','USD',1,NOW(3),NOW(3));
+          INSERT INTO FinancialBudget (id,providerId,name,amountCop,amountUsd,periodStart,periodEnd,active,createdAt,updatedAt) VALUES (@budget,@provider,'CI budget',100000,30,'2026-01-01','2026-01-31',1,NOW(3),NOW(3));
+          INSERT INTO FinancialConsumption (id,providerId,externalId,periodStart,periodEnd,amountUsd,amountCop,creditsUsd,dataKind,createdAt,updatedAt) VALUES (@consumption,@provider,'ci-consumption','2026-01-01','2026-01-31',10,40000,0,'MANUAL',NOW(3),NOW(3));
+          INSERT INTO FinancialInvoice (id,providerId,externalId,periodStart,periodEnd,amountUsd,amountCop,dataKind,createdAt,updatedAt) VALUES (@invoice,@provider,'ci-invoice','2026-01-01','2026-01-31',10,40000,'REAL',NOW(3),NOW(3));
+          INSERT INTO FinancialPayment (id,invoiceId,amountCop,status,reference,createdAt) VALUES (@payment,@invoice,20000,'PAID','ci-partial',NOW(3));
+          INSERT INTO FinancialAlert (id,budgetId,dedupeKey,threshold,message,createdAt) VALUES (@alert,@budget,'ci-budget:50',50,'CI alert',NOW(3));
+          INSERT INTO FinancialAuditEntry (id,entityType,entityId,action,beforeState,afterState,reason,createdAt) VALUES (@audit,'FinancialBudget',@budget,'CORRECT','{}','{"amountCop":100000}','CI correction',NOW(3));
+          INSERT INTO FinancialConsumption (id,providerId,externalId,periodStart,periodEnd,amountUsd,amountCop,creditsUsd,dataKind,createdAt,updatedAt) VALUES (UUID(),@provider,'ci-consumption','2026-01-01','2026-01-31',10,40000,0,'MANUAL',NOW(3),NOW(3)) ON DUPLICATE KEY UPDATE updatedAt=updatedAt;
+          SELECT COUNT(*) = 1 AS provider_persisted FROM FinancialProvider WHERE id=@provider;
+          SELECT COUNT(*) = 1 AS budget_persisted FROM FinancialBudget WHERE id=@budget;
+          SELECT COUNT(*) = 1 AS consumption_idempotent FROM FinancialConsumption WHERE providerId=@provider AND externalId='ci-consumption';
+          SELECT COUNT(*) = 1 AS invoice_persisted FROM FinancialInvoice WHERE id=@invoice;
+          SELECT COUNT(*) = 1 AS partial_payment_persisted FROM FinancialPayment WHERE invoiceId=@invoice AND amountCop=20000;
+          SELECT COUNT(*) = 1 AS alert_persisted FROM FinancialAlert WHERE dedupeKey='ci-budget:50';
+          SELECT COUNT(*) = 1 AS audit_persisted FROM FinancialAuditEntry WHERE entityId=@budget AND reason='CI correction';
+          ROLLBACK;
+          SQL
+      - name: Run finance persistence and reconciliation tests
+        run: node --import tsx --test src/modules/finance/*.test.ts
+      - name: Typecheck
+        run: npm run typecheck

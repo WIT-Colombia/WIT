@@ -1,0 +1,125 @@
+name: XAMUKO production (manual approval)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Deployment action
+        type: choice
+        options: [deploy, rollback]
+        default: deploy
+        required: true
+      commit:
+        description: 40-character commit to deploy (or bootstrap for rollback)
+        type: string
+        required: true
+      rollback_commit:
+        description: Previously verified 40-character commit for rollback
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: xamuko-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-test-only
+          MYSQL_DATABASE: xamuko_test
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DATABASE_URL: mysql://test:test@127.0.0.1:3306/xamuko_test
+      AUTH_ACCESS_TOKEN_SECRET: ci-test-secret-not-for-production-0123456789
+      GOOGLE_CLIENT_ID: xamuko-test.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: test-secret-not-real
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Backend checks
+        working-directory: backend
+        env: { NODE_ENV: development }
+        run: |
+          npm ci --no-audit --no-fund
+          npm run prisma:generate
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Frontend checks
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm run build
+          npm run test:verification
+
+  deploy:
+    needs: verify
+    if: vars.XAMUKO_PRODUCTION_DEPLOY_ENABLED == 'true'
+    environment:
+      name: production
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.commit }}
+      - name: Validate immutable deployment input
+        env:
+          ACTION: ${{ inputs.action }}
+          COMMIT: ${{ inputs.commit }}
+          ROLLBACK_COMMIT: ${{ inputs.rollback_commit }}
+        run: |
+          set -euo pipefail
+          [[ "$ACTION" =~ ^(deploy|rollback)$ ]]
+          [[ "$COMMIT" =~ ^[0-9a-f]{40}$ || ( "$ACTION" == rollback && "$COMMIT" == bootstrap ) ]]
+          if [[ "$ACTION" == rollback ]]; then
+            [[ "$ROLLBACK_COMMIT" =~ ^[0-9a-f]{40}$ || "$ROLLBACK_COMMIT" == bootstrap ]]
+          fi
+      - name: Obtain short-lived AWS credentials
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df
+        with:
+          role-to-assume: ${{ vars.XAMUKO_PRODUCTION_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-2
+          role-duration-seconds: 900
+          allowed-account-ids: '988024221050'
+      - name: Deploy through the approved restricted SSM document
+        env:
+          COMMIT: ${{ inputs.commit }}
+          ACTION: ${{ inputs.action }}
+          ROLLBACK_COMMIT: ${{ inputs.rollback_commit }}
+          INSTANCE_ID: ${{ vars.XAMUKO_PRODUCTION_INSTANCE_ID }}
+          AWS_PAGER: ''
+        run: |
+          set -euo pipefail
+          [[ -n "$INSTANCE_ID" && -n "${{ vars.XAMUKO_PRODUCTION_DEPLOY_ROLE_ARN }}" ]]
+          aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name Xamuko-Production-Deploy \
+            --parameters "Commit=$COMMIT,Action=$ACTION,RollbackCommit=$ROLLBACK_COMMIT" \
+            --timeout-seconds 120 \
+            --comment "XAMUKO production ${GITHUB_RUN_ID}"
