@@ -157,6 +157,8 @@ export default function Home() {
   // deben mostrar cuando existe una conexión con la base real.
   const hasSampleCatalog = false;
   const [message, setMessage] = useState(() => typeof navigationMessage === "string" ? navigationMessage : "");
+  const [catalogState, setCatalogState] = useState<"loading" | "ready" | "error">("loading");
+  const [catalogRetry, setCatalogRetry] = useState(0);
 
   function distanceBetween(origin: { lat: number; lng: number } | undefined, target: { lat: number; lng: number } | undefined): number {
     if (!origin || !target) return Number.POSITIVE_INFINITY;
@@ -175,17 +177,19 @@ export default function Home() {
 
   useEffect(() => {
     let current = true;
+    setCatalogState("loading");
     const userCoordinates = selection?.coordinates;
     void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng }).then(({ businesses, products }) => {
       if (!current) return;
+      setCatalogState("ready");
       setCatalogProducts(products);
       setItems(businesses.map((business) => ({
         ...business,
         distanceKm: distanceBetween(userCoordinates, business.coordinates),
       })));
-    }).catch(() => { if (current) setItems([]); });
+    }).catch(() => { if (current) { setItems([]); setCatalogProducts([]); setCatalogState("error"); } });
     return () => { current = false; };
-  }, [query, category, selection]);
+  }, [query, category, selection, catalogRetry]);
   useEffect(() => {
     if (!message) return;
     const timeout = window.setTimeout(() => setMessage(""), 3200);
@@ -555,7 +559,7 @@ export default function Home() {
 
       <section className="business-section home-nearby-section" id="lugares" aria-labelledby="business-title">
         <div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="business-title"><span className="home-section-symbol" aria-hidden="true"><Icon name="pin"/></span>{resultsLabel}</h2><p>Encuentra ese lugar que estás buscando.</p></div>{nearbyItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllNearby} aria-controls="nearby-business-list" onClick={() => setShowAllNearby((current) => !current)}>{showAllNearby ? "Ver menos" : `Ver más (${nearbyItems.length})`} <Icon name="arrow" /></button>}</div>
-          {visibleItems.length ? <><div className="business-grid" id="nearby-business-list" ref={nearbyListRef} onScroll={() => { const list = nearbyListRef.current; if (list) setNearbyScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startNearbyDrag} onPointerMove={moveNearbyDrag} onPointerUp={endNearbyDrag} onPointerCancel={endNearbyDrag} onClickCapture={(event) => { if (ignoreNearbyClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllNearby ? nearbyItems : nearbyItems.slice(0, 4)).map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllNearby && nearbyScroll.max > 0 && <div className="nearby-scroll-control"><input type="range" min="0" max={nearbyScroll.max} step="1" value={Math.min(nearbyScroll.left, nearbyScroll.max)} aria-label="Desplazar lugares cerca de ti" onChange={(event) => { const left = Number(event.target.value); if (nearbyListRef.current) nearbyListRef.current.scrollLeft = left; setNearbyScroll((current) => ({ ...current, left })); }} /></div>}</> : <NoResultsState term={query || category} locationName={cityName}/>}
+          {catalogState === "loading" ? <p role="status">Cargando negocios…</p> : catalogState === "error" ? <div className="home-empty-state" role="alert"><h3>No pudimos cargar los negocios</h3><p>Revisa tu conexión e inténtalo nuevamente.</p><button type="button" onClick={() => setCatalogRetry((value) => value + 1)}>Reintentar</button></div> : visibleItems.length ? <><div className="business-grid" id="nearby-business-list" ref={nearbyListRef} onScroll={() => { const list = nearbyListRef.current; if (list) setNearbyScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startNearbyDrag} onPointerMove={moveNearbyDrag} onPointerUp={endNearbyDrag} onPointerCancel={endNearbyDrag} onClickCapture={(event) => { if (ignoreNearbyClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllNearby ? nearbyItems : nearbyItems.slice(0, 4)).map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllNearby && nearbyScroll.max > 0 && <div className="nearby-scroll-control"><input type="range" min="0" max={nearbyScroll.max} step="1" value={Math.min(nearbyScroll.left, nearbyScroll.max)} aria-label="Desplazar lugares cerca de ti" onChange={(event) => { const left = Number(event.target.value); if (nearbyListRef.current) nearbyListRef.current.scrollLeft = left; setNearbyScroll((current) => ({ ...current, left })); }} /></div>}</> : <NoResultsState term={query || category} locationName={cityName}/>}
       </section>
 
       <section className="special-offers" aria-labelledby="special-offers-title">
