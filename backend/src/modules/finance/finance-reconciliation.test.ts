@@ -1,0 +1,3 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { reconcileFinancials, validateReceiptUrl } from './finance.service.js';
+test('conciliación separa devengado, facturado, pagado y no facturado',()=>{const r=reconcileFinancials({consumptions:[{amountCop:1000,creditsCop:100},{amountCop:500}],invoices:[{amountCop:900,payments:[400,100]}]}); assert.deepEqual(r,{accrued:1400,invoiced:900,paid:500,pending:400,unbilled:500});});
+test('valida comprobantes HTTPS',()=>{assert.equal(validateReceiptUrl('https://example.com/invoice/1'),'https://example.com/invoice/1'); assert.throws(()=>validateReceiptUrl('http://example.com'));});

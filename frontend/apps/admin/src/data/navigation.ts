@@ -17,7 +17,7 @@ export const navigation: NavigationItem[] = [
   { path: '/billing', label: 'Pagos y facturación', icon: 'card', group: 'FINANZAS', description: 'Pagos y facturación pendientes.', pending: true },
   { path: '/transactions', label: 'Transacciones', icon: 'clock', group: 'FINANZAS', description: 'Transacciones pendientes.', pending: true },
   { path: '/refunds', label: 'Reembolsos', icon: 'clock', group: 'FINANZAS', description: 'Reembolsos pendientes.', pending: true },
-  { path: '/financial-reports', label: 'Reportes financieros', icon: 'chart', group: 'FINANZAS', description: 'Reportes financieros pendientes.', pending: true },
+  { path: '/financial-reports', label: 'Gastos tecnológicos', icon: 'chart', group: 'FINANZAS', description: 'Control de gastos AWS, Google Maps y Resend.' },
   { path: '/zones', label: 'Zonas y categorías', icon: 'globe', group: 'CONFIGURACIÓN', description: 'Zonas y categorías.' },
   { path: '/parameters', label: 'Parámetros', icon: 'settings', group: 'CONFIGURACIÓN', description: 'Parámetros pendientes.', pending: true },
   { path: '/administrators', label: 'Administradores', icon: 'users', group: 'CONFIGURACIÓN', description: 'Administradores pendientes.', pending: true },
