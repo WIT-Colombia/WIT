@@ -15,7 +15,9 @@
     "test:e2e:coordinator": "node e2e/coordinator.mjs",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test:verification": "../backend/node_modules/.bin/tsx --test tests/email-verification.test.ts tests/email-validation.test.ts tests/welcome-navigation.test.ts"
+    "test:verification": "../backend/node_modules/.bin/tsx --test tests/email-verification.test.ts tests/email-validation.test.ts tests/welcome-navigation.test.ts",
+    "package:publication": "node scripts/package-publication.mjs",
+    "test:publication": "node --experimental-strip-types --test tests/publication.test.ts"
   },
   "devDependencies": {
     "playwright": "^1.64.1"
