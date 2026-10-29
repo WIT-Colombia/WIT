@@ -1,0 +1,146 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "XAMUKO staging: GitHub OIDC role and restricted SSM command; no EC2/network/plan changes.",
+  "Parameters": {
+    "ExistingOidcProviderArn": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Existing token.actions.githubusercontent.com provider ARN, or empty to create one"
+    }
+  },
+  "Conditions": {
+    "CreateProvider": {
+      "Fn::Equals": [
+        {
+          "Ref": "ExistingOidcProviderArn"
+        },
+        ""
+      ]
+    }
+  },
+  "Resources": {
+    "GitHubOidc": {
+      "Type": "AWS::IAM::OIDCProvider",
+      "Condition": "CreateProvider",
+      "Properties": {
+        "Url": "https://token.actions.githubusercontent.com",
+        "ClientIdList": [
+          "sts.amazonaws.com"
+        ]
+      }
+    },
+    "DeployDocument": {
+      "Type": "AWS::SSM::Document",
+      "Properties": {
+        "Name": "Xamuko-Staging-Deploy",
+        "DocumentType": "Command",
+        "DocumentFormat": "JSON",
+        "Content": {
+          "schemaVersion": "2.2",
+          "description": "Deploy only an exact staging commit or restore a previously verified release",
+          "parameters": {
+            "Commit": {
+              "type": "String",
+              "allowedPattern": "^([0-9a-f]{40}|bootstrap)$",
+              "interpolationType": "ENV_VAR"
+            },
+            "Action": {
+              "type": "String",
+              "allowedValues": [
+                "deploy",
+                "rollback"
+              ],
+              "interpolationType": "ENV_VAR"
+            }
+          },
+          "mainSteps": [
+            {
+              "action": "aws:runShellScript",
+              "name": "deploy",
+              "inputs": {
+                "timeoutSeconds": "2400",
+                "runCommand": [
+                  "set -eu",
+                  "test -n \"${SSM_Commit:-}\" && test -n \"${SSM_Action:-}\"",
+                  "exec /usr/local/sbin/xamuko-deploy \"$SSM_Action\" \"$SSM_Commit\""
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "DeployRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "xamuko-github-staging-deploy",
+        "MaxSessionDuration": 3600,
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": {
+                  "Fn::If": [
+                    "CreateProvider",
+                    {
+                      "Ref": "GitHubOidc"
+                    },
+                    {
+                      "Ref": "ExistingOidcProviderArn"
+                    }
+                  ]
+                }
+              },
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "StringEquals": {
+                  "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                  "token.actions.githubusercontent.com:sub": "repo:WIT-Colombia@337111109/WIT@1402327719:ref:refs/heads/staging"
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "OnlyXamukoDeploy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "ssm:SendCommand",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:ssm:us-east-2:${AWS::AccountId}:document/Xamuko-Staging-Deploy"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:ec2:us-east-2:${AWS::AccountId}:instance/i-0bc484a461397e2b1"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "ssm:GetCommandInvocation",
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "DeployRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "DeployRole",
+          "Arn"
+        ]
+      }
+    }
+  }
+}
