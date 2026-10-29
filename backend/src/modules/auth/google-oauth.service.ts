@@ -45,11 +45,11 @@ export class GoogleOAuthDiagnosticError extends Error {
   }
 }
 
-function requireGoogleConfig(): { clientId: string; clientSecret: string; redirectUri: string } {
+function requireGoogleConfig(application: GoogleApplication): { clientId: string; clientSecret: string; redirectUri: string } {
   if (!env.googleClientId || !env.googleClientSecret) {
     throw new AppError(503, 'GOOGLE_NOT_CONFIGURED', 'El inicio de sesión con Google no está disponible.');
   }
-  return { clientId: env.googleClientId, clientSecret: env.googleClientSecret, redirectUri: env.googleRedirectUri };
+  return { clientId: env.googleClientId, clientSecret: env.googleClientSecret, redirectUri: env.googleRedirectUris[application] };
 }
 
 function encode(value: string): string {
@@ -107,14 +107,15 @@ export function getGoogleState(request: Request): GoogleState {
 }
 
 export function createGoogleAuthorization(requested: { flow: GoogleFlow; application?: GoogleApplication; returnTo?: unknown; rememberMe?: boolean; consent?: boolean; userId?: string }): { state: GoogleState; url: string } {
-  const { clientId, redirectUri } = requireGoogleConfig();
+  const application = requested.application ?? 'usuario';
+  const { clientId, redirectUri } = requireGoogleConfig(application);
   const state: GoogleState = {
     state: randomBytes(32).toString('base64url'),
     nonce: randomBytes(32).toString('base64url'),
     verifier: randomBytes(32).toString('base64url'),
     returnTo: safeGoogleReturnTo(requested.returnTo),
     flow: requested.flow,
-    application: requested.application ?? 'usuario',
+    application,
     rememberMe: requested.rememberMe === true,
     consent: requested.consent === true,
     ...(requested.userId ? { userId: requested.userId } : {}),
@@ -125,7 +126,7 @@ export function createGoogleAuthorization(requested: { flow: GoogleFlow; applica
 }
 
 async function exchangeCode(code: string, state: GoogleState): Promise<string> {
-  const { clientId, clientSecret, redirectUri } = requireGoogleConfig();
+  const { clientId, clientSecret, redirectUri } = requireGoogleConfig(state.application);
   let response: globalThis.Response;
   try {
     response = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ code, client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri, grant_type: 'authorization_code', code_verifier: state.verifier }) });
@@ -144,7 +145,7 @@ function claimString(payload: JWTPayload, key: string): string | undefined {
 }
 
 export async function verifyGoogleCode(code: string, state: GoogleState): Promise<GoogleProfile> {
-  const { clientId } = requireGoogleConfig();
+  const { clientId } = requireGoogleConfig(state.application);
   const idToken = await exchangeCode(code, state);
   let verified: Awaited<ReturnType<typeof jwtVerify>>;
   try { verified = await jwtVerify(idToken, googleKeys, { issuer: GOOGLE_ISSUERS, audience: clientId }); } catch (error) { throw new GoogleOAuthDiagnosticError('id_token_validation', 'token_invalid', error); }
