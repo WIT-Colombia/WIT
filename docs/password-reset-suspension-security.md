@@ -69,8 +69,9 @@ habituales; no acceden a la base de datos del proyecto en producción.
 
 ## Riesgos y pendientes de revisión
 
-- Validar el SQL/bloqueo y la concurrencia con MySQL 8.4 en un entorno aislado autorizado;
-  el doble en memoria no prueba las garantías físicas del motor o del adaptador Prisma.
+- La revisión conjunta posterior validó SQL, bloqueo y concurrencia con MySQL 8.4.11
+  temporal real y el adaptador Prisma. No se ha validado la configuración del servidor
+  productivo; las pruebas originales en memoria, por sí solas, no demostraban esas garantías.
 - Los bloqueos de fila pueden introducir esperas o deadlocks ante operaciones con otro
   orden de bloqueo. Un error antes del commit debe fallar cerrado; no se añadieron reintentos.
 - Si se suspende después del cambio pero antes de la sesión, la contraseña queda cambiada,
@@ -83,3 +84,58 @@ habituales; no acceden a la base de datos del proyecto en producción.
   No se cambia PASSWORD_RESET_URL ni se resuelven los pendientes de OAuth/infraestructura.
 - Revertir este cambio sería revertir código mediante otro PR; no requiere revertir esquema.
   Ningún procedimiento de despliegue o rollback de producción fue ejecutado ni autorizado.
+
+
+## Revisión conjunta de PR #8 y #9
+
+Se ensayó una copia temporal con el frontend de #8 y el backend de #9, sin hacer merge
+ni modificar staging. Se detectó en Admin una doble renovación simultánea de la misma
+cookie (React StrictMode/concurrencia): una respuesta 401 podía anular otra restauración
+correcta. La deduplicación y sus dos pruebas se incorporan SOLO en #8, no en esta rama.
+El backend mantiene la rotación estricta de tokens; no se habilita reutilización.
+
+Resultados finales: 21 escenarios integrados reales aprobados con MySQL 8.4.11 e InnoDB,
+Express y el frontend compilado en producción. También pasaron 107 pruebas de backend,
+29 de publicación/contratos frontend y 66 de navegador con API simulada, además de tipos
+y compilación de ambos componentes. El contrato 202 de solicitud, 200 de reset con sesión,
+200 mínimo {user:{id},autoLogin:false}, 204 de cambio y rechazos 400/401/403 son compatibles.
+
+Cobertura real: hash y cookie, refresh y revocación, no acceso administrativo de una cuenta
+normal, bloqueo de acceso/refresh después de suspensión, cuentas suspendidas/eliminadas,
+tokens vencidos/usados/otro propósito, dos consumos simultáneos, suspensión y expiración
+durante una espera InnoDB observada en performance_schema, rollback real ante un fallo
+inyectado de revocación y fallo de perfil posterior al commit. Las pantallas reales de
+Usuario/Business aceptan tanto autologin como éxito mínimo y no confirman un rechazo.
+Las tres apps solicitan recuperación, inician sesión, cambian contraseña y cierran sesión
+contra Express y MySQL reales. Los correos se capturan en el emisor de desarrollo en memoria.
+
+La interceptación del navegador sirve archivos y encamina /api/v1 al Express local;
+transfiere las cookies host-only al dominio simulado conservando sus atributos. Esto no
+prueba el Nginx, TLS, Secure o CORS reales de producción ni Google OAuth o la entrega por
+Resend. Esos puntos continúan pendientes sin AWS. No se encontraron otras incompatibilidades
+bloqueantes en los contratos ejercitados, tras el ajuste de Admin en #8.
+
+### Repetición segura
+
+Con MySQL server/client, Python 3, Node 24, dependencias y Prisma Client generados:
+
+```
+cd backend
+npm run test:integration:password-reset
+```
+
+Para incluir el frontend, compilar una copia independiente de #8 en modo producción
+(sin NODE_ENV=development), instalar Chromium de Playwright en esa copia y ejecutar:
+
+```
+npm run test:integration:password-reset -- --frontend-root /ruta/absoluta/al/frontend-del-pr8
+```
+
+El runner NO acepta DATABASE_URL ni servidores existentes como destino. Crea datadir,
+socket, puerto, usuario y esquema propios; valida @@datadir/@@port antes de escribir;
+genera DDL desde cero fuera del repositorio y lo aplica SOLO a ese esquema desechable.
+No ejecuta ni cambia el historial de migraciones del proyecto. El harness exige además
+un marcador del directorio y comprueba la identidad del servidor antes de crear fixtures.
+Al terminar detiene únicamente su proceso hijo y elimina su directorio temporal, incluso
+si fallan las pruebas. En la revisión se verificó la limpieza. No se modificaron ni
+consultaron bases de datos del proyecto y no se accedió a AWS/EC2.

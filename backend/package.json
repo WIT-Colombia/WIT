@@ -15,7 +15,8 @@
     "test:integration:business": "node --import tsx scripts/business-integration.ts",
     "test:integration:env": "node --import tsx scripts/verify-integration-env.ts",
     "test:integration:pro": "node --import tsx scripts/business-pro-integration.ts",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test:integration:password-reset": "python3 scripts/run-password-reset-isolated.py"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",
