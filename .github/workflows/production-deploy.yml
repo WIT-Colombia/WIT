@@ -85,7 +85,9 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with: { persist-credentials: false, ref: ${{ inputs.commit }} }
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.commit }}
       - name: Validate immutable deployment input
         env:
           ACTION: ${{ inputs.action }}
