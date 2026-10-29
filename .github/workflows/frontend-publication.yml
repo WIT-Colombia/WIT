@@ -20,7 +20,7 @@ jobs:
           node-version: '24'
       - run: npm ci --no-audit --no-fund
         working-directory: frontend
-      - run: node --experimental-strip-types --test tests/publication.test.ts
+      - run: npm run test:publication
         working-directory: frontend
       - run: npm run typecheck && npm run package:publication
         working-directory: frontend

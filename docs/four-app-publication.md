@@ -66,3 +66,9 @@ la transición. Esta reversión es solo de archivos/configuración de frontend, 
 migraciones ni rollback de base de datos. Revertir el PR no restaura un sitio activado:
 se necesitan los archivos y la configuración previa. La prueba real de activación y
 reversión queda pendiente del entorno aislado y de la autorización correspondiente.
+
+## Verificaciones de EC2 pendientes
+
+El inventario, los comandos de solo lectura y los criterios de comprobación están en
+[ec2-pending-verification.md](ec2-pending-verification.md). Ningún resultado de CI
+confirma la versión activa en EC2 ni una restauración real.
