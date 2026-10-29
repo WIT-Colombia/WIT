@@ -1,5 +1,6 @@
 import { env } from './config/env.js';
 import { app } from './app.js';
+import { prisma } from './config/prisma.js';
 
 const server = app.listen(env.port, env.host, () => {
   console.info(`WIT backend disponible en http://${env.host}:${env.port}/api/v1/health`);
@@ -20,11 +21,18 @@ function shutdown(signal: string) {
     process.exit(1);
   }, 10_000);
   timeout.unref();
-  server.close((error) => {
-    clearTimeout(timeout);
+  server.close(async (error) => {
     if (error) {
       console.error('Error al cerrar el servidor:', error.message);
       process.exitCode = 1;
+    }
+    try {
+      await prisma.$disconnect();
+    } catch {
+      console.error('No se pudo cerrar la conexión de base de datos.');
+      process.exitCode = 1;
+    } finally {
+      clearTimeout(timeout);
     }
   });
 }
