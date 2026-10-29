@@ -14,8 +14,8 @@ flock -n 9 || { echo 'Another deployment is running'; exit 75; }
 old=$(readlink -f "$base/current")
 release=$base/releases/$sha
 health() {
-  local i
-  for i in {1..30}; do
+  local _
+  for _ in {1..30}; do
     if systemctl is-active --quiet xamuko-api &&
        curl --max-time 3 -fsS http://127.0.0.1:3000/api/v1/health | /usr/bin/node -e '
          let b="";process.stdin.on("data",c=>b+=c);process.stdin.on("end",()=>{
