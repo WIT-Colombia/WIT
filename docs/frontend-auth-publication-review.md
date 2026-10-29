@@ -132,3 +132,8 @@ navegador y 28 pruebas existentes de contrato/navegación correctas. Los cuatro
 paquetes optativos se construyeron y pasaron la verificación de hashes/recursos.
 git diff --check sin incidencias. La confirmación de CI del commit final se enlaza
 en el PR para no confundir resultados locales con la ejecución de GitHub.
+
+
+La revisión conjunta posterior con el backend de #9 está en
+[joint-pr8-pr9-review.md](joint-pr8-pr9-review.md). Incluye la corrección de la doble
+renovación de Admin y pruebas reales contra una instancia MySQL temporal.

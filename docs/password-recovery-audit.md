@@ -57,21 +57,20 @@ Los tokens permanecen en memoria del formulario y se retiran de la URL. No se gu
 en localStorage, no se adjuntan a enlaces externos ni se usan parámetros next para
 redirigir estos formularios; sus destinos posteriores son rutas internas fijas.
 
-## Backend: hallazgo detenido y pendiente de autorización
+## Backend: corrección separada preparada en PR #9, sin integrar
 
-**Cuenta que deja de estar activa después de emitir el enlace.** sendPasswordResetRequest
+**Hallazgo en el backend base de staging: cuenta que deja de estar activa después de emitir el enlace.** sendPasswordResetRequest
 solo emite para una cuenta ACTIVE, pero resetPassword no vuelve a comprobar ese estado
 antes de consumir el token y modificar la contraseña. Después del commit, el controlador
 llama a getCurrentUser, que rechaza una cuenta suspendida/eliminada con 401. Por tanto,
 la contraseña podría haberse modificado aunque el cliente reciba un error. Además, un
 fallo de lectura posterior al commit puede impedir confirmar un cambio ya realizado.
 
-No se modificó backend ni se intentó reproducir con datos reales. Se solicita autorización
-para tratarlo en una corrección separada: comprobar elegibilidad dentro de la transacción
-antes del consumo/actualización y definir un resultado de operación completada que no
-pueda convertirse en error por una fase posterior de sesión/perfil. Añadir pruebas de
-suspensión entre emisión y consumo, token usado/vencido, concurrencia y fallo de sesión.
-El contrato y la estrategia de concurrencia deben revisarse antes de implementar.
+La corrección autorizada se preparó por separado en el PR #9: exige ACTIVE bajo bloqueo
+antes del consumo y de la emisión de sesión opcional, y mantiene una respuesta de cambio
+completado cuando falla la fase posterior de perfil/sesión. La revisión conjunta validó
+los contratos y la concurrencia con una instancia MySQL temporal y datos sintéticos.
+Esta rama #8 no incorpora cambios de backend; ambos PR permanecen separados y sin merge.
 
 ## Correo y publicación: pendientes separados
 
@@ -121,3 +120,8 @@ Resultado local final: typecheck y compilación de las cuatro aplicaciones corre
 pruebas existentes de contratos/navegación/esquema aprobadas. Empaquetado de cuatro
 apps e integridad de archivos correctos; git diff --check sin incidencias. Ningún
 archivo de backend, deploy o workflow de despliegue de staging fue modificado.
+
+
+Actualización de revisión conjunta: la corrección del hallazgo del backend está preparada
+en el PR #9, sin integrar. Se validó con MySQL temporal real y el frontend de #8; ver
+[joint-pr8-pr9-review.md](joint-pr8-pr9-review.md). Los dos PR siguen separados y sin merge.
