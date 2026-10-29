@@ -18,6 +18,8 @@
     "test:verification": "../backend/node_modules/.bin/tsx --test tests/email-verification.test.ts tests/email-validation.test.ts tests/welcome-navigation.test.ts"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
     "playwright": "^1.64.1",
     "vitest": "^2.1.9"
   }
