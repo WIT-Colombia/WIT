@@ -1,14 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchAwsDailyCosts, normalizeCostExplorer } from './aws-cost-explorer.js';
+import { fetchAwsDailyCosts, normalizeCostExplorer, validateAwsPeriod } from './aws-cost-explorer.js';
 
 const response = { ResultsByTime: [{ TimePeriod: { Start: '2026-10-28', End: '2026-10-29' }, Groups: [{ Keys: ['Amazon Elastic Compute Cloud - Compute'], Metrics: { UnblendedCost: { Amount: '2.50', Unit: 'USD' }, NetUnblendedCost: { Amount: '2.00', Unit: 'USD' } } }, { Keys: ['Amazon Relational Database Service'], Metrics: { UnblendedCost: { Amount: '1.25', Unit: 'USD' }, NetUnblendedCost: { Amount: '1.25', Unit: 'USD' } } }] }] } as any;
 
 test('normaliza servicios, créditos y costos netos sin reasignar nombres', () => {
   assert.deepEqual(normalizeCostExplorer(response), [
-    { service: 'Amazon Elastic Compute Cloud - Compute', date: '2026-10-28', unblendedUsd: 2.5, netUnblendedUsd: 2, creditsUsd: 0.5, currency: 'USD', provisional: true },
-    { service: 'Amazon Relational Database Service', date: '2026-10-28', unblendedUsd: 1.25, netUnblendedUsd: 1.25, creditsUsd: 0, currency: 'USD', provisional: true },
+    { service: 'Amazon Elastic Compute Cloud - Compute', date: '2026-10-28', unblendedUsd: 2.5, netUnblendedUsd: 2, metricDifferenceUsd: 0.5, currency: 'USD', provisional: true },
+    { service: 'Amazon Relational Database Service', date: '2026-10-28', unblendedUsd: 1.25, netUnblendedUsd: 1.25, metricDifferenceUsd: 0, currency: 'USD', provisional: true },
   ]);
+});
+
+test('rechaza periodos inválidos o excesivos', () => {
+  assert.throws(() => validateAwsPeriod(new Date('2026-10-29'), new Date('2026-10-28')));
+  assert.throws(() => validateAwsPeriod(new Date('2026-01-01'), new Date('2026-02-02')));
 });
 
 test('consulta diaria agrupada por servicio con una sola llamada', async () => {
