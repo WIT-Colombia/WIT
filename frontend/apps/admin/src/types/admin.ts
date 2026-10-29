@@ -1,5 +1,5 @@
 export type Role = 'principal' | 'verification' | 'moderator' | 'support' | 'analyst' | 'ADMIN' | 'SUPER_ADMIN';
-export type Permission = 'dashboard:read' | 'verification:write' | 'content:moderate' | 'settings:write' | 'business:write' | 'PIONEER_MANAGE';
+export type Permission = 'dashboard:read' | 'verification:write' | 'content:moderate' | 'settings:write' | 'business:write' | 'finance:read' | 'finance:manage' | 'PIONEER_MANAGE';
 export interface Admin { id: string; name: string; email: string; avatarUrl?: string | null; role: Role; permissions?: Permission[]; realRole?: 'ADMIN' | 'SUPER_ADMIN' }
 export interface Location { country: string; region: string; city: string; zone?: string }
 export interface User { id: string; name: string; email: string; phone?: string; location: Location }
