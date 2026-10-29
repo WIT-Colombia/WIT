@@ -6,6 +6,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import { createAccessToken, createRefreshToken, hashRefreshToken } from '../../shared/auth/tokens.js';
 import type { LoginInput, RegisterInput } from './auth.schemas.js';
 import { sendVerificationRequest } from './auth-token.service.js';
+import { sendWelcomeEmail } from '../../shared/email/email-service.js';
 import { shouldRequireEmailVerification } from './email-login-policy.js';
 
 const invalidCredentials = () => new AppError(401, 'INVALID_CREDENTIALS', 'Correo o contraseña incorrectos.');
@@ -65,6 +66,8 @@ export async function register(input: RegisterInput, _requestMeta?: { userAgent?
     let verificationEmailSent = true;
     try { await sendVerificationRequest(emailNormalized); }
     catch { verificationEmailSent = false; console.warn('Registration verification email could not be sent'); }
+    try { await sendWelcomeEmail(emailNormalized, user.displayName); }
+    catch { console.warn('Registration welcome email could not be sent'); }
     return { ...result, user: { ...result.user, verificationEmailSent } };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

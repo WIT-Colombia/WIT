@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { renderPasswordResetEmail, renderVerificationEmail } from './email-templates.js';
+import { renderPasswordResetEmail, renderSecurityNotificationEmail, renderVerificationEmail, renderWelcomeEmail } from './email-templates.js';
 
 test('renders a verification message with an encoded one-time link', () => {
   const message = renderVerificationEmail({ to: 'person@example.test', token: 'token with spaces', baseUrl: 'https://usuario.wit.example/verify-email', displayName: '<Persona>' });
@@ -63,4 +63,13 @@ test('uses the configured HTTPS logo for XAMUKO and keeps a text fallback withou
   const withoutLogo = renderPasswordResetEmail({ to: 'person@example.test', token: 'token', baseUrl: 'https://usuario.example/reset-password' });
   assert.doesNotMatch(withoutLogo.html, /<img[^>]+src=/);
   assert.match(withoutLogo.html, />XAMUKO<\/span>/);
+});
+
+test('renders welcome and security notices without exposing unsafe HTML', () => {
+  const welcome = renderWelcomeEmail({ to: 'person@example.test', displayName: '<Persona>' });
+  assert.match(welcome.subject, /Bienvenido/);
+  assert.match(welcome.html, /&lt;Persona&gt;/);
+  const security = renderSecurityNotificationEmail({ to: 'person@example.test', displayName: 'Persona' }, 'Se cambió tu contraseña');
+  assert.match(security.subject, /Aviso de seguridad/);
+  assert.match(security.text, /Se cambió tu contraseña/);
 });
