@@ -65,7 +65,8 @@ Inspected on 2026-10-28:
    EC2 to avoid platform-specific dependency mismatches.
 5. Builds run as a dedicated user, without sudo/new privileges, with a read-only
    system and blocked EC2/container metadata addresses. Backend runtime secrets
-   are not injected into builds. A loopback smoke process runs on port 3001.
+   are not injected into builds. A loopback smoke process runs on port 3001
+   and reads the public catalog to exercise database connectivity.
 6. A symlink switch selects the tested web/API release. Nginx remains running;
    API restart may briefly interrupt API requests. This is not zero-downtime API
    deployment. Failed activation restores the previous symlink and restarts API.
@@ -142,8 +143,12 @@ reload Nginx and restart API during an agreed maintenance window. Original
 - These are LOCAL code/config recovery copies, not off-instance backups or a
   database backup. There is no DB restore step; rollback does not undo user data.
 - /health proves process responsiveness, not database readiness or complete
-  business functionality. Database-dependent and browser E2E checks remain a
-  separate validation requirement.
+  business functionality. The candidate catalog probe also reads the database;
+  complete business flows and browser E2E checks remain separate requirements.
+- SIGTERM closes Prisma's adapter pool after HTTP requests finish. The ten-second
+  application deadline remains active while disconnecting, and systemd caps
+  service stops at fifteen seconds. CI verifies shutdown with an actual MySQL
+  connection; this prevents the observed ninety-second stop timeout.
 - Run Command on EC2 has no additional SSM charge per AWS documentation:
   https://docs.aws.amazon.com/systems-manager/latest/userguide/run-command.html
   EC2 CPU, storage, network and GitHub Actions quotas still apply. No paid AWS

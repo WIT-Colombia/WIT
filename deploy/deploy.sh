@@ -83,12 +83,16 @@ smoke_unit="xamuko-smoke-${sha:0:12}"
 [[ -z $(ss -H -ltn 'sport = :3001') ]] || { echo 'Smoke port already in use'; exit 65; }
 systemd-run --quiet --collect --unit="$smoke_unit" \
   -p User=ssm-user -p NoNewPrivileges=yes \
+  -p TimeoutStopSec=15 \
   -p "WorkingDirectory=$release/backend" \
   -p 'Environment=PORT=3001 HOST=127.0.0.1' \
   /usr/bin/node "$release/backend/dist/server.js"
 smoke_ok=0
 for _ in {1..20}; do
-  if systemctl is-active --quiet "$smoke_unit" && curl --max-time 2 -fsS http://127.0.0.1:3001/api/v1/health >/dev/null; then smoke_ok=1; break; fi
+  if systemctl is-active --quiet "$smoke_unit" && curl --max-time 2 -fsS http://127.0.0.1:3001/api/v1/health >/dev/null; then
+    if curl --max-time 15 -fsS http://127.0.0.1:3001/api/v1/public/businesses >/dev/null; then smoke_ok=1; fi
+    break
+  fi
   sleep 1
 done
 systemctl stop "$smoke_unit" || true

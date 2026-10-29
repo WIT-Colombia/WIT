@@ -58,6 +58,7 @@ cat > /etc/systemd/system/xamuko-api.service.d/deploy.conf <<'UNIT'
 WorkingDirectory=/opt/xamuko/deploy/current/backend
 ExecStart=
 ExecStart=/usr/bin/node /opt/xamuko/deploy/current/backend/dist/server.js
+TimeoutStopSec=15
 UNIT
 python3 - <<'PY'
 from pathlib import Path
