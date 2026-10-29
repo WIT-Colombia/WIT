@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createAwsCostExplorerReader, syncAwsDailyCosts } from './aws-cost-explorer.js';
 import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireAdmin, adminFromRequest } from '../admin/admin-auth.service.js';
 import { financeSummary, createManualConsumption, createProvider, createBudget, createInvoice, createPayment, listFinanceRecords, acknowledgeAlert, updateManualConsumption, reconcileFinancials, updateProvider, updateBudget, updateInvoice, updatePayment, listFinancialAudit } from './finance.service.js';
@@ -33,6 +34,7 @@ financeRouter.patch('/alerts/:id/acknowledge', requireAdmin('FINANCE_MANAGE'), a
 financeRouter.patch('/consumptions/:id', requireAdmin('FINANCE_MANAGE'), async (req, res, next) => { try { res.json({ consumption: await updateManualConsumption(adminFromRequest(req), req.params.id, { amountCop: Number(req.body.amountCop), amountUsd: Number(req.body.amountUsd), reason: String(req.body.reason ?? '') }) }); } catch (error) { next(error); } });
 financeRouter.post('/reconcile', requireAdmin('FINANCE_READ'), async (req, res, next) => { try { res.json(reconcileFinancials(req.body)); } catch (error) { next(error); } });
 financeRouter.get('/audit', requireAdmin('FINANCE_READ'), async (_req,res,next)=>{try{res.json({entries:await listFinancialAudit()});}catch(error){next(error);}});
+financeRouter.post('/sync/aws', requireAdmin('FINANCE_MANAGE'), async (req,res,next)=>{try{const end=new Date(req.body?.end ?? new Date());const start=new Date(req.body?.start ?? new Date(end.getTime()-86400000));res.json(await syncAwsDailyCosts(createAwsCostExplorerReader(),start,end));}catch(error){next(error);}});
 financeRouter.patch('/providers/:id', requireAdmin('FINANCE_MANAGE'), async(req,res,next)=>{try{res.json({provider:await updateProvider(adminFromRequest(req),req.params.id,req.body)});}catch(error){next(error);}});
 financeRouter.patch('/budgets/:id', requireAdmin('FINANCE_MANAGE'), async(req,res,next)=>{try{res.json({budget:await updateBudget(adminFromRequest(req),req.params.id,{...req.body,amountCop:Number(req.body.amountCop),amountUsd:req.body.amountUsd===undefined?undefined:Number(req.body.amountUsd)})});}catch(error){next(error);}});
 financeRouter.patch('/invoices/:id', requireAdmin('FINANCE_MANAGE'), async(req,res,next)=>{try{res.json({invoice:await updateInvoice(adminFromRequest(req),req.params.id,{...req.body,amountCop:Number(req.body.amountCop),amountUsd:Number(req.body.amountUsd)})});}catch(error){next(error);}});
