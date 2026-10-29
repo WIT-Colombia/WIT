@@ -33,6 +33,13 @@ An API outage or rate limit fails closed. Five-minute polling is not instantaneo
 The Actions page shows CI; deployment results are recorded on EC2, not posted back
 to GitHub. Manual rollback in this mode uses the server command below, not Actions.
 
+Each attempt now also writes `/opt/xamuko/deploy/status.json` atomically with the
+requested action, requested SHA, active release, UTC completion time, duration and
+result. It is safe to read from an SSM Session Manager shell and contains no
+secrets. The append-only `/opt/xamuko/deploy/history.log` remains the deployment
+history; `current/COMMIT`, `previous/COMMIT` and `status.json` provide the current,
+rollback and last-operation views.
+
 Activate advanced features only through a separate explicit account decision.
 AWS describes these restrictions here:
 https://docs.aws.amazon.com/accounts/latest/reference/sign-up-for-aws.html
@@ -111,6 +118,27 @@ The workflow pins SSM document version 1. Future document/script upgrades requir
 explicit review and updating the pinned version; they are not self-updated by CI.
 
 ## Rollback and recovery
+
+From the AWS Console or AWS Console Mobile, open Systems Manager → Session
+Manager for `i-0bc484a461397e2b1` and run:
+
+```bash
+sudo cat /opt/xamuko/deploy/status.json
+sudo tail -50 /opt/xamuko/deploy/history.log
+sudo readlink -f /opt/xamuko/deploy/current
+sudo cat /opt/xamuko/deploy/current/COMMIT
+sudo journalctl -u xamuko-poll.service --no-pager -n 80
+```
+
+Only roll back to a release containing `VERIFIED`:
+
+```bash
+sudo /usr/local/sbin/xamuko-deploy rollback <verified-40-character-sha>
+```
+
+The existing host lock prevents concurrent deploys and rollbacks. The wrapper
+now checks the public home page, API health and public catalog after activation;
+failure restores the previous release.
 
 Use Actions → XAMUKO staging → Run workflow → branch staging → action rollback
 and a previously verified 40-character commit, or `bootstrap` for the original
