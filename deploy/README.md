@@ -8,6 +8,35 @@ the server bootstrap, IAM stack and a supervised first deployment are verified.
 The deployment destination is the PUBLIC site, not an isolated test environment.
 Only Usuario is published; all four frontend apps are compiled and checked.
 
+### Current account: pull deployment without a plan change
+
+The IAM console explicitly reports identity providers unavailable until advanced
+features are activated. OIDC provisioning is therefore optional and NOT active.
+For this account use the server-side poller after bootstrap and supervised tests:
+
+```bash
+sudo bash deploy/install-poll.sh
+```
+
+It checks GitHub's public API every five minutes, requires the latest push run
+of staging-deploy.yml for the current staging HEAD to have completed successfully,
+then invokes the same fixed-commit deployment wrapper. No GitHub token, AWS access
+key, self-hosted Actions runner, new IAM permission or inbound port is needed.
+Keep XAMUKO_DEPLOY_ENABLED unset/false in this mode so the OIDC job is skipped.
+Do not enable both deployment transports at once.
+
+The last attempted SHA is recorded before execution. Failures do not retry forever;
+manual rollback is retained until another staging commit. To pause:
+`sudo systemctl stop xamuko-poll.timer` and remove the POLL_ENABLED marker.
+Review failures with `sudo journalctl -u xamuko-poll.service` (administrator only).
+An API outage or rate limit fails closed. Five-minute polling is not instantaneous.
+The Actions page shows CI; deployment results are recorded on EC2, not posted back
+to GitHub. Manual rollback in this mode uses the server command below, not Actions.
+
+Activate advanced features only through a separate explicit account decision.
+AWS describes these restrictions here:
+https://docs.aws.amazon.com/accounts/latest/reference/sign-up-for-aws.html
+
 Inspected on 2026-10-28:
 
 - AWS account 988024221050, region us-east-2, instance i-0bc484a461397e2b1.
