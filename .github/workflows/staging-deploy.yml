@@ -43,7 +43,9 @@ jobs:
             backend/package-lock.json
             frontend/package-lock.json
       - name: Validate deployment scripts
-        run: for file in deploy/*.sh; do bash -n "$file" || exit; done
+        run: |
+          for file in deploy/*.sh; do bash -n "$file" || exit; done
+          shellcheck deploy/*.sh
       - name: Backend install, generate, typecheck, test and build
         working-directory: backend
         env:

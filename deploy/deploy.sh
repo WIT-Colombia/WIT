@@ -87,7 +87,7 @@ systemd-run --quiet --collect --unit="$smoke_unit" \
   -p 'Environment=PORT=3001 HOST=127.0.0.1' \
   /usr/bin/node "$release/backend/dist/server.js"
 smoke_ok=0
-for i in {1..20}; do
+for _ in {1..20}; do
   if systemctl is-active --quiet "$smoke_unit" && curl --max-time 2 -fsS http://127.0.0.1:3001/api/v1/health >/dev/null; then smoke_ok=1; break; fi
   sleep 1
 done
