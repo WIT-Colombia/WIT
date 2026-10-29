@@ -2,7 +2,7 @@ import { consumeVerificationToken } from './verification-confirmation.js';
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { sendPasswordResetEmail, sendVerificationEmail } from '../../shared/email/email-service.js';
+import { sendPasswordResetEmail, sendSecurityNotificationEmail, sendVerificationEmail } from '../../shared/email/email-service.js';
 
 type TokenType = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
 
@@ -52,7 +52,7 @@ export async function sendPasswordResetRequest(emailNormalized: string): Promise
 }
 
 export async function resetPassword(token: string, passwordHash: string): Promise<string> {
-  return prisma.$transaction(async (transaction) => {
+  const userId = await prisma.$transaction(async (transaction) => {
     const record = await transaction.authToken.findUnique({ where: { tokenHash: hashToken(token) } });
     const now = new Date();
     if (!record || record.type !== 'PASSWORD_RESET' || record.consumedAt || record.expiresAt <= now) {
@@ -66,4 +66,10 @@ export async function resetPassword(token: string, passwordHash: string): Promis
     await transaction.session.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: now } });
     return record.userId;
   });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { emailNormalized: true, displayName: true } });
+  if (user?.emailNormalized) {
+    try { await sendSecurityNotificationEmail(user.emailNormalized, user.displayName, 'Se cambió la contraseña de tu cuenta'); }
+    catch { console.warn('Password security notification could not be sent'); }
+  }
+  return userId;
 }
