@@ -111,7 +111,9 @@ export async function getBusinesses(filters: BusinessFilters = {}): Promise<Busi
 
 async function getBusinessesUncached(filters: BusinessFilters = {}): Promise<Business[]> {
   let publicBusinesses: Business[];
-  try { publicBusinesses = await listPublicBusinesses(); } catch { publicBusinesses = []; }
+  // Preserve transport failures so the screen can distinguish an unavailable
+  // catalog from a valid empty result and offer a retry to the user.
+  publicBusinesses = await listPublicBusinesses();
   return publicBusinesses.filter((business) => {
     const categoryMatches = !filters.category || matchesCategory(business.category, filters.category);
     const businessProducts: string[] = [];
