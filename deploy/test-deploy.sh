@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2016,SC2317
 set -Eeuo pipefail
 
 # Fast, dependency-free regression tests for the deployment bookkeeping.
