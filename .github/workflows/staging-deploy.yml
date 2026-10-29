@@ -1,0 +1,117 @@
+name: XAMUKO staging
+
+on:
+  pull_request:
+    branches: [staging]
+  push:
+    branches: [staging]
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [deploy, rollback]
+        default: deploy
+      rollback_commit:
+        description: Previously verified 40-character commit or bootstrap (rollback only)
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: xamuko-staging-${{ github.event_name == 'pull_request' && github.ref || 'deployment' }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: mysql://test:test@127.0.0.1:3306/xamuko_test
+      AUTH_ACCESS_TOKEN_SECRET: ci-test-secret-not-for-production-0123456789
+      GOOGLE_CLIENT_ID: xamuko-test.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: test-secret-not-real
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Validate deployment scripts
+        run: |
+          for file in deploy/*.sh; do bash -n "$file" || exit; done
+          shellcheck deploy/*.sh
+      - name: Backend install, generate, typecheck, test and build
+        working-directory: backend
+        env:
+          NODE_ENV: development
+        run: |
+          npm ci --no-audit --no-fund
+          npm run prisma:generate
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Frontend install, typecheck, test and build all applications
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm run test:verification
+          npm run build
+
+  deploy:
+    needs: verify
+    if: >-
+      github.ref == 'refs/heads/staging' &&
+      github.event_name != 'pull_request' &&
+      vars.XAMUKO_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Obtain short-lived AWS credentials
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          role-to-assume: ${{ vars.XAMUKO_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-2
+          role-duration-seconds: 3600
+          allowed-account-ids: '988024221050'
+      - name: Deploy exact commit through the restricted SSM document
+        env:
+          COMMIT: ${{ github.sha }}
+          ACTION: ${{ inputs.action || 'deploy' }}
+          ROLLBACK_COMMIT: ${{ inputs.rollback_commit }}
+          AWS_PAGER: ''
+        run: |
+          set -euo pipefail
+          if [[ "$ACTION" == rollback ]]; then COMMIT="$ROLLBACK_COMMIT"; fi
+          [[ "$ACTION" =~ ^(deploy|rollback)$ ]]
+          [[ "$COMMIT" =~ ^[0-9a-f]{40}$ || ( "$ACTION" == rollback && "$COMMIT" == bootstrap ) ]]
+          command_id=$(aws ssm send-command \
+            --instance-ids i-0bc484a461397e2b1 \
+            --document-name Xamuko-Staging-Deploy --document-version '1' \
+            --parameters "Commit=$COMMIT,Action=$ACTION" \
+            --timeout-seconds 120 --comment "XAMUKO ${GITHUB_RUN_ID}" \
+            --query Command.CommandId --output text)
+          echo "SSM command: $command_id"
+          for i in {1..540}; do
+            if ! status=$(aws ssm get-command-invocation --command-id "$command_id" \
+              --instance-id i-0bc484a461397e2b1 --query Status --output text 2>ssm-error); then
+              if grep -q InvocationDoesNotExist ssm-error; then sleep 5; continue; fi
+              cat ssm-error; exit 1
+            fi
+            case "$status" in
+              Success) echo 'Deployment healthy'; exit 0 ;;
+              Pending|InProgress|Delayed) sleep 5 ;;
+              *) echo "Deployment failed: $status (inspect SSM command)"; exit 1 ;;
+            esac
+          done
+          echo 'Timed out waiting; inspect SSM before retrying. Do not assume rollback occurred.'
+          exit 1

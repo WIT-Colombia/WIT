@@ -11,6 +11,8 @@ test("the visible Welcome logo navigates internally to home", () => {
 test("location screen logos also navigate to home", () => {
   const location = readFileSync(new URL("../apps/usuario/src/pages/Location.tsx", import.meta.url), "utf8");
   const manual = readFileSync(new URL("../apps/usuario/src/pages/ManualLocation.tsx", import.meta.url), "utf8");
-  assert.match(location, /<Link className="location-logo" to="\/home" aria-label="(?:WIT|XAMUKO), inicio">/);
+  const header = readFileSync(new URL("../apps/usuario/src/components/SiteHeader.tsx", import.meta.url), "utf8");
+  assert.match(location, /<SiteHeader\s[^>]*\/>/);
+  assert.match(header, /<Link className="brand" to="\/home" aria-label="XAMUKO, inicio">/);
   assert.match(manual, /<SiteHeader\s*\/>/);
 });
