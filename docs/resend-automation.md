@@ -19,6 +19,8 @@ Todos los flujos de prueba sustituyen `fetch`; no se envían correos reales.
 
 Configurar los valores anteriores como secreto/variable en el entorno de despliegue, sin guardarlos en Git. `EMAIL_MODE=resend` requiere `RESEND_API_KEY`. Antes de activar el envío, verificar el dominio en Resend y mantener `EMAIL_FROM` dentro de un dominio verificado.
 
+En esta instalación, el archivo real es `/opt/xamuko/api/backend/.env` y permanece fuera del artefacto de Git, con permisos restringidos. La preparación segura consiste en editar ese archivo desde una sesión SSM autorizada, conservar todas las variables existentes y establecer únicamente `EMAIL_MODE=resend` y `EMAIL_FROM="XAMUKO <notificaciones@xamuko.com>"`; la clave se añade como `RESEND_API_KEY` sin mostrarla en la consola. Después se debe validar el formato, reiniciar `xamuko-api` durante una ventana acordada y comprobar `/api/v1/health`. No se debe poner la clave en GitHub Actions porque el transporte actual de despliegue por polling no la necesita.
+
 La consulta DNS pública observada el 28-10-2026 muestra SPF de Hostinger (`include:_spf.mail.hostinger.com`), MX de Hostinger y un registro TXT en `resend._domainkey.xamuko.com`. No se puede confirmar desde DNS si ese DKIM corresponde al proyecto Resend; hay que comparar el valor que muestra Resend. No se modificó DNS.
 
 ## Webhooks y recuperación
