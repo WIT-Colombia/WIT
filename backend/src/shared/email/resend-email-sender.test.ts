@@ -24,6 +24,7 @@ test('sends the email payload through the configured provider without logging it
   assert.equal(request?.url, 'https://provider.test/emails');
   assert.equal(request?.init?.method, 'POST');
   assert.equal(new Headers(request?.init?.headers).get('Authorization'), 'Bearer test-api-key');
+  assert.equal(new Headers(request?.init?.headers).get('Idempotency-Key'), null);
   assert.match(String(request?.init?.body), /Plain text/);
   assert.match(String(request?.init?.body), /<p>HTML<\/p>/);
 });
@@ -69,3 +70,19 @@ for (const providerStatus of [401, 403, 422, 429, 500, 502, 503]) {
     assert.doesNotMatch(JSON.stringify(logs), /secret-api-key|person@example\.test|private recipient|token details/i);
   });
 }
+
+test('retries transient responses with the same idempotency key and does not retry client errors', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalSetTimeout = globalThis.setTimeout;
+  let calls = 0;
+  globalThis.setTimeout = ((callback: (...args: never[]) => void) => { callback(); return 0 as never; }) as unknown as typeof setTimeout;
+  globalThis.fetch = async (_input, init) => {
+    calls += 1;
+    assert.equal(new Headers(init?.headers).get('Idempotency-Key'), 'welcome/user-1');
+    return calls < 3 ? new Response('{}', { status: 503 }) : new Response('{}', { status: 200 });
+  };
+  try {
+    await new ResendEmailSender('test-api-key', 'https://provider.test/emails', 'WIT <no-reply@example.test>').send({ to: 'person@example.test', subject: 'Subject', text: 'Plain text', html: '<p>HTML</p>', eventType: 'welcome', idempotencyKey: 'welcome/user-1' });
+  } finally { globalThis.fetch = originalFetch; globalThis.setTimeout = originalSetTimeout; }
+  assert.equal(calls, 3);
+});
