@@ -26,12 +26,12 @@ Construir desde un checkout limpio del commit aprobado; conservar manifest y paq
 
 | Aplicación | Origen propuesto | Workspace |
 | --- | --- | --- |
-| Landing | https://xamuko.com | @wit/landing |
-| Usuario | https://app.xamuko.com | @wit/usuario |
+| Landing | https://xamuko.com y https://www.xamuko.com | @wit/landing |
+| Usuario | https://user.xamuko.com | @wit/usuario |
 | Business | https://business.xamuko.com | @wit/negocios |
 | Admin | https://admin.xamuko.com | @wit/admin |
 
-Son propuestas de publicación, no evidencia de dominios disponibles. Landing usa
+Son destinos acordados para preparar la publicación, no evidencia de dominios activos. Landing usa
 los dos destinos anteriores en builds de producción; permite sustituirlos mediante
 VITE_USUARIO_PUBLIC_URL y VITE_BUSINESS_PUBLIC_URL. En desarrollo conserva
 127.0.0.1:5173 y 127.0.0.1:5174 y las rutas existentes de acceso/registro.
@@ -72,3 +72,6 @@ reversión queda pendiente del entorno aislado y de la autorización correspondi
 El inventario, los comandos de solo lectura y los criterios de comprobación están en
 [ec2-pending-verification.md](ec2-pending-verification.md). Ningún resultado de CI
 confirma la versión activa en EC2 ni una restauración real.
+
+La revisión de pantallas, autenticación y condiciones previas a la activación está en
+[frontend-auth-publication-review.md](frontend-auth-publication-review.md).

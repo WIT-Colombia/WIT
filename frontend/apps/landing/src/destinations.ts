@@ -6,7 +6,7 @@ export function landingDestinations(dev: boolean, overrides: { user?: string; bu
     }
     return url.origin;
   }
-  const user = origin(overrides.user, dev ? 'http://127.0.0.1:5173' : 'https://app.xamuko.com');
+  const user = origin(overrides.user, dev ? 'http://127.0.0.1:5173' : 'https://user.xamuko.com');
   const business = origin(overrides.business, dev ? 'http://127.0.0.1:5174' : 'https://business.xamuko.com');
   return {
     businessLogin: `${business}/login`, businessRegister: `${business}/registro`,

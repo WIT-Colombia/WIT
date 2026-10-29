@@ -1,3 +1,4 @@
+import { safeAppReturn } from "@wit/utils";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -12,7 +13,7 @@ import "./RegisterAlert.css";
 import "./RegisterRedesign.css";
 
 function safeReturn(value: string | null) {
-  return value?.startsWith("/") && !value.startsWith("//") && !value.startsWith("/register") ? value : "/profile";
+  return safeAppReturn(value, "/profile", ["/register", "/auth/google/callback"]);
 }
 
 function GoogleIcon() {
@@ -153,6 +154,7 @@ export default function Register() {
           </form>
           {!registration && <Link className="register-mode-switch register-forgot-link" to="/recover-password">¿Olvidaste tu contraseña?</Link>}
           {requiresVerification && <Link className="register-mode-switch" to={`/verify-email?pending=1&email=${encodeURIComponent(email.trim())}`}>Reenviar correo de verificación</Link>}
+          <Link className="register-mode-switch" to="/home">Explorar sin registrarme</Link>
           <button className="register-mode-switch user-auth-mode-switch" type="button" onClick={() => { setMode(registration ? "login" : "register"); setMessage(""); }}>{registration ? "¿Ya tienes una cuenta? Inicia sesión" : "¿No tienes una cuenta? Crear cuenta"}</button>
         </div>
       </section>

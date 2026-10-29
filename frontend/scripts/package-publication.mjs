@@ -6,6 +6,11 @@ import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const publicationEnv = {
+  ...process.env,
+  VITE_USUARIO_PUBLIC_URL: process.env.VITE_USUARIO_PUBLIC_URL || 'https://user.xamuko.com',
+  VITE_BUSINESS_PUBLIC_URL: process.env.VITE_BUSINESS_PUBLIC_URL || 'https://business.xamuko.com',
+};
 const output = join(root, 'dist/publication');
 mkdirSync(output, { recursive: true });
 const release = mkdtempSync(join(output, 'release-'));
@@ -22,7 +27,7 @@ try {
   for (const [name, workspace] of Object.entries({ landing: 'landing', usuario: 'usuario', business: 'negocios', admin: 'admin' })) {
     const build = join(release, `${name}-dist`);
     execFileSync('npm', ['exec', `--workspace=@wit/${workspace}`, '--', 'tsc', '-b'], { cwd: root, stdio: 'inherit' });
-    execFileSync('npm', ['exec', `--workspace=@wit/${workspace}`, '--', 'vite', 'build', '--outDir', build], { cwd: root, stdio: 'inherit' });
+    execFileSync('npm', ['exec', `--workspace=@wit/${workspace}`, '--', 'vite', 'build', '--outDir', build], { cwd: root, stdio: 'inherit', env: publicationEnv });
     if (!readFileSync(join(build, 'index.html'), 'utf8').includes('<html')) throw new Error(`Missing HTML: ${name}`);
     validate(build);
     const archive = `${name}.tar.gz`;

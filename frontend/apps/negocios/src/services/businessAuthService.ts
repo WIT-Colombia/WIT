@@ -1,3 +1,4 @@
+import { safeAppReturn } from "@wit/utils";
 import { BusinessApiError, buildApiUrl, configureAccessTokenProvider, configureUnauthorizedHandler, requestJson } from "./businessApiClient";
 
 export type BusinessAuthUser = {
@@ -76,14 +77,7 @@ export function getSessionState(): BusinessSessionState {
 }
 
 export function resolveBusinessNext(value: string | null): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/mis-negocios";
-  try {
-    const path = new URL(value, "http://xamuko-business.local").pathname;
-    if (["/login", "/registro", "/recuperar", "/bienvenida"].includes(path)) return "/mis-negocios";
-  } catch {
-    return "/mis-negocios";
-  }
-  return value;
+  return safeAppReturn(value, "/mis-negocios", ["/login", "/registro", "/recuperar", "/bienvenida", "/auth/google/callback"]);
 }
 
 export async function updateProfile(input: { name: string; nickname?: string; avatarUrl?: string | null }): Promise<BusinessAuthUser> {
