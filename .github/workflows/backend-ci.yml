@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feature/xamuko-backend-security
+      - integration/preserve-all-20261029
 
 jobs:
   backend:
