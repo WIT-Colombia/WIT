@@ -18,6 +18,16 @@ export async function createAdminPendingOAuth(response: Response, googleSub: str
   response.appendHeader('Set-Cookie', stringifySetCookie({ name: COOKIE, value: token, httpOnly: true, secure: env.nodeEnv === 'production', sameSite: 'lax', path: PATH, maxAge: TTL_SECONDS }));
 }
 
+export async function readAdminPendingOAuth(request: Request): Promise<string> {
+  const token = parseCookie(request.headers.cookie ?? '')[COOKIE];
+  if (!token || !/^[A-Za-z0-9_-]{64}$/.test(token)) throw new AppError(401, 'ADMIN_PENDING_INVALID', 'Debes autenticarte nuevamente con Google.');
+  const record = await prisma.adminPendingOAuth.findUnique({ where: { tokenHash: hash(token) } });
+  if (!record || record.consumedAt || record.expiresAt <= new Date() || !isAuthorizedAdminGoogleSub(record.googleSub)) {
+    throw new AppError(401, 'ADMIN_PENDING_INVALID', 'Debes autenticarte nuevamente con Google.');
+  }
+  return record.googleSub;
+}
+
 export async function consumeAdminPendingOAuth(request: Request): Promise<string> {
   const token = parseCookie(request.headers.cookie ?? '')[COOKIE];
   if (!token || !/^[A-Za-z0-9_-]{64}$/.test(token)) throw new AppError(401, 'ADMIN_PENDING_INVALID', 'Debes autenticarte nuevamente con Google.');
