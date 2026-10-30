@@ -1,4 +1,4 @@
-import { adminLogout, adminRefresh, type RealAdmin } from './adminApiClient';
+import { adminSessionLogout, getAdminSession, beginAdminWebAuthn, type RealAdmin } from './adminApiClient';
 export const startGoogleLogin = () => { window.location.assign('/api/v1/auth/google/start?application=admin&next=%2Fdashboard'); };
 import type { Admin, Permission, Role } from '../types/admin';
 export const API_BASE = '/api/v1';
@@ -7,6 +7,6 @@ export const can = (admin: Admin, permission: Permission) => admin.permissions ?
 let currentSession: Admin | null = null;
 function mapAdmin(value: RealAdmin): Admin { const permissionMap = { BUSINESSES_READ: 'business:write', CATALOG_READ: 'dashboard:read', REPORTS_REVIEW: 'content:moderate', CONTENT_MODERATE: 'content:moderate', AUDIT_READ: 'dashboard:read', ADMINS_MANAGE: 'settings:write', PIONEER_MANAGE: 'PIONEER_MANAGE', FINANCE_READ: 'finance:read', FINANCE_MANAGE: 'finance:manage' } as const; return { id: value.user.id, name: value.user.displayName, avatarUrl: value.user.avatarUrl, email: value.user.emailNormalized ?? '', role: value.role, realRole: value.role, permissions: value.permissions.map(permission => permissionMap[permission]) }; }
 export const getSession = (): Admin | null => currentSession;
-export const restoreSession = async (): Promise<Admin | null> => { try { currentSession = mapAdmin(await adminRefresh()); return currentSession; } catch { currentSession = null; return null; } };
+export const restoreSession = async (): Promise<Admin | null> => { try { await getAdminSession(); currentSession = mapAdmin(await (await fetch('/api/v1/admin/me', { credentials: 'include' })).json().then(value => value.admin)); return currentSession; } catch { currentSession = null; return null; } };
 
-export const logout = async () => { await adminLogout(); currentSession = null; };
+export const authenticateWithPasskey = async () => { await beginAdminWebAuthn(); currentSession = mapAdmin(await (await fetch('/api/v1/admin/me', { credentials: 'include' })).json().then(value => value.admin)); return currentSession; };\nexport const logout = async () => { await adminSessionLogout(); currentSession = null; };
