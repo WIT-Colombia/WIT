@@ -43,6 +43,8 @@ jobs:
       XAMUKO_TEST_ORIGIN: http://127.0.0.1:5174
       ADMIN_PASSKEY_ACTIVATION_CODE_HASH: 5c55a2f6a1da4768a635d45e8b0e0ba1bae9786b6a8e3351c435800bcf852aea
       ADMIN_GOOGLE_SUB_ALLOWLIST: ci-admin-google-sub
+      ADMIN_WEBAUTHN_RP_ID: localhost
+      ADMIN_WEBAUTHN_ORIGIN: http://localhost:5173
     steps:
       - name: Checkout
         uses: actions/checkout@v4
