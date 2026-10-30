@@ -81,6 +81,7 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI?.trim() ?? 'http://localhost:3000/api/v1/auth/google/callback';
 const googleFrontendUrl = process.env.GOOGLE_FRONTEND_URL?.trim() ?? 'http://localhost:5173';
 const googleFrontendUrls = Object.freeze({
+  admin: process.env.GOOGLE_FRONTEND_URL_ADMIN?.trim() ?? googleFrontendUrl,
   usuario: process.env.GOOGLE_FRONTEND_URL_USUARIO?.trim() ?? googleFrontendUrl,
   negocios: process.env.GOOGLE_FRONTEND_URL_NEGOCIOS?.trim() ?? 'http://localhost:5174',
   staging: process.env.GOOGLE_FRONTEND_URL_STAGING?.trim() ?? 'https://staging.xamuko.com',
