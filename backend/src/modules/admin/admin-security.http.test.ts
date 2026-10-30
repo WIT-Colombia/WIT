@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
 import { app } from '../../app.js';
+import { createAdminFixture, createPendingOAuth, createActivation, createAdminSession } from './admin-security.fixtures.js';
 let server: ReturnType<typeof app.listen>; let base = '';
 before(async () => { server = app.listen(0); await new Promise<void>(resolve => server.once('listening', () => resolve())); const address = server.address(); if (!address || typeof address === 'string') throw new Error('No se pudo iniciar el harness HTTP.'); base = 'http://127.0.0.1:' + address.port; });
 after(async () => { await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); });
@@ -10,3 +11,7 @@ test('rechaza código de activación incorrecto sin revelar el valor', async () 
 test('rechaza registro WebAuthn sin autorización temporal', async () => { const response = await request('/api/v1/admin/auth/passkey/activation/verify', { method: 'POST', body: JSON.stringify({}), headers: { 'content-type': 'application/json' } }); assert.equal(response.status, 401); });
 test('rechaza JWT normal en una ruta Admin', async () => { const response = await request('/api/v1/admin/me', { headers: { authorization: 'Bearer test.jwt.token' } }); assert.equal(response.status, 401); });
 test('rechaza acceso Admin sin AdminSession y sin segundo factor', async () => { const response = await request('/api/v1/admin/me'); assert.equal(response.status, 401); });
+
+test('rechaza autorización OAuth expirada y consumida con registros reales', async () => { const fixture = await createAdminFixture(); try { for (const state of ['expired','consumed'] as const) { const pending = await createPendingOAuth(fixture.googleSub, state); const response = await request('/api/v1/admin/auth/webauthn/options', { headers: { cookie: pending.cookie, 'x-admin-activation-code': 'unused' } }); assert.equal(response.status, 401); } } finally { await fixture.cleanup(); } });
+test('rechaza sesión Admin expirada, revocada y cookie alterada', async () => { const fixture = await createAdminFixture(); try { const expired = await createAdminSession(fixture.userId, 'expired'); const revoked = await createAdminSession(fixture.userId, 'revoked'); for (const cookie of [expired.cookie, revoked.cookie, 'xamuko_admin_session=altered']) { const response = await request('/api/v1/admin/me', { headers: { cookie } }); assert.equal(response.status, 401); } } finally { await fixture.cleanup(); } });
+test('rechaza activación expirada y consumida con registros reales', async () => { const fixture = await createAdminFixture(); try { for (const state of ['expired','consumed'] as const) { const activation = await createActivation(fixture.googleSub, state); const response = await request('/api/v1/admin/auth/passkey/activation/verify', { method: 'POST', headers: { cookie: activation.cookie, 'content-type': 'application/json' }, body: '{}' }); assert.equal(response.status, 401); } } finally { await fixture.cleanup(); } });
