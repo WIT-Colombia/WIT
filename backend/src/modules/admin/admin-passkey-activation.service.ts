@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { parseCookie, stringifySetCookie } from 'cookie';
 import { prisma } from '../../config/prisma.js';
@@ -28,6 +28,9 @@ async function tokenFrom(request: Request) {
   return activation;
 }
 export async function beginPasskeyActivation(request: Request, response: Response) {
+  const configured = env.adminPasskeyActivationCodeHash;
+  const supplied = request.header('x-admin-activation-code') ?? '';
+  if (!configured || !supplied || !/^[a-f0-9]{64}$/i.test(configured) || !timingSafeEqual(Buffer.from(hash(supplied), 'utf8'), Buffer.from(configured, 'utf8'))) throw new AppError(403, 'ADMIN_ACTIVATION_AUTH_REQUIRED', 'Se requiere autorización operativa independiente.');
   const googleSub = await readAdminPendingOAuth(request);
   const userId = await userForSub(googleSub);
   const token = randomBytes(48).toString('base64url');
