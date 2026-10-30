@@ -85,5 +85,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: xamuko-backend-\${GITHUB_SHA}
-          path: release-artifacts/*
+          path: ../release-artifacts/*
           if-no-files-found: error
