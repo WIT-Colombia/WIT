@@ -1269,3 +1269,40 @@ model BusinessAnalyticsEvent {
   @@index([actorUserId, createdAt])
   @@index([dedupeKey])
 }
+
+
+model AdminWebAuthnCredential {
+  id            String   @id @default(uuid()) @db.Char(36)
+  userId        String   @db.Char(36)
+  credentialId  String   @unique @db.VarChar(512)
+  publicKey     Bytes    @db.VarBinary(1024)
+  counter       BigInt   @default(0)
+  transports    String?  @db.VarChar(255)
+  createdAt     DateTime @default(now()) @db.DateTime(3)
+  lastUsedAt    DateTime? @db.DateTime(3)
+  revokedAt     DateTime?
+  @@index([userId, revokedAt])
+}
+
+model AdminWebAuthnChallenge {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
+  challenge  String   @unique @db.VarChar(255)
+  purpose    String   @db.VarChar(32)
+  expiresAt  DateTime @db.DateTime(3)
+  consumedAt DateTime? @db.DateTime(3)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  @@index([userId, purpose, expiresAt])
+}
+
+model AdminSession {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
+  tokenHash  String   @unique @db.VarChar(255)
+  expiresAt  DateTime @db.DateTime(3)
+  revokedAt  DateTime? @db.DateTime(3)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  lastSeenAt DateTime? @db.DateTime(3)
+  @@index([userId, expiresAt])
+  @@index([revokedAt])
+}
