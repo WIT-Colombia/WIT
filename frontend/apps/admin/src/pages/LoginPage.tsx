@@ -1,7 +1,7 @@
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState, type FormEvent } from 'react';
 import xamukoLogo from '../assets/xamuko-logo.png';
-import { authenticateWithPasskey } from '../services/adminService';
+import { authenticateWithPasskey, startGoogleLogin } from '../services/adminService';
 import { beginAdminPasskeyActivation, finishAdminPasskeyActivation } from '../services/adminApiClient';
 import { getSession } from '../services/adminService';
 
@@ -30,7 +30,7 @@ export function LoginPage() {
   return <main className="login-page admin-login"><section className="admin-login-form-wrap"><div className="admin-login-form">
     <div className="admin-login-form-brand"><img src={xamukoLogo} alt="XAMUKO" /><span>ADMIN</span></div>
     <header><h2>Acceso seguro a XAMUKO Admin</h2><p>Primero autoriza Google y después confirma Face ID, Touch ID o tu llave de seguridad.</p></header>
-    <button className="admin-login-submit" type="button" onClick={() => { window.location.assign('/api/v1/auth/google/start?application=admin&next=%2Fdashboard'); }} disabled={busy}>Continuar con Google</button>
+    <button className="admin-login-submit" type="button" onClick={() => { startGoogleLogin(); }} disabled={busy}>Continuar con Google</button>
     <button className="admin-login-submit" type="button" onClick={() => void passkey()} disabled={busy}>{busy ? 'Verificando passkey…' : 'Verificar passkey'}</button>
     <form onSubmit={activate} aria-label="Activación inicial de passkey">
       <label htmlFor="activation-code">Código de activación inicial</label>
