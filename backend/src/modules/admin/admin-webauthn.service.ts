@@ -4,8 +4,8 @@ import { prisma } from '../../config/prisma.js';
 import { env } from '../../config/env.js';
 import { AppError } from '../../shared/errors/app-error.js';
 
-const RP_ID = env.adminWebauthnRpId;
-const ORIGIN = env.adminWebauthnOrigin;
+const RP_ID = env.adminWebauthnRpId ?? '';
+const ORIGIN = env.adminWebauthnOrigin ?? '';
 const RP_NAME = env.adminWebauthnRpName;
 const TTL_MS = 5 * 60 * 1000;
 
@@ -18,7 +18,7 @@ function assertFresh(expiresAt: Date, consumedAt: Date | null) {
 export async function beginRegistration(userId: string) {
   requireConfig();
   const credentials = await (prisma as any).adminWebAuthnCredential.findMany({ where: { userId, revokedAt: null }, select: { credentialId: true, transports: true } });
-  const options = await generateRegistrationOptions({ rpName: RP_NAME, rpID: RP_ID, userName: userId, userDisplayName: 'XAMUKO Admin', attestationType: 'none', excludeCredentials: credentials.map((item: any) => ({ id: item.credentialId, transports: item.transports ? item.transports.split(',') : undefined })) });
+  const options = await generateRegistrationOptions({ rpName: RP_NAME, rpID: RP_ID, userName: userId, userDisplayName: 'XAMUKO Admin', attestationType: 'none', excludeCredentials: credentials.map((item: any) => ({ id: item.credentialId, transports: item.transports ? item.transports.split(',') : [] })) });
   await (prisma as any).adminWebAuthnChallenge.create({ data: { userId, challenge: options.challenge, purpose: 'registration', expiresAt: new Date(Date.now() + TTL_MS) } });
   return options;
 }
