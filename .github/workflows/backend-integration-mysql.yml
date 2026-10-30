@@ -65,9 +65,22 @@ jobs:
           mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uxamuko_test_app -pintegration-app xamuko_integration_test \
             -e "SELECT COUNT(*) AS applied_migrations FROM _prisma_migrations WHERE finished_at IS NOT NULL;"
 
+      - name: Diagnose MySQL foreign keys before HTTP tests
+        env:
+          MYSQL_PWD: integration-root
+        run: |
+          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uroot xamuko_integration_test -e "SHOW CREATE TABLE BusinessSubscription; SHOW CREATE TABLE Business; SHOW CREATE TABLE AdminRoleAssignment; SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SELECT CONSTRAINT_NAME, TABLE_NAME, REFERENCED_TABLE_NAME, UPDATE_RULE, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SHOW TRIGGERS WHERE \`Table\` IN ('BusinessSubscription','Business','AdminRoleAssignment');"
+
       - name: Run HTTP integration suite
         run: |
           npm run test:integration:pro
+
+      - name: Diagnose MySQL foreign keys after HTTP tests
+        if: always()
+        env:
+          MYSQL_PWD: integration-root
+        run: |
+          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uroot xamuko_integration_test -e "SHOW CREATE TABLE BusinessSubscription; SHOW CREATE TABLE Business; SHOW CREATE TABLE AdminRoleAssignment; SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SELECT CONSTRAINT_NAME, TABLE_NAME, REFERENCED_TABLE_NAME, UPDATE_RULE, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SHOW TRIGGERS WHERE \`Table\` IN ('BusinessSubscription','Business','AdminRoleAssignment'); SHOW ENGINE INNODB STATUS\\G"
 
       - name: Run backend unit and finance coverage
         run: npm test
