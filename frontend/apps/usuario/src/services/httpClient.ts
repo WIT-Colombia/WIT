@@ -1,3 +1,5 @@
+import { buildApiUrl } from '@wit/utils';
+
 export type ApiErrorPayload = { error?: { code?: string; message?: string; fields?: Record<string, string> } };
 
 export class ApiError extends Error {
@@ -10,7 +12,7 @@ export class ApiError extends Error {
 export async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  const response = await fetch(path, {
+  const response = await fetch(buildApiUrl(path), {
     ...init,
     // The refresh cookie is issued by the isolated backend through the Vite
     // proxy; include it explicitly so reload restores the real session.
