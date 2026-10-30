@@ -93,6 +93,7 @@ export const googleCallbackController: RequestHandler = async (request, response
       if (!linkedUserId || linkedUserId !== state.userId) throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
     }
     if (stateApplication === 'admin') {
+      if (state.flow !== 'login') throw new AppError(400, 'GOOGLE_STATE_INVALID', 'El acceso Admin requiere un inicio de sesión Google nuevo.');
       if (!isAuthorizedAdminGoogleSub(profile.subject)) throw new AppError(403, 'ADMIN_GOOGLE_SUB_DENIED', 'La identidad Google no está autorizada para XAMUKO Admin.');
       await createAdminPendingOAuth(response, profile.subject);
       clearGoogleStateCookie(response);
