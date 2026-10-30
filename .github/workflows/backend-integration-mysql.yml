@@ -1,0 +1,93 @@
+name: XAMUKO backend integration (MySQL 8.4)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [security/frontend-toolchain-20261030]
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: Isolated backend integration
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: integration-root
+          MYSQL_DATABASE: xamuko_integration_test
+          MYSQL_USER: xamuko_test_app
+          MYSQL_PASSWORD: integration-app
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pintegration-root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=30
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: mysql://xamuko_test_app:integration-app@127.0.0.1:3306/xamuko_integration_test
+      AUTH_ACCESS_TOKEN_SECRET: ci-integration-secret-not-for-production-0123456789
+      AUTH_TRUSTED_ORIGINS: http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:5174,http://localhost:5174
+      GOOGLE_CLIENT_ID: ci-fake-client.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: ci-fake-secret-not-for-production
+      XAMUKO_TEST_API_URL: http://127.0.0.1:3100/api/v1
+      XAMUKO_TEST_ORIGIN: http://127.0.0.1:5174
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Apply all 31 Prisma migrations
+        run: npx prisma migrate deploy
+
+      - name: Verify isolated schema
+        run: |
+          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uxamuko_test_app -pintegration-app xamuko_integration_test \
+            -e "SELECT COUNT(*) AS applied_migrations FROM _prisma_migrations WHERE finished_at IS NOT NULL;"
+
+      - name: Diagnose MySQL foreign keys before HTTP tests
+        env:
+          MYSQL_PWD: integration-root
+        run: |
+          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uroot xamuko_integration_test -e "SHOW CREATE TABLE BusinessSubscription; SHOW CREATE TABLE Business; SHOW CREATE TABLE AdminRoleAssignment; SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SELECT CONSTRAINT_NAME, TABLE_NAME, REFERENCED_TABLE_NAME, UPDATE_RULE, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SHOW TRIGGERS WHERE \`Table\` IN ('BusinessSubscription','Business','AdminRoleAssignment');"
+
+      - name: Run HTTP integration suite
+        run: |
+          npm run test:integration:pro
+
+      - name: Diagnose MySQL foreign keys after HTTP tests
+        if: always()
+        env:
+          MYSQL_PWD: integration-root
+        run: |
+          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uroot xamuko_integration_test -e "SHOW CREATE TABLE BusinessSubscription; SHOW CREATE TABLE Business; SHOW CREATE TABLE AdminRoleAssignment; SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SELECT CONSTRAINT_NAME, TABLE_NAME, REFERENCED_TABLE_NAME, UPDATE_RULE, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SHOW TRIGGERS WHERE \`Table\` IN ('BusinessSubscription','Business','AdminRoleAssignment'); SHOW ENGINE INNODB STATUS\\G"
+
+      - name: Run backend unit and finance coverage
+        run: npm test
+
+      - name: Typecheck and build
+        run: |
+          npm run typecheck
+          npm run build
