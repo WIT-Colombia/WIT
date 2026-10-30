@@ -78,7 +78,7 @@ jobs:
       - name: Create versioned archive and checksum
         run: |
           archive="xamuko-backend-\${GITHUB_SHA}.tar.gz"
-          tar --exclude='*.env' --exclude='*.log' --exclude='*.pem' -czf "$archive" -C backend/release .
+          tar --exclude='*.env' --exclude='*.log' --exclude='*.pem' -czf "$archive" -C release .
           sha256sum "$archive" > "$archive.sha256"
           mkdir -p ../release-artifacts
           cp "$archive" "$archive.sha256" ../release-artifacts/
