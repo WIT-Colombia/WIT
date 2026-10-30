@@ -22,13 +22,6 @@ export class BusinessApiError extends Error {
   }
 }
 
-type RuntimeImportMeta = ImportMeta & {
-  env?: Record<string, string | undefined>;
-};
-
-const configuredBaseUrl = (import.meta as RuntimeImportMeta).env?.VITE_API_BASE_URL?.trim();
-export const API_BASE_URL = configuredBaseUrl || "/api/v1";
-
 let accessTokenProvider: (() => string | null) | null = null;
 let unauthorizedHandler: (() => Promise<boolean>) | null = null;
 
