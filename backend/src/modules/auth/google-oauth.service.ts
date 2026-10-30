@@ -34,6 +34,8 @@ export type GoogleProfile = {
   avatarUrl: string | null;
 };
 
+export function isAuthorizedAdminGoogleSub(subject: string): boolean { return env.adminGoogleSubAllowlist.includes(subject); }
+
 export class GoogleOAuthDiagnosticError extends Error {
   constructor(
     public readonly stage: GoogleDiagnosticStage,
