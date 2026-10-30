@@ -11,6 +11,7 @@ import { beginRegistration, finishRegistration } from './admin-webauthn.service.
 const COOKIE = 'xamuko_admin_activation';
 const TTL = 10 * 60;
 const hash = (v: string) => createHash('sha256').update(v).digest('hex');
+export function activationCodeMatches(configured: string | undefined, supplied: string): boolean { if (!configured || !supplied || !/^[a-f0-9]{64}$/i.test(configured)) return false; const actual = Buffer.from(hash(supplied), 'utf8'); const expected = Buffer.from(configured, 'utf8'); return actual.length === expected.length && timingSafeEqual(actual, expected); }
 const setCookie = (response: Response, value: string, maxAge: number) => response.appendHeader('Set-Cookie', stringifySetCookie({ name: COOKIE, value, httpOnly: true, secure: env.nodeEnv === 'production', sameSite: 'lax', path: '/api/v1/admin/auth', maxAge }));
 
 async function userForSub(googleSub: string) {
@@ -30,7 +31,7 @@ async function tokenFrom(request: Request) {
 export async function beginPasskeyActivation(request: Request, response: Response) {
   const configured = env.adminPasskeyActivationCodeHash;
   const supplied = request.header('x-admin-activation-code') ?? '';
-  if (!configured || !supplied || !/^[a-f0-9]{64}$/i.test(configured) || !timingSafeEqual(Buffer.from(hash(supplied), 'utf8'), Buffer.from(configured, 'utf8'))) throw new AppError(403, 'ADMIN_ACTIVATION_AUTH_REQUIRED', 'Se requiere autorización operativa independiente.');
+  if (!activationCodeMatches(configured, supplied)) throw new AppError(403, 'ADMIN_ACTIVATION_AUTH_REQUIRED', 'Se requiere autorización operativa independiente.');
   const googleSub = await readAdminPendingOAuth(request);
   const userId = await userForSub(googleSub);
   const token = randomBytes(48).toString('base64url');
