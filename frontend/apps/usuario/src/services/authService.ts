@@ -1,4 +1,5 @@
 import { ApiError, requestJson } from "./httpClient";
+import { buildApiUrl } from "@wit/utils";
 
 export type AuthUser = {
   emailVerified: boolean;
@@ -45,7 +46,7 @@ export function getRememberedEmail(): string {
 export function startGoogleLogin(options: { returnTo?: string; consent?: boolean; rememberMe?: boolean } = {}): void {
   const params = new URLSearchParams({ application: "usuario", rememberMe: options.rememberMe ? "1" : "0", consent: options.consent ? "1" : "0" });
   if (options.returnTo) params.set("next", options.returnTo);
-  window.location.assign(`/api/v1/auth/google/start?${params.toString()}`);
+  window.location.assign(`${buildApiUrl("/auth/google/start")}?${params.toString()}`);
 }
 
 function saveSessionPreference(email: string, rememberMe: boolean): void {
