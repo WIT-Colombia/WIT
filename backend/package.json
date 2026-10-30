@@ -29,7 +29,8 @@
     "jose": "^6.2.12",
     "mariadb": "^3.5.4",
     "multer": "^2.4.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.5",
+    "@simplewebauthn/server": "^13.2.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
