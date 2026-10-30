@@ -46,7 +46,7 @@ function googleErrorCode(error: unknown): string {
 
 function googleApplication(value: unknown): GoogleApplication {
   if (value === undefined || value === '') return 'usuario';
-  if (value === 'usuario' || value === 'negocios') return value;
+  if (value === 'usuario' || value === 'negocios' || value === 'admin') return value;
   throw new AppError(400, 'GOOGLE_APPLICATION_INVALID', 'La aplicación de inicio de sesión no es válida.');
 }
 
