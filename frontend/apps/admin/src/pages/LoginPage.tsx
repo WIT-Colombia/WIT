@@ -2,7 +2,8 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState, type FormEvent } from 'react';
 import xamukoLogo from '../assets/xamuko-logo.png';
 import { authenticateWithPasskey } from '../services/adminService';
-import { getSession, beginAdminPasskeyActivation, finishAdminPasskeyActivation } from '../services/adminApiClient';
+import { beginAdminPasskeyActivation, finishAdminPasskeyActivation } from '../services/adminApiClient';
+import { getSession } from '../services/adminService';
 
 export function LoginPage() {
   const navigate = useNavigate();
