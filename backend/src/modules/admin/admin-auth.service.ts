@@ -1,7 +1,6 @@
 import { Prisma, type PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 
 export const adminPermissions = ['BUSINESSES_READ', 'CATALOG_READ', 'REPORTS_REVIEW', 'CONTENT_MODERATE', 'AUDIT_READ', 'ADMINS_MANAGE', 'PIONEER_MANAGE'] as const;
 export type AdminPermission = typeof adminPermissions[number] | 'FINANCE_READ' | 'FINANCE_MANAGE';
