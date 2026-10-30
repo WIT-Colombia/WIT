@@ -85,7 +85,7 @@ function unpackState(value: string): GoogleState {
     throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
   }
   const application = candidate.application === undefined ? 'usuario' : candidate.application;
-  if (application !== 'usuario' && application !== 'negocios') throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
+  if (application !== 'usuario' && application !== 'negocios' && application !== 'admin') throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
   return { ...candidate, application } as GoogleState;
 }
 
