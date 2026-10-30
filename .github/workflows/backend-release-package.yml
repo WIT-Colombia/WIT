@@ -67,7 +67,7 @@ jobs:
           cp -R dist prisma release/
           npm ci --omit=dev --prefix release
           find release -type f \( -name '.env' -o -name '*.log' -o -name '*.pem' \) -delete
-          printf '%s\n' "\${RELEASE_SHA}" > release/RELEASE_COMMIT
+          printf '%s\n' "${RELEASE_SHA}" > release/RELEASE_COMMIT
       - name: Verify native dependencies on Amazon Linux 2023 x86_64
         run: |
           docker run --rm --platform linux/amd64 -v "$PWD/release:/release:ro" amazonlinux:2023 bash -lc '
