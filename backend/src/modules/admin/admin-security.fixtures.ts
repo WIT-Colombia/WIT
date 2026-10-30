@@ -6,7 +6,7 @@ const unique = (prefix: string) => prefix + '-' + randomBytes(8).toString('hex')
 export type AdminFixture = { userId: string; googleSub: string; email: string; cleanup: () => Promise<void> };
 
 export async function createAdminFixture(): Promise<AdminFixture> {
-  const googleSub = unique('google-sub');
+  const googleSub = 'ci-admin-google-sub';
   const email = unique('admin-test') + '@example.test';
   const user = await prisma.user.create({ data: { emailNormalized: email, displayName: 'Admin integration test', authIdentities: { create: { provider: 'GOOGLE', providerSubject: googleSub, verifiedAt: new Date() } }, adminRoleAssignments: { create: { role: 'SUPER_ADMIN', active: true } } }, select: { id: true } });
   return { userId: user.id, googleSub, email, cleanup: async () => { await prisma.adminSession.deleteMany({ where: { userId: user.id } }); await prisma.adminWebAuthnCredential.deleteMany({ where: { userId: user.id } }); await prisma.adminRoleAssignment.deleteMany({ where: { userId: user.id } }); await prisma.authIdentity.deleteMany({ where: { userId: user.id } }); await prisma.user.delete({ where: { id: user.id } }); } };
