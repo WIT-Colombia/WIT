@@ -3,6 +3,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { readAdminPendingOAuth, consumeAdminPendingOAuth, clearAdminPendingOAuth } from './admin-pending-oauth.service.js';
 import { beginAuthentication, finishAuthentication } from './admin-webauthn.service.js';
+import { issueAdminSession, requireAdminSession, revokeAdminSession } from './admin-session.service.js';
 
 export const adminAuthRouter = Router();
 
@@ -22,9 +23,14 @@ adminAuthRouter.get('/webauthn/options', async (request, response, next) => {
 adminAuthRouter.post('/webauthn/verify', async (request, response, next) => {
   try {
     const googleSub = await readAdminPendingOAuth(request);
-    const verified = await finishAuthentication(await userIdForGoogleSub(googleSub), request.body);
+    const userId = await userIdForGoogleSub(googleSub);
+    const verified = await finishAuthentication(userId, request.body);
     await consumeAdminPendingOAuth(request);
     clearAdminPendingOAuth(response);
-    response.json({ verified: verified.verified, requiresAdminSession: true });
+    await issueAdminSession(response, userId);
+    response.json({ verified: verified.verified, adminSession: true });
   } catch (error) { next(error); }
 });
+
+adminAuthRouter.get('/session', async (request, response, next) => { try { const session = await requireAdminSession(request); response.json({ authenticated: true, userId: session.userId }); } catch (error) { next(error); } });
+adminAuthRouter.post('/logout', async (request, response, next) => { try { await revokeAdminSession(request, response); response.status(204).send(); } catch (error) { next(error); } });
