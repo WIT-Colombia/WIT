@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 const localUrls = {
   landing: "http://127.0.0.1:5175",
   usuario: "http://127.0.0.1:5173",
@@ -14,9 +16,22 @@ const productionUrls = {
   api: "https://api.xamuko.com",
 } as const;
 
+const safePreviewUrls = {
+  ...productionUrls,
+  usuario: "#",
+  business: "#",
+  admin: "#",
+} as const;
+
 const isLocalDevelopment = typeof window !== "undefined" &&
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
-export const publicUrls = isLocalDevelopment ? localUrls : productionUrls;
+const officialDomainsEnabled = import.meta.env.VITE_ENABLE_OFFICIAL_DOMAINS === "true";
+
+export const publicUrls = isLocalDevelopment
+  ? localUrls
+  : officialDomainsEnabled
+    ? productionUrls
+    : safePreviewUrls;
 
 export const apiBaseUrl = `${publicUrls.api}/api/v1`;
