@@ -1,6 +1,8 @@
 name: XAMUKO frontend validation
 
 on:
+  push:
+    branches: [integration/preserve-all-20261029]
   pull_request:
     branches: [integration/preserve-all-20261029]
   workflow_dispatch:
