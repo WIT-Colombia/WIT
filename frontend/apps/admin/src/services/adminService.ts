@@ -1,5 +1,6 @@
 import { adminSessionLogout, getAdminSession, beginAdminWebAuthn, type RealAdmin } from './adminApiClient';
-export const startGoogleLogin = () => { window.location.assign('/api/v1/auth/google/start?application=admin&next=%2Fdashboard'); };
+import { buildApiUrl } from '@wit/utils';
+export const startGoogleLogin = () => { window.location.assign(`${buildApiUrl('/auth/google/start')}?application=admin&next=%2Fdashboard`); };
 import type { Admin, Permission, Role } from '../types/admin';
 export const API_BASE = '/api/v1';
 const grants: Partial<Record<Role, Permission[]>> = { principal: ['dashboard:read', 'verification:write', 'content:moderate', 'settings:write', 'business:write'], verification: ['dashboard:read', 'verification:write'], moderator: ['dashboard:read', 'content:moderate'], support: ['dashboard:read'], analyst: ['dashboard:read'] };
