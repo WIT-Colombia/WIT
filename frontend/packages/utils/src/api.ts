@@ -1,4 +1,5 @@
-export const API_BASE_URL = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_API_BASE_URL?.trim() || "https://api.xamuko.com/api/v1";
+const runtimeEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {};
+export const API_BASE_URL = runtimeEnv.VITE_API_BASE_URL?.trim() || (runtimeEnv.MODE === "production" ? "https://api.xamuko.com/api/v1" : "/api/v1");
 
 export function buildApiUrl(path: string): string {
   if (/^https?:\\/\\//i.test(path)) return path;
