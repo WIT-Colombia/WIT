@@ -27,6 +27,19 @@ test('Google OAuth state preserves the explicit Business application', () => {
   assert.equal(recovered.returnTo, '/mis-negocios');
 });
 
+test('Google OAuth state preserves Admin application without granting a session', () => {
+  const authorization = createGoogleAuthorization({ application: 'admin', flow: 'login', returnTo: '/dashboard', consent: true });
+  const headers: string[] = [];
+  setGoogleStateCookie({ appendHeader: (_name: string, value: string) => headers.push(value) } as never, authorization.state);
+  const cookie = headers[0].split(';', 1)[0];
+  const recovered = getGoogleState({ headers: { cookie } } as never);
+  assert.equal(recovered.application, 'admin');
+  assert.equal(recovered.flow, 'login');
+  assert.equal(recovered.returnTo, '/dashboard');
+  assert.equal(recovered.state, authorization.state.state);
+  assert.match(headers[0], /HttpOnly/);
+});
+
 test('Google OAuth return paths cannot redirect outside WIT', () => {
   assert.equal(safeGoogleReturnTo('https://evil.example'), '/home');
   assert.equal(safeGoogleReturnTo('//evil.example'), '/home');

@@ -9,7 +9,8 @@ import { confirmEmail, resetPassword, sendPasswordResetRequest, sendVerification
 import argon2 from 'argon2';
 import { clearRefreshCookie, getRefreshToken, setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
 import { env } from '../../config/env.js';
-import { createGoogleAuthorization, clearGoogleStateCookie, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode, type GoogleApplication } from './google-oauth.service.js';
+import { createGoogleAuthorization, clearGoogleStateCookie, isAuthorizedAdminGoogleSub, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode, type GoogleApplication } from './google-oauth.service.js';
+import { createAdminPendingOAuth } from '../admin/admin-pending-oauth.service.js';
 import { createGoogleDiagnostic, logGoogleDiagnostic, type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
 import { GoogleOAuthDiagnosticError } from './google-oauth.service.js';
 import { getPreferredLocation, savePreferredLocation } from './location.service.js';
@@ -46,7 +47,7 @@ function googleErrorCode(error: unknown): string {
 
 function googleApplication(value: unknown): GoogleApplication {
   if (value === undefined || value === '') return 'usuario';
-  if (value === 'usuario' || value === 'negocios') return value;
+  if (value === 'usuario' || value === 'negocios' || value === 'admin') return value;
   throw new AppError(400, 'GOOGLE_APPLICATION_INVALID', 'La aplicación de inicio de sesión no es válida.');
 }
 
@@ -90,6 +91,14 @@ export const googleCallbackController: RequestHandler = async (request, response
       const refreshToken = getRefreshToken(request);
       const linkedUserId = refreshToken ? await findSessionUserId(refreshToken) : undefined;
       if (!linkedUserId || linkedUserId !== state.userId) throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
+    }
+    if (stateApplication === 'admin') {
+      if (state.flow !== 'login') throw new AppError(400, 'GOOGLE_STATE_INVALID', 'El acceso Admin requiere un inicio de sesión Google nuevo.');
+      if (!isAuthorizedAdminGoogleSub(profile.subject)) throw new AppError(403, 'ADMIN_GOOGLE_SUB_DENIED', 'La identidad Google no está autorizada para XAMUKO Admin.');
+      await createAdminPendingOAuth(response, profile.subject);
+      clearGoogleStateCookie(response);
+      response.redirect(googleCallbackUrl('admin', { next: safeGoogleReturnTo(stateReturnTo) }));
+      return;
     }
     stage = 'user_resolution';
     let resolved: Awaited<ReturnType<typeof resolveGoogleUser>>;

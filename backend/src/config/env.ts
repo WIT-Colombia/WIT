@@ -81,11 +81,18 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
 const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI?.trim() ?? 'http://localhost:3000/api/v1/auth/google/callback';
 const googleFrontendUrl = process.env.GOOGLE_FRONTEND_URL?.trim() ?? 'http://localhost:5173';
 const googleFrontendUrls = Object.freeze({
+  admin: process.env.GOOGLE_FRONTEND_URL_ADMIN?.trim() ?? googleFrontendUrl,
   usuario: process.env.GOOGLE_FRONTEND_URL_USUARIO?.trim() ?? googleFrontendUrl,
   negocios: process.env.GOOGLE_FRONTEND_URL_NEGOCIOS?.trim() ?? 'http://localhost:5174',
   staging: process.env.GOOGLE_FRONTEND_URL_STAGING?.trim() ?? 'https://staging.xamuko.com',
 });
 const googleBackendUrl = process.env.GOOGLE_BACKEND_URL?.trim() ?? 'http://localhost:3000';
+
+const adminGoogleSubAllowlist = Object.freeze((process.env.ADMIN_GOOGLE_SUB_ALLOWLIST ?? '').split(',').map(value => value.trim()).filter(Boolean));
+const adminWebauthnRpId = process.env.ADMIN_WEBAUTHN_RP_ID?.trim();
+const adminWebauthnOrigin = process.env.ADMIN_WEBAUTHN_ORIGIN?.trim();
+const adminWebauthnRpName = process.env.ADMIN_WEBAUTHN_RP_NAME?.trim() ?? 'XAMUKO Admin';
+const adminPasskeyActivationCodeHash = process.env.ADMIN_PASSKEY_ACTIVATION_CODE_HASH?.trim();
 
 export const env = Object.freeze({
   nodeEnv,
@@ -114,4 +121,9 @@ export const env = Object.freeze({
   googleFrontendUrl,
   googleFrontendUrls,
   googleBackendUrl,
+  adminGoogleSubAllowlist,
+  adminWebauthnRpId,
+  adminWebauthnOrigin,
+  adminWebauthnRpName,
+  adminPasskeyActivationCodeHash,
 });

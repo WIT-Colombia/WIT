@@ -1,12 +1,10 @@
 import { Router } from 'express';
-import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
 import { requireAdmin } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 
 export const adminRouter = Router();
-adminRouter.use(requireAuth);
 adminRouter.get('/me', requireAdmin(), adminMeController);
 adminRouter.get('/administrators', requireAdmin('ADMINS_MANAGE'), administratorsController);
 adminRouter.post('/administrators/:userId/roles', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), assignRoleController);
