@@ -92,6 +92,7 @@ const adminGoogleSubAllowlist = Object.freeze((process.env.ADMIN_GOOGLE_SUB_ALLO
 const adminWebauthnRpId = process.env.ADMIN_WEBAUTHN_RP_ID?.trim();
 const adminWebauthnOrigin = process.env.ADMIN_WEBAUTHN_ORIGIN?.trim();
 const adminWebauthnRpName = process.env.ADMIN_WEBAUTHN_RP_NAME?.trim() ?? 'XAMUKO Admin';
+const adminPasskeyActivationCodeHash = process.env.ADMIN_PASSKEY_ACTIVATION_CODE_HASH?.trim();
 
 export const env = Object.freeze({
   nodeEnv,
@@ -124,4 +125,5 @@ export const env = Object.freeze({
   adminWebauthnRpId,
   adminWebauthnOrigin,
   adminWebauthnRpName,
+  adminPasskeyActivationCodeHash,
 });
