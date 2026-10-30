@@ -35,13 +35,6 @@ export function configureUnauthorizedHandler(handler: (() => Promise<boolean>) |
   unauthorizedHandler = handler;
 }
 
-export function buildApiUrl(path: string): string {
-  if (/^https?:\/\//i.test(path)) return path;
-  const base = API_BASE_URL.replace(/\/+$/, "");
-  const suffix = path.startsWith("/") ? path : `/${path}`;
-  if (base.endsWith("/api/v1") && suffix.startsWith("/api/v1/")) return `${base}${suffix.slice("/api/v1".length)}`;
-  return `${base}${suffix}`;
-}
 
 async function requestJsonInternal<T>(path: string, init: RequestInit, retryUnauthorized: boolean): Promise<T> {
   const headers = new Headers(init.headers);
