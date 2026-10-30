@@ -18,8 +18,8 @@ const productionUrls = {
 
 const safePreviewUrls = {
   ...productionUrls,
-  usuario: "#",
-  business: "#",
+  usuario: productionUrls.usuario,
+  business: productionUrls.business,
   admin: "#",
 } as const;
 
