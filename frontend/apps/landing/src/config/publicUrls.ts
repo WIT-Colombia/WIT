@@ -14,6 +14,9 @@ const productionUrls = {
   api: "https://api.xamuko.com",
 } as const;
 
-const isLocalDevelopment = typeof window !== "undefined" &&\n  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");\n\nexport const publicUrls = isLocalDevelopment ? localUrls : productionUrls;
+const isLocalDevelopment = typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+export const publicUrls = isLocalDevelopment ? localUrls : productionUrls;
 
 export const apiBaseUrl = `${publicUrls.api}/api/v1`;
