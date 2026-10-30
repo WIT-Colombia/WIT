@@ -18,7 +18,7 @@ import { getLikeIds, toggleLike } from "../services/userDataService";
 import { useFavorites } from "../services/favoritesService";
 import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { createAnalyticsInteractionId } from "../services/analyticsService";
-import xamukoLocalHero from "../assets/xamuko-local-hero.png";
+import xamukoLocalHero from "../assets/xamuko-local-hero.avif";
 import "./Home.css";
 import "./HomeChanges.css";
 import "./HomeAdjustments.css";
