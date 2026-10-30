@@ -31,6 +31,7 @@ jobs:
       run:
         working-directory: backend
     env:
+      RELEASE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       NODE_ENV: test
       DATABASE_URL: mysql://release_test:release_test@127.0.0.1:3306/xamuko_release_test
       AUTH_ACCESS_TOKEN_SECRET: ci-release-secret-not-for-production-0123456789
@@ -66,7 +67,7 @@ jobs:
           cp -R dist prisma release/
           npm ci --omit=dev --prefix release
           find release -type f \( -name '.env' -o -name '*.log' -o -name '*.pem' \) -delete
-          printf '%s\n' "\${GITHUB_SHA}" > release/RELEASE_COMMIT
+          printf '%s\n' "\${RELEASE_SHA}" > release/RELEASE_COMMIT
       - name: Verify native dependencies on Amazon Linux 2023 x86_64
         run: |
           docker run --rm --platform linux/amd64 -v "$PWD/release:/release:ro" amazonlinux:2023 bash -lc '
@@ -77,7 +78,7 @@ jobs:
           '
       - name: Create versioned archive and checksum
         run: |
-          archive="xamuko-backend-${GITHUB_SHA}.tar.gz"
+          archive="xamuko-backend-${RELEASE_SHA}.tar.gz"
           tar --exclude='*.env' --exclude='*.log' --exclude='*.pem' -czf "$archive" -C release .
           sha256sum "$archive" > "$archive.sha256"
           mkdir -p ../release-artifacts
