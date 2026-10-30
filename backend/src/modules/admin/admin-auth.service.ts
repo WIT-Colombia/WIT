@@ -20,19 +20,9 @@ export async function getAdminContext(userId: string, db: Db = prisma): Promise<
   return { userId, role, permissions: [...new Set(permissions)] as AdminPermission[] };
 }
 
-export function requireAdmin(permission?: AdminPermission) {
-  return async (request: any, _response: any, next: any) => {
-    try {
-      // Fail closed until an independently verified AdminSession middleware is installed.
-      // A regular Usuario/Business JWT must never authorize administrative routes.
-      throw new AppError(403, 'ADMIN_SECOND_FACTOR_REQUIRED', 'El acceso administrativo requiere una sesión con segundo factor verificado.');
-      const auth = (request as AuthenticatedRequest).auth;
-      const context = await getAdminContext(auth.userId);
-      if (!context) throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'No tienes acceso administrativo.');
-      if (permission && !context.permissions.includes(permission)) throw new AppError(403, 'ADMIN_PERMISSION_DENIED', 'No tienes permisos para esta acción.');
-      request.admin = context;
-      next();
-    } catch (error) { next(error); }
+export function requireAdmin(_permission?: AdminPermission) {
+  return (_request: any, _response: any, next: any) => {
+    next(new AppError(403, 'ADMIN_SECOND_FACTOR_REQUIRED', 'El acceso administrativo requiere una sesión con segundo factor verificado.'));
   };
 }
 
