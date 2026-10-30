@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import xamukoLogo from '../assets/xamuko-logo.png';
 import { authenticateWithPasskey } from '../services/adminService';
 import { getSession, beginAdminPasskeyActivation, finishAdminPasskeyActivation } from '../services/adminApiClient';
@@ -13,7 +13,7 @@ export function LoginPage() {
   const [activationMessage, setActivationMessage] = useState('');
   if (getSession()) return <Navigate to="/dashboard" replace />;
   async function passkey() { setBusy(true); setError(''); try { await authenticateWithPasskey(); navigate('/dashboard', { replace: true }); } catch (reason) { setError(reason instanceof Error ? reason.message : 'No pudimos verificar la passkey.'); } finally { setBusy(false); } }
-  async function activate(event: React.FormEvent) {
+  async function activate(event: FormEvent) {
     event.preventDefault(); setActivationBusy(true); setError(''); setActivationMessage('');
     try {
       if (!activationCode) throw new Error('Escribe el código de activación.');
