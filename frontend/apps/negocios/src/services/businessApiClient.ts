@@ -1,3 +1,6 @@
+import { API_BASE_URL, buildApiUrl } from '@wit/utils';
+export { buildApiUrl };
+
 export type ApiErrorPayload = {
   error?: {
     code?: string;
