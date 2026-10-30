@@ -2,6 +2,8 @@ name: XAMUKO backend integration (MySQL 8.4)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [integration/preserve-all-20261029]
   pull_request:
     branches: [security/frontend-toolchain-20261030]
 
