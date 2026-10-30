@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import xamukoLogo from "../../assets/XAMUKO-V1-transparent.png";
+import xamukoLogo from "../../assets/XAMUKO-V1-transparent.avif";
 import type { BusinessDetails } from "../../types/business";
 import { formatCategoryName } from "../../services/realBusinessAdapter";
 import { PersistedPhoto } from "../common/PersistedPhoto";

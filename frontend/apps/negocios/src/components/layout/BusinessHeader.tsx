@@ -1,4 +1,4 @@
-import xamukoLogo from "../../assets/XAMUKO-V1-transparent.png";
+import xamukoLogo from "../../assets/XAMUKO-V1-transparent.avif";
 import { Link } from "react-router-dom";
 import { useBusinessStore } from "../../services/businessStore";
 import { businessApi } from "../../services/businessApiClient";

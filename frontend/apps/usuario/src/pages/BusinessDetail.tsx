@@ -19,7 +19,7 @@ import { whatsappLink } from "../utils/whatsapp";
 import { PublicBusinessDigitalCard } from "../components/PublicBusinessDigitalCard";
 import { activeBusinessContext, consumeBusinessVisitContext, recordBusinessEvent } from "../services/analyticsService";
 import { listPublicReviews, type PublicReview } from "../services/reviewsService";
-import registrationInvitePerson from "../assets/registration-invite-person.png";
+import registrationInvitePerson from "../assets/registration-invite-person.avif";
 import "./BusinessDetail.css";
 import "./BusinessDetailEnhancements.css";
 import "./BusinessReviewEnhancements.css";

@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import type { Business } from "../data/mockData";
 import { PioneerBadge } from "./PioneerBadge";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
+import xamukoLogo from "../assets/XAMUKO-V1-transparent.avif";
 import "./PublicBusinessDigitalCard.css";
 import { generatePublicBusinessQrPng } from "../utils/publicBusinessQr";
 
