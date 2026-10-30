@@ -1317,3 +1317,15 @@ model AdminPendingOAuth {
   @@index([googleSub, expiresAt])
   @@index([expiresAt])
 }
+
+
+model AdminPasskeyActivation {
+  id         String   @id @default(uuid()) @db.Char(36)
+  googleSub  String   @db.VarChar(255)
+  tokenHash  String   @unique @db.VarChar(64)
+  expiresAt  DateTime @db.DateTime(3)
+  consumedAt DateTime? @db.DateTime(3)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  @@index([googleSub, expiresAt])
+  @@index([expiresAt])
+}
