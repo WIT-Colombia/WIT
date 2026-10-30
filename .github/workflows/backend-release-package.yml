@@ -1,0 +1,89 @@
+name: XAMUKO backend production release package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci/backend-release-package-20261030]
+  pull_request:
+    branches: [integration/preserve-all-20261029]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-and-package:
+    name: Verify and package backend release
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: xamuko_release_test
+          MYSQL_USER: release_test
+          MYSQL_PASSWORD: release_test
+          MYSQL_ROOT_PASSWORD: release_root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -prelease_root"
+          --health-interval=10s --health-timeout=5s --health-retries=30
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      NODE_ENV: test
+      DATABASE_URL: mysql://release_test:release_test@127.0.0.1:3306/xamuko_release_test
+      AUTH_ACCESS_TOKEN_SECRET: ci-release-secret-not-for-production-0123456789
+      AUTH_TRUSTED_ORIGINS: http://127.0.0.1:5173,http://localhost:5173
+      GOOGLE_CLIENT_ID: ci-release.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: ci-release-secret
+      ADMIN_PASSKEY_ACTIVATION_CODE_HASH: 5c55a2f6a1da4768a635d45e8b0e0ba1bae9786b6a8e3351c435800bcf852aea
+      ADMIN_GOOGLE_SUB_ALLOWLIST: ci-admin-google-sub
+      ADMIN_WEBAUTHN_RP_ID: localhost
+      ADMIN_WEBAUTHN_ORIGIN: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install, generate, migrate, test, typecheck and build
+        run: |
+          npm ci
+          npm run prisma:generate
+          npx prisma migrate deploy
+          npm test
+          npm run typecheck
+          npm run build
+      - name: Verify CORS implementation
+        run: grep -q "Access-Control-Allow-Origin" src/app.ts
+      - name: Prepare production dependency tree
+        run: |
+          rm -rf release
+          mkdir -p release
+          cp package.json package-lock.json prisma.config.ts tsconfig.json release/
+          cp -R dist prisma release/
+          npm ci --omit=dev --prefix release
+          find release -type f \( -name '.env' -o -name '*.log' -o -name '*.pem' \) -delete
+          printf '%s\n' "\${GITHUB_SHA}" > release/RELEASE_COMMIT
+      - name: Verify native dependencies on Amazon Linux 2023 x86_64
+        run: |
+          docker run --rm --platform linux/amd64 -v "$PWD/release:/release:ro" amazonlinux:2023 bash -lc '
+            dnf install -y tar gzip findutils >/dev/null
+            test -f /release/RELEASE_COMMIT
+            test -d /release/node_modules/argon2
+            test -d /release/node_modules/mariadb
+          '
+      - name: Create versioned archive and checksum
+        run: |
+          archive="xamuko-backend-\${GITHUB_SHA}.tar.gz"
+          tar --exclude='*.env' --exclude='*.log' --exclude='*.pem' -czf "$archive" -C backend/release .
+          sha256sum "$archive" > "$archive.sha256"
+          mkdir -p ../release-artifacts
+          cp "$archive" "$archive.sha256" ../release-artifacts/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-backend-\${GITHUB_SHA}
+          path: release-artifacts/*
+          if-no-files-found: error
