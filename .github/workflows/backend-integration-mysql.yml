@@ -5,7 +5,7 @@ on:
   push:
     branches: [integration/preserve-all-20261029]
   pull_request:
-    branches: [security/frontend-toolchain-20261030]
+    branches: [security/frontend-toolchain-20261030, integration/preserve-all-20261029]
 
 permissions:
   contents: read
@@ -29,11 +29,9 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=30
-
     defaults:
       run:
         working-directory: backend
-
     env:
       NODE_ENV: test
       DATABASE_URL: mysql://xamuko_test_app:integration-app@127.0.0.1:3306/xamuko_integration_test
@@ -43,52 +41,42 @@ jobs:
       GOOGLE_CLIENT_SECRET: ci-fake-secret-not-for-production
       XAMUKO_TEST_API_URL: http://127.0.0.1:3100/api/v1
       XAMUKO_TEST_ORIGIN: http://127.0.0.1:5174
-
+      ADMIN_PASSKEY_ACTIVATION_CODE_HASH: 5c55a2f6a1da4768a635d45e8b0e0ba1bae9786b6a8e3351c435800bcf852aea
+      ADMIN_GOOGLE_SUB_ALLOWLIST: ci-admin-google-sub
+      ADMIN_WEBAUTHN_RP_ID: localhost
+      ADMIN_WEBAUTHN_ORIGIN: http://localhost:5173
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js 24
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
           cache: npm
           cache-dependency-path: backend/package-lock.json
-
       - name: Install dependencies
         run: npm ci
-
       - name: Generate Prisma Client
         run: npm run prisma:generate
-
-      - name: Apply all 31 Prisma migrations
+      - name: Apply migrations
         run: npx prisma migrate deploy
-
-      - name: Verify isolated schema
-        run: |
-          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uxamuko_test_app -pintegration-app xamuko_integration_test \
-            -e "SELECT COUNT(*) AS applied_migrations FROM _prisma_migrations WHERE finished_at IS NOT NULL;"
-
-      - name: Diagnose MySQL foreign keys before HTTP tests
-        env:
-          MYSQL_PWD: integration-root
-        run: |
-          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uroot xamuko_integration_test -e "SHOW CREATE TABLE BusinessSubscription; SHOW CREATE TABLE Business; SHOW CREATE TABLE AdminRoleAssignment; SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SELECT CONSTRAINT_NAME, TABLE_NAME, REFERENCED_TABLE_NAME, UPDATE_RULE, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SHOW TRIGGERS WHERE \`Table\` IN ('BusinessSubscription','Business','AdminRoleAssignment');"
-
       - name: Run HTTP integration suite
-        run: |
-          npm run test:integration:pro
-
-      - name: Diagnose MySQL foreign keys after HTTP tests
-        if: always()
-        env:
-          MYSQL_PWD: integration-root
-        run: |
-          mysql --protocol=tcp -h 127.0.0.1 -P 3306 -uroot xamuko_integration_test -e "SHOW CREATE TABLE BusinessSubscription; SHOW CREATE TABLE Business; SHOW CREATE TABLE AdminRoleAssignment; SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SELECT CONSTRAINT_NAME, TABLE_NAME, REFERENCED_TABLE_NAME, UPDATE_RULE, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('BusinessSubscription','Business','AdminRoleAssignment'); SHOW TRIGGERS WHERE \`Table\` IN ('BusinessSubscription','Business','AdminRoleAssignment'); SHOW ENGINE INNODB STATUS\\G"
-
+        run: npm run test:integration:pro
       - name: Run backend unit and finance coverage
-        run: npm test
-
+        run: |
+          set +e
+          npm test > npm-test.log 2>&1
+          status=$?
+          cat npm-test.log
+          echo "npm test exit code: $status" >> npm-test.log
+          exit $status
+      - name: Upload backend unit test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-unit-test-log
+          path: backend/npm-test.log
+          if-no-files-found: warn
       - name: Typecheck and build
         run: |
           npm run typecheck
