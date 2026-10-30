@@ -34,6 +34,8 @@ export async function beginPasskeyActivation(request: Request, response: Respons
   if (!activationCodeMatches(configured, supplied)) throw new AppError(403, 'ADMIN_ACTIVATION_AUTH_REQUIRED', 'Se requiere autorización operativa independiente.');
   const googleSub = await readAdminPendingOAuth(request);
   const userId = await userForSub(googleSub);
+  const existing = await (prisma as any).adminWebAuthnCredential.count({ where: { userId, revokedAt: null } });
+  if (existing > 0) throw new AppError(409, 'ADMIN_PASSKEY_ALREADY_REGISTERED', 'La activación inicial ya fue utilizada para esta cuenta.');
   const token = randomBytes(48).toString('base64url');
   await (prisma as any).adminPasskeyActivation.create({ data: { googleSub, tokenHash: hash(token), expiresAt: new Date(Date.now() + TTL * 1000) } });
   setCookie(response, token, TTL);
