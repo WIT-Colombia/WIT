@@ -42,6 +42,8 @@ export async function beginPasskeyActivation(request: Request, response: Respons
   return beginRegistration(userId);
 }
 export async function finishPasskeyActivation(request: Request) {
+  const supplied = request.header('x-admin-activation-code') ?? '';
+  if (!activationCodeMatches(env.adminPasskeyActivationCodeHash, supplied)) throw new AppError(403, 'ADMIN_ACTIVATION_AUTH_REQUIRED', 'Se requiere autorización operativa independiente.');
   const activation = await tokenFrom(request);
   const userId = await userForSub(activation.googleSub);
   const result = await finishRegistration(userId, request.body);
