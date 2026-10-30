@@ -60,4 +60,13 @@ export async function beginAdminWebAuthn() {
   const response = credential.response as AuthenticatorAssertionResponse;
   return request<{ verified: boolean; adminSession: boolean }>('/admin/auth/webauthn/verify', { method: 'POST', headers: { 'X-Admin-CSRF': adminCsrf() }, body: JSON.stringify({ id: credential.id, rawId: toBase64Url(credential.rawId), type: credential.type, response: { clientDataJSON: toBase64Url(response.clientDataJSON), authenticatorData: toBase64Url(response.authenticatorData), signature: toBase64Url(response.signature), userHandle: response.userHandle ? toBase64Url(response.userHandle) : null } }) });
 }
+export async function beginAdminPasskeyActivation(code: string) {
+  const options = await request<any>('/admin/auth/passkey/activation/options', { headers: { 'X-Admin-Activation-Code': code } });
+  return { ...options, challenge: fromBase64Url(options.challenge), user: { ...options.user, id: fromBase64Url(options.user.id) }, excludeCredentials: (options.excludeCredentials ?? []).map((item: any) => ({ ...item, id: fromBase64Url(item.id) })) };
+}
+export async function finishAdminPasskeyActivation(code: string, credential: PublicKeyCredential) {
+  const response = credential.response as AuthenticatorAttestationResponse;
+  return request('/admin/auth/passkey/activation/verify', { method: 'POST', headers: { 'X-Admin-Activation-Code': code }, body: JSON.stringify({ id: credential.id, rawId: toBase64Url(credential.rawId), type: credential.type, response: { clientDataJSON: toBase64Url(response.clientDataJSON), attestationObject: toBase64Url(response.attestationObject), transports: response.getTransports?.() ?? [] } }) });
+}
+
 export async function adminSessionLogout() { return request('/admin/auth/logout', { method: 'POST', headers: { 'X-Admin-CSRF': adminCsrf() }, body: '{}' }); }
