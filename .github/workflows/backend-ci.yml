@@ -32,6 +32,7 @@ jobs:
       NODE_ENV: development
       DATABASE_URL: mysql://test:test@127.0.0.1:3306/xamuko_test
       ADMIN_PASSKEY_ACTIVATION_CODE_HASH: 5c55a2f6a1da4768a635d45e8b0e0ba1bae9786b6a8e3351c435800bcf852aea
+      ADMIN_GOOGLE_SUB_ALLOWLIST: ci-admin-google-sub
       AUTH_ACCESS_TOKEN_SECRET: ci-test-secret-not-for-production-0123456789
       GOOGLE_CLIENT_ID: xamuko-test.apps.googleusercontent.com
       GOOGLE_CLIENT_SECRET: test-secret-not-real
