@@ -10,6 +10,7 @@ import argon2 from 'argon2';
 import { clearRefreshCookie, getRefreshToken, setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
 import { env } from '../../config/env.js';
 import { createGoogleAuthorization, clearGoogleStateCookie, isAuthorizedAdminGoogleSub, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode, type GoogleApplication } from './google-oauth.service.js';
+import { createAdminPendingOAuth } from '../admin/admin-pending-oauth.service.js';
 import { createGoogleDiagnostic, logGoogleDiagnostic, type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
 import { GoogleOAuthDiagnosticError } from './google-oauth.service.js';
 import { getPreferredLocation, savePreferredLocation } from './location.service.js';
@@ -93,8 +94,9 @@ export const googleCallbackController: RequestHandler = async (request, response
     }
     if (stateApplication === 'admin') {
       if (!isAuthorizedAdminGoogleSub(profile.subject)) throw new AppError(403, 'ADMIN_GOOGLE_SUB_DENIED', 'La identidad Google no está autorizada para XAMUKO Admin.');
+      await createAdminPendingOAuth(response, profile.subject);
       clearGoogleStateCookie(response);
-      response.redirect(googleCallbackUrl('admin', { next: safeGoogleReturnTo(stateReturnTo), adminPending: '1' }));
+      response.redirect(googleCallbackUrl('admin', { next: safeGoogleReturnTo(stateReturnTo) }));
       return;
     }
     stage = 'user_resolution';
