@@ -108,7 +108,7 @@ export default function Register() {
             {(registration ? ["Explora negocios en tu zona.", "Guarda tus favoritos y recibe recomendaciones.", "Comparte tu experiencia y apoya lo local."] : ["Explora negocios cerca de ti.", "Guarda tus favoritos y comparte.", "Apoya los negocios locales de tu ciudad."]).map((item, index) => <li key={item}><span aria-hidden="true">{[<PinIcon key="pin"/>, "♥", "★"][index]}</span><small>{item}</small></li>)}
           </ul>
         </div>
-        <div className="user-auth-tagline">{registration ? <><span className="user-auth-tagline-default">Descubre · Apoya · Disfruta</span><span className="user-auth-tagline-tablet">Lo que necesitas,<br/>está más cerca.</span></> : <>Lo que necesitas,<br/>está más cerca.</>}</div>
+        <div className="user-auth-tagline">{registration ? <><span className="user-auth-tagline-default">Descubre · Apoya · Disfruta</span></> : <></>}</div>
       </section>
 
       <section className="user-auth-main" aria-label={registration ? "Crear cuenta" : "Iniciar sesión"}>
