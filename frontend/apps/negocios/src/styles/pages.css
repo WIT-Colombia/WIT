@@ -1292,3 +1292,6 @@
 @media(max-width:800px){.auth-page .business-header{display:none}.auth-layout{display:block;width:100%;min-height:100vh;padding:24px 16px}.auth-story{display:none}.auth-form-card{width:min(100%,540px);margin:0 auto;padding:28px 24px;border:1px solid #e0e8f3;border-radius:20px;background:#fff;box-shadow:0 16px 40px rgba(24,46,105,.1)}.auth-form-heading h2{font-size:27px}}
 @media(max-width:480px){.auth-layout{min-height:100vh;padding:15px 12px 28px}.auth-form-card{width:100%;padding:23px 18px;border-radius:18px}.auth-form-heading h2{font-size:24px}.auth-form-heading p{font-size:12px}.auth-form{gap:10px}.auth-form input{min-height:44px}.auth-social-options{margin-top:2px}}
 .recovery-profile-link,.recovery-profile-link:hover,.recovery-profile-link:focus,.recovery-profile-link:visited{text-decoration:none}
+
+/* Identidad XAMUKO: logotipo oficial y eslogan en cabeceras. */
+.business-header-copy{display:grid;gap:3px;min-width:0}.business-header-tagline{color:var(--wit-text-secondary);font-size:10px;line-height:1.2;white-space:nowrap}.business-header-name{display:inline-flex;align-items:center;gap:6px}@media(max-width:700px){.business-header-tagline{max-width:125px;overflow:hidden;font-size:9px;text-overflow:ellipsis}.business-header-copy{gap:2px}.business-header-brand{gap:8px}.business-header-name{padding-left:8px;font-size:10px}}
