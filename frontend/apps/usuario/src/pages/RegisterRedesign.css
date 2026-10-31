@@ -800,3 +800,15 @@
 @media (max-width: 800px) {
   .user-auth-brand { padding: 8px 11px; border-radius: 13px; }
 }
+
+
+/* Desktop: let the brand column stretch with the full auth layout. */
+@media (min-width: 801px) {
+  .user-auth-layout { align-items: stretch; }
+  .user-auth-story {
+    position: relative;
+    height: auto;
+    min-height: 100dvh;
+    align-self: stretch;
+  }
+}
