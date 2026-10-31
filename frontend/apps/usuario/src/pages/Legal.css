@@ -92,19 +92,6 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.legal-document-brand {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.legal-document-brand img {
-  display: block;
-  width: 156px;
-  height: auto;
-}
-
 .legal-document-heading h2 {
   margin: 0 0 8px;
   color: #7b3ffb;
@@ -238,16 +225,6 @@
     margin-top: 14px;
     padding: 24px 20px 30px;
     border-radius: 20px;
-  }
-
-  .legal-document-brand {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .legal-document-brand img {
-    width: 142px;
   }
 
   .legal-document-heading h2 {

@@ -1,6 +1,5 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { PageLayout } from "../components/PageLayout";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.avif";
 import "./Legal.css";
 
 const termsSections = [
@@ -35,7 +34,7 @@ export default function Legal() {
   return <PageLayout className="legal-page">
     <div className="legal-layout">
       <aside className="legal-sidebar"><span className="legal-eyebrow">CENTRO LEGAL</span><h1>{title}</h1><p>{description}</p><nav aria-label="Documentos legales"><Link className={isTerms ? "active" : ""} to={`/legal/terms?from=${fromRegister ? "register" : "settings"}`}>Términos y condiciones</Link><Link className={page === "privacy" ? "active" : ""} to={`/legal/privacy?from=${fromRegister ? "register" : "settings"}`}>Política de privacidad</Link></nav></aside>
-      <article className="legal-card legal-document"><div className="legal-document-heading"><div className="legal-document-brand"><img src={xamukoLogo} alt="XAMUKO"/><span className="legal-eyebrow">WIT USUARIOS · DOCUMENTO LEGAL</span></div><h2>{title}</h2><p>Última actualización: 3 de octubre de 2026</p></div>
+      <article className="legal-card legal-document"><div className="legal-document-heading"><h2>{title}</h2><p>Última actualización: 3 de octubre de 2026</p></div>
         {isTerms ? <><nav className="legal-toc" aria-label="Contenido del documento"><strong>En este documento</strong>{termsSections.map((section) => <a key={section.id} href={`#${section.id}`}>{section.title}</a>)}</nav>{termsSections.map((section) => <section className="legal-section" id={section.id} key={section.id}><h3>{section.title}</h3>{section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</section>)}</> : <><section className="legal-section"><h3>Tratamiento de datos</h3><p>{description}</p></section><section className="legal-section"><h3>Marco aplicable</h3><p>El contenido definitivo se completará antes de activar el registro y la autenticación real.</p></section></>}
         <Link className="legal-back" to={returnTo}>← Volver a {returnLabel}</Link>
       </article>
