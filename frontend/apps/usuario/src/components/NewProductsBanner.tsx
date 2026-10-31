@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { Product } from "../data/mockData";
 import { ProductCard } from "./EntityCards";
-import "./NewProductsBanner.css";
+import { isHorizontalDominantGesture } from "../utils/gestureDirection";\nimport "./NewProductsBanner.css";
 import "./NewProductsBannerEnhancements.css";
 
 type NewProductsBannerProps = {
@@ -43,7 +43,7 @@ export function NewProductsBanner({ products, likedIds, onLike, getLikeCount }: 
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
     const deltaY = event.clientY - drag.startY;
-    if (Math.abs(delta) > 6 && Math.abs(delta) > Math.abs(deltaY)) drag.moved = true;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
