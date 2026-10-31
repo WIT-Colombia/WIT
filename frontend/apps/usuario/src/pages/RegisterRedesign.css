@@ -866,6 +866,36 @@
 
 .user-auth-tagline-tablet { display: none; }
 
+/* Desktop and iPad share the same visual brand column. The reference artwork
+   is kept in the markup for responsive/auth reuse, but must not replace the
+   live logo, copy, benefits and tagline on wide screens. */
+@media (min-width: 801px) {
+  .user-auth-reference-art { display: none; }
+
+  .user-auth-story > :not(.user-auth-reference-art) {
+    opacity: 1;
+  }
+
+  .user-auth-story {
+    display: flex;
+    height: auto;
+    min-height: 100dvh;
+    align-self: stretch;
+    justify-content: flex-start;
+  }
+
+  .user-auth-story-copy {
+    align-self: center;
+    margin-block: clamp(28px, 6vh, 74px);
+  }
+
+  .user-auth-tagline {
+    position: static;
+    align-self: flex-start;
+    margin-top: auto;
+  }
+}
+
 /* iPad/tablet landscape: use the slogan as the final normal column item. */
 @media (min-width: 801px) and (max-width: 1100px) {
   .user-auth-story {
