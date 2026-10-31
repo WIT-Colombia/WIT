@@ -37,7 +37,7 @@ function mapBusiness(value: PublicSummary): Business {
     name: value.name,
     category,
     rating: typeof value.rating === "number" && Number.isFinite(value.rating) ? value.rating : 0,
-    reviewCount: Number.isInteger(value.reviewCount) && value.reviewCount > 0 ? value.reviewCount : 0,
+    reviewCount: Number.isInteger(value.reviewCount) && (value.reviewCount ?? 0) > 0 ? (value.reviewCount ?? 0) : 0,
     distanceKm: Number.POSITIVE_INFINITY,
     isOpen: true,
     address: location?.address ?? (location?.cityName ?? "Ubicación no pública"),
