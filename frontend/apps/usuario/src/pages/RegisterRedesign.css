@@ -785,3 +785,18 @@
     margin-top: 0;
   }
 }
+
+
+/* Preserve the official full-colour mark against the dark brand canvas. */
+.user-auth-brand {
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,.7);
+  border-radius: 16px;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 10px 30px rgba(15,23,42,.18);
+  backdrop-filter: blur(10px);
+}
+.user-auth-brand img { filter: none; }
+@media (max-width: 800px) {
+  .user-auth-brand { padding: 8px 11px; border-radius: 13px; }
+}

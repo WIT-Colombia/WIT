@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../services/httpClient";
 import { validateEmail } from "../services/emailValidation";
 import { getRememberedEmail, startGoogleLogin } from "../services/authService";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.avif";
+import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
 import authReference from "../assets/auth-reference-users2.avif";
 import "./Register.css";
 import "./RegisterEnhancements.css";
