@@ -5,7 +5,7 @@ import { buildApiUrl } from "@wit/utils";
 
 type PublicPhoto = { id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean };
 type PublicCategory = { id: string; code: string; name: string; iconKey: string | null } | null;
-type PublicSummary = { pioneerNumber?: number | null; isFeatured?: boolean; plan?: "free" | "premium"; createdAt?: string; publicId: string; name: string; sede: string | null; adultOnly: boolean; description: string | null; category: PublicCategory; secondaryCategories?: PublicCategory[]; modalities?: { type: string }[]; location: { cityName: string; regionName: string | null; additionalAddressInfo?: string | null; address: string | null; latitude: number | null; longitude: number | null; visibility: string } | null; coverPhoto: PublicPhoto | null; profilePhoto: PublicPhoto | null };
+type PublicSummary = { rating?: number | null; reviewCount?: number; pioneerNumber?: number | null; isFeatured?: boolean; plan?: "free" | "premium"; createdAt?: string; publicId: string; name: string; sede: string | null; adultOnly: boolean; description: string | null; category: PublicCategory; secondaryCategories?: PublicCategory[]; modalities?: { type: string }[]; location: { cityName: string; regionName: string | null; additionalAddressInfo?: string | null; address: string | null; latitude: number | null; longitude: number | null; visibility: string } | null; coverPhoto: PublicPhoto | null; profilePhoto: PublicPhoto | null };
 type PublicDetail = PublicSummary & { gallery: PublicPhoto[]; contacts: { email: string | null; phone: string | null; whatsapp: string | null; website: string | null }; socialNetworks?: { instagram: string | null; facebook: string | null; x: string | null; tiktok: string | null }; modalities?: { type: string; hours: { dayOfWeek: string; isClosed: boolean; opensAt: string | null; closesAt: string | null }[] }[]; products: PublicOffer[]; services: PublicOffer[] };
 type PublicOffer = { id: string; name: string; description: string | null; createdAt?: string; isOffer?: boolean; offerLabel?: string | null; discount?: string | null; offerDeadline?: string | null; promotion?: { id: string } | null; category: PublicCategory; price: { amount: string | null; currency: string | null; text: string | null; negotiable: boolean }; photos: PublicPhoto[] };
 type UniversalOffer = PublicOffer & { business: { publicId: string } };
@@ -36,8 +36,8 @@ function mapBusiness(value: PublicSummary): Business {
     createdAt: value.createdAt,
     name: value.name,
     category,
-    rating: 0,
-    reviewCount: 0,
+    rating: typeof value.rating === "number" && Number.isFinite(value.rating) ? value.rating : 0,
+    reviewCount: Number.isInteger(value.reviewCount) && value.reviewCount > 0 ? value.reviewCount : 0,
     distanceKm: Number.POSITIVE_INFINITY,
     isOpen: true,
     address: location?.address ?? (location?.cityName ?? "Ubicación no pública"),
