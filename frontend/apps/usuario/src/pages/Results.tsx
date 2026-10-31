@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { alphabeticalCategories, businesses as demoBusinesses, type Business, type Product, type Service } from "../data/mockData";
 import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
+import { listPublicReviews } from "../services/reviewsService";
 import { useLocationContext } from "../context/LocationContext";
 import { SiteHeader } from "../components/SiteHeader";
 import { SearchBar, createSearchId } from "../components/SearchBar";
@@ -81,10 +82,23 @@ export default function Results() {
     }
     manualTabSelection.current = false;
     searchUniversal({ query, category, latitude: selection?.coordinates?.lat, longitude: selection?.coordinates?.lng, businessPageSize: 50, productPageSize: 50, servicePageSize: 50 })
-      .then(({ businesses: foundBusinesses, products: foundProducts, services: foundServices, pagination }) => {
+      .then(async ({ businesses: foundBusinesses, products: foundProducts, services: foundServices, pagination }) => {
+        if (!current) return;
+        const ratedBusinesses = await Promise.all(foundBusinesses.map(async (business) => {
+          try {
+            const response = await listPublicReviews(business.id, 1, 1);
+            return {
+              ...business,
+              rating: response.summary?.average ?? business.rating,
+              reviewCount: response.summary?.total ?? business.reviewCount,
+            };
+          } catch {
+            return business;
+          }
+        }));
         if (!current) return;
         const userCoordinates = selection?.coordinates;
-        setItems(foundBusinesses.map((business) => ({ ...business, distanceKm: userCoordinates && business.coordinates ? distanceBetweenCoordinates(userCoordinates, business.coordinates) : Number.POSITIVE_INFINITY })));
+        setItems(ratedBusinesses.map((business) => ({ ...business, distanceKm: userCoordinates && business.coordinates ? distanceBetweenCoordinates(userCoordinates, business.coordinates) : Number.POSITIVE_INFINITY })));
         setMatchingProducts(foundProducts);
         setMatchingServices(foundServices);
         setPages({ businesses: 1, products: 1, services: 1 });
