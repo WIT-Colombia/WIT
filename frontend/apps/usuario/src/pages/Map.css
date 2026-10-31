@@ -170,10 +170,10 @@
   .map-results-heading, .map-results-more, .map-empty { grid-column: 1; }
 }
 @media (max-width: 700px) {
-  .map-results-grid { grid-template-columns: 1fr; gap: 12px; }
-  .map-results .entity-card__image { height: 165px; min-height: 165px; }
-  .map-results .entity-card__content { padding: 12px; }
+  .map-results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .map-results .entity-card__image { height: 130px; min-height: 130px; }
+  .map-results .entity-card__content { padding: 10px; }
   .map-results .entity-card__heading h3 { font-size: 13px; }
-  .map-results .entity-address { margin: 9px 0; font-size: 9px; }
+  .map-results .entity-address { margin: 8px 0; font-size: 9px; }
   .map-results-heading, .map-results-more, .map-empty { grid-column: 1; }
 }
