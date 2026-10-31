@@ -12,7 +12,8 @@
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 780px);
   align-items: start;
-  gap: clamp(32px, 6vw, 88px);
+  row-gap: 18px;
+  column-gap: clamp(32px, 6vw, 88px);
   margin: 0 auto;
 }
 
