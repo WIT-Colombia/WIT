@@ -20,7 +20,8 @@ import { PublicBusinessDigitalCard } from "../components/PublicBusinessDigitalCa
 import { activeBusinessContext, consumeBusinessVisitContext, recordBusinessEvent } from "../services/analyticsService";
 import { listPublicReviews, type PublicReview } from "../services/reviewsService";
 import registrationInvitePerson from "../assets/registration-invite-person.avif";
-import { isHorizontalDominantGesture } from "../utils/gestureDirection";\nimport "./BusinessDetail.css";
+import { isHorizontalDominantGesture } from "../utils/gestureDirection";
+import "./BusinessDetail.css";
 import "./BusinessDetailEnhancements.css";
 import "./BusinessReviewEnhancements.css";
 import "./BusinessRatingEnhancements.css";
