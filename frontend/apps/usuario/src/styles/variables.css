@@ -7,7 +7,11 @@
   --xamuko-background: #F8FAFC;
   --xamuko-muted: #64748B;
   --xamuko-border: #E2E8F0;
-  --xamuko-gradient: linear-gradient(110deg, #7B3FFB 0%, #7B3FFB 62%, #2563EB 86%, #22D3EE 100%);\n  --xamuko-violet-soft: #F1EBFF;\n  --xamuko-violet-glow: rgba(123, 63, 251, .18);\n  --xamuko-blue-glow: rgba(37, 99, 235, .14);\n  --xamuko-cyan-glow: rgba(34, 211, 238, .12);
+  --xamuko-gradient: linear-gradient(110deg, #7B3FFB 0%, #7B3FFB 62%, #2563EB 86%, #22D3EE 100%);
+  --xamuko-violet-soft: #F1EBFF;
+  --xamuko-violet-glow: rgba(123, 63, 251, .18);
+  --xamuko-blue-glow: rgba(37, 99, 235, .14);
+  --xamuko-cyan-glow: rgba(34, 211, 238, .12);
   --wit-primary: #16B978;
   --wit-primary-dark: #0C8F5B;
   --wit-primary-light: #DDF7EC;

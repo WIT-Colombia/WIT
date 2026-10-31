@@ -762,3 +762,26 @@
   box-shadow: 0 5px 12px var(--xamuko-violet-glow);
   transform: translateY(1px);
 }
+
+
+/* Keep the desktop brand column balanced once the violet background is visible. */
+@media (min-width: 801px) {
+  .user-auth-story {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-items: start;
+  }
+  .user-auth-brand {
+    position: relative;
+    z-index: 2;
+  }
+  .user-auth-story-copy {
+    align-self: center;
+    margin-block: clamp(28px, 6vh, 74px);
+  }
+  .user-auth-tagline {
+    position: relative;
+    z-index: 2;
+    margin-top: 0;
+  }
+}
