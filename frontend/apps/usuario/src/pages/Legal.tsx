@@ -29,7 +29,15 @@ export default function Legal() {
   const navigate = useNavigate();
   const fromRegister = params.get("from") === "register";
   const fallbackReturnTo = fromRegister ? "/register" : "/settings";
-  const goBack = () => window.history.length > 1 ? navigate(-1) : navigate(fallbackReturnTo);
+  const goBack = () => {
+    const previousUrl = document.referrer;
+    const hasSameOriginPreviousPage = previousUrl && new URL(previousUrl).origin === window.location.origin;
+    if (hasSameOriginPreviousPage && window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(fallbackReturnTo);
+  };
   const isTerms = page === "terms";
   const [title, description] = isTerms ? ["Términos y condiciones", "Información clara para usar WIT con confianza."] : (copy[page] ?? copy.privacy);
   return <PageLayout className="legal-page">
