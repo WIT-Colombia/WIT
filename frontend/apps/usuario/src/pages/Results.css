@@ -496,3 +496,8 @@
 .results-page .results-businesses .entity-rating,
 .results-page .results-businesses .entity-business-card--featured .entity-rating { color: var(--wit-text-primary) !important; }
 .results-page .results-businesses .entity-rating .entity-rating__star { color: #f5b53d !important; }
+
+
+/* Preserve horizontal carousels while allowing vertical page scrolling on touch. */
+.results-category-chips,
+.results-tabs-scroll { touch-action: pan-x pan-y; }

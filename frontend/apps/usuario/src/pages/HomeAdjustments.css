@@ -200,3 +200,11 @@
   .home-page .admob-banner-slot--home-footer { margin-top:24px; }
 }
 .home-page .home-empty-offers{margin:0;padding:18px 0;color:var(--xamuko-muted);font-size:13px}
+
+
+/* Native horizontal scrollers must not capture vertical page swipes on iOS. */
+.home-page .home-business-banner__viewport,
+.home-page .category-list,
+.home-page .home-featured-section .business-grid,
+.home-page .home-nearby-section .business-grid,
+.home-page .special-offers__list { touch-action: pan-x pan-y; }
