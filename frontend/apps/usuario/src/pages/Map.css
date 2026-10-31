@@ -203,3 +203,32 @@
   font-weight: 600;
   line-height: 1.2 !important;
 }
+
+/* Map cards match the approved Inicio card dimensions exactly. */
+.map-results .entity-business-card .entity-card__heading h3 {
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+}
+.map-results .entity-business-card .entity-business-meta > p {
+  color: #5d43a6 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 1.2 !important;
+}
+.map-results .entity-business-card .entity-business-meta .entity-rating {
+  color: #242950 !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
+@media (max-width: 700px) {
+  .map-results .entity-business-card .entity-card__heading h3 {
+    font-size: 11px !important;
+    line-height: 1.12 !important;
+  }
+  .map-results .entity-business-card .entity-business-meta > p {
+    font-size: 9px !important;
+  }
+  .map-results .entity-business-card .entity-business-meta .entity-rating {
+    font-size: 9px !important;
+  }
+}
