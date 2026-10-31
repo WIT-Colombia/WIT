@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { Product } from "../data/mockData";
 import { ProductCard } from "./EntityCards";
-import { isHorizontalDominantGesture } from "../utils/gestureDirection";\nimport "./NewProductsBanner.css";
+import { isHorizontalDominantGesture } from "../utils/gestureDirection";
+import "./NewProductsBanner.css";
 import "./NewProductsBannerEnhancements.css";
 
 type NewProductsBannerProps = {
