@@ -234,6 +234,13 @@
     white-space: nowrap;
   }
 
+  .legal-back {
+    min-height: 34px;
+    margin-bottom: 14px;
+    padding: 0 11px;
+    font-size: 10px;
+  }
+
   .legal-document {
     margin-top: 14px;
     padding: 24px 20px 30px;
