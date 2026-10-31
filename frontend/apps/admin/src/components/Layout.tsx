@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { navigation, auxiliaryNavigation } from '../data/navigation';
-import { getSession, logout } from '../services/adminService';
+import { getSession, logout, restoreSession } from '../services/adminService';
 import { fetchOwnAvatar } from '../services/adminApiClient';
 import { Icon } from './Icon';
 import xamukoLogo from '../assets/xamuko-logo.png';
@@ -10,11 +10,12 @@ export function Layout() {
   const location = useLocation(); const navigate = useNavigate(); const admin = getSession();
   const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState(false); const [query, setQuery] = useState(''); const [confirmLogout, setConfirmLogout] = useState(false);
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null); const [, setSessionRevision] = useState(0);
   const toggleRef = useRef<HTMLButtonElement>(null); const sidebarRef = useRef<HTMLElement>(null);
   const verification = location.pathname.startsWith('/verifications');
   const dashboardRoute = ['/dashboard', '/summary', '/statistics'].includes(location.pathname);
   useEffect(() => { setOpen(false); setQuery(''); }, [location.pathname, location.search]);
+  useEffect(() => { let active = true; const synchronize = () => { if (document.visibilityState !== 'visible') return; void restoreSession().then(() => { if (active) setSessionRevision(value => value + 1); }).catch(() => {}); }; const interval = window.setInterval(synchronize, 3000); window.addEventListener('focus', synchronize); document.addEventListener('visibilitychange', synchronize); return () => { active = false; window.clearInterval(interval); window.removeEventListener('focus', synchronize); document.removeEventListener('visibilitychange', synchronize); }; }, []);
   useEffect(() => {
     let url: string | null = null;
     if (!admin?.avatarUrl) { setAvatarSrc(null); return; }
