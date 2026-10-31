@@ -536,9 +536,7 @@ export default function Home() {
   }
 
   return <div className="home-page home-v2">
-    <div className="home-topbar">
-      <SiteHeader active="home" onSearchChange={setQuery} />
-    </div>
+    <SiteHeader active="home" onSearchChange={setQuery} />
 
     <main id="inicio">
 
