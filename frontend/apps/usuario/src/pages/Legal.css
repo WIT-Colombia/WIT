@@ -162,32 +162,38 @@
 
 .legal-back {
   display: inline-flex;
-  min-height: 40px;
   align-items: center;
-  margin-top: 28px;
-  padding: 0 16px;
-  border: 1px solid #cfc2ff;
+  gap: 7px;
+  width: max-content;
+  min-height: 36px;
+  margin: 0 0 18px;
+  padding: 0 13px;
+  border: 1px solid #ddd4ff;
   border-radius: 999px;
-  color: #2563eb;
-  font-size: 12px;
+  background: #fff;
+  color: #7b3ffb;
+  font: inherit;
+  font-size: 11px;
   font-weight: 700;
+  line-height: 1;
   text-decoration: none;
-  transition: background .18s ease, border-color .18s ease, color .18s ease;
+  cursor: pointer;
+  box-shadow: 0 5px 14px rgba(123, 63, 251, .08);
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
 }
 
 .legal-back--top {
-  margin: 0 0 26px;
-  background: #fff;
-  font: inherit;
-  cursor: pointer;
+  margin: 0 0 18px;
 }
 
 .legal-back:hover,
 .legal-back:focus-visible {
-  border-color: #7b3ffb;
-  background: #f1ebff;
-  color: #7b3ffb;
+  border-color: #c8b8ff;
+  background: #f7f4ff;
+  color: #6330db;
   outline: none;
+  box-shadow: 0 7px 18px rgba(123, 63, 251, .14);
+  transform: translateX(-1px);
 }
 
 @media (max-width: 800px) {
