@@ -83,14 +83,6 @@ export const businessReviews = {
   ],
 } as const;
 
-export const initialNotifications: BusinessNotification[] = [
-  { id: "n1", createdAt: "2026-10-08T09:42:00-05:00", title: "Recibiste una nueva opinión", description: "Laura P. compartió su experiencia con tu negocio.", date: "Hoy · 9:42 a. m.", type: "review", read: false },
-  { id: "n2", createdAt: "2026-10-07T16:18:00-05:00", title: "Tu capuchino está llamando la atención", description: "Este producto recibió más interés durante la última semana.", date: "Ayer · 4:18 p. m.", type: "interest", read: false },
-  { id: "n3", createdAt: "2026-09-30T11:05:00-05:00", title: "Completa la información de tu perfil", description: "Añade más fotos y detalles para ayudar a tus clientes.", date: "30 sep · 11:05 a. m.", type: "profile", read: false },
-  { id: "n4", createdAt: "2026-09-22T08:00:00-05:00", title: "Tu negocio está verificado", description: "Tu establecimiento aparece en las búsquedas de WIT.", date: "22 sep · 8:00 a. m.", type: "wit", read: true },
-  { id: "n5", createdAt: "2026-09-18T10:30:00-05:00", title: "Mensaje del equipo WIT", description: "Recuerda mantener actualizados tus horarios para que tus clientes encuentren información confiable.", date: "18 sep · 10:30 a. m.", type: "admin", read: true },
-  { id: "n6", createdAt: "2026-09-15T14:15:00-05:00", title: "Nueva oportunidad para tu negocio", description: "Tu perfil puede destacar más si agregas una descripción y fotografías de tus productos.", date: "15 sep · 2:15 p. m.", type: "offer", read: true },
-  { id: "n7", createdAt: "2026-09-10T08:05:00-05:00", title: "Tu contraseña se actualizó", description: "La contraseña de tu cuenta fue actualizada correctamente.", date: "10 sep · 8:05 a. m.", type: "security", read: true },
-];
+export const initialNotifications: BusinessNotification[] = [\n  { id: "welcome", createdAt: "2026-10-30T09:00:00-05:00", title: "Te damos la bienvenida a XAMUKO Business", description: "Configura tu negocio y empieza a conectar con más personas.", date: "Hoy", type: "wit", read: false },\n];
 
 export const initialPreferences: Preferences = { emailUpdates: true, reviewAlerts: true, interestAlerts: true, profileVisible: true, visibilityUntil: addBusinessVisibilityPeriod().toISOString() };
