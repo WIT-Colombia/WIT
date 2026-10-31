@@ -80,3 +80,5 @@
  .reviews-page .review-stars{font-size:13px}
  .reviews-page .review-row p{font-size:11px}
 }
+
+.review-avatar{overflow:hidden}.review-avatar img{width:100%;height:100%;object-fit:cover}.review-avatar>span{display:grid;width:100%;height:100%;place-items:center}
