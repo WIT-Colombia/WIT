@@ -908,3 +908,17 @@
     margin-top: auto;
   }
 }
+
+
+/* iPad/tablet: stretch the visual column to the full auth layout height. */
+@media (min-width: 801px) and (max-width: 1100px) {
+  .user-auth-layout {
+    align-items: stretch;
+  }
+
+  .user-auth-story {
+    height: auto;
+    min-height: 100dvh;
+    align-self: stretch;
+  }
+}
