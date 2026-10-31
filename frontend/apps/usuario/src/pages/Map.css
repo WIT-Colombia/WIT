@@ -207,6 +207,7 @@
 /* Map cards match the approved Inicio card dimensions exactly. */
 .map-results .entity-business-card .entity-card__heading h3 {
   font-size: 16px !important;
+  font-weight: 750 !important;
   line-height: 1.2 !important;
 }
 .map-results .entity-business-card .entity-business-meta > p {
