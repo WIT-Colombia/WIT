@@ -454,3 +454,30 @@
 
 /* La estrella de calificación de Resultados siempre debe usar el amarillo oficial. */
 .results-page .entity-rating .entity-rating__star { color: #f5b53d !important; }
+
+
+/* Tarjetas de negocios de Resultados: composición de referencia XAMUKO. */
+.results-page .results-businesses .results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.results-page .results-businesses .entity-business-card { min-height: 620px; }
+.results-page .results-businesses .entity-business-card .entity-card__image { height: 350px; }
+.results-page .results-businesses .entity-business-card .entity-card__content { padding: 24px 28px 22px; }
+.results-page .results-businesses .entity-business-card .entity-card__heading h3 { font-size: 24px; }
+.results-page .results-businesses .entity-business-card .entity-card__heading p { font-size: 18px; }
+.results-page .results-businesses .entity-business-card .entity-rating { font-size: 20px; }
+.results-page .results-businesses .entity-business-card .entity-rating small { font-size: 16px; }
+.results-page .results-businesses .entity-business-card .entity-address { margin: 18px 0; font-size: 16px; }
+.results-page .results-businesses .entity-business-card .entity-card__actions { min-height: 50px; font-size: 16px; }
+.results-page .results-businesses .entity-business-card .entity-view { font-size: 16px; }
+@media (max-width: 700px) {
+  .results-page .results-businesses .results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .results-page .results-businesses .entity-business-card { min-height: 0; height: auto; }
+  .results-page .results-businesses .entity-business-card .entity-card__image { height: 118px; }
+  .results-page .results-businesses .entity-business-card .entity-card__content { padding: 10px; }
+  .results-page .results-businesses .entity-business-card .entity-card__heading h3 { font-size: 13px; }
+  .results-page .results-businesses .entity-business-card .entity-card__heading p { font-size: 10px; }
+  .results-page .results-businesses .entity-business-card .entity-rating { font-size: 11px; }
+  .results-page .results-businesses .entity-business-card .entity-rating small { font-size: 9px; }
+  .results-page .results-businesses .entity-business-card .entity-address { margin: 9px 0; font-size: 9px; }
+  .results-page .results-businesses .entity-business-card .entity-card__actions { min-height: 32px; font-size: 9px; }
+  .results-page .results-businesses .entity-business-card .entity-view { font-size: 10px; }
+}
