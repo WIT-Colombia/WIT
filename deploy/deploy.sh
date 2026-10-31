@@ -6,6 +6,9 @@ export AWS_PAGER=
 base=/opt/xamuko/deploy
 action=${1:-}
 sha=${2:-}
+artifact_bucket=${3:-}
+artifact_key=${4:-}
+artifact_sha256=${5:-}
 started_ms=$(date +%s%3N)
 status_file=$base/status.json
 work=''
@@ -65,41 +68,31 @@ curl --max-time 15 -fsS https://xamuko.com/api/v1/public/businesses >/dev/null
 if [[ $action == deploy ]]; then
   [[ ! -e $release ]] || { echo 'Release exists; use rollback to reactivate it'; exit 65; }
   [[ $(df --output=avail -k "$base" | tail -1) -gt 4194304 ]] || { echo 'Need at least 4 GiB free'; exit 74; }
+  [[ $artifact_bucket =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]] || { echo 'Invalid artifact bucket'; exit 64; }
+  [[ $artifact_key == releases/$sha/xamuko-backend-$sha.tar.gz ]] || { echo 'Artifact key does not match commit'; exit 65; }
+  [[ $artifact_sha256 =~ ^[0-9a-f]{64}$ ]] || { echo 'Invalid artifact checksum'; exit 64; }
   work=$(mktemp -d /var/lib/xamuko-build/release.XXXXXXXX)
-  # Fetch a fixed commit from staging; never execute git hooks or pull mutable code.
-  git -c core.hooksPath=/dev/null init -q "$work/source"
-  git -C "$work/source" -c core.hooksPath=/dev/null fetch -q --depth=1 https://github.com/WIT-Colombia/WIT.git refs/heads/staging
-  [[ $(git -C "$work/source" rev-parse FETCH_HEAD) == "$sha" ]] || { echo 'Stale deployment: staging moved'; exit 65; }
-  git -C "$work/source" -c core.hooksPath=/dev/null checkout -q --detach "$sha"
-  # Database changes require a separate reviewed migration and recovery plan.
-  diff -qr "$old/backend/prisma" "$work/source/backend/prisma" >/dev/null || { echo 'Prisma changes require manual review'; exit 65; }
-  cp /etc/xamuko-deploy/frontend.env "$work/source/frontend/apps/usuario/.env.production.local"
-  chown -R xamuko-build:xamuko-build "$work"
-  systemd-run --quiet --wait --pipe --collect --unit="xamuko-build-${sha:0:12}" \
-    -p User=xamuko-build -p Group=xamuko-build -p NoNewPrivileges=yes \
-    -p ProtectSystem=strict -p ProtectHome=yes -p PrivateTmp=yes \
-    -p MemoryMax=384M -p MemorySwapMax=512M -p CPUQuota=50% \
-    -p Nice=10 -p TasksMax=128 -p RuntimeMaxSec=1800 -p OOMPolicy=stop \
-    -p "ReadWritePaths=$work" -p "Environment=HOME=$work" \
-    -p IPAddressDeny=169.254.169.254/32 -p IPAddressDeny=169.254.170.2/32 \
-    -p IPAddressDeny=fd00:ec2::254/128 \
-    /usr/local/libexec/xamuko-build "$work/source"
-  [[ -s $work/source/backend/dist/server.js && -s $work/source/frontend/apps/usuario/dist/index.html ]]
-  mkdir "$release"
-  cp -a "$work/source/backend" "$release/backend"
-  cp -a "$work/source/frontend/apps/usuario/dist" "$release/web"
+  aws s3 cp "s3://$artifact_bucket/$artifact_key" "$work/release.tar.gz" --only-show-errors
+  printf '%s  %s\\n' "$artifact_sha256" "$work/release.tar.gz" | sha256sum -c -
+  tar -tzf "$work/release.tar.gz" | grep -qE '(^|/)\.\.|^/' && { echo 'Unsafe archive paths'; exit 65; }
+  mkdir "$work/package"
+  tar -xzf "$work/release.tar.gz" -C "$work/package"
+  [[ -f "$work/package/RELEASE_COMMIT" ]] || { echo 'RELEASE_COMMIT missing'; exit 65; }
+  [[ "$(cat "$work/package/RELEASE_COMMIT")" == "$sha" ]] || { echo 'Artifact commit mismatch'; exit 65; }
+  [[ -s "$work/package/dist/server.js" ]] || { echo 'Backend dist missing'; exit 65; }
+  [[ -d "$work/package/node_modules/@prisma/client" ]] || { echo 'Prisma Client missing'; exit 65; }
+  old_env="$old/backend/.env"
+  [[ -f "$old_env" ]] || { echo 'Active release EnvironmentFile missing'; exit 78; }
+  [[ "$(stat -c '%a' "$old_env")" == "600" ]] || { echo 'Active EnvironmentFile permissions invalid'; exit 78; }
+  [[ "$(stat -c '%U:%G' "$old_env")" == "root:root" ]] || { echo 'Active EnvironmentFile owner invalid'; exit 78; }
+  if [[ -d "$old/backend/prisma" && -d "$work/package/prisma" ]]; then
+    diff -qr "$old/backend/prisma" "$work/package/prisma" >/dev/null || { echo 'Prisma changes require manual review'; exit 65; }
+  fi
+  mkdir -p "$release/backend"
+  cp -a "$work/package/." "$release/backend/"
+  install -o root -g root -m 0600 "$old_env" "$release/backend/.env"
   chown -R root:root "$release"
-  rm -f "$release/backend/.env"
-  [[ ! -e $release/backend/storage ]] || { echo 'Unexpected storage in artifact'; exit 65; }
-  ln -s /opt/xamuko/api/backend/.env "$release/backend/.env"
-  ln -s /opt/xamuko/api/backend/storage "$release/backend/storage"
-  # Keep hashed assets available to clients with an older page, including rollback.
-  [[ -d $release/web/assets && ! -L $release/web/assets ]]
-  [[ -z $(find "$release/web" -type l -print -quit) ]] || exit 65
-  cp -an "$release/web/assets/." "$base/assets/"
-  rm -rf "$release/web/assets"
-  ln -s "$base/assets" "$release/web/assets"
-  printf '%s\n' "$sha" > "$release/COMMIT"
+  printf '%s\\n' "$sha" > "$release/COMMIT"
   touch "$release/VERIFIED"
 else
   [[ -d $release && -f $release/VERIFIED ]] || { echo 'Unknown verified release'; exit 65; }
