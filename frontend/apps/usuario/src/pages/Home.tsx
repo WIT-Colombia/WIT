@@ -20,7 +20,7 @@ import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { createAnalyticsInteractionId } from "../services/analyticsService";
 import { listPublicReviews } from "../services/reviewsService";
 import xamukoLocalHero from "../assets/xamuko-local-hero.avif";
-import "./Home.css";
+import { isHorizontalDominantGesture } from "../utils/gestureDirection";\nimport "./Home.css";
 import "./HomeChanges.css";
 import "./HomeAdjustments.css";
 import "./HomeV2.css";
@@ -408,7 +408,7 @@ export default function Home() {
     if (!drag || drag.pointerId !== event.pointerId) return;
     const distance = event.clientX - drag.startX;
     const distanceY = event.clientY - drag.startY;
-    if (Math.abs(distance) > 4 && Math.abs(distance) > Math.abs(distanceY)) {
+    if (isHorizontalDominantGesture(distance, distanceY, 4)) {
       drag.moved = true;
       setBannerDragging(true);
       if (!event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.setPointerCapture(event.pointerId);
@@ -443,7 +443,7 @@ export default function Home() {
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
     const deltaY = event.clientY - drag.startY;
-    if (Math.abs(delta) > 6 && Math.abs(delta) > Math.abs(deltaY)) drag.moved = true;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -474,7 +474,7 @@ export default function Home() {
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
     const deltaY = event.clientY - drag.startY;
-    if (Math.abs(delta) > 6 && Math.abs(delta) > Math.abs(deltaY)) drag.moved = true;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -505,7 +505,7 @@ export default function Home() {
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
     const deltaY = event.clientY - drag.startY;
-    if (Math.abs(delta) > 6 && Math.abs(delta) > Math.abs(deltaY)) drag.moved = true;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -536,7 +536,7 @@ export default function Home() {
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
     const deltaY = event.clientY - drag.startY;
-    if (Math.abs(delta) > 6 && Math.abs(delta) > Math.abs(deltaY)) drag.moved = true;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
