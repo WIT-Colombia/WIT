@@ -881,3 +881,12 @@
     margin-top: 28px;
   }
 }
+
+
+@media (min-width: 801px) and (max-width: 1100px) {
+  .user-auth-story {
+    height: 100dvh;
+    min-height: 100dvh;
+    align-self: start;
+  }
+}
