@@ -157,3 +157,23 @@
   .map-page .user-content-main{padding-bottom:calc(35px + 67px + env(safe-area-inset-bottom));}
   .map-canvas{scroll-margin-bottom:calc(67px + env(safe-area-inset-bottom));}
 }
+
+
+/* Keep map listings aligned with the shared Home business-card design. */
+.map-results { grid-template-columns: 1fr; }
+.map-results-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.map-results .entity-card { display: flex; flex-direction: column; height: 100%; min-width: 0; }
+.map-results .entity-card__image { height: 190px; min-height: 190px; flex: 0 0 auto; }
+.map-results .entity-card__content { padding: 14px 15px 12px; }
+@media (min-width: 701px) and (max-width: 900px) {
+  .map-results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .map-results-heading, .map-results-more, .map-empty { grid-column: 1; }
+}
+@media (max-width: 700px) {
+  .map-results-grid { grid-template-columns: 1fr; gap: 12px; }
+  .map-results .entity-card__image { height: 165px; min-height: 165px; }
+  .map-results .entity-card__content { padding: 12px; }
+  .map-results .entity-card__heading h3 { font-size: 13px; }
+  .map-results .entity-address { margin: 9px 0; font-size: 9px; }
+  .map-results-heading, .map-results-more, .map-empty { grid-column: 1; }
+}
