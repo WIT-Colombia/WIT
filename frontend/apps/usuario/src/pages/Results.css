@@ -490,3 +490,9 @@
 @media (max-width:700px) {
   .results-page .results-businesses .entity-business-meta { gap:6px; margin-top:10px; }
 }
+
+
+/* La calificación numérica de resultados siempre es negra, incluso para destacados. */
+.results-page .results-businesses .entity-rating,
+.results-page .results-businesses .entity-business-card--featured .entity-rating { color: var(--wit-text-primary) !important; }
+.results-page .results-businesses .entity-rating .entity-rating__star { color: #f5b53d !important; }
