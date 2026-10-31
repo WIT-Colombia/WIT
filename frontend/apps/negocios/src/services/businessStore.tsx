@@ -60,7 +60,13 @@ function stored<T>(key: string, fallback: T): T {
   } catch { return fallback; }
 }
 
-function storedWelcomeNotifications(): BusinessNotification[] {\n  const value = stored("notifications", initialNotifications);\n  const welcome = value.find((item) => item.id === "welcome") ?? initialNotifications[0];\n  return welcome ? [welcome] : [];\n}\n\nfunction useStoredState<T>(key: string, fallback: T): [T, (value: T) => void] {
+function storedWelcomeNotifications(): BusinessNotification[] {
+  const value = stored("notifications", initialNotifications);
+  const welcome = value.find((item) => item.id === "welcome") ?? initialNotifications[0];
+  return welcome ? [welcome] : [];
+}
+
+function useStoredState<T>(key: string, fallback: T): [T, (value: T) => void] {
   const [value, setValue] = useState<T>(() => stored(key, fallback));
   useEffect(() => {
     try { localStorage.setItem(`wit-negocios-demo:${key}`, JSON.stringify(value)); } catch { /* La demo sigue funcionando sin almacenamiento. */ }
