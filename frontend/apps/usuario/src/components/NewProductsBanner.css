@@ -15,3 +15,7 @@
 @media(max-width:700px) { .new-products { padding-top:37px; }.new-products__heading { margin-bottom:13px; }.new-products__heading h2 { font-size:20px; }.new-products__heading p { font-size:11px; }.new-products__list { grid-auto-columns:minmax(210px,72%); gap:10px; margin-right:-16px; padding-right:16px; scrollbar-width:none; }.new-products__list::-webkit-scrollbar { display:none; } }
 @media(max-width:700px) { .new-products__list.is-expanded { scrollbar-width:thin; scrollbar-color:#cfc2ff transparent; }.new-products__list.is-expanded::-webkit-scrollbar { display:block; height:6px; }.new-products__list.is-expanded::-webkit-scrollbar-thumb { border-radius:999px; background:#cfc2ff; } }
 @media(prefers-reduced-motion:reduce) { .new-products__list { scroll-behavior:auto; } }
+
+
+/* Allow vertical page scrolling to win over horizontal carousel gestures on touch devices. */
+.new-products__list { touch-action: pan-x pan-y; }
