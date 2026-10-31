@@ -173,7 +173,7 @@
   .map-results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .map-results .entity-card__image { height: 130px; min-height: 130px; }
   .map-results .entity-card__content { padding: 10px; }
-  .map-results .entity-card__heading h3 { font-size: 13px; }
+  .map-results .entity-card__heading h3 { font-size: 11px; }
   .map-results .entity-address { margin: 8px 0; font-size: 9px; }
   .map-results-heading, .map-results-more, .map-empty { grid-column: 1; }
 }
@@ -183,7 +183,7 @@
 .map-category-chips { touch-action: pan-x pan-y; }
 
 /* Match Inicio card typography: category and rating share the same readable scale. */
-.map-results .entity-business-meta > p { font-size: 13px; line-height: 1.25; }
+.map-results .entity-business-meta > p { font-size: 11px; line-height: 1.2; }
 .map-results .entity-business-meta .entity-rating { font-size: 13px; }
 @media(max-width:700px) {
   .map-results .entity-business-meta > p { font-size: 13px; }
