@@ -20,7 +20,7 @@ import { PublicBusinessDigitalCard } from "../components/PublicBusinessDigitalCa
 import { activeBusinessContext, consumeBusinessVisitContext, recordBusinessEvent } from "../services/analyticsService";
 import { listPublicReviews, type PublicReview } from "../services/reviewsService";
 import registrationInvitePerson from "../assets/registration-invite-person.avif";
-import "./BusinessDetail.css";
+import { isHorizontalDominantGesture } from "../utils/gestureDirection";\nimport "./BusinessDetail.css";
 import "./BusinessDetailEnhancements.css";
 import "./BusinessReviewEnhancements.css";
 import "./BusinessRatingEnhancements.css";
@@ -247,7 +247,7 @@ export default function BusinessDetail() {
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
     const deltaY = event.clientY - drag.startY;
-    if (Math.abs(delta) > 6 && Math.abs(delta) > Math.abs(deltaY)) drag.moved = true;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
