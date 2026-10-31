@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { Product } from "../data/mockData";
 import { ProductCard } from "./EntityCards";
+import { isHorizontalDominantGesture } from "../utils/gestureDirection";
 import "./NewProductsBanner.css";
 import "./NewProductsBannerEnhancements.css";
 
@@ -15,7 +16,7 @@ export function NewProductsBanner({ products, likedIds, onLike, getLikeCount }: 
   const [showAll, setShowAll] = useState(false);
   const [scrollState, setScrollState] = useState({ left: 0, max: 0 });
   const listRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const dragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreClickRef = useRef(false);
   useEffect(() => {
     const list = listRef.current;
@@ -34,7 +35,7 @@ export function NewProductsBanner({ products, likedIds, onLike, getLikeCount }: 
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const list = listRef.current;
     if (!list) return;
-    dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
 
   function moveDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -42,7 +43,8 @@ export function NewProductsBanner({ products, likedIds, onLike, getLikeCount }: 
     const list = listRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);

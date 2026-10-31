@@ -20,6 +20,7 @@ import { PublicBusinessDigitalCard } from "../components/PublicBusinessDigitalCa
 import { activeBusinessContext, consumeBusinessVisitContext, recordBusinessEvent } from "../services/analyticsService";
 import { listPublicReviews, type PublicReview } from "../services/reviewsService";
 import registrationInvitePerson from "../assets/registration-invite-person.avif";
+import { isHorizontalDominantGesture } from "../utils/gestureDirection";
 import "./BusinessDetail.css";
 import "./BusinessDetailEnhancements.css";
 import "./BusinessReviewEnhancements.css";
@@ -86,7 +87,7 @@ export default function BusinessDetail() {
   const headerTouchStartX = useRef<number | null>(null);
   const headerSwipeDetected = useRef(false);
   const popularListRef = useRef<HTMLDivElement>(null);
-  const popularDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const popularDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const { favorites, toggleFavorite } = useFavorites(); const [message, setMessage] = useState(""); const requireAccount = useAccountGate();
   const [business, setBusiness] = useState<Business | null>(null);
   const [businessProducts, setBusinessProducts] = useState<Product[]>([]);
@@ -239,14 +240,15 @@ export default function BusinessDetail() {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const list = popularListRef.current;
     if (!list) return;
-    popularDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    popularDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
   function movePopularDrag(event: ReactPointerEvent<HTMLDivElement>) {
     const drag = popularDragRef.current;
     const list = popularListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);

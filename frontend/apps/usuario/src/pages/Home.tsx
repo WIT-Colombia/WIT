@@ -20,6 +20,7 @@ import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { createAnalyticsInteractionId } from "../services/analyticsService";
 import { listPublicReviews } from "../services/reviewsService";
 import xamukoLocalHero from "../assets/xamuko-local-hero.avif";
+import { isHorizontalDominantGesture } from "../utils/gestureDirection";
 import "./Home.css";
 import "./HomeChanges.css";
 import "./HomeAdjustments.css";
@@ -136,22 +137,22 @@ export default function Home() {
   const [bannerDragging, setBannerDragging] = useState(false);
   const bannerViewportRef = useRef<HTMLDivElement>(null);
   const bannerGroupRef = useRef<HTMLDivElement>(null);
-  const bannerDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const bannerDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreBannerClickRef = useRef(false);
   const bannerResumeTimerRef = useRef<number | null>(null);
   const featuredListRef = useRef<HTMLDivElement>(null);
-  const featuredDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const featuredDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreFeaturedClickRef = useRef(false);
   const categoryListRef = useRef<HTMLDivElement>(null);
-  const categoryDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const categoryDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreCategoryClickRef = useRef(false);
   const nearbyListRef = useRef<HTMLDivElement>(null);
-  const nearbyDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const nearbyDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreNearbyClickRef = useRef(false);
   const [showAllOffers, setShowAllOffers] = useState(false);
   const [offersScroll, setOffersScroll] = useState({ left: 0, max: 0 });
   const offersListRef = useRef<HTMLDivElement>(null);
-  const offersDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const offersDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreOffersClickRef = useRef(false);
   const { selection } = useLocationContext();
   const selectedLocation = selection?.locality ?? null;
@@ -398,7 +399,7 @@ export default function Home() {
 
   function startBannerDrag(event: ReactPointerEvent<HTMLDivElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
-    bannerDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: event.currentTarget.scrollLeft, moved: false };
+    bannerDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: event.currentTarget.scrollLeft, moved: false };
     pauseBannerForInteraction();
     setBannerDragging(false);
   }
@@ -407,7 +408,8 @@ export default function Home() {
     const drag = bannerDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     const distance = event.clientX - drag.startX;
-    if (Math.abs(distance) > 4) {
+    const distanceY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(distance, distanceY, 4)) {
       drag.moved = true;
       setBannerDragging(true);
       if (!event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.setPointerCapture(event.pointerId);
@@ -433,7 +435,7 @@ export default function Home() {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const list = featuredListRef.current;
     if (!list) return;
-    featuredDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    featuredDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
 
   function moveFeaturedDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -441,7 +443,8 @@ export default function Home() {
     const list = featuredListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -463,7 +466,7 @@ export default function Home() {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const list = categoryListRef.current;
     if (!list) return;
-    categoryDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    categoryDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
 
   function moveCategoryDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -471,7 +474,8 @@ export default function Home() {
     const list = categoryListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -493,7 +497,7 @@ export default function Home() {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const list = nearbyListRef.current;
     if (!list) return;
-    nearbyDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    nearbyDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
 
   function moveNearbyDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -501,7 +505,8 @@ export default function Home() {
     const list = nearbyListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -523,7 +528,7 @@ export default function Home() {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const list = offersListRef.current;
     if (!list) return;
-    offersDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    offersDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
 
   function moveOffersDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -531,7 +536,8 @@ export default function Home() {
     const list = offersListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
