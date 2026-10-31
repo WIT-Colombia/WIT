@@ -481,3 +481,12 @@
   .results-page .results-businesses .entity-business-card .entity-card__actions { min-height: 32px; font-size: 9px; }
   .results-page .results-businesses .entity-business-card .entity-view { font-size: 10px; }
 }
+
+
+/* Resultados: categoría y calificación comparten la misma fila bajo el nombre. */
+.results-page .results-businesses .entity-business-meta { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-top:18px; }
+.results-page .results-businesses .entity-business-meta > p { margin:0; color:var(--xamuko-violet); font-weight:700; }
+.results-page .results-businesses .entity-business-meta .entity-rating { position:static; margin:0; white-space:nowrap; }
+@media (max-width:700px) {
+  .results-page .results-businesses .entity-business-meta { gap:6px; margin-top:10px; }
+}
