@@ -854,3 +854,11 @@
     bottom: max(14px, env(safe-area-inset-bottom));
   }
 }
+
+
+/* Keep the fixed slogan visually separated from the benefits on desktop/tablet. */
+@media (min-width: 801px) {
+  .user-auth-story-copy {
+    margin-bottom: clamp(72px, 10vh, 112px);
+  }
+}
