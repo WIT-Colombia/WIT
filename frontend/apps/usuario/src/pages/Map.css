@@ -203,3 +203,17 @@
   font-weight: 600;
   line-height: 1.2 !important;
 }
+
+/* Final mobile parity with Inicio: cover the card's rendered heading selector. */
+.map-results .entity-business-card .entity-card__heading p {
+  margin: 0 0 4px !important;
+  color: #5d43a6 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 1.2 !important;
+}
+.map-results .entity-business-card .entity-card__heading .entity-rating {
+  color: #242950 !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+}
