@@ -67,7 +67,7 @@ export function requestWithSession<T>(path: string, init: RequestInit = {}): Pro
 }
 
 export async function requestBlobWithSession(path: string): Promise<Blob> {
-  const send = () => fetch(path, { credentials: "include", headers: withAuthorization().headers });
+  const send = () => fetch(buildApiUrl(path), { credentials: "include", headers: withAuthorization().headers, cache: "no-store" });
   let response = await send();
   if (response.status === 401) {
     try {

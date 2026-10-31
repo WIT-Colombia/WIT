@@ -1,6 +1,7 @@
 import type { Business, Product, Service } from "../data/mockData";
 import { ApiError } from "./httpClient";
 import { requestWithSession } from "./authService";
+import { buildApiUrl } from "@wit/utils";
 
 type PublicPhoto = { id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean };
 type PublicCategory = { id: string; code: string; name: string; iconKey: string | null } | null;
@@ -8,6 +9,15 @@ type PublicSummary = { pioneerNumber?: number | null; isFeatured?: boolean; plan
 type PublicDetail = PublicSummary & { gallery: PublicPhoto[]; contacts: { email: string | null; phone: string | null; whatsapp: string | null; website: string | null }; socialNetworks?: { instagram: string | null; facebook: string | null; x: string | null; tiktok: string | null }; modalities?: { type: string; hours: { dayOfWeek: string; isClosed: boolean; opensAt: string | null; closesAt: string | null }[] }[]; products: PublicOffer[]; services: PublicOffer[] };
 type PublicOffer = { id: string; name: string; description: string | null; createdAt?: string; isOffer?: boolean; offerLabel?: string | null; discount?: string | null; offerDeadline?: string | null; promotion?: { id: string } | null; category: PublicCategory; price: { amount: string | null; currency: string | null; text: string | null; negotiable: boolean }; photos: PublicPhoto[] };
 type UniversalOffer = PublicOffer & { business: { publicId: string } };
+
+function mediaUrl(value: string | null | undefined): string {
+  if (!value) return "";
+  return /^https?:\/\//i.test(value) ? value : buildApiUrl(value);
+}
+
+function mapPhoto(value: PublicPhoto): PublicPhoto {
+  return { ...value, url: mediaUrl(value.url) };
+}
 export type PublicPromotion = { id: string; businessId: string; title: string; description: string; originalPrice: string | null; promotionalPrice: string | null; startsAt: string; endsAt: string; photos: PublicPhoto[]; relatedOfferId: string | null; type: 'OFFER' | 'PROMOTION'; state?: 'ACTIVE' | 'SCHEDULED' | 'FINISHED'; business?: { publicId: string; name: string; category: string | null } };
 
 function formatOfferDeadline(value?: string | null): string | undefined {
@@ -15,10 +25,12 @@ function formatOfferDeadline(value?: string | null): string | undefined {
 }
 
 function mapBusiness(value: PublicSummary): Business {
+  const coverPhoto = value.coverPhoto ? mapPhoto(value.coverPhoto) : null;
+  const profilePhoto = value.profilePhoto ? mapPhoto(value.profilePhoto) : null;
   const rawCategory = value.category?.name ?? value.category?.code ?? "Sin categoría";
   const category = rawCategory.replace(/[-_]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
   const location = value.location;
-  const cover = value.coverPhoto?.url ?? value.profilePhoto?.url ?? "";
+  const cover = coverPhoto?.url ?? profilePhoto?.url ?? "";
   return {
     id: value.publicId,
     createdAt: value.createdAt,
@@ -36,8 +48,8 @@ function mapBusiness(value: PublicSummary): Business {
     modalityTypes: (value.modalities ?? []).map((item) => item.type),
     socialNetworks: undefined,
     image: cover,
-    logo: value.profilePhoto?.url,
-    gallery: [cover, ...(value.profilePhoto?.url && value.profilePhoto.url !== cover ? [value.profilePhoto.url] : [])].filter(Boolean),
+    logo: profilePhoto?.url,
+    gallery: [cover, ...(profilePhoto?.url && profilePhoto.url !== cover ? [profilePhoto.url] : [])].filter(Boolean),
     tags: [value.sede ? `Sede ${value.sede.replace(/^sede\s+/i, "")}` : "", ...(value.secondaryCategories ?? []).filter((item): item is Exclude<PublicCategory, null> => Boolean(item)).map((item) => item.name), value.adultOnly ? "+18" : ""].filter(Boolean),
     description: value.description ?? "",
     coordinates: location?.latitude != null && location?.longitude != null ? { lat: location.latitude, lng: location.longitude } : undefined,
@@ -49,7 +61,7 @@ function mapBusiness(value: PublicSummary): Business {
 }
 
 function mapProduct(value: PublicOffer, businessId: string): Product {
-  const image = value.photos[0]?.url ?? "";
+  const image = mediaUrl(value.photos[0]?.url);
   const amount = value.price.amount ? Number(value.price.amount) : undefined;
   const currency = value.price.currency ?? "COP";
   const formatAmount = (raw: number) => `${new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(raw).replace(/\u00a0/g, " ")} ${currency}`;
@@ -73,7 +85,7 @@ function mapService(value: PublicOffer, businessId: string): Service {
   const original = (value as PublicOffer & { originalPrice?: string | null }).originalPrice;
   const currency = value.price.currency ?? "COP";
   const originalPriceLabel = original ? `${new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(original)).replace(/\u00a0/g, " ")} ${currency}` : undefined;
-  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: value.photos[0]?.url ?? "", priceLabel: formatServicePrice(value), originalPriceLabel, promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
+  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: mediaUrl(value.photos[0]?.url), priceLabel: formatServicePrice(value), originalPriceLabel, promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
 }
 
 export async function listPublicBusinesses(): Promise<Business[]> {
@@ -91,7 +103,7 @@ export async function getPublicBusiness(id: string): Promise<{ business: Busines
     if (contacts.email) business.email = contacts.email;
     if (contacts.website) business.website = contacts.website;
     business.socialNetworks = response.business.socialNetworks;
-    business.gallery = response.business.gallery.map(item => item.url);
+    business.gallery = response.business.gallery.map(item => mediaUrl(item.url));
     const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     const hours = response.business.modalities?.[0]?.hours ?? [];
     business.weeklyHours = hours.map(hour => ({
@@ -118,12 +130,12 @@ export async function listPublicServices(id: string): Promise<Service[]> {
 
 export async function listPublicPromotions(id: string): Promise<PublicPromotion[]> {
   const response = await requestWithSession<{ promotions: PublicPromotion[] }>(`/api/v1/public/businesses/${encodeURIComponent(id)}/promotions`);
-  return response.promotions;
+  return response.promotions.map(item => ({ ...item, photos: item.photos.map(mapPhoto) }));
 }
 
 export async function getPublicPromotion(id: string): Promise<PublicPromotion> {
   const response = await requestWithSession<{ promotion: PublicPromotion }>(`/api/v1/public/promotions/${encodeURIComponent(id)}`);
-  return response.promotion;
+  return { ...response.promotion, photos: response.promotion.photos.map(mapPhoto) };
 }
 
 export async function recordPublicPromotionView(id: string, dedupeKey: string): Promise<void> {
