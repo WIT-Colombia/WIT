@@ -70,3 +70,6 @@
 .entity-card__image > .pioneer-badge { border: 0 !important; }
 
 .entity-card__image > .pioneer-badge { box-shadow: none !important; filter: none !important; }
+
+
+.entity-rating__star { color: #f5b53d; }
