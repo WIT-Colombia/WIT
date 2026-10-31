@@ -4,7 +4,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import { photoStoragePath } from '../business/photo-storage.js';
 import { isSubscriptionEffective } from '../business/recognition.service.js';
 
-type PublicDb = Pick<PrismaClient, 'business' | 'businessOffer' | 'photo'> & { user?: PrismaClient['user'] };
+type PublicDb = Pick<PrismaClient, 'business' | 'businessOffer' | 'businessReview' | 'photo'> & { user?: PrismaClient['user'] };
 type PublicOfferKind = 'PRODUCT' | 'SERVICE';
 export type PublicAccessContext = { userId?: string };
 
@@ -211,7 +211,14 @@ function offer(publicId: string, value: any) {
   };
 }
 
-function summary(value: any) {
+async function reviewSummaries(values: any[], db: PublicDb) {
+  const ids = values.map((value) => value.id).filter(Boolean);
+  if (!ids.length || !db.businessReview) return new Map<string, { average: number | null; count: number }>();
+  const rows = await db.businessReview.groupBy({ by: ['businessId'], where: { businessId: { in: ids }, status: 'PUBLISHED' }, _avg: { rating: true }, _count: { _all: true } });
+  return new Map(rows.map((row) => [row.businessId, { average: row._avg.rating === null ? null : Number(row._avg.rating), count: row._count._all }]));
+}
+
+function summary(value: any, review?: { average: number | null; count: number }) {
   return {
     publicId: value.publicId,
     createdAt: value.createdAt,
@@ -226,10 +233,12 @@ function summary(value: any) {
     profilePhoto: photo(value.publicId, value.profilePhoto),
     isFeatured: (value.subscriptions ?? []).some((subscription: any) => isSubscriptionEffective(subscription)),
     plan: (value.subscriptions ?? []).some((subscription: any) => isSubscriptionEffective(subscription)) ? 'premium' : 'free',
+    rating: review?.average ?? null,
+    reviewCount: review?.count ?? 0,
   };
 }
 
-function detail(value: any, canViewAdult: boolean) {
+function detail(value: any, canViewAdult: boolean, review?: { average: number | null; count: number }) {
   const modalities = (value.modalities ?? []).map((modality: any) => ({
     type: modality.type,
     hours: modality.hours.map((hour: any) => ({
@@ -244,7 +253,7 @@ function detail(value: any, canViewAdult: boolean) {
   const products = visibleOffers.filter((item: any) => item.kind === 'PRODUCT').map((item: any) => offer(value.publicId, item));
   const services = visibleOffers.filter((item: any) => item.kind === 'SERVICE').map((item: any) => offer(value.publicId, item));
   return {
-    ...summary(value),
+    ...summary(value, review),
     secondaryCategories: (value.secondaryCategories ?? []).map((item: any) => category(item.category)),
     gallery: (value.photos ?? []).map((item: any) => photo(value.publicId, item)),
     // Only Business commercial fields; never fall back to the owner or login account.
@@ -265,7 +274,6 @@ function detail(value: any, canViewAdult: boolean) {
     services,
     // Active promotions are overlaid at serialization time; the original offer remains unchanged.
     offers: [],
-    rating: null,
   };
 }
 
@@ -347,8 +355,9 @@ export async function listPublicBusinesses(input: PublicBusinessListInput, db: P
       orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
     }),
   ]);
+  const ratings = await reviewSummaries(businesses, db);
   return {
-    businesses: prioritizeBusinesses(businesses).map(summary).slice((input.page - 1) * input.pageSize, input.page * input.pageSize),
+    businesses: prioritizeBusinesses(businesses).map((item) => summary(item, ratings.get(item.id))).slice((input.page - 1) * input.pageSize, input.page * input.pageSize),
     pagination: { page: input.page, pageSize: input.pageSize, total, totalPages: Math.ceil(total / input.pageSize) },
   };
 }
@@ -410,7 +419,7 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
     ...(canViewAdult ? {} : { adultOnly: false }),
   };
   const [businesses, products, services] = await Promise.all([
-    db.business.findMany({ where: businessWhere, select: { publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.business.findMany({ where: businessWhere, select: { id: true, publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
     db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
     db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
   ]);
@@ -423,7 +432,8 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   // Cuando el usuario solicita un radio, los negocios sin coordenadas públicas
   // verificables quedan fuera (distanceKm devuelve Infinity). Sin radio, se
   // conserva el comportamiento actual y no se aplica ningún filtro geográfico.
-  const filteredBusinesses = businessItems.filter(({ item, rank }) => categoryMatches(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId))).sort((a, b) => pioneerPriority(b.item) - pioneerPriority(a.item) || featuredPriority(b.item) - featuredPriority(a.item) || b.rank - a.rank || sortNearby(a.item, b.item) || String(a.item.publicId).localeCompare(String(b.item.publicId))).map(({ item }) => summary(item));
+  const ratings = await reviewSummaries(businesses, db);
+  const filteredBusinesses = businessItems.filter(({ item, rank }) => categoryMatches(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId))).sort((a, b) => pioneerPriority(b.item) - pioneerPriority(a.item) || featuredPriority(b.item) - featuredPriority(a.item) || b.rank - a.rank || sortNearby(a.item, b.item) || String(a.item.publicId).localeCompare(String(b.item.publicId))).map(({ item }) => summary(item, ratings.get(item.id)));
   const mapOffer = (item: any) => ({ ...offer(item.business.publicId, item), business: { publicId: item.business.publicId, name: item.business.name, location: location(item.business.location) } });
   const filteredProducts = products.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item)).sort(sortNearby).map(mapOffer);
   const filteredServices = services.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item)).sort(sortNearby).map(mapOffer);
@@ -437,7 +447,8 @@ export async function getPublicBusiness(publicId: string, db: PublicDb = prisma,
   const canViewAdult = await canViewAdultContent(viewer, db);
   const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: publicBusinessDetailSelect });
   if (!business) throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
-  return detail(business, canViewAdult);
+  const ratings = await reviewSummaries([business], db);
+  return detail(business, canViewAdult, ratings.get(business.id));
 }
 
 async function listPublicOffers(publicId: string, kind: PublicOfferKind, db: PublicDb = prisma, viewer?: PublicAccessContext) {
