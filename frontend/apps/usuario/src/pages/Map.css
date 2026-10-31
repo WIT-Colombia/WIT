@@ -177,3 +177,7 @@
   .map-results .entity-address { margin: 8px 0; font-size: 9px; }
   .map-results-heading, .map-results-more, .map-empty { grid-column: 1; }
 }
+
+
+/* Map filters remain horizontally scrollable without capturing vertical swipes. */
+.map-category-chips { touch-action: pan-x pan-y; }
