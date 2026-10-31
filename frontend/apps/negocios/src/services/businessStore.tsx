@@ -60,7 +60,7 @@ function stored<T>(key: string, fallback: T): T {
   } catch { return fallback; }
 }
 
-function useStoredState<T>(key: string, fallback: T): [T, (value: T) => void] {
+function storedWelcomeNotifications(): BusinessNotification[] {\n  const value = stored("notifications", initialNotifications);\n  const welcome = value.find((item) => item.id === "welcome") ?? initialNotifications[0];\n  return welcome ? [welcome] : [];\n}\n\nfunction useStoredState<T>(key: string, fallback: T): [T, (value: T) => void] {
   const [value, setValue] = useState<T>(() => stored(key, fallback));
   useEffect(() => {
     try { localStorage.setItem(`wit-negocios-demo:${key}`, JSON.stringify(value)); } catch { /* La demo sigue funcionando sin almacenamiento. */ }
@@ -140,7 +140,7 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
     setAccount({ ...account, nickname: `@${account.name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "")}` });
   }, [account, isPreview]);
   const [items, setItems] = useState<CatalogItem[]>(() => isPreview ? stored("items", initialItems) : []);
-  const [notifications, setNotifications] = useState<BusinessNotification[]>(() => isPreview ? stored("notifications", initialNotifications) : []);
+  const [notifications, setNotifications] = useState<BusinessNotification[]>(() => isPreview ? storedWelcomeNotifications() : []);
   const [persistentNotificationCount, setPersistentNotificationCount] = useState(0);
   useEffect(() => {
     if (isPreview || auth.state.status !== "authenticated") { setPersistentNotificationCount(0); return; }
