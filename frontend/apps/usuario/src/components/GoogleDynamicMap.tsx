@@ -40,16 +40,31 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
     if (!center) { setState("ready"); return; }
     if (mapRef.current) { mapRef.current.setCenter(center); return; }
     let active = true;
+    let resizeObserver: ResizeObserver | undefined;
     void loadGoogleMaps().then((maps) => {
       if (!active || !containerRef.current) return;
       mapsRef.current = maps;
-      mapRef.current = new maps.Map(containerRef.current, { center, zoom: zoomForRadius(radiusKm), mapTypeId: "roadmap", mapTypeControl: false, zoomControl: false, streetViewControl: false, fullscreenControl: false, gestureHandling: "greedy" });
+      const map = new maps.Map(containerRef.current, { center, zoom: zoomForRadius(radiusKm), mapTypeId: "roadmap", mapTypeControl: false, zoomControl: false, streetViewControl: false, fullscreenControl: false, gestureHandling: "greedy" });
+      mapRef.current = map;
+      const notifyResize = () => {
+        if (!active || !mapRef.current) return;
+        maps.event?.trigger(mapRef.current, "resize");
+        mapRef.current.setCenter(center);
+      };
+      requestAnimationFrame(notifyResize);
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObserver = new ResizeObserver(() => requestAnimationFrame(notifyResize));
+        resizeObserver.observe(containerRef.current);
+      }
       setState("ready");
     }).catch((error: unknown) => {
       if (import.meta.env.DEV) console.error("[XAMUKO Usuario] Error al inicializar el mapa", error);
       if (active) setState(error instanceof Error && error.message === "GOOGLE_MAPS_JS_KEY_MISSING" ? "missing-key" : "error");
     });
-    return () => { active = false; };
+    return () => {
+      active = false;
+      resizeObserver?.disconnect();
+    };
   }, [centerKey]);
 
   useEffect(() => {

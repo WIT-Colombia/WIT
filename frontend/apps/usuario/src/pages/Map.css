@@ -150,3 +150,10 @@
   .map-canvas{height:330px;min-height:330px}
 }
 .map-controls { display: none; }
+
+
+/* Reserve the mobile navigation area and let Maps recalculate after layout changes. */
+@media(max-width:700px){
+  .map-page .user-content-main{padding-bottom:calc(35px + 67px + env(safe-area-inset-bottom));}
+  .map-canvas{scroll-margin-bottom:calc(67px + env(safe-area-inset-bottom));}
+}
