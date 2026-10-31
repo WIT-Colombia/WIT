@@ -812,3 +812,45 @@
     align-self: stretch;
   }
 }
+
+
+/* Responsive slogan placement: positioning and spacing only. */
+@media (min-width: 801px) {
+  .user-auth-tagline {
+    position: fixed;
+    right: auto;
+    bottom: clamp(20px, 4vh, 44px);
+    left: clamp(28px, 6vw, 92px);
+    margin: 0;
+    align-self: auto;
+    z-index: 5;
+  }
+}
+
+@media (min-width: 801px) and (max-width: 1100px) {
+  .user-auth-tagline {
+    left: 38px;
+    bottom: 24px;
+  }
+}
+
+@media (max-width: 800px) {
+  .user-auth-story {
+    padding-bottom: max(42px, env(safe-area-inset-bottom));
+  }
+
+  .user-auth-tagline {
+    right: 18px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: auto;
+    margin: 0;
+    align-self: auto;
+  }
+}
+
+@media (max-width: 340px) {
+  .user-auth-tagline {
+    right: 14px;
+    bottom: max(14px, env(safe-area-inset-bottom));
+  }
+}
