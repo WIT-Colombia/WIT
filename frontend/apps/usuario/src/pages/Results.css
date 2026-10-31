@@ -450,3 +450,7 @@
     flex-shrink: 0;
   }
 }
+
+
+/* La estrella de calificación de Resultados siempre debe usar el amarillo oficial. */
+.results-page .entity-rating .entity-rating__star { color: #f5b53d !important; }
