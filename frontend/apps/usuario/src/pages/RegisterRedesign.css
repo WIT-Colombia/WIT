@@ -890,3 +890,21 @@
     align-self: start;
   }
 }
+
+
+/* iPad/tablet: keep the slogan inside the full-height visual column. */
+@media (min-width: 801px) and (max-width: 1100px) {
+  .user-auth-story {
+    display: flex;
+    height: 100dvh;
+    min-height: 100dvh;
+    align-self: start;
+    justify-content: flex-start;
+  }
+
+  .user-auth-tagline {
+    position: static;
+    align-self: flex-start;
+    margin-top: auto;
+  }
+}
