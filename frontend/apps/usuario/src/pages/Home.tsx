@@ -18,6 +18,7 @@ import { getLikeIds, toggleLike } from "../services/userDataService";
 import { useFavorites } from "../services/favoritesService";
 import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { createAnalyticsInteractionId } from "../services/analyticsService";
+import { listPublicReviews } from "../services/reviewsService";
 import xamukoLocalHero from "../assets/xamuko-local-hero.avif";
 import "./Home.css";
 import "./HomeChanges.css";
@@ -180,11 +181,24 @@ export default function Home() {
     let current = true;
     setCatalogState("loading");
     const userCoordinates = selection?.coordinates;
-    void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng }).then(({ businesses, products }) => {
+    void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng }).then(async ({ businesses, products }) => {
+      if (!current) return;
+      const ratedBusinesses = await Promise.all(businesses.map(async (business) => {
+        try {
+          const response = await listPublicReviews(business.id, 1, 1);
+          return {
+            ...business,
+            rating: response.summary?.average ?? business.rating,
+            reviewCount: response.summary?.total ?? business.reviewCount,
+          };
+        } catch {
+          return business;
+        }
+      }));
       if (!current) return;
       setCatalogState("ready");
       setCatalogProducts(products);
-      setItems(businesses.map((business) => ({
+      setItems(ratedBusinesses.map((business) => ({
         ...business,
         distanceKm: distanceBetween(userCoordinates, business.coordinates),
       })));
