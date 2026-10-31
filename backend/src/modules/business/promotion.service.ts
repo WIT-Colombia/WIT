@@ -1,7 +1,7 @@
 import { Prisma, type PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, photoStoragePath, removePhoto, savePhoto } from './photo-storage.js';
+import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, isPhotoMissingError, photoMimeType, readPhoto, removePhoto, savePhoto } from './photo-storage.js';
 import { canManagePromotion, promotionEntitlements, promotionState, promotionValidationError, type PromotionPlan, type PromotionRecurrence } from './promotion-policy.js';
 import type { PromotionCreateInput, PromotionUpdateInput } from './promotion.schemas.js';
 
@@ -210,7 +210,8 @@ export async function getPromotionPhotoContent(userId: string, identifier: strin
   const business = await findMemberBusiness(userId, identifier);
   const photo = await prisma.businessPromotionPhoto.findFirst({ where: { id: photoId, promotionId, businessId: business.id }, select: { storageKey: true } });
   if (!photo) throw new AppError(404, 'PROMOTION_PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
-  return { path: photoStoragePath(photo.storageKey), mimeType: photo.storageKey.endsWith('.png') ? 'image/png' : photo.storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
+  try { return { content: await readPhoto(photo.storageKey), mimeType: photoMimeType(photo.storageKey) }; }
+  catch (error) { if (isPhotoMissingError(error)) throw new AppError(404, 'PROMOTION_PHOTO_NOT_FOUND', 'No encontramos esa fotografía.'); throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la fotografía.'); }
 }
 
 const publicBusinessWhere = { businessAccount: { status: 'ACTIVE' }, lifecycleStatus: 'ACTIVE', publicationStatus: 'PUBLISHED', visibilityStatus: 'VISIBLE', deletionStatus: 'NONE' } as const;
@@ -241,7 +242,8 @@ export async function getPublicPromotion(promotionId: string) {
 export async function getPublicPromotionPhoto(promotionId: string, photoId: string) {
   const photo = await prisma.businessPromotionPhoto.findFirst({ where: { id: photoId, promotionId, promotion: { deletedAt: null, business: publicBusinessWhere } }, select: { storageKey: true, promotion: { select: { active: true, startsAt: true, endsAt: true, recurrence: true, recurrenceUntil: true } } } });
   if (!photo || state(photo.promotion) === 'SCHEDULED') throw new AppError(404, 'PROMOTION_PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
-  return { path: photoStoragePath(photo.storageKey), mimeType: photo.storageKey.endsWith('.png') ? 'image/png' : photo.storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
+  try { return { content: await readPhoto(photo.storageKey), mimeType: photoMimeType(photo.storageKey) }; }
+  catch (error) { if (isPhotoMissingError(error)) throw new AppError(404, 'PROMOTION_PHOTO_NOT_FOUND', 'No encontramos esa fotografía.'); throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la fotografía.'); }
 }
 
 export async function recordPromotionView(promotionId: string, dedupeKey?: string) {
