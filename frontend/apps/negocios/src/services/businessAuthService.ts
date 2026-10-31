@@ -98,7 +98,7 @@ export async function uploadAvatar(file: File): Promise<void> {
   if (!response.ok) throw new Error("No se pudo guardar la foto de perfil.");
 }
 export async function getAvatarBlob(path = "/api/v1/auth/me/avatar"): Promise<Blob> {
-  const response = await fetch(buildApiUrl(path), { credentials: "include", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined });
+  const response = await fetch(buildApiUrl(path), { credentials: "include", cache: "no-store", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined });
   if (!response.ok) throw new Error("No se pudo cargar la foto de perfil.");
   return response.blob();
 }
