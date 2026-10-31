@@ -222,11 +222,11 @@
 }
 @media (max-width: 700px) {
   .map-results .entity-business-card .entity-card__heading h3 {
-    font-size: 11px !important;
+    font-size: 13px !important;
     line-height: 1.12 !important;
   }
   .map-results .entity-business-card .entity-business-meta > p {
-    font-size: 9px !important;
+    font-size: 11px !important;
   }
   .map-results .entity-business-card .entity-business-meta .entity-rating {
     font-size: 9px !important;
