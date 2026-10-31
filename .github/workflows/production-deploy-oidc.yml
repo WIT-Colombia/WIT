@@ -1,0 +1,114 @@
+name: XAMUKO production deploy (OIDC, gated)
+on:
+  push:
+    branches: [integration/preserve-all-20261029]
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 40-character commit to deploy
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: xamuko-production
+  cancel-in-progress: false
+env:
+  AWS_REGION: us-east-2
+  INSTANCE_ID: ${{ vars.XAMUKO_PRODUCTION_INSTANCE_ID }}
+  DEPLOY_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.commit || github.sha }}
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-test-only
+          MYSQL_DATABASE: xamuko_test
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DATABASE_URL: mysql://test:test@127.0.0.1:3306/xamuko_test
+      AUTH_ACCESS_TOKEN_SECRET: ci-test-secret-not-for-production-0123456789
+      GOOGLE_CLIENT_ID: xamuko-test.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: test-secret-not-real
+      ADMIN_PASSKEY_ACTIVATION_CODE_HASH: 5c55a2f6a1da4768a635d45e8b0e0ba1bae9786b6a8e3351c435800bcf852aea
+      ADMIN_GOOGLE_SUB_ALLOWLIST: ci-admin-google-sub
+      ADMIN_WEBAUTHN_RP_ID: 127.0.0.1
+      ADMIN_WEBAUTHN_ORIGIN: http://127.0.0.1
+      ADMIN_WEBAUTHN_RP_NAME: XAMUKO CI
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+          persist-credentials: false
+      - name: Assert approved integrations
+        run: |
+          set -euo pipefail
+          test -f backend/src/modules/business/photo-storage.ts
+          test -f backend/src/modules/auth/avatar.service.ts
+          rg -n "businessPhotoUrl" backend frontend
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Backend checks
+        working-directory: backend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run prisma:generate
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Frontend checks
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm run build
+          npm run test:verification
+  deploy:
+    needs: verify
+    if: vars.XAMUKO_PRODUCTION_DEPLOY_ENABLED == 'true'
+    environment: production
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Validate
+        run: |
+          set -euo pipefail
+          [[ "${{ env.DEPLOY_SHA }}" =~ ^[0-9a-f]{40}$ ]]
+          [[ -n "${{ vars.XAMUKO_PRODUCTION_DEPLOY_ROLE_ARN }}" ]]
+          [[ -n "${{ vars.XAMUKO_PRODUCTION_INSTANCE_ID }}" ]]
+      - uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df
+        with:
+          role-to-assume: ${{ vars.XAMUKO_PRODUCTION_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 900
+          allowed-account-ids: '988024221050'
+      - name: Deploy via restricted SSM document
+        env: { AWS_PAGER: '' }
+        run: |
+          set -euo pipefail
+          command_id=$(aws ssm send-command --instance-ids "${INSTANCE_ID}" --document-name Xamuko-Production-Deploy --parameters "Commit=${DEPLOY_SHA},Action=deploy,RollbackCommit=" --timeout-seconds 120 --comment "XAMUKO OIDC deployment ${GITHUB_SHA}" --query 'Command.CommandId' --output text)
+          for attempt in {1..30}; do
+            status=$(aws ssm get-command-invocation --command-id "${command_id}" --instance-id "${INSTANCE_ID}" --query 'Status' --output text 2>/dev/null || true)
+            case "${status}" in
+              Success) exit 0 ;;
+              Failed|Cancelled|TimedOut|Undeliverable|Terminated) echo "SSM deployment failed: ${status}" >&2; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "Timed out waiting for SSM deployment" >&2
+          exit 1
