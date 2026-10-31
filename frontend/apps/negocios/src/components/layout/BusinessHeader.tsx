@@ -13,7 +13,7 @@ export function BusinessHeader() {
   const displayName = user?.displayName || (business.source === "real" ? "" : account.name);
   const initials = displayName.split(" ").map((part) => part[0]).slice(0, 2).join("");
   return <header className="business-header">
-    <Link className="business-header-brand" to="/" aria-label="XAMUKO Business, inicio"><img className="xamuko-header-logo" src={xamukoLogo} alt="XAMUKO" /><span className="business-header-copy"><span className="business-header-name">BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span><span className="business-header-tagline">Lo que necesitas, está más cerca</span></span></Link>
+    <Link className="business-header-brand" to="/" aria-label="XAMUKO Business, inicio"><img className="xamuko-header-logo" src={xamukoLogo} alt="XAMUKO" /><span className="business-header-copy"><span className="business-header-name">BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></span></Link>
     <Link className="business-header-profile" to="/perfil" aria-label="Abrir mi perfil">{initials}</Link>
   </header>;
 }
