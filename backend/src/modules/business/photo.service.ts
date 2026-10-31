@@ -2,7 +2,7 @@ import type { PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { findBusinessForPhotoRead, findBusinessForPhotoWrite, requireBusinessPhotoPermission } from './photo-access.js';
-import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, photoStoragePath, removePhoto, savePhoto } from './photo-storage.js';
+import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, isPhotoMissingError, photoMimeType, readPhoto, removePhoto, savePhoto } from './photo-storage.js';
 
 const db: PrismaClient = prisma;
 
@@ -150,5 +150,6 @@ export async function getPhotoContent(userId: string, businessId: string, photoI
   }
   const photo = await db.photo.findFirst({ where: { id: photoId, businessId, OR: [{ offerId: null }, { offer: { deletedAt: null } }] } });
   if (!photo) throw new AppError(404, 'PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
-  return { path: photoStoragePath(photo.storageKey), mimeType: photo.storageKey.endsWith('.png') ? 'image/png' : photo.storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
+  try { return { content: await readPhoto(photo.storageKey), mimeType: photoMimeType(photo.storageKey) }; }
+  catch (error) { if (isPhotoMissingError(error)) throw new AppError(404, 'PHOTO_NOT_FOUND', 'No encontramos esa fotografía.'); throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la fotografía.'); }
 }

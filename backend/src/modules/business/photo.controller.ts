@@ -48,6 +48,6 @@ export const setProfilePhotoController: RequestHandler = async (req, res, next) 
 export const photoContentController: RequestHandler = async (req, res, next) => {
   try {
     const content = await getPhotoContent(userId(req), req.params.businessId as string, req.params.photoId as string);
-    res.type(content.mimeType).sendFile(content.path, error => { if (error && !res.headersSent) next(error); });
+    res.type(content.mimeType).send(content.content);
   } catch (error) { next(error); }
 };

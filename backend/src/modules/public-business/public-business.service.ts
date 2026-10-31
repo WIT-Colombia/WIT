@@ -1,7 +1,7 @@
 import { type Prisma, type PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { photoStoragePath } from '../business/photo-storage.js';
+import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 import { isSubscriptionEffective } from '../business/recognition.service.js';
 
 type PublicDb = Pick<PrismaClient, 'business' | 'businessOffer' | 'photo'> & { user?: PrismaClient['user'] };
@@ -493,10 +493,8 @@ export async function getPublicPhotoContent(publicId: string, photoId: string, d
     select: { storageKey: true },
   });
   if (!value) throw new AppError(404, 'PUBLIC_PHOTO_NOT_FOUND', 'No encontramos esa fotografía pública.');
-  return {
-    path: photoStoragePath(value.storageKey),
-    mimeType: value.storageKey.endsWith('.png') ? 'image/png' : value.storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg',
-  };
+  try { return { content: await readPhoto(value.storageKey), mimeType: photoMimeType(value.storageKey) }; }
+  catch (error) { if (isPhotoMissingError(error)) throw new AppError(404, 'PUBLIC_PHOTO_NOT_FOUND', 'No encontramos esa fotografía pública.'); throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la fotografía.'); }
 }
 
 export const publicBusinessRules = { PUBLIC_BUSINESS_WHERE: PUBLIC_BUSINESS_BASE_WHERE, summary, detail };

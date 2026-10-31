@@ -5,8 +5,8 @@ import { createPromotion, deletePromotion, deletePromotionPhoto, finishPromotion
 
 const actor = (req: Parameters<RequestHandler>[0]) => (req as AuthenticatedRequest).auth.userId;
 const parseBody = <T>(schema: { parse(input: unknown): T }, body: unknown) => schema.parse(body);
-const sendPhoto = (handler: (req: Parameters<RequestHandler>[0]) => Promise<{ path: string; mimeType: string }>): RequestHandler => async (req, res, next) => {
-  try { const photo = await handler(req); res.type(photo.mimeType).sendFile(photo.path, error => { if (error && !res.headersSent) next(error); }); } catch (error) { next(error); }
+const sendPhoto = (handler: (req: Parameters<RequestHandler>[0]) => Promise<{ content: Buffer; mimeType: string }>): RequestHandler => async (req, res, next) => {
+  try { const photo = await handler(req); res.type(photo.mimeType).send(photo.content); } catch (error) { next(error); }
 };
 
 export const listPromotionsController: RequestHandler = async (req, res, next) => { try { res.json(await listPromotions(actor(req), req.params.businessId as string)); } catch (error) { next(error); } };
