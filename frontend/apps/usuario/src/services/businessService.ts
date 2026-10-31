@@ -38,8 +38,6 @@ const BUSINESS_CACHE_TTL_MS = 30_000;
 const businessCache = new Map<string, { expiresAt: number; value: Business[] }>();
 const businessRequests = new Map<string, Promise<Business[]>>();
 
-export function invalidateBusinessCatalog(): void { businessCache.clear(); }
-
 export function prioritizeFeaturedByDistance(items: Business[], featuredLimit = 3): Business[] {
   const byDistance = (a: Business, b: Business) => a.distanceKm - b.distanceKm || a.id.localeCompare(b.id);
   const nearbyPioneers = items
