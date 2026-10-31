@@ -90,7 +90,7 @@ export function getNotifications(): UserNotification[] {
   try {
     const saved = localStorage.getItem(NOTIFICATIONS_KEY);
     if (!saved) { localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(defaultNotifications)); return defaultNotifications; }
-    return JSON.parse(saved) as UserNotification[];
+    const parsed = JSON.parse(saved) as UserNotification[];\n    const cleaned = parsed.filter((notification) => notification.id === "welcome" || !notification.id.startsWith("demo-") && notification.id !== "saved-tip");\n    if (!cleaned.some((notification) => notification.id === "welcome")) cleaned.unshift(defaultNotifications[0]);\n    if (cleaned.length !== parsed.length) localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(cleaned));\n    return cleaned;
   } catch { return defaultNotifications; }
 }
 export function markNotificationRead(id: string): UserNotification[] {
