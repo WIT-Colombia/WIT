@@ -1,0 +1,65 @@
+schemaVersion: "2.2"
+description: "XAMUKO production deployment from a verified private S3 artifact"
+parameters:
+  Commit:
+    type: String
+    description: "Immutable 40-character commit SHA"
+    allowedPattern: "^[0-9a-f]{40}$"
+  Action:
+    type: String
+    description: "Deployment action"
+    allowedValues:
+      - deploy
+      - rollback
+  RollbackCommit:
+    type: String
+    description: "Verified release SHA or bootstrap for rollback"
+    default: ""
+    allowedPattern: "^$|^[0-9a-f]{40}$|^bootstrap$"
+  ArtifactBucket:
+    type: String
+    description: "Private deployment artifact bucket"
+    default: ""
+    allowedPattern: "^$|^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$"
+  ArtifactKey:
+    type: String
+    description: "Commit-pinned S3 object key"
+    default: ""
+    allowedPattern: "^$|releases/[0-9a-f]{40}/xamuko-backend-[0-9a-f]{40}\\.tar\\.gz$"
+  ArtifactSha256:
+    type: String
+    description: "SHA-256 of the S3 object"
+    default: ""
+    allowedPattern: "^$|[0-9a-f]{64}$"
+mainSteps:
+  - action: aws:runShellScript
+    name: deployVerifiedRelease
+    precondition:
+      StringEquals:
+        - platformType
+        - Linux
+    inputs:
+      timeoutSeconds: "2400"
+      runCommand:
+        - |
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+          commit="{{ Commit }}"
+          action="{{ Action }}"
+          rollback_commit="{{ RollbackCommit }}"
+          artifact_bucket="{{ ArtifactBucket }}"
+          artifact_key="{{ ArtifactKey }}"
+          artifact_sha256="{{ ArtifactSha256 }}"
+          [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid Commit" >&2; exit 64; }
+          [[ "$action" == deploy || "$action" == rollback ]] || { echo "invalid Action" >&2; exit 64; }
+          [[ -x /usr/local/sbin/xamuko-deploy ]] || { echo "deployment wrapper is not installed" >&2; exit 78; }
+          if [[ "$action" == rollback ]]; then
+            [[ "$rollback_commit" =~ ^[0-9a-f]{40}$ || "$rollback_commit" == bootstrap ]] || { echo "RollbackCommit required" >&2; exit 64; }
+            exec /usr/local/sbin/xamuko-deploy rollback "$rollback_commit"
+          fi
+          [[ "$rollback_commit" == "" ]] || { echo "RollbackCommit must be empty for deploy" >&2; exit 64; }
+          [[ "$artifact_bucket" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]] || { echo "ArtifactBucket required" >&2; exit 64; }
+          [[ "$artifact_key" == "releases/$commit/xamuko-backend-$commit.tar.gz" ]] || { echo "ArtifactKey does not match Commit" >&2; exit 65; }
+          [[ "$artifact_sha256" =~ ^[0-9a-f]{64}$ ]] || { echo "ArtifactSha256 required" >&2; exit 64; }
+          exec /usr/local/sbin/xamuko-deploy deploy "$commit" "$artifact_bucket" "$artifact_key" "$artifact_sha256"
