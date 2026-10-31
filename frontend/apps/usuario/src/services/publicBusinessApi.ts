@@ -2,6 +2,7 @@ import type { Business, Product, Service } from "../data/mockData";
 import { ApiError } from "./httpClient";
 import { requestWithSession } from "./authService";
 import { buildApiUrl } from "@wit/utils";
+import { listPublicReviews } from "./reviewsService";
 
 type PublicPhoto = { id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean };
 type PublicCategory = { id: string; code: string; name: string; iconKey: string | null } | null;
@@ -86,6 +87,22 @@ function mapService(value: PublicOffer, businessId: string): Service {
   const currency = value.price.currency ?? "COP";
   const originalPriceLabel = original ? `${new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(original)).replace(/\u00a0/g, " ")} ${currency}` : undefined;
   return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: mediaUrl(value.photos[0]?.url), priceLabel: formatServicePrice(value), originalPriceLabel, promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
+}
+
+export async function hydrateBusinessRatings(businesses: Business[]): Promise<Business[]> {
+  return Promise.all(businesses.map(async (business) => {
+    try {
+      const response = await listPublicReviews(business.id, 1, 1);
+      const summary = response.summary;
+      return {
+        ...business,
+        rating: summary?.average ?? 0,
+        reviewCount: summary?.total ?? 0,
+      };
+    } catch {
+      return business;
+    }
+  }));
 }
 
 export async function listPublicBusinesses(): Promise<Business[]> {
