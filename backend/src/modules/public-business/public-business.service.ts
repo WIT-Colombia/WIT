@@ -338,6 +338,7 @@ export async function listPublicBusinesses(input: PublicBusinessListInput, db: P
     db.business.findMany({
       where,
       select: {
+        id: true,
         publicId: true,
         createdAt: true,
         name: true,
@@ -445,7 +446,7 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
 
 export async function getPublicBusiness(publicId: string, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
-  const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: publicBusinessDetailSelect });
+  const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: { id: true, ...publicBusinessDetailSelect } });
   if (!business) throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
   const ratings = await reviewSummaries([business], db);
   return detail(business, canViewAdult, ratings.get(business.id));
