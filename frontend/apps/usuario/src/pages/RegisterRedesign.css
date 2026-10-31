@@ -862,3 +862,12 @@
     margin-bottom: clamp(72px, 10vh, 112px);
   }
 }
+
+
+/* Move the desktop/tablet story copy clear of the fixed slogan. */
+@media (min-width: 801px) {
+  .user-auth-story-copy {
+    position: relative;
+    top: clamp(-112px, -10vh, -72px);
+  }
+}
