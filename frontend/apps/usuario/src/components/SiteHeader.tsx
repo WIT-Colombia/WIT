@@ -3,7 +3,7 @@ import { useLocationContext } from "../context/LocationContext";
 import { useAuth } from "../context/AuthContext";
 import { useAccountAvatar } from "../hooks/useAccountAvatar";
 import { getNotifications, getProfile } from "../services/userDataService";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.avif";
+import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
 import { SearchBar } from "./SearchBar";
 import "./SiteHeader.css";
 
