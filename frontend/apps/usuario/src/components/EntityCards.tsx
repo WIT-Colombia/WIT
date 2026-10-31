@@ -38,7 +38,7 @@ export function BusinessCard({ business, favorite = false, onFavorite, onContact
   const requireAccount = useAccountGate();
   const navigate = useNavigate();
   const location = useLocation();
-  const isFeatured = business.plan === "premium" || business.isFeatured || Boolean(business.pioneerNumber);
+  const isFeatured = business.plan === "premium" || business.isFeatured;
   const publicationState = getBusinessPublicationState(business.name);
   const inferredContext: AnalyticsContext = location.pathname === '/results' ? { source: 'search', searchTerm: new URLSearchParams(location.search).get('q') ?? undefined, category: business.category, isFeatured } : { source: isFeatured ? 'featured' : 'direct', category: business.category, isFeatured };
   const open = () => { rememberBusinessVisitContext(business.id, analyticsContext ?? inferredContext); navigate(`/business/${business.id}`); };
