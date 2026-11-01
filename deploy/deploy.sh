@@ -84,10 +84,12 @@ if [[ $action == deploy ]]; then
     -p IPAddressDeny=169.254.169.254/32 -p IPAddressDeny=169.254.170.2/32 \
     -p IPAddressDeny=fd00:ec2::254/128 \
     /usr/local/libexec/xamuko-build "$work/source"
-  [[ -s $work/source/backend/dist/server.js && -s $work/source/frontend/apps/usuario/dist/index.html ]]
+  [[ -s $work/source/backend/dist/server.js && -s $work/source/frontend/apps/usuario/dist/index.html && -s $work/source/frontend/apps/admin/dist/index.html ]]
   mkdir "$release"
   cp -a "$work/source/backend" "$release/backend"
   cp -a "$work/source/frontend/apps/usuario/dist" "$release/web"
+  # Keep Admin as a separate static bundle; exposure is opt-in through a dedicated HTTPS vhost.
+  cp -a "$work/source/frontend/apps/admin/dist" "$release/admin"
   chown -R root:root "$release"
   rm -f "$release/backend/.env"
   [[ ! -e $release/backend/storage ]] || { echo 'Unexpected storage in artifact'; exit 65; }
