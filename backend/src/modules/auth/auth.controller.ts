@@ -4,7 +4,7 @@ import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 import { getCurrentUser, issueSession, login, logout, refresh, register } from './auth.service.js';
 import { changePassword, updateAdultContentPreference, updateProfile } from './account.service.js';
 import { loginSchema, registerSchema } from './auth.schemas.js';
-import { adultContentPreferenceSchema, changePasswordSchema, emailRequestSchema, emailTokenSchema, passwordResetConfirmSchema, profileUpdateSchema, sessionPreferenceSchema } from './auth.schemas.js';
+import { adultContentPreferenceSchema, changePasswordSchema, emailRequestSchema, emailTokenSchema, passwordResetConfirmSchema, passwordResetRequestSchema, profileUpdateSchema, sessionPreferenceSchema } from './auth.schemas.js';
 import { confirmEmail, resetPassword, sendPasswordResetRequest, sendVerificationRequest } from './auth-token.service.js';
 import argon2 from 'argon2';
 import { clearRefreshCookie, getRefreshToken, setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
@@ -135,7 +135,7 @@ export const confirmEmailController: RequestHandler = async (request, response, 
     }
   } catch (error) { next(error); }
 };
-export const requestPasswordResetController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendPasswordResetRequest(email.trim().toLocaleLowerCase('en-US')); response.status(202).json({ message: 'Si la cuenta existe, recibirás instrucciones para continuar.' }); } catch (error) { next(error); } };
+export const requestPasswordResetController: RequestHandler = async (request, response, next) => { try { const { email, application } = parse(passwordResetRequestSchema, request.body); await sendPasswordResetRequest(email.trim().toLocaleLowerCase('en-US'), application); response.status(202).json({ message: 'Si la cuenta existe, recibirás instrucciones para continuar.' }); } catch (error) { next(error); } };
 export const confirmPasswordResetController: RequestHandler = async (request, response, next) => {
   try {
     const input = parse(passwordResetConfirmSchema, request.body);
