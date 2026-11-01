@@ -1,6 +1,7 @@
 import { consumeVerificationToken } from './verification-confirmation.js';
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
+import { env } from '../../config/env.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { sendPasswordResetEmail, sendSecurityNotificationEmail, sendVerificationEmail } from '../../shared/email/email-service.js';
 
@@ -41,14 +42,14 @@ export async function confirmEmail(token: string): Promise<string> {
   return record.userId;
 }
 
-export async function sendPasswordResetRequest(emailNormalized: string): Promise<void> {
+export async function sendPasswordResetRequest(emailNormalized: string, application: 'usuario' | 'admin' = 'usuario'): Promise<void> {
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || !identity.verifiedAt || identity.user.status !== 'ACTIVE') return;
   const token = await issueToken(identity.userId, 'PASSWORD_RESET', 30 * 60 * 1000);
-  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName);
+  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName, 'usuario', application === 'admin' ? env.passwordResetAdminUrl : env.passwordResetUrl);
 }
 
 export async function resetPassword(token: string, passwordHash: string): Promise<string> {
