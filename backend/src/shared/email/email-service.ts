@@ -20,8 +20,8 @@ export async function sendVerificationEmail(to: string, token: string, displayNa
   await sendTransactionalEmail({ ...message, eventType: 'email_verification', idempotencyKey: `email_verification/${createHash('sha256').update(token).digest('hex')}` });
 }
 
-export async function sendPasswordResetEmail(to: string, token: string, displayName?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  const message = renderPasswordResetEmail({ to, token, displayName, baseUrl: env.passwordResetUrl, logoUrl: env.emailLogoUrl }, application);
+export async function sendPasswordResetEmail(to: string, token: string, displayName?: string, application: EmailApplication = 'usuario', resetBaseUrl: string = env.passwordResetUrl): Promise<void> {
+  const message = renderPasswordResetEmail({ to, token, displayName, baseUrl: resetBaseUrl, logoUrl: env.emailLogoUrl }, application);
   await sendTransactionalEmail({ ...message, eventType: 'password_reset', idempotencyKey: `password_reset/${createHash('sha256').update(token).digest('hex')}` });
 }
 
