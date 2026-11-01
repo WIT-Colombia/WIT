@@ -56,6 +56,7 @@ if (!['development', 'resend'].includes(emailMode)) {
 const emailFrom = process.env.EMAIL_FROM?.trim() ?? 'XAMUKO <notificaciones@xamuko.com>';
 const emailVerificationUrl = process.env.EMAIL_VERIFICATION_URL?.trim() ?? 'http://localhost:5173/verify-email';
 const passwordResetUrl = process.env.PASSWORD_RESET_URL?.trim() ?? 'http://localhost:5173/reset-password';
+const passwordResetAdminUrl = process.env.PASSWORD_RESET_ADMIN_URL?.trim() ?? 'https://admin.xamuko.com/reset-password';
 // RESEND_API_KEY is the canonical name. EMAIL_API_KEY remains a backwards-compatible fallback
 // for existing local environments and is never logged or exposed.
 const resendApiKey = process.env.RESEND_API_KEY?.trim() ?? process.env.EMAIL_API_KEY?.trim();
@@ -102,6 +103,7 @@ export const env = Object.freeze({
   emailFrom,
   emailVerificationUrl,
   passwordResetUrl,
+  passwordResetAdminUrl,
   resendApiKey,
   emailApiUrl,
   emailLogoUrl,
