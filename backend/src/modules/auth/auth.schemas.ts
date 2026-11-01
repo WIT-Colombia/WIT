@@ -15,7 +15,7 @@ export const refreshSchema = z.object({ refreshToken: z.string().min(20).max(256
 export const logoutSchema = refreshSchema;
 export const emailTokenSchema = z.object({ token: z.string().min(32).max(256) }).strict();
 export const emailRequestSchema = z.object({ email }).strict();
-export const passwordResetRequestSchema = emailRequestSchema;
+export const passwordResetRequestSchema = z.object({ email, application: z.enum(['usuario', 'admin']).optional().default('usuario') }).strict();
 export const passwordResetConfirmSchema = z.object({ token: z.string().min(32).max(256), password, rememberMe: z.boolean().optional().default(false) }).strict();
 
 export type RegisterInput = z.infer<typeof registerSchema>;
