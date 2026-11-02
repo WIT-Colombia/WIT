@@ -29,10 +29,7 @@ function businessProximityLabel(business: Business): string {
   return getBusinessCoordinates(business) && Number.isFinite(business.distanceKm) ? `A ${formatDistance(business.distanceKm)}` : "Sin distancia";
 }
 
-function OfferPrice({ current, original }: { current: string; original?: string }) {
-  void original;
-  return <strong>{current}</strong>;
-}
+function OfferPrice({ current, original }: { current: string; original?: string }) {\n  return <strong className="entity-offer-price"><span>{current}</span>{original && <del>{original}</del>}</strong>;\n}
 
 export function BusinessCard({ business, favorite = false, onFavorite, onContact, analyticsContext }: BusinessCardProps) {
   const requireAccount = useAccountGate();
