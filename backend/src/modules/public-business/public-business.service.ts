@@ -448,7 +448,7 @@ async function listPublicOffers(publicId: string, kind: PublicOfferKind, db: Pub
   const businessId = await findPublicBusinessId(publicId, db, canViewAdult);
   const offers = await db.businessOffer.findMany({
     where: { businessId, kind, active: true, deletedAt: null, publicationStatus: 'PUBLISHED', ...(canViewAdult ? {} : { adultOnly: false }) },
-    select: publicOfferSelect,
+    select: publicOfferSelect(),
     orderBy: { updatedAt: 'desc' },
   });
   return offers.map(item => offer(publicId, item));
