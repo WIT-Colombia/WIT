@@ -2,7 +2,6 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { BusinessProfileThumbnail, BusinessIndicatorRow, Sidebar, SidebarIcon, formatSedeLabel, type SidebarIconName } from "./Sidebar";
 import { useBusinessStore } from "../../services/businessStore";
-import { formatCategoryName } from "../../services/realBusinessAdapter";
 
 type MobileLink = { label: string; icon: SidebarIconName; to: string; end?: boolean; permission?: string; ownerOnly?: boolean };
 const primaryLinks: MobileLink[] = [
@@ -43,7 +42,7 @@ export function MobileNavigation() {
   const unread = notifications.filter((item) => !item.read).length + persistentNotificationCount;
   const destination = (link: MobileLink) => link.label === "Mi cuenta" && empty ? "/perfil?empty=1" : link.to;
   const visiblePrimaryLinks = primaryLinks.filter(link => business.role === "Propietario" || (!link.ownerOnly && (!link.permission || business.permissions?.includes(link.permission))));
-  const mobileBusinessMeta = (item: { sede?: string; category: string; city: string }) => formatSedeLabel(item.sede) ? `${formatSedeLabel(item.sede)} · ${item.city}` : `${formatCategoryName(item.category)} · ${item.city}`;
+  const mobileBusinessMeta = (item: { sede?: string; city: string }) => formatSedeLabel(item.sede) || item.city;
   useEffect(() => setMoreOpen(false), [location.pathname]);
   useEffect(() => {
     if (!businessesOpen) return;
