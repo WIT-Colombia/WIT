@@ -71,7 +71,7 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run prisma:generate
-          npm run prisma:migrate:deploy
+          npx prisma migrate deploy
           npm run typecheck
           npm test
           npm run build
