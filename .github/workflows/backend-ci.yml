@@ -2,10 +2,16 @@ name: XAMUKO Backend CI
 
 on:
   pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
   push:
     branches:
       - feature/xamuko-backend-security
       - integration/preserve-all-20261029
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
 
 jobs:
   backend:

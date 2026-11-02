@@ -3,12 +3,24 @@ name: XAMUKO frontend validation
 on:
   push:
     branches: [integration/preserve-all-20261029]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-validation.yml'
   pull_request:
     branches: [integration/preserve-all-20261029]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-validation.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# Keep only the newest validation for a branch/PR; obsolete builds waste time
+# while preserving the complete validation suite for the latest commit.
+concurrency:
+  group: xamuko-frontend-validation-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   frontend:
