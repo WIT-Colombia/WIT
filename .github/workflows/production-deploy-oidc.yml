@@ -96,8 +96,8 @@ jobs:
         with:
           name: xamuko-backend-${{ env.DEPLOY_SHA }}
           path: |
-            xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz
-            xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz.sha256
+            backend/xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz
+            backend/xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz.sha256
           if-no-files-found: error
           retention-days: 14
 
