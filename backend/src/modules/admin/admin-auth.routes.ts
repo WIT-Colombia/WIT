@@ -1,10 +1,22 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
+import { env } from '../../config/env.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { readAdminPendingOAuth, consumeAdminPendingOAuth, clearAdminPendingOAuth } from './admin-pending-oauth.service.js';
 import { beginAuthentication, finishAuthentication } from './admin-webauthn.service.js';
 import { issueAdminSession, requireAdminSession, revokeAdminSession } from './admin-session.service.js';
 import { beginPasskeyActivation, finishPasskeyActivation } from './admin-passkey-activation.service.js';
+import { getAdminContext, adminSession } from './admin-auth.service.js';
+import { login } from '../auth/auth.service.js';
+import { loginSchema } from '../auth/auth.schemas.js';
+import { setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
+import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
+import { LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from '../auth/auth-rate-limit-policy.js';
+
+const adminPasswordRateLimit = rateLimit({ windowMs: env.nodeEnv === 'development' ? 60 * 1000 : LOGIN_IP_WINDOW_SECONDS * 1000, limit: env.nodeEnv === 'development' ? 60 : LOGIN_RATE_LIMIT, standardHeaders: 'draft-8', legacyHeaders: false });
+
+const requestMeta = (request: any) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
 
 export const adminAuthRouter = Router();
 
@@ -13,6 +25,19 @@ async function userIdForGoogleSub(googleSub: string): Promise<string> {
   if (!identity) throw new AppError(403, 'ADMIN_IDENTITY_NOT_LINKED', 'La identidad Google autorizada aún no está vinculada a una cuenta.');
   return identity.userId;
 }
+
+adminAuthRouter.post('/password', adminPasswordRateLimit, requireTrustedOrigin, async (request, response, next) => {
+  try {
+    const parsed = loginSchema.safeParse(request.body);
+    if (!parsed.success) throw new AppError(400, 'INVALID_INPUT', 'Revisa el correo y la contraseña.');
+    const result = await login(parsed.data, requestMeta(request));
+    const context = await getAdminContext(result.user.id);
+    if (!context || context.role !== 'SUPER_ADMIN') throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'La cuenta no tiene acceso administrativo.');
+    await issueAdminSession(response, result.user.id);
+    setRefreshCookie(response, result.refreshToken, parsed.data.rememberMe);
+    response.json({ authenticated: true, admin: await adminSession(result.user.id) });
+  } catch (error) { next(error); }
+});
 
 adminAuthRouter.get('/webauthn/options', async (request, response, next) => {
   try {
