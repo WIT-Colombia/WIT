@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from 'react-router-dom';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import xamukoLogo from '../assets/xamuko-logo.png';
 import { authenticateWithPassword, authenticateWithPasskey, startGoogleLogin, getSession } from '../services/adminService';
 import { beginAdminPasskeyActivation, finishAdminPasskeyActivation } from '../services/adminApiClient';
@@ -48,8 +48,6 @@ export function LoginPage() {
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'No se pudo registrar la passkey.'); }
     finally { setActivationBusy(false); }
   }
-
-  useEffect(() => { void passkey(); }, []);
 
   return <main className="login-page admin-login"><section className="admin-login-form-wrap"><div className="admin-login-form">
     <div className="admin-login-form-brand"><img src={xamukoLogo} alt="XAMUKO" /><span>ADMIN</span></div>
