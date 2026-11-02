@@ -56,9 +56,9 @@ export function LoginPage() {
     <header><h2>Acceso seguro a XAMUKO Admin</h2><p>Inicia sesión con tu cuenta administrativa autorizada.</p></header>
     <form onSubmit={login} aria-label="Inicio de sesión administrativo">
       <label htmlFor="admin-email">Correo electrónico</label>
-      <input id="admin-email" name="email" type="email" autoComplete="username" required value={email} onChange={event => setEmail(event.target.value)} disabled={loginBusy} />
+      <div className="admin-login-input"><input id="admin-email" name="email" type="email" autoComplete="username" required value={email} onChange={event => setEmail(event.target.value)} disabled={loginBusy} /></div>
       <label htmlFor="admin-password">Contraseña</label>
-      <div className="admin-password-field">
+      <div className="admin-login-input admin-login-password">
         <input id="admin-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required minLength={8} value={password} onChange={event => setPassword(event.target.value)} disabled={loginBusy} />
         <button type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>{showPassword ? 'Ocultar' : 'Mostrar'}</button>
       </div>
