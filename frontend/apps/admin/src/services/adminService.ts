@@ -14,4 +14,4 @@ export const authenticateWithPassword = async (email: string, password: string) 
 export const restoreSession = async (): Promise<Admin | null> => { try { await getAdminSession(); currentSession = mapAdmin(await (await fetch('/api/v1/admin/me', { credentials: 'include' })).json().then(value => value.admin)); return currentSession; } catch { currentSession = null; return null; } };
 
 export const authenticateWithPasskey = async () => { await beginAdminWebAuthn(); currentSession = mapAdmin(await (await fetch('/api/v1/admin/me', { credentials: 'include' })).json().then(value => value.admin)); return currentSession; };
-export const logout = async () => { await adminSessionLogout(); currentSession = null; };
+export const logout = async () => { if (isAdminDemoMode) { currentSession = null; return; } await adminSessionLogout(); currentSession = null; };
