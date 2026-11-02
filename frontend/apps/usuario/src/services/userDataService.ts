@@ -86,15 +86,17 @@ export function getMatchingReportCount(targetType: UserReport["targetType"], tar
 
 export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean };
 const defaultNotifications: UserNotification[] = [
-  { id: "welcome", title: "Te damos la bienvenida a WIT", body: "Empieza buscando eso que necesitas cerca de ti.", date: "Hoy", read: false },
-  { id: "saved-tip", title: "Guarda los lugares que te interesan", body: "Toca el corazón de una ficha para volver a ella después.", date: "Ayer", read: false },
-  ...Array.from({ length: 10 }, (_, index) => ({ id: `demo-unread-${index + 1}`, title: `Novedad cerca de ti ${index + 1}`, body: "Hay un nuevo lugar que podría interesarte.", date: "Hoy", read: false })),
+  { id: "welcome", title: "Te damos la bienvenida a XAMUKO", body: "Empieza buscando eso que necesitas cerca de ti.", date: "Hoy", read: false },
 ];
 export function getNotifications(): UserNotification[] {
   try {
     const saved = localStorage.getItem(NOTIFICATIONS_KEY);
     if (!saved) { localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(defaultNotifications)); return defaultNotifications; }
-    return JSON.parse(saved) as UserNotification[];
+    const parsed = JSON.parse(saved) as UserNotification[];
+    const cleaned = parsed.filter((notification) => notification.id === "welcome" || !notification.id.startsWith("demo-") && notification.id !== "saved-tip");
+    if (!cleaned.some((notification) => notification.id === "welcome")) cleaned.unshift(defaultNotifications[0]);
+    if (cleaned.length !== parsed.length) localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(cleaned));
+    return cleaned;
   } catch { return defaultNotifications; }
 }
 export function markNotificationRead(id: string): UserNotification[] {
