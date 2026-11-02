@@ -3,7 +3,9 @@ import { buildApiUrl } from '@wit/utils';
 export const startGoogleLogin = () => { window.location.assign(`${buildApiUrl('/auth/google/start')}?application=admin&next=%2Fdashboard`); };
 import type { Admin, Permission, Role } from '../types/admin';
 export const API_BASE = '/api/v1';
-export const isAdminDemoMode = import.meta.env.VITE_ADMIN_DEMO_MODE === 'true';
+const isPagesPreviewHost = typeof window !== 'undefined' && window.location.hostname.endsWith('.xamuko-admin.pages.dev');
+// Preview-only safety net: Cloudflare Preview builds may omit project env vars. Production domains never match this host.
+export const isAdminDemoMode = import.meta.env.VITE_ADMIN_DEMO_MODE === 'true' || isPagesPreviewHost;
 const grants: Partial<Record<Role, Permission[]>> = { principal: ['dashboard:read', 'verification:write', 'content:moderate', 'settings:write', 'business:write'], verification: ['dashboard:read', 'verification:write'], moderator: ['dashboard:read', 'content:moderate'], support: ['dashboard:read'], analyst: ['dashboard:read'] };
 export const can = (admin: Admin, permission: Permission) => admin.permissions ? admin.permissions.includes(permission) : (grants[admin.role] ?? []).includes(permission);
 let currentSession: Admin | null = null;
