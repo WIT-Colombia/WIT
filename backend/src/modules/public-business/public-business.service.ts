@@ -72,7 +72,9 @@ const publicLocationSelect = {
   timezone: true,
 } as const;
 
-function publicOfferSelect() {\n  const now = new Date();\n  return {
+function publicOfferSelect() {
+  const now = new Date();
+  return {
   id: true,
   kind: true,
   createdAt: true,
@@ -86,7 +88,8 @@ function publicOfferSelect() {\n  const now = new Date();\n  return {
   category: { select: publicCategorySelect },
   photos: { select: publicPhotoSelect, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
   promotions: { where: { active: true, deletedAt: null, startsAt: { lte: now }, endsAt: { gte: now } }, orderBy: { startsAt: 'asc' }, take: 1, select: { id: true, type: true, conditions: true, originalPrice: true, promotionalPrice: true, startsAt: true, endsAt: true, photos: { select: { id: true, sortOrder: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } } },
-  } satisfies Prisma.BusinessOfferSelect;\n}
+  } satisfies Prisma.BusinessOfferSelect;
+}
 
 // Select only the commercial fields used by the public contract. Besides avoiding
 // accidental exposure when the Business model grows, this keeps the public query
