@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { navigation, auxiliaryNavigation } from '../data/navigation';
-import { getSession, logout } from '../services/adminService';
+import { getSession, logout, isAdminDemoMode } from '../services/adminService';
 import { fetchOwnAvatar } from '../services/adminApiClient';
 import { Icon } from './Icon';
 import xamukoLogo from '../assets/xamuko-logo.png';
@@ -43,7 +43,7 @@ export function Layout() {
   const grouped = ['PLATAFORMA', 'GESTIÓN', 'SUSCRIPCIONES', 'FINANZAS', 'CONFIGURACIÓN'];
   const avatar = avatarSrc ? <img src={avatarSrc} alt="" /> : admin?.name?.split(' ').map(part => part[0]).slice(0, 2).join('') || 'A';
   const navItem = (item: typeof navigation[number]) => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={item.icon} size={18} /><span>{item.label}</span></NavLink>;
-  return <div className={`app-shell admin-refresh ${verification ? 'verification-preserved' : ''}`}>
+  return <div className={`app-shell admin-refresh ${verification ? 'verification-preserved' : ''}`}>{isAdminDemoMode && <div className="admin-demo-banner" role="status">Modo de pruebas — Sin acceso a datos reales</div>}
     <a className="skip-link" href="#main">Ir al contenido</a>
     {open && <button className="sidebar-backdrop" aria-label="Cerrar navegación" onClick={() => { setOpen(false); toggleRef.current?.focus(); }} />}
     <aside ref={sidebarRef} className={`admin-sidebar ${open ? 'is-open' : ''}`} aria-label="Navegación administrativa">
