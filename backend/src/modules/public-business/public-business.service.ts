@@ -72,7 +72,9 @@ const publicLocationSelect = {
   timezone: true,
 } as const;
 
-const publicOfferSelect = {
+function publicOfferSelect() {
+  const now = new Date();
+  return {
   id: true,
   kind: true,
   createdAt: true,
@@ -85,8 +87,9 @@ const publicOfferSelect = {
   negotiable: true,
   category: { select: publicCategorySelect },
   photos: { select: publicPhotoSelect, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
-  promotions: { where: { active: true, deletedAt: null, startsAt: { lte: new Date() }, endsAt: { gte: new Date() } }, orderBy: { startsAt: 'asc' }, take: 1, select: { id: true, type: true, conditions: true, originalPrice: true, promotionalPrice: true, startsAt: true, endsAt: true, photos: { select: { id: true, sortOrder: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } } },
-} satisfies Prisma.BusinessOfferSelect;
+  promotions: { where: { active: true, deletedAt: null, startsAt: { lte: now }, endsAt: { gte: now } }, orderBy: { startsAt: 'asc' }, take: 1, select: { id: true, type: true, conditions: true, originalPrice: true, promotionalPrice: true, startsAt: true, endsAt: true, photos: { select: { id: true, sortOrder: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } } },
+  } satisfies Prisma.BusinessOfferSelect;
+}
 
 // Select only the commercial fields used by the public contract. Besides avoiding
 // accidental exposure when the Business model grows, this keeps the public query
@@ -124,7 +127,7 @@ const publicBusinessDetailSelect = {
   },
   offers: {
     where: { active: true, deletedAt: null, publicationStatus: 'PUBLISHED' },
-    select: publicOfferSelect,
+    select: publicOfferSelect(),
     orderBy: { updatedAt: 'desc' },
   },
 } satisfies Prisma.BusinessSelect;
@@ -411,8 +414,8 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   };
   const [businesses, products, services] = await Promise.all([
     db.business.findMany({ where: businessWhere, select: { publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect, business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
   ]);
   const categoryMatches = (item: any) => !categoryTerms.length || matchesSearch([item.category?.code, item.category?.translations?.[0]?.name], categoryTerms);
   const inRadius = (value: any) => input.latitude !== undefined && input.longitude !== undefined && input.radiusKm !== undefined ? distanceKm(input.latitude, input.longitude, value) <= input.radiusKm : true;
@@ -445,7 +448,7 @@ async function listPublicOffers(publicId: string, kind: PublicOfferKind, db: Pub
   const businessId = await findPublicBusinessId(publicId, db, canViewAdult);
   const offers = await db.businessOffer.findMany({
     where: { businessId, kind, active: true, deletedAt: null, publicationStatus: 'PUBLISHED', ...(canViewAdult ? {} : { adultOnly: false }) },
-    select: publicOfferSelect,
+    select: publicOfferSelect(),
     orderBy: { updatedAt: 'desc' },
   });
   return offers.map(item => offer(publicId, item));

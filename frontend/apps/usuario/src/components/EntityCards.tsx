@@ -30,8 +30,7 @@ function businessProximityLabel(business: Business): string {
 }
 
 function OfferPrice({ current, original }: { current: string; original?: string }) {
-  void original;
-  return <strong>{current}</strong>;
+  return <strong className="entity-offer-price"><span>{current}</span>{original && <del>{original}</del>}</strong>;
 }
 
 export function BusinessCard({ business, favorite = false, onFavorite, onContact, analyticsContext }: BusinessCardProps) {

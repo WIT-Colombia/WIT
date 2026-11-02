@@ -86,7 +86,7 @@ function mapService(value: PublicOffer, businessId: string): Service {
   const original = (value as PublicOffer & { originalPrice?: string | null }).originalPrice;
   const currency = value.price.currency ?? "COP";
   const originalPriceLabel = original ? `${new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(original)).replace(/\u00a0/g, " ")} ${currency}` : undefined;
-  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: mediaUrl(value.photos[0]?.url), priceLabel: formatServicePrice(value), originalPriceLabel, promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
+  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: mediaUrl(value.photos[0]?.url), priceLabel: formatServicePrice(value), originalPriceLabel, isOffer: Boolean(value.isOffer), offerLabel: value.offerLabel ?? undefined, discount: value.discount ?? undefined, offerDeadline: formatOfferDeadline(value.offerDeadline), promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
 }
 
 export async function hydrateBusinessRatings(businesses: Business[]): Promise<Business[]> {
