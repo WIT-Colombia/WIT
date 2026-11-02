@@ -88,16 +88,16 @@ jobs:
           set -euo pipefail
           printf '%s\n' "${DEPLOY_SHA}" > RELEASE_COMMIT
           npm prune --omit=dev --no-audit --no-fund
-          tar -czf "../xamuko-backend-${DEPLOY_SHA}.tar.gz" \
+          tar -czf "xamuko-backend-${DEPLOY_SHA}.tar.gz" \
             dist node_modules prisma package.json package-lock.json RELEASE_COMMIT
-          sha256sum "../xamuko-backend-${DEPLOY_SHA}.tar.gz" > "../xamuko-backend-${DEPLOY_SHA}.tar.gz.sha256"
+          sha256sum "xamuko-backend-${DEPLOY_SHA}.tar.gz" > "xamuko-backend-${DEPLOY_SHA}.tar.gz.sha256"
       - name: Upload verified release artifact
         uses: actions/upload-artifact@v4
         with:
           name: xamuko-backend-${{ env.DEPLOY_SHA }}
           path: |
-            backend/../xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz
-            backend/../xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz.sha256
+            xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz
+            xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz.sha256
           if-no-files-found: error
           retention-days: 14
 
