@@ -1,0 +1,163 @@
+name: XAMUKO production deploy (OIDC, private S3 artifact)
+
+on:
+  push:
+    branches: [integration/preserve-all-20261029]
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 40-character commit to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+concurrency:
+  group: xamuko-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-2
+  INSTANCE_ID: ${{ vars.XAMUKO_PRODUCTION_INSTANCE_ID }}
+  ARTIFACT_BUCKET: ${{ vars.XAMUKO_PRODUCTION_ARTIFACT_BUCKET }}
+  DEPLOY_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.commit || github.sha }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-test-only
+          MYSQL_DATABASE: xamuko_test
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DATABASE_URL: mysql://test:test@127.0.0.1:3306/xamuko_test
+      AUTH_ACCESS_TOKEN_SECRET: ci-test-secret-not-for-production-0123456789
+      GOOGLE_CLIENT_ID: xamuko-test.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: test-secret-not-real
+      ADMIN_PASSKEY_ACTIVATION_CODE_HASH: 5c55a2f6a1da4768a635d45e8b0e0ba1bae9786b6a8e3351c435800bcf852aea
+      ADMIN_GOOGLE_SUB_ALLOWLIST: ci-admin-google-sub
+      ADMIN_WEBAUTHN_RP_ID: 127.0.0.1
+      ADMIN_WEBAUTHN_ORIGIN: http://127.0.0.1
+      ADMIN_WEBAUTHN_RP_NAME: XAMUKO CI
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+          persist-credentials: false
+      - name: Assert approved integrations
+        run: |
+          set -euo pipefail
+          test -f backend/src/modules/business/photo-storage.ts
+          test -f backend/src/modules/auth/avatar.service.ts
+          rg -n "businessPhotoUrl" backend frontend
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Backend checks
+        working-directory: backend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run prisma:generate
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Frontend checks
+        working-directory: frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm run build
+          npm run test:verification
+      - name: Package backend release
+        working-directory: backend
+        run: |
+          set -euo pipefail
+          printf '%s\n' "${DEPLOY_SHA}" > RELEASE_COMMIT
+          npm prune --omit=dev --no-audit --no-fund
+          tar -czf "../xamuko-backend-${DEPLOY_SHA}.tar.gz" \
+            dist node_modules prisma package.json package-lock.json RELEASE_COMMIT
+          sha256sum "../xamuko-backend-${DEPLOY_SHA}.tar.gz" > "../xamuko-backend-${DEPLOY_SHA}.tar.gz.sha256"
+      - name: Upload verified release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-backend-${{ env.DEPLOY_SHA }}
+          path: |
+            backend/../xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz
+            backend/../xamuko-backend-${{ env.DEPLOY_SHA }}.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy:
+    needs: verify
+    if: vars.XAMUKO_PRODUCTION_DEPLOY_ENABLED == 'true'
+    environment: production
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: xamuko-backend-${{ env.DEPLOY_SHA }}
+          path: artifact
+      - name: Validate release checksum
+        working-directory: artifact
+        run: |
+          set -euo pipefail
+          sha256sum -c "xamuko-backend-${DEPLOY_SHA}.tar.gz.sha256"
+          test "$(tar -xOzf "xamuko-backend-${DEPLOY_SHA}.tar.gz" RELEASE_COMMIT)" = "${DEPLOY_SHA}"
+      - uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df
+        with:
+          role-to-assume: ${{ vars.XAMUKO_PRODUCTION_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 900
+          allowed-account-ids: '988024221050'
+      - name: Publish private release to S3
+        id: upload
+        working-directory: artifact
+        env: { AWS_PAGER: '' }
+        run: |
+          set -euo pipefail
+          [[ -n "${ARTIFACT_BUCKET}" && "${ARTIFACT_BUCKET}" != *.* ]]
+          key="releases/${DEPLOY_SHA}/xamuko-backend-${DEPLOY_SHA}.tar.gz"
+          aws s3 cp "xamuko-backend-${DEPLOY_SHA}.tar.gz" "s3://${ARTIFACT_BUCKET}/${key}" --sse AES256 --metadata "commit=${DEPLOY_SHA},sha256=$(cut -d' ' -f1 "xamuko-backend-${DEPLOY_SHA}.tar.gz.sha256")"
+          echo "key=${key}" >> "${GITHUB_OUTPUT}"
+          echo "sha256=$(cut -d' ' -f1 "xamuko-backend-${DEPLOY_SHA}.tar.gz.sha256")" >> "${GITHUB_OUTPUT}"
+      - name: Send deployment command through SSM
+        env:
+          AWS_PAGER: ''
+          ARTIFACT_KEY: ${{ steps.upload.outputs.key }}
+          ARTIFACT_SHA256: ${{ steps.upload.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          [[ -n "${INSTANCE_ID}" ]]
+          command_id=$(aws ssm send-command \
+            --instance-ids "${INSTANCE_ID}" \
+            --document-name Xamuko-Production-Deploy \
+            --parameters "Commit=${DEPLOY_SHA},Action=deploy,RollbackCommit=,ArtifactBucket=${ARTIFACT_BUCKET},ArtifactKey=${ARTIFACT_KEY},ArtifactSha256=${ARTIFACT_SHA256}" \
+            --timeout-seconds 120 \
+            --comment "XAMUKO OIDC deployment ${GITHUB_SHA}" \
+            --query 'Command.CommandId' --output text)
+          for attempt in {1..30}; do
+            status=$(aws ssm get-command-invocation --command-id "${command_id}" --instance-id "${INSTANCE_ID}" --query 'Status' --output text 2>/dev/null || true)
+            case "${status}" in
+              Success) exit 0 ;;
+              Failed|Cancelled|TimedOut|Undeliverable|Terminated) echo "SSM deployment failed: ${status}" >&2; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "Timed out waiting for SSM deployment" >&2
+          exit 1
