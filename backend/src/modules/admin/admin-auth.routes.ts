@@ -5,13 +5,14 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { readAdminPendingOAuth, consumeAdminPendingOAuth, clearAdminPendingOAuth } from './admin-pending-oauth.service.js';
 import { beginAuthentication, finishAuthentication } from './admin-webauthn.service.js';
-import { issueAdminSession, requireAdminSession, revokeAdminSession } from './admin-session.service.js';
+import { issueAdminSession, requireAdminSession, revokeAdminSession, adminSession } from './admin-session.service.js';
 import { beginPasskeyActivation, finishPasskeyActivation } from './admin-passkey-activation.service.js';
+import { getAdminContext } from './admin-auth.service.js';
 import { login } from '../auth/auth.service.js';
 import { loginSchema } from '../auth/auth.schemas.js';
 import { setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
-import { LOGIN_ACCOUNT_WINDOW_SECONDS, LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from '../auth/auth-rate-limit-policy.js';
+import { LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from '../auth/auth-rate-limit-policy.js';
 
 const adminPasswordRateLimit = rateLimit({ windowMs: env.nodeEnv === 'development' ? 60 * 1000 : LOGIN_IP_WINDOW_SECONDS * 1000, limit: env.nodeEnv === 'development' ? 60 : LOGIN_RATE_LIMIT, standardHeaders: 'draft-8', legacyHeaders: false });
 
