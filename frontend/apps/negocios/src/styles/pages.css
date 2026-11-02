@@ -768,7 +768,7 @@
   .mobile-business-picker .mobile-business-copy strong{color:#0f172a!important;text-shadow:none!important;font-weight:800}
   .mobile-business-picker .mobile-business-copy small{color:#64748b!important}
   .mobile-business-picker .mobile-business-chevron{color:#2563eb!important;font-weight:800}
-  .mobile-business-menu{top:48px!important;right:0!important;left:auto!important;width:min(360px,calc(100vw - 32px))!important;max-height:min(360px,60vh)!important;padding:6px!important;border-radius:16px!important}
+  .mobile-business-menu{top:48px!important;right:0!important;left:auto!important;width:100%!important;max-height:min(360px,60vh)!important;padding:6px!important;border-radius:16px!important}
   .mobile-notification-button{color:#0f172a!important}
   .mobile-topbar-dot{border-color:#fff!important;background:#7b3ffb!important;color:#fff!important;box-shadow:0 2px 5px rgba(123,63,251,.25)}
   .mobile-menu-button{color:#0f172a!important;background:#f8fafc!important;border:1px solid #e2e8f0!important;box-shadow:0 2px 8px rgba(15,23,42,.08)}
