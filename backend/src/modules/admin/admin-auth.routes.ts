@@ -5,6 +5,11 @@ import { readAdminPendingOAuth, consumeAdminPendingOAuth, clearAdminPendingOAuth
 import { beginAuthentication, finishAuthentication } from './admin-webauthn.service.js';
 import { issueAdminSession, requireAdminSession, revokeAdminSession } from './admin-session.service.js';
 import { beginPasskeyActivation, finishPasskeyActivation } from './admin-passkey-activation.service.js';
+import { login } from '../auth/auth.service.js';
+import { loginSchema } from '../auth/auth.schemas.js';
+import { setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
+
+const requestMeta = (request: any) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
 
 export const adminAuthRouter = Router();
 
@@ -13,6 +18,19 @@ async function userIdForGoogleSub(googleSub: string): Promise<string> {
   if (!identity) throw new AppError(403, 'ADMIN_IDENTITY_NOT_LINKED', 'La identidad Google autorizada aún no está vinculada a una cuenta.');
   return identity.userId;
 }
+
+adminAuthRouter.post('/password', async (request, response, next) => {
+  try {
+    const parsed = loginSchema.safeParse(request.body);
+    if (!parsed.success) throw new AppError(400, 'INVALID_INPUT', 'Revisa el correo y la contraseña.');
+    const result = await login(parsed.data, requestMeta(request));
+    const context = await getAdminContext(result.user.id);
+    if (!context || context.role !== 'SUPER_ADMIN') throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'La cuenta no tiene acceso administrativo.');
+    await issueAdminSession(response, result.user.id);
+    setRefreshCookie(response, result.refreshToken, parsed.data.rememberMe);
+    response.json({ authenticated: true, admin: await adminSession(result.user.id) });
+  } catch (error) { next(error); }
+});
 
 adminAuthRouter.get('/webauthn/options', async (request, response, next) => {
   try {
