@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-for f in deploy/bootstrap.sh deploy/deploy-github-release.sh deploy/github-release-poll.sh deploy/install-github-release-poll.sh; do
+for f in deploy/bootstrap.sh deploy/deploy-github-release.sh deploy/github-release-poll.sh deploy/install-github-release-poll.sh deploy/verify-persistent-storage.sh; do
   bash -n "$f"
 done
 grep -q 'integration/preserve-all-20261029' .github/workflows/backend-release-package.yml
@@ -16,6 +16,14 @@ grep -q 'xamuko-api.env' deploy/deploy-github-release.sh
 grep -q 'smoke_ok' deploy/deploy-github-release.sh
 grep -q 'healthy' deploy/deploy-github-release.sh
 grep -q 'rollback' deploy/deploy-github-release.sh
+grep -Fq 'storage_mode=$(/usr/local/sbin/xamuko-verify-persistent-storage "$old")' deploy/deploy-github-release.sh
+grep -Fq 'chmod 0755 "$release" "$release/backend"' deploy/deploy-github-release.sh
+grep -Fq 'ln -s "$persistent_storage" "$release/backend/storage"' deploy/deploy-github-release.sh
+grep -Fq 'set +e' deploy/deploy-github-release.sh
+grep -Fq '127.0.0.1:1/smoke' deploy/deploy-github-release.sh
+grep -Fq 'No es seguro activar: almacenamiento persistente sin validar' deploy/install-github-release-poll.sh
+grep -Fq 'ENV_ONLY' deploy/verify-persistent-storage.sh
+grep -Fq 'LINK %s' deploy/verify-persistent-storage.sh
 grep -q 'validate-only' deploy/bootstrap.sh
 grep -q 'mode=\${1:-validate}' deploy/install-github-release-poll.sh
 grep -q 'Validation passed; production remains unchanged' deploy/install-github-release-poll.sh

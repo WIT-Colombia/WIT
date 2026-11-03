@@ -39,6 +39,9 @@ fi
 [[ -s "$current_release/backend/dist/server.js" ]] || die "Falta server.js."
 [[ -f "$current_release/xamuko-api.env" ]] || die "Falta xamuko-api.env."
 [[ $(stat -c '%a' "$current_release/xamuko-api.env") == 600 ]] || die "Permisos incorrectos en xamuko-api.env."
+here=$(cd "$(dirname "$0")" && pwd)
+[[ -f "$here/verify-persistent-storage.sh" ]] || die "Falta el verificador de almacenamiento."
+bash "$here/verify-persistent-storage.sh" "$current_release" >/dev/null || die "No es seguro activar: almacenamiento persistente sin validar."
 
 systemctl is-active --quiet xamuko-api || die "La API actual no esta activa."
 curl -fsS --max-time 10 http://127.0.0.1:3000/api/v1/health >/dev/null || die "La API actual no responde."
@@ -63,6 +66,7 @@ if [[ "$mode" == --prepare ]]; then
   here=$(cd "$(dirname "$0")" && pwd)
   [[ -f "$here/deploy-github-release.sh" ]] || die "Falta deploy-github-release.sh."
   [[ -f "$here/github-release-poll.sh" ]] || die "Falta github-release-poll.sh."
+  [[ -f "$here/verify-persistent-storage.sh" ]] || die "Falta verify-persistent-storage.sh."
 
   dropin=/etc/systemd/system/xamuko-api.service.d/90-xamuko-release.conf
 
@@ -99,6 +103,7 @@ UNIT
 
   install -m 0755 "$here/deploy-github-release.sh" /usr/local/sbin/xamuko-deploy-github-release
   install -m 0755 "$here/github-release-poll.sh" /usr/local/sbin/xamuko-github-release-poll
+  install -m 0755 "$here/verify-persistent-storage.sh" /usr/local/sbin/xamuko-verify-persistent-storage
 
   cat > /etc/systemd/system/xamuko-github-release-poll.service <<'UNIT'
 [Unit]
@@ -147,6 +152,7 @@ if [[ "$mode" == --activate ]]; then
 
   [[ -x /usr/local/sbin/xamuko-deploy-github-release ]] || die "Falta el ejecutable de despliegue."
   [[ -x /usr/local/sbin/xamuko-github-release-poll ]] || die "Falta el poller."
+  [[ -x /usr/local/sbin/xamuko-verify-persistent-storage ]] || die "Falta el verificador de almacenamiento."
 
   [[ -f /etc/systemd/system/xamuko-github-release-poll.timer ]] || die "Falta el temporizador."
 

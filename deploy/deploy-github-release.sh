@@ -31,6 +31,9 @@ release="$base/releases/$sha"
 [[ -f "$old/xamuko-api.env" ]] || fail "Faltan variables del release anterior."
 [[ $(stat -c '%a' "$old/xamuko-api.env") == 600 ]] || fail "Permisos incorrectos del entorno."
 [[ ! -e "$release" && ! -L "$release" ]] || fail "Release ya existe."
+[[ -x /usr/local/sbin/xamuko-verify-persistent-storage ]] || fail "Falta el verificador de almacenamiento."
+storage_mode=$(/usr/local/sbin/xamuko-verify-persistent-storage "$old") || fail "Almacenamiento persistente no validado."
+[[ "$storage_mode" == ENV_ONLY || "$storage_mode" == LINK\ * ]] || fail "Respuesta invalida del verificador."
 
 [[ -d /var/lib/xamuko-build ]] || fail "Falta directorio de preparacion."
 work=$(mktemp -d /var/lib/xamuko-build/release.XXXXXXXX)
@@ -50,16 +53,15 @@ cleanup() {
 
 rollback() {
   local code=$?
-  trap - ERR
-
+  trap - ERR INT TERM
+  set +e
   echo "Fallo de despliegue. Iniciando recuperacion." >&2
-
   if [[ "$switched" == 1 ]]; then
-    ln -s "$old" "$base/.current-next"
-    mv -Tf "$base/.current-next" "$base/current"
-
-    if systemctl restart xamuko-api && \
-       systemctl is-active --quiet xamuko-api && \
+    rm -f -- "$base/.current-next"
+    if ln -s "$old" "$base/.current-next" &&
+       mv -Tf "$base/.current-next" "$base/current" &&
+       systemctl restart xamuko-api &&
+       systemctl is-active --quiet xamuko-api &&
        curl -fsS --max-time 10 http://127.0.0.1:3000/api/v1/health >/dev/null; then
       echo "Release anterior recuperado."
       rm -rf -- "$release"
@@ -69,12 +71,12 @@ rollback() {
   elif [[ "$created" == 1 ]]; then
     rm -rf -- "$release"
   fi
-
   exit "$code"
 }
 
 trap cleanup EXIT
 trap rollback ERR
+trap 'false' INT TERM
 
 # Verificar seguridad del archivo antes de extraerlo
 python3 - "$archive" <<'PY'
@@ -117,19 +119,29 @@ if [[ -d "$old/backend/prisma" || -d "$work/prisma" ]]; then
   diff -qr "$old/backend/prisma" "$work/prisma" >/dev/null || fail "Cambios Prisma requieren revision manual."
 fi
 
-mkdir -p "$release/backend"
+# The service runs as ssm-user. With umask 077, mkdir -p creates
+# root-only directories and prevents the server from starting.
+install -d -m 0755 "$release" "$release/backend"
 created=1
-
+[[ ! -e "$work/storage" && ! -L "$work/storage" ]] || fail "El paquete incluye almacenamiento mutable."
 cp -a "$work/." "$release/backend/"
+if [[ "$storage_mode" == LINK\ * ]]; then
+  persistent_storage=${storage_mode#LINK }
+  [[ ! -e "$release/backend/storage" && ! -L "$release/backend/storage" ]] || fail "El paquete sobrescribe el almacenamiento."
+  ln -s "$persistent_storage" "$release/backend/storage"
+fi
 install -o root -g root -m 0600 "$old/xamuko-api.env" "$release/xamuko-api.env"
-
 printf '%s\n' "$sha" > "$release/COMMIT"
 touch "$release/VERIFIED"
 chown -R root:root "$release"
+chmod 0755 "$release" "$release/backend"
+chmod -R a+rX "$release/backend"
+chmod 0600 "$release/xamuko-api.env"
 
 # Entorno aislado para comprobar el candidato
 install -m 0600 "$old/xamuko-api.env" "$smoke_env"
-printf '\nPORT=3001\nHOST=127.0.0.1\n' >> "$smoke_env"
+# Smoke test must not connect to production MySQL or write live uploads.
+printf '\nPORT=3001\nHOST=127.0.0.1\nDATABASE_URL=mysql://smoke:smoke@127.0.0.1:1/smoke\nPHOTO_STORAGE_DIR=/nonexistent/xamuko-smoke-photos\nVERIFICATION_STORAGE_DIR=/nonexistent/xamuko-smoke-verification\n' >> "$smoke_env"
 
 systemd-run --quiet --collect \
   --unit="$smoke" \
@@ -186,6 +198,6 @@ ln -s "$old" "$base/.previous-next"
 mv -Tf "$base/.previous-next" "$base/previous"
 
 switched=0
-trap - ERR
+trap - ERR INT TERM
 
 echo "Despliegue exitoso: $sha"

@@ -51,6 +51,9 @@ jobs:
       ADMIN_WEBAUTHN_ORIGIN: http://localhost:5173
     steps:
       - uses: actions/checkout@v4
+      - name: Verify deployment script safeguards
+        working-directory: .
+        run: bash deploy/test-github-release-poll.sh
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
