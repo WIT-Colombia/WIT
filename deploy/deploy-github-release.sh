@@ -1,68 +1,192 @@
+
 #!/usr/bin/env bash
 set -Eeuo pipefail
-umask 022
+umask 077
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
 base=${XAMUKO_DEPLOY_BASE:-/opt/xamuko/deploy}
 archive=${1:-}
 sha=${2:-}
-action=${3:-deploy}
-[[ $EUID == 0 && $action == deploy ]] || exit 64
-[[ -f $archive && $sha =~ ^[0-9a-f]{40}$ ]] || exit 64
+
+fail() {
+  echo "ERROR: $1" >&2
+  exit 78
+}
+
+[[ $EUID -eq 0 ]] || fail "Se requieren permisos root."
+[[ -f "$archive" ]] || fail "Artefacto inexistente."
+[[ "$sha" =~ ^[0-9a-f]{40}$ ]] || fail "SHA invalido."
+
 exec 9>/run/lock/xamuko-deploy.lock
-flock -n 9 || { echo 'Another deployment is running'; exit 75; }
-[[ -d $base && -d $base/releases ]] || { echo 'Existing deployment directory required'; exit 78; }
-service_workdir=$(systemctl show xamuko-api -p WorkingDirectory --value)
-if [[ -L $base/current ]]; then
-  old=$(readlink -f "$base/current")
-else
-  [[ $service_workdir == "$base"/releases/*/backend ]] || { echo 'Service is not using a managed release'; exit 78; }
-  old=${service_workdir%/backend}
-fi
-[[ -d $old/backend ]] || { echo 'Active release missing'; exit 78; }
+flock -n 9 || fail "Otro despliegue esta en progreso."
+
+[[ -f "$base/READY" ]] || fail "Produccion no esta preparada."
+[[ -L "$base/current" ]] || fail "Falta current."
+
+[[ $(systemctl show xamuko-api -p WorkingDirectory --value) == "$base/current/backend" ]] || fail "Servicio no configurado para current."
+
+old=$(readlink -f "$base/current")
 release="$base/releases/$sha"
-[[ ! -e $release ]] || { echo 'Release exists; use rollback to reactivate it'; exit 65; }
-[[ -f "$old/backend/xamuko-api.env" ]] || { echo 'Active xamuko-api.env missing'; exit 78; }
-[[ $(stat -c '%a' "$old/backend/xamuko-api.env") == 600 ]] || { echo 'Active environment permissions invalid'; exit 78; }
+
+[[ -d "$old/backend" ]] || fail "Release anterior inexistente."
+[[ -f "$old/xamuko-api.env" ]] || fail "Faltan variables del release anterior."
+[[ $(stat -c '%a' "$old/xamuko-api.env") == 600 ]] || fail "Permisos incorrectos del entorno."
+[[ ! -e "$release" && ! -L "$release" ]] || fail "Release ya existe."
+
+[[ -d /var/lib/xamuko-build ]] || fail "Falta directorio de preparacion."
 work=$(mktemp -d /var/lib/xamuko-build/release.XXXXXXXX)
-changed=0
-cleanup(){ rm -rf -- "$work"; }
-rollback(){ local code=$?; if [[ $changed == 1 ]]; then ln -sfn "$old" "$base/.current-next"; mv -Tf "$base/.current-next" "$base/current"; systemctl restart xamuko-api || true; fi; exit "$code"; }
+smoke_env="$work/smoke.env"
+smoke="xamuko-smoke-${sha:0:12}"
+
+created=0
+switched=0
+smoke_started=0
+
+cleanup() {
+  if [[ "$smoke_started" == 1 ]]; then
+    systemctl stop "$smoke" >/dev/null 2>&1 || true
+  fi
+  rm -rf -- "$work"
+}
+
+rollback() {
+  local code=$?
+  trap - ERR
+
+  echo "Fallo de despliegue. Iniciando recuperacion." >&2
+
+  if [[ "$switched" == 1 ]]; then
+    ln -s "$old" "$base/.current-next"
+    mv -Tf "$base/.current-next" "$base/current"
+
+    if systemctl restart xamuko-api && \
+       systemctl is-active --quiet xamuko-api && \
+       curl -fsS --max-time 10 http://127.0.0.1:3000/api/v1/health >/dev/null; then
+      echo "Release anterior recuperado."
+      rm -rf -- "$release"
+    else
+      echo "CRITICO: rollback requiere intervencion manual." >&2
+    fi
+  elif [[ "$created" == 1 ]]; then
+    rm -rf -- "$release"
+  fi
+
+  exit "$code"
+}
+
 trap cleanup EXIT
 trap rollback ERR
-tar -tzf "$archive" | grep -qE '(^|/)\.\.|^/' && { echo 'Unsafe archive paths'; exit 65; }
+
+# Verificar seguridad del archivo antes de extraerlo
+python3 - "$archive" <<'PY'
+import posixpath
+import sys
+import tarfile
+
+with tarfile.open(sys.argv[1], "r:gz") as tar:
+    for member in tar:
+        path = posixpath.normpath(member.name)
+
+        if path.startswith("/") or path == ".." or path.startswith("../"):
+            raise SystemExit("Ruta insegura en artefacto")
+
+        if member.issym():
+            target = posixpath.normpath(
+                posixpath.join(posixpath.dirname(path), member.linkname)
+            )
+            if target.startswith("/") or target == ".." or target.startswith("../"):
+                raise SystemExit("Enlace inseguro en artefacto")
+        elif member.islnk():
+            target = posixpath.normpath(member.linkname)
+            if target.startswith("/") or target == ".." or target.startswith("../"):
+                raise SystemExit("Enlace duro inseguro")
+        elif not (member.isfile() or member.isdir()):
+            raise SystemExit("Tipo de archivo no permitido")
+PY
+
 tar -xzf "$archive" -C "$work"
-[[ "$(cat "$work/RELEASE_COMMIT" 2>/dev/null)" == "$sha" ]] || { echo 'Artifact commit mismatch'; exit 65; }
-[[ -s "$work/dist/server.js" && -d "$work/node_modules/@prisma/client" ]] || { echo 'Incomplete backend artifact'; exit 65; }
-[[ $(df --output=avail -k "$base" | tail -1) -gt 4194304 ]] || { echo 'Need at least 4 GiB free'; exit 74; }
-if [[ -d "$old/backend/prisma" && -d "$work/prisma" ]]; then
-  diff -qr "$old/backend/prisma" "$work/prisma" >/dev/null || { echo 'Prisma changes require manual review'; exit 65; }
+
+[[ "$(cat "$work/RELEASE_COMMIT" 2>/dev/null)" == "$sha" ]] || fail "Commit del artefacto incorrecto."
+[[ -s "$work/dist/server.js" ]] || fail "Falta servidor compilado."
+[[ -d "$work/node_modules/@prisma/client" ]] || fail "Faltan dependencias Prisma."
+
+[[ $(df --output=avail -k "$base" | tail -1) -gt 4194304 ]] || fail "Espacio insuficiente."
+
+# No permitir cambios de esquema sin revision
+if [[ -d "$old/backend/prisma" || -d "$work/prisma" ]]; then
+  [[ -d "$old/backend/prisma" && -d "$work/prisma" ]] || fail "Estructura Prisma diferente."
+  diff -qr "$old/backend/prisma" "$work/prisma" >/dev/null || fail "Cambios Prisma requieren revision manual."
 fi
+
 mkdir -p "$release/backend"
+created=1
+
 cp -a "$work/." "$release/backend/"
-install -o root -g root -m 0600 "$old/backend/xamuko-api.env" "$release/backend/xamuko-api.env"
+install -o root -g root -m 0600 "$old/xamuko-api.env" "$release/xamuko-api.env"
+
 printf '%s\n' "$sha" > "$release/COMMIT"
 touch "$release/VERIFIED"
 chown -R root:root "$release"
-smoke="xamuko-smoke-${sha:0:12}"
-systemd-run --quiet --collect --unit="$smoke" -p User=ssm-user -p NoNewPrivileges=yes -p TimeoutStopSec=15 -p WorkingDirectory="$release/backend" -p 'Environment=PORT=3001 HOST=127.0.0.1' /usr/bin/node "$release/backend/dist/server.js"
+
+# Entorno aislado para comprobar el candidato
+install -m 0600 "$old/xamuko-api.env" "$smoke_env"
+printf '\nPORT=3001\nHOST=127.0.0.1\n' >> "$smoke_env"
+
+systemd-run --quiet --collect \
+  --unit="$smoke" \
+  -p User=ssm-user \
+  -p NoNewPrivileges=yes \
+  -p "WorkingDirectory=$release/backend" \
+  -p "EnvironmentFile=$smoke_env" \
+  /usr/bin/node-22 "$release/backend/dist/server.js"
+
+smoke_started=1
 smoke_ok=0
+
 for _ in {1..20}; do
-  if systemctl is-active --quiet "$smoke" && curl --max-time 2 -fsS http://127.0.0.1:3001/api/v1/health >/dev/null; then smoke_ok=1; break; fi
+  if systemctl is-active --quiet "$smoke" && \
+     curl -fsS --max-time 2 http://127.0.0.1:3001/api/v1/health >/dev/null; then
+    smoke_ok=1
+    break
+  fi
   sleep 1
 done
-systemctl stop "$smoke" || true
-[[ $smoke_ok == 1 ]] || { echo 'Candidate smoke test failed; live release untouched'; exit 1; }
-ln -sfn "$release" "$base/.current-next"
-changed=1
+
+systemctl stop "$smoke" >/dev/null 2>&1 || true
+smoke_started=0
+
+[[ "$smoke_ok" == 1 ]] || fail "Smoke test fallido."
+
+# Cambiar a la nueva version
+ln -s "$release" "$base/.current-next"
 mv -Tf "$base/.current-next" "$base/current"
+switched=1
+
 systemctl restart xamuko-api
+
 healthy=0
+
 for _ in {1..30}; do
-  if systemctl is-active --quiet xamuko-api && curl --max-time 3 -fsS http://127.0.0.1:3000/api/v1/health >/dev/null; then healthy=1; break; fi
+  if systemctl is-active --quiet xamuko-api && \
+     curl -fsS --max-time 3 http://127.0.0.1:3000/api/v1/health >/dev/null; then
+
+    pid=$(systemctl show xamuko-api -p MainPID --value)
+
+    if [[ "$pid" =~ ^[1-9][0-9]*$ ]] && \
+       [[ "$(readlink -f "/proc/$pid/cwd" 2>/dev/null)" == "$release/backend" ]]; then
+      healthy=1
+      break
+    fi
+  fi
   sleep 2
 done
-[[ $healthy == 1 ]] || { echo 'New release healthcheck failed; rollback executed'; exit 1; }
-ln -sfn "$old" "$base/.previous-next"
+
+[[ "$healthy" == 1 ]] || fail "Nuevo release no responde correctamente."
+
+ln -s "$old" "$base/.previous-next"
 mv -Tf "$base/.previous-next" "$base/previous"
+
+switched=0
 trap - ERR
-echo "Activated $sha"
+
+echo "Despliegue exitoso: $sha"
