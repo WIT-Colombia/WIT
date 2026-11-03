@@ -69,8 +69,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "backend-$GITHUB_SHA" \
-            "backend/xamuko-backend-$GITHUB_SHA.tar.gz" \
-            "backend/xamuko-backend-$GITHUB_SHA.tar.gz.sha256" \
+            "xamuko-backend-$GITHUB_SHA.tar.gz" \
+            "xamuko-backend-$GITHUB_SHA.tar.gz.sha256" \
             --repo "$GITHUB_REPOSITORY" \
             --title "Backend $GITHUB_SHA" \
             --notes "Verified backend release for $GITHUB_SHA."
