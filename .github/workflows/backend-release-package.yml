@@ -106,5 +106,6 @@ jobs:
             "xamuko-backend-${RELEASE_SHA}.tar.gz" \
             "xamuko-backend-${RELEASE_SHA}.tar.gz.sha256" \
             --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
             --title "Backend ${RELEASE_SHA}" \
             --notes "Verified backend release for ${RELEASE_SHA}."
