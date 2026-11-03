@@ -20,6 +20,9 @@ grep -Fq 'storage_mode=$(/usr/local/sbin/xamuko-verify-persistent-storage "$old"
 grep -Fq 'chmod 0755 "$release" "$release/backend"' deploy/deploy-github-release.sh
 grep -Fq 'ln -s "$persistent_storage" "$release/backend/storage"' deploy/deploy-github-release.sh
 grep -Fq 'set +e' deploy/deploy-github-release.sh
+grep -Fq "El puerto 3001 de prueba esta ocupado" deploy/deploy-github-release.sh
+grep -Fq 'smoke_pid=' deploy/deploy-github-release.sh
+grep -Fq 'Any explicit environment override takes precedence' deploy/verify-persistent-storage.sh
 grep -Fq '127.0.0.1:1/smoke' deploy/deploy-github-release.sh
 grep -Fq 'No es seguro activar: almacenamiento persistente sin validar' deploy/install-github-release-poll.sh
 grep -Fq 'ENV_ONLY' deploy/verify-persistent-storage.sh

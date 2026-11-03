@@ -143,6 +143,7 @@ install -m 0600 "$old/xamuko-api.env" "$smoke_env"
 # Smoke test must not connect to production MySQL or write live uploads.
 printf '\nPORT=3001\nHOST=127.0.0.1\nDATABASE_URL=mysql://smoke:smoke@127.0.0.1:1/smoke\nPHOTO_STORAGE_DIR=/nonexistent/xamuko-smoke-photos\nVERIFICATION_STORAGE_DIR=/nonexistent/xamuko-smoke-verification\n' >> "$smoke_env"
 
+[[ -z $(ss -H -ltn 'sport = :3001') ]] || fail "El puerto 3001 de prueba esta ocupado."
 systemd-run --quiet --collect \
   --unit="$smoke" \
   -p User=ssm-user \
@@ -155,7 +156,10 @@ smoke_started=1
 smoke_ok=0
 
 for _ in {1..20}; do
-  if systemctl is-active --quiet "$smoke" && \
+  if systemctl is-active --quiet "$smoke" &&
+     smoke_pid=$(systemctl show "$smoke" -p MainPID --value) &&
+     [[ "$smoke_pid" =~ ^[1-9][0-9]*$ ]] &&
+     [[ "$(readlink -f "/proc/$smoke_pid/cwd" 2>/dev/null)" == "$release/backend" ]] &&
      curl -fsS --max-time 2 http://127.0.0.1:3001/api/v1/health >/dev/null; then
     smoke_ok=1
     break

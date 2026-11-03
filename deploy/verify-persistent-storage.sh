@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Refuse releases unless photos and verification PDFs use persistent storage.
+# Refuse releases unless uploads and verification documents survive versions.
 set -Eeuo pipefail
 base=${XAMUKO_DEPLOY_BASE:-/opt/xamuko/deploy}
 release=${1:-}
@@ -19,14 +19,9 @@ check_directory() {
       fail "ssm-user no tiene acceso de lectura y escritura: $canonical"
   checked_dir=$canonical
 }
-if [[ -L "$release/backend/storage" ]]; then
-  target=$(readlink -e "$release/backend/storage") || fail "Enlace de almacenamiento roto."
-  check_directory "$target"
-  printf 'LINK %s\n' "$checked_dir"
-else
-  # Both environment paths must be explicit and external; otherwise one type
-  # of uploaded document could silently stay inside a versioned directory.
-  paths=$(python3 - "$release/xamuko-api.env" <<'PY'
+# Any explicit environment override takes precedence over the legacy storage
+# symlink and must also be checked; otherwise uploads might remain versioned.
+paths=$(python3 - "$release/xamuko-api.env" <<'PY'
 from pathlib import Path
 import sys
 keys = ("PHOTO_STORAGE_DIR", "VERIFICATION_STORAGE_DIR")
@@ -41,16 +36,29 @@ for line in Path(sys.argv[1]).read_text().splitlines():
         if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
             value = value[1:-1]
         values[key] = value
-if any(not values.get(key, "").startswith("/") for key in keys):
-    raise SystemExit("Configure ambas rutas externas PHOTO_STORAGE_DIR y VERIFICATION_STORAGE_DIR, o migre el almacenamiento existente a un enlace persistente.")
 for key in keys:
-    print(values[key])
+    print(values.get(key, "-"))
 PY
-) || fail "Almacenamiento no persistente."
-  photo_path=${paths%%$'\n'*}
-  verification_path=${paths#*$'\n'}
-  [[ "$photo_path" != "$verification_path" ]] || fail "Las rutas de fotos y verificaciones deben ser diferentes."
+) || fail "No se puede validar el entorno."
+photo_path=${paths%%$'\n'*}
+verification_path=${paths#*$'\n'}
+if [[ "$photo_path" != - ]]; then
+  [[ "$photo_path" == /* ]] || fail "PHOTO_STORAGE_DIR debe ser absoluta."
   check_directory "$photo_path"
+fi
+if [[ "$verification_path" != - ]]; then
+  [[ "$verification_path" == /* ]] || fail "VERIFICATION_STORAGE_DIR debe ser absoluta."
   check_directory "$verification_path"
+fi
+if [[ "$photo_path" != - && "$verification_path" != - ]]; then
+  [[ "$(realpath -e "$photo_path")" != "$(realpath -e "$verification_path")" ]] || fail "Fotos y verificaciones requieren directorios distintos."
+fi
+if [[ -L "$release/backend/storage" ]]; then
+  target=$(readlink -e "$release/backend/storage") || fail "Enlace de almacenamiento roto."
+  check_directory "$target"
+  printf 'LINK %s\n' "$checked_dir"
+else
+  [[ "$photo_path" != - && "$verification_path" != - ]] ||
+    fail "Configure ambas rutas externas o migre el almacenamiento de la version actual."
   printf 'ENV_ONLY\n'
 fi
