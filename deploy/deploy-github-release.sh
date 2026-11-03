@@ -10,12 +10,19 @@ action=${3:-deploy}
 [[ -f $archive && $sha =~ ^[0-9a-f]{40}$ ]] || exit 64
 exec 9>/run/lock/xamuko-deploy.lock
 flock -n 9 || { echo 'Another deployment is running'; exit 75; }
-[[ -d $base && -L $base/current ]] || { echo 'Existing deployment layout required'; exit 78; }
-old=$(readlink -f "$base/current")
+[[ -d $base && -d $base/releases ]] || { echo 'Existing deployment directory required'; exit 78; }
+service_workdir=$(systemctl show xamuko-api -p WorkingDirectory --value)
+if [[ -L $base/current ]]; then
+  old=$(readlink -f "$base/current")
+else
+  [[ $service_workdir == "$base"/releases/*/backend ]] || { echo 'Service is not using a managed release'; exit 78; }
+  old=${service_workdir%/backend}
+fi
+[[ -d $old/backend ]] || { echo 'Active release missing'; exit 78; }
 release="$base/releases/$sha"
 [[ ! -e $release ]] || { echo 'Release exists; use rollback to reactivate it'; exit 65; }
 [[ -f "$old/backend/xamuko-api.env" ]] || { echo 'Active xamuko-api.env missing'; exit 78; }
-[[ "$(stat -c '%a' "$old/backend/xamuko-api.env")" == 600 ]] || { echo 'Active environment permissions invalid'; exit 78; }
+[[ $(stat -c '%a' "$old/backend/xamuko-api.env") == 600 ]] || { echo 'Active environment permissions invalid'; exit 78; }
 work=$(mktemp -d /var/lib/xamuko-build/release.XXXXXXXX)
 changed=0
 cleanup(){ rm -rf -- "$work"; }
