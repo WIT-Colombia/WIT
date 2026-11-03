@@ -9,7 +9,7 @@ sha=${2:-}
 
 fail() {
   echo "ERROR: $1" >&2
-  exit 78
+  return 78
 }
 
 [[ $EUID -eq 0 ]] || fail "Se requieren permisos root."
