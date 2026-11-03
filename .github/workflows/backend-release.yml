@@ -1,0 +1,76 @@
+name: XAMUKO backend release
+
+on:
+  push:
+    branches: [integration/preserve-all-20261029]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xamuko-backend-release
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-test-only
+          MYSQL_DATABASE: xamuko_test
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DATABASE_URL: mysql://test:test@127.0.0.1:3306/xamuko_test
+      AUTH_ACCESS_TOKEN_SECRET: ci-test-secret-not-for-production-0123456789
+      GOOGLE_CLIENT_ID: xamuko-test.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: test-secret-not-real
+      NODE_ENV: development
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install and verify
+        run: |
+          npm ci --no-audit --no-fund
+          npm run prisma:generate
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Prepare immutable release
+        run: |
+          set -euo pipefail
+          rm -rf release
+          mkdir -p release
+          npm prune --omit=dev
+          cp -a dist node_modules package.json package-lock.json prisma release/
+          printf '%s\n' "$GITHUB_SHA" > release/RELEASE_COMMIT
+          tar -czf "xamuko-backend-$GITHUB_SHA.tar.gz" -C release .
+          sha256sum "xamuko-backend-$GITHUB_SHA.tar.gz" > "xamuko-backend-$GITHUB_SHA.tar.gz.sha256"
+      - name: Publish verified GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "backend-$GITHUB_SHA" \
+            "backend/xamuko-backend-$GITHUB_SHA.tar.gz" \
+            "backend/xamuko-backend-$GITHUB_SHA.tar.gz.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Backend $GITHUB_SHA" \
+            --notes "Verified backend release for $GITHUB_SHA."
