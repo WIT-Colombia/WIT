@@ -113,9 +113,10 @@ export async function renderBusinessCardCanvas(card: HTMLElement): Promise<HTMLC
     new XMLSerializer().serializeToString(clone),
     '</foreignObject></svg>',
   ].join("");
-  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
-  try {
-    const artwork = await loadImage(url);
+  // Chromium marks blob: SVGs containing foreignObject as cross-origin.
+  // A fully self-contained data: URL preserves an origin-clean canvas.
+  const artwork = await loadImage("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg));
+  {
     const canvas = document.createElement("canvas");
     canvas.width = BUSINESS_CARD_PRINT.widthPx;
     canvas.height = BUSINESS_CARD_PRINT.heightPx;
@@ -128,12 +129,14 @@ export async function renderBusinessCardCanvas(card: HTMLElement): Promise<HTMLC
       // Explicitly detect tainted/blank exports instead of downloading a broken
       // image or PDF. The first pixel may be transparent because of rounded corners.
       ctx.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1);
+      const [red, green, blue] = ctx.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height * 0.95), 1, 1).data;
+      if (red > 245 && green > 245 && blue > 245) {
+        throw new Error("La tarjeta no se pudo capturar completamente.");
+      }
     } catch {
       throw new Error("Este navegador no pudo capturar la tarjeta completa. Prueba desde Chrome en un computador.");
     }
     return canvas;
-  } finally {
-    URL.revokeObjectURL(url);
   }
 }
 
