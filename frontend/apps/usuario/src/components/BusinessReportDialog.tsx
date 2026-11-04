@@ -10,7 +10,7 @@ const reasons: Array<{ value: BusinessReportReason; label: string }> = [
   { value: "OTHER", label: "Otro motivo" },
 ];
 
-export function BusinessReportDialog({ businessId, businessName }: { businessId: string; businessName: string }) {
+export function BusinessReportDialog({ businessId, businessName, disabled = false }: { businessId: string; businessName: string; disabled?: boolean }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<BusinessReportReason>("IMPERSONATION");
   const [description, setDescription] = useState("");
@@ -52,7 +52,7 @@ export function BusinessReportDialog({ businessId, businessName }: { businessId:
   }
 
   return <>
-    <button type="button" ref={triggerRef} className="business-report-trigger" onClick={() => {
+    <button type="button" ref={triggerRef} className="business-report-trigger" disabled={disabled} title={disabled ? "Disponible en la página pública del negocio" : "Enviar un reporte sobre este negocio"} onClick={() => {
       setReason("IMPERSONATION"); setDescription(""); setSubmitted(false); setError(""); setOpen(true);
     }}>⚑ Reportar negocio</button>
     {open && <div className="business-report-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>

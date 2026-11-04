@@ -18,3 +18,10 @@
 .business-report-dialog button:disabled{opacity:.55;cursor:default}
 .business-report-error{color:#b4232f!important}
 @media(max-width:480px){.business-report-dialog{padding:22px}.business-report-actions>*{flex:1}}
+
+/* Acción visible junto a Compartir en la cabecera de cada ficha pública. */
+.business-detail-page .business-header-tools{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;min-width:0}
+.business-detail-page .business-detail-back .business-report-trigger{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 12px;border:1px solid #dbe3ef;border-radius:9px;background:#fff;color:#475569;font:inherit;font-size:12px;font-weight:600;line-height:1.3;text-decoration:none;white-space:nowrap;cursor:pointer}
+.business-detail-page .business-detail-back .business-report-trigger:hover:not(:disabled),.business-detail-page .business-detail-back .business-report-trigger:focus-visible{border-color:#9574ee;background:#f7f4ff;color:#642fcf}
+.business-detail-page .business-detail-back .business-report-trigger:disabled{cursor:not-allowed;opacity:.58}
+@media(max-width:600px){.business-detail-page .business-detail-back{align-items:flex-start;gap:8px}.business-detail-page .business-header-tools{gap:7px}.business-detail-page .business-detail-back .business-report-trigger{min-height:32px;padding:6px 8px;font-size:11px}}
