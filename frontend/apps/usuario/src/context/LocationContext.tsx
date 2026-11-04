@@ -86,10 +86,12 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     void savePreferredLocation(payload).catch(() => { if (lastSynced.current === key) lastSynced.current = ""; });
   }, [selection, status, serverReady]);
 
-  // Refresh an existing GPS point or obtain a fresh one if permission was
-  // already granted. Do not replace a manually selected city automatically.
+  // Device coordinates are the first choice. On a first visit the browser
+  // may show its native permission prompt; denial leaves manual selection open.
+  // Returning users keep their last manual city. Granted GPS sessions refresh.
   useEffect(() => {
-    if (devicePermission !== "granted" || autoRefreshStarted.current || status === "loading"
+    const canUseDevice = devicePermission === "granted" || (devicePermission === "prompt" && !selection);
+    if (!canUseDevice || autoRefreshStarted.current || status === "loading"
       || (status === "authenticated" && !serverReady) || selection?.mode === "manual") return;
     autoRefreshStarted.current = true;
     void requestAutomaticLocation().catch(() => { /* Keep last selection; manual choice remains available. */ });
