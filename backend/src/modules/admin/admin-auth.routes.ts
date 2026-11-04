@@ -19,6 +19,7 @@ const adminPasswordRateLimit = rateLimit({ windowMs: env.nodeEnv === 'developmen
 const requestMeta = (request: any) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
 
 export const adminAuthRouter = Router();
+adminAuthRouter.use((_request, response, next) => { response.setHeader('Cache-Control', 'no-store'); next(); });
 
 async function userIdForGoogleSub(googleSub: string): Promise<string> {
   const identity = await prisma.authIdentity.findUnique({ where: { provider_providerSubject: { provider: 'GOOGLE', providerSubject: googleSub } }, select: { userId: true } });
@@ -33,9 +34,9 @@ adminAuthRouter.post('/password', adminPasswordRateLimit, requireTrustedOrigin, 
     const result = await login(parsed.data, requestMeta(request));
     const context = await getAdminContext(result.user.id);
     if (!context || context.role !== 'SUPER_ADMIN') throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'La cuenta no tiene acceso administrativo.');
-    await issueAdminSession(response, result.user.id);
+    const csrfToken = await issueAdminSession(response, result.user.id);
     setRefreshCookie(response, result.refreshToken, parsed.data.rememberMe);
-    response.json({ authenticated: true, admin: await adminSession(result.user.id) });
+    response.json({ authenticated: true, csrfToken, admin: await adminSession(result.user.id) });
   } catch (error) { next(error); }
 });
 
@@ -53,13 +54,13 @@ adminAuthRouter.post('/webauthn/verify', async (request, response, next) => {
     const verified = await finishAuthentication(userId, request.body);
     await consumeAdminPendingOAuth(request);
     clearAdminPendingOAuth(response);
-    await issueAdminSession(response, userId);
-    response.json({ verified: verified.verified, adminSession: true });
+    const csrfToken = await issueAdminSession(response, userId);
+    response.json({ verified: verified.verified, adminSession: true, csrfToken });
   } catch (error) { next(error); }
 });
 
-adminAuthRouter.get('/session', async (request, response, next) => { try { const session = await requireAdminSession(request); response.json({ authenticated: true, userId: session.userId }); } catch (error) { next(error); } });
-adminAuthRouter.post('/logout', async (request, response, next) => { try { await revokeAdminSession(request, response); response.status(204).send(); } catch (error) { next(error); } });
+adminAuthRouter.get('/session', async (request, response, next) => { try { const session = await requireAdminSession(request); response.json({ authenticated: true, userId: session.userId, csrfToken: session.csrf }); } catch (error) { next(error); } });
+adminAuthRouter.post('/logout', async (request, response, next) => { try { await requireAdminSession(request); await revokeAdminSession(request, response); response.status(204).send(); } catch (error) { next(error); } });
 
 adminAuthRouter.get('/passkey/activation/options', async (request, response, next) => { try { response.json(await beginPasskeyActivation(request, response)); } catch (error) { next(error); } });
 adminAuthRouter.post('/passkey/activation/verify', async (request, response, next) => { try { response.json(await finishPasskeyActivation(request)); } catch (error) { next(error); } });

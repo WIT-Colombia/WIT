@@ -6,9 +6,12 @@ export type AdminReview = { id: string; rating: number; comment: string; status:
 export type AdminReviewsResponse = { reviews: AdminReview[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
 export type AdminReviewReport = { id: string; reason: string; description: string | null; status: string; createdAt: string; review: { id: string; rating: number; comment: string; business: { name: string; publicId: string }; user: { displayName: string } }; reporter: { displayName: string } };
 let accessToken: string | null = null;
+// The API cookie belongs to api.xamuko.com and cannot be read by the Admin UI.
+// Recover its CSRF counterpart through credentialed, CORS-protected API responses.
+let adminCsrfToken = '';
 export async function fetchOwnAvatar(path = `${API_BASE}/auth/me/avatar`): Promise<Blob> { const response = await fetch(path, headers()); if (!response.ok) throw new Error('No se pudo cargar la foto de perfil.'); return response.blob(); }
-function headers(init: RequestInit = {}) { const value = new Headers(init.headers); value.set('Accept', 'application/json'); if (init.body && !value.has('Content-Type')) value.set('Content-Type', 'application/json'); if (accessToken) value.set('Authorization', `Bearer ${accessToken}`); return { ...init, headers: value, credentials: 'include' as RequestCredentials }; }
-async function request<T>(path: string, init: RequestInit = {}) { const response = await fetch(buildApiUrl(path), headers(init)); const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } & T; if (!response.ok) { const code=payload?.error?.code ?? 'UNKNOWN_ERROR'; const message=payload?.error?.message ?? 'No se pudo completar la solicitud.'; throw new AdminApiError(response.status, code, message); } return payload; }
+function headers(init: RequestInit = {}) { const value = new Headers(init.headers); if (!['GET', 'HEAD', 'OPTIONS'].includes((init.method ?? 'GET').toUpperCase()) && adminCsrfToken) value.set('X-Admin-CSRF', adminCsrfToken); value.set('Accept', 'application/json'); if (init.body && !value.has('Content-Type')) value.set('Content-Type', 'application/json'); if (accessToken) value.set('Authorization', `Bearer ${accessToken}`); return { ...init, headers: value, credentials: 'include' as RequestCredentials }; }
+async function request<T>(path: string, init: RequestInit = {}) { const response = await fetch(buildApiUrl(path), headers(init)); const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } & T; if (!response.ok) { const code=payload?.error?.code ?? 'UNKNOWN_ERROR'; const message=payload?.error?.message ?? 'No se pudo completar la solicitud.'; throw new AdminApiError(response.status, code, message); } if (payload && typeof (payload as { csrfToken?: unknown }).csrfToken === 'string') adminCsrfToken = (payload as { csrfToken: string }).csrfToken; return payload; }
 export async function adminLogin(email: string, password: string, rememberMe: boolean) { return (await request<{ admin: RealAdmin }>('/admin/auth/password', { method: 'POST', body: JSON.stringify({ email, password, rememberMe }) })).admin; }
 export async function adminMe() { return (await request<{ admin: RealAdmin }>('/admin/me')).admin; }
 export async function adminRefresh() { const result = await request<{ user: RealAdmin['user']; accessToken: string }>('/auth/refresh', { method: 'POST', body: JSON.stringify({ rememberMe: false }) }); accessToken = result.accessToken; return adminMe(); }
@@ -49,7 +52,7 @@ export function updateFinanceInvoice(id: string, input: unknown) { return reques
 export function updateFinancePayment(id: string, input: unknown) { return request(`/admin/finance/payments/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(input) }); }
 export function getFinanceAudit() { return request<{ entries: Array<{ id: string; entityType: string; entityId: string; action: string; reason: string; createdAt: string }> }>('/admin/finance/audit'); }
 
-const adminCsrf = () => document.cookie.split('; ').find(item => item.startsWith('xamuko_admin_csrf='))?.split('=').slice(1).join('=') ?? '';
+const adminCsrf = () => adminCsrfToken;
 function fromBase64Url(value: string) { const padded = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - value.length % 4) % 4); return Uint8Array.from(atob(padded), char => char.charCodeAt(0)); }
 function toBase64Url(value: ArrayBuffer) { return btoa(String.fromCharCode(...new Uint8Array(value))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 export async function getAdminSession() { return request<{ authenticated: boolean; userId: string }>('/admin/auth/session'); }
@@ -69,4 +72,4 @@ export async function finishAdminPasskeyActivation(code: string, credential: Pub
   return request('/admin/auth/passkey/activation/verify', { method: 'POST', headers: { 'X-Admin-Activation-Code': code }, body: JSON.stringify({ id: credential.id, rawId: toBase64Url(credential.rawId), type: credential.type, response: { clientDataJSON: toBase64Url(response.clientDataJSON), attestationObject: toBase64Url(response.attestationObject), transports: response.getTransports?.() ?? [] } }) });
 }
 
-export async function adminSessionLogout() { return request('/admin/auth/logout', { method: 'POST', headers: { 'X-Admin-CSRF': adminCsrf() }, body: '{}' }); }
+export async function adminSessionLogout() { try { return await request('/admin/auth/logout', { method: 'POST', body: '{}' }); } finally { adminCsrfToken = ''; accessToken = null; } }

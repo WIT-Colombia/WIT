@@ -15,7 +15,7 @@ const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 function cookieOptions(maxAge: number) { return { httpOnly: true, secure: env.nodeEnv === 'production', sameSite: 'lax' as const, path: COOKIE_PATH, maxAge }; }
 function append(response: Response, name: string, value: string, maxAge: number, httpOnly: boolean) { response.appendHeader('Set-Cookie', stringifySetCookie({ name, value, ...cookieOptions(maxAge), httpOnly })); }
 
-export async function issueAdminSession(response: Response, userId: string): Promise<void> {
+export async function issueAdminSession(response: Response, userId: string): Promise<string> {
   const context = await getAdminContext(userId);
   if (!context || context.role !== 'SUPER_ADMIN') throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'La cuenta no tiene rol SUPER_ADMIN.');
   const token = randomBytes(48).toString('base64url');
@@ -23,6 +23,7 @@ export async function issueAdminSession(response: Response, userId: string): Pro
   await (prisma as any).adminSession.create({ data: { userId, tokenHash: hash(token), expiresAt: new Date(Date.now() + TTL_SECONDS * 1000) } });
   append(response, SESSION_COOKIE, token, TTL_SECONDS, true);
   append(response, CSRF_COOKIE, csrf, TTL_SECONDS, false);
+  return csrf;
 }
 
 function token(request: Request): string | null { return parseCookie(request.headers.cookie ?? '')[SESSION_COOKIE] ?? null; }
