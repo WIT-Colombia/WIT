@@ -23,7 +23,8 @@ export default function ManualLocation() {
   const [params] = useSearchParams();
   const returnTo = params.get("returnTo") || "/home";
   const current = selection?.locality ?? null;
-  const catalog = getColombianAdministrativeDivisions();\n  const defaultMunicipality = catalog.municipalities.find((item) => item.id === \"76520\");
+  const catalog = getColombianAdministrativeDivisions();
+  const defaultMunicipality = catalog.municipalities.find((item) => item.id === "76520");
   const [departments] = useState<Department[]>(catalog.departments);
   const [municipalities] = useState<Locality[]>(catalog.municipalities);
   const [departmentCode, setDepartmentCode] = useState(current?.departmentCode ?? defaultMunicipality?.departmentCode ?? "");
