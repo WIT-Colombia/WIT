@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { getPreferredLocation, savePreferredLocation } from "../services/authService";
-import { clearSelectedLocation, getLocationSelection, resolveLocalityFromCoordinates, restorePreferredLocation, saveAutomaticLocation, saveSelectedLocation, subscribeToLocation, type Coordinates, type LocationSelection } from "../services/locationService";
+import { getLocationSelection, resolveCoordinatesForLocality, resolveLocalityFromCoordinates, restorePreferredLocation, saveAutomaticLocation, saveSelectedLocation, subscribeToLocation, type Coordinates, type LocationSelection } from "../services/locationService";
 import type { Locality } from "../data/locations";
 
 type LocationContextValue = {
   selection: LocationSelection | null;
-  setManualLocation: (locality: Locality) => void;
+  setManualLocation: (locality: Locality) => Promise<void>;
   setAutomaticLocation: (coordinates: Coordinates) => Promise<void>;
   requestAutomaticLocation: () => Promise<Coordinates>;
   isRequesting: boolean;
@@ -25,7 +25,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const localRevision = useRef(0);
   const autoRefreshStarted = useRef(false);
   const [devicePermission, setDevicePermission] = useState<LocationContextValue["devicePermission"]>("checking");
-  const [isRequesting, setIsRequesting] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);\n  const [isReady, setIsReady] = useState(status !== \"loading\" && status !== \"authenticated\");
 
   useEffect(() => subscribeToLocation(() => setSelection(getLocationSelection())), []);
   // A granted browser permission may be reused; a new permission prompt is
