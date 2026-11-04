@@ -1,5 +1,8 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { useEffect, useRef, type ReactNode } from "react";\nimport { useNavigate } from "react-router-dom";\nimport { useAuth } from "./context/AuthContext";\nimport { useLocationContext } from "./context/LocationContext";
+import { useEffect, useRef, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
+import { useLocationContext } from "./context/LocationContext";
 import Home from "./pages/Home";
 import ManualLocation from "./pages/ManualLocation";
 import Location from "./pages/Location";
@@ -66,7 +69,21 @@ function StandaloneFooter() {
   return authPages.includes(pathname) ? <SiteFooter /> : null;
 }
 
-function InitialLocationGate({ children }: { children: ReactNode }) {\n  const navigate = useNavigate();\n  const route = useLocation();\n  const { status } = useAuth();\n  const { selection, isReady, requestAutomaticLocation } = useLocationContext();\n  const attempted = useRef(false);\n  useEffect(() => {\n    if (route.pathname !== \"/home\" || status === \"loading\" || !isReady || selection || attempted.current) return;\n    attempted.current = true;\n    void requestAutomaticLocation().catch(() => navigate(\"/location?returnTo=\" + encodeURIComponent(\"/home\"), { replace: true }));\n  }, [isReady, navigate, requestAutomaticLocation, route.pathname, selection, status]);\n  return <>{children}</>;\n}\n\nexport default function App() {
+function InitialLocationGate({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+  const route = useLocation();
+  const { status } = useAuth();
+  const { selection, isReady, requestAutomaticLocation } = useLocationContext();
+  const attempted = useRef(false);
+  useEffect(() => {
+    if (route.pathname !== "/home" || status === "loading" || !isReady || selection || attempted.current) return;
+    attempted.current = true;
+    void requestAutomaticLocation().catch(() => navigate("/location?returnTo=" + encodeURIComponent("/home"), { replace: true }));
+  }, [isReady, navigate, requestAutomaticLocation, route.pathname, selection, status]);
+  return <>{children}</>;
+}
+
+export default function App() {
   return <InitialLocationGate><ScrollToTop /><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
