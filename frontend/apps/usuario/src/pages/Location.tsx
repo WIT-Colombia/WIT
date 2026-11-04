@@ -18,7 +18,7 @@ function CompassIcon() {
 
 export default function Location() {
   const { selection, requestAutomaticLocation, isRequesting } = useLocationContext();
-  const [state, setState] = useState<LocationState>(() => selection?.mode === "automatic" ? "granted" : "ready");
+  const [state, setState] = useState<LocationState>("ready");
   const coordinates = selection?.mode === "automatic" ? selection.coordinates : null;
 
   function requestLocation() {
@@ -51,8 +51,8 @@ export default function Location() {
         </ul>
 
         <div className="location-actions">
-          <Button type="button" disabled={isRequesting || state === "granted"} onClick={requestLocation}>
-            {isRequesting ? "Buscando tu ubicación…" : state === "granted" ? "Ubicación permitida" : "Usar mi ubicación"}
+          <Button type="button" disabled={isRequesting} onClick={requestLocation}>
+            {isRequesting ? "Buscando tu ubicación…" : state === "granted" ? "Actualizar mi ubicación" : selection?.mode === "automatic" ? "Actualizar ubicación del dispositivo" : "Usar mi ubicación"}
             {state === "ready" && <span aria-hidden="true">→</span>}
           </Button>
           <Link className="location-manual-link" to={`/location${window.location.search ? window.location.search : ""}`}>Prefiero elegir mi zona</Link>
