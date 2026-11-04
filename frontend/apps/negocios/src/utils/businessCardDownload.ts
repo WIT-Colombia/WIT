@@ -297,6 +297,9 @@ export async function renderBusinessCardCanvas(card: HTMLElement): Promise<HTMLC
     const [r, g, b] = ctx.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height * 0.95), 1, 1).data;
     if (r > 245 && g > 245 && b > 245) throw new Error("Captura SVG vacía");
   } catch {
+    // Resetting width clears a potentially tainted canvas before native painting.
+    canvas.width = BUSINESS_CARD_PRINT.widthPx;
+    canvas.height = BUSINESS_CARD_PRINT.heightPx;
     reset();
     await drawNativeCard(ctx, card, rect);
     // Detect an origin-tainted canvas before offering a file.
