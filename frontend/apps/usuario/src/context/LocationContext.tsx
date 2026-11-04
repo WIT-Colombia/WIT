@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { getPreferredLocation, savePreferredLocation } from "../services/authService";
-import { getLocationSelection, resolveCoordinatesForLocality, resolveLocalityFromCoordinates, restorePreferredLocation, saveAutomaticLocation, saveSelectedLocation, subscribeToLocation, type Coordinates, type LocationSelection } from "../services/locationService";
+import { clearSelectedLocation, getLocationSelection, resolveCoordinatesForLocality, resolveLocalityFromCoordinates, restorePreferredLocation, saveAutomaticLocation, saveSelectedLocation, subscribeToLocation, type Coordinates, type LocationSelection } from "../services/locationService";
 import type { Locality } from "../data/locations";
 
 type LocationContextValue = {
@@ -182,7 +182,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  const value = useMemo(() => ({ selection, setManualLocation, setAutomaticLocation, requestAutomaticLocation, isRequesting, devicePermission }), [selection, isRequesting, devicePermission]);
+  const value = useMemo(() => ({ selection, setManualLocation, setAutomaticLocation, requestAutomaticLocation, isRequesting, devicePermission, isReady: status !== "loading" && (status !== "authenticated" || serverReady) }), [selection, isRequesting, devicePermission, status, serverReady]);
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;
 }
 
