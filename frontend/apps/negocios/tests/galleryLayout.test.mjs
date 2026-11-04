@@ -18,7 +18,8 @@ test("gallery breakpoints keep complete photos visible at rest", () => {
   assert.match(styles, /overflow-x:auto/);
   assert.match(styles, /overflow-y:hidden/);
   assert.match(styles, /object-fit:cover/);
-  assert.match(styles, /calc\(\(100% - 30px\) \/ 4\)/);
+  assert.match(styles, /width:min\(100%,720px\);max-width:720px/);
+  assert.match(styles, /calc\(\(100% - 40px\) \/ 5\)/);
   assert.match(styles, /@media \(min-width:768px\) and \(max-width:1023px\)[\s\S]*calc\(\(100% - 20px\) \/ 3\)/);
   assert.match(styles, /@media \(max-width:767px\)[\s\S]*calc\(\(100% - 9px\) \/ 2\)/);
 });
