@@ -117,6 +117,8 @@ export async function login(email: string, password: string, rememberMe = false)
     body: JSON.stringify({ email, password, rememberMe }),
   });
   accessToken = result.accessToken;
+  refreshBlockedUntil = 0;
+  refreshBlockError = null;
   saveSessionPreference(email, rememberMe);
   const confirmed = (await requestJson<{ user: BusinessAuthUser }>("/auth/me", withAuthorization())).user;
   sessionState = { status: "authenticated", user: confirmed };
@@ -216,5 +218,7 @@ export async function confirmPasswordReset(token: string, password: string, reme
 
 export function clearAccessToken(): void {
   accessToken = null;
+  refreshBlockedUntil = 0;
+  refreshBlockError = null;
   sessionState = { status: "unauthenticated" };
 }

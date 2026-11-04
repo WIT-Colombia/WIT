@@ -54,6 +54,29 @@ test("restaura una sesión válida mediante refresh", async () => {
   assert.equal(state.status, "authenticated");
 });
 
+test("un bloqueo de renovación no cierra sesión ni repite llamadas durante Retry-After", async () => {
+  let requests = 0;
+  globalThis.fetch = (async () => {
+    requests += 1;
+    return new Response(JSON.stringify({ error: { code: "SESSION_REFRESH_RATE_LIMITED", message: "Demasiados intentos" } }), {
+      status: 429,
+      headers: { "Retry-After": "60" },
+    });
+  }) as typeof fetch;
+
+  const first = await restoreSession();
+  assert.equal(first.status, "error");
+  if (first.status === "error") {
+    assert.ok(first.error instanceof BusinessApiError);
+    assert.equal(first.error.status, 429);
+    assert.equal(first.error.retryAfterSeconds, 60);
+  }
+
+  const second = await restoreSession();
+  assert.equal(second.status, "error");
+  assert.equal(requests, 1);
+});
+
 test("confirma /auth/me después del login antes de devolver la sesión", async () => {
   const requests: string[] = [];
   globalThis.fetch = (async (input) => {
