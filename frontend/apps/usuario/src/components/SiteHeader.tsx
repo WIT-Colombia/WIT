@@ -70,7 +70,7 @@ export function SiteHeader({ active, onProfile, onSearchChange }: { active?: Sit
     <nav className="desktop-nav" aria-label="Navegación principal">
       <Link className={active === "home" ? "active" : undefined} to="/home">Inicio</Link>
     </nav>
-    <Link className="location-pill" to="/location"><PinIcon /><span><b>{location?.name ?? (selection?.mode === "automatic" ? "Tu ubicación actual" : "Elige una zona")}</b>{location?.context && <small>{location.context}</small>}</span><span className="chevron" aria-hidden="true">⌄</span></Link>
+    <Link className="location-pill" to="/location/automatic"><PinIcon /><span><b>{location?.name ?? (selection?.mode === "automatic" ? "Tu ubicación actual" : "Elige una zona")}</b>{location?.context && <small>{location.context}</small>}</span><span className="chevron" aria-hidden="true">⌄</span></Link>
     {isAuthenticated && <Link className="notification-button" to="/notifications" aria-label={unreadNotifications ? `Notificaciones, ${unreadNotifications} pendientes` : "Notificaciones"}><HeaderBellIcon />{unreadNotifications > 0 && <span className="notification-badge" aria-label={`${unreadNotifications} pendientes`}>{unreadNotifications > 9 ? "9+" : unreadNotifications}</span>}</Link>}
     {onProfile ? <button className="profile-button" type="button" aria-label={isAuthenticated ? "Perfil" : "Iniciar sesión"} onClick={onProfile}>{profileContent}</button> : <Link className="profile-button" to={profileTarget} aria-label={isAuthenticated ? "Perfil" : "Iniciar sesión"}>{profileContent}</Link>}
   </header>;
