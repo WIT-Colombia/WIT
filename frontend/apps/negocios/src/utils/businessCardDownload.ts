@@ -186,6 +186,10 @@ export async function businessCardPdfFromJpeg(jpeg: Blob): Promise<Blob> {
 }
 
 export async function downloadBusinessCard({ card, business, qrImageUrl, format }: BusinessCardDownloadOptions): Promise<void> {
+  const shownQr = card.querySelector<HTMLImageElement>(".business-digital-card__qr > img");
+  if (!qrImageUrl || !shownQr || (shownQr.currentSrc || shownQr.src) !== qrImageUrl) {
+    throw new Error("El código QR aún no está listo para descargar.");
+  }
   const canvas = await renderBusinessCardCanvas(card);
   const blob = format === "png"
     ? await canvasToBlob(canvas, "image/png")
