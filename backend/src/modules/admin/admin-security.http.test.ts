@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import argon2 from 'argon2';
+import { env } from '../../config/env.js';
 import test, { after, before } from 'node:test';
 import { app } from '../../app.js';
 import { createAdminFixture, createPendingOAuth, createActivation, createAdminSession, createWebAuthnCredential } from './admin-security.fixtures.js';
@@ -26,3 +28,68 @@ test('impide una segunda activación cuando ya existe passkey activa', async () 
 test('bloquea segunda activación mediante el endpoint HTTP real', async () => { const fixture = await createAdminFixture(); try { await createWebAuthnCredential(fixture.userId); const pending = await createPendingOAuth(fixture.googleSub); const response = await request('/api/v1/admin/auth/passkey/activation/options', { headers: { cookie: pending.cookie, 'x-admin-activation-code': 'ci-activation-code' } }); assert.equal(response.status, 409); assert.equal((await response.json() as any).error.code, 'ADMIN_PASSKEY_ALREADY_REGISTERED'); } finally { await fixture.cleanup(); } });
 
 test('requiere el código también al finalizar la activación HTTP', async () => { const fixture = await createAdminFixture(); try { const pending = await createPendingOAuth(fixture.googleSub); const options = await request('/api/v1/admin/auth/passkey/activation/options', { headers: { cookie: pending.cookie, 'x-admin-activation-code': 'ci-activation-code' } }); assert.equal(options.status, 200); const activationCookie = options.headers.get('set-cookie') ?? ''; const response = await request('/api/v1/admin/auth/passkey/activation/verify', { method: 'POST', headers: { cookie: activationCookie, 'content-type': 'application/json' }, body: '{}' }); assert.equal(response.status, 403); assert.equal((await response.json() as any).error.code, 'ADMIN_ACTIVATION_AUTH_REQUIRED'); } finally { await fixture.cleanup(); } });
+
+test('password SUPER_ADMIN crea cookies y restaura la sesión sin OAuth ni passkey', async () => {
+  const fixture = await createAdminFixture();
+  const password = 'ci-only-admin-password-2026';
+  try {
+    await prisma.authIdentity.create({ data: { userId: fixture.userId, provider: 'EMAIL', providerSubject: fixture.email, passwordHash: await argon2.hash(password), verifiedAt: new Date() } });
+    const response = await request('/api/v1/admin/auth/password', { method: 'POST', headers: { origin: env.trustedOrigins[0]!, 'content-type': 'application/json' }, body: JSON.stringify({ email: fixture.email, password }) });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    const payload = await response.json() as any;
+    assert.equal(payload.admin.role, 'SUPER_ADMIN');
+    assert.ok(payload.csrfToken);
+    const cookies = response.headers.getSetCookie();
+    const sessionCookie = cookies.find(item => item.startsWith('xamuko_admin_session='))!;
+    assert.ok(sessionCookie);
+    assert.match(sessionCookie, /HttpOnly/i);
+    assert.match(sessionCookie, /SameSite=Lax/i);
+    assert.match(sessionCookie, /Path=\/api\/v1\/admin/i);
+    if (env.nodeEnv === 'production') assert.match(sessionCookie, /Secure/i);
+    const cookie = cookies.map(item => item.split(';')[0]).join('; ');
+    const restored = await request('/api/v1/admin/auth/session', { headers: { cookie } });
+    assert.equal(restored.status, 200);
+    assert.equal((await restored.json() as any).csrfToken, payload.csrfToken);
+    const me = await request('/api/v1/admin/me', { headers: { cookie } });
+    assert.equal(me.status, 200);
+    assert.equal((await me.json() as any).admin.user.id, fixture.userId);
+    const csrfRejected = await request('/api/v1/admin/auth/logout', { method: 'POST', headers: { cookie } });
+    assert.equal(csrfRejected.status, 403);
+    const logout = await request('/api/v1/admin/auth/logout', { method: 'POST', headers: { cookie, 'x-admin-csrf': payload.csrfToken } });
+    assert.equal(logout.status, 204);
+    assert.equal((await request('/api/v1/admin/me', { headers: { cookie } })).status, 401);
+  } finally {
+    await prisma.session.deleteMany({ where: { userId: fixture.userId } });
+    await fixture.cleanup();
+  }
+});
+
+test('password rechaza contraseña incorrecta y cuenta sin SUPER_ADMIN sin cookie administrativa', async () => {
+  const fixture = await createAdminFixture();
+  const password = 'ci-only-denied-password-2026';
+  try {
+    await prisma.authIdentity.create({ data: { userId: fixture.userId, provider: 'EMAIL', providerSubject: fixture.email, passwordHash: await argon2.hash(password), verifiedAt: new Date() } });
+    for (const supplied of ['incorrect-password', password]) {
+      if (supplied === password) await prisma.adminRoleAssignment.updateMany({ where: { userId: fixture.userId }, data: { role: 'ADMIN' } });
+      const response = await request('/api/v1/admin/auth/password', { method: 'POST', headers: { origin: env.trustedOrigins[0]!, 'content-type': 'application/json' }, body: JSON.stringify({ email: fixture.email, password: supplied }) });
+      assert.equal(response.status, supplied === password ? 403 : 401);
+      assert.equal(response.headers.getSetCookie().some(item => item.startsWith('xamuko_admin_session=')), false);
+      assert.equal(await prisma.adminSession.count({ where: { userId: fixture.userId } }), 0);
+    }
+  } finally {
+    await prisma.session.deleteMany({ where: { userId: fixture.userId } });
+    await fixture.cleanup();
+  }
+});
+
+test('preflight administrativo permite CSRF para origen confiable y rechaza origen ajeno', async () => {
+  const allowed = await request('/api/v1/admin/auth/logout', { method: 'OPTIONS', headers: { origin: env.trustedOrigins[0]!, 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type,x-admin-csrf' } });
+  assert.equal(allowed.status, 204);
+  assert.equal(allowed.headers.get('access-control-allow-origin'), env.trustedOrigins[0]);
+  assert.equal(allowed.headers.get('access-control-allow-credentials'), 'true');
+  assert.match(allowed.headers.get('access-control-allow-headers') ?? '', /X-Admin-CSRF/i);
+  const denied = await request('/api/v1/admin/auth/password', { method: 'OPTIONS', headers: { origin: 'https://untrusted.example.test', 'access-control-request-method': 'POST' } });
+  assert.equal(denied.status, 403);
+  assert.equal(denied.headers.get('access-control-allow-origin'), null);
+});
