@@ -70,14 +70,14 @@ export function getSelectedLocation(): Locality | null {
   return selection?.locality ?? null;
 }
 
-export function saveSelectedLocation(location: Locality): void {
+export function saveSelectedLocation(location: Locality, coordinates?: Coordinates): void {
   const selected = findCanonicalLocality(location);
   if (!selected) return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: "manual", locality: selected, country: "Colombia", coordinates: coordinatesForLocality(selected) } satisfies LocationSelection));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: "manual", locality: selected, country: "Colombia", coordinates: coordinates ?? coordinatesForLocality(selected) } satisfies LocationSelection));
   notify();
 }
 
-export function saveAutomaticLocation(coordinates: Coordinates, locality?: Locality, cityResolution: "pending" | "resolved" | "unavailable" = "pending"): void {
+export async function resolveCoordinatesForLocality(locality: Locality): Promise<Coordinates | undefined> {\n  const known = coordinatesForLocality(locality);\n  if (known) return known;\n  try {\n    const maps = await loadGoogleMaps();\n    const Geocoder = maps.Geocoder;\n    if (!Geocoder) return undefined;\n    return await new Promise<Coordinates | undefined>((resolve) => {\n      new Geocoder().geocode({ address: locality.name + \", \" + locality.context + \", Colombia\" }, (results, status) => {\n        const point = results?.[0]?.geometry?.location;\n        resolve(status === \"OK\" && point ? { lat: point.lat(), lng: point.lng() } : undefined);\n      });\n    });\n  } catch {\n    return undefined;\n  }\n}\n\nexport function saveAutomaticLocation(coordinates: Coordinates, locality?: Locality, cityResolution: "pending" | "resolved" | "unavailable" = "pending"): void {
   if (!isCoordinates(coordinates)) return;
   const current = getLocationSelection();
   // Only preserve the previously resolved city when the GPS position is identical.
