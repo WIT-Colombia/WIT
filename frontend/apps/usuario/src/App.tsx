@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";\nimport { useNavigate } from "react-router-dom";\nimport { useAuth } from "./context/AuthContext";\nimport { useLocationContext } from "./context/LocationContext";
 import Home from "./pages/Home";
 import ManualLocation from "./pages/ManualLocation";
 import Location from "./pages/Location";
@@ -66,8 +66,8 @@ function StandaloneFooter() {
   return authPages.includes(pathname) ? <SiteFooter /> : null;
 }
 
-export default function App() {
-  return <><ScrollToTop /><Routes>
+function InitialLocationGate({ children }: { children: ReactNode }) {\n  const navigate = useNavigate();\n  const route = useLocation();\n  const { status } = useAuth();\n  const { selection, isReady, requestAutomaticLocation } = useLocationContext();\n  const attempted = useRef(false);\n  useEffect(() => {\n    if (route.pathname !== \"/home\" || status === \"loading\" || !isReady || selection || attempted.current) return;\n    attempted.current = true;\n    void requestAutomaticLocation().catch(() => navigate(\"/location?returnTo=\" + encodeURIComponent(\"/home\"), { replace: true }));\n  }, [isReady, navigate, requestAutomaticLocation, route.pathname, selection, status]);\n  return <>{children}</>;\n}\n\nexport default function App() {
+  return <InitialLocationGate><ScrollToTop /><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Navigate to="/home" replace />} />
@@ -104,5 +104,5 @@ export default function App() {
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<Navigate to="/home" replace />} />
-  </Routes><StandaloneFooter /></>;
+  </Routes><StandaloneFooter /></InitialLocationGate>;
 }
