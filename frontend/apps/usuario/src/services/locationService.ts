@@ -77,7 +77,25 @@ export function saveSelectedLocation(location: Locality, coordinates?: Coordinat
   notify();
 }
 
-export async function resolveCoordinatesForLocality(locality: Locality): Promise<Coordinates | undefined> {\n  const known = coordinatesForLocality(locality);\n  if (known) return known;\n  try {\n    const maps = await loadGoogleMaps();\n    const Geocoder = maps.Geocoder;\n    if (!Geocoder) return undefined;\n    return await new Promise<Coordinates | undefined>((resolve) => {\n      new Geocoder().geocode({ address: locality.name + \", \" + locality.context + \", Colombia\" }, (results, status) => {\n        const point = results?.[0]?.geometry?.location;\n        resolve(status === \"OK\" && point ? { lat: point.lat(), lng: point.lng() } : undefined);\n      });\n    });\n  } catch {\n    return undefined;\n  }\n}\n\nexport function saveAutomaticLocation(coordinates: Coordinates, locality?: Locality, cityResolution: "pending" | "resolved" | "unavailable" = "pending"): void {
+export async function resolveCoordinatesForLocality(locality: Locality): Promise<Coordinates | undefined> {
+  const known = coordinatesForLocality(locality);
+  if (known) return known;
+  try {
+    const maps = await loadGoogleMaps();
+    const Geocoder = maps.Geocoder;
+    if (!Geocoder) return undefined;
+    return await new Promise<Coordinates | undefined>((resolve) => {
+      new Geocoder().geocode({ address: locality.name + ", " + locality.context + ", Colombia" }, (results, status) => {
+        const point = results?.[0]?.geometry?.location;
+        resolve(status === "OK" && point ? { lat: point.lat(), lng: point.lng() } : undefined);
+      });
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+export function saveAutomaticLocation(coordinates: Coordinates, locality?: Locality, cityResolution: "pending" | "resolved" | "unavailable" = "pending"): void {
   if (!isCoordinates(coordinates)) return;
   const current = getLocationSelection();
   // Only preserve the previously resolved city when the GPS position is identical.
