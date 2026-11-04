@@ -293,14 +293,14 @@ export async function renderBusinessCardCanvas(card: HTMLElement): Promise<HTMLC
     ].join("");
     const bitmap = await loadImage("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg));
     ctx.drawImage(bitmap, 0, 0, rect.width, rect.height);
-    ctx.getImageData(Math.floor(rect.width / 2), Math.floor(rect.height / 2), 1, 1);
-    const [r, g, b] = ctx.getImageData(Math.floor(rect.width / 2), Math.floor(rect.height * 0.95), 1, 1).data;
+    ctx.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1);
+    const [r, g, b] = ctx.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height * 0.95), 1, 1).data;
     if (r > 245 && g > 245 && b > 245) throw new Error("Captura SVG vacía");
   } catch {
     reset();
     await drawNativeCard(ctx, card, rect);
     // Detect an origin-tainted canvas before offering a file.
-    try { ctx.getImageData(Math.floor(rect.width / 2), Math.floor(rect.height / 2), 1, 1); }
+    try { ctx.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1); }
     catch { throw new Error("No se pudo incluir una imagen de la tarjeta; verifica la foto del negocio."); }
   }
   return canvas;
