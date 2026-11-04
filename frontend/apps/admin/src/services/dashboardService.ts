@@ -1,29 +1,30 @@
-import { listAdminReviews, listReviewReports, type AdminReview, type AdminReviewReport } from './adminApiClient';
+import { getAdminDashboardStats, listAdminReviews, listReviewReports, type AdminDashboardStats, type AdminReview, type AdminReviewReport } from './adminApiClient';
 import { can } from './adminService';
 import type { Admin } from '../types/admin';
 
 export type DashboardSnapshot = {
-  publishedReviews: number | null;
+  stats: AdminDashboardStats | null;
+  statsError: boolean;
   recentReviews: AdminReview[];
   recentReports: AdminReviewReport[];
   reviewError: boolean;
 };
 
-// The current Admin API exposes reviews and reports, but no platform-wide
-// analytics, membership, subscription, or finance totals.
+// Data is always read from protected backend endpoints. No sample or inferred
+// values are displayed as real company statistics.
 export async function loadDashboardSnapshot(admin: Admin): Promise<DashboardSnapshot> {
-  if (!can(admin, 'content:moderate')) return { publishedReviews: null, recentReviews: [], recentReports: [], reviewError: false };
-  const [reviewsResult, reportsResult] = await Promise.allSettled([listAdminReviews(1, 100), listReviewReports()]);
-  const reviews = reviewsResult.status === 'fulfilled' ? reviewsResult.value.reviews : [];
-  // A page total includes moderated and removed records. Only show a complete
-  // published count when every review fits in the returned page.
-  const total = reviewsResult.status === 'fulfilled' && reviewsResult.value.pagination.total <= reviews.length
-    ? reviews.filter(review => review.status === 'PUBLISHED').length
-    : null;
+  const moderate = can(admin, 'content:moderate');
+  const [statsResult, reviewsResult, reportsResult] = await Promise.allSettled([
+    getAdminDashboardStats(),
+    moderate ? listAdminReviews(1, 20) : Promise.resolve(null),
+    moderate ? listReviewReports() : Promise.resolve(null),
+  ]);
+  const reviews = reviewsResult.status === 'fulfilled' ? reviewsResult.value?.reviews ?? [] : [];
   return {
-    publishedReviews: total,
+    stats: statsResult.status === 'fulfilled' ? statsResult.value : null,
+    statsError: statsResult.status === 'rejected',
     recentReviews: reviews.filter(review => review.status === 'PUBLISHED').slice(0, 4),
-    recentReports: reportsResult.status === 'fulfilled' ? reportsResult.value.reports.slice(0, 4) : [],
-    reviewError: reviewsResult.status === 'rejected' || reportsResult.status === 'rejected',
+    recentReports: reportsResult.status === 'fulfilled' ? reportsResult.value?.reports.slice(0, 4) ?? [] : [],
+    reviewError: moderate && (reviewsResult.status === 'rejected' || reportsResult.status === 'rejected'),
   };
 }
