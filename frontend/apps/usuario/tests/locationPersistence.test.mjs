@@ -6,6 +6,7 @@ const service = await readFile(new URL("../src/services/locationService.ts", imp
 const context = await readFile(new URL("../src/context/LocationContext.tsx", import.meta.url), "utf8");
 const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
 const manual = await readFile(new URL("../src/pages/ManualLocation.tsx", import.meta.url), "utf8");
+const header = await readFile(new URL("../src/components/SiteHeader.tsx", import.meta.url), "utf8");
 
 test("new visitors are not silently assigned Palmira", () => {
   assert.match(service, /if \(!saved\) return null/);
@@ -23,4 +24,9 @@ test("manual municipalities resolve coordinates before persistence", () => {
   assert.match(service, /resolveCoordinatesForLocality/);
   assert.match(context, /const coordinates = await resolveCoordinatesForLocality\(locality\)/);
   assert.match(context, /saveSelectedLocation\(locality, coordinates\)/);
+});
+
+
+test("the header location button opens the location page", () => {
+  assert.match(header, /className="location-pill"[^>]*to="\/location"/);
 });
