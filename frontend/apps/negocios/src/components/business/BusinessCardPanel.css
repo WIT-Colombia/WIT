@@ -56,3 +56,6 @@
 .business-card-benefits-list ul.is-pending li::before{content:"🔒";color:inherit;font-size:9px}
 .business-card-next-level{margin:0;padding:10px 12px;border-radius:9px;background:#f8fafc;color:#475569;font-size:11px;line-height:1.55}
 @media(max-width:600px){.business-card-panel{padding:18px 16px;border-radius:12px}.business-card-panel-heading h2{font-size:16px}}
+
+/* Keep the approved portrait card centred while its two export formats are offered. */
+.business-card-panel-preview{display:grid;place-items:center;min-width:0}
