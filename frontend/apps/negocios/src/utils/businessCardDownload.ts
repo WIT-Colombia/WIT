@@ -211,6 +211,7 @@ export async function renderBusinessCardCanvas(card: HTMLElement, business: Busi
   const logoUrl = getSourceImage(card, ".business-digital-card__logo:not(.business-digital-card__logo--light)");
   if (!logoUrl) throw new Error("No se encontró el logotipo oficial de XAMUKO.");
   const avatarUrl = getSourceImage(card, ".business-digital-card__photo");
+  if (business.profilePhotoId && !avatarUrl) throw new Error("Espera a que cargue la fotografía del negocio antes de descargar.");
   const [logo, qr, avatar] = await Promise.all([
     loadImage(logoUrl),
     loadImage(qrImageUrl),
