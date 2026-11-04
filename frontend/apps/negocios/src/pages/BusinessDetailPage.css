@@ -374,6 +374,9 @@
   .business-detail-page .business-photos-section .business-gallery-scroll-arrow{flex-basis:32px;width:32px;height:32px}
 }
 
+/* El contenedor define el punto de ruptura según el espacio disponible en Business. */
+.business-detail-page .business-photos-section{container:business-photos / inline-size}
+
 /* Fotogalería: cada columna contiene exactamente dos miniaturas de tamaño fijo relativo al ancho visible. */
 .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid{
   display:flex;
@@ -438,24 +441,24 @@
   border:0;
   border-radius:7px;
 }
-/* Cuatro columnas en pantallas intermedias; cinco en pantallas amplias. */
-@media (min-width:1025px) and (max-width:1399px){
+/* Los cortes dependen del ancho real del panel, no del viewport. */
+@container business-photos (max-width: 850px){
   .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column{
     flex-basis:calc((100% - 30px) / 4);
     width:calc((100% - 30px) / 4);
   }
 }
-@media (min-width:601px) and (max-width:1024px){
+@container business-photos (max-width: 650px){
   .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column{
-    flex-basis:calc((100% - 28px) / 3);
-    width:calc((100% - 28px) / 3);
+    flex-basis:calc((100% - 20px) / 3);
+    width:calc((100% - 20px) / 3);
   }
 }
-@media (max-width:600px){
+@container business-photos (max-width: 450px){
   .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid{gap:9px}
   .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column{
-    flex-basis:calc((100% - 15px) / 2);
-    width:calc((100% - 15px) / 2);
+    flex-basis:calc((100% - 9px) / 2);
+    width:calc((100% - 9px) / 2);
     gap:9px;
   }
 }
@@ -471,19 +474,27 @@
   width:min(100%,600px);
   max-width:600px;
 }
-@media (min-width:601px) and (max-width:1024px){
+@container business-photos (max-width: 850px){
   .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid,
   .business-detail-page .business-photos-section .business-gallery-management,
   .business-detail-page .business-photos-section .business-gallery-scroll-control{
-    width:min(100%,435px);
-    max-width:435px;
+    width:min(100%,480px);
+    max-width:480px;
   }
 }
-@media (max-width:600px){
+@container business-photos (max-width: 650px){
   .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid,
   .business-detail-page .business-photos-section .business-gallery-management,
   .business-detail-page .business-photos-section .business-gallery-scroll-control{
-    width:min(100%,270px);
-    max-width:270px;
+    width:min(100%,360px);
+    max-width:360px;
+  }
+}
+@container business-photos (max-width: 450px){
+  .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid,
+  .business-detail-page .business-photos-section .business-gallery-management,
+  .business-detail-page .business-photos-section .business-gallery-scroll-control{
+    width:min(100%,240px);
+    max-width:240px;
   }
 }
