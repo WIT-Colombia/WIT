@@ -48,7 +48,9 @@ jobs:
         run: npm run typecheck
 
       - name: Run available frontend tests
-        run: npm run test --workspace=@wit/admin --if-present
+        run: |
+          npm run test --workspace=@wit/admin --if-present
+          npm run test --workspace=@wit/usuario --if-present
 
       - name: Build all applications
         run: npm run build
