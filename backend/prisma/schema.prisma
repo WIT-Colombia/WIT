@@ -251,6 +251,21 @@ enum BusinessReviewReportStatus {
   REJECTED
 }
 
+enum BusinessReportReason {
+  IMPERSONATION
+  FALSE_INFORMATION
+  SUSPECTED_FRAUD
+  INAPPROPRIATE_CONTENT
+  OTHER
+}
+
+enum BusinessReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
 enum BusinessReviewReportReason {
   OFFENSIVE
   SPAM
@@ -297,6 +312,7 @@ model User {
   uploadedPhotos              Photo[]                    @relation("PhotoUploader")
   uploadedPromotionPhotos     BusinessPromotionPhoto[]   @relation("PromotionPhotoUploader")
   auditLogs                   AuditLog[]                 @relation("AuditActor")
+  submittedBusinessReports      BusinessReport[]
   businessFavorites           BusinessFavorite[]
   offerLikes                  BusinessOfferLike[]
   analyticsEvents             BusinessAnalyticsEvent[]   @relation("AnalyticsActor")
@@ -521,6 +537,7 @@ model Business {
   favorites             BusinessFavorite[]
   analyticsEvents       BusinessAnalyticsEvent[]
   reviews               BusinessReview[]
+  reports               BusinessReport[]
   brand                 BusinessBrand?              @relation(fields: [brandId], references: [id])
   brandId               String?                     @db.Char(36)
   reviewCooldowns       BusinessReviewCooldown[]
@@ -907,6 +924,25 @@ model BusinessReviewResponse {
   owner     User           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
 
   @@index([ownerId, updatedAt])
+}
+
+
+model BusinessReport {
+  id          String               @id @default(uuid()) @db.Char(36)
+  businessId  String               @db.Char(36)
+  reporterId  String?              @db.Char(36)
+  reason      BusinessReportReason
+  description String               @db.VarChar(1500)
+  status      BusinessReportStatus @default(PENDING)
+  decisionNote String?             @db.VarChar(1500)
+  createdAt   DateTime             @default(now()) @db.DateTime(3)
+  updatedAt   DateTime             @updatedAt @db.DateTime(3)
+  business    Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  reporter    User?                @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([businessId, createdAt])
+  @@index([reporterId, createdAt])
 }
 
 model BusinessReviewReport {
