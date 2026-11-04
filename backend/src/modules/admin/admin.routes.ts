@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { getAdminDashboardStats } from './admin-dashboard.service.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
 import { requireAdmin } from './admin-auth.service.js';
@@ -6,6 +7,12 @@ import { decisionVerificationController, listVerificationController, verificatio
 
 export const adminRouter = Router();
 adminRouter.get('/me', requireAdmin(), adminMeController);
+adminRouter.get('/dashboard/stats', requireAdmin(), async (_req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await getAdminDashboardStats());
+  } catch (error) { next(error); }
+});
 adminRouter.get('/administrators', requireAdmin('ADMINS_MANAGE'), administratorsController);
 adminRouter.post('/administrators/:userId/roles', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), assignRoleController);
 adminRouter.post('/administrators/:userId/roles/:role/revoke', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), revokeRoleController);

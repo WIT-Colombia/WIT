@@ -2,6 +2,15 @@ import { API_BASE_URL as API_BASE, buildApiUrl } from '@wit/utils';
 export class AdminApiError extends Error { readonly status:number; readonly code:string; constructor(status:number,code:string,message:string){super(message);this.name='AdminApiError';this.status=status;this.code=code;} }
 export type AdminPermission = 'BUSINESSES_READ' | 'CATALOG_READ' | 'REPORTS_REVIEW' | 'CONTENT_MODERATE' | 'AUDIT_READ' | 'ADMINS_MANAGE' | 'PIONEER_MANAGE' | 'FINANCE_READ' | 'FINANCE_MANAGE';
 export type RealAdmin = { user: { id: string; publicId: string; displayName: string; emailNormalized: string | null; avatarUrl: string | null; locale: string }; role: 'ADMIN' | 'SUPER_ADMIN'; permissions: AdminPermission[] };
+export type AdminDashboardStats = {
+  generatedAt: string;
+  totals: { users: number; businesses: number; businessesVerified: number; reviewsPublished: number; businessProActive: number };
+  businessStatuses: { published: number; unpublished: number; review: number };
+  userStatuses: { active: number; suspended: number };
+  subscriptions: { proActive: number; proPending: number; proExpiring30Days: number; plus: null };
+  monthly: Array<{ month: string; users: number; businesses: number; reviews: number }>;
+  revenue: null;
+};
 export type AdminReview = { id: string; rating: number; comment: string; status: string; createdAt: string; business: { name: string; publicId: string }; user: { displayName: string }; response: { body: string } | null; reports: { id: string; status: string; reason: string }[] };
 export type AdminReviewsResponse = { reviews: AdminReview[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
 export type AdminReviewReport = { id: string; reason: string; description: string | null; status: string; createdAt: string; review: { id: string; rating: number; comment: string; business: { name: string; publicId: string }; user: { displayName: string } }; reporter: { displayName: string } };
@@ -13,6 +22,7 @@ export async function fetchOwnAvatar(path = `${API_BASE}/auth/me/avatar`): Promi
 function headers(init: RequestInit = {}) { const value = new Headers(init.headers); if (!['GET', 'HEAD', 'OPTIONS'].includes((init.method ?? 'GET').toUpperCase()) && adminCsrfToken) value.set('X-Admin-CSRF', adminCsrfToken); value.set('Accept', 'application/json'); if (init.body && !value.has('Content-Type')) value.set('Content-Type', 'application/json'); if (accessToken) value.set('Authorization', `Bearer ${accessToken}`); return { ...init, headers: value, credentials: 'include' as RequestCredentials }; }
 async function request<T>(path: string, init: RequestInit = {}) { const response = await fetch(buildApiUrl(path), headers(init)); const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string }; csrfToken?: unknown } & T; if (!response.ok) { const code=payload?.error?.code ?? 'UNKNOWN_ERROR'; const message=payload?.error?.message ?? 'No se pudo completar la solicitud.'; throw new AdminApiError(response.status, code, message); } if (payload && typeof payload.csrfToken === 'string') adminCsrfToken = payload.csrfToken; return payload; }
 export async function adminLogin(email: string, password: string, rememberMe: boolean) { return (await request<{ admin: RealAdmin }>('/admin/auth/password', { method: 'POST', body: JSON.stringify({ email, password, rememberMe }) })).admin; }
+export function getAdminDashboardStats() { return request<AdminDashboardStats>('/admin/dashboard/stats'); }
 export async function adminMe() { return (await request<{ admin: RealAdmin }>('/admin/me')).admin; }
 export async function adminRefresh() { const result = await request<{ user: RealAdmin['user']; accessToken: string }>('/auth/refresh', { method: 'POST', body: JSON.stringify({ rememberMe: false }) }); accessToken = result.accessToken; return adminMe(); }
 export async function adminLogout() { try { await request('/auth/logout', { method: 'POST', body: '{}' }); } finally { accessToken = null; } }

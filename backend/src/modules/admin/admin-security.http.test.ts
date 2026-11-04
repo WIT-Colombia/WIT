@@ -93,3 +93,27 @@ test('preflight administrativo permite CSRF para origen confiable y rechaza orig
   assert.equal(denied.status, 403);
   assert.equal(denied.headers.get('access-control-allow-origin'), null);
 });
+
+
+test('dashboard statistics only expose real aggregate counts to an authenticated administrator', async () => {
+  const anonymous = await request('/api/v1/admin/dashboard/stats');
+  assert.equal(anonymous.status, 401);
+  const fixture = await createAdminFixture();
+  try {
+    const session = await createAdminSession(fixture.userId);
+    const response = await request('/api/v1/admin/dashboard/stats', { headers: { cookie: session.cookie } });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    const result = await response.json() as any;
+    assert.ok(result.totals.users >= 1);
+    assert.equal(typeof result.totals.businesses, 'number');
+    assert.equal(typeof result.totals.businessesVerified, 'number');
+    assert.equal(typeof result.totals.reviewsPublished, 'number');
+    assert.equal(typeof result.totals.businessProActive, 'number');
+    assert.equal(result.monthly.length, 6);
+    assert.ok(result.monthly.every((month: any) => /^\d{4}-\d{2}$/.test(month.month)));
+    assert.equal(result.revenue, null, 'Do not present expenses as company revenue');
+    assert.equal(result.subscriptions.plus, null, 'Do not invent Plus subscriptions');
+    assert.equal(Object.hasOwn(result, 'administrators'), false);
+  } finally { await fixture.cleanup(); }
+});
