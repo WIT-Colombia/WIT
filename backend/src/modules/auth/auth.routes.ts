@@ -6,7 +6,7 @@ import { env } from '../../config/env.js';
 import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import { changePasswordController, confirmEmailController, confirmPasswordResetController, googleCallbackController, googleLinkStartController, googleStartController, loginController, logoutController, meController, ownAvatarController, refreshController, registerController, requestPasswordResetController, requestVerificationController, updateAdultContentPreferenceController, getPreferredLocationController, savePreferredLocationController, updateProfileController, uploadAvatarController } from './auth.controller.js';
-import { LOGIN_ACCOUNT_WINDOW_SECONDS, LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from './auth-rate-limit-policy.js';
+import { LOGIN_ACCOUNT_WINDOW_SECONDS, LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT, REFRESH_RATE_LIMIT_POLICY } from './auth-rate-limit-policy.js';
 
 export const authRouter = Router();
 const avatarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
@@ -20,6 +20,15 @@ const authRateLimit = rateLimit({
   handler: (_request, response) => {
     response.setHeader('Retry-After', String(Math.ceil(authRateLimitWindowMs / 1000)));
     response.status(429).json({ error: { code: 'AUTH_RATE_LIMITED', message: 'Demasiados intentos. Intenta de nuevo más tarde.' } });
+  },
+});
+const refreshRateLimit = rateLimit({
+  ...REFRESH_RATE_LIMIT_POLICY,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  handler: (_request, response) => {
+    response.setHeader('Retry-After', String(REFRESH_RATE_LIMIT_POLICY.windowMs / 1000));
+    response.status(429).json({ error: { code: 'SESSION_REFRESH_RATE_LIMITED', message: 'Hay demasiados intentos de renovación de sesión. Intenta nuevamente más tarde.' } });
   },
 });
 const loginRateLimitWindowMs = LOGIN_IP_WINDOW_SECONDS * 1000;
@@ -46,7 +55,7 @@ const loginAccountRateLimit = rateLimit({
 });
 authRouter.post('/register', authRateLimit, requireTrustedOrigin, registerController);
 authRouter.post('/login', loginAccountRateLimit, loginRateLimit, requireTrustedOrigin, loginController);
-authRouter.post('/refresh', authRateLimit, requireTrustedOrigin, refreshController);
+authRouter.post('/refresh', refreshRateLimit, requireTrustedOrigin, refreshController);
 authRouter.post('/logout', authRateLimit, requireTrustedOrigin, logoutController);
 authRouter.get('/me', requireAuth, meController);
 authRouter.get('/me/avatar', requireAuth, ownAvatarController);
