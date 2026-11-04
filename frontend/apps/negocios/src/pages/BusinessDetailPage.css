@@ -373,3 +373,82 @@
   .business-detail-page .business-photos-section .business-gallery-scroll-control{gap:7px}
   .business-detail-page .business-photos-section .business-gallery-scroll-arrow{flex-basis:32px;width:32px;height:32px}
 }
+
+/* Fotogalería: cada columna contiene exactamente dos miniaturas de tamaño fijo relativo al ancho visible. */
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid{
+  display:flex;
+  flex-flow:row nowrap;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:10px;
+  max-width:800px;
+  min-width:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:4px 4px 12px;
+  scroll-snap-type:x proximity;
+  box-sizing:border-box;
+}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column{
+  display:grid;
+  grid-template-rows:repeat(2, auto);
+  align-content:start;
+  flex:0 0 calc((100% - 38px) / 4);
+  width:calc((100% - 38px) / 4);
+  min-width:0;
+  gap:10px;
+  scroll-snap-align:start;
+}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column>button{
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  height:auto;
+  aspect-ratio:4 / 3;
+  margin:0;
+  padding:3px;
+  border:2px solid transparent;
+  border-radius:11px;
+  background:#eff6ff;
+  overflow:hidden;
+  opacity:1;
+  cursor:pointer;
+  box-sizing:border-box;
+}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column>button.active{
+  border-color:#2563eb;
+  box-shadow:0 0 0 2px #dbeafe;
+}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column>button:focus-visible{
+  outline:3px solid #7b3ffb;
+  outline-offset:2px;
+}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column>button img,
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column>button span{
+  display:block;
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  max-width:100%;
+  max-height:100%;
+  aspect-ratio:auto;
+  object-fit:cover;
+  border:0;
+  border-radius:7px;
+}
+@media (min-width:601px) and (max-width:1024px){
+  .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column{
+    flex-basis:calc((100% - 28px) / 3);
+    width:calc((100% - 28px) / 3);
+  }
+}
+@media (max-width:600px){
+  .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid{gap:9px}
+  .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid .business-photo-column{
+    flex-basis:calc((100% - 15px) / 2);
+    width:calc((100% - 15px) / 2);
+    gap:9px;
+  }
+}
