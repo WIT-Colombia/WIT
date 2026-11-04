@@ -10,6 +10,7 @@ type LocationContextValue = {
   setAutomaticLocation: (coordinates: Coordinates) => Promise<void>;
   requestAutomaticLocation: () => Promise<Coordinates>;
   isRequesting: boolean;
+  isReady: boolean;
   devicePermission: "checking" | "granted" | "prompt" | "denied" | "unavailable";
 };
 
@@ -26,7 +27,6 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const autoRefreshStarted = useRef(false);
   const [devicePermission, setDevicePermission] = useState<LocationContextValue["devicePermission"]>("checking");
   const [isRequesting, setIsRequesting] = useState(false);
-  const [isReady, setIsReady] = useState(status !== "loading" && status !== "authenticated");
 
   useEffect(() => subscribeToLocation(() => setSelection(getLocationSelection())), []);
   // A granted browser permission may be reused; a new permission prompt is
@@ -160,9 +160,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     return pendingRequest;
   }
 
-  function setManualLocation(locality: Locality): void {
+  async function setManualLocation(locality: Locality): Promise<void> {
     localRevision.current += 1;
-    saveSelectedLocation(locality);
+    const coordinates = await resolveCoordinatesForLocality(locality);
+    saveSelectedLocation(locality, coordinates);
   }
 
   function setAutomaticLocation(coordinates: Coordinates): Promise<void> {
