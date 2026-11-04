@@ -22,6 +22,8 @@
 .business-card-panel-notice{padding:11px 12px;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;color:#526b8a}
 .business-card-panel-actions{display:grid;gap:8px;min-width:0}
 .business-card-panel-actions>button{display:flex;align-items:center;justify-content:center;width:100%;min-height:40px;margin:0;padding:9px 12px;border-radius:7px;font-size:12px;line-height:1.4}
+/* Direct links preserve the browser download gesture and look exactly like buttons. */
+.business-card-panel-actions>a{display:flex;align-items:center;justify-content:center;width:100%;min-height:40px;margin:0;padding:9px 12px;border-radius:7px;font-size:12px;line-height:1.4;text-decoration:none;text-align:center}
 .business-card-panel-actions>button:disabled{border:1px solid #e2e8f0;background:#f1f5f9;color:#64748b;box-shadow:none;cursor:not-allowed;opacity:1}
 .business-card-panel-benefits-note{color:#64748b;font-size:10px;line-height:1.5;text-align:center}
 .business-card-benefits-overlay{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;padding:20px;background:#0f172a80}
