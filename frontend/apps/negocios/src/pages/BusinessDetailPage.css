@@ -295,3 +295,81 @@
 @media(max-width:600px){.business-header-image-overlay{padding:12px}.business-header-image-modal{gap:16px;max-height:calc(100dvh - 24px);padding:18px;border-radius:12px}.business-header-image-heading h2{font-size:17px}.business-profile-photo-options,.business-cover-photo-options{grid-auto-columns:110px;max-height:240px;gap:8px}.business-cover-preview{aspect-ratio:16/8}}
 @media(max-width:600px){.business-detail-page .business-photo-limit-alert{padding:9px 11px;font-size:12px;line-height:1.35}.business-detail-page .business-photo-limit-alert+.business-detail-gallery,.business-detail-page .business-photo-limit-alert+.business-gallery-thumbnails,.business-detail-page .business-photo-limit-alert+.business-detail-empty{margin-top:12px}}
 .business-detail-hero-copy>.business-pioneer-badge{margin:7px auto 0;}
+
+
+/* Mi negocio > Fotografías: dos filas con cuatro, tres o dos columnas visibles. */
+.business-detail-page .business-photos-section .business-photo-gallery{min-width:0}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid{
+  display:grid;
+  grid-template-columns:none;
+  grid-template-rows:repeat(2,auto);
+  grid-auto-flow:column;
+  grid-auto-columns:calc((100% - 30px)/4);
+  align-items:start;
+  width:100%;
+  max-width:800px;
+  margin:0 auto;
+  gap:10px;
+  padding:4px 4px 10px;
+  box-sizing:border-box;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x proximity;
+  overscroll-behavior-x:contain;
+  scrollbar-width:thin;
+  scrollbar-color:#c7d2fe transparent;
+  touch-action:pan-x;
+  cursor:grab;
+}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid:active{cursor:grabbing}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid>button{
+  display:block;
+  flex:none;
+  width:100%;
+  min-width:0;
+  height:auto;
+  min-height:0;
+  aspect-ratio:4/3;
+  margin:0;
+  padding:3px;
+  border:2px solid transparent;
+  border-radius:11px;
+  background:#eff6ff;
+  overflow:hidden;
+  opacity:1;
+  box-shadow:0 2px 8px #0f274712;
+  scroll-snap-align:start;
+  transition:border-color .16s ease,box-shadow .16s ease;
+}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid>button:hover{border-color:#b3cbf9}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid>button.active{border-color:#2563eb;box-shadow:0 0 0 2px #dbeafe}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid>button:focus-visible{outline:3px solid #7b3ffb;outline-offset:2px}
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid>button img{
+  display:block;
+  width:100%;
+  height:100%;
+  aspect-ratio:auto;
+  object-fit:cover;
+  border:0;
+  border-radius:7px;
+}
+.business-detail-page .business-photos-section .business-gallery-management{justify-content:space-between;max-width:800px;margin:12px auto 0;gap:8px 14px}
+.business-detail-page .business-photos-section .business-photo-selection{font-size:12px;color:#64748b}
+.business-detail-page .business-photos-section .business-gallery-scroll-control{gap:10px;max-width:800px;margin:8px auto 0;padding:0}
+.business-detail-page .business-photos-section .business-gallery-scroll-control input{flex:1;min-width:0}
+.business-detail-page .business-photos-section .business-gallery-scroll-arrow{
+  display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;
+  padding:0;border:1px solid #dbe3ee;border-radius:9px;background:#fff;
+  color:#2563eb;font-size:26px;line-height:1;cursor:pointer;
+}
+.business-detail-page .business-photos-section .business-gallery-scroll-arrow:not(:disabled):hover{background:#eff6ff;border-color:#93b4f9}
+.business-detail-page .business-photos-section .business-gallery-scroll-arrow:disabled{opacity:.35;cursor:default}
+@media (min-width:601px) and (max-width:1024px){
+  .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid{grid-auto-columns:calc((100% - 20px)/3)}
+}
+@media (max-width:600px){
+  .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid{grid-auto-columns:calc((100% - 9px)/2);gap:9px;padding:3px 3px 8px}
+  .business-detail-page .business-photos-section .business-gallery-management{align-items:flex-start}
+  .business-detail-page .business-photos-section .business-gallery-scroll-control{gap:7px}
+  .business-detail-page .business-photos-section .business-gallery-scroll-arrow{flex-basis:32px;width:32px;height:32px}
+}
