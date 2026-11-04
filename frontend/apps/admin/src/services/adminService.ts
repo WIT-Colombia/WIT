@@ -1,4 +1,4 @@
-import { adminSessionLogout, adminLogin, getAdminSession, beginAdminWebAuthn, type RealAdmin } from './adminApiClient';
+import { adminSessionLogout, adminLogin, adminMe, getAdminSession, beginAdminWebAuthn, type RealAdmin } from './adminApiClient';
 import { buildApiUrl } from '@wit/utils';
 export const startGoogleLogin = () => { window.location.assign(`${buildApiUrl('/auth/google/start')}?application=admin&next=%2Fdashboard`); };
 import type { Admin, Permission, Role } from '../types/admin';
@@ -13,7 +13,7 @@ function mapAdmin(value: RealAdmin): Admin { const permissionMap = { BUSINESSES_
 export const getSession = (): Admin | null => currentSession;
 export const enableDemoSession = () => { currentSession = { id: 'demo-admin', name: 'Administrador de demostración', avatarUrl: null, email: 'demo@example.test', role: 'principal', realRole: 'ADMIN', permissions: ['dashboard:read', 'business:write', 'content:moderate', 'settings:write'] }; return currentSession; };
 export const authenticateWithPassword = async (email: string, password: string) => { currentSession = mapAdmin(await adminLogin(email, password, false)); return currentSession; };
-export const restoreSession = async (): Promise<Admin | null> => { try { await getAdminSession(); currentSession = mapAdmin(await (await fetch('/api/v1/admin/me', { credentials: 'include' })).json().then(value => value.admin)); return currentSession; } catch { currentSession = null; return null; } };
+export const restoreSession = async (): Promise<Admin | null> => { try { await getAdminSession(); currentSession = mapAdmin(await adminMe()); return currentSession; } catch { currentSession = null; return null; } };
 
-export const authenticateWithPasskey = async () => { await beginAdminWebAuthn(); currentSession = mapAdmin(await (await fetch('/api/v1/admin/me', { credentials: 'include' })).json().then(value => value.admin)); return currentSession; };
+export const authenticateWithPasskey = async () => { const verification = await beginAdminWebAuthn(); if (!verification.verified || !verification.adminSession) throw new Error('La verificación de passkey no pudo crear una sesión administrativa.'); currentSession = mapAdmin(await adminMe()); return currentSession; };
 export const logout = async () => { if (isAdminDemoMode) { currentSession = null; return; } await adminSessionLogout(); currentSession = null; };
