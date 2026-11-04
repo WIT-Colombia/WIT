@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { PersistedPhoto } from "../components/common/PersistedPhoto";
+import { BusinessProfileThumbnail } from "../components/layout/Sidebar";
 import { getPublicBusinessUrl } from "../config/publicApp";
 import { businessApi, type BusinessStatisticsDashboard } from "../services/businessApiClient";
 import { useBusinessStore } from "../services/businessStore";
@@ -28,12 +29,17 @@ const periods: Array<{ value: Period; label: string }> = [
 const number = (value: number) => value.toLocaleString("es-CO");
 const publicProfileUrl = (business: BusinessDetails) => getPublicBusinessUrl(business.publicId);
 
-function BusinessImage({ src, name, className, alt, isPreview = false }: { src?: string; name: string; className: string; alt: string; isPreview?: boolean }) {
+function BusinessImage({ src, name, className, alt, isPreview = false, objectPosition }: { src?: string; name: string; className: string; alt: string; isPreview?: boolean; objectPosition?: string }) {
   const safeSrc = isPreview && src?.startsWith("/api/") ? undefined : src;
   return <span className={`${className}${safeSrc ? " has-image" : ""}`} aria-label={safeSrc ? undefined : alt}>
     {!className.includes("business-home-cover") && <span className="business-home-image-fallback" aria-hidden="true">{name.trim().charAt(0).toLocaleUpperCase("es-CO") || "X"}</span>}
-    {safeSrc && <PersistedPhoto src={safeSrc} alt={alt} className="business-home-photo" />}
+    {safeSrc && <PersistedPhoto src={safeSrc} alt={alt} className="business-home-photo" style={objectPosition ? { objectPosition } : undefined} />}
   </span>;
+}
+
+function SelectedBusinessProfileImage({ business, className, isPreview = false }: { business: BusinessDetails; className: string; isPreview?: boolean }) {
+  const previewBusiness = isPreview && business.profileImage?.startsWith("/api/") ? { ...business, profileImage: undefined } : business;
+  return <span className={className}><BusinessProfileThumbnail business={previewBusiness} /></span>;
 }
 
 function VisitChart({ points }: { points: Array<{ label: string; value: number }> }) {
@@ -145,10 +151,10 @@ export function DashboardPage() {
 
     {showEmptyAccount ? <section className="business-home-no-business"><span aria-hidden="true">⌂</span><h2>Selecciona o crea tu negocio</h2><p>Cuando elijas un establecimiento, aquí encontrarás su actividad y accesos de gestión.</p><Link className="business-home-primary" to="/mis-negocios">Ir a mis negocios <span aria-hidden="true">→</span></Link></section> : <>
       <section className="business-home-hero" aria-label={`Perfil de ${business.name}`}>
-        <BusinessImage src={business.coverImage} name={business.name} className="business-home-cover" alt={`Portada de ${business.name}`} isPreview={isPreview} />
+        <BusinessImage src={business.coverImage} name={business.name} className="business-home-cover" alt={`Portada de ${business.name}`} isPreview={isPreview} objectPosition={business.coverImagePosition ? `${business.coverImagePosition.x}% ${business.coverImagePosition.y}%` : undefined} />
         <div className="business-home-hero-shade" />
         <div className="business-home-hero-content">
-          <BusinessImage src={business.profileImage} name={business.name} className="business-home-profile" alt={`Imagen de ${business.name}`} isPreview={isPreview} />
+          <SelectedBusinessProfileImage business={business} className="business-home-profile" isPreview={isPreview} />
           <div className="business-home-business-copy"><div className="business-home-name-line"><h2>{business.name}</h2>{verified && <span className="business-home-verified" title="Negocio verificado" aria-label="Negocio verificado">✓</span>}</div><p>{[categoryLabel, business.city].filter(Boolean).join(" · ")}</p>{business.description && <p className="business-home-description">{business.description}</p>}{businessStatus && <span className={`business-home-status${business.isOpen === false ? " closed" : ""}`}>{business.isOpen === true && <i />}{businessStatus}</span>}</div>
           <div className="business-home-hero-actions">
             {profileUrl ? <a className="business-home-button glass" href={profileUrl} target="_blank" rel="noreferrer"><span aria-hidden="true">↗</span>Ver en XAMUKO</a> : <span className="business-home-button glass disabled" aria-disabled="true" title="Este negocio aún no tiene un perfil público">Perfil público no disponible</span>}
@@ -183,7 +189,7 @@ export function DashboardPage() {
         </section>
 
         <section className="business-home-panel business-home-details" aria-labelledby="business-home-details-title">
-          <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">TU ESTABLECIMIENTO</span><h2 id="business-home-details-title">Información del negocio</h2></div><BusinessImage src={business.profileImage} name={business.name} className="business-home-details-avatar" alt="" isPreview={isPreview} /></div>
+          <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">TU ESTABLECIMIENTO</span><h2 id="business-home-details-title">Información del negocio</h2></div><SelectedBusinessProfileImage business={business} className="business-home-details-avatar" isPreview={isPreview} /></div>
           {((currentRating != null) || (reviewCount ?? 0) > 0) && <div className="business-home-rating"><span aria-hidden="true">★</span><strong>{currentRating == null ? "—" : currentRating.toFixed(1)}</strong><small>{reviewCount === undefined ? "Calificación disponible" : `${number(reviewCount)} ${reviewCount === 1 ? "opinión" : "opiniones"}`}</small></div>}
           <dl className="business-home-info-list">
             {address && <div><dt><span aria-hidden="true">⌖</span>Ubicación</dt><dd>{address}</dd></div>}
