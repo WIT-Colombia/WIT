@@ -15,7 +15,7 @@
 .business-home-profile{position:relative;display:flex;align-items:center;justify-content:center;width:106px;height:106px;overflow:hidden;border:3px solid #ffffffd9;border-radius:22px;background:#ffffffee;box-shadow:0 10px 26px #100d2e45;color:#6130ce;font-size:40px;font-weight:800}
 .business-home-image-fallback{display:grid;position:absolute;inset:0;place-items:center}
 .business-home-profile .business-home-photo,.business-home-details-avatar .business-home-photo{z-index:1}
-.business-home-profile .business-home-photo>img,.business-home-details-avatar .business-home-photo>img{object-fit:cover}
+.business-home-profile .business-home-photo>img,.business-home-details-avatar .business-home-photo>img{object-fit:contain;background:#fff}
 .business-home-business-copy{min-width:0;color:#fff}
 .business-home-name-line{display:flex;align-items:center;gap:9px;min-width:0}
 .business-home-name-line h2{overflow:hidden;margin:0;color:#fff;font-size:clamp(22px,2.4vw,30px);font-weight:800;letter-spacing:-.035em;line-height:1.2;text-overflow:ellipsis}
