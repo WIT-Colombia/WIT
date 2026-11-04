@@ -16,6 +16,7 @@
 .business-home-image-fallback{display:grid;position:absolute;inset:0;place-items:center}
 .business-home-profile .business-home-photo,.business-home-details-avatar .business-home-photo{z-index:1}
 .business-home-profile .business-home-photo>img,.business-home-details-avatar .business-home-photo>img{object-fit:contain;background:#fff}
+.business-home-profile .business-selector-profile-photo>img,.business-home-details-avatar .business-selector-profile-photo>img{object-fit:contain;background:#fff}
 .business-home-business-copy{min-width:0;color:#fff}
 .business-home-name-line{display:flex;align-items:center;gap:9px;min-width:0}
 .business-home-name-line h2{overflow:hidden;margin:0;color:#fff;font-size:clamp(22px,2.4vw,30px);font-weight:800;letter-spacing:-.035em;line-height:1.2;text-overflow:ellipsis}
