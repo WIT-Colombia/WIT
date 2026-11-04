@@ -5,7 +5,7 @@ import { developmentReferralTestFor, recognitionLevelFor, recognitionLevels, rec
 import { getPublicBusinessUrl } from "../../config/publicApp";
 import { shareLink } from "../../../../usuario/src/utils/share";
 import { generateBusinessQrPng, isPermanentBusinessQrUrl } from "../../utils/businessQr";
-import { downloadBusinessCard, type BusinessCardDownloadFormat } from "../../utils/businessCardDownload";
+import { downloadBusinessCard, prepareBusinessCard, type BusinessCardDownloadFormat } from "../../utils/businessCardDownload";
 import "./BusinessCardPanel.css";
 
 /** Data supplied by the referral integration when valid referrals become available. */
@@ -19,6 +19,12 @@ export type BusinessCardPanelData = {
 
 const validReferralCount = (value: unknown) => Number.isInteger(value) && typeof value === "number" && value >= 0 ? value : null;
 
+/** Safari on iOS needs a real user-tapped file link after asynchronous rendering. */
+function needsUserActivatedSave() {
+  return /iPad|iPhone|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+
 type Props = { business: BusinessDetails; cardData?: BusinessCardPanelData };
 
 export function BusinessCardPanel({ business, cardData }: Props) {
@@ -28,6 +34,8 @@ export function BusinessCardPanel({ business, cardData }: Props) {
   const [qrError, setQrError] = useState(false);
   const [downloading, setDownloading] = useState<BusinessCardDownloadFormat | null>(null);
   const [downloadError, setDownloadError] = useState("");
+  const [readyDownload, setReadyDownload] = useState<{ format: BusinessCardDownloadFormat; filename: string; url: string } | null>(null);
+  const readyUrlRef = useRef<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [benefitsOpen, setBenefitsOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<BusinessCardLevel>("BASIC");
@@ -69,14 +77,32 @@ export function BusinessCardPanel({ business, cardData }: Props) {
     setSharing(false);
   };
 
+  useEffect(() => () => {
+    if (readyUrlRef.current) URL.revokeObjectURL(readyUrlRef.current);
+  }, []);
+
   const downloadCard = async (format: BusinessCardDownloadFormat) => {
     if (!qrImageUrl || !permanentQr || downloading) return;
     const card = cardRef.current?.querySelector<HTMLElement>(".business-digital-card");
     if (!card) return;
     setDownloading(format);
     setDownloadError("");
+    setReadyDownload(null);
+    if (readyUrlRef.current) {
+      URL.revokeObjectURL(readyUrlRef.current);
+      readyUrlRef.current = null;
+    }
     try {
-      await downloadBusinessCard({ card, business, qrImageUrl, format });
+      if (needsUserActivatedSave()) {
+        // On iOS an automatic click after await is frequently blocked.
+        // Make the actual download an explicit user gesture with a real href.
+        const prepared = await prepareBusinessCard({ card, business, qrImageUrl, format });
+        const url = URL.createObjectURL(prepared.blob);
+        readyUrlRef.current = url;
+        setReadyDownload({ format, filename: prepared.filename, url });
+      } else {
+        await downloadBusinessCard({ card, business, qrImageUrl, format });
+      }
     } catch (cause) {
       setDownloadError(cause instanceof Error ? cause.message : "No se pudo preparar la tarjeta. Intenta de nuevo.");
     } finally {
@@ -103,6 +129,7 @@ export function BusinessCardPanel({ business, cardData }: Props) {
       {hasReferralData && nextLevel && progressPercent !== null ? <div className="business-card-panel-progress"><div><span>Siguiente nivel: <strong>{nextLevel.name}</strong></span><strong>{referredUsers.toLocaleString("es-CO")} / {nextLevel.min.toLocaleString("es-CO")}</strong></div><progress max="100" value={progressPercent} aria-label={`Progreso hacia ${nextLevel.name}`} /></div> : hasReferralData ? <p className="business-card-panel-pending">Nivel máximo alcanzado.</p> : <p className="business-card-panel-pending">{referralState === 'loading' ? 'Estamos consultando tu progreso.' : 'No fue posible consultar tus referidos. Intenta recargar la página.'}</p>}
       {(!hasReferralData || !qrImageUrl || !permanentQr) && <p className="business-card-panel-notice">{hasReferralData ? '' : referralState === 'loading' ? 'El nivel se actualizará al confirmar los referidos válidos. ' : 'El contador de referidos no está disponible en este momento. '}{!publicUrl ? "Configura la URL pública de user.xamuko.com para generar el QR definitivo." : qrError ? "No se pudo generar el código QR." : !qrImageUrl ? "Generando el código QR…" : !permanentQr ? "Vista local de prueba: configura user.xamuko.com para habilitar descarga y compartir definitivos." : ""}</p>}
       <div className="business-card-panel-actions business-card-panel-actions--qr"><button type="button" className="outline-button" disabled={!permanentQr || !qrImageUrl || Boolean(downloading)} onClick={() => void downloadCard("pdf")} title="PDF a tamaño real: 15 × 23,5 cm">{downloading === "pdf" ? "Preparando PDF…" : "Descargar PDF"}</button><button type="button" className="outline-button" disabled={!permanentQr || !qrImageUrl || Boolean(downloading)} onClick={() => void downloadCard("png")} title="Imagen PNG de 1772 × 2776 píxeles">{downloading === "png" ? "Preparando PNG…" : "Descargar PNG"}</button><button type="button" className="action-button" disabled={!permanentQr || !qrImageUrl || sharing} onClick={() => void share()} title={permanentQr ? "Compartir la ficha pública" : "Disponible con una URL pública HTTPS de XAMUKO"}>{sharing ? "Compartiendo…" : "Compartir"}</button><button type="button" className="outline-button" onClick={() => setBenefitsOpen(true)}>Beneficios del nivel</button></div>
+      {readyDownload && <div className="business-card-panel-notice" role="status">Tarjeta {readyDownload.format.toUpperCase()} lista. <a href={readyDownload.url} download={readyDownload.filename}>Guardar archivo</a> · <a href={readyDownload.url} target="_blank" rel="noopener noreferrer">Abrir archivo</a>. En iPhone puedes usar Compartir → Guardar en Archivos.</div>}
       {downloadError && <p className="business-card-panel-notice" role="alert">{downloadError}</p>}
       {shareMessage && <p className="business-card-panel-message" role="status">{shareMessage}</p>}
     </div>
