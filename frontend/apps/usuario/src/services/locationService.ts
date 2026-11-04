@@ -28,6 +28,12 @@ function findCanonicalLocality(value: unknown): Locality | null {
     && (typeof candidate.departmentCode !== "string" || item.departmentCode === candidate.departmentCode)) ?? null;
 }
 
+// Preserve the known city centre only when Palmira was explicitly selected.
+// This is never used as a default location for a new visitor.
+function coordinatesForLocality(locality: Locality): Coordinates | undefined {
+  return locality.id === "76520" ? { lat: 3.5394, lng: -76.3036 } : undefined;
+}
+
 function notify(): void {
   window.dispatchEvent(new Event(LOCATION_EVENT));
 }
