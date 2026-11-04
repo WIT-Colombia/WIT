@@ -18,7 +18,6 @@ export function AppShell({ demoMode = false }: { demoMode?: boolean }) {
   if (auth.state.status === "unauthenticated") return <Navigate to={`/login?next=${encodeURIComponent(location.pathname)}`} replace />;
   if (auth.state.status === "error") return <main className="auth-page"><section className="auth-status-card" role="alert"><strong>No pudimos conectar con XAMUKO.</strong><p>Comprueba tu conexión e intenta nuevamente.</p><button className="action-button" type="button" onClick={() => void auth.refresh()}>Reintentar</button></section></main>;
   if (!businessesReady) return renderLayout(<main className="auth-status" aria-live="polite">Cargando tus negocios…</main>);
-  if (location.pathname === "/") return <Navigate to="/mis-negocios" replace />;
   if (businesses.length === 0 && (location.pathname === "/mi-negocio" || location.pathname.startsWith("/mi-negocio/"))) return <Navigate to="/mis-negocios" replace />;
   // Todas las rutas privadas declaradas en App.tsx comparten este layout.
   // Antes se filtraban aquí las rutas que no pertenecían al flujo de negocios
