@@ -76,12 +76,12 @@ export function getSessionState(): BusinessSessionState {
 }
 
 export function resolveBusinessNext(value: string | null): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/mis-negocios";
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/inicio";
   try {
     const path = new URL(value, "http://xamuko-business.local").pathname;
-    if (["/login", "/registro", "/recuperar", "/bienvenida"].includes(path)) return "/mis-negocios";
+    if (["/login", "/registro", "/recuperar", "/bienvenida"].includes(path)) return "/inicio";
   } catch {
-    return "/mis-negocios";
+    return "/inicio";
   }
   return value;
 }

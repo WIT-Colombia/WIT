@@ -51,7 +51,8 @@ export default function App() {
     <Route path="/legal/:page" element={<LegalPage />} />
     <Route path="/preview" element={<AppShell demoMode />}><Route index element={<DashboardPage />} /></Route>
     <Route element={<AppShell />}>
-      <Route path="/" element={<DashboardPage />} />
+      <Route path="/" element={<Navigate to="/inicio" replace />} />
+      <Route path="/inicio" element={<DashboardPage />} />
       <Route path="/mi-negocio" element={<BusinessPermissionRoute permission="EDIT_BUSINESS"><SelectedBusinessPage /></BusinessPermissionRoute>} />
       <Route path="/mis-negocios" element={<BusinessPage />} />
       <Route path="/mis-negocios/nuevo" element={<BusinessCreatePage />} />
