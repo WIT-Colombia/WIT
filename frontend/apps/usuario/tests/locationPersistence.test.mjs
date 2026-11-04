@@ -14,7 +14,7 @@ test("new visitors are not silently assigned Palmira", () => {
 
 test("location is hydrated from the account and guarded before home", () => {
   assert.match(context, /getPreferredLocation\(\)/);
-  assert.match(context, /wit-location-owner/);
+  assert.match(context, /wit-selected-location-owner/);
   assert.match(app, /InitialLocationGate/);
   assert.match(app, /requestAutomaticLocation\(\)\.catch/);
 });
