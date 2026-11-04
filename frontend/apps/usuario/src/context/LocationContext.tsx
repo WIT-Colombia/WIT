@@ -25,7 +25,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   const localRevision = useRef(0);
   const autoRefreshStarted = useRef(false);
   const [devicePermission, setDevicePermission] = useState<LocationContextValue["devicePermission"]>("checking");
-  const [isRequesting, setIsRequesting] = useState(false);\n  const [isReady, setIsReady] = useState(status !== \"loading\" && status !== \"authenticated\");
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [isReady, setIsReady] = useState(status !== "loading" && status !== "authenticated");
 
   useEffect(() => subscribeToLocation(() => setSelection(getLocationSelection())), []);
   // A granted browser permission may be reused; a new permission prompt is
