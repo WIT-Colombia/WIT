@@ -70,11 +70,29 @@ export function getSelectedLocation(): Locality | null {
   return selection?.locality ?? null;
 }
 
-export function saveSelectedLocation(location: Locality): void {
+export function saveSelectedLocation(location: Locality, coordinates?: Coordinates): void {
   const selected = findCanonicalLocality(location);
   if (!selected) return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: "manual", locality: selected, country: "Colombia", coordinates: coordinatesForLocality(selected) } satisfies LocationSelection));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: "manual", locality: selected, country: "Colombia", coordinates: coordinates ?? coordinatesForLocality(selected) } satisfies LocationSelection));
   notify();
+}
+
+export async function resolveCoordinatesForLocality(locality: Locality): Promise<Coordinates | undefined> {
+  const known = coordinatesForLocality(locality);
+  if (known) return known;
+  try {
+    const maps = await loadGoogleMaps();
+    const Geocoder = maps.Geocoder;
+    if (!Geocoder) return undefined;
+    return await new Promise<Coordinates | undefined>((resolve) => {
+      new Geocoder().geocode({ address: locality.name + ", " + locality.context + ", Colombia" }, (results, status) => {
+        const point = results?.[0]?.geometry?.location;
+        resolve(status === "OK" && point ? { lat: point.lat(), lng: point.lng() } : undefined);
+      });
+    });
+  } catch {
+    return undefined;
+  }
 }
 
 export function saveAutomaticLocation(coordinates: Coordinates, locality?: Locality, cityResolution: "pending" | "resolved" | "unavailable" = "pending"): void {

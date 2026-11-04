@@ -1,15 +1,16 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { getPreferredLocation, savePreferredLocation } from "../services/authService";
-import { clearSelectedLocation, getLocationSelection, resolveLocalityFromCoordinates, restorePreferredLocation, saveAutomaticLocation, saveSelectedLocation, subscribeToLocation, type Coordinates, type LocationSelection } from "../services/locationService";
+import { clearSelectedLocation, getLocationSelection, resolveCoordinatesForLocality, resolveLocalityFromCoordinates, restorePreferredLocation, saveAutomaticLocation, saveSelectedLocation, subscribeToLocation, type Coordinates, type LocationSelection } from "../services/locationService";
 import type { Locality } from "../data/locations";
 
 type LocationContextValue = {
   selection: LocationSelection | null;
-  setManualLocation: (locality: Locality) => void;
+  setManualLocation: (locality: Locality) => Promise<void>;
   setAutomaticLocation: (coordinates: Coordinates) => Promise<void>;
   requestAutomaticLocation: () => Promise<Coordinates>;
   isRequesting: boolean;
+  isReady: boolean;
   devicePermission: "checking" | "granted" | "prompt" | "denied" | "unavailable";
 };
 
@@ -159,9 +160,10 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     return pendingRequest;
   }
 
-  function setManualLocation(locality: Locality): void {
+  async function setManualLocation(locality: Locality): Promise<void> {
     localRevision.current += 1;
-    saveSelectedLocation(locality);
+    const coordinates = await resolveCoordinatesForLocality(locality);
+    saveSelectedLocation(locality, coordinates);
   }
 
   function setAutomaticLocation(coordinates: Coordinates): Promise<void> {
@@ -182,7 +184,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  const value = useMemo(() => ({ selection, setManualLocation, setAutomaticLocation, requestAutomaticLocation, isRequesting, devicePermission }), [selection, isRequesting, devicePermission]);
+  const value = useMemo(() => ({ selection, setManualLocation, setAutomaticLocation, requestAutomaticLocation, isRequesting, devicePermission, isReady: status !== "loading" && (status !== "authenticated" || serverReady) }), [selection, isRequesting, devicePermission, status, serverReady]);
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;
 }
 

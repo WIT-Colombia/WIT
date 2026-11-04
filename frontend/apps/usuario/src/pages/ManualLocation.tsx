@@ -24,11 +24,12 @@ export default function ManualLocation() {
   const returnTo = params.get("returnTo") || "/home";
   const current = selection?.locality ?? null;
   const catalog = getColombianAdministrativeDivisions();
+  const defaultMunicipality = catalog.municipalities.find((item) => item.id === "76520");
   const [departments] = useState<Department[]>(catalog.departments);
   const [municipalities] = useState<Locality[]>(catalog.municipalities);
-  const [departmentCode, setDepartmentCode] = useState(current?.departmentCode ?? "");
-  const [municipalityId, setMunicipalityId] = useState(current?.id ?? "");
-  const [query, setQuery] = useState(current?.name ?? "");
+  const [departmentCode, setDepartmentCode] = useState(current?.departmentCode ?? defaultMunicipality?.departmentCode ?? "");
+  const [municipalityId, setMunicipalityId] = useState(current?.id ?? defaultMunicipality?.id ?? "");
+  const [query, setQuery] = useState(current?.name ?? defaultMunicipality?.name ?? "");
   const [showMunicipalityOptions, setShowMunicipalityOptions] = useState(false);
   const [automaticError, setAutomaticError] = useState(false);
 
