@@ -1,6 +1,6 @@
 import type { BusinessDetails } from "../types/business";
 
-/** Exact print trim: 150 × 235 mm, portrait, at approximately 300 dpi. */
+/** Final printed card dimensions; portrait orientation, approximately 300 dpi. */
 export const BUSINESS_CARD_PRINT = {
   widthMm: 150,
   heightMm: 235,
@@ -17,230 +17,124 @@ type BusinessCardDownloadOptions = {
   format: BusinessCardDownloadFormat;
 };
 
-const DESIGN_WIDTH = 264;
-const DESIGN_HEIGHT = 414;
-const NAVY = "#091632";
-const PURPLE = "#7b3ffb";
-
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("No fue posible cargar una imagen de la tarjeta."));
+    image.onerror = () => reject(new Error("No fue posible cargar el diseño de la tarjeta."));
     image.src = src;
   });
 }
 
-async function drawInlineSvg(ctx: CanvasRenderingContext2D, element: SVGSVGElement, x: number, y: number, width: number, height: number) {
-  const clone = element.cloneNode(true) as SVGSVGElement;
-  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  clone.setAttribute("width", String(width));
-  clone.setAttribute("height", String(height));
-  const blob = new Blob([new XMLSerializer().serializeToString(clone)], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
+/**
+ * Foreign-object image export uses the same React card element and computed CSS as
+ * the on-screen preview. Never manually re-create its text, artwork or badges:
+ * that caused the previous downloaded graphic to differ from the preview.
+ */
+function copyComputedStyles(source: Element, target: Element): void {
+  // The SVG artwork/medals already declare their vector styles in SVG markup.
+  // Keep those attributes untouched while resolving their outer layout CSS.
+  const isSvg = source instanceof SVGElement;
+  if (!isSvg || source.tagName.toLowerCase() === "svg") {
+    const computed = window.getComputedStyle(source);
+    const targetStyle = (target as HTMLElement | SVGSVGElement).style;
+    for (let i = 0; i < computed.length; i++) {
+      const property = computed.item(i);
+      const value = computed.getPropertyValue(property);
+      if (value) targetStyle.setProperty(property, value, computed.getPropertyPriority(property));
+    }
+  }
+  const sourceChildren = source.children;
+  const targetChildren = target.children;
+  for (let i = 0; i < sourceChildren.length; i++) {
+    if (targetChildren[i]) copyComputedStyles(sourceChildren[i], targetChildren[i]);
+  }
+}
+
+async function inlineImage(source: HTMLImageElement): Promise<string> {
+  const existingData = source.currentSrc || source.src;
+  if (existingData.startsWith("data:")) return existingData;
   try {
-    const image = await loadImage(url);
-    ctx.drawImage(image, x, y, width, height);
+    if (!source.complete || !source.naturalWidth) await source.decode();
+    if (!source.naturalWidth || !source.naturalHeight) throw new Error("Sin datos de imagen");
+
+    // Render a browser-loaded image into a self-contained data URL: this also
+    // handles private API photo blobs and the AVIF official logo.
+    const maxEdge = 1600;
+    const ratio = Math.min(1, maxEdge / Math.max(source.naturalWidth, source.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(source.naturalWidth * ratio));
+    canvas.height = Math.max(1, Math.round(source.naturalHeight * ratio));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("No hay contexto de imagen");
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/png");
+  } catch {
+    throw new Error("No se pudo incluir la fotografía o el logo. Verifica que estén cargados antes de descargar.");
+  }
+}
+
+async function clonePrintableCard(card: HTMLElement): Promise<HTMLElement> {
+  const clone = card.cloneNode(true) as HTMLElement;
+  copyComputedStyles(card, clone);
+  const images = Array.from(card.querySelectorAll<HTMLImageElement>("img"));
+  const clonedImages = Array.from(clone.querySelectorAll<HTMLImageElement>("img"));
+  await Promise.all(images.map(async (original, index) => {
+    const target = clonedImages[index];
+    if (!target) return;
+    target.setAttribute("src", await inlineImage(original));
+    target.removeAttribute("srcset");
+    target.removeAttribute("loading");
+  }));
+
+  const rect = card.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) throw new Error("La tarjeta debe estar visible para descargarse.");
+  // Exact border-box size matters: container-query typography and absolute
+  // positioning must have the same geometry in the exported illustration.
+  clone.style.setProperty("width", rect.width + "px");
+  clone.style.setProperty("height", rect.height + "px");
+  clone.style.setProperty("box-sizing", "border-box");
+  clone.style.setProperty("max-width", "none");
+  clone.style.setProperty("margin", "0");
+  clone.style.setProperty("box-shadow", "none");
+  clone.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+  return clone;
+}
+
+export async function renderBusinessCardCanvas(card: HTMLElement): Promise<HTMLCanvasElement> {
+  const rect = card.getBoundingClientRect();
+  if (!rect.width || !rect.height) throw new Error("No se encontró la vista previa de la tarjeta.");
+  await document.fonts?.ready;
+  const clone = await clonePrintableCard(card);
+  const svg = [
+    '<svg xmlns="http://www.w3.org/2000/svg" width="', rect.width,
+    '" height="', rect.height, '" viewBox="0 0 ', rect.width, ' ', rect.height, '">',
+    '<foreignObject x="0" y="0" width="100%" height="100%">',
+    new XMLSerializer().serializeToString(clone),
+    '</foreignObject></svg>',
+  ].join("");
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
+  try {
+    const artwork = await loadImage(url);
+    const canvas = document.createElement("canvas");
+    canvas.width = BUSINESS_CARD_PRINT.widthPx;
+    canvas.height = BUSINESS_CARD_PRINT.heightPx;
+    const ctx = canvas.getContext("2d", { alpha: false });
+    if (!ctx) throw new Error("No se pudo preparar el archivo de impresión.");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    try {
+      ctx.drawImage(artwork, 0, 0, canvas.width, canvas.height);
+      // Explicitly detect tainted/blank exports instead of downloading a broken
+      // image or PDF. The first pixel may be transparent because of rounded corners.
+      ctx.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1);
+    } catch {
+      throw new Error("Este navegador no pudo capturar la tarjeta completa. Prueba desde Chrome en un computador.");
+    }
+    return canvas;
   } finally {
     URL.revokeObjectURL(url);
   }
-}
-
-function drawContained(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, width: number, height: number) {
-  const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
-  const drawWidth = image.naturalWidth * scale;
-  const drawHeight = image.naturalHeight * scale;
-  ctx.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
-}
-
-function drawAvatar(ctx: CanvasRenderingContext2D, image: HTMLImageElement | null, dark: boolean) {
-  const x = 99;
-  const y = 69;
-  const size = 66;
-  ctx.save();
-  ctx.shadowColor = "#17253a40";
-  ctx.shadowBlur = 5;
-  ctx.fillStyle = dark ? "#1c344a" : "#eff0f6";
-  ctx.beginPath();
-  ctx.arc(132, 102, size / 2, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.restore();
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(132, 102, size / 2 - 1, 0, 2 * Math.PI);
-  ctx.clip();
-  if (image) {
-    const scale = Math.max(size / image.naturalWidth, size / image.naturalHeight);
-    const w = image.naturalWidth * scale;
-    const h = image.naturalHeight * scale;
-    ctx.drawImage(image, x + (size - w) / 2, y + (size - h) / 2, w, h);
-  } else {
-    ctx.fillStyle = dark ? "#153e59" : "#e6e9f9";
-    ctx.fillRect(x, y, size, size);
-    ctx.fillStyle = dark ? "#ffffff" : PURPLE;
-    ctx.font = "700 27px Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("X", 132, 102);
-  }
-  ctx.restore();
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(132, 102, size / 2, 0, 2 * Math.PI);
-  ctx.stroke();
-}
-
-function fitText(ctx: CanvasRenderingContext2D, value: string, maxWidth: number) {
-  let text = value.trim();
-  while (text.length > 1 && ctx.measureText(text).width > maxWidth) {
-    text = text.slice(0, -1).trimEnd();
-  }
-  return text === value.trim() ? text : text.trimEnd() + "…";
-}
-
-function nameLines(ctx: CanvasRenderingContext2D, value: string, maxWidth: number): string[] {
-  const words = value.trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return ["Mi negocio"];
-  const lines: string[] = [];
-  for (const word of words) {
-    const current = lines[lines.length - 1];
-    if (current && ctx.measureText(current + " " + word).width <= maxWidth) lines[lines.length - 1] = current + " " + word;
-    else lines.push(word);
-  }
-  if (lines.length > 2) return [fitText(ctx, lines[0], maxWidth), fitText(ctx, lines.slice(1).join(" "), maxWidth)];
-  return lines.map(line => fitText(ctx, line, maxWidth));
-}
-
-function drawBusinessIdentity(ctx: CanvasRenderingContext2D, business: BusinessDetails, dark: boolean) {
-  ctx.fillStyle = dark ? "#ffffff" : NAVY;
-  const longName = business.name.length > 25;
-  ctx.font = "750 " + (longName ? "14" : "17") + "px Arial, sans-serif";
-  const lines = nameLines(ctx, business.name, 236);
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const lineHeight = longName ? 16 : 20;
-  const start = lines.length === 1 ? 157 : 150;
-  lines.forEach((line, index) => ctx.fillText(line, 132, start + index * lineHeight));
-  const pioneer = business.pioneerNumber;
-  if (Number.isInteger(pioneer) && pioneer! >= 1 && pioneer! <= 20) {
-    ctx.fillStyle = "#d5a31a";
-    ctx.beginPath();
-    ctx.arc(87, 185, 5, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.fillStyle = dark ? "#e1d5ff" : PURPLE;
-    ctx.font = "700 11px Arial, sans-serif";
-    ctx.fillText("Pionero #" + String(pioneer).padStart(3, "0"), 142, 185);
-  } else if (business.sede?.trim()) {
-    ctx.fillStyle = dark ? "#e5eaf1" : NAVY;
-    ctx.font = "600 10px Arial, sans-serif";
-    ctx.fillText(fitText(ctx, business.sede, 224), 132, 184);
-  }
-}
-
-function drawBusinessMeta(ctx: CanvasRenderingContext2D, business: BusinessDetails, dark: boolean) {
-  const category = business.category.trim() || "Negocio";
-  const city = business.city.trim();
-  ctx.font = "11px Arial, sans-serif";
-  const gap = city ? 24 : 0;
-  const categoryMax = city ? 156 : 225;
-  const visibleCategory = fitText(ctx, category, categoryMax);
-  const visibleCity = city ? fitText(ctx, city, 76) : "";
-  const categoryWidth = ctx.measureText(visibleCategory).width;
-  const cityWidth = ctx.measureText(visibleCity).width;
-  const total = categoryWidth + cityWidth + gap;
-  const left = (264 - total) / 2;
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = dark ? "#e5eaf1" : "#445778";
-  ctx.textAlign = "left";
-  ctx.fillText(visibleCategory, left, 207);
-  if (visibleCity) {
-    const pinX = left + categoryWidth + 9;
-    ctx.strokeStyle = dark ? "#a99aff" : PURPLE;
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.arc(pinX + 4, 205, 3.2, 0, Math.PI * 2);
-    ctx.moveTo(pinX + 1.5, 208);
-    ctx.lineTo(pinX + 4, 213);
-    ctx.lineTo(pinX + 6.5, 208);
-    ctx.stroke();
-    ctx.fillText(visibleCity, left + categoryWidth + gap, 207);
-  }
-}
-
-function drawQr(ctx: CanvasRenderingContext2D, qr: HTMLImageElement) {
-  ctx.save();
-  ctx.shadowColor = "#1826481d";
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetY = 2;
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.roundRect(76, 218, 112, 112, 10);
-  ctx.fill();
-  ctx.restore();
-  ctx.strokeStyle = "#e4e9f5";
-  ctx.lineWidth = 0.8;
-  ctx.beginPath();
-  ctx.roundRect(76, 218, 112, 112, 10);
-  ctx.stroke();
-  // 83 design units / 264 × 150 mm ≈ 47 mm, including the QR's quiet zone.
-  ctx.drawImage(qr, 90.5, 232.5, 83, 83);
-}
-
-function drawCallToAction(ctx: CanvasRenderingContext2D, dark: boolean) {
-  ctx.fillStyle = dark ? "#ffffff" : NAVY;
-  ctx.font = "700 11px Arial, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Escanéame y descubre", 132, 343);
-  ctx.fillText("nuestro negocio", 132, 355);
-  ctx.fillStyle = "#fff";
-  ctx.font = "500 12.5px Arial, sans-serif";
-  ctx.fillText("Descubre · Apoya · Disfruta", 132, 394);
-}
-
-function getSourceImage(card: HTMLElement, selector: string) {
-  const element = card.querySelector<HTMLImageElement>(selector);
-  return element?.currentSrc || element?.src || null;
-}
-
-export async function renderBusinessCardCanvas(card: HTMLElement, business: BusinessDetails, qrImageUrl: string): Promise<HTMLCanvasElement> {
-  const background = card.querySelector<SVGSVGElement>(".business-digital-card__artwork");
-  if (!background) throw new Error("No se encontró el diseño original de la tarjeta.");
-  const logoUrl = getSourceImage(card, ".business-digital-card__logo:not(.business-digital-card__logo--light)");
-  if (!logoUrl) throw new Error("No se encontró el logotipo oficial de XAMUKO.");
-  const avatarUrl = getSourceImage(card, ".business-digital-card__photo");
-  if (business.profilePhotoId && !avatarUrl) throw new Error("Espera a que cargue la fotografía del negocio antes de descargar.");
-  const [logo, qr, avatar] = await Promise.all([
-    loadImage(logoUrl),
-    loadImage(qrImageUrl),
-    avatarUrl ? loadImage(avatarUrl) : Promise.resolve(null),
-  ]);
-  const canvas = document.createElement("canvas");
-  canvas.width = BUSINESS_CARD_PRINT.widthPx;
-  canvas.height = BUSINESS_CARD_PRINT.heightPx;
-  const ctx = canvas.getContext("2d", { alpha: false });
-  if (!ctx) throw new Error("Tu navegador no pudo preparar la imagen para impresión.");
-  ctx.scale(canvas.width / DESIGN_WIDTH, canvas.height / DESIGN_HEIGHT);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
-  ctx.save();
-  ctx.beginPath();
-  ctx.roundRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT, 16);
-  ctx.clip();
-  await drawInlineSvg(ctx, background, 0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
-  const dark = card.classList.contains("business-digital-card--platinum") || card.classList.contains("business-digital-card--diamond");
-  drawContained(ctx, logo, 53, 17, 158, 44);
-  const medal = card.querySelector<SVGSVGElement>(".business-digital-card__medal");
-  if (medal) await drawInlineSvg(ctx, medal, 189, 7, 72, 88);
-  drawAvatar(ctx, avatar, dark);
-  drawBusinessIdentity(ctx, business, dark);
-  drawBusinessMeta(ctx, business, dark);
-  drawQr(ctx, qr);
-  drawCallToAction(ctx, dark);
-  ctx.restore();
-  return canvas;
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement, mime: string, quality?: number): Promise<Blob> {
@@ -289,7 +183,7 @@ export async function businessCardPdfFromJpeg(jpeg: Blob): Promise<Blob> {
 }
 
 export async function downloadBusinessCard({ card, business, qrImageUrl, format }: BusinessCardDownloadOptions): Promise<void> {
-  const canvas = await renderBusinessCardCanvas(card, business, qrImageUrl);
+  const canvas = await renderBusinessCardCanvas(card);
   const blob = format === "png"
     ? await canvasToBlob(canvas, "image/png")
     : await businessCardPdfFromJpeg(await canvasToBlob(canvas, "image/jpeg", 0.96));
