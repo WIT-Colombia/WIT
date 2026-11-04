@@ -749,7 +749,17 @@ export function BusinessDetailPage() {
           {photoError && <p className="form-error business-photo-limit-alert" role="alert" aria-live="assertive">{photoError}</p>}
           {business.images && business.images.length > 0 ? <div className="business-photo-gallery">
             <div ref={galleryStripRef} className="business-gallery-thumbnails business-photo-grid" role="region" aria-label="Galería de fotografías del negocio" onPointerDown={beginGalleryDrag} onPointerMove={moveGalleryDrag} onPointerUp={endGalleryDrag} onPointerCancel={endGalleryDrag} onScroll={() => { const strip = galleryStripRef.current; if (strip) setGalleryScroll({ left: strip.scrollLeft, max: Math.max(0, strip.scrollWidth - strip.clientWidth) }); }}>
-              {business.images.map((image, imageIndex) => <button type="button" className={imageIndex === galleryIndex ? "active" : ""} key={business.photos?.[imageIndex]?.id ?? imageIndex} aria-label={"Seleccionar fotografía " + (imageIndex + 1) + " de " + (business.images?.length ?? 0)} aria-pressed={imageIndex === galleryIndex} onPointerDown={event => { event.stopPropagation(); selectGalleryImage(imageIndex); }} onClick={() => selectGalleryImage(imageIndex)}><PersistedPhoto src={image} alt={"Fotografía " + (imageIndex + 1) + " de " + business.name} /></button>)}
+              {Array.from({ length: Math.ceil(business.images.length / 2) }, (_, columnIndex) => (
+                <div className="business-photo-column" key={columnIndex}>
+                  {(business.images ?? []).slice(columnIndex * 2, columnIndex * 2 + 2).map((image, rowIndex) => {
+                    const imageIndex = columnIndex * 2 + rowIndex;
+                    return <button type="button" className={imageIndex === galleryIndex ? "active" : ""} key={business.photos?.[imageIndex]?.id ?? imageIndex} aria-label={`Seleccionar fotografía ${imageIndex + 1} de ${business.images?.length ?? 0}`} aria-pressed={imageIndex === galleryIndex} onClick={() => {
+                      if (galleryDragRef.current.moved) { galleryDragRef.current.moved = false; return; }
+                      selectGalleryImage(imageIndex);
+                    }}><PersistedPhoto src={image} alt={`Fotografía ${imageIndex + 1} de ${business.name}`} /></button>;
+                  })}
+                </div>
+              ))}
             </div>
             {editingPhotos && <div className="business-gallery-management"><span className="business-photo-selection">Fotografía {galleryIndex + 1} de {business.images.length} seleccionada</span><button type="button" className="text-button business-photo-delete-button" disabled={photoBusy} onClick={() => setPhotoDeleteConfirmation(business.photos?.[galleryIndex]?.id ?? null)} aria-label={"Eliminar fotografía " + (galleryIndex + 1)}>🗑️ Eliminar foto seleccionada</button></div>}
             {editingPhotos && photoDeleteConfirmation && <div className="business-photo-confirm"><strong>¿Eliminar esta fotografía?</strong><div><button type="button" className="outline-button" onClick={() => setPhotoDeleteConfirmation(null)}>Cancelar</button><button type="button" className="danger-button" disabled={photoBusy} onClick={() => void removeDetailPhoto(photoDeleteConfirmation)}>Eliminar foto</button></div></div>}
