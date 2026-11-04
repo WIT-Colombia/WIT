@@ -117,6 +117,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     if (pendingRequest) return pendingRequest;
     if (!navigator.geolocation || !window.isSecureContext) throw new Error("GEOLOCATION_UNAVAILABLE");
 
+    const revisionAtRequest = localRevision.current;
     setIsRequesting(true);
     pendingRequest = new Promise<Coordinates>((resolve, reject) => {
       try {
@@ -133,7 +134,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       }
     }).then(async (coordinates) => {
       // A manual choice made while GPS was pending takes precedence.
-      if (getLocationSelection()?.mode === "manual") return coordinates;
+      if (localRevision.current !== revisionAtRequest) return coordinates;
       localRevision.current += 1;
       localityResolutionKeys.add(`${coordinates.lat}:${coordinates.lng}`);
       saveAutomaticLocation(coordinates);
