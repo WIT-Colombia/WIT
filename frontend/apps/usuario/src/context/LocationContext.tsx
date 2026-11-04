@@ -10,6 +10,7 @@ type LocationContextValue = {
   setAutomaticLocation: (coordinates: Coordinates) => Promise<void>;
   requestAutomaticLocation: () => Promise<Coordinates>;
   isRequesting: boolean;
+  devicePermission: "checking" | "granted" | "prompt" | "denied" | "unavailable";
 };
 
 const LocationContext = createContext<LocationContextValue | null>(null);
@@ -17,37 +18,83 @@ let pendingRequest: Promise<Coordinates> | null = null;
 const localityResolutionKeys = new Set<string>();
 
 export function LocationProvider({ children }: { children: ReactNode }) {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const [selection, setSelection] = useState<LocationSelection | null>(() => getLocationSelection());
-  const serverLoaded = useRef(false);
+  const [serverReady, setServerReady] = useState(false);
   const lastSynced = useRef("");
-  const previousStatus = useRef(status);
+  const localRevision = useRef(0);
+  const autoRefreshStarted = useRef(false);
+  const [devicePermission, setDevicePermission] = useState<LocationContextValue["devicePermission"]>("checking");
   const [isRequesting, setIsRequesting] = useState(false);
 
   useEffect(() => subscribeToLocation(() => setSelection(getLocationSelection())), []);
+  // A granted browser permission may be reused; a new permission prompt is
+  // offered through a user-initiated button instead of interrupting navigation.
   useEffect(() => {
-    if (previousStatus.current === "authenticated" && status === "anonymous") { clearSelectedLocation(); setSelection(null); }
-    previousStatus.current = status;
-    if (status !== "authenticated") { serverLoaded.current = false; lastSynced.current = ""; return; }
+    if (!navigator.geolocation || !window.isSecureContext) {
+      setDevicePermission("unavailable");
+      return;
+    }
+    if (!navigator.permissions?.query) {
+      setDevicePermission("prompt");
+      return;
+    }
     let active = true;
-    getPreferredLocation().then((remote) => {
+    let permission: PermissionStatus | null = null;
+    void navigator.permissions.query({ name: "geolocation" }).then((result) => {
       if (!active) return;
-      if (remote) restorePreferredLocation(remote);
-      serverLoaded.current = true;
-      setSelection(getLocationSelection());
-    }).catch(() => { if (active) serverLoaded.current = true; });
-    return () => { active = false; };
-  }, [status]);
+      permission = result;
+      setDevicePermission(result.state);
+      result.onchange = () => { if (active) setDevicePermission(result.state); };
+    }).catch(() => { if (active) setDevicePermission("prompt"); });
+    return () => { active = false; if (permission) permission.onchange = null; };
+  }, []);
+
+  // Restore the account's last location before attempting a new GPS reading.
+  // Never overwrite a choice made while the server preference was loading.
   useEffect(() => {
-    if (status !== "authenticated" || !serverLoaded.current || !selection) return;
+    setServerReady(false);
+    if (status !== "authenticated" || !user?.id) { lastSynced.current = ""; return; }
+    let active = true;
+    const initialRevision = localRevision.current;
+    const owner = localStorage.getItem("wit-selected-location-owner");
+    void getPreferredLocation().then((remote) => {
+      if (!active) return;
+      if (localRevision.current === initialRevision) {
+        if (remote) restorePreferredLocation(remote);
+        else if (owner && owner !== user.id) clearSelectedLocation();
+      }
+      localStorage.setItem("wit-selected-location-owner", user.id);
+      setServerReady(true);
+    }).catch(() => {
+      // An unavailable preference API must not overwrite a stored value.
+      if (active) setServerReady(false);
+    });
+    return () => { active = false; };
+  }, [status, user?.id]);
+
+  // Save an explicit selection after remote preferences are loaded. Only
+  // authenticated accounts are synchronized; guests keep local state.
+  useEffect(() => {
+    if (status !== "authenticated" || !serverReady || !selection) return;
     const locality = selection.locality;
     const coordinates = selection.coordinates ?? null;
     const payload = { city: locality?.name ?? "Ubicación actual", region: locality?.context ?? null, country: "Colombia", name: locality ? `${locality.name}, ${locality.context}` : "Ubicación actual", latitude: coordinates?.lat ?? null, longitude: coordinates?.lng ?? null, mode: selection.mode === "automatic" ? "GPS" as const : "MANUAL" as const, resolution: selection.mode === "automatic" ? (selection.cityResolution === "resolved" ? "RESOLVED" as const : selection.cityResolution === "unavailable" ? "UNAVAILABLE" as const : "PENDING" as const) : "RESOLVED" as const, clientUpdatedAt: Date.now() };
     const key = JSON.stringify({ ...payload, clientUpdatedAt: undefined });
     if (lastSynced.current === key) return;
     lastSynced.current = key;
-    void savePreferredLocation(payload).catch(() => { lastSynced.current = ""; });
-  }, [selection, status]);
+    void savePreferredLocation(payload).catch(() => { if (lastSynced.current === key) lastSynced.current = ""; });
+  }, [selection, status, serverReady]);
+
+  // Refresh an existing GPS point or obtain a fresh one if permission was
+  // already granted. Do not replace a manually selected city automatically.
+  useEffect(() => {
+    if (devicePermission !== "granted" || autoRefreshStarted.current || status === "loading"
+      || (status === "authenticated" && !serverReady) || selection?.mode === "manual") return;
+    autoRefreshStarted.current = true;
+    void requestAutomaticLocation().catch(() => { /* Keep last selection; manual choice remains available. */ });
+  }, [devicePermission, selection?.mode, status, serverReady]);
+
   useEffect(() => {
     if (selection?.mode !== "automatic" || selection.cityResolution !== "pending") return;
     const coordinates = selection.coordinates;
@@ -67,9 +114,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   }, [selection]);
 
   async function requestAutomaticLocation(): Promise<Coordinates> {
-    if (selection?.mode === "automatic" && selection.cityResolution === "resolved") return selection.coordinates;
     if (pendingRequest) return pendingRequest;
-    if (!navigator.geolocation) throw new Error("GEOLOCATION_UNAVAILABLE");
+    if (!navigator.geolocation || !window.isSecureContext) throw new Error("GEOLOCATION_UNAVAILABLE");
 
     setIsRequesting(true);
     pendingRequest = new Promise<Coordinates>((resolve, reject) => {
@@ -86,6 +132,9 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         reject(error);
       }
     }).then(async (coordinates) => {
+      // A manual choice made while GPS was pending takes precedence.
+      if (getLocationSelection()?.mode === "manual") return coordinates;
+      localRevision.current += 1;
       localityResolutionKeys.add(`${coordinates.lat}:${coordinates.lng}`);
       saveAutomaticLocation(coordinates);
       // Resolve the municipality once so GPS and manual selection share the
@@ -108,10 +157,12 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   }
 
   function setManualLocation(locality: Locality): void {
+    localRevision.current += 1;
     saveSelectedLocation(locality);
   }
 
   function setAutomaticLocation(coordinates: Coordinates): Promise<void> {
+    localRevision.current += 1;
     saveAutomaticLocation(coordinates);
     const resolutionKey = `${coordinates.lat}:${coordinates.lng}`;
     if (localityResolutionKeys.has(resolutionKey)) return Promise.resolve();
@@ -128,7 +179,7 @@ export function LocationProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  const value = useMemo(() => ({ selection, setManualLocation, setAutomaticLocation, requestAutomaticLocation, isRequesting }), [selection, isRequesting]);
+  const value = useMemo(() => ({ selection, setManualLocation, setAutomaticLocation, requestAutomaticLocation, isRequesting, devicePermission }), [selection, isRequesting, devicePermission]);
   return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;
 }
 
