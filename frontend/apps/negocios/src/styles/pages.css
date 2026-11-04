@@ -343,9 +343,9 @@
 @media (max-width: 640px){.business-gallery-preview-strip{gap:9px}.business-gallery-preview-strip button{flex-basis:112px;width:112px;height:84px}}
 
 /* Galería horizontal real de dos filas: cada columna contiene como máximo dos miniaturas. */
-.business-detail-page .business-gallery-thumbnails.business-photo-grid{display:flex;flex-flow:row nowrap;align-items:flex-start;justify-content:flex-start;width:min(100%,600px);max-width:600px;min-width:0;margin-inline:auto;gap:10px;overflow-x:auto;overflow-y:hidden;padding:4px 4px 12px;box-sizing:border-box;scroll-snap-type:x proximity;scrollbar-width:none;touch-action:pan-x}
+.business-detail-page .business-gallery-thumbnails.business-photo-grid{display:flex;flex-flow:row nowrap;align-items:flex-start;justify-content:flex-start;width:min(100%,720px);max-width:720px;min-width:0;margin-inline:auto;gap:10px;overflow-x:auto;overflow-y:hidden;padding:4px 4px 12px;box-sizing:border-box;scroll-snap-type:x proximity;scrollbar-width:none;touch-action:pan-x}
 .business-detail-page .business-gallery-thumbnails.business-photo-grid::-webkit-scrollbar{display:none}
-.business-detail-page .business-gallery-thumbnails.business-photo-grid .business-photo-column{display:grid;grid-template-rows:repeat(2,auto);align-content:start;flex:0 0 calc((100% - 30px) / 4);width:calc((100% - 30px) / 4);min-width:0;gap:10px;scroll-snap-align:start}
+.business-detail-page .business-gallery-thumbnails.business-photo-grid .business-photo-column{display:grid;grid-template-rows:repeat(2,auto);align-content:start;flex:0 0 calc((100% - 40px) / 5);width:calc((100% - 40px) / 5);min-width:0;gap:10px;scroll-snap-align:start}
 .business-detail-page .business-gallery-thumbnails.business-photo-grid .business-photo-column>button{display:block;width:100%;min-width:0;min-height:0;height:auto;aspect-ratio:4 / 3;margin:0;padding:3px;border:2px solid transparent;border-radius:11px;background:#eff6ff;overflow:hidden;opacity:1;cursor:pointer;box-sizing:border-box}
 .business-detail-page .business-gallery-thumbnails.business-photo-grid .business-photo-column>button.active{border-color:#2563eb;box-shadow:0 0 0 2px #dbeafe}
 .business-detail-page .business-gallery-thumbnails.business-photo-grid .business-photo-column>button:focus-visible{outline:3px solid #7b3ffb;outline-offset:2px}
