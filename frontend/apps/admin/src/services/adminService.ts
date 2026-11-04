@@ -5,7 +5,8 @@ import type { Admin, Permission, Role } from '../types/admin';
 export const API_BASE = '/api/v1';
 const isPagesPreviewHost = typeof window !== 'undefined' && window.location.hostname.endsWith('.xamuko-admin.pages.dev');
 // Preview-only safety net: Cloudflare Preview builds may omit project env vars. Production domains never match this host.
-export const isAdminDemoMode = import.meta.env.VITE_ADMIN_DEMO_MODE === 'true' || isPagesPreviewHost;
+const isLocalHost = typeof window !== 'undefined' && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
+export const isAdminDemoMode = isPagesPreviewHost || (isLocalHost && import.meta.env.VITE_ADMIN_DEMO_MODE === 'true');
 const grants: Partial<Record<Role, Permission[]>> = { principal: ['dashboard:read', 'verification:write', 'content:moderate', 'settings:write', 'business:write'], verification: ['dashboard:read', 'verification:write'], moderator: ['dashboard:read', 'content:moderate'], support: ['dashboard:read'], analyst: ['dashboard:read'] };
 export const can = (admin: Admin, permission: Permission) => admin.permissions ? admin.permissions.includes(permission) : (grants[admin.role] ?? []).includes(permission);
 let currentSession: Admin | null = null;
