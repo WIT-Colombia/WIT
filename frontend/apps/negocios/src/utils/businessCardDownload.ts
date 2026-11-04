@@ -369,6 +369,31 @@ export async function prepareBusinessCard({ card, business, qrImageUrl, format }
   return { blob, filename: "XAMUKO-" + safeId + "-15x23.5cm." + format };
 }
 
+/**
+ * Prepare both files ahead of a mobile download gesture. Safari needs the
+ * download link to have a real href before the user taps it.
+ * One canvas render keeps the PDF and PNG visually identical.
+ */
+export async function prepareBusinessCardDownloads(
+  { card, business, qrImageUrl }: Omit<BusinessCardDownloadOptions, "format">,
+): Promise<Record<BusinessCardDownloadFormat, PreparedBusinessCard>> {
+  const shownQr = card.querySelector<HTMLImageElement>(".business-digital-card__qr > img");
+  if (!qrImageUrl || !shownQr || !shownQr.complete || !shownQr.naturalWidth) {
+    throw new Error("El código QR aún no está listo para descargar.");
+  }
+  const canvas = await renderBusinessCardCanvas(card);
+  const png = await canvasToBlob(canvas, "image/png");
+  const jpeg = await canvasToBlob(canvas, "image/jpeg", 0.96);
+  const pdf = await businessCardPdfFromJpeg(jpeg);
+  const safeId = (business.publicId || business.id || "negocio")
+    .replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 70);
+  const baseName = "XAMUKO-" + safeId + "-15x23.5cm";
+  return {
+    pdf: { blob: pdf, filename: baseName + ".pdf" },
+    png: { blob: png, filename: baseName + ".png" },
+  };
+}
+
 export async function downloadBusinessCard(options: BusinessCardDownloadOptions): Promise<void> {
   const { blob, filename } = await prepareBusinessCard(options);
   const url = URL.createObjectURL(blob);
