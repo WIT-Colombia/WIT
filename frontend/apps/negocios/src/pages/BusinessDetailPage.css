@@ -452,3 +452,31 @@
     gap:9px;
   }
 }
+
+/* Tamaño de las miniaturas: similar a los selectores de portada y perfil. */
+.business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid{
+  width:min(100%,600px);
+  max-width:600px;
+  margin-inline:auto;
+}
+.business-detail-page .business-photos-section .business-gallery-management,
+.business-detail-page .business-photos-section .business-gallery-scroll-control{
+  width:min(100%,600px);
+  max-width:600px;
+}
+@media (min-width:601px) and (max-width:1024px){
+  .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid,
+  .business-detail-page .business-photos-section .business-gallery-management,
+  .business-detail-page .business-photos-section .business-gallery-scroll-control{
+    width:min(100%,435px);
+    max-width:435px;
+  }
+}
+@media (max-width:600px){
+  .business-detail-page .business-photos-section .business-gallery-thumbnails.business-photo-grid,
+  .business-detail-page .business-photos-section .business-gallery-management,
+  .business-detail-page .business-photos-section .business-gallery-scroll-control{
+    width:min(100%,270px);
+    max-width:270px;
+  }
+}
