@@ -111,7 +111,7 @@ test('dashboard statistics only expose real aggregate counts to an authenticated
     assert.equal(typeof result.totals.reviewsPublished, 'number');
     assert.equal(typeof result.totals.businessProActive, 'number');
     assert.equal(result.monthly.length, 6);
-    assert.ok(result.monthly.every((month: any) => /^\\d{4}-\\d{2}$/.test(month.month)));
+    assert.ok(result.monthly.every((month: any) => /^\d{4}-\d{2}$/.test(month.month)));
     assert.equal(result.revenue, null, 'Do not present expenses as company revenue');
     assert.equal(result.subscriptions.plus, null, 'Do not invent Plus subscriptions');
     assert.equal(Object.hasOwn(result, 'administrators'), false);
