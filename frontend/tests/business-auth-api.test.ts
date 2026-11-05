@@ -80,10 +80,10 @@ test("adjunta el access token en memoria a las solicitudes reales de negocios", 
 });
 
 test("no permite que next devuelva al login ni a una ruta externa", () => {
-  assert.equal(resolveBusinessNext("/login"), "/mis-negocios");
-  assert.equal(resolveBusinessNext("/registro?from=login"), "/mis-negocios");
-  assert.equal(resolveBusinessNext("https://evil.example"), "/mis-negocios");
-  assert.equal(resolveBusinessNext("//evil.example"), "/mis-negocios");
+  assert.equal(resolveBusinessNext("/login"), "/inicio");
+  assert.equal(resolveBusinessNext("/registro?from=login"), "/inicio");
+  assert.equal(resolveBusinessNext("https://evil.example"), "/inicio");
+  assert.equal(resolveBusinessNext("//evil.example"), "/inicio");
   assert.equal(resolveBusinessNext("/mi-negocio/modalidades/0"), "/mi-negocio/modalidades/0");
 });
 

@@ -81,6 +81,8 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
   const [businesses, setBusinesses] = useState<BusinessDetails[]>(() => isPreview ? stored("businesses", initialBusinesses) : []);
   const [businessesReady, setBusinessesReady] = useState(isPreview);
   const auth = useBusinessAuth();
+  const userId = auth.user?.id;
+  const selectionKey = `wit-negocios-selected-business-id:${userId ?? 'anonymous'}`;
   const wasPreview = useRef(isPreview);
   useEffect(() => {
     if (!isPreview && wasPreview.current) setBusinesses([]);
@@ -92,6 +94,7 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (auth.state.status !== "authenticated") {
+      if (auth.state.status === "unauthenticated") { setBusinesses([]); setBusiness(emptyBusiness); }
       setBusinessesReady(auth.state.status === "unauthenticated");
       return;
     }
@@ -101,7 +104,8 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       if (!active) return;
       const next = values.map(toBusinessDetails);
       setBusinesses(next);
-      const storedId = localStorage.getItem("wit-negocios-selected-business-id");
+      // Migrate the previous preference only if it belongs to the authorized list below.
+      const storedId = localStorage.getItem(selectionKey) ?? localStorage.getItem("wit-negocios-selected-business-id");
       const preferred = next.find(item => item.id === business.id) ?? next.find(item => item.id === storedId) ?? next.find(item => item.publicationStatus === 'PUBLISHED' && item.visibilityStatus === 'VISIBLE') ?? next[0];
       if (preferred) setBusiness(preferred);
     }).catch(() => {
@@ -111,10 +115,10 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       if (active) setBusinessesReady(true);
     });
     return () => { active = false; };
-  }, [auth.state.status, isPreview, business.id]);
+  }, [auth.state.status, userId, isPreview, business.id, selectionKey]);
   useEffect(() => {
-    if (business.id) localStorage.setItem("wit-negocios-selected-business-id", business.id);
-  }, [business.id]);
+    if (!isPreview && userId && business.id && businesses.some(item => item.id === business.id)) localStorage.setItem(selectionKey, business.id);
+  }, [business.id, businesses, isPreview, userId, selectionKey]);
   useEffect(() => {
     if (businesses.length === 0 && !isPreview) return;
     try { localStorage.setItem("wit-negocios-demo:businesses", JSON.stringify(businesses)); } catch { /* La aplicación sigue funcionando sin almacenamiento local. */ }

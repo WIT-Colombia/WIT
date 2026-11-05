@@ -19,7 +19,7 @@ const adminPasswordRateLimit = rateLimit({ windowMs: env.nodeEnv === 'developmen
 const requestMeta = (request: any) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
 
 export const adminAuthRouter = Router();
-adminAuthRouter.use((_request, response, next) => { response.setHeader('Cache-Control', 'no-store'); next(); });
+adminAuthRouter.use((request, response, next) => { response.setHeader('Cache-Control', 'no-store'); if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return next(); return requireTrustedOrigin(request, response, next); });
 
 async function userIdForGoogleSub(googleSub: string): Promise<string> {
   const identity = await prisma.authIdentity.findUnique({ where: { provider_providerSubject: { provider: 'GOOGLE', providerSubject: googleSub } }, select: { userId: true } });
@@ -34,7 +34,7 @@ adminAuthRouter.post('/password', adminPasswordRateLimit, requireTrustedOrigin, 
     const result = await login(parsed.data, requestMeta(request));
     const context = await getAdminContext(result.user.id);
     if (!context || context.role !== 'SUPER_ADMIN') throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'La cuenta no tiene acceso administrativo.');
-    const csrfToken = await issueAdminSession(response, result.user.id);
+    const csrfToken = await issueAdminSession(response, result.user.id, parsed.data.rememberMe);
     setRefreshCookie(response, result.refreshToken, parsed.data.rememberMe);
     response.json({ authenticated: true, csrfToken, admin: await adminSession(result.user.id) });
   } catch (error) { next(error); }
@@ -54,7 +54,7 @@ adminAuthRouter.post('/webauthn/verify', async (request, response, next) => {
     const verified = await finishAuthentication(userId, request.body);
     await consumeAdminPendingOAuth(request);
     clearAdminPendingOAuth(response);
-    const csrfToken = await issueAdminSession(response, userId);
+    const csrfToken = await issueAdminSession(response, userId, request.body?.rememberMe === true);
     response.json({ verified: verified.verified, adminSession: true, csrfToken });
   } catch (error) { next(error); }
 });

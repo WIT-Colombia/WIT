@@ -12,7 +12,7 @@ export const requireAuth: RequestHandler = async (request, _response, next) => {
     if (!header?.startsWith('Bearer ')) throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
     const token = header.slice(7).trim();
     if (!token) throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
-    const auth = await verifyAccessToken(token);
+    const auth = await verifyAccessToken(token).catch(() => { throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.'); });
     const session = await prisma.session.findUnique({
       where: { id: auth.sessionId },
       select: { userId: true, revokedAt: true, expiresAt: true },
@@ -26,7 +26,7 @@ export const requireAuth: RequestHandler = async (request, _response, next) => {
     (request as AuthenticatedRequest).auth = auth;
     next();
   } catch (error) {
-    if (error instanceof AppError) next(error);
-    else next(new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.'));
+    // Database outages must remain 5xx, rather than falsely reporting logout.
+    next(error);
   }
 };

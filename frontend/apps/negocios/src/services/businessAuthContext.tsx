@@ -30,7 +30,19 @@ export function BusinessAuthProvider({ children }: { children: ReactNode }) {
     setState(next);
     return next;
   }, []);
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const restore = async () => {
+      const next = await restoreSession();
+      if (!active) return;
+      setState(next);
+      if (next.status === "error") timer = setTimeout(restore, 5000);
+    };
+    void restore();
+    window.addEventListener("online", restore);
+    return () => { active = false; clearTimeout(timer); window.removeEventListener("online", restore); };
+  }, []);
   useEffect(() => {
     if (state.status !== "authenticated") return;
     let active = true;

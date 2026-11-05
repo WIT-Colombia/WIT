@@ -21,11 +21,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    refreshSession()
-      .then(() => getMe())
-      .then((currentUser) => { if (active) { setUser(currentUser); setStatus("authenticated"); } })
-      .catch((error: unknown) => { if (active && error instanceof ApiError && error.status === 401) { setUser(null); setStatus("anonymous"); } else if (active) { setUser(null); setStatus("anonymous"); } })
-    return () => { active = false; };
+    let timer: ReturnType<typeof setTimeout>;
+    const restore = () => {
+      refreshSession().then((currentUser) => {
+        if (active) { setUser(currentUser); setStatus("authenticated"); }
+      }).catch((error: unknown) => {
+        if (!active) return;
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          setUser(null); setStatus("anonymous");
+        } else {
+          // Preserve loading during network/5xx/429 failures; guards must wait.
+          timer = setTimeout(restore, error instanceof ApiError && error.retryAfterSeconds ? error.retryAfterSeconds * 1000 : 5000);
+        }
+      });
+    };
+    restore();
+    window.addEventListener("online", restore);
+    return () => { active = false; clearTimeout(timer); window.removeEventListener("online", restore); };
   }, []);
 
   useEffect(() => {

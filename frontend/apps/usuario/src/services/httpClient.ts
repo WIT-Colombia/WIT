@@ -9,9 +9,14 @@ export class ApiError extends Error {
   }
 }
 
-export async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+let tokenProvider: () => string | null = () => null;
+let renew: (() => Promise<unknown>) | null = null;
+export function configureSession(provider: () => string | null, refresh: () => Promise<unknown>): void { tokenProvider = provider; renew = refresh; }
+export async function requestJson<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
   const headers = new Headers(init.headers);
   if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  const authenticated = /\/auth\/me(?:[/?]|$)|\/auth\/change-password/.test(path) || headers.has("Authorization");
+  if (authenticated && tokenProvider()) headers.set("Authorization", `Bearer ${tokenProvider()}`);
   const response = await fetch(buildApiUrl(path), {
     ...init,
     // The refresh cookie is issued by the isolated backend through the Vite
@@ -19,6 +24,10 @@ export async function requestJson<T>(path: string, init: RequestInit = {}): Prom
     credentials: "include",
     headers,
   });
+  if (response.status === 401 && authenticated && retry && renew) {
+    await renew();
+    return requestJson<T>(path, init, false);
+  }
   const text = await response.text();
   let payload: T | ApiErrorPayload | null = null;
   try { payload = text ? JSON.parse(text) as T | ApiErrorPayload : null; } catch { /* handled as an empty response */ }

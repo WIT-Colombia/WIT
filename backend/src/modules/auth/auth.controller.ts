@@ -4,7 +4,7 @@ import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 import { getCurrentUser, issueSession, login, logout, refresh, register } from './auth.service.js';
 import { changePassword, updateAdultContentPreference, updateProfile } from './account.service.js';
 import { loginSchema, registerSchema } from './auth.schemas.js';
-import { adultContentPreferenceSchema, changePasswordSchema, emailRequestSchema, emailTokenSchema, passwordResetConfirmSchema, profileUpdateSchema, sessionPreferenceSchema } from './auth.schemas.js';
+import { adultContentPreferenceSchema, changePasswordSchema, emailRequestSchema, emailTokenSchema, passwordResetConfirmSchema, profileUpdateSchema } from './auth.schemas.js';
 import { confirmEmail, resetPassword, sendPasswordResetRequest, sendVerificationRequest } from './auth-token.service.js';
 import argon2 from 'argon2';
 import { clearRefreshCookie, getRefreshToken, setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
@@ -106,7 +106,7 @@ export const googleCallbackController: RequestHandler = async (request, response
     if (state.flow === 'login') {
       stage = 'session_creation';
       let session: Awaited<ReturnType<typeof issueSession>>;
-      try { session = await issueSession(resolved.userId, meta(request)); } catch (error) { throw new GoogleOAuthDiagnosticError('session_creation', 'session_failure', error); }
+      try { session = await issueSession(resolved.userId, meta(request), state.rememberMe); } catch (error) { throw new GoogleOAuthDiagnosticError('session_creation', 'session_failure', error); }
       setRefreshCookie(response, session.refreshToken, state.rememberMe);
     }
     clearGoogleStateCookie(response);
@@ -126,7 +126,7 @@ export const googleCallbackController: RequestHandler = async (request, response
 
 export const registerController: RequestHandler = async (request, response, next) => { try { const result = await register(parse(registerSchema, request.body), meta(request)); response.status(201).json(result); } catch (error) { next(error); } };
 export const loginController: RequestHandler = async (request, response, next) => { try { const input = parse(loginSchema, request.body); const result = await login(input, meta(request)); setRefreshCookie(response, result.refreshToken, input.rememberMe); const { refreshToken: _refreshToken, ...publicResult } = result; response.status(200).json(publicResult); } catch (error) { next(error); } };
-export const refreshController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (!token) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.'); const preference = parse(sessionPreferenceSchema, request.body ?? {}); const result = await refresh(token, meta(request)); setRefreshCookie(response, result.refreshToken, preference.rememberMe); const { refreshToken: _refreshToken, ...publicResult } = result; response.status(200).json(publicResult); } catch (error) { next(error); } };
+export const refreshController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (!token) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.'); const result = await refresh(token, meta(request)); response.setHeader('Cache-Control', 'no-store'); response.status(200).json(result); } catch (error) { next(error); } };
 export const logoutController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (token) await logout(token); clearRefreshCookie(response); response.status(204).send(); } catch (error) { next(error); } };
 export const meController: RequestHandler = async (request, response, next) => { try { response.status(200).json({ user: await getCurrentUser((request as AuthenticatedRequest).auth.userId) }); } catch (error) { next(error); } };
 export const requestVerificationController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US')); response.status(202).json({ message: 'Si la cuenta es elegible, recibirás un correo.' }); } catch (error) { next(error); } };
@@ -151,7 +151,7 @@ export const confirmPasswordResetController: RequestHandler = async (request, re
     const userId = await resetPassword(input.token, await argon2.hash(input.password, { type: argon2.argon2id }));
     const user = await getCurrentUser(userId);
     try {
-      const session = await issueSession(userId, meta(request));
+      const session = await issueSession(userId, meta(request), input.rememberMe);
       setRefreshCookie(response, session.refreshToken, input.rememberMe);
       response.status(200).json({ user, accessToken: session.accessToken });
     } catch {

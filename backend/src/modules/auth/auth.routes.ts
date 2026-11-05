@@ -9,6 +9,7 @@ import { changePasswordController, confirmEmailController, confirmPasswordResetC
 import { LOGIN_ACCOUNT_WINDOW_SECONDS, LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from './auth-rate-limit-policy.js';
 
 export const authRouter = Router();
+authRouter.use((_request, response, next) => { response.setHeader('Cache-Control', 'no-store'); next(); });
 const avatarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
 const authRateLimitWindowMs = env.nodeEnv === 'development' ? 60 * 1000 : 15 * 60 * 1000;
 const authRateLimitLimit = env.nodeEnv === 'development' ? 60 : 10;
@@ -46,8 +47,10 @@ const loginAccountRateLimit = rateLimit({
 });
 authRouter.post('/register', authRateLimit, requireTrustedOrigin, registerController);
 authRouter.post('/login', loginAccountRateLimit, loginRateLimit, requireTrustedOrigin, loginController);
-authRouter.post('/refresh', authRateLimit, requireTrustedOrigin, refreshController);
-authRouter.post('/logout', authRateLimit, requireTrustedOrigin, logoutController);
+// Restoring a valid session is not a login attempt. Keep a separate abuse limit.
+const refreshRateLimit = rateLimit({ windowMs: 60 * 1000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false });
+authRouter.post('/refresh', refreshRateLimit, requireTrustedOrigin, refreshController);
+authRouter.post('/logout', requireTrustedOrigin, logoutController);
 authRouter.get('/me', requireAuth, meController);
 authRouter.get('/me/avatar', requireAuth, ownAvatarController);
 authRouter.post('/me/avatar', requireAuth, requireTrustedOrigin, avatarUpload.single('file'), uploadAvatarController);
