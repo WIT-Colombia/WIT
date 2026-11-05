@@ -3,8 +3,7 @@
 .business-app .business-shell-sidebar{z-index:120;display:flex;flex-direction:column;gap:0;overflow-y:auto;overflow-x:hidden;padding:20px 13px 16px;border:0;background:radial-gradient(ellipse at 105% 45%,#075c9d66,transparent 60%),radial-gradient(ellipse at 0 95%,#351c8c44,transparent 45%),#0f2747;color:#fff;scrollbar-width:thin;scrollbar-color:#3c5b7b transparent}
 .business-app .sidebar-brand{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:54px;margin:0 7px 22px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .business-app .sidebar-brand-artwork{position:relative;display:block;width:172px;height:58px}
-.business-app .sidebar-brand-artwork img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;object-position:left center;filter:drop-shadow(0 0 1px rgba(226,232,240,.9))}
-.business-app .sidebar-brand-artwork .sidebar-brand-tagline{position:absolute;inset:0;clip-path:inset(66% 0 0 23%);filter:brightness(0) invert(1)!important;opacity:.82}
+.business-app .sidebar-brand-artwork img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;object-position:left center;filter:none}
 .business-app .sidebar-brand-artwork .sidebar-brand-wordmark{position:absolute;inset:0;clip-path:inset(0 0 0 23%);filter:brightness(0) invert(1)!important}
 .business-app .sidebar-brand>span:not(.sidebar-brand-artwork){margin-left:32px;color:#22d3ee;font-size:10px;font-weight:750;line-height:1.1;letter-spacing:.1em}
 .business-app .sidebar-nav{display:grid;gap:4px;margin:0}

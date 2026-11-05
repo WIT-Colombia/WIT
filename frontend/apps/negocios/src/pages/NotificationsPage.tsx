@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { PageHeader } from "../components/common/PageHeader";
 import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type PersistedBusinessNotification } from "../services/businessApiClient";
 import { toBusinessDetails } from "../services/realBusinessAdapter";
-import { useBusinessAuth } from "../services/businessAuthContext";
-import { rememberBusinessNotificationDismissal } from "../services/notificationDismissal";
-import xamukoLogoMark from "../assets/XAMUKO-mark.png";
 
 const icons = { review: "☆", interest: "↗", profile: "▣", wit: "✦", admin: "✉", offer: "✦", security: "✓", collaboration: "♙" };
+const destination = { review: "/opiniones", interest: "/productos", profile: "/mis-negocios/editar", wit: "/mi-negocio", admin: "/configuracion", offer: "/estadisticas", security: "/perfil" } as const;
 const permissionLabels: Record<string, string> = {
   MANAGE_CATALOG: "Productos y servicios",
   MANAGE_PROMOTIONS: "Promociones",
@@ -15,7 +15,7 @@ const permissionLabels: Record<string, string> = {
 };
 
 function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) {
-  const photoUrl = item.imageUrl ?? item.business.profilePhoto?.url;
+  const photoUrl = item.business.profilePhoto?.url;
   const [image, setImage] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
@@ -34,37 +34,17 @@ function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) 
   const title = item.title.toLocaleLowerCase("es-CO");
   const variant = title.includes("permiso") ? "permissions" : title.includes("suspend") || title.includes("revoc") ? "access" : title.includes("reactiv") || title.includes("aceptad") ? "success" : "invitation";
   const glyph = variant === "permissions" ? "☷" : variant === "access" ? "⌑" : variant === "success" ? "✓" : "✉";
-  return <span className={`notification-artwork ${variant}`} role="img" aria-label={item.imageAlt ?? `Notificación de ${item.business.name}`}>
+  return <span className={`notification-artwork ${variant}`} role="img" aria-label={`Notificación de ${item.business.name}`}>
     <span className="notification-artwork-glyph" aria-hidden="true">{glyph}</span>
     {image && <img src={image} alt="" onError={event => { URL.revokeObjectURL(image); setImage(null); event.currentTarget.remove(); }} />}
   </span>;
 }
 
-
-type DeleteTarget = { source: "persisted" | "local"; id: string };
-const notificationKey = (source: DeleteTarget["source"], id: string) => `${source}:${id}`;
-
-function NotificationDeleteAction({ title, confirming, busy, pendingRequest, onRequest, onConfirm, onCancel }: {
-  title: string;
-  confirming: boolean;
-  busy: boolean;
-  pendingRequest?: boolean;
-  onRequest: () => void;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  return <div className="notification-delete-control" onClick={event => event.stopPropagation()}>
-    <button type="button" className="notification-delete notification-delete-icon" aria-label={`Eliminar ${title}`} title="Eliminar notificación" onClick={onRequest} disabled={busy}>×</button>
-    {confirming && <div className="notification-delete-confirm" role="group" aria-label={`Confirmar eliminación de ${title}`}>
-      <span>{pendingRequest ? "¿Quitar aviso? La solicitud seguirá pendiente." : "¿Eliminarla?"}</span>
-      <button type="button" className="notification-delete-yes" onClick={onConfirm} disabled={busy}>{busy ? "Eliminando…" : "Sí"}</button>
-      <button type="button" onClick={onCancel} disabled={busy}>No</button>
-    </div>}
-  </div>;
-}
-
 export function NotificationsPage() {
-  const { notifications, setNotifications, business, setBusinesses, setBusiness } = useBusinessStore();
+  const { notifications, setNotifications, businesses, business, setBusinesses, setBusiness } = useBusinessStore();
+  const navigate = useNavigate();
+  const businessIndex = Math.max(0, businesses.findIndex(item => item.name === business.name));
+  const [filter, setFilter] = useState<"Todas" | "No leídas">("Todas");
   const [confirmingInvitation, setConfirmingInvitation] = useState<{ id: string; accepted: boolean } | null>(null);
   const [persisted, setPersisted] = useState<PersistedBusinessNotification[]>([]);
   const [apiError, setApiError] = useState("");
@@ -72,27 +52,10 @@ export function NotificationsPage() {
   const [transfers, setTransfers] = useState<Array<{ id: string; status: string; expiresAt: string | null; requestedAt: string; business: { id: string; name: string }; fromUser: { displayName: string; nickname: string | null } }>>([]);
   const [busyTransfer, setBusyTransfer] = useState<string | null>(null);
   const [confirmingTransfer, setConfirmingTransfer] = useState<{ id: string; accepted: boolean } | null>(null);
-  const { user } = useBusinessAuth();
-  const [pendingDelete, setPendingDelete] = useState<DeleteTarget | null>(null);
-  const [busyDelete, setBusyDelete] = useState<string | null>(null);
-  const [deleteSuccess, setDeleteSuccess] = useState(false);
-  const [selectedNotificationKey, setSelectedNotificationKey] = useState<string | null>(null);
-  useEffect(() => {
-    if (!deleteSuccess) return;
-    const timeout = window.setTimeout(() => setDeleteSuccess(false), 3000);
-    return () => window.clearTimeout(timeout);
-  }, [deleteSuccess]);
-
 
   const reloadPersisted = useCallback(async () => {
-    try {
-      const rows = (await businessApi.listBusinessNotifications()).notifications;
-      setPersisted(rows);
-      setApiError("");
-      window.dispatchEvent(new CustomEvent("xamuko-notifications-updated", { detail: rows.filter(item => !item.readAt).length }));
-    } catch (error) {
-      setApiError(error instanceof Error ? error.message : "No se pudieron cargar las notificaciones de tu cuenta.");
-    }
+    try { const rows = (await businessApi.listBusinessNotifications()).notifications; setPersisted(rows); setApiError(""); window.dispatchEvent(new CustomEvent("xamuko-notifications-updated", { detail: rows.filter(item => !item.readAt).length })); }
+    catch { setApiError("No se pudieron cargar las notificaciones de tu cuenta."); }
   }, []);
   useEffect(() => {
     void reloadPersisted();
@@ -116,8 +79,8 @@ export function NotificationsPage() {
     if (item.date.startsWith("Ayer")) return Date.now() - 24 * 60 * 60 * 1000;
     return 0;
   };
-  const visible = notifications.slice().sort((left, right) => notificationTime(right) - notificationTime(left));
-  const visiblePersisted = useMemo(() => persisted, [persisted]);
+  const visible = notifications.filter(item => filter === "Todas" || !item.read).sort((left, right) => notificationTime(right) - notificationTime(left));
+  const visiblePersisted = useMemo(() => persisted.filter(item => filter === "Todas" || !item.readAt), [filter, persisted]);
   const totalUnread = notifications.filter(item => !item.read).length + persisted.filter(item => !item.readAt).length;
 
   const respondPersisted = async (item: PersistedBusinessNotification, accept: boolean) => {
@@ -143,56 +106,11 @@ export function NotificationsPage() {
   };
   const respondTransfer = async (id: string, accept: boolean) => { setBusyTransfer(id); setApiError(""); try { await businessApi.respondOwnershipTransfer(id, accept); const fresh = (await businessApi.list()).businesses.map(toBusinessDetails); setBusinesses(fresh); const selected = fresh.find(value => value.id === business.id) ?? fresh[0]; if (selected) setBusiness(selected); await reloadTransfers(); await reloadPersisted(); setConfirmingTransfer(null); } catch (cause) { setApiError(cause instanceof Error ? cause.message : "No se pudo responder la transferencia."); } finally { setBusyTransfer(null); } };
 
-  const deleting = (source: DeleteTarget["source"], id: string) => busyDelete === `${source}:${id}`;
-  const confirmingDelete = (source: DeleteTarget["source"], id: string) => pendingDelete?.source === source && pendingDelete.id === id;
-  const selectLocalNotification = (item: typeof notifications[number]) => {
-    setSelectedNotificationKey(notificationKey("local", item.id));
-    if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current));
-  };
-  const selectPersistedNotification = (item: PersistedBusinessNotification) => {
-    setSelectedNotificationKey(notificationKey("persisted", item.id));
-    if (!item.readAt) {
-      void businessApi.markBusinessNotificationRead(item.id)
-        .then(reloadPersisted)
-        .catch(() => setApiError("No se pudo marcar la notificación como leída."));
-    }
-  };
-  const confirmDelete = async (target: DeleteTarget) => {
-    if (busyDelete) return;
-    const key = `${target.source}:${target.id}`;
-    setBusyDelete(key);
-    setApiError("");
-    try {
-      if (target.source === "persisted") {
-        await businessApi.deleteBusinessNotification(target.id);
-        setPersisted(current => current.filter(item => item.id !== target.id));
-        await reloadPersisted();
-      } else {
-        rememberBusinessNotificationDismissal(user?.publicId ?? "preview", target.id);
-        setNotifications(notifications.filter(item => item.id !== target.id));
-      }
-      if (selectedNotificationKey === notificationKey(target.source, target.id)) setSelectedNotificationKey(null);
-      setPendingDelete(null);
-      setDeleteSuccess(true);
-    } catch (error) {
-      setApiError(error instanceof Error ? error.message : "No se pudo eliminar la notificación.");
-    } finally {
-      setBusyDelete(null);
-    }
-  };
-
-  return <div className="business-notifications-page">
-    <header className="business-notifications-heading">
-      <div className="business-notifications-page-heading">
-        <span>Tu actividad en XAMUKO</span>
-        <h1>Notificaciones</h1>
-        <span className="business-notification-unread-count">{totalUnread} {totalUnread === 1 ? "pendiente" : "pendientes"} por leer</span>
-      </div>
-      {totalUnread > 0 && <button type="button" onClick={() => void markAllRead()}>Marcar todas como leídas</button>}
-    </header>
+  return <>
+    <PageHeader eyebrow="AL DÍA" title="Notificaciones" description="Entérate de lo que ocurre con tu presencia en XAMUKO." action={totalUnread > 0 && <button type="button" className="outline-button" onClick={() => void markAllRead()}>Marcar todas como leídas</button>} />
     {apiError && <div className="notification-page-alert" role="alert">{apiError}</div>}
-    {deleteSuccess && <p className="notification-delete-success" role="status">La notificación se eliminó correctamente.</p>}
-    <section className="business-notifications-card">
+    <section className="surface-card notifications-card">
+      <div className="notification-tabs" role="group" aria-label="Filtrar notificaciones"><button type="button" onClick={() => setFilter("Todas")} className={filter === "Todas" ? "active" : ""} aria-pressed={filter === "Todas"}>Todas</button><button type="button" onClick={() => setFilter("No leídas")} className={filter === "No leídas" ? "active" : ""} aria-pressed={filter === "No leídas"}>No leídas <span>{totalUnread}</span></button></div>
       {visiblePersisted.map(item => {
         const pending = item.type === "COLLABORATION_INVITATION" && item.membership?.status === "INVITED";
         const permissionText = item.membership?.permissions.filter(permission => permission.allowed).map(permission => permissionLabels[permission.permission] ?? permission.permission).join(", ");
@@ -201,18 +119,16 @@ export function NotificationsPage() {
           ? transfers.filter(candidate => candidate.business.id === item.businessId).sort((left, right) => Math.abs(Date.parse(left.requestedAt) - Date.parse(item.createdAt)) - Math.abs(Date.parse(right.requestedAt) - Date.parse(item.createdAt)))[0]
           : undefined;
         const status = item.type === "COLLABORATION_INVITATION" ? item.membership?.status === "ACTIVE" ? "Invitación aceptada" : item.membership?.status === "REJECTED" ? "Invitación rechazada" : item.membership?.status === "REVOKED" ? "Invitación cancelada" : item.membership?.status === "EXPIRED" ? "Invitación vencida" : null : null;
-        return <article className={`notification-row ${item.readAt ? "" : "unread"}${transfer ? " is-transfer-notification" : ""}${selectedNotificationKey === notificationKey("persisted", item.id) ? " is-selected" : ""}`} key={item.id} onClick={() => selectPersistedNotification(item)}>
+        return <article className={`notification-row ${item.readAt ? "" : "unread"}${transfer ? " is-transfer-notification" : ""}`} key={item.id}>
           <NotificationArtwork item={item}/>
-          <div><div className="notification-title"><h2>{item.title}</h2>{transfer && <span className={`transfer-state ${transfer.status.toLowerCase()}`}>{transfer.status === "PENDING" ? "Pendiente" : transfer.status === "ACCEPTED" ? "Aceptada" : transfer.status === "REJECTED" ? "Rechazada" : transfer.status === "CANCELLED" ? "Cancelada" : transfer.status === "EXPIRED" ? "Vencida" : transfer.status}</span>}</div><p>{item.message}</p>{transfer && <><small>Solicitud enviada por {transfer.fromUser.displayName}{transfer.fromUser.nickname ? ` (${transfer.fromUser.nickname})` : ""}.</small><small>Solicitada {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(transfer.requestedAt))}{transfer.expiresAt ? ` · Vence ${new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(transfer.expiresAt))}` : ""}</small></>}{ownerName && item.type === "COLLABORATION_INVITATION" && <small>Propietario: {ownerName}</small>}{permissionText && item.type === "COLLABORATION_INVITATION" && <small>Permisos: {permissionText}</small>}{!transfer && <small>{new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}{item.membership?.expiresAt ? ` · Vence ${new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(item.membership.expiresAt))}` : ""}</small>}
-            {transfer?.status === "PENDING" ? <div className="notification-invitation-actions">{confirmingTransfer?.id === transfer.id ? <div className="notification-inline-confirm" role="group" aria-label="Confirmar respuesta a transferencia"><span>{confirmingTransfer.accepted ? `Al aceptar, asumirás la propiedad administrativa de ${transfer.business.name}.` : `¿Rechazar la transferencia de ${transfer.business.name}?`}</span><button className={confirmingTransfer.accepted ? "action-button" : "danger-button"} disabled={busyTransfer === transfer.id} onClick={() => void respondTransfer(transfer.id, confirmingTransfer.accepted)}>{busyTransfer === transfer.id ? "Procesando…" : confirmingTransfer.accepted ? "Confirmar aceptación" : "Confirmar rechazo"}</button><button className="subtle-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer(null)}>Volver</button></div> : <><button className="action-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer({ id: transfer.id, accepted: true })}>Aceptar transferencia</button><button className="outline-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer({ id: transfer.id, accepted: false })}>Rechazar</button></>}</div> : pending ? <div className="notification-invitation-actions">{confirmingInvitation?.id === item.id ? <div className="notification-inline-confirm"><span>{confirmingInvitation.accepted ? "¿Aceptar esta invitación?" : "¿Rechazar esta invitación?"}</span><button className="action-button" disabled={busyInvitation === item.id} onClick={() => void respondPersisted(item, confirmingInvitation.accepted)}>{busyInvitation === item.id ? "Procesando…" : confirmingInvitation.accepted ? "Sí, aceptar" : "Sí, rechazar"}</button><button className="subtle-button" onClick={() => setConfirmingInvitation(null)}>Cancelar</button></div> : <><button className="action-button" onClick={() => setConfirmingInvitation({ id: item.id, accepted: true })}>Aceptar invitación</button><button className="outline-button" onClick={() => setConfirmingInvitation({ id: item.id, accepted: false })}>Rechazar</button></>}</div> : status && <small>{status}</small>}
+          <div><div className="notification-title"><h2>{item.title}</h2>{transfer && <span className={`transfer-state ${transfer.status.toLowerCase()}`}>{transfer.status === "PENDING" ? "Pendiente" : transfer.status === "ACCEPTED" ? "Aceptada" : transfer.status === "REJECTED" ? "Rechazada" : transfer.status === "CANCELLED" ? "Cancelada" : transfer.status === "EXPIRED" ? "Vencida" : transfer.status}</span>}{!item.readAt && <span aria-label="Sin leer"/>}</div><p>{item.message}</p>{transfer && <><small>Solicitud enviada por {transfer.fromUser.displayName}{transfer.fromUser.nickname ? ` (${transfer.fromUser.nickname})` : ""}.</small><small>Solicitada {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(transfer.requestedAt))}{transfer.expiresAt ? ` · Vence ${new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(transfer.expiresAt))}` : ""}</small></>}{ownerName && item.type === "COLLABORATION_INVITATION" && <small>Propietario: {ownerName}</small>}{permissionText && item.type === "COLLABORATION_INVITATION" && <small>Permisos: {permissionText}</small>}{!transfer && <small>{new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}{item.membership?.expiresAt ? ` · Vence ${new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(item.membership.expiresAt))}` : ""}</small>}
+            {transfer?.status === "PENDING" ? <div className="notification-invitation-actions">{confirmingTransfer?.id === transfer.id ? <div className="notification-inline-confirm" role="group" aria-label="Confirmar respuesta a transferencia"><span>{confirmingTransfer.accepted ? `Al aceptar, asumirás la propiedad administrativa de ${transfer.business.name}.` : `¿Rechazar la transferencia de ${transfer.business.name}?`}</span><button className={confirmingTransfer.accepted ? "action-button" : "danger-button"} disabled={busyTransfer === transfer.id} onClick={() => void respondTransfer(transfer.id, confirmingTransfer.accepted)}>{busyTransfer === transfer.id ? "Procesando…" : confirmingTransfer.accepted ? "Confirmar aceptación" : "Confirmar rechazo"}</button><button className="subtle-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer(null)}>Volver</button></div> : <><button className="action-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer({ id: transfer.id, accepted: true })}>Aceptar transferencia</button><button className="outline-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer({ id: transfer.id, accepted: false })}>Rechazar</button></>}</div> : pending && !item.readAt ? <div className="notification-invitation-actions">{confirmingInvitation?.id === item.id ? <div className="notification-inline-confirm"><span>{confirmingInvitation.accepted ? "¿Aceptar esta invitación?" : "¿Rechazar esta invitación?"}</span><button className="action-button" disabled={busyInvitation === item.id} onClick={() => void respondPersisted(item, confirmingInvitation.accepted)}>{busyInvitation === item.id ? "Procesando…" : confirmingInvitation.accepted ? "Sí, aceptar" : "Sí, rechazar"}</button><button className="subtle-button" onClick={() => setConfirmingInvitation(null)}>Cancelar</button></div> : <><button className="action-button" onClick={() => setConfirmingInvitation({ id: item.id, accepted: true })}>Aceptar invitación</button><button className="outline-button" onClick={() => setConfirmingInvitation({ id: item.id, accepted: false })}>Rechazar</button></>}</div> : status && <small>{status}</small>}
           </div>
-          <div className="notification-actions">
-            <NotificationDeleteAction title={item.title} confirming={confirmingDelete("persisted", item.id)} busy={deleting("persisted", item.id)} pendingRequest={pending || transfer?.status === "PENDING"} onRequest={() => setPendingDelete({ source: "persisted", id: item.id })} onConfirm={() => void confirmDelete({ source: "persisted", id: item.id })} onCancel={() => setPendingDelete(null)}/>
-          </div>
+          <div className="notification-actions">{!item.readAt && !pending && <button className="subtle-button" onClick={() => void businessApi.markBusinessNotificationRead(item.id).then(reloadPersisted).catch(() => setApiError("No se pudo actualizar la notificación."))}>Marcar leída</button>}</div>
         </article>;
       })}
-      {visible.map(item => <article className={`notification-row ${item.read ? "is-read" : "unread"}${selectedNotificationKey === notificationKey("local", item.id) ? " is-selected" : ""}`} key={item.id} onClick={() => selectLocalNotification(item)}><span className={`notification-icon ${item.type}${item.id === "welcome" ? " notification-brand-logo" : ""}`}>{item.id === "welcome" ? <img src={xamukoLogoMark} alt="Logo XAMUKO" /> : icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2></div><p>{item.description}</p><small>{item.date}</small></div><div className="notification-actions"><NotificationDeleteAction title={item.title} confirming={confirmingDelete("local", item.id)} busy={deleting("local", item.id)} onRequest={() => setPendingDelete({ source: "local", id: item.id })} onConfirm={() => void confirmDelete({ source: "local", id: item.id })} onCancel={() => setPendingDelete(null)}/></div></article>)}
+      {visible.map(item => { const to = item.id.startsWith("visibility-reminder-") ? "/configuracion" : item.type === "profile" ? `${destination.profile}/${businessIndex}` : item.type === "collaboration" ? "/notificaciones" : destination[item.type]; return <article className={`notification-row ${item.read ? "" : "unread"}${item.id.startsWith("visibility-reminder-") ? " is-actionable" : ""}`} key={item.id} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); if (item.id.startsWith("visibility-reminder-")) navigate("/configuracion"); }}><span className={`notification-icon ${item.type}`}>{icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2>{!item.read && <span aria-label="Sin leer"/>}</div><p>{item.description}</p><small>{item.date}</small><Link className="notification-link" to={to}>Ver detalle →</Link></div><div className="notification-actions">{!item.read && <button className="subtle-button" onClick={event => { event.stopPropagation(); setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }}>Marcar leída</button>}<button className="notification-delete" aria-label={`Eliminar ${item.title}`} onClick={event => { event.stopPropagation(); setNotifications(notifications.filter(current => current.id !== item.id)); }}>Eliminar</button></div></article>; })}
       {!visiblePersisted.length && !visible.length && <div className="empty-state"><span>✓</span><h2>Todo al día</h2><p>No tienes notificaciones en tu bandeja.</p></div>}
     </section>
-  </div>;
+  </>;
 }

@@ -150,39 +150,27 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
     setAccount({ ...account, nickname: `@${account.name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "")}` });
   }, [account, isPreview]);
   const [items, setItems] = useState<CatalogItem[]>(() => isPreview ? stored("items", initialItems) : []);
-  const [notifications, setNotifications] = useState<BusinessNotification[]>(storedWelcomeNotifications);
+  const [notifications, setNotifications] = useState<BusinessNotification[]>(() => isPreview ? storedWelcomeNotifications() : []);
   const [persistentNotificationCount, setPersistentNotificationCount] = useState(0);
   useEffect(() => {
-    if (isPreview || auth.state.status !== "authenticated") {
-      setPersistentNotificationCount(0);
-      return;
-    }
+    if (isPreview || auth.state.status !== "authenticated") { setPersistentNotificationCount(0); return; }
     let active = true;
-    const refresh = () => {
-      void businessApi.listBusinessNotifications()
-        .then(({ notifications: rows }) => {
-          if (active) setPersistentNotificationCount(rows.filter(item => !item.readAt).length);
-        })
-        .catch(() => { /* Preserve the previous count when the API is unavailable. */ });
-    };
-    const onUpdated = (event: Event) => {
-      const count = (event as CustomEvent<number>).detail;
-      if (active && typeof count === "number") setPersistentNotificationCount(count);
-    };
+    const refresh = () => { void businessApi.listBusinessNotifications().then(({ notifications: rows }) => { if (active) setPersistentNotificationCount(rows.filter(item => !item.readAt).length); }).catch(() => undefined); };
+    const onUpdated = (event: Event) => { const count = (event as CustomEvent<number>).detail; if (typeof count === "number") setPersistentNotificationCount(count); else refresh(); };
     const refreshIfVisible = () => { if (document.visibilityState === "visible") refresh(); };
     refresh();
-    const timer = window.setInterval(refreshIfVisible, 30_000);
+    const intervalId = window.setInterval(refreshIfVisible, 30_000);
+    document.addEventListener("visibilitychange", refreshIfVisible);
     window.addEventListener("focus", refreshIfVisible);
     window.addEventListener("xamuko-notifications-updated", onUpdated);
-    document.addEventListener("visibilitychange", refreshIfVisible);
     return () => {
       active = false;
-      window.clearInterval(timer);
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
       window.removeEventListener("focus", refreshIfVisible);
       window.removeEventListener("xamuko-notifications-updated", onUpdated);
-      document.removeEventListener("visibilitychange", refreshIfVisible);
     };
-  }, [auth.state.status, isPreview, userId]);
+  }, [auth.state, isPreview]);
   useEffect(() => {
     if (!isPreview) return;
     try { localStorage.setItem("wit-negocios-demo:items", JSON.stringify(items)); } catch { /* La vista previa continúa funcionando sin almacenamiento local. */ }
@@ -209,8 +197,17 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
   }, [account, businesses, notifications, isPreview]);
   const [preferences, setPreferences] = useStoredState("preferences", initialPreferences);
   useEffect(() => {
-    // Las notificaciones automáticas están pausadas temporalmente: sólo se muestra la bienvenida.
-  }, []);
+    const now = Date.now();
+    const reminders = businesses.filter(item => item.role === "Propietario").map(item => {
+      const untilValue = preferences.visibilityByBusiness?.[item.name]?.visibilityUntil ?? preferences.visibilityUntil;
+      if (!untilValue) return null;
+      const daysLeft = Math.ceil((new Date(untilValue).getTime() - now) / DAY_IN_MS);
+      return daysLeft > 0 && daysLeft <= 39 && !notifications.some(note => note.id === `visibility-reminder-${item.name}`) ? item : null;
+    }).filter((item): item is BusinessDetails => Boolean(item));
+    if (!reminders.length) return;
+    const additions = reminders.map(item => ({ id: `visibility-reminder-${item.name}`, title: "Mantén visible tu negocio", description: `A tu negocio ${item.name} le quedan pocos días de visibilidad. Renueva ahora para que las personas sigan encontrándolo en XAMUKO.`, date: "Ahora", createdAt: new Date().toISOString(), type: "admin" as const, read: false, businessName: item.name, businessId: item.name }));
+    setNotifications([...notifications, ...additions]);
+  }, [businesses, preferences, notifications]);
   useEffect(() => {
     const demoVisibilityKey = "wit-negocios-demo:near-visibility-date-v3";
     try {

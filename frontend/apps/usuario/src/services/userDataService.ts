@@ -1,6 +1,4 @@
 import { products, services, type Review } from "../data/mockData";
-import xamukoLogoMark from "../assets/XAMUKO-mark.png";
-import type { CollaboratorInvitation } from "./authService";
 
 const FAVORITES_KEY = "wit-favorites";
 const LIKES_KEY = "wit-likes";
@@ -8,7 +6,6 @@ const REVIEWS_KEY = "wit-user-reviews";
 const NEEDS_KEY = "wit-user-needs";
 const REPORTS_KEY = "wit-user-reports";
 const NOTIFICATIONS_KEY = "wit-notifications";
-const WELCOME_DISMISSED_KEY = "wit-notifications-welcome-dismissed";
 const PROFILE_KEY = "wit-profile";
 const SETTINGS_KEY = "wit-settings";
 const RATINGS_KEY = "wit-user-ratings";
@@ -87,20 +84,19 @@ export function getMatchingReportCount(targetType: UserReport["targetType"], tar
   return getUserReports().filter((report) => report.targetType === targetType && report.targetId === targetId && report.category === category).length;
 }
 
-export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean; imageUrl?: string | null; imageAlt?: string | null; source?: "local" | "remote"; invitation?: CollaboratorInvitation | null };
+export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean };
 const defaultNotifications: UserNotification[] = [
-  { id: "welcome", title: "Te damos la bienvenida a XAMUKO", body: "Empieza buscando eso que necesitas cerca de ti.", date: "Hoy", read: false, imageUrl: xamukoLogoMark, imageAlt: "Logo XAMUKO" },
+  { id: "welcome", title: "Te damos la bienvenida a XAMUKO", body: "Empieza buscando eso que necesitas cerca de ti.", date: "Hoy", read: false },
 ];
 export function getNotifications(): UserNotification[] {
   try {
-    if (localStorage.getItem(WELCOME_DISMISSED_KEY) === "1") return [];
     const saved = localStorage.getItem(NOTIFICATIONS_KEY);
-    const parsed = saved ? JSON.parse(saved) as UserNotification[] : [];
-    const savedWelcome = parsed.find((notification) => notification.id === "welcome");
-    const welcome = { ...defaultNotifications[0], ...savedWelcome, imageUrl: xamukoLogoMark, imageAlt: "Logo XAMUKO" };
-    const next = [welcome];
-    if (JSON.stringify(parsed) !== JSON.stringify(next)) localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next));
-    return next;
+    if (!saved) { localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(defaultNotifications)); return defaultNotifications; }
+    const parsed = JSON.parse(saved) as UserNotification[];
+    const cleaned = parsed.filter((notification) => notification.id === "welcome" || !notification.id.startsWith("demo-") && notification.id !== "saved-tip");
+    if (!cleaned.some((notification) => notification.id === "welcome")) cleaned.unshift(defaultNotifications[0]);
+    if (cleaned.length !== parsed.length) localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(cleaned));
+    return cleaned;
   } catch { return defaultNotifications; }
 }
 export function markNotificationRead(id: string): UserNotification[] {
@@ -114,7 +110,6 @@ export function markAllNotificationsRead(): UserNotification[] {
   return next;
 }
 export function deleteNotification(id: string): UserNotification[] {
-  if (id === "welcome") localStorage.setItem(WELCOME_DISMISSED_KEY, "1");
   const next = getNotifications().filter((notification) => notification.id !== id);
   localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next));
   return next;

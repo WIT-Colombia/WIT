@@ -247,7 +247,7 @@ export type RealBusiness = {
 
 export type BusinessMembership = { id:string; businessId:string; userId:string; role:'OWNER'|'COLLABORATOR'; status:'INVITED'|'ACTIVE'|'SUSPENDED'|'REJECTED'|'REVOKED'|'EXPIRED'; invitedAt:string; acceptedAt:string|null; expiresAt:string|null; user:{id:string;displayName:string;nickname:string|null;emailNormalized:string|null;avatarUrl:string|null;lastLoginAt:string|null}; permissions:Array<{permission:string;allowed:boolean}> };
 export type ResolvedCollaboratorRecipient = { publicId:string; displayName:string; nickname:string; avatarUrl:string|null };
-export type PersistedBusinessNotification = {id:string;userId:string;businessId:string;membershipId:string|null;type:'COLLABORATION_INVITATION'|'COLLABORATION_UPDATE';title:string;message:string;readAt:string|null;createdAt:string;imageUrl:string|null;imageAlt:string|null;business:{id:string;name:string;profilePhoto:{url:string}|null;memberships:Array<{user:{displayName:string}}>};membership:{id:string;status:string;expiresAt:string|null;permissions:Array<{permission:string;allowed:boolean}>}|null};
+export type PersistedBusinessNotification = {id:string;userId:string;businessId:string;membershipId:string|null;type:'COLLABORATION_INVITATION'|'COLLABORATION_UPDATE';title:string;message:string;readAt:string|null;createdAt:string;business:{id:string;name:string;profilePhoto:{url:string}|null;memberships:Array<{user:{displayName:string}}>};membership:{id:string;status:string;expiresAt:string|null;permissions:Array<{permission:string;allowed:boolean}>}|null};
 
 export type ModalityType = "PHYSICAL" | "VIRTUAL" | "DELIVERY";
 export type ModalityStatus = "CONFIGURING" | "ACTIVE" | "PAUSED";
@@ -267,9 +267,8 @@ export const businessApi = {
   cancelCollaboratorInvitation: (membershipId:string) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/cancel`,{method:'POST'}),
   leaveBusiness: (businessId:string) => requestJson(`/businesses/${encodeURIComponent(businessId)}/leave`,{method:'POST'}),
   respondCollaboratorInvitation: (membershipId:string,accept:boolean) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/${accept?'accept':'reject'}`,{method:'POST'}),
-  listBusinessNotifications: () => requestJson<{notifications:PersistedBusinessNotification[]}>('/business-notifications'),
-  markBusinessNotificationRead: (id:string) => requestJson(`/business-notifications/${encodeURIComponent(id)}/read`,{method:'POST'}),
-  deleteBusinessNotification: (id:string) => requestJson<{deleted:boolean}>(`/business-notifications/${encodeURIComponent(id)}`,{method:'DELETE'}),
+  listBusinessNotifications: () => requestJson<{notifications:PersistedBusinessNotification[]}>('/notifications'),
+  markBusinessNotificationRead: (id:string) => requestJson(`/notifications/${encodeURIComponent(id)}/read`,{method:'POST'}),
   list: () => requestJson<{ businesses: RealBusiness[] }>('/businesses'),
   categories: () => requestJson<{ categories: Array<{ id: string; code: string; translations: Array<{ name: string }> }> }>('/business-categories'),
   create: (input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>('/businesses', { method: 'POST', body: JSON.stringify(input) }),
