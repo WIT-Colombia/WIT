@@ -18,3 +18,6 @@ collaboratorRouter.put('/memberships/:membershipId/permissions',requireTrustedOr
 collaboratorRouter.get('/notifications',notificationsController);
 collaboratorRouter.post('/notifications/:notificationId/read',requireTrustedOrigin,readNotificationController);
 collaboratorRouter.delete('/notifications/:notificationId',requireTrustedOrigin,deleteNotificationController);
+collaboratorRouter.get('/business-notifications',notificationsController);
+collaboratorRouter.post('/business-notifications/:notificationId/read',requireTrustedOrigin,readNotificationController);
+collaboratorRouter.delete('/business-notifications/:notificationId',requireTrustedOrigin,deleteNotificationController);
