@@ -58,6 +58,8 @@
 .business-notifications-card .notification-delete-confirm button{padding:2px 5px;border:1px solid #e5def8;border-radius:5px;background:#fff;color:#7b3ffb;font:inherit;font-size:10px;cursor:pointer}
 .business-notifications-card .notification-delete-confirm button:first-of-type{border-color:#efb8bd;color:#b14b56}
 .business-notifications-card .notification-row.is-read{background:#fff}
+/* Keep the selected card identical to Usuario's approved state. */
+.business-notifications-card .notification-row.is-selected{border-color:#b9a2ff;background:#f7f3ff;box-shadow:0 8px 22px rgba(15,23,42,.045)}
 @media(max-width:700px){
   .business-notifications-page{width:100%;padding-top:22px}
   .business-notifications-heading{display:block;margin-bottom:18px}
