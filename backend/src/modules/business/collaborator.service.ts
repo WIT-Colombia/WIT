@@ -30,8 +30,15 @@ function publicAvatarUrl(value: string | null | undefined) {
     return url.protocol === 'http:' || url.protocol === 'https:' ? value : null;
   } catch { return null; }
 }
+function privateAvatarVersion(value: string | null | undefined) {
+  const storageKey = privateAvatarStorageKey(value);
+  return storageKey?.split('/').at(-1)?.replace(/\.(jpg|png|webp)$/i, '') ?? null;
+}
 function collaboratorPhotoUrl(businessId: string, userId: string, avatarUrl: string | null | undefined) {
-  if (avatarUrl?.startsWith('private-avatar:')) return `/api/v1/businesses/${encodeURIComponent(businessId)}/collaborators/${encodeURIComponent(userId)}/avatar`;
+  if (avatarUrl?.startsWith('private-avatar:')) {
+    const version = privateAvatarVersion(avatarUrl);
+    return `/api/v1/businesses/${encodeURIComponent(businessId)}/collaborators/${encodeURIComponent(userId)}/avatar${version ? `?v=${encodeURIComponent(version)}` : ''}`;
+  }
   return publicAvatarUrl(avatarUrl);
 }
 function privateAvatarStorageKey(value: string | null | undefined) {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { readCollaboratorAvatar, readCollaboratorRecipientAvatar, resolveCollaboratorRecipient } from './collaborator.service.js';
+import { listCollaborators, readCollaboratorAvatar, readCollaboratorRecipientAvatar, resolveCollaboratorRecipient } from './collaborator.service.js';
 
 const actorId = 'owner-user';
 const businessId = 'business-1';
@@ -62,4 +62,23 @@ test('la ruta protegida devuelve 404 controlado si la fotografía ya no existe',
   await withLookups({ id: 'user-2', publicId: 'public-2', displayName: 'Danilo', nickname: '@danilo.jaramillo', avatarUrl: privateAvatar }, membership, async () => {
     await assert.rejects(readCollaboratorAvatar(actorId, businessId, 'user-2'), (error: unknown) => error instanceof AppError && error.statusCode === 404);
   });
+});
+
+test('versiona la URL privada para reflejar un cambio de fotografía', async () => {
+  const restoreMembership = stub(prisma.businessMembership, 'findUnique', async () => ownerMembership);
+  const restoreRows = stub(prisma.businessMembership, 'findMany', async () => [{
+    id: 'membership-1',
+    businessId,
+    userId: actorId,
+    role: 'OWNER',
+    status: 'ACTIVE',
+    expiresAt: null,
+    createdAt: new Date(),
+    user: { id: actorId, publicId: 'owner-public', displayName: 'Mónica Cepeda', nickname: '@monica.cepeda', emailNormalized: 'monica@example.com', avatarUrl: privateAvatar, lastLoginAt: null },
+    permissions: [],
+  }]);
+  try {
+    const result = await listCollaborators(actorId, businessId);
+    assert.equal(result[0].user.avatarUrl, `/api/v1/businesses/${businessId}/collaborators/${actorId}/avatar?v=22222222-2222-2222-2222-222222222222`);
+  } finally { restoreMembership(); restoreRows(); }
 });
