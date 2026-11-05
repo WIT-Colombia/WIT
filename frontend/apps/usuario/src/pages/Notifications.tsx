@@ -139,6 +139,9 @@ export default function Notifications() {
     setApiError("");
     try {
       await respondToCollaboratorInvitation(item.invitation.membershipId, accept);
+      // Legacy invitations did not store a membership link: mark this inbox
+      // entry as read even though the membership action already succeeded.
+      try { await markRemoteNotificationRead(item.id); } catch { /* The membership response succeeded. */ }
       setNotifications(current => current.map(notification => notification.id === item.id
         ? { ...notification, read: true, invitation: notification.invitation ? { ...notification.invitation, status: accept ? ("ACTIVE" as const) : ("REJECTED" as const) } : null }
         : notification));
