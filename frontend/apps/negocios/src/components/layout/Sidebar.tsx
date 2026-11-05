@@ -1,4 +1,4 @@
-import xamukoLogo from "../../assets/XAMUKO-V1-transparent.avif";
+import xamukoLogo from "../../assets/XAMUKO-V1-transparent.png";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useBusinessAuth } from "../../services/businessAuthContext";
