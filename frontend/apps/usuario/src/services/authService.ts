@@ -1,4 +1,4 @@
-import { ApiError, requestJson } from "./httpClient";
+import { ApiError, configureSession, requestJson } from "./httpClient";
 import { buildApiUrl } from "@wit/utils";
 
 export type AuthUser = {
@@ -32,6 +32,7 @@ type MessageResponse = { message: string };
 
 let accessToken: string | null = null;
 let refreshInFlight: Promise<AuthUser> | null = null;
+configureSession(() => accessToken, refreshSession);
 const REMEMBER_SESSION_KEY = "wit-auth-remember-session";
 const LAST_EMAIL_KEY = "wit-auth-last-email";
 

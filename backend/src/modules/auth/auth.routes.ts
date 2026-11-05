@@ -46,8 +46,10 @@ const loginAccountRateLimit = rateLimit({
 });
 authRouter.post('/register', authRateLimit, requireTrustedOrigin, registerController);
 authRouter.post('/login', loginAccountRateLimit, loginRateLimit, requireTrustedOrigin, loginController);
-authRouter.post('/refresh', authRateLimit, requireTrustedOrigin, refreshController);
-authRouter.post('/logout', authRateLimit, requireTrustedOrigin, logoutController);
+// Restoring a valid session is not a login attempt. Keep a separate abuse limit.
+const refreshRateLimit = rateLimit({ windowMs: 60 * 1000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false });
+authRouter.post('/refresh', refreshRateLimit, requireTrustedOrigin, refreshController);
+authRouter.post('/logout', requireTrustedOrigin, logoutController);
 authRouter.get('/me', requireAuth, meController);
 authRouter.get('/me/avatar', requireAuth, ownAvatarController);
 authRouter.post('/me/avatar', requireAuth, requireTrustedOrigin, avatarUpload.single('file'), uploadAvatarController);

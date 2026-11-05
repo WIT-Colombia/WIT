@@ -36,8 +36,9 @@ configureUnauthorizedHandler(async () => {
   try {
     await refreshSession();
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    // A failed connection or rate limit is not proof of a revoked session.
+    throw error;
   }
 });
 

@@ -69,7 +69,11 @@ async function requestJsonInternal<T>(path: string, init: RequestInit, retryUnau
 
   if (response.status === 401 && retryUnauthorized && unauthorizedHandler && !/^\/auth\//.test(path)) {
     const refreshed = await unauthorizedHandler();
-    if (refreshed) return requestJsonInternal<T>(path, init, false);
+    if (refreshed) {
+      const retryHeaders = new Headers(init.headers);
+      retryHeaders.delete("Authorization");
+      return requestJsonInternal<T>(path, { ...init, headers: retryHeaders }, false);
+    }
   }
 
   if (!response.ok) {
