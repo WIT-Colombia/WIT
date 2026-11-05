@@ -192,4 +192,3 @@ export async function deleteNotification(userId: string, id: string) {
   return { deleted: true };
 }
 export async function markNotificationRead(userId: string,id:string) { const notification=await prisma.businessNotification.findFirst({where:{id,userId},select:{id:true,readAt:true}});if(!notification)throw new AppError(404,'NOTIFICATION_NOT_FOUND','Notificación no encontrada.');if(!notification.readAt)await prisma.businessNotification.update({where:{id},data:{readAt:new Date()}});return {ok:true}; }
-export async function deleteNotification(userId: string, id: string) { if (!/^[0-9a-f-]{20,}$/i.test(id)) throw new AppError(400, 'NOTIFICATION_ID_INVALID', 'Identificador de notificación no válido.'); await prisma.businessNotification.deleteMany({ where: { id, userId } }); return { ok: true }; }
