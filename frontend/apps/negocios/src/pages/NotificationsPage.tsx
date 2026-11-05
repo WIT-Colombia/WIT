@@ -152,13 +152,9 @@ export function NotificationsPage() {
   const selectPersistedNotification = (item: PersistedBusinessNotification) => {
     setSelectedNotificationKey(notificationKey("persisted", item.id));
     if (!item.readAt) {
-      void businessApi.markBusinessNotificationRead(item.id).then(() => {
-        setPersisted(current => {
-          const next = current.map(row => row.id === item.id ? { ...row, readAt: new Date().toISOString() } : row);
-          window.dispatchEvent(new CustomEvent("xamuko-notifications-updated", { detail: next.filter(row => !row.readAt).length }));
-          return next;
-        });
-      }).catch(() => setApiError("No se pudo marcar la notificación como leída."));
+      void businessApi.markBusinessNotificationRead(item.id)
+        .then(reloadPersisted)
+        .catch(() => setApiError("No se pudo marcar la notificación como leída."));
     }
   };
   const confirmDelete = async (target: DeleteTarget) => {
