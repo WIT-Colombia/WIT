@@ -1,11 +1,14 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { readFile } from 'node:fs/promises';
+import { SignJWT, jwtVerify } from 'jose';
+import { env } from '../../config/env.js';
 import { photoStoragePath } from './photo-storage.js';
 import { createUserNotification } from '../auth/user-notification.service.js';
 
 const allowedPermissions = ['MANAGE_CATALOG', 'MANAGE_PROMOTIONS', 'READ_ANALYTICS', 'EDIT_BUSINESS'] as const;
 type Permission = typeof allowedPermissions[number];
+const avatarPreviewSecret = new TextEncoder().encode(env.accessTokenSecret);
 function normalizeNickname(value: string) {
   const normalized = value.trim().toLocaleLowerCase('en-US');
   if (!/^@?[a-z0-9._-]{3,30}$/.test(normalized)) throw new AppError(400, 'INVALID_NICKNAME', 'Escribe un nickname válido.');
@@ -32,6 +35,33 @@ function collaboratorPhotoUrl(businessId: string, userId: string, avatarUrl: str
   if (avatarUrl?.startsWith('private-avatar:')) return `/api/v1/businesses/${encodeURIComponent(businessId)}/collaborators/${encodeURIComponent(userId)}/avatar`;
   return publicAvatarUrl(avatarUrl);
 }
+function privateAvatarStorageKey(value: string | null | undefined) {
+  const storageKey = value?.startsWith('private-avatar:') ? value.slice('private-avatar:'.length) : null;
+  return storageKey && /^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(storageKey) ? storageKey : null;
+}
+function avatarMimeType(storageKey: string) {
+  return storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+}
+async function readPrivateAvatar(value: string | null | undefined) {
+  const storageKey = privateAvatarStorageKey(value);
+  if (!storageKey) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
+  try { return { content: await readFile(photoStoragePath(storageKey)), mimeType: avatarMimeType(storageKey) }; }
+  catch { throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.'); }
+}
+async function createAvatarPreviewToken(actorId: string, businessId: string, userId: string, publicId: string) {
+  return new SignJWT({ typ: 'COLLABORATOR_AVATAR_PREVIEW', businessId, userId, publicId })
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+    .setSubject(actorId)
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .sign(avatarPreviewSecret);
+}
+async function verifyAvatarPreviewToken(token: string, actorId: string, businessId: string, userId: string, publicId: string) {
+  try {
+    const { payload } = await jwtVerify(token, avatarPreviewSecret, { algorithms: ['HS256'] });
+    if (payload.typ !== 'COLLABORATOR_AVATAR_PREVIEW' || payload.sub !== actorId || payload.businessId !== businessId || payload.userId !== userId || payload.publicId !== publicId) throw new Error('AVATAR_PREVIEW_SCOPE_INVALID');
+  } catch { throw new AppError(403, 'AVATAR_PREVIEW_FORBIDDEN', 'No tienes autorización para consultar esta fotografía.'); }
+}
 async function owner(userId: string, businessId: string) {
   const m = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId } } });
   if (!m || m.role !== 'OWNER' || m.status !== 'ACTIVE') throw new AppError(403, 'OWNER_REQUIRED', 'Solo el propietario puede administrar colaboradores.');
@@ -52,11 +82,15 @@ export async function listCollaborators(actorId: string, businessId: string) {
 export async function readCollaboratorAvatar(actorId: string, businessId: string, targetUserId: string) {
   await owner(actorId, businessId);
   const membership = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId: targetUserId } }, select: { status: true, user: { select: { avatarUrl: true } } } });
-  const storageKey = membership && ['ACTIVE', 'SUSPENDED'].includes(membership.status) && membership.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
-  if (!storageKey || !/^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(storageKey)) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
-  try {
-    return { content: await readFile(photoStoragePath(storageKey)), mimeType: storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
-  } catch { throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.'); }
+  if (!membership || !['ACTIVE', 'SUSPENDED'].includes(membership.status)) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
+  return readPrivateAvatar(membership.user.avatarUrl);
+}
+export async function readCollaboratorRecipientAvatar(actorId: string, businessId: string, publicId: string, token: string) {
+  await owner(actorId, businessId);
+  const user = await prisma.user.findUnique({ where: { publicId }, select: { id: true, status: true, avatarUrl: true } });
+  if (!user || user.status !== 'ACTIVE') throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
+  await verifyAvatarPreviewToken(token, actorId, businessId, user.id, publicId);
+  return readPrivateAvatar(user.avatarUrl);
 }
 async function findCollaboratorRecipient(actorId: string, businessId: string, identifier: string) {
   await owner(actorId, businessId);
@@ -70,8 +104,12 @@ async function findCollaboratorRecipient(actorId: string, businessId: string, id
   return recipient;
 }
 export async function resolveCollaboratorRecipient(actorId: string, businessId: string, identifier: string) {
-  const { id: _id, ...publicRecipient } = await findCollaboratorRecipient(actorId, businessId, identifier);
-  return publicRecipient;
+  const recipient = await findCollaboratorRecipient(actorId, businessId, identifier);
+  const avatarUrl = recipient.avatarUrl?.startsWith('private-avatar:')
+    ? `/api/v1/businesses/${encodeURIComponent(businessId)}/collaborators/recipient/${encodeURIComponent(recipient.publicId)}/avatar?token=${encodeURIComponent(await createAvatarPreviewToken(actorId, businessId, recipient.id, recipient.publicId))}`
+    : publicAvatarUrl(recipient.avatarUrl);
+  const { id: _id, avatarUrl: _storedAvatar, ...publicRecipient } = recipient;
+  return { ...publicRecipient, avatarUrl };
 }
 export async function inviteCollaborator(actorId: string, businessId: string, identifier: string, requestedPermissions: string[]) {
   const permissions = validatedPermissions(requestedPermissions);
