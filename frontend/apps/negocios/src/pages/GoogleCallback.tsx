@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useBusinessAuth } from "../services/businessAuthContext";
-import { resolveBusinessNext } from "../services/businessAuthService";
 import { BusinessApiError } from "../services/businessApiClient";
 
 const messages: Record<string, string> = {
@@ -20,7 +19,6 @@ export default function GoogleCallback() {
   const { refresh } = useBusinessAuth();
   const [error, setError] = useState("");
   const providerError = params.get("error");
-  const next = params.get("next");
 
   useEffect(() => {
     let active = true;
@@ -32,7 +30,7 @@ export default function GoogleCallback() {
       .then((state) => {
         if (!active) return;
         if (state.status !== "authenticated") throw new Error("SESSION_NOT_RESTORED");
-        navigate(resolveBusinessNext(next), { replace: true });
+        navigate("/inicio", { replace: true });
       })
       .catch((caught: unknown) => {
         if (!active) return;
