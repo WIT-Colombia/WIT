@@ -84,7 +84,7 @@ export function getMatchingReportCount(targetType: UserReport["targetType"], tar
   return getUserReports().filter((report) => report.targetType === targetType && report.targetId === targetId && report.category === category).length;
 }
 
-export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean };
+export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean; imageUrl?: string | null };
 const defaultNotifications: UserNotification[] = [
   { id: "welcome", title: "Te damos la bienvenida a XAMUKO", body: "Empieza buscando eso que necesitas cerca de ti.", date: "Hoy", read: false },
 ];
