@@ -182,4 +182,13 @@ export async function listNotifications(userId: string) {
       : {}),
   }));
 }
+/**
+ * Remove only the authenticated recipient's inbox entry. The related
+ * membership, invitation and ownership-transfer workflows are untouched.
+ */
+export async function deleteNotification(userId: string, id: string) {
+  const deleted = await prisma.businessNotification.deleteMany({ where: { id, userId } });
+  if (!deleted.count) throw new AppError(404, 'NOTIFICATION_NOT_FOUND', 'Notificación no encontrada.');
+  return { deleted: true };
+}
 export async function markNotificationRead(userId: string,id:string) { const notification=await prisma.businessNotification.findFirst({where:{id,userId},select:{id:true,readAt:true}});if(!notification)throw new AppError(404,'NOTIFICATION_NOT_FOUND','Notificación no encontrada.');if(!notification.readAt)await prisma.businessNotification.update({where:{id},data:{readAt:new Date()}});return {ok:true}; }
