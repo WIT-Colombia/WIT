@@ -337,6 +337,7 @@ model User {
   createdBusinesses           Business[]                 @relation("BusinessCreator")
   memberships                 BusinessMembership[]
   notifications               BusinessNotification[]
+  userNotifications           UserNotification[]
   requestedTransfers          OwnershipTransfer[]        @relation("TransferFromUser")
   receivedTransfers           OwnershipTransfer[]        @relation("TransferToUser")
   requestedVisibilityPeriods  BusinessVisibilityPeriod[] @relation("VisibilityRequester")
@@ -364,6 +365,17 @@ model User {
   reviewedBrandClaims         BusinessClaim[]            @relation("BrandClaimReviewer")
 
   @@index([status])
+}
+
+model UserNotification {
+  id        String   @id @default(uuid()) @db.Char(36)
+  userId    String   @db.Char(36)
+  title     String   @db.VarChar(180)
+  body      String   @db.VarChar(500)
+  readAt    DateTime? @db.DateTime(3)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, readAt, createdAt])
 }
 
 model AdminRoleAssignment {

@@ -180,3 +180,7 @@ export async function getPreferredLocation(): Promise<PreferredLocation | null> 
 export async function savePreferredLocation(input: Omit<PreferredLocation, "updatedAt"> & { clientUpdatedAt?: number }): Promise<PreferredLocation | null> {
   return (await requestWithSession<{ location: PreferredLocation | null }>("/api/v1/auth/me/location", { method: "PUT", body: JSON.stringify(input) })).location;
 }
+export type RemoteUserNotification = { id: string; title: string; body: string; readAt: string | null; createdAt: string };
+export async function getRemoteNotifications(): Promise<RemoteUserNotification[]> { return (await requestWithSession<{ notifications: RemoteUserNotification[] }>("/api/v1/notifications")).notifications; }
+export async function markRemoteNotificationRead(id: string): Promise<void> { await requestWithSession(`/api/v1/notifications/${encodeURIComponent(id)}/read`, { method: "POST" }); }
+export async function deleteRemoteNotification(id: string): Promise<void> { await requestWithSession(`/api/v1/notifications/${encodeURIComponent(id)}`, { method: "DELETE" }); }

@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { requireAuth } from '../../shared/middleware/require-auth.js';
+import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
+import { deleteUserNotification, listUserNotifications, markUserNotificationRead } from './user-notification.service.js';
+const uid = (req: any) => req.auth.userId as string;
+export const userNotificationRouter = Router();
+userNotificationRouter.use(requireAuth);
+userNotificationRouter.get('/', async (req, res, next) => { try { res.json({ notifications: await listUserNotifications(uid(req)) }); } catch (e) { next(e); } });
+userNotificationRouter.post('/:notificationId/read', requireTrustedOrigin, async (req, res, next) => { try { res.json(await markUserNotificationRead(uid(req), String(req.params.notificationId))); } catch (e) { next(e); } });
+userNotificationRouter.delete('/:notificationId', requireTrustedOrigin, async (req, res, next) => { try { res.json(await deleteUserNotification(uid(req), String(req.params.notificationId))); } catch (e) { next(e); } });
