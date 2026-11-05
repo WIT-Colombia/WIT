@@ -181,12 +181,24 @@ export default function Notifications() {
     {apiError && <p className="notification-page-alert" role="alert">{apiError}</p>}
     {notifications.length ? <>
       <div className="notification-list">
-        {visibleNotifications.map((item) => <div className={`notification-item${item.read ? " is-read" : ""}${selectedId === item.id ? " is-selected" : ""}`} key={item.id}>
+        {visibleNotifications.map((item) => <div className={`notification-item${item.read ? " is-read" : ""}${selectedId === item.id ? " is-selected" : ""}${item.invitation ? " has-invitation" : ""}`} key={item.id}>
           <button type="button" className="notification-main-action" onClick={() => void markRead(item)}>
             <NotificationAvatar notification={item} />
             <span className="notification-copy"><b>{item.title}</b><small>{item.body}</small><time>{item.date}</time></span>
             {!item.read && <i aria-label="Sin leer" />}
           </button>
+          {item.invitation && <div className="notification-invitation-controls" role="group" aria-label="Estado y respuesta de invitación">
+            {item.invitation.status === "INVITED" ? (
+              pendingInvitationResponse?.id === item.id ? <>
+                <span className="notification-invitation-question">{pendingInvitationResponse.accept ? "¿Aceptar esta invitación para colaborar?" : "¿Rechazar esta invitación para colaborar?"}</span>
+                <button type="button" className="notification-invitation-primary" disabled={busyInvitationId !== null} onClick={() => void respondInvitation(item, pendingInvitationResponse.accept)}>{busyInvitationId === item.id ? "Procesando…" : pendingInvitationResponse.accept ? "Sí, aceptar" : "Sí, rechazar"}</button>
+                <button type="button" className="notification-invitation-secondary" disabled={busyInvitationId !== null} onClick={() => setPendingInvitationResponse(null)}>Cancelar</button>
+              </> : <>
+                <button type="button" className="notification-invitation-primary" disabled={busyInvitationId !== null} onClick={() => setPendingInvitationResponse({ id: item.id, accept: true })}>Aceptar invitación</button>
+                <button type="button" className="notification-invitation-secondary" disabled={busyInvitationId !== null} onClick={() => setPendingInvitationResponse({ id: item.id, accept: false })}>Rechazar invitación</button>
+              </>
+            ) : <span className="notification-invitation-status" aria-live="polite">{invitationStateLabel[item.invitation.status] ?? "Invitación procesada"}</span>}
+          </div>}
           {selectedId === item.id && <span className="notification-actions">
             <button type="button" className="notification-delete" aria-label={`Eliminar ${item.title}`} onClick={(event) => { event.stopPropagation(); setPendingDeleteId(item.id); }}>×</button>
             {pendingDeleteId === item.id && <span className="notification-delete-confirm">¿Eliminarla? <button type="button" onClick={() => void removeNotification(item)}>Sí</button><button type="button" onClick={() => setPendingDeleteId(null)}>No</button></span>}
