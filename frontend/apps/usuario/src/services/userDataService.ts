@@ -1,5 +1,6 @@
 import { products, services, type Review } from "../data/mockData";
 import xamukoLogoMark from "../assets/XAMUKO-mark.png";
+import type { CollaboratorInvitation } from "./authService";
 
 const FAVORITES_KEY = "wit-favorites";
 const LIKES_KEY = "wit-likes";
@@ -86,7 +87,7 @@ export function getMatchingReportCount(targetType: UserReport["targetType"], tar
   return getUserReports().filter((report) => report.targetType === targetType && report.targetId === targetId && report.category === category).length;
 }
 
-export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean; imageUrl?: string | null; imageAlt?: string | null; source?: "local" | "remote" };
+export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean; imageUrl?: string | null; imageAlt?: string | null; source?: "local" | "remote"; invitation?: CollaboratorInvitation | null };
 const defaultNotifications: UserNotification[] = [
   { id: "welcome", title: "Te damos la bienvenida a XAMUKO", body: "Empieza buscando eso que necesitas cerca de ti.", date: "Hoy", read: false, imageUrl: xamukoLogoMark, imageAlt: "Logo XAMUKO" },
 ];
