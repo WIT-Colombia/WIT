@@ -35,8 +35,7 @@ export async function listCollaborators(actorId: string, businessId: string) {
   const now = new Date();
   return rows.map(row => {
     const status = row.status === 'INVITED' && row.expiresAt && row.expiresAt <= now ? 'EXPIRED' as const : row.status;
-    const canShowAvatar = status === 'ACTIVE' || status === 'SUSPENDED';
-    const avatarUrl = canShowAvatar && row.user.avatarUrl?.startsWith('private-avatar:') ? `/api/v1/businesses/${businessId}/collaborators/${row.user.id}/avatar` : canShowAvatar ? row.user.avatarUrl : null;
+    const avatarUrl = collaboratorPhotoUrl(businessId, row.user.id, row.user.avatarUrl);
     return { ...row, status, user: { ...row.user, avatarUrl } };
   });
 }
@@ -44,7 +43,7 @@ export async function listCollaborators(actorId: string, businessId: string) {
 export async function readCollaboratorAvatar(actorId: string, businessId: string, targetUserId: string) {
   await owner(actorId, businessId);
   const membership = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId: targetUserId } }, select: { status: true, user: { select: { avatarUrl: true } } } });
-  const storageKey = membership && ['ACTIVE', 'REJECTED'].includes(membership.status) && membership.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
+  const storageKey = membership?.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
   if (!storageKey || !/^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(storageKey)) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
   return { content: await readFile(photoStoragePath(storageKey)), mimeType: storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
 }
