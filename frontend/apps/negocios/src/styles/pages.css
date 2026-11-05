@@ -26,7 +26,7 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 /* Temporary notification reset: the welcome card uses the XAMUKO mark. */
-.notifications-card .notification-brand-logo{box-sizing:border-box;padding:6px;background:#0f2747}
+.notifications-card .notification-brand-logo{box-sizing:border-box;padding:6px;border:1px solid #e5eaf3;background:#fff}
 .notifications-card .notification-brand-logo img{width:100%;height:100%;object-fit:contain}
 
 /* Business notifications use the same approved visual treatment as Usuario. */
@@ -44,7 +44,7 @@
 .business-notifications-card .notification-row.unread{border-color:#d8ccff;background:linear-gradient(105deg,#fff 0%,#faf8ff 100%);box-shadow:0 16px 38px rgba(83,61,170,.19),0 0 0 1px rgba(123,63,251,.1)}
 .business-notifications-card .notification-row.unread:hover{box-shadow:0 20px 44px rgba(83,61,170,.23),0 0 0 1px rgba(123,63,251,.14)}
 .business-notifications-card .notification-row>.notification-icon{flex:0 0 40px;width:40px;height:40px;margin-right:13px;border-radius:13px;background:linear-gradient(145deg,#eee8ff,#def9ff);color:#7b3ffb;font-size:18px}
-.business-notifications-card .notification-brand-logo{box-sizing:border-box;padding:5px;background:#0f2747}
+.business-notifications-card .notification-brand-logo{box-sizing:border-box;padding:5px;border:1px solid #e5eaf3;background:#fff}
 .business-notifications-card .notification-brand-logo img{width:100%;height:100%;object-fit:contain}
 .business-notifications-card .notification-row>div:nth-child(2){flex:1;min-width:0}
 .business-notifications-card .notification-title h2{margin:0;color:#11194b;font-size:13px}

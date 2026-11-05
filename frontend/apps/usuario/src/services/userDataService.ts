@@ -1,5 +1,5 @@
 import { products, services, type Review } from "../data/mockData";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
+import xamukoLogoMark from "../assets/XAMUKO-mark.png";
 
 const FAVORITES_KEY = "wit-favorites";
 const LIKES_KEY = "wit-likes";
@@ -87,14 +87,14 @@ export function getMatchingReportCount(targetType: UserReport["targetType"], tar
 
 export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean; imageUrl?: string | null; imageAlt?: string | null; source?: "local" | "remote" };
 const defaultNotifications: UserNotification[] = [
-  { id: "welcome", title: "Te damos la bienvenida a XAMUKO", body: "Empieza buscando eso que necesitas cerca de ti.", date: "Hoy", read: false, imageUrl: xamukoLogo, imageAlt: "XAMUKO" },
+  { id: "welcome", title: "Te damos la bienvenida a XAMUKO", body: "Empieza buscando eso que necesitas cerca de ti.", date: "Hoy", read: false, imageUrl: xamukoLogoMark, imageAlt: "Logo XAMUKO" },
 ];
 export function getNotifications(): UserNotification[] {
   try {
     const saved = localStorage.getItem(NOTIFICATIONS_KEY);
     const parsed = saved ? JSON.parse(saved) as UserNotification[] : [];
     const savedWelcome = parsed.find((notification) => notification.id === "welcome");
-    const welcome = { ...defaultNotifications[0], ...savedWelcome, imageUrl: xamukoLogo, imageAlt: "XAMUKO" };
+    const welcome = { ...defaultNotifications[0], ...savedWelcome, imageUrl: xamukoLogoMark, imageAlt: "Logo XAMUKO" };
     const next = [welcome];
     if (JSON.stringify(parsed) !== JSON.stringify(next)) localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next));
     return next;

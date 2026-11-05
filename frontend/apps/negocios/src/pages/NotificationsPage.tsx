@@ -4,7 +4,7 @@ import { businessApi, type PersistedBusinessNotification } from "../services/bus
 import { toBusinessDetails } from "../services/realBusinessAdapter";
 import { useBusinessAuth } from "../services/businessAuthContext";
 import { rememberBusinessNotificationDismissal } from "../services/notificationDismissal";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.avif";
+import xamukoLogoMark from "../assets/XAMUKO-mark.png";
 
 const icons = { review: "☆", interest: "↗", profile: "▣", wit: "✦", admin: "✉", offer: "✦", security: "✓", collaboration: "♙" };
 const permissionLabels: Record<string, string> = {
@@ -191,7 +191,7 @@ export function NotificationsPage() {
           </div>
         </article>;
       })}
-      {visible.map(item => <article className={`notification-row ${item.read ? "is-read" : "unread"}`} key={item.id} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }}><span className={`notification-icon ${item.type}${item.id === "welcome" ? " notification-brand-logo" : ""}`}>{item.id === "welcome" ? <img src={xamukoLogo} alt="XAMUKO" /> : icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2></div><p>{item.description}</p><small>{item.date}</small></div><div className="notification-actions"><NotificationDeleteAction title={item.title} confirming={confirmingDelete("local", item.id)} busy={deleting("local", item.id)} onRequest={() => setPendingDelete({ source: "local", id: item.id })} onConfirm={() => void confirmDelete({ source: "local", id: item.id })} onCancel={() => setPendingDelete(null)}/></div></article>)}
+      {visible.map(item => <article className={`notification-row ${item.read ? "is-read" : "unread"}`} key={item.id} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }}><span className={`notification-icon ${item.type}${item.id === "welcome" ? " notification-brand-logo" : ""}`}>{item.id === "welcome" ? <img src={xamukoLogoMark} alt="Logo XAMUKO" /> : icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2></div><p>{item.description}</p><small>{item.date}</small></div><div className="notification-actions"><NotificationDeleteAction title={item.title} confirming={confirmingDelete("local", item.id)} busy={deleting("local", item.id)} onRequest={() => setPendingDelete({ source: "local", id: item.id })} onConfirm={() => void confirmDelete({ source: "local", id: item.id })} onCancel={() => setPendingDelete(null)}/></div></article>)}
       {!visiblePersisted.length && !visible.length && <div className="empty-state"><span>✓</span><h2>Todo al día</h2><p>No tienes notificaciones en tu bandeja.</p></div>}
     </section>
   </div>;
