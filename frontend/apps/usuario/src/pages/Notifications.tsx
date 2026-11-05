@@ -4,6 +4,16 @@ import { deleteNotification, getNotifications, markAllNotificationsRead, markNot
 import { PageLayout } from "../components/PageLayout";
 import "./Notifications.css";
 
+function NotificationAvatar({ notification }: { notification: UserNotification }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const imageUrl = notification.imageUrl?.trim() || null;
+  return <span className={`notification-icon${imageUrl && !imageFailed ? " notification-icon--profile" : ""}`}>
+    {imageUrl && !imageFailed
+      ? <img src={imageUrl} alt={notification.imageAlt ?? ""} loading="lazy" onError={() => setImageFailed(true)} />
+      : <span aria-hidden="true">✦</span>}
+  </span>;
+}
+
 export default function Notifications() {
   const [notifications, setNotifications] = useState<UserNotification[]>(getNotifications);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -11,7 +21,42 @@ export default function Notifications() {
   const [deleted, setDeleted] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
   const unread = notifications.filter((item) => !item.read).length;
-  useEffect(() => { if (!deleted) return; const timeout = window.setTimeout(() => setDeleted(false), 3000); return () => window.clearTimeout(timeout); }, [deleted]);
+  useEffect(() => {
+    if (!deleted) return;
+    const timeout = window.setTimeout(() => setDeleted(false), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [deleted]);
   const visibleNotifications = notifications.slice(0, visibleCount);
-  return <PageLayout className="notifications-page"><Link className="offer-detail-back" to="/profile">← Volver al perfil</Link><div className="notifications-heading"><div className="user-page-heading"><span>Tu actividad en XAMUKO</span><h1>Notificaciones</h1><span className="notification-unread-count">{unread} {unread === 1 ? "pendiente" : "pendientes"} por leer</span>{deleted && <p className="notification-success" role="status">La notificación se eliminó correctamente.</p>}</div>{unread > 0 && <button type="button" onClick={() => setNotifications(markAllNotificationsRead())}>Marcar todas como leídas</button>}</div>{notifications.length ? <><div className="notification-list">{visibleNotifications.map((item) => <div className={`notification-item${item.read ? " is-read" : ""}${selectedId === item.id ? " is-selected" : ""}`} key={item.id}><button type="button" className="notification-main-action" onClick={() => { setSelectedId(item.id); setNotifications(markNotificationRead(item.id)); }}><span className="notification-icon">{item.imageUrl ? <img src={item.imageUrl} alt="" onError={(event) => { event.currentTarget.style.display = "none"; }} /> : "✦"}</span><span className="notification-copy"><b>{item.title}</b><small>{item.body}</small><time>{item.date}</time></span>{!item.read && <i aria-label="Sin leer"/>}</button>{selectedId === item.id && <span className="notification-actions"><button type="button" className="notification-delete" aria-label={`Eliminar ${item.title}`} onClick={(event) => { event.stopPropagation(); setPendingDeleteId(item.id); }}>×</button>{pendingDeleteId === item.id && <span className="notification-delete-confirm">¿Eliminarla? <button type="button" onClick={() => { deleteNotification(item.id); setPendingDeleteId(null); setSelectedId(null); setDeleted(true); setNotifications((current) => current.filter((notification) => notification.id !== item.id)); }}>Sí</button><button type="button" onClick={() => setPendingDeleteId(null)}>No</button></span>}</span>}</div>)}</div>{notifications.length > 10 && <div className="notifications-pagination">{visibleCount < notifications.length ? <button type="button" onClick={() => setVisibleCount((current) => Math.min(current + 10, notifications.length))}>Ver más notificaciones <span>→</span></button> : <button type="button" onClick={() => { setVisibleCount(10); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Volver arriba <span>↑</span></button>}</div>}</> : <div className="user-empty-state"><h2>No tienes notificaciones</h2><p>Cuando haya novedades, aparecerán aquí.</p><Link to="/home">Ir al inicio</Link></div>}</PageLayout>;
+
+  return <PageLayout className="notifications-page">
+    <Link className="offer-detail-back" to="/profile">← Volver al perfil</Link>
+    <div className="notifications-heading">
+      <div className="user-page-heading">
+        <span>Tu actividad en XAMUKO</span>
+        <h1>Notificaciones</h1>
+        <span className="notification-unread-count">{unread} {unread === 1 ? "pendiente" : "pendientes"} por leer</span>
+        {deleted && <p className="notification-success" role="status">La notificación se eliminó correctamente.</p>}
+      </div>
+      {unread > 0 && <button type="button" onClick={() => setNotifications(markAllNotificationsRead())}>Marcar todas como leídas</button>}
+    </div>
+    {notifications.length ? <>
+      <div className="notification-list">
+        {visibleNotifications.map((item) => <div className={`notification-item${item.read ? " is-read" : ""}${selectedId === item.id ? " is-selected" : ""}`} key={item.id}>
+          <button type="button" className="notification-main-action" onClick={() => { setSelectedId(item.id); setNotifications(markNotificationRead(item.id)); }}>
+            <NotificationAvatar notification={item} />
+            <span className="notification-copy"><b>{item.title}</b><small>{item.body}</small><time>{item.date}</time></span>
+            {!item.read && <i aria-label="Sin leer" />}
+          </button>
+          {selectedId === item.id && <span className="notification-actions">
+            <button type="button" className="notification-delete" aria-label={`Eliminar ${item.title}`} onClick={(event) => { event.stopPropagation(); setPendingDeleteId(item.id); }}>×</button>
+            {pendingDeleteId === item.id && <span className="notification-delete-confirm">¿Eliminarla? <button type="button" onClick={() => { deleteNotification(item.id); setPendingDeleteId(null); setSelectedId(null); setDeleted(true); setNotifications((current) => current.filter((notification) => notification.id !== item.id)); }}>Sí</button><button type="button" onClick={() => setPendingDeleteId(null)}>No</button></span>}
+          </span>}
+        </div>)}
+      </div>
+      {notifications.length > 10 && <div className="notifications-pagination">{visibleCount < notifications.length
+        ? <button type="button" onClick={() => setVisibleCount((current) => Math.min(current + 10, notifications.length))}>Ver más notificaciones <span>→</span></button>
+        : <button type="button" onClick={() => { setVisibleCount(10); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Volver arriba <span>↑</span></button>}
+      </div>}
+    </> : <div className="user-empty-state"><h2>No tienes notificaciones</h2><p>Cuando haya novedades, aparecerán aquí.</p><Link to="/home">Ir al inicio</Link></div>}
+  </PageLayout>;
 }

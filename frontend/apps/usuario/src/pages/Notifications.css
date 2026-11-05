@@ -46,6 +46,10 @@
 .notifications-page .notifications-pagination button:hover{background:var(--xamuko-violet);color:#fff;transform:translateY(-1px)}
 .notifications-page .notifications-pagination span{font-size:16px;line-height:10px}
 
+/* Keep unread Usuario notifications as visually prominent as Business notifications. */
+.notifications-page .notification-item:not(.is-read){box-shadow:0 16px 38px rgba(83,61,170,.19),0 0 0 1px rgba(123,63,251,.1)}
+.notifications-page .notification-item:not(.is-read):hover{box-shadow:0 20px 44px rgba(83,61,170,.23),0 0 0 1px rgba(123,63,251,.14)}
+
 @media(max-width:700px){
  .notifications-page .user-content-main{width:calc(100% - 32px);padding-top:22px}
  .notifications-page .offer-detail-back{margin-bottom:19px}
