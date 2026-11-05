@@ -1344,3 +1344,7 @@
   .notifications-card .notification-row.is-transfer-notification>div:nth-child(2){padding-right:100px}
   .notifications-card .notification-row.is-transfer-notification .notification-title .transfer-state{position:absolute;top:50%;right:64px;z-index:1;min-width:80px;margin:0;transform:translateY(-50%)}
 }
+
+/* Match Usuario: hovering a card keeps its own read/unread surface color. */
+.notifications-card .notification-row:not(.is-selected):hover{background:#fff}
+.notifications-card .notification-row.unread:not(.is-selected):hover{background:linear-gradient(105deg,#fff 0%,#faf8ff 100%)}
