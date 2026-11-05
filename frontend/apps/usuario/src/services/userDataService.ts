@@ -7,6 +7,7 @@ const REVIEWS_KEY = "wit-user-reviews";
 const NEEDS_KEY = "wit-user-needs";
 const REPORTS_KEY = "wit-user-reports";
 const NOTIFICATIONS_KEY = "wit-notifications";
+const WELCOME_DISMISSED_KEY = "wit-notifications-welcome-dismissed";
 const PROFILE_KEY = "wit-profile";
 const SETTINGS_KEY = "wit-settings";
 const RATINGS_KEY = "wit-user-ratings";
@@ -91,6 +92,7 @@ const defaultNotifications: UserNotification[] = [
 ];
 export function getNotifications(): UserNotification[] {
   try {
+    if (localStorage.getItem(WELCOME_DISMISSED_KEY) === "1") return [];
     const saved = localStorage.getItem(NOTIFICATIONS_KEY);
     const parsed = saved ? JSON.parse(saved) as UserNotification[] : [];
     const savedWelcome = parsed.find((notification) => notification.id === "welcome");
@@ -111,6 +113,7 @@ export function markAllNotificationsRead(): UserNotification[] {
   return next;
 }
 export function deleteNotification(id: string): UserNotification[] {
+  if (id === "welcome") localStorage.setItem(WELCOME_DISMISSED_KEY, "1");
   const next = getNotifications().filter((notification) => notification.id !== id);
   localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next));
   return next;
