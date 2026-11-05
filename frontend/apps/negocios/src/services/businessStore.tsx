@@ -153,8 +153,36 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<BusinessNotification[]>(storedWelcomeNotifications);
   const [persistentNotificationCount, setPersistentNotificationCount] = useState(0);
   useEffect(() => {
-    setPersistentNotificationCount(0);
-  }, []);
+    if (isPreview || auth.state.status !== "authenticated") {
+      setPersistentNotificationCount(0);
+      return;
+    }
+    let active = true;
+    const refresh = () => {
+      void businessApi.listBusinessNotifications()
+        .then(({ notifications: rows }) => {
+          if (active) setPersistentNotificationCount(rows.filter(item => !item.readAt).length);
+        })
+        .catch(() => { /* Preserve the previous count when the API is unavailable. */ });
+    };
+    const onUpdated = (event: Event) => {
+      const count = (event as CustomEvent<number>).detail;
+      if (active && typeof count === "number") setPersistentNotificationCount(count);
+    };
+    const refreshIfVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    refresh();
+    const timer = window.setInterval(refreshIfVisible, 30_000);
+    window.addEventListener("focus", refreshIfVisible);
+    window.addEventListener("xamuko-notifications-updated", onUpdated);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshIfVisible);
+      window.removeEventListener("xamuko-notifications-updated", onUpdated);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [auth.state.status, isPreview, userId]);
   useEffect(() => {
     if (!isPreview) return;
     try { localStorage.setItem("wit-negocios-demo:items", JSON.stringify(items)); } catch { /* La vista previa continúa funcionando sin almacenamiento local. */ }
