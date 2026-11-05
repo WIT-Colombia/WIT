@@ -45,7 +45,7 @@ export async function requireAdminSession(request: Request): Promise<{ userId: s
     if (!csrf || !supplied || Buffer.byteLength(csrf) !== Buffer.byteLength(supplied) || !timingSafeEqual(Buffer.from(csrf), Buffer.from(supplied))) throw new AppError(403, 'ADMIN_CSRF_INVALID', 'Verificación CSRF requerida.');
   }
   if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method) && !request.originalUrl?.endsWith('/auth/logout') && record.createdAt < new Date(Date.now() - 15 * 60 * 1000)) {
-    throw new AppError(403, 'ADMIN_REAUTH_REQUIRED', 'Confirma de nuevo Google y tu passkey para esta operación sensible.');
+    throw new AppError(403, 'ADMIN_REAUTH_REQUIRED', 'Confirma de nuevo tu identidad para esta operación sensible.');
   }
   return { userId: record.userId, csrf };
 }

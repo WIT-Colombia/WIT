@@ -96,7 +96,7 @@ export async function refresh(refreshToken: string, _requestMeta?: { userAgent?:
   const now = new Date();
   const owner = await prisma.session.findUnique({ where: { tokenHash }, select: { id: true, userId: true, revokedAt: true, expiresAt: true, user: { select: { status: true } } } });
   if (!owner || owner.revokedAt || owner.expiresAt <= now || owner.user.status !== 'ACTIVE') throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.');
-  const identities = await prisma.authIdentity.findMany({ where: { userId: owner.userId }, select: { verifiedAt: true } }).catch(() => []);
+  const identities = await prisma.authIdentity.findMany({ where: { userId: owner.userId }, select: { verifiedAt: true } });
   if (identities.every((identity) => shouldRequireEmailVerification(identity.verifiedAt, env.allowUnverifiedEmailLogin))) {
     await prisma.session.updateMany({ where: { id: owner.id, revokedAt: null }, data: { revokedAt: now } });
     throw unverifiedEmail();

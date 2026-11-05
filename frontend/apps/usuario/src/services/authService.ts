@@ -97,7 +97,7 @@ export async function login(credentials: Credentials, rememberMe = true): Promis
 
 export async function refreshSession(): Promise<AuthUser> {
   if (refreshInFlight) return refreshInFlight;
-  refreshInFlight = requestJson<AuthResponse>("/api/v1/auth/refresh", { method: "POST", body: JSON.stringify({ rememberMe: readRememberSession() }) })
+  refreshInFlight = requestJson<AuthResponse>("/api/v1/auth/refresh", { method: "POST", body: "{}" })
     .then((result) => { accessToken = result.accessToken; return result.user; })
     .finally(() => { refreshInFlight = null; });
   return refreshInFlight;
@@ -109,18 +109,13 @@ export async function restoreSession(): Promise<AuthUser> {
 }
 
 export async function getMe(): Promise<AuthUser> {
-  try {
-    return (await requestJson<{ user: AuthUser }>("/api/v1/auth/me", withAuthorization())).user;
-  } catch (error) {
-    if (!(error instanceof ApiError) || error.status !== 401) throw error;
-    const refreshed = await refreshSession();
-    return (await requestJson<{ user: AuthUser }>("/api/v1/auth/me", withAuthorization())).user ?? refreshed;
-  }
+  return (await requestJson<{ user: AuthUser }>("/api/v1/auth/me", withAuthorization())).user;
 }
 
 export async function logout(): Promise<void> {
-  try { await requestJson<void>("/api/v1/auth/logout", { method: "POST", body: "{}" }); }
-  finally {
+  await refreshInFlight?.catch(() => undefined);
+  await requestJson<void>("/api/v1/auth/logout", { method: "POST", body: "{}" });
+  {
     accessToken = null;
     window.localStorage.removeItem(REMEMBER_SESSION_KEY);
     window.localStorage.removeItem(LAST_EMAIL_KEY);

@@ -15,7 +15,6 @@ export type BusinessAuthUser = {
 
 type AuthResponse = { user: BusinessAuthUser; accessToken: string };
 type RegisterResponse = { user: BusinessAuthUser };
-type SessionPreference = { rememberMe: boolean };
 
 export type BusinessSessionState =
   | { status: "unchecked" }
@@ -44,10 +43,6 @@ configureUnauthorizedHandler(async () => {
 
 function storage(): Storage | undefined {
   return typeof window === "undefined" ? undefined : window.localStorage;
-}
-
-function readRememberMe(): boolean {
-  return storage()?.getItem(REMEMBER_SESSION_KEY) === "1";
 }
 
 function saveSessionPreference(email: string, rememberMe: boolean): void {
@@ -129,7 +124,7 @@ export async function refreshSession(): Promise<BusinessAuthUser> {
   if (Date.now() < refreshBlockedUntil && refreshBlockError) throw refreshBlockError;
   refreshInFlight = requestJson<AuthResponse>("/auth/refresh", {
     method: "POST",
-    body: JSON.stringify({ rememberMe: readRememberMe() } satisfies SessionPreference),
+    body: "{}",
   })
     .then((result) => {
       accessToken = result.accessToken;
@@ -187,9 +182,9 @@ export function startGoogleLogin(options: { returnTo?: string; consent?: boolean
 }
 
 export async function logout(): Promise<void> {
-  try {
-    await requestJson<void>("/auth/logout", { method: "POST", body: "{}" });
-  } finally {
+  await refreshInFlight?.catch(() => undefined);
+  await requestJson<void>("/auth/logout", { method: "POST", body: "{}" });
+  {
     accessToken = null;
     const localStorage = storage();
     localStorage?.removeItem(REMEMBER_SESSION_KEY);

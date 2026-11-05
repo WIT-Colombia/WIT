@@ -9,6 +9,7 @@ import { changePasswordController, confirmEmailController, confirmPasswordResetC
 import { LOGIN_ACCOUNT_WINDOW_SECONDS, LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from './auth-rate-limit-policy.js';
 
 export const authRouter = Router();
+authRouter.use((_request, response, next) => { response.setHeader('Cache-Control', 'no-store'); next(); });
 const avatarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
 const authRateLimitWindowMs = env.nodeEnv === 'development' ? 60 * 1000 : 15 * 60 * 1000;
 const authRateLimitLimit = env.nodeEnv === 'development' ? 60 : 10;
