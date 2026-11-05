@@ -64,3 +64,17 @@
  .notifications-page .notification-copy b{font-size:12px}
  .notifications-page .notification-copy small{font-size:10px}
 }
+
+/* Actionable collaboration invitations, scoped to the existing Usuario cards. */
+.notifications-page .notification-item.has-invitation{flex-wrap:wrap}
+.notifications-page .notification-item.has-invitation .notification-main-action{flex:0 0 100%;width:100%}
+.notifications-page .notification-invitation-controls{box-sizing:border-box;display:flex;flex:0 0 100%;align-items:center;flex-wrap:wrap;gap:8px;padding:0 48px 14px 70px}
+.notifications-page .notification-invitation-controls button{min-height:31px;padding:6px 11px;border-radius:8px;font:inherit;font-size:10px;font-weight:700;cursor:pointer}
+.notifications-page .notification-invitation-primary{border:1px solid #7b3ffb;background:#7b3ffb;color:#fff}
+.notifications-page .notification-invitation-secondary{border:1px solid #d9cbff;background:#fff;color:#7b3ffb}
+.notifications-page .notification-invitation-controls button:disabled{opacity:.55;cursor:wait}
+.notifications-page .notification-invitation-question{color:#475569;font-size:11px;font-weight:600}
+.notifications-page .notification-invitation-status{color:#64748b;font-size:11px;font-weight:700}
+@media(max-width:700px){
+  .notifications-page .notification-invitation-controls{gap:7px;padding:0 42px 12px 59px}
+}
