@@ -5,7 +5,6 @@ type Db = PrismaClient | Prisma.TransactionClient;
 
 export type UserNotificationInput = {
   userId: string;
-  membershipId?: string | null;
   title: string;
   body: string;
   imageUrl?: string | null;
@@ -22,49 +21,77 @@ export async function listUserNotifications(userId: string) {
     orderBy: { createdAt: 'desc' },
     take: 100,
   });
-  // Read older invitations created before membershipId was stored. Only infer
-  // a link when exactly one membership matches the recipient, message and time.
-  const unlinked = rows.filter(row => !row.membershipId && row.title === 'Invitación para colaborar');
-  const inferred = new Map<string, string>();
-  if (unlinked.length) {
-    const times = unlinked.map(row => row.createdAt.getTime());
-    const earliest = new Date(Math.min(...times) - 15_000);
-    const latest = new Date(Math.max(...times) + 15_000);
-    const candidates = await prisma.businessMembership.findMany({
-      where: { userId, role: 'COLLABORATOR', invitedAt: { gte: earliest, lte: latest } },
-      select: { id: true, invitedAt: true, business: { select: { name: true } } },
-    });
-    for (const row of unlinked) {
-      const matches = candidates.filter(candidate =>
-        row.body === `${candidate.business.name} te ha invitado a colaborar en su establecimiento.`
-        && Math.abs(row.createdAt.getTime() - candidate.invitedAt.getTime()) <= 15_000);
-      if (matches.length === 1) inferred.set(row.id, matches[0].id);
+
+  const invitationRows = rows.filter(row => row.title === 'Invitación para colaborar');
+  if (!invitationRows.length) return rows.map(row => ({ ...row, invitation: null }));
+
+  // Legacy and new invitations are both linked through the existing Business
+  // records. Require the same authenticated recipient, exact message and a
+  // close creation time so a notification cannot act on another invitation.
+  const times = invitationRows.map(row => row.createdAt.getTime());
+  const earliest = new Date(Math.min(...times) - 15_000);
+  const latest = new Date(Math.max(...times) + 15_000);
+  const records = await prisma.businessNotification.findMany({
+    where: {
+      userId,
+      type: 'COLLABORATION_INVITATION',
+      createdAt: { gte: earliest, lte: latest },
+    },
+    select: { membershipId: true, title: true, message: true, createdAt: true },
+    orderBy: { createdAt: 'desc' },
+    take: 500,
+  });
+  const invitationIds = new Map<string, string>();
+  for (const row of invitationRows) {
+    const matches = records.filter(record =>
+      record.membershipId &&
+      record.title === row.title &&
+      record.message === row.body &&
+      Math.abs(record.createdAt.getTime() - row.createdAt.getTime()) <= 15_000);
+    if (matches.length === 1 && matches[0].membershipId) {
+      invitationIds.set(row.id, matches[0].membershipId);
     }
   }
 
-  const membershipIds = rows.flatMap(row => {
-    const id = row.membershipId ?? inferred.get(row.id);
-    return id ? [id] : [];
-  });
-  const memberships = membershipIds.length
+  // A dismissed Business inbox card must not prevent a valid Usuario
+  // invitation from being acted upon. Resolve a unique matching membership.
+  const unresolved = invitationRows.filter(row => !invitationIds.has(row.id));
+  if (unresolved.length) {
+    const candidates = await prisma.businessMembership.findMany({
+      where: { userId, role: 'COLLABORATOR', invitedAt: { gte: earliest, lte: latest } },
+      select: { id: true, invitedAt: true, business: { select: { name: true } } },
+      take: 500,
+    });
+    for (const row of unresolved) {
+      const matches = candidates.filter(candidate =>
+        row.body === `${candidate.business.name} te ha invitado a colaborar en su establecimiento.` &&
+        Math.abs(row.createdAt.getTime() - candidate.invitedAt.getTime()) <= 15_000);
+      if (matches.length === 1) invitationIds.set(row.id, matches[0].id);
+    }
+  }
+
+  const ids = [...new Set(invitationIds.values())];
+  const memberships = ids.length
     ? await prisma.businessMembership.findMany({
-        where: { id: { in: membershipIds }, userId },
+        where: { id: { in: ids }, userId },
         select: { id: true, status: true, expiresAt: true },
       })
     : [];
-  const membershipById = new Map(memberships.map(membership => [membership.id, membership]));
+  const membershipById = new Map(memberships.map(item => [item.id, item]));
   const now = new Date();
 
   return rows.map(row => {
-    const membershipId = row.membershipId ?? inferred.get(row.id);
-    const membership = membershipId ? membershipById.get(membershipId) : undefined;
-    const invitation = membership ? {
-      membershipId: membership.id,
-      status: membership.status === 'INVITED' && membership.expiresAt && membership.expiresAt <= now
-        ? 'EXPIRED' : membership.status,
-      expiresAt: membership.expiresAt,
-    } : null;
-    return { ...row, invitation };
+    const id = invitationIds.get(row.id);
+    const membership = id ? membershipById.get(id) : undefined;
+    return {
+      ...row,
+      invitation: membership ? {
+        membershipId: membership.id,
+        status: membership.status === 'INVITED' && membership.expiresAt && membership.expiresAt <= now
+          ? 'EXPIRED' : membership.status,
+        expiresAt: membership.expiresAt,
+      } : null,
+    };
   });
 }
 export async function markUserNotificationRead(userId: string, id: string) {
