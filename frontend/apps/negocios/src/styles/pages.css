@@ -801,6 +801,7 @@
 .auth-form input[readonly]{border-color:#e2e8f0;background:#f1f5f9;color:#94a3b8;cursor:not-allowed}
 .auth-form input[readonly]:focus{border-color:#e2e8f0;box-shadow:none}
 .sidebar-brand{border-color:transparent!important;background:transparent!important;box-shadow:none!important}
+.sidebar-brand-artwork{display:flex;align-items:center;flex:none;min-width:0}.sidebar-brand-artwork img{display:block;width:142px;height:48px;object-fit:contain;object-position:left center;filter:none!important}
 .sidebar-brand:hover{background:transparent!important}
 .completion-card{background:#2563eb!important;color:#fff!important;border-color:#1d4ed8!important;box-shadow:0 14px 28px rgba(37,99,235,.16)!important}
 .completion-copy h2{color:#fff!important}.completion-copy p,.completion-tasks ul{color:#dbeafe!important}.completion-card .section-kicker{color:#bfdbfe!important}
