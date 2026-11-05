@@ -22,7 +22,30 @@ export async function listUserNotifications(userId: string) {
     orderBy: { createdAt: 'desc' },
     take: 100,
   });
-  const membershipIds = rows.flatMap(row => row.membershipId ? [row.membershipId] : []);
+  // Read older invitations created before membershipId was stored. Only infer
+  // a link when exactly one membership matches the recipient, message and time.
+  const unlinked = rows.filter(row => !row.membershipId && row.title === 'Invitación para colaborar');
+  const inferred = new Map<string, string>();
+  if (unlinked.length) {
+    const times = unlinked.map(row => row.createdAt.getTime());
+    const earliest = new Date(Math.min(...times) - 15_000);
+    const latest = new Date(Math.max(...times) + 15_000);
+    const candidates = await prisma.businessMembership.findMany({
+      where: { userId, role: 'COLLABORATOR', invitedAt: { gte: earliest, lte: latest } },
+      select: { id: true, invitedAt: true, business: { select: { name: true } } },
+    });
+    for (const row of unlinked) {
+      const matches = candidates.filter(candidate =>
+        row.body === `${candidate.business.name} te ha invitado a colaborar en su establecimiento.`
+        && Math.abs(row.createdAt.getTime() - candidate.invitedAt.getTime()) <= 15_000);
+      if (matches.length === 1) inferred.set(row.id, matches[0].id);
+    }
+  }
+
+  const membershipIds = rows.flatMap(row => {
+    const id = row.membershipId ?? inferred.get(row.id);
+    return id ? [id] : [];
+  });
   const memberships = membershipIds.length
     ? await prisma.businessMembership.findMany({
         where: { id: { in: membershipIds }, userId },
@@ -33,7 +56,8 @@ export async function listUserNotifications(userId: string) {
   const now = new Date();
 
   return rows.map(row => {
-    const membership = row.membershipId ? membershipById.get(row.membershipId) : undefined;
+    const membershipId = row.membershipId ?? inferred.get(row.id);
+    const membership = membershipId ? membershipById.get(membershipId) : undefined;
     const invitation = membership ? {
       membershipId: membership.id,
       status: membership.status === 'INVITED' && membership.expiresAt && membership.expiresAt <= now
