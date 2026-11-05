@@ -1394,3 +1394,10 @@
 /* Match Usuario: hovering a card keeps its own read/unread surface color. */
 .notifications-card .notification-row:not(.is-selected):hover{background:#fff}
 .notifications-card .notification-row.unread:not(.is-selected):hover{background:linear-gradient(105deg,#fff 0%,#faf8ff 100%)}
+
+/* Business notification artwork and deletion stay centered against the full card height. */
+.business-notifications-card .notification-row>.notification-icon,
+.business-notifications-card .notification-row>.notification-artwork,
+.business-notifications-card .notification-row>.notification-actions{align-self:center}
+.business-notifications-card .notification-brand-logo{display:grid;place-items:center}
+.business-notifications-card .notification-brand-logo img{display:block;object-position:center}
