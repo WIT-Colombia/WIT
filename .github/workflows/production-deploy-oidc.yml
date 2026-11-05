@@ -58,7 +58,7 @@ jobs:
           set -euo pipefail
           test -f backend/src/modules/business/photo-storage.ts
           test -f backend/src/modules/auth/avatar.service.ts
-          grep -RIn --exclude-dir=node_modules -- "businessPhotoUrl" backend frontend
+          git grep -n -- "businessPhotoUrl" -- backend frontend
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
