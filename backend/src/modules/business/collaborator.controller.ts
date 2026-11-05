@@ -1,6 +1,6 @@
 import type { RequestHandler } from 'express';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
-import { acceptInvitation, cancelInvitation, inviteCollaborator, leaveBusiness, listCollaborators, listNotifications, markNotificationRead, reactivateCollaborator, readCollaboratorAvatar, rejectInvitation, resolveCollaboratorRecipient, revokeCollaborator, setPermissions, suspendCollaborator } from './collaborator.service.js';
+import { acceptInvitation, cancelInvitation, deleteNotification, inviteCollaborator, leaveBusiness, listCollaborators, listNotifications, markNotificationRead, reactivateCollaborator, readCollaboratorAvatar, rejectInvitation, resolveCollaboratorRecipient, revokeCollaborator, setPermissions, suspendCollaborator } from './collaborator.service.js';
 const uid=(req:any)=>(req as AuthenticatedRequest).auth.userId;
 const run=(fn:(req:any)=>Promise<unknown>,status=200):RequestHandler=>async(req,res,next)=>{try{res.status(status).json(await fn(req));}catch(error){next(error);}};
 export const collaboratorsController=run(async req=>({memberships:await listCollaborators(uid(req),req.params.businessId)}));
@@ -17,3 +17,4 @@ export const permissionsController=run(async req=>({result:await setPermissions(
 export const leaveController=run(async req=>({membership:await leaveBusiness(uid(req),req.params.businessId)}));
 export const notificationsController=run(async req=>({notifications:await listNotifications(uid(req))}));
 export const readNotificationController=run(async req=>markNotificationRead(uid(req),req.params.notificationId));
+export const deleteNotificationController=run(async req=>deleteNotification(uid(req),req.params.notificationId));

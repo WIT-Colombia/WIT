@@ -265,6 +265,7 @@ export const businessApi = {
   respondCollaboratorInvitation: (membershipId:string,accept:boolean) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/${accept?'accept':'reject'}`,{method:'POST'}),
   listBusinessNotifications: () => requestJson<{notifications:PersistedBusinessNotification[]}>('/notifications'),
   markBusinessNotificationRead: (id:string) => requestJson(`/notifications/${encodeURIComponent(id)}/read`,{method:'POST'}),
+  deleteBusinessNotification: (id:string) => requestJson(`/notifications/${encodeURIComponent(id)}`,{method:'DELETE'}),
   list: () => requestJson<{ businesses: RealBusiness[] }>('/businesses'),
   categories: () => requestJson<{ categories: Array<{ id: string; code: string; translations: Array<{ name: string }> }> }>('/business-categories'),
   create: (input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>('/businesses', { method: 'POST', body: JSON.stringify(input) }),
