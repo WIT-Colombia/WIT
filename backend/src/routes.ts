@@ -17,12 +17,10 @@ import { collaboratorRouter } from './modules/business/collaborator.routes.js';
 import { verificationRouter } from './modules/business/verification.routes.js';
 import { ownershipTransferRouter } from './modules/business/ownership-transfer.routes.js';
 import { financeRouter } from './modules/finance/finance.routes.js';
-import { userNotificationRouter } from './modules/auth/user-notification.routes.js';
 
 export const apiRouter = Router();
 apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
-apiRouter.use('/notifications', userNotificationRouter);
 apiRouter.use('/admin/auth', adminAuthRouter);
 apiRouter.use('/admin', adminRouter);
 apiRouter.use('/admin/finance', financeRouter);

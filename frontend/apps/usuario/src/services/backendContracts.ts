@@ -31,8 +31,6 @@ export type UserNotification = {
   body: string;
   createdAt: string;
   readAt?: string;
-  imageUrl?: string | null;
-  imageAlt?: string | null;
 };
 
 /** Contrato único para sustituir los datos de muestra sin cambiar las pantallas. */
