@@ -1,9 +1,8 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { readFile } from 'node:fs/promises';
 import { SignJWT, jwtVerify } from 'jose';
 import { env } from '../../config/env.js';
-import { photoStoragePath } from './photo-storage.js';
+import { isPhotoMissingError, photoMimeType, readPhoto } from './photo-storage.js';
 import { createUserNotification } from '../auth/user-notification.service.js';
 
 const allowedPermissions = ['MANAGE_CATALOG', 'MANAGE_PROMOTIONS', 'READ_ANALYTICS', 'EDIT_BUSINESS'] as const;
@@ -39,14 +38,15 @@ function privateAvatarStorageKey(value: string | null | undefined) {
   const storageKey = value?.startsWith('private-avatar:') ? value.slice('private-avatar:'.length) : null;
   return storageKey && /^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(storageKey) ? storageKey : null;
 }
-function avatarMimeType(storageKey: string) {
-  return storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
-}
 async function readPrivateAvatar(value: string | null | undefined) {
   const storageKey = privateAvatarStorageKey(value);
   if (!storageKey) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
-  try { return { content: await readFile(photoStoragePath(storageKey)), mimeType: avatarMimeType(storageKey) }; }
-  catch { throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.'); }
+  try { return { content: await readPhoto(storageKey), mimeType: photoMimeType(storageKey) }; }
+  catch (error) {
+    const code = error && typeof error === 'object' ? (error as { code?: string }).code : undefined;
+    if (isPhotoMissingError(error) || code === 'ENOENT') throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
+    throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la foto.');
+  }
 }
 async function createAvatarPreviewToken(actorId: string, businessId: string, userId: string, publicId: string) {
   return new SignJWT({ typ: 'COLLABORATOR_AVATAR_PREVIEW', businessId, userId, publicId })
