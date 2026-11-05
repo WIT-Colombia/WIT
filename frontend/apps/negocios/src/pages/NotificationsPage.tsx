@@ -16,7 +16,7 @@ const permissionLabels: Record<string, string> = {
 };
 
 function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) {
-  const photoUrl = item.business.profilePhoto?.url;
+  const photoUrl = item.imageUrl ?? item.business.profilePhoto?.url;
   const [image, setImage] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
@@ -35,7 +35,7 @@ function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) 
   const title = item.title.toLocaleLowerCase("es-CO");
   const variant = title.includes("permiso") ? "permissions" : title.includes("suspend") || title.includes("revoc") ? "access" : title.includes("reactiv") || title.includes("aceptad") ? "success" : "invitation";
   const glyph = variant === "permissions" ? "☷" : variant === "access" ? "⌑" : variant === "success" ? "✓" : "✉";
-  return <span className={`notification-artwork ${variant}`} role="img" aria-label={`Notificación de ${item.business.name}`}>
+  return <span className={`notification-artwork ${variant}`} role="img" aria-label={item.imageAlt ?? `Notificación de ${item.business.name}`}>
     <span className="notification-artwork-glyph" aria-hidden="true">{glyph}</span>
     {image && <img src={image} alt="" onError={event => { URL.revokeObjectURL(image); setImage(null); event.currentTarget.remove(); }} />}
   </span>;

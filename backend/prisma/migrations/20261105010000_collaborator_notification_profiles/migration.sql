@@ -1,0 +1,3 @@
+ALTER TABLE `UserNotification`
+  ADD COLUMN `imageUrl` VARCHAR(2048) NULL,
+  ADD COLUMN `imageAlt` VARCHAR(180) NULL;

@@ -1,4 +1,19 @@
 import { prisma } from '../../config/prisma.js';
+import type { Prisma, PrismaClient } from '../../generated/prisma/client.js';
+
+type Db = PrismaClient | Prisma.TransactionClient;
+
+export type UserNotificationInput = {
+  userId: string;
+  title: string;
+  body: string;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+};
+
+export function createUserNotification(db: Db, input: UserNotificationInput) {
+  return db.userNotification.create({ data: input });
+}
 
 export async function listUserNotifications(userId: string) {
   return prisma.userNotification.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 100 });

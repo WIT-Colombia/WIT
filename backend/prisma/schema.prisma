@@ -372,6 +372,8 @@ model UserNotification {
   userId    String   @db.Char(36)
   title     String   @db.VarChar(180)
   body      String   @db.VarChar(500)
+  imageUrl  String?  @db.VarChar(2048)
+  imageAlt  String?  @db.VarChar(180)
   readAt    DateTime? @db.DateTime(3)
   createdAt DateTime @default(now()) @db.DateTime(3)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -2,6 +2,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { readFile } from 'node:fs/promises';
 import { photoStoragePath } from './photo-storage.js';
+import { createUserNotification } from '../auth/user-notification.service.js';
 
 const allowedPermissions = ['MANAGE_CATALOG', 'MANAGE_PROMOTIONS', 'READ_ANALYTICS', 'EDIT_BUSINESS'] as const;
 type Permission = typeof allowedPermissions[number];
@@ -15,6 +16,13 @@ function validatedPermissions(values: string[]): Permission[] {
   if (!unique.length) throw new AppError(400, 'PERMISSIONS_REQUIRED', 'Selecciona al menos un permiso.');
   if (unique.some(value => !(allowedPermissions as readonly string[]).includes(value))) throw new AppError(400, 'INVALID_PERMISSION', 'Uno o más permisos no son válidos.');
   return unique as Permission[];
+}
+function publicBusinessPhotoUrl(publicId: string, photoId: string | null | undefined) {
+  return photoId ? `/api/v1/public/businesses/${encodeURIComponent(publicId)}/photos/${encodeURIComponent(photoId)}/content` : null;
+}
+function collaboratorPhotoUrl(businessId: string, userId: string, avatarUrl: string | null | undefined) {
+  if (!avatarUrl) return null;
+  return avatarUrl.startsWith('private-avatar:') ? `/api/v1/businesses/${encodeURIComponent(businessId)}/collaborators/${encodeURIComponent(userId)}/avatar` : avatarUrl;
 }
 async function owner(userId: string, businessId: string) {
   const m = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId } } });
@@ -36,7 +44,7 @@ export async function listCollaborators(actorId: string, businessId: string) {
 export async function readCollaboratorAvatar(actorId: string, businessId: string, targetUserId: string) {
   await owner(actorId, businessId);
   const membership = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId: targetUserId } }, select: { status: true, user: { select: { avatarUrl: true } } } });
-  const storageKey = membership?.status === 'ACTIVE' && membership.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
+  const storageKey = membership && ['ACTIVE', 'REJECTED'].includes(membership.status) && membership.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
   if (!storageKey || !/^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(storageKey)) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
   return { content: await readFile(photoStoragePath(storageKey)), mimeType: storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
 }
@@ -58,7 +66,7 @@ export async function resolveCollaboratorRecipient(actorId: string, businessId: 
 export async function inviteCollaborator(actorId: string, businessId: string, identifier: string, requestedPermissions: string[]) {
   const permissions = validatedPermissions(requestedPermissions);
   const recipient = await findCollaboratorRecipient(actorId, businessId, identifier);
-  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { name: true } });
+  const business = await prisma.business.findUnique({ where: { id: businessId }, select: { name: true, publicId: true, profilePhoto: { select: { id: true } } } });
   if (!business) throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese negocio.');
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const membership = await prisma.$transaction(async tx => {
@@ -70,13 +78,14 @@ export async function inviteCollaborator(actorId: string, businessId: string, id
     await tx.businessMembershipPermission.createMany({ data: permissions.map(permission => ({ membershipId: m.id, permission, allowed: true })) });
     await tx.businessNotification.updateMany({ where: { membershipId: m.id, type: 'COLLABORATION_INVITATION', readAt: null }, data: { readAt: new Date() } });
     await tx.businessNotification.create({ data: { userId: recipient.id, businessId, membershipId: m.id, type: 'COLLABORATION_INVITATION', title: 'Invitación para colaborar', message: `${business.name} te ha invitado a colaborar en su establecimiento.` } });
+    await createUserNotification(tx, { userId: recipient.id, title: 'Invitación para colaborar', body: `${business.name} te ha invitado a colaborar en su establecimiento.`, imageUrl: publicBusinessPhotoUrl(business.publicId, business.profilePhoto?.id), imageAlt: `Perfil de ${business.name}` });
     await tx.auditLog.create({ data: { actorUserId: actorId, entityType: 'MEMBERSHIP', entityId: m.id, action: 'COLLABORATOR_INVITED', newState: { businessId, recipientUserId: recipient.id, status: 'INVITED', expiresAt: expiresAt.toISOString(), permissions } } });
     return m;
   });
   return membership;
 }
 async function respond(actorId: string, membershipId: string, status: 'ACTIVE'|'REJECTED') {
-  const membership = await prisma.businessMembership.findUnique({ where: { id: membershipId }, include: { user: { select: { displayName: true } }, business: { select: { name: true, memberships: { where: { role: 'OWNER', status: 'ACTIVE' }, select: { userId: true }, take: 1 } } } } });
+  const membership = await prisma.businessMembership.findUnique({ where: { id: membershipId }, include: { user: { select: { id: true, displayName: true, avatarUrl: true } }, business: { select: { id: true, name: true, memberships: { where: { role: 'OWNER', status: 'ACTIVE' }, select: { userId: true }, take: 1 } } } } });
   if (!membership || membership.userId !== actorId) throw new AppError(404, 'INVITATION_UNAVAILABLE', 'La invitación no está disponible.');
   if (membership.status !== 'INVITED') throw new AppError(409, 'INVITATION_ALREADY_RESOLVED', 'La invitación ya fue procesada.');
   if (!membership.expiresAt || membership.expiresAt <= new Date()) throw new AppError(410, 'INVITATION_EXPIRED', 'La invitación ha vencido.');
@@ -167,20 +176,25 @@ export async function listNotifications(userId: string) {
   const rows = await prisma.businessNotification.findMany({
     where: { userId },
     include: {
-      business: { select: { id: true, name: true, profilePhoto: { select: { id: true } }, memberships: { where: { role: 'OWNER', status: 'ACTIVE' }, select: { user: { select: { displayName: true } } }, take: 1 } } },
-      membership: { select: { id: true, status: true, expiresAt: true, permissions: true } },
+      business: { select: { id: true, publicId: true, name: true, profilePhoto: { select: { id: true } }, memberships: { where: { role: 'OWNER', status: 'ACTIVE' }, select: { user: { select: { displayName: true } } }, take: 1 } } },
+      membership: { select: { id: true, userId: true, status: true, expiresAt: true, permissions: true, user: { select: { id: true, displayName: true, avatarUrl: true } } } },
     },
     orderBy: { createdAt: 'desc' },
     take: 100,
   });
   const now = new Date();
-  return rows.map(row => ({
-    ...row,
-    business: { ...row.business, profilePhoto: row.business.profilePhoto ? { url: `/api/v1/businesses/${row.business.id}/photos/${row.business.profilePhoto.id}/content` } : null },
-    ...(row.membership?.status === 'INVITED' && row.membership.expiresAt && row.membership.expiresAt <= now
-      ? { membership: { ...row.membership, status: 'EXPIRED' as const } }
-      : {}),
-  }));
+  return rows.map(row => {
+    const membership = row.membership;
+    const responseFromCollaborator = Boolean(membership && row.type === 'COLLABORATION_UPDATE' && row.userId !== membership.userId);
+    const membershipStatus = membership?.status === 'INVITED' && membership.expiresAt && membership.expiresAt <= now ? 'EXPIRED' as const : membership?.status;
+    return {
+      ...row,
+      business: { id: row.business.id, name: row.business.name, profilePhoto: row.business.profilePhoto ? { url: `/api/v1/businesses/${row.business.id}/photos/${row.business.profilePhoto.id}/content` } : null, memberships: row.business.memberships },
+      membership: membership ? { id: membership.id, status: membershipStatus, expiresAt: membership.expiresAt, permissions: membership.permissions } : null,
+      imageUrl: responseFromCollaborator && membership ? collaboratorPhotoUrl(row.business.id, membership.user.id, membership.user.avatarUrl) : publicBusinessPhotoUrl(row.business.publicId, row.business.profilePhoto?.id),
+      imageAlt: responseFromCollaborator && membership ? `Perfil de ${membership.user.displayName}` : `Perfil de ${row.business.name}`,
+    };
+  });
 }
 /**
  * Remove only the authenticated recipient's inbox entry. The related
