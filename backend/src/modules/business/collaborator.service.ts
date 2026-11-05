@@ -78,7 +78,7 @@ export async function inviteCollaborator(actorId: string, businessId: string, id
     await tx.businessMembershipPermission.createMany({ data: permissions.map(permission => ({ membershipId: m.id, permission, allowed: true })) });
     await tx.businessNotification.updateMany({ where: { membershipId: m.id, type: 'COLLABORATION_INVITATION', readAt: null }, data: { readAt: new Date() } });
     await tx.businessNotification.create({ data: { userId: recipient.id, businessId, membershipId: m.id, type: 'COLLABORATION_INVITATION', title: 'Invitación para colaborar', message: `${business.name} te ha invitado a colaborar en su establecimiento.` } });
-    await createUserNotification(tx, { userId: recipient.id, membershipId: m.id, title: 'Invitación para colaborar', body: `${business.name} te ha invitado a colaborar en su establecimiento.`, imageUrl: publicBusinessPhotoUrl(business.publicId, business.profilePhoto?.id), imageAlt: `Perfil de ${business.name}` });
+    await createUserNotification(tx, { userId: recipient.id, title: 'Invitación para colaborar', body: `${business.name} te ha invitado a colaborar en su establecimiento.`, imageUrl: publicBusinessPhotoUrl(business.publicId, business.profilePhoto?.id), imageAlt: `Perfil de ${business.name}` });
     await tx.auditLog.create({ data: { actorUserId: actorId, entityType: 'MEMBERSHIP', entityId: m.id, action: 'COLLABORATOR_INVITED', newState: { businessId, recipientUserId: recipient.id, status: 'INVITED', expiresAt: expiresAt.toISOString(), permissions } } });
     return m;
   });
@@ -96,7 +96,6 @@ async function respond(actorId: string, membershipId: string, status: 'ACTIVE'|'
     const result = await tx.businessMembership.updateMany({ where: { id: membership.id, userId: actorId, status: 'INVITED', expiresAt: { gt: now } }, data: { status, acceptedAt: status === 'ACTIVE' ? now : null, expiresAt: null } });
     if (result.count !== 1) throw new AppError(409, 'INVITATION_ALREADY_RESOLVED', 'La invitación ya fue procesada.');
     await tx.businessNotification.updateMany({ where: { membershipId: membership.id, userId: actorId, type: 'COLLABORATION_INVITATION', readAt: null }, data: { readAt: now } });
-    await tx.userNotification.updateMany({ where: { membershipId: membership.id, userId: actorId, readAt: null }, data: { readAt: now } });
     await tx.businessNotification.create({ data: { userId: ownerUserId, businessId: membership.businessId, membershipId: membership.id, type: 'COLLABORATION_UPDATE', title: status === 'ACTIVE' ? 'Invitación aceptada' : 'Invitación rechazada', message: `${membership.user.displayName} ${status === 'ACTIVE' ? 'aceptó' : 'rechazó'} tu invitación para colaborar en ${membership.business.name}.` } });
     await tx.auditLog.create({ data: { actorUserId: actorId, entityType: 'MEMBERSHIP', entityId: membership.id, action: status === 'ACTIVE' ? 'INVITATION_ACCEPTED' : 'INVITATION_REJECTED', previousState: { status: 'INVITED' }, newState: { status, businessId: membership.businessId } } });
     return tx.businessMembership.findUniqueOrThrow({ where: { id: membership.id }, include: { permissions: true } });
