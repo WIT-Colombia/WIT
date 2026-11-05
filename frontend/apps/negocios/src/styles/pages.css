@@ -1292,3 +1292,17 @@
 @media(max-width:800px){.auth-page .business-header{display:none}.auth-layout{display:block;width:100%;min-height:100vh;padding:24px 16px}.auth-story{display:none}.auth-form-card{width:min(100%,540px);margin:0 auto;padding:28px 24px;border:1px solid #e0e8f3;border-radius:20px;background:#fff;box-shadow:0 16px 40px rgba(24,46,105,.1)}.auth-form-heading h2{font-size:27px}}
 @media(max-width:480px){.auth-layout{min-height:100vh;padding:15px 12px 28px}.auth-form-card{width:100%;padding:23px 18px;border-radius:18px}.auth-form-heading h2{font-size:24px}.auth-form-heading p{font-size:12px}.auth-form{gap:10px}.auth-form input{min-height:44px}.auth-social-options{margin-top:2px}}
 .recovery-profile-link,.recovery-profile-link:hover,.recovery-profile-link:focus,.recovery-profile-link:visited{text-decoration:none}
+
+/* Business inbox: same discreet X + inline Sí/No confirmation as Usuario. */
+.notifications-card .notification-delete-control{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;min-width:0}
+.notifications-card .notification-delete-icon{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:0;border:1px solid #e8e4ec;border-radius:9px;background:#fff;color:#64748b;font-size:20px;font-weight:400;line-height:1;text-decoration:none}
+.notifications-card .notification-delete-icon:hover:not(:disabled),.notifications-card .notification-delete-icon:focus-visible{border-color:#f4c6d0;background:#fff1f2;color:#b4535b;text-decoration:none}
+.notifications-card .notification-delete-confirm{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px;min-width:0;max-width:100%;padding:7px 9px;border:1px solid #e2d8ff;border-radius:9px;background:#fff;color:#64748b;font-size:11px;box-shadow:0 5px 14px rgba(15,23,42,.08)}
+.notifications-card .notification-delete-confirm span{flex:1 1 110px;line-height:1.4}
+.notifications-card .notification-delete-confirm button{min-height:28px;padding:3px 8px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;color:#6c3cd7;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.notifications-card .notification-delete-confirm .notification-delete-yes{border-color:#f1c7ce;color:#b14b56}
+.notifications-card .notification-delete-confirm button:hover:not(:disabled){background:#faf6ff}
+.notifications-card .notification-delete-control button:disabled{opacity:.6;cursor:wait}
+.notification-delete-success{display:inline-block;margin:0 0 14px;padding:9px 12px;border:1px solid #b9eedf;border-radius:9px;background:#ecfffa;color:#087d67;font-size:12px;font-weight:700}
+@media(max-width:800px){.notifications-card .notification-row .notification-actions{justify-content:flex-start;flex-wrap:wrap}.notifications-card .notification-delete-control{justify-content:flex-start}}
+@media(max-width:600px){.notifications-card .notification-delete-confirm{width:100%}.notifications-card .notification-delete-icon{flex-basis:34px;width:34px;height:34px}}
