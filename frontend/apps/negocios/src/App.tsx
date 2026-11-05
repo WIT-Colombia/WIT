@@ -24,6 +24,7 @@ import { RecoveryPage } from "./pages/RecoveryPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { NoBusinessPage } from "./pages/NoBusinessPage";
 import { HelpPage } from "./pages/HelpPage";
+import { SupportPage } from "./pages/SupportPage";
 import BusinessPublicPreviewPage from "./pages/BusinessPublicPreviewPage";
 import { BusinessAuthProvider } from "./services/businessAuthContext";
 import GoogleCallback from "./pages/GoogleCallback";
@@ -73,6 +74,8 @@ export default function App() {
       <Route path="/perfil" element={<ProfilePage />} />
       <Route path="/mas" element={<MorePage />} />
       <Route path="/ayuda" element={<HelpPage />} />
+      <Route path="/soporte" element={<SupportPage />} />
+      <Route path="/sugerencias" element={<SupportPage mode="suggestion" />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></BusinessStoreProvider></BusinessAuthProvider>;
