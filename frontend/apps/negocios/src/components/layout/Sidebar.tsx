@@ -1,4 +1,4 @@
-import xamukoLogo from "../../assets/XAMUKO-V1-transparent.avif";
+import xamukoLogo from "../../assets/XAMUKO-V1-transparent.png";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useBusinessAuth } from "../../services/businessAuthContext";
@@ -56,7 +56,7 @@ export function Sidebar({ empty = false, onNavigate }: { empty?: boolean; onNavi
   ];
   const visibleEntries = entries.filter(entry => entry.label === "Mi colaboración" ? isCollaborator : business.role === "Propietario" || (!entry.ownerOnly && (!entry.permission || business.permissions?.includes(entry.permission))));
   return <aside className="sidebar business-shell-sidebar">
-    <Link className="sidebar-brand" to="/inicio" aria-label="XAMUKO Business, inicio" onClick={onNavigate}><span className="sidebar-brand-artwork"><img src={xamukoLogo} alt="XAMUKO" /><img className="sidebar-brand-wordmark" src={xamukoLogo} alt="" aria-hidden="true" /></span><span>BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
+    <Link className="sidebar-brand" to="/inicio" aria-label="XAMUKO Business, inicio" onClick={onNavigate}><span className="sidebar-brand-artwork"><img src={xamukoLogo} alt="XAMUKO" /></span><span>BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
     <nav aria-label="Navegación principal" className="sidebar-nav">{visibleEntries.map(entry => <NavLink key={entry.label} to={entry.to} end={entry.to === "/"} onClick={onNavigate} className={({ isActive }) => `nav-link${(entry.label === "Colaboradores" ? collaborators && !empty : entry.label === "Mi negocio" ? !collaborators && location.pathname.startsWith("/mi-negocio") : isActive) ? " active" : ""}`}><SidebarIcon name={entry.icon} /><span>{entry.label}</span>{entry.label === "Notificaciones" && unread > 0 && <span className="notification-dot">{unread}</span>}</NavLink>)}</nav>
     {!isPro && <section className="sidebar-pro-card"><div><span className="sidebar-pro-icon" aria-hidden="true"><SidebarIcon name="crown" /></span><strong><em>XAMUKO</em>Business Pro</strong></div><p>Haz crecer tu negocio con herramientas exclusivas.</p><button type="button" onClick={() => setNotice("pro")}>Conocer beneficios</button></section>}
     <nav aria-label="Ayuda y soporte" className="sidebar-support"><Link to="/ayuda" onClick={onNavigate}><SidebarIcon name="help" />Centro de ayuda</Link><Link to="/soporte" onClick={onNavigate}><SidebarIcon name="support" />Soporte técnico</Link><Link to="/sugerencias" onClick={onNavigate}><SidebarIcon name="message" />Sugerencias</Link></nav>
