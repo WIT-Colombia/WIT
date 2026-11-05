@@ -234,9 +234,6 @@ export default function BusinessDetail() {
   const showRegistrationInvite = authStatus === "anonymous" && !isBusinessPreview;
   const cleanPublicUrl = getPublicBusinessUrl(id);
   async function share() { if (!cleanPublicUrl) { setMessage("No se pudo compartir el enlace."); setShareOpen(false); return; } const result = await shareLink(currentBusiness.name, `Descubre ${currentBusiness.name} en XAMUKO.`, cleanPublicUrl); setMessage(result === "copied" ? "Enlace copiado." : result === "unavailable" ? "No se pudo compartir el enlace." : ""); setShareOpen(false); }
-  const whatsappShareUrl = cleanPublicUrl
-    ? `https://wa.me/?text=${encodeURIComponent(`Descubre ${currentBusiness.name} en XAMUKO. ${cleanPublicUrl}`)}`
-    : "";
   function startPopularDrag(event: ReactPointerEvent<HTMLDivElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const list = popularListRef.current;
