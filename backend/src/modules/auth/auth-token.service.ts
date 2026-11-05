@@ -1,7 +1,7 @@
+import { consumePasswordResetToken } from './password-reset.js';
 import { consumeVerificationToken } from './verification-confirmation.js';
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
-import { AppError } from '../../shared/errors/app-error.js';
 import { sendPasswordResetEmail, sendSecurityNotificationEmail, sendVerificationEmail } from '../../shared/email/email-service.js';
 
 type TokenType = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
@@ -52,24 +52,10 @@ export async function sendPasswordResetRequest(emailNormalized: string): Promise
 }
 
 export async function resetPassword(token: string, passwordHash: string): Promise<string> {
-  const userId = await prisma.$transaction(async (transaction) => {
-    const record = await transaction.authToken.findUnique({ where: { tokenHash: hashToken(token) } });
-    const now = new Date();
-    if (!record || record.type !== 'PASSWORD_RESET' || record.consumedAt || record.expiresAt <= now) {
-      throw new AppError(400, 'INVALID_AUTH_TOKEN', 'El enlace no es válido o ya expiró.');
-    }
-    const identity = await transaction.authIdentity.findFirst({ where: { userId: record.userId, provider: 'EMAIL' }, select: { verifiedAt: true } });
-    if (!identity?.verifiedAt) throw new AppError(403, 'EMAIL_NOT_VERIFIED', 'Verifica tu correo electrónico antes de recuperar el acceso.');
-    const consumed = await transaction.authToken.updateMany({ where: { id: record.id, consumedAt: null, expiresAt: { gt: now } }, data: { consumedAt: now } });
-    if (consumed.count !== 1) throw new AppError(400, 'INVALID_AUTH_TOKEN', 'El enlace no es válido o ya expiró.');
-    await transaction.authIdentity.updateMany({ where: { userId: record.userId, provider: 'EMAIL' }, data: { passwordHash } });
-    await transaction.session.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: now } });
-    return record.userId;
-  });
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { emailNormalized: true, displayName: true } });
+  const user = await prisma.$transaction((transaction) => consumePasswordResetToken(transaction, token, passwordHash));
   if (user?.emailNormalized) {
     try { await sendSecurityNotificationEmail(user.emailNormalized, user.displayName, 'Se cambió la contraseña de tu cuenta'); }
     catch { console.warn('Password security notification could not be sent'); }
   }
-  return userId;
+  return user.id;
 }
