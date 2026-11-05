@@ -1319,6 +1319,8 @@
 .notification-delete-success{display:inline-block;margin:0 0 14px;padding:9px 12px;border:1px solid #b9eedf;border-radius:9px;background:#ecfffa;color:#087d67;font-size:12px;font-weight:700}
 @media(max-width:800px){.notifications-card .notification-row .notification-actions{justify-content:flex-start;flex-wrap:wrap}.notifications-card .notification-delete-control{justify-content:flex-start}}
 @media(max-width:600px){.notifications-card .notification-delete-confirm{width:100%}.notifications-card .notification-delete-icon{flex-basis:34px;width:34px;height:34px}}
+.notifications-card .notification-row.unread{box-shadow:0 12px 30px rgba(83,61,170,.14),0 0 0 1px rgba(123,63,251,.08)}
+.notifications-card .notification-row.unread:hover{box-shadow:0 16px 34px rgba(83,61,170,.18),0 0 0 1px rgba(123,63,251,.12)}
 
 /* Alineación estable de arte, estados y eliminación en cada tarjeta. */
 .notifications-card .notification-row{display:grid;grid-template-columns:50px minmax(0,1fr) auto;align-items:center;column-gap:16px}
