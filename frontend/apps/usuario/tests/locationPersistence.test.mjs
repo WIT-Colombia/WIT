@@ -9,7 +9,9 @@ const manual = await readFile(new URL("../src/pages/ManualLocation.tsx", import.
 
 test("new visitors are not silently assigned Palmira", () => {
   assert.match(service, /if \(!saved\) return null/);
-  assert.match(manual, /defaultMunicipality.*76520/);
+  assert.match(manual, /async function continueWithLocation\(\)/);
+  assert.doesNotMatch(manual, /setManualLocation\(municipality\)/);
+  assert.match(manual, /await setManualLocation\(selectedMunicipality\)/);
 });
 
 test("location is hydrated from the account and guarded before home", () => {
