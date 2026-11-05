@@ -4,6 +4,8 @@ import { PageHeader } from "../components/common/PageHeader";
 import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type PersistedBusinessNotification } from "../services/businessApiClient";
 import { toBusinessDetails } from "../services/realBusinessAdapter";
+import { useBusinessAuth } from "../services/businessAuthContext";
+import { rememberBusinessNotificationDismissal } from "../services/notificationDismissal";
 
 const icons = { review: "☆", interest: "↗", profile: "▣", wit: "✦", admin: "✉", offer: "✦", security: "✓", collaboration: "♙" };
 const destination = { review: "/opiniones", interest: "/productos", profile: "/mis-negocios/editar", wit: "/mi-negocio", admin: "/configuracion", offer: "/estadisticas", security: "/perfil" } as const;
@@ -40,6 +42,28 @@ function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) 
   </span>;
 }
 
+
+type DeleteTarget = { source: "persisted" | "local"; id: string };
+
+function NotificationDeleteAction({ title, confirming, busy, pendingRequest, onRequest, onConfirm, onCancel }: {
+  title: string;
+  confirming: boolean;
+  busy: boolean;
+  pendingRequest?: boolean;
+  onRequest: () => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return <div className="notification-delete-control" onClick={event => event.stopPropagation()}>
+    <button type="button" className="notification-delete notification-delete-icon" aria-label={`Eliminar ${title}`} title="Eliminar notificación" onClick={onRequest} disabled={busy}>×</button>
+    {confirming && <div className="notification-delete-confirm" role="group" aria-label={`Confirmar eliminación de ${title}`}>
+      <span>{pendingRequest ? "¿Quitar aviso? La solicitud seguirá pendiente." : "¿Eliminarla?"}</span>
+      <button type="button" className="notification-delete-yes" onClick={onConfirm} disabled={busy}>{busy ? "Eliminando…" : "Sí"}</button>
+      <button type="button" onClick={onCancel} disabled={busy}>No</button>
+    </div>}
+  </div>;
+}
+
 export function NotificationsPage() {
   const { notifications, setNotifications, businesses, business, setBusinesses, setBusiness } = useBusinessStore();
   const navigate = useNavigate();
@@ -52,10 +76,16 @@ export function NotificationsPage() {
   const [transfers, setTransfers] = useState<Array<{ id: string; status: string; expiresAt: string | null; requestedAt: string; business: { id: string; name: string }; fromUser: { displayName: string; nickname: string | null } }>>([]);
   const [busyTransfer, setBusyTransfer] = useState<string | null>(null);
   const [confirmingTransfer, setConfirmingTransfer] = useState<{ id: string; accepted: boolean } | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [deleted, setDeleted] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(10);
+  const { user } = useBusinessAuth();
+  const [pendingDelete, setPendingDelete] = useState<DeleteTarget | null>(null);
+  const [busyDelete, setBusyDelete] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  useEffect(() => {
+    if (!deleteSuccess) return;
+    const timeout = window.setTimeout(() => setDeleteSuccess(false), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [deleteSuccess]);
+
 
   const reloadPersisted = useCallback(async () => {
     try { const rows = (await businessApi.listBusinessNotifications()).notifications; setPersisted(rows); setApiError(""); window.dispatchEvent(new CustomEvent("xamuko-notifications-updated", { detail: rows.filter(item => !item.readAt).length })); }
@@ -110,13 +140,38 @@ export function NotificationsPage() {
   };
   const respondTransfer = async (id: string, accept: boolean) => { setBusyTransfer(id); setApiError(""); try { await businessApi.respondOwnershipTransfer(id, accept); const fresh = (await businessApi.list()).businesses.map(toBusinessDetails); setBusinesses(fresh); const selected = fresh.find(value => value.id === business.id) ?? fresh[0]; if (selected) setBusiness(selected); await reloadTransfers(); await reloadPersisted(); setConfirmingTransfer(null); } catch (cause) { setApiError(cause instanceof Error ? cause.message : "No se pudo responder la transferencia."); } finally { setBusyTransfer(null); } };
 
+  const deleting = (source: DeleteTarget["source"], id: string) => busyDelete === `${source}:${id}`;
+  const confirmingDelete = (source: DeleteTarget["source"], id: string) => pendingDelete?.source === source && pendingDelete.id === id;
+  const confirmDelete = async (target: DeleteTarget) => {
+    if (busyDelete) return;
+    const key = `${target.source}:${target.id}`;
+    setBusyDelete(key);
+    setApiError("");
+    try {
+      if (target.source === "persisted") {
+        await businessApi.deleteBusinessNotification(target.id);
+        setPersisted(current => current.filter(item => item.id !== target.id));
+        await reloadPersisted();
+      } else {
+        rememberBusinessNotificationDismissal(user?.publicId ?? "preview", target.id);
+        setNotifications(notifications.filter(item => item.id !== target.id));
+      }
+      setPendingDelete(null);
+      setDeleteSuccess(true);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "No se pudo eliminar la notificación.");
+    } finally {
+      setBusyDelete(null);
+    }
+  };
+
   return <>
-    <PageHeader eyebrow="Tu actividad en XAMUKO" title="Notificaciones" description="Entérate de lo que ocurre con tu presencia en XAMUKO." action={totalUnread > 0 && <button type="button" className="outline-button" onClick={() => void markAllRead()}>Marcar todas como leídas</button>} />
-    {deleted && <div className="notification-success" role="status">La notificación se eliminó correctamente.</div>}
+    <PageHeader eyebrow="AL DÍA" title="Notificaciones" description="Entérate de lo que ocurre con tu presencia en XAMUKO." action={totalUnread > 0 && <button type="button" className="outline-button" onClick={() => void markAllRead()}>Marcar todas como leídas</button>} />
     {apiError && <div className="notification-page-alert" role="alert">{apiError}</div>}
+    {deleteSuccess && <p className="notification-delete-success" role="status">La notificación se eliminó correctamente.</p>}
     <section className="surface-card notifications-card">
       <div className="notification-tabs" role="group" aria-label="Filtrar notificaciones"><button type="button" onClick={() => setFilter("Todas")} className={filter === "Todas" ? "active" : ""} aria-pressed={filter === "Todas"}>Todas</button><button type="button" onClick={() => setFilter("No leídas")} className={filter === "No leídas" ? "active" : ""} aria-pressed={filter === "No leídas"}>No leídas <span>{totalUnread}</span></button></div>
-      {visiblePersisted.slice(0, visibleCount).map(item => {
+      {visiblePersisted.map(item => {
         const pending = item.type === "COLLABORATION_INVITATION" && item.membership?.status === "INVITED";
         const permissionText = item.membership?.permissions.filter(permission => permission.allowed).map(permission => permissionLabels[permission.permission] ?? permission.permission).join(", ");
         const ownerName = item.business.memberships[0]?.user.displayName;
@@ -124,16 +179,17 @@ export function NotificationsPage() {
           ? transfers.filter(candidate => candidate.business.id === item.businessId).sort((left, right) => Math.abs(Date.parse(left.requestedAt) - Date.parse(item.createdAt)) - Math.abs(Date.parse(right.requestedAt) - Date.parse(item.createdAt)))[0]
           : undefined;
         const status = item.type === "COLLABORATION_INVITATION" ? item.membership?.status === "ACTIVE" ? "Invitación aceptada" : item.membership?.status === "REJECTED" ? "Invitación rechazada" : item.membership?.status === "REVOKED" ? "Invitación cancelada" : item.membership?.status === "EXPIRED" ? "Invitación vencida" : null : null;
-        return <article className={`notification-row ${item.readAt ? "" : "unread"}${selectedId === item.id ? " is-selected" : ""}${transfer ? " is-transfer-notification" : ""}`} key={item.id} onMouseEnter={() => { if (!item.readAt) void businessApi.markBusinessNotificationRead(item.id).then(reloadPersisted); }} onClick={() => setSelectedId(item.id)}>
+        return <article className={`notification-row ${item.readAt ? "" : "unread"}${transfer ? " is-transfer-notification" : ""}`} key={item.id}>
           <NotificationArtwork item={item}/>
           <div><div className="notification-title"><h2>{item.title}</h2>{transfer && <span className={`transfer-state ${transfer.status.toLowerCase()}`}>{transfer.status === "PENDING" ? "Pendiente" : transfer.status === "ACCEPTED" ? "Aceptada" : transfer.status === "REJECTED" ? "Rechazada" : transfer.status === "CANCELLED" ? "Cancelada" : transfer.status === "EXPIRED" ? "Vencida" : transfer.status}</span>}{!item.readAt && <span aria-label="Sin leer"/>}</div><p>{item.message}</p>{transfer && <><small>Solicitud enviada por {transfer.fromUser.displayName}{transfer.fromUser.nickname ? ` (${transfer.fromUser.nickname})` : ""}.</small><small>Solicitada {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(transfer.requestedAt))}{transfer.expiresAt ? ` · Vence ${new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(transfer.expiresAt))}` : ""}</small></>}{ownerName && item.type === "COLLABORATION_INVITATION" && <small>Propietario: {ownerName}</small>}{permissionText && item.type === "COLLABORATION_INVITATION" && <small>Permisos: {permissionText}</small>}{!transfer && <small>{new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}{item.membership?.expiresAt ? ` · Vence ${new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(item.membership.expiresAt))}` : ""}</small>}
             {transfer?.status === "PENDING" ? <div className="notification-invitation-actions">{confirmingTransfer?.id === transfer.id ? <div className="notification-inline-confirm" role="group" aria-label="Confirmar respuesta a transferencia"><span>{confirmingTransfer.accepted ? `Al aceptar, asumirás la propiedad administrativa de ${transfer.business.name}.` : `¿Rechazar la transferencia de ${transfer.business.name}?`}</span><button className={confirmingTransfer.accepted ? "action-button" : "danger-button"} disabled={busyTransfer === transfer.id} onClick={() => void respondTransfer(transfer.id, confirmingTransfer.accepted)}>{busyTransfer === transfer.id ? "Procesando…" : confirmingTransfer.accepted ? "Confirmar aceptación" : "Confirmar rechazo"}</button><button className="subtle-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer(null)}>Volver</button></div> : <><button className="action-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer({ id: transfer.id, accepted: true })}>Aceptar transferencia</button><button className="outline-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer({ id: transfer.id, accepted: false })}>Rechazar</button></>}</div> : pending && !item.readAt ? <div className="notification-invitation-actions">{confirmingInvitation?.id === item.id ? <div className="notification-inline-confirm"><span>{confirmingInvitation.accepted ? "¿Aceptar esta invitación?" : "¿Rechazar esta invitación?"}</span><button className="action-button" disabled={busyInvitation === item.id} onClick={() => void respondPersisted(item, confirmingInvitation.accepted)}>{busyInvitation === item.id ? "Procesando…" : confirmingInvitation.accepted ? "Sí, aceptar" : "Sí, rechazar"}</button><button className="subtle-button" onClick={() => setConfirmingInvitation(null)}>Cancelar</button></div> : <><button className="action-button" onClick={() => setConfirmingInvitation({ id: item.id, accepted: true })}>Aceptar invitación</button><button className="outline-button" onClick={() => setConfirmingInvitation({ id: item.id, accepted: false })}>Rechazar</button></>}</div> : status && <small>{status}</small>}
           </div>
-          <div className="notification-actions">{selectedId === item.id && <><button className="notification-delete" aria-label={`Eliminar ${item.title}`} onClick={event => { event.stopPropagation(); setPendingDeleteId(item.id); }}>×</button>{pendingDeleteId === item.id && <span className="notification-delete-confirm">¿Eliminarla? <button onClick={async event => { event.stopPropagation(); try { await businessApi.deleteBusinessNotification(item.id); setPendingDeleteId(null); setSelectedId(null); setDeleted(true); await reloadPersisted(); } catch { setApiError("No se pudo eliminar la notificación."); } }}>Sí</button><button onClick={event => { event.stopPropagation(); setPendingDeleteId(null); }}>No</button></span>}</>}</div>
+          <div className="notification-actions">
+            <NotificationDeleteAction title={item.title} confirming={confirmingDelete("persisted", item.id)} busy={deleting("persisted", item.id)} pendingRequest={pending || transfer?.status === "PENDING"} onRequest={() => setPendingDelete({ source: "persisted", id: item.id })} onConfirm={() => void confirmDelete({ source: "persisted", id: item.id })} onCancel={() => setPendingDelete(null)}/>
+          </div>
         </article>;
       })}
-      {visible.slice(0, visibleCount).map(item => { const to = item.id.startsWith("visibility-reminder-") ? "/configuracion" : item.type === "profile" ? `${destination.profile}/${businessIndex}` : item.type === "collaboration" ? "/notificaciones" : destination[item.type]; return <article className={`notification-row ${item.read ? "" : "unread"}${selectedId === item.id ? " is-selected" : ""}${item.id.startsWith("visibility-reminder-") ? " is-actionable" : ""}`} key={item.id} onMouseEnter={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }} onClick={() => { setSelectedId(item.id); if (item.id.startsWith("visibility-reminder-")) navigate("/configuracion"); }}><span className={`notification-icon ${item.type}`}>{icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2>{!item.read && <span aria-label="Sin leer"/>}</div><p>{item.description}</p><small>{item.date}</small><Link className="notification-link" to={to}>Ver detalle →</Link></div><div className="notification-actions">{selectedId === item.id && <><button className="notification-delete" aria-label={`Eliminar ${item.title}`} onClick={event => { event.stopPropagation(); setPendingDeleteId(item.id); }}>×</button>{pendingDeleteId === item.id && <span className="notification-delete-confirm">¿Eliminarla? <button onClick={event => { event.stopPropagation(); setPendingDeleteId(null); setSelectedId(null); setDeleted(true); setNotifications(notifications.filter(current => current.id !== item.id)); }}>Sí</button><button onClick={event => { event.stopPropagation(); setPendingDeleteId(null); }}>No</button></span>}</>}</div></article>; })}
-      {(visiblePersisted.length + visible.length) > 10 && <div className="notifications-pagination"><button type="button" onClick={() => visibleCount < visiblePersisted.length + visible.length ? setVisibleCount(current => Math.min(current + 10, visiblePersisted.length + visible.length)) : (setVisibleCount(10), window.scrollTo({ top: 0, behavior: "smooth" }))}>{visibleCount < visiblePersisted.length + visible.length ? <>Ver más notificaciones <span>→</span></> : <>Volver arriba <span>↑</span></>}</button></div>}
+      {visible.map(item => { const to = item.id.startsWith("visibility-reminder-") ? "/configuracion" : item.type === "profile" ? `${destination.profile}/${businessIndex}` : item.type === "collaboration" ? "/notificaciones" : destination[item.type]; return <article className={`notification-row ${item.read ? "" : "unread"}${item.id.startsWith("visibility-reminder-") ? " is-actionable" : ""}`} key={item.id} onMouseEnter={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); if (item.id.startsWith("visibility-reminder-")) navigate("/configuracion"); }}><span className={`notification-icon ${item.type}`}>{icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2>{!item.read && <span aria-label="Sin leer"/>}</div><p>{item.description}</p><small>{item.date}</small><Link className="notification-link" to={to}>Ver detalle →</Link></div><div className="notification-actions"><NotificationDeleteAction title={item.title} confirming={confirmingDelete("local", item.id)} busy={deleting("local", item.id)} onRequest={() => setPendingDelete({ source: "local", id: item.id })} onConfirm={() => void confirmDelete({ source: "local", id: item.id })} onCancel={() => setPendingDelete(null)}/></div></article>; })}
       {!visiblePersisted.length && !visible.length && <div className="empty-state"><span>✓</span><h2>Todo al día</h2><p>No tienes notificaciones en tu bandeja.</p></div>}
     </section>
   </>;

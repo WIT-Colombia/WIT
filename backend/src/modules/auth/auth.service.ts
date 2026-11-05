@@ -28,17 +28,17 @@ async function createUniqueNickname(displayName: string): Promise<string> {
   return candidate;
 }
 
-function refreshExpiresAt(): Date {
-  return new Date(Date.now() + env.refreshTokenTtlDays * 24 * 60 * 60 * 1000);
+function refreshExpiresAt(persistent: boolean): Date {
+  return new Date(Date.now() + (persistent ? env.refreshTokenTtlDays * 86400 : 8 * 3600) * 1000);
 }
 
-export async function issueSession(userId: string, requestMeta?: { userAgent?: string; ipAddress?: string }) {
+export async function issueSession(userId: string, requestMeta?: { userAgent?: string; ipAddress?: string }, persistent = false) {
   const refreshToken = createRefreshToken();
   const session = await prisma.session.create({
     data: {
       userId,
       tokenHash: hashRefreshToken(refreshToken),
-      expiresAt: refreshExpiresAt(),
+      expiresAt: refreshExpiresAt(persistent),
       userAgent: requestMeta?.userAgent,
       ipAddress: requestMeta?.ipAddress,
     },
@@ -88,36 +88,29 @@ export async function login(input: LoginInput, requestMeta?: { userAgent?: strin
   if (!valid) throw invalidCredentials();
   if (shouldRequireEmailVerification(identity.verifiedAt, env.allowUnverifiedEmailLogin)) throw unverifiedEmail();
   await prisma.user.update({ where: { id: identity.user.id }, data: { lastLoginAt: new Date() } });
-  return { user: await getCurrentUser(identity.user.id), ...(await issueSession(identity.user.id, requestMeta)) };
+  return { user: await getCurrentUser(identity.user.id), ...(await issueSession(identity.user.id, requestMeta, input.rememberMe)) };
 }
 
-export async function refresh(refreshToken: string, requestMeta?: { userAgent?: string; ipAddress?: string }) {
+export async function refresh(refreshToken: string, _requestMeta?: { userAgent?: string; ipAddress?: string }) {
   const tokenHash = hashRefreshToken(refreshToken);
   const now = new Date();
   const owner = await prisma.session.findUnique({ where: { tokenHash }, select: { id: true, userId: true, revokedAt: true, expiresAt: true, user: { select: { status: true } } } });
   if (!owner || owner.revokedAt || owner.expiresAt <= now || owner.user.status !== 'ACTIVE') throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.');
-  const identities = await prisma.authIdentity.findMany({ where: { userId: owner.userId }, select: { verifiedAt: true } }).catch(() => []);
+  const identities = await prisma.authIdentity.findMany({ where: { userId: owner.userId }, select: { verifiedAt: true } });
   if (identities.every((identity) => shouldRequireEmailVerification(identity.verifiedAt, env.allowUnverifiedEmailLogin))) {
     await prisma.session.updateMany({ where: { id: owner.id, revokedAt: null }, data: { revokedAt: now } });
     throw unverifiedEmail();
   }
-  return prisma.$transaction(async (transaction) => {
-    const session = await transaction.session.findUnique({ where: { tokenHash }, include: { user: true } });
-    if (!session || session.revokedAt || session.expiresAt <= now || session.user.status !== 'ACTIVE') {
-      throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.');
-    }
-    const revoked = await transaction.session.updateMany({ where: { id: session.id, revokedAt: null }, data: { revokedAt: now } });
-    if (revoked.count !== 1) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.');
-    const nextRefreshToken = createRefreshToken();
-    const nextSession = await transaction.session.create({
-      data: { userId: session.userId, tokenHash: hashRefreshToken(nextRefreshToken), expiresAt: refreshExpiresAt(), userAgent: requestMeta?.userAgent, ipAddress: requestMeta?.ipAddress },
-    });
-    return {
-      user: await getCurrentUser(session.userId),
-      accessToken: await createAccessToken({ userId: session.userId, sessionId: nextSession.id }),
-      refreshToken: nextRefreshToken,
-    };
+  // Keep the opaque, hashed session credential stable. Rotating by revoking the
+  // session also revoked every access token in other tabs and lost the session
+  // whenever a refresh response was interrupted. Absolute expiry never slides.
+  const user = await getCurrentUser(owner.userId);
+  const active = await prisma.session.updateMany({
+    where: { id: owner.id, revokedAt: null, expiresAt: { gt: new Date() } },
+    data: { lastSeenAt: new Date() },
   });
+  if (active.count !== 1) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.');
+  return { user, accessToken: await createAccessToken({ userId: owner.userId, sessionId: owner.id }) };
 }
 
 export async function logout(refreshToken: string): Promise<void> {

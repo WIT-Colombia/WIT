@@ -5,6 +5,7 @@ import type { BusinessAccount, BusinessDetails, BusinessNotification, CatalogIte
 import { DAY_IN_MS } from "./visibilityPolicy";
 import { useBusinessAuth } from "./businessAuthContext";
 import { businessApi } from "./businessApiClient";
+import { wasBusinessNotificationDismissed } from "./notificationDismissal";
 import { toBusinessDetails } from "./realBusinessAdapter";
 
 interface BusinessStore {
@@ -81,6 +82,8 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
   const [businesses, setBusinesses] = useState<BusinessDetails[]>(() => isPreview ? stored("businesses", initialBusinesses) : []);
   const [businessesReady, setBusinessesReady] = useState(isPreview);
   const auth = useBusinessAuth();
+  const userId = auth.user?.id;
+  const selectionKey = `wit-negocios-selected-business-id:${userId ?? 'anonymous'}`;
   const wasPreview = useRef(isPreview);
   useEffect(() => {
     if (!isPreview && wasPreview.current) setBusinesses([]);
@@ -92,6 +95,7 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (auth.state.status !== "authenticated") {
+      if (auth.state.status === "unauthenticated") { setBusinesses([]); setBusiness(emptyBusiness); }
       setBusinessesReady(auth.state.status === "unauthenticated");
       return;
     }
@@ -101,7 +105,8 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       if (!active) return;
       const next = values.map(toBusinessDetails);
       setBusinesses(next);
-      const storedId = localStorage.getItem("wit-negocios-selected-business-id");
+      // Migrate the previous preference only if it belongs to the authorized list below.
+      const storedId = localStorage.getItem(selectionKey) ?? localStorage.getItem("wit-negocios-selected-business-id");
       const preferred = next.find(item => item.id === business.id) ?? next.find(item => item.id === storedId) ?? next.find(item => item.publicationStatus === 'PUBLISHED' && item.visibilityStatus === 'VISIBLE') ?? next[0];
       if (preferred) setBusiness(preferred);
     }).catch(() => {
@@ -111,10 +116,10 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       if (active) setBusinessesReady(true);
     });
     return () => { active = false; };
-  }, [auth.state.status, isPreview, business.id]);
+  }, [auth.state.status, userId, isPreview, business.id, selectionKey]);
   useEffect(() => {
-    if (business.id) localStorage.setItem("wit-negocios-selected-business-id", business.id);
-  }, [business.id]);
+    if (!isPreview && userId && business.id && businesses.some(item => item.id === business.id)) localStorage.setItem(selectionKey, business.id);
+  }, [business.id, businesses, isPreview, userId, selectionKey]);
   useEffect(() => {
     if (businesses.length === 0 && !isPreview) return;
     try { localStorage.setItem("wit-negocios-demo:businesses", JSON.stringify(businesses)); } catch { /* La aplicación sigue funcionando sin almacenamiento local. */ }
@@ -198,12 +203,14 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       const untilValue = preferences.visibilityByBusiness?.[item.name]?.visibilityUntil ?? preferences.visibilityUntil;
       if (!untilValue) return null;
       const daysLeft = Math.ceil((new Date(untilValue).getTime() - now) / DAY_IN_MS);
-      return daysLeft > 0 && daysLeft <= 39 && !notifications.some(note => note.id === `visibility-reminder-${item.name}`) ? item : null;
+      const reminderId = `visibility-reminder-${item.name}`;
+      const notificationOwner = isPreview ? "preview" : auth.state.status === "authenticated" ? auth.state.user.publicId : null;
+      return daysLeft > 0 && daysLeft <= 39 && !wasBusinessNotificationDismissed(notificationOwner, reminderId) && !notifications.some(note => note.id === reminderId) ? item : null;
     }).filter((item): item is BusinessDetails => Boolean(item));
     if (!reminders.length) return;
     const additions = reminders.map(item => ({ id: `visibility-reminder-${item.name}`, title: "Mantén visible tu negocio", description: `A tu negocio ${item.name} le quedan pocos días de visibilidad. Renueva ahora para que las personas sigan encontrándolo en XAMUKO.`, date: "Ahora", createdAt: new Date().toISOString(), type: "admin" as const, read: false, businessName: item.name, businessId: item.name }));
     setNotifications([...notifications, ...additions]);
-  }, [businesses, preferences, notifications]);
+  }, [businesses, preferences, notifications, auth.state, isPreview]);
   useEffect(() => {
     const demoVisibilityKey = "wit-negocios-demo:near-visibility-date-v3";
     try {

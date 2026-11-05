@@ -6,6 +6,7 @@ import { authenticateWithPassword, getSession } from '../services/adminService';
 export function LoginPage() {
   const navigate = useNavigate();
   const [loginBusy, setLoginBusy] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +20,7 @@ export function LoginPage() {
     setLoginBusy(true);
     setError('');
     try {
-      await authenticateWithPassword(email, password);
+      await authenticateWithPassword(email, password, rememberMe);
       navigate('/dashboard', { replace: true });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No pudimos verificar el acceso administrativo.');
@@ -52,6 +53,7 @@ export function LoginPage() {
               {showPassword ? 'Ocultar' : 'Mostrar'}
             </button>
           </div>
+          <label className="admin-login-remember"><input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} /> Mantener sesión iniciada</label>
           <button className="admin-login-submit" type="submit" disabled={loginBusy}>
             {loginBusy ? 'Iniciando sesión…' : 'Iniciar sesión'}
           </button>

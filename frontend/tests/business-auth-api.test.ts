@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { BusinessApiError, buildApiUrl, businessApi, requestJson } from "../apps/negocios/src/services/businessApiClient.ts";
 import { clearAccessToken, login, resolveBusinessNext, restoreSession } from "../apps/negocios/src/services/businessAuthService.ts";
+import { rememberBusinessNotificationDismissal, wasBusinessNotificationDismissed } from "../apps/negocios/src/services/notificationDismissal.ts";
 
 const originalFetch = globalThis.fetch;
 
@@ -80,10 +81,10 @@ test("adjunta el access token en memoria a las solicitudes reales de negocios", 
 });
 
 test("no permite que next devuelva al login ni a una ruta externa", () => {
-  assert.equal(resolveBusinessNext("/login"), "/mis-negocios");
-  assert.equal(resolveBusinessNext("/registro?from=login"), "/mis-negocios");
-  assert.equal(resolveBusinessNext("https://evil.example"), "/mis-negocios");
-  assert.equal(resolveBusinessNext("//evil.example"), "/mis-negocios");
+  assert.equal(resolveBusinessNext("/login"), "/inicio");
+  assert.equal(resolveBusinessNext("/registro?from=login"), "/inicio");
+  assert.equal(resolveBusinessNext("https://evil.example"), "/inicio");
+  assert.equal(resolveBusinessNext("//evil.example"), "/inicio");
   assert.equal(resolveBusinessNext("/mi-negocio/modalidades/0"), "/mi-negocio/modalidades/0");
 });
 
@@ -144,4 +145,37 @@ test("el cliente de negocios usa los endpoints reales y cookies HttpOnly", async
   assert.equal(requestedInit?.method, "POST");
   assert.equal(requestedInit?.credentials, "include");
   assert.equal((JSON.parse(String(requestedInit?.body)) as { name: string }).name, "Negocio real");
+});
+
+test("las notificaciones reales se eliminan mediante DELETE autenticado", async () => {
+  const requests: Array<{ url: string; init?: RequestInit }> = [];
+  globalThis.fetch = (async (input, init) => {
+    requests.push({ url: String(input), init });
+    return new Response(JSON.stringify({ deleted: true }), { status: 200 });
+  }) as typeof fetch;
+  const result = await businessApi.deleteBusinessNotification("notice 1");
+  assert.deepEqual(result, { deleted: true });
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].url, "/api/v1/notifications/notice%201");
+  assert.equal(requests[0].init?.method, "DELETE");
+});
+
+test("recordatorios eliminados permanecen ocultos y no se cruzan entre cuentas", () => {
+  const existing = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  const data = new Map<string, string>();
+  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: {
+    getItem: (key: string) => data.get(key) ?? null,
+    setItem: (key: string, value: string) => { data.set(key, value); },
+  } });
+  try {
+    const reminder = "visibility-reminder-negocio";
+    assert.equal(wasBusinessNotificationDismissed("cuenta-1", reminder), false);
+    rememberBusinessNotificationDismissal("cuenta-1", reminder);
+    assert.equal(wasBusinessNotificationDismissed("cuenta-1", reminder), true);
+    assert.equal(wasBusinessNotificationDismissed("cuenta-2", reminder), false);
+    assert.equal(wasBusinessNotificationDismissed("preview", reminder), false);
+  } finally {
+    if (existing) Object.defineProperty(globalThis, "localStorage", existing);
+    else Reflect.deleteProperty(globalThis, "localStorage");
+  }
 });

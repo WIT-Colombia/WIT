@@ -39,7 +39,7 @@ describe('XAMUKO Admin: acceso con cuenta existente', () => {
     fireEvent.change(screen.getByLabelText('Correo electrónico'), { target: { value: 'admin@example.test' } });
     fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'una-clave-de-prueba' } });
     fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
-    await waitFor(() => expect(auth.authenticateWithPassword).toHaveBeenCalledWith('admin@example.test', 'una-clave-de-prueba'));
+    await waitFor(() => expect(auth.authenticateWithPassword).toHaveBeenCalledWith('admin@example.test', 'una-clave-de-prueba', false));
     expect(await screen.findByText('Panel administrativo autorizado')).toBeInTheDocument();
   });
 

@@ -30,8 +30,8 @@ if (!Number.isInteger(accessTokenTtlSeconds) || accessTokenTtlSeconds < 60 || ac
 }
 
 const refreshTokenTtlDays = Number(process.env.AUTH_REFRESH_TOKEN_TTL_DAYS ?? '30');
-if (!Number.isInteger(refreshTokenTtlDays) || refreshTokenTtlDays < 1 || refreshTokenTtlDays > 365) {
-  throw new Error('AUTH_REFRESH_TOKEN_TTL_DAYS debe estar entre 1 y 365.');
+if (!Number.isInteger(refreshTokenTtlDays) || refreshTokenTtlDays < 15 || refreshTokenTtlDays > 365) {
+  throw new Error('AUTH_REFRESH_TOKEN_TTL_DAYS debe estar entre 15 y 365.');
 }
 
 const authCookieSameSite = process.env.AUTH_COOKIE_SAMESITE?.trim().toLowerCase() ?? 'lax';

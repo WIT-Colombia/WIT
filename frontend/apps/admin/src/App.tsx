@@ -19,7 +19,19 @@ import { navigation, auxiliaryNavigation } from './data/navigation';
 import { PendingModulePage } from './pages/PendingModulePage';
 import { FinancialExpensesPage } from './pages/FinancialExpensesPage';
 function DemoProtectedRoute() { enableDemoSession(); return <Outlet />; }
-function ProtectedRoute() { const [state, setState] = useState<'loading' | 'ready'>(getSession() ? 'ready' : 'loading'); useEffect(() => { if (state === 'ready') return; void restoreSession().then(() => setState('ready')); }, [state]); if (state === 'loading') return <main className="state-panel loading"><h2>Validando sesión…</h2></main>; return getSession() ? <Outlet /> : <Navigate to="/login" replace />; }
+function ProtectedRoute() {
+  const [state, setState] = useState<'loading' | 'ready'>(getSession() ? 'ready' : 'loading');
+  useEffect(() => {
+    if (state === 'ready') return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const restore = () => { void restoreSession().then(() => { if (active) setState('ready'); }).catch(() => { if (active) timer = setTimeout(restore, 5000); }); };
+    restore(); window.addEventListener('online', restore);
+    return () => { active = false; clearTimeout(timer); window.removeEventListener('online', restore); };
+  }, [state]);
+  if (state === 'loading') return <main className="state-panel loading"><h2>Validando sesión…</h2></main>;
+  return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
+}
 export default function App() {
   if (isAdminDemoMode) return <Routes>
     <Route element={<DemoProtectedRoute />}>
