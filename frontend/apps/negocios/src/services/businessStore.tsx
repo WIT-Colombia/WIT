@@ -5,6 +5,7 @@ import type { BusinessAccount, BusinessDetails, BusinessNotification, CatalogIte
 import { DAY_IN_MS } from "./visibilityPolicy";
 import { useBusinessAuth } from "./businessAuthContext";
 import { businessApi } from "./businessApiClient";
+import { wasBusinessNotificationDismissed } from "./notificationDismissal";
 import { toBusinessDetails } from "./realBusinessAdapter";
 
 interface BusinessStore {
@@ -192,12 +193,14 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       const untilValue = preferences.visibilityByBusiness?.[item.name]?.visibilityUntil ?? preferences.visibilityUntil;
       if (!untilValue) return null;
       const daysLeft = Math.ceil((new Date(untilValue).getTime() - now) / DAY_IN_MS);
-      return daysLeft > 0 && daysLeft <= 39 && !notifications.some(note => note.id === `visibility-reminder-${item.name}`) ? item : null;
+      const reminderId = `visibility-reminder-${item.name}`;
+      const notificationOwner = isPreview ? "preview" : auth.state.status === "authenticated" ? auth.state.user.publicId : null;
+      return daysLeft > 0 && daysLeft <= 39 && !wasBusinessNotificationDismissed(notificationOwner, reminderId) && !notifications.some(note => note.id === reminderId) ? item : null;
     }).filter((item): item is BusinessDetails => Boolean(item));
     if (!reminders.length) return;
     const additions = reminders.map(item => ({ id: `visibility-reminder-${item.name}`, title: "Mantén visible tu negocio", description: `A tu negocio ${item.name} le quedan pocos días de visibilidad. Renueva ahora para que las personas sigan encontrándolo en XAMUKO.`, date: "Ahora", createdAt: new Date().toISOString(), type: "admin" as const, read: false, businessName: item.name, businessId: item.name }));
     setNotifications([...notifications, ...additions]);
-  }, [businesses, preferences, notifications]);
+  }, [businesses, preferences, notifications, auth.state, isPreview]);
   useEffect(() => {
     const demoVisibilityKey = "wit-negocios-demo:near-visibility-date-v3";
     try {
