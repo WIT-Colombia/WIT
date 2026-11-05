@@ -1337,3 +1337,7 @@
   .notifications-card .notification-row:not(.ownership-transfer-notification)>.notification-artwork,.notifications-card .notification-row:not(.ownership-transfer-notification)>.notification-icon{width:40px;height:40px}
   .notifications-card .notification-row .notification-title .transfer-state{min-width:74px}
 }
+@media(min-width:801px){
+  .notifications-card .notification-row.is-transfer-notification>div:nth-child(2){padding-right:100px}
+  .notifications-card .notification-row.is-transfer-notification .notification-title .transfer-state{position:absolute;top:50%;right:64px;z-index:1;min-width:80px;margin:0;transform:translateY(-50%)}
+}
