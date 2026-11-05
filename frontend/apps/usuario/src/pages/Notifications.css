@@ -20,7 +20,6 @@
 .notifications-page .user-page-heading h1{margin:0;color:var(--xamuko-navy);font-size:clamp(30px,4vw,40px);font-weight:800;letter-spacing:-1.2px}
 .notifications-page .notification-unread-count{margin-top:9px;border:1px solid #cceff4;background:#ecfbff;color:#08758b;font-size:10px}
 .notifications-page .notification-success{margin:10px 0 0;padding:8px 11px;border:1px solid #b9eedf;border-radius:9px;background:#ecfffa;color:#087d67;font-size:10px;font-weight:700}
-.notifications-page .notification-error{margin:10px 0 0;padding:8px 11px;border:1px solid #f1c7ce;border-radius:9px;background:#fff5f6;color:#b14b56;font-size:10px;font-weight:700}
 .notifications-page .notifications-heading>button{min-height:35px;padding:0 12px;border:1px solid #d9cbff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font-size:10px;font-weight:700;box-shadow:0 5px 16px rgba(123,63,251,.07);transition:background .2s ease,color .2s ease}
 .notifications-page .notifications-heading>button:hover{background:var(--xamuko-violet);color:#fff}
 .notifications-page .notification-list{max-width:900px;overflow:visible;border:0;border-radius:0;background:transparent}
@@ -30,6 +29,8 @@
 .notifications-page .notification-item.is-selected{border-color:#b9a2ff;background:#f7f3ff}
 .notifications-page .notification-main-action{box-sizing:border-box;width:100%;min-height:78px;padding:15px 48px 15px 16px;gap:13px;border-radius:16px}
 .notifications-page .notification-icon{flex-basis:40px;height:40px;border-radius:13px;background:linear-gradient(145deg,#eee8ff,#def9ff);color:var(--xamuko-violet);font-size:18px}
+.notifications-page .notification-icon--brand{padding:5px;background:#0f2747;box-sizing:border-box}
+.notifications-page .notification-icon--brand img{object-fit:contain}
 .notifications-page .notification-copy{gap:4px}
 .notifications-page .notification-copy b{color:var(--xamuko-navy);font-size:13px}
 .notifications-page .notification-copy small{color:var(--xamuko-muted);font-size:11px;line-height:1.45}
