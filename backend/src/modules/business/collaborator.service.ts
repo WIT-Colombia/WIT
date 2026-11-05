@@ -20,9 +20,17 @@ function validatedPermissions(values: string[]): Permission[] {
 function publicBusinessPhotoUrl(publicId: string, photoId: string | null | undefined) {
   return photoId ? `/api/v1/public/businesses/${encodeURIComponent(publicId)}/photos/${encodeURIComponent(photoId)}/content` : null;
 }
+function publicAvatarUrl(value: string | null | undefined) {
+  if (!value || value.startsWith('private-avatar:')) return null;
+  if (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value)) return value;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? value : null;
+  } catch { return null; }
+}
 function collaboratorPhotoUrl(businessId: string, userId: string, avatarUrl: string | null | undefined) {
-  if (!avatarUrl) return null;
-  return avatarUrl.startsWith('private-avatar:') ? `/api/v1/businesses/${encodeURIComponent(businessId)}/collaborators/${encodeURIComponent(userId)}/avatar` : avatarUrl;
+  if (avatarUrl?.startsWith('private-avatar:')) return `/api/v1/businesses/${encodeURIComponent(businessId)}/collaborators/${encodeURIComponent(userId)}/avatar`;
+  return publicAvatarUrl(avatarUrl);
 }
 async function owner(userId: string, businessId: string) {
   const m = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId } } });
@@ -35,7 +43,8 @@ export async function listCollaborators(actorId: string, businessId: string) {
   const now = new Date();
   return rows.map(row => {
     const status = row.status === 'INVITED' && row.expiresAt && row.expiresAt <= now ? 'EXPIRED' as const : row.status;
-    const avatarUrl = collaboratorPhotoUrl(businessId, row.user.id, row.user.avatarUrl);
+    const canShowAvatar = status === 'ACTIVE' || status === 'SUSPENDED';
+    const avatarUrl = canShowAvatar ? collaboratorPhotoUrl(businessId, row.user.id, row.user.avatarUrl) : null;
     return { ...row, status, user: { ...row.user, avatarUrl } };
   });
 }
@@ -43,9 +52,11 @@ export async function listCollaborators(actorId: string, businessId: string) {
 export async function readCollaboratorAvatar(actorId: string, businessId: string, targetUserId: string) {
   await owner(actorId, businessId);
   const membership = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId: targetUserId } }, select: { status: true, user: { select: { avatarUrl: true } } } });
-  const storageKey = membership?.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
+  const storageKey = membership && ['ACTIVE', 'SUSPENDED'].includes(membership.status) && membership.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
   if (!storageKey || !/^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(storageKey)) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
-  return { content: await readFile(photoStoragePath(storageKey)), mimeType: storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
+  try {
+    return { content: await readFile(photoStoragePath(storageKey)), mimeType: storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
+  } catch { throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.'); }
 }
 async function findCollaboratorRecipient(actorId: string, businessId: string, identifier: string) {
   await owner(actorId, businessId);
