@@ -11,10 +11,6 @@ import "./RegisterEnhancements.css";
 import "./RegisterAlert.css";
 import "./RegisterRedesign.css";
 
-function safeReturn(value: string | null) {
-  return value?.startsWith("/") && !value.startsWith("//") && !value.startsWith("/register") ? value : "/profile";
-}
-
 function GoogleIcon() {
   return <svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.5 9.5 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8V33A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4v-5.1H5.8a20 20 0 0 0 0 17.6l6.8-5.1Z"/><path fill="#EA4335" d="M24 12c3 0 5.6 1 7.7 3l5.8-5.8A19.4 19.4 0 0 0 24 4 20 20 0 0 0 5.8 15.2l6.8 5.1C14.2 15.6 18.7 12 24 12Z"/></svg>;
 }
@@ -54,11 +50,11 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [message, setMessage] = useState(() => params.get("verified") === "1" ? "Correo verificado. Inicia sesión para continuar a tu perfil." : "");
+  const [message, setMessage] = useState(() => params.get("verified") === "1" ? "Correo verificado. Inicia sesión para comenzar a explorar." : "");
   const [requiresVerification, setRequiresVerification] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const returnTo = safeReturn(params.get("next"));
+  const returnTo = "/home";
   const passwordError = mode === "register" && (fieldErrors.password || (password.length > 0 && password.length < 8 ? "Tu contraseña debe tener al menos 8 caracteres." : ""));
   const confirmPasswordError = mode === "register" && confirmPassword.length > 0 && password !== confirmPassword ? "Las contraseñas no coinciden." : "";
   const hasPasswordErrors = Boolean(passwordError || confirmPasswordError);
