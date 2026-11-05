@@ -1,4 +1,4 @@
-import xamukoLogo from "../../assets/XAMUKO-V1-transparent.avif";
+import xamukoLogo from "../../assets/XAMUKO-V1-transparent.png";
 import { Link } from "react-router-dom";
 import { useBusinessStore } from "../../services/businessStore";
 import { businessApi } from "../../services/businessApiClient";
@@ -13,7 +13,7 @@ export function BusinessHeader() {
   const displayName = user?.displayName || (business.source === "real" ? "" : account.name);
   const initials = displayName.split(" ").map((part) => part[0]).slice(0, 2).join("");
   return <header className="business-header">
-    <Link className="business-header-brand" to="/inicio" aria-label="XAMUKO Business, inicio"><img className="xamuko-header-logo" src={xamukoLogo} alt="XAMUKO" /><span className="business-header-name">BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
+    <Link className="business-header-brand" to="/inicio" aria-label="XAMUKO Business, inicio"><span className="xamuko-header-artwork"><img className="xamuko-header-logo" src={xamukoLogo} alt="XAMUKO" /><img className="xamuko-header-logo xamuko-header-wordmark" src={xamukoLogo} alt="" aria-hidden="true" /></span><span className="business-header-name">BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
     <Link className="business-header-profile" to="/perfil" aria-label="Abrir mi perfil">{initials}</Link>
   </header>;
 }
