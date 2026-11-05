@@ -1319,3 +1319,21 @@
 .notification-delete-success{display:inline-block;margin:0 0 14px;padding:9px 12px;border:1px solid #b9eedf;border-radius:9px;background:#ecfffa;color:#087d67;font-size:12px;font-weight:700}
 @media(max-width:800px){.notifications-card .notification-row .notification-actions{justify-content:flex-start;flex-wrap:wrap}.notifications-card .notification-delete-control{justify-content:flex-start}}
 @media(max-width:600px){.notifications-card .notification-delete-confirm{width:100%}.notifications-card .notification-delete-icon{flex-basis:34px;width:34px;height:34px}}
+
+/* Alineación estable de arte, estados y eliminación en cada tarjeta. */
+.notifications-card .notification-row{display:grid;grid-template-columns:50px minmax(0,1fr) auto;align-items:center;column-gap:16px}
+.notifications-card .notification-row>.notification-artwork,.notifications-card .notification-row>.notification-icon{flex:none;width:50px;height:50px;margin:0;align-self:center}
+.notifications-card .notification-row>.notification-actions{display:flex;align-items:center;justify-content:center;align-self:center;min-width:32px;margin-left:0}
+.notifications-card .notification-row .notification-title{align-items:center;gap:12px}
+.notifications-card .notification-row .notification-title h2{flex:1 1 auto;min-width:0}
+.notifications-card .notification-row .notification-title .transfer-state{align-self:center;min-width:80px;margin-left:auto;text-align:center;line-height:1.2}
+@media(max-width:800px){
+  .notifications-card .notification-row:not(.ownership-transfer-notification){grid-template-columns:44px minmax(0,1fr);align-items:start}
+  .notifications-card .notification-row:not(.ownership-transfer-notification)>.notification-artwork,.notifications-card .notification-row:not(.ownership-transfer-notification)>.notification-icon{width:44px;height:44px}
+  .notifications-card .notification-row>.notification-actions{align-self:start;justify-content:flex-start}
+}
+@media(max-width:600px){
+  .notifications-card .notification-row:not(.ownership-transfer-notification){grid-template-columns:40px minmax(0,1fr)}
+  .notifications-card .notification-row:not(.ownership-transfer-notification)>.notification-artwork,.notifications-card .notification-row:not(.ownership-transfer-notification)>.notification-icon{width:40px;height:40px}
+  .notifications-card .notification-row .notification-title .transfer-state{min-width:74px}
+}
