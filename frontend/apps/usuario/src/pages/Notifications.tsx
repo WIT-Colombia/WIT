@@ -140,7 +140,7 @@ export default function Notifications() {
     try {
       await respondToCollaboratorInvitation(item.invitation.membershipId, accept);
       setNotifications(current => current.map(notification => notification.id === item.id
-        ? { ...notification, read: true, invitation: notification.invitation ? { ...notification.invitation, status: accept ? "ACTIVE" : "REJECTED" } : null }
+        ? { ...notification, read: true, invitation: notification.invitation ? { ...notification.invitation, status: accept ? ("ACTIVE" as const) : ("REJECTED" as const) } : null }
         : notification));
       setPendingInvitationResponse(null);
     } catch (error) {
