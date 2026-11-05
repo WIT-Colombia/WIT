@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { PageHeader } from "../components/common/PageHeader";
 import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type PersistedBusinessNotification } from "../services/businessApiClient";
 import { toBusinessDetails } from "../services/realBusinessAdapter";
@@ -65,7 +64,6 @@ function NotificationDeleteAction({ title, confirming, busy, pendingRequest, onR
 
 export function NotificationsPage() {
   const { notifications, setNotifications, business, setBusinesses, setBusiness } = useBusinessStore();
-  const [filter, setFilter] = useState<"Todas" | "No leídas">("Todas");
   const [confirmingInvitation, setConfirmingInvitation] = useState<{ id: string; accepted: boolean } | null>(null);
   const [persisted, setPersisted] = useState<PersistedBusinessNotification[]>([]);
   const [apiError, setApiError] = useState("");
@@ -111,9 +109,9 @@ export function NotificationsPage() {
     if (item.date.startsWith("Ayer")) return Date.now() - 24 * 60 * 60 * 1000;
     return 0;
   };
-  const visible = notifications.filter(item => filter === "Todas" || !item.read).sort((left, right) => notificationTime(right) - notificationTime(left));
-  const visiblePersisted = useMemo(() => persisted.filter(item => filter === "Todas" || !item.readAt), [filter, persisted]);
-  const totalUnread = notifications.filter(item => !item.read).length + persisted.filter(item => !item.readAt).length;
+  const visible = notifications.slice().sort((left, right) => notificationTime(right) - notificationTime(left));
+  const visiblePersisted = useMemo(() => persisted, [persisted]);
+  const totalUnread = notifications.filter(item => !item.read).length;
 
   const respondPersisted = async (item: PersistedBusinessNotification, accept: boolean) => {
     if (!item.membershipId) return;
@@ -163,12 +161,18 @@ export function NotificationsPage() {
     }
   };
 
-  return <>
-    <PageHeader eyebrow="AL DÍA" title="Notificaciones" description="Entérate de lo que ocurre con tu presencia en XAMUKO." action={totalUnread > 0 && <button type="button" className="outline-button" onClick={() => void markAllRead()}>Marcar todas como leídas</button>} />
+  return <div className="business-notifications-page">
+    <header className="business-notifications-heading">
+      <div className="business-notifications-page-heading">
+        <span>Tu actividad en XAMUKO</span>
+        <h1>Notificaciones</h1>
+        <span className="business-notification-unread-count">{totalUnread} {totalUnread === 1 ? "pendiente" : "pendientes"} por leer</span>
+      </div>
+      {totalUnread > 0 && <button type="button" onClick={() => void markAllRead()}>Marcar todas como leídas</button>}
+    </header>
     {apiError && <div className="notification-page-alert" role="alert">{apiError}</div>}
     {deleteSuccess && <p className="notification-delete-success" role="status">La notificación se eliminó correctamente.</p>}
-    <section className="surface-card notifications-card">
-      <div className="notification-tabs" role="group" aria-label="Filtrar notificaciones"><button type="button" onClick={() => setFilter("Todas")} className={filter === "Todas" ? "active" : ""} aria-pressed={filter === "Todas"}>Todas</button><button type="button" onClick={() => setFilter("No leídas")} className={filter === "No leídas" ? "active" : ""} aria-pressed={filter === "No leídas"}>No leídas <span>{totalUnread}</span></button></div>
+    <section className="business-notifications-card">
       {visiblePersisted.map(item => {
         const pending = item.type === "COLLABORATION_INVITATION" && item.membership?.status === "INVITED";
         const permissionText = item.membership?.permissions.filter(permission => permission.allowed).map(permission => permissionLabels[permission.permission] ?? permission.permission).join(", ");
@@ -187,8 +191,8 @@ export function NotificationsPage() {
           </div>
         </article>;
       })}
-      {visible.map(item => <article className={`notification-row ${item.read ? "" : "unread"}`} key={item.id} onMouseEnter={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...item, read: true } : current)); }}><span className={`notification-icon ${item.type}${item.id === "welcome" ? " notification-brand-logo" : ""}`}>{item.id === "welcome" ? <img src={xamukoLogo} alt="XAMUKO" /> : icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2></div><p>{item.description}</p><small>{item.date}</small></div><div className="notification-actions"><NotificationDeleteAction title={item.title} confirming={confirmingDelete("local", item.id)} busy={deleting("local", item.id)} onRequest={() => setPendingDelete({ source: "local", id: item.id })} onConfirm={() => void confirmDelete({ source: "local", id: item.id })} onCancel={() => setPendingDelete(null)}/></div></article>)}
+      {visible.map(item => <article className={`notification-row ${item.read ? "is-read" : "unread"}`} key={item.id} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }}><span className={`notification-icon ${item.type}${item.id === "welcome" ? " notification-brand-logo" : ""}`}>{item.id === "welcome" ? <img src={xamukoLogo} alt="XAMUKO" /> : icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2></div><p>{item.description}</p><small>{item.date}</small></div><div className="notification-actions"><NotificationDeleteAction title={item.title} confirming={confirmingDelete("local", item.id)} busy={deleting("local", item.id)} onRequest={() => setPendingDelete({ source: "local", id: item.id })} onConfirm={() => void confirmDelete({ source: "local", id: item.id })} onCancel={() => setPendingDelete(null)}/></div></article>)}
       {!visiblePersisted.length && !visible.length && <div className="empty-state"><span>✓</span><h2>Todo al día</h2><p>No tienes notificaciones en tu bandeja.</p></div>}
     </section>
-  </>;
+  </div>;
 }

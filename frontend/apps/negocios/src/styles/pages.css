@@ -29,6 +29,46 @@
 .notifications-card .notification-brand-logo{box-sizing:border-box;padding:6px;background:#0f2747}
 .notifications-card .notification-brand-logo img{width:100%;height:100%;object-fit:contain}
 
+/* Business notifications use the same approved visual treatment as Usuario. */
+.business-notifications-page{width:min(100%,900px);padding-top:34px}
+.business-notifications-heading{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:23px}
+.business-notifications-page-heading{margin-bottom:0}
+.business-notifications-page-heading>span:first-child{display:block;margin-bottom:7px;color:#7b3ffb;font-size:11px;font-weight:700;letter-spacing:.02em}
+.business-notifications-page-heading h1{margin:0;color:#11194b;font-size:clamp(30px,4vw,40px);font-weight:800;letter-spacing:-1.2px}
+.business-notification-unread-count{display:inline-flex;align-items:center;width:max-content;margin-top:9px;padding:5px 9px;border:1px solid #cceff4;border-radius:999px;background:#ecfbff;color:#08758b;font-size:10px;font-weight:700}
+.business-notifications-heading>button{min-height:35px;padding:0 12px;border:1px solid #d9cbff;border-radius:999px;background:#fff;color:#7b3ffb;font-size:10px;font-weight:700;box-shadow:0 5px 16px rgba(123,63,251,.07);transition:background .2s ease,color .2s ease}
+.business-notifications-heading>button:hover{background:#7b3ffb;color:#fff}
+.business-notifications-card{max-width:900px;overflow:visible}
+.business-notifications-card .notification-row{position:relative;display:flex;align-items:center;min-height:80px;margin-bottom:10px;padding:0 16px;border:1px solid #e5def8;border-radius:16px;background:#fff;box-shadow:0 8px 22px rgba(15,23,42,.045);cursor:pointer;transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+.business-notifications-card .notification-row:hover{border-color:#d7c7ff;box-shadow:0 12px 28px rgba(123,63,251,.09);transform:translateY(-1px)}
+.business-notifications-card .notification-row.unread{border-color:#d8ccff;background:linear-gradient(105deg,#fff 0%,#faf8ff 100%);box-shadow:0 16px 38px rgba(83,61,170,.19),0 0 0 1px rgba(123,63,251,.1)}
+.business-notifications-card .notification-row.unread:hover{box-shadow:0 20px 44px rgba(83,61,170,.23),0 0 0 1px rgba(123,63,251,.14)}
+.business-notifications-card .notification-row>.notification-icon{flex:0 0 40px;width:40px;height:40px;margin-right:13px;border-radius:13px;background:linear-gradient(145deg,#eee8ff,#def9ff);color:#7b3ffb;font-size:18px}
+.business-notifications-card .notification-brand-logo{box-sizing:border-box;padding:5px;background:#0f2747}
+.business-notifications-card .notification-brand-logo img{width:100%;height:100%;object-fit:contain}
+.business-notifications-card .notification-row>div:nth-child(2){flex:1;min-width:0}
+.business-notifications-card .notification-title h2{margin:0;color:#11194b;font-size:13px}
+.business-notifications-card .notification-row p{margin:6px 0;color:#64748b;font-size:11px;line-height:1.45}
+.business-notifications-card .notification-row small{color:#94a3b8;font-size:9px}
+.business-notifications-card .notification-actions{display:flex;align-items:center;gap:7px;margin-left:10px}
+.business-notifications-card .notification-delete-control{display:flex;align-items:center;justify-content:flex-end;min-width:0}
+.business-notifications-card .notification-delete-icon{display:grid;place-items:center;width:30px;height:30px;margin:0;padding:0;border:0;border-radius:8px;background:#fff1f1;color:#94a3b8;font-size:17px;font-weight:400;line-height:1;cursor:pointer;transition:color .2s ease,background .2s ease}
+.business-notifications-card .notification-delete-icon:hover{background:#fff1f2;color:#b4535b}
+.business-notifications-card .notification-delete-confirm{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid #e2d8ff;border-radius:8px;background:#fff;color:#64748b;font-size:10px;white-space:nowrap;box-shadow:0 5px 14px rgba(15,23,42,.08)}
+.business-notifications-card .notification-delete-confirm button{padding:2px 5px;border:1px solid #e5def8;border-radius:5px;background:#fff;color:#7b3ffb;font:inherit;font-size:10px;cursor:pointer}
+.business-notifications-card .notification-delete-confirm button:first-of-type{border-color:#efb8bd;color:#b14b56}
+.business-notifications-card .notification-row.is-read{background:#fff}
+@media(max-width:700px){
+  .business-notifications-page{width:100%;padding-top:22px}
+  .business-notifications-heading{display:block;margin-bottom:18px}
+  .business-notifications-heading>button{margin-top:12px}
+  .business-notifications-page-heading h1{font-size:30px;letter-spacing:-.8px}
+  .business-notifications-card .notification-row{min-height:76px;margin-bottom:8px;padding:0 12px;border-radius:14px}
+  .business-notifications-card .notification-row>.notification-icon{flex-basis:36px;width:36px;height:36px;margin-right:10px;border-radius:11px;font-size:16px}
+  .business-notifications-card .notification-title h2{font-size:12px}
+  .business-notifications-card .notification-row p{font-size:10px}
+}
+
 /* Evita que el resumen de opiniones conserve anchos intrínsecos en móvil. */
 @media(max-width:700px){
   .reviews-layout,.review-overview,.review-feed,.review-score,.review-score>div,.rating-bars.full{min-width:0;max-width:100%;box-sizing:border-box}
