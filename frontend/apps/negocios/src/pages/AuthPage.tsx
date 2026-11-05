@@ -64,8 +64,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
         navigate("/login?registered=1", { replace: true });
       } else {
         await signIn(email, password, rememberMe);
-        const next = resolveBusinessNext(new URLSearchParams(window.location.search).get("next"));
-        navigate(next, { replace: true });
+        navigate("/inicio", { replace: true });
       }
     } catch (error) {
       setMessage(error instanceof BusinessApiError ? error.message : "No se pudo completar la solicitud.");
