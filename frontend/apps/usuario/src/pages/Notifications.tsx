@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getRemoteNotifications, markRemoteNotificationRead, deleteRemoteNotification, requestBlobWithSession, respondToCollaboratorInvitation, type RemoteUserNotification } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
-import { deleteNotification, getNotifications, markAllNotificationsRead, markNotificationRead, type UserNotification } from "../services/userDataService";
+import type { UserNotification } from "../services/userDataService";
 import { PageLayout } from "../components/PageLayout";
 import "./Notifications.css";
 
@@ -49,7 +49,7 @@ const invitationStateLabel: Record<string, string> = {
 
 export default function Notifications() {
   const { status, user } = useAuth();
-  const [notifications, setNotifications] = useState<UserNotification[]>(getNotifications);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [apiError, setApiError] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export default function Notifications() {
   }, [deleted]);
   useEffect(() => {
     let active = true;
-    setNotifications(getNotifications());
+    setNotifications([]);
     setApiError("");
     if (status !== "authenticated") return () => { active = false; };
 
@@ -84,7 +84,7 @@ export default function Notifications() {
           source: "remote",
           invitation: row.invitation,
         }));
-        setNotifications([...remote, ...getNotifications()]);
+        setNotifications(remote);
         setApiError("");
       } catch {
         if (active) setApiError("No se pudieron cargar las notificaciones de tu cuenta.");
@@ -108,22 +108,15 @@ export default function Notifications() {
   const markRead = async (item: UserNotification) => {
     setSelectedId(item.id);
     if (item.read) return;
-    if (item.source === "remote") {
-      try {
-        await markRemoteNotificationRead(item.id);
-        setNotifications(current => current.map(notification => notification.id === item.id ? { ...notification, read: true } : notification));
-      } catch {
-        setApiError("No se pudo marcar la notificación como leída.");
-      }
-    } else {
-      const localNext = markNotificationRead(item.id);
-      setNotifications(current => current.map(notification => localNext.find(next => next.id === notification.id) ?? notification));
+    try {
+      await markRemoteNotificationRead(item.id);
+      setNotifications(current => current.map(notification => notification.id === item.id ? { ...notification, read: true } : notification));
+    } catch {
+      setApiError("No se pudo marcar la notificación como leída.");
     }
   };
   const markAllRead = async () => {
-    const localNext = markAllNotificationsRead();
-    setNotifications(current => current.map(notification => notification.source === "remote" ? notification : localNext.find(next => next.id === notification.id) ?? notification));
-    const unreadRemote = notifications.filter(item => item.source === "remote" && !item.read);
+    const unreadRemote = notifications.filter(item => !item.read);
     if (!unreadRemote.length) return;
     try {
       await Promise.all(unreadRemote.map(item => markRemoteNotificationRead(item.id)));
@@ -154,15 +147,11 @@ export default function Notifications() {
   };
 
   const removeNotification = async (item: UserNotification) => {
-    if (item.source === "remote") {
-      try {
-        await deleteRemoteNotification(item.id);
-      } catch {
-        setApiError("No se pudo eliminar la notificación.");
-        return;
-      }
-    } else {
-      deleteNotification(item.id);
+    try {
+      await deleteRemoteNotification(item.id);
+    } catch {
+      setApiError("No se pudo eliminar la notificación.");
+      return;
     }
     setPendingDeleteId(null);
     setSelectedId(null);
