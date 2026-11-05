@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getRemoteNotifications, markRemoteNotificationRead, deleteRemoteNotification, type RemoteUserNotification } from "../services/authService";
+import { getRemoteNotifications, markRemoteNotificationRead, deleteRemoteNotification, requestBlobWithSession, respondToCollaboratorInvitation, type RemoteUserNotification } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import { deleteNotification, getNotifications, markAllNotificationsRead, markNotificationRead, type UserNotification } from "../services/userDataService";
@@ -8,14 +8,44 @@ import "./Notifications.css";
 
 function NotificationAvatar({ notification }: { notification: UserNotification }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const [resolvedImage, setResolvedImage] = useState<string | null>(null);
   const imageUrl = notification.imageUrl?.trim() || null;
   const isBrand = notification.id === "welcome" || notification.imageAlt === "XAMUKO";
-  return <span className={`notification-icon${imageUrl && !imageFailed ? " notification-icon--profile" : ""}${isBrand ? " notification-icon--brand" : ""}`}>
-    {imageUrl && !imageFailed
-      ? <img src={imageUrl} alt={notification.imageAlt ?? ""} loading="lazy" onError={() => setImageFailed(true)} />
+
+  useEffect(() => {
+    let active = true;
+    let objectUrl: string | null = null;
+    setImageFailed(false);
+    setResolvedImage(null);
+    if (imageUrl?.startsWith("/api/v1/")) {
+      void requestBlobWithSession(imageUrl).then(blob => {
+        objectUrl = URL.createObjectURL(blob);
+        if (active) setResolvedImage(objectUrl);
+        else URL.revokeObjectURL(objectUrl);
+      }).catch(() => { if (active) setImageFailed(true); });
+    } else if (imageUrl) {
+      setResolvedImage(imageUrl);
+    }
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [imageUrl]);
+
+  return <span className={`notification-icon${resolvedImage && !imageFailed ? " notification-icon--profile" : ""}${isBrand ? " notification-icon--brand" : ""}`}>
+    {resolvedImage && !imageFailed
+      ? <img src={resolvedImage} alt={notification.imageAlt ?? ""} loading="lazy" onError={() => setImageFailed(true)} />
       : <span aria-hidden="true">✦</span>}
   </span>;
 }
+
+const invitationStateLabel: Record<string, string> = {
+  ACTIVE: "Invitación aceptada",
+  REJECTED: "Invitación rechazada",
+  REVOKED: "Invitación cancelada",
+  EXPIRED: "Invitación vencida",
+  SUSPENDED: "Acceso suspendido",
+};
 
 export default function Notifications() {
   const { status, user } = useAuth();
@@ -25,6 +55,8 @@ export default function Notifications() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleted, setDeleted] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
+  const [pendingInvitationResponse, setPendingInvitationResponse] = useState<{ id: string; accept: boolean } | null>(null);
+  const [busyInvitationId, setBusyInvitationId] = useState<string | null>(null);
   const unread = notifications.filter((item) => !item.read).length;
   useEffect(() => {
     if (!deleted) return;
@@ -50,6 +82,7 @@ export default function Notifications() {
           imageUrl: row.imageUrl,
           imageAlt: row.imageAlt,
           source: "remote",
+          invitation: row.invitation,
         }));
         setNotifications([...remote, ...getNotifications()]);
         setApiError("");
@@ -100,6 +133,23 @@ export default function Notifications() {
       setApiError("No se pudieron actualizar todas las notificaciones.");
     }
   };
+  const respondInvitation = async (item: UserNotification, accept: boolean) => {
+    if (busyInvitationId || item.invitation?.status !== "INVITED") return;
+    setBusyInvitationId(item.id);
+    setApiError("");
+    try {
+      await respondToCollaboratorInvitation(item.invitation.membershipId, accept);
+      setNotifications(current => current.map(notification => notification.id === item.id
+        ? { ...notification, read: true, invitation: notification.invitation ? { ...notification.invitation, status: accept ? "ACTIVE" : "REJECTED" } : null }
+        : notification));
+      setPendingInvitationResponse(null);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "No se pudo responder la invitación.");
+    } finally {
+      setBusyInvitationId(null);
+    }
+  };
+
   const removeNotification = async (item: UserNotification) => {
     if (item.source === "remote") {
       try {
