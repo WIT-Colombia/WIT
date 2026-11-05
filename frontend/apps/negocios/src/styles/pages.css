@@ -25,6 +25,10 @@
 @media(max-width:450px){.form-grid{grid-template-columns:1fr}.quick-actions a{padding:0 8px;font-size:10px}.business-cover-body{align-items:flex-start;flex-direction:column;padding:0 17px}.business-cover-body>.status-pill{margin-left:78px}.review-feed .card-heading{align-items:flex-start;flex-direction:column}.stat-grid{gap:9px}.stat-tile{padding:15px}.stat-tile strong{font-size:22px}.period-tabs{width:100%;justify-content:space-around}.modal-actions{flex-wrap:wrap}.modal-actions button{flex:1}.profile-hero{align-items:flex-start}.chart-card{padding:16px}.bar-chart{height:210px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
+/* Temporary notification reset: the welcome card uses the XAMUKO mark. */
+.notifications-card .notification-brand-logo{box-sizing:border-box;padding:6px;background:#0f2747}
+.notifications-card .notification-brand-logo img{width:100%;height:100%;object-fit:contain}
+
 /* Evita que el resumen de opiniones conserve anchos intrínsecos en móvil. */
 @media(max-width:700px){
   .reviews-layout,.review-overview,.review-feed,.review-score,.review-score>div,.rating-bars.full{min-width:0;max-width:100%;box-sizing:border-box}

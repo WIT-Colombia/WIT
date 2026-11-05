@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/common/PageHeader";
 import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type PersistedBusinessNotification } from "../services/businessApiClient";
 import { toBusinessDetails } from "../services/realBusinessAdapter";
 import { useBusinessAuth } from "../services/businessAuthContext";
 import { rememberBusinessNotificationDismissal } from "../services/notificationDismissal";
+import xamukoLogo from "../assets/XAMUKO-V1-transparent.avif";
 
 const icons = { review: "☆", interest: "↗", profile: "▣", wit: "✦", admin: "✉", offer: "✦", security: "✓", collaboration: "♙" };
 const permissionLabels: Record<string, string> = {
@@ -65,7 +65,6 @@ function NotificationDeleteAction({ title, confirming, busy, pendingRequest, onR
 
 export function NotificationsPage() {
   const { notifications, setNotifications, business, setBusinesses, setBusiness } = useBusinessStore();
-  const navigate = useNavigate();
   const [filter, setFilter] = useState<"Todas" | "No leídas">("Todas");
   const [confirmingInvitation, setConfirmingInvitation] = useState<{ id: string; accepted: boolean } | null>(null);
   const [persisted, setPersisted] = useState<PersistedBusinessNotification[]>([]);
@@ -86,8 +85,9 @@ export function NotificationsPage() {
 
 
   const reloadPersisted = useCallback(async () => {
-    try { const rows = (await businessApi.listBusinessNotifications()).notifications; setPersisted(rows); setApiError(""); window.dispatchEvent(new CustomEvent("xamuko-notifications-updated", { detail: rows.filter(item => !item.readAt).length })); }
-    catch { setApiError("No se pudieron cargar las notificaciones de tu cuenta."); }
+    setPersisted([]);
+    setApiError("");
+    window.dispatchEvent(new CustomEvent("xamuko-notifications-updated", { detail: 0 }));
   }, []);
   useEffect(() => {
     void reloadPersisted();
@@ -187,7 +187,7 @@ export function NotificationsPage() {
           </div>
         </article>;
       })}
-      {visible.map(item => <article className={`notification-row ${item.read ? "" : "unread"}${item.id.startsWith("visibility-reminder-") ? " is-actionable" : ""}`} key={item.id} onMouseEnter={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); if (item.id.startsWith("visibility-reminder-")) navigate("/configuracion"); }}><span className={`notification-icon ${item.type}`}>{icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2></div><p>{item.description}</p><small>{item.date}</small></div><div className="notification-actions"><NotificationDeleteAction title={item.title} confirming={confirmingDelete("local", item.id)} busy={deleting("local", item.id)} onRequest={() => setPendingDelete({ source: "local", id: item.id })} onConfirm={() => void confirmDelete({ source: "local", id: item.id })} onCancel={() => setPendingDelete(null)}/></div></article>)}
+      {visible.map(item => <article className={`notification-row ${item.read ? "" : "unread"}`} key={item.id} onMouseEnter={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...item, read: true } : current)); }}><span className={`notification-icon ${item.type}${item.id === "welcome" ? " notification-brand-logo" : ""}`}>{item.id === "welcome" ? <img src={xamukoLogo} alt="XAMUKO" /> : icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2></div><p>{item.description}</p><small>{item.date}</small></div><div className="notification-actions"><NotificationDeleteAction title={item.title} confirming={confirmingDelete("local", item.id)} busy={deleting("local", item.id)} onRequest={() => setPendingDelete({ source: "local", id: item.id })} onConfirm={() => void confirmDelete({ source: "local", id: item.id })} onCancel={() => setPendingDelete(null)}/></div></article>)}
       {!visiblePersisted.length && !visible.length && <div className="empty-state"><span>✓</span><h2>Todo al día</h2><p>No tienes notificaciones en tu bandeja.</p></div>}
     </section>
   </>;
