@@ -29,7 +29,7 @@
 .notifications-page .notification-item.is-selected{border-color:#b9a2ff;background:#f7f3ff}
 .notifications-page .notification-main-action{box-sizing:border-box;width:100%;min-height:78px;padding:15px 48px 15px 16px;gap:13px;border-radius:16px}
 .notifications-page .notification-icon{flex-basis:40px;height:40px;border-radius:13px;background:linear-gradient(145deg,#eee8ff,#def9ff);color:var(--xamuko-violet);font-size:18px}
-.notifications-page .notification-icon--brand{padding:5px;background:#0f2747;box-sizing:border-box}
+.notifications-page .notification-icon--brand{box-sizing:border-box;padding:5px;border:1px solid #e5eaf3;background:#fff}
 .notifications-page .notification-icon--brand img{object-fit:contain}
 .notifications-page .notification-copy{gap:4px}
 .notifications-page .notification-copy b{color:var(--xamuko-navy);font-size:13px}
