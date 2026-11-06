@@ -41,9 +41,27 @@ function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; d
 
 const meta = (request: Parameters<RequestHandler>[0]) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
 
+function normalizeOrigin(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (!['http:', 'https:'].includes(url.protocol) || url.pathname !== '/' || url.search || url.hash) return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+export function emailApplicationForOrigin(origin: string | undefined): EmailApplication {
+  const normalizedOrigin = normalizeOrigin(origin);
+  if (!normalizedOrigin) return 'usuario';
+  const authorizedOrigins = new Set(env.trustedOrigins.map((value) => normalizeOrigin(value)).filter((value): value is string => value !== null));
+  const businessOrigin = normalizeOrigin(env.emailFrontendUrls.negocios);
+  return businessOrigin === normalizedOrigin && authorizedOrigins.has(normalizedOrigin) ? 'negocios' : 'usuario';
+}
+
 function emailApplicationForRequest(request: Parameters<RequestHandler>[0]): EmailApplication {
-  const origin = request.get('origin')?.trim().replace(/\/$/, '');
-  return origin === env.emailFrontendUrls.negocios ? 'negocios' : 'usuario';
+  return emailApplicationForOrigin(request.get('origin') ?? undefined);
 }
 
 function googleErrorCode(error: unknown): string {
