@@ -16,6 +16,8 @@ export default function Profile() {
   const [profile, setProfile] = useState<UserProfile>(() => getProfile(user?.id));
   const navigate = useNavigate();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
   const { selection } = useLocationContext();
   const selectedLocation = selection?.locality ?? null;
@@ -25,24 +27,40 @@ export default function Profile() {
     if (!user) return;
     setProfile(() => ({ ...getProfile(user.id), name: user.displayName, email: user.emailNormalized ?? "" }));
   }, [user]);
-  useEffect(() => { const savedPhoto = profile.photo; if (!user || user.avatarUrl || !savedPhoto?.startsWith("data:image/")) return; void fetch(savedPhoto).then(response => response.blob()).then(blob => uploadAvatar(new File([blob], "perfil.jpg", { type: blob.type || "image/jpeg" }))).then(() => reloadUser()).catch(() => {}); }, [profile.photo, reloadUser, user]);
+  useEffect(() => { const savedPhoto = profile.photo; if (!user || user.avatarUrl || !savedPhoto?.startsWith("data:image/")) return; void fetch(savedPhoto).then(response => response.blob()).then(blob => uploadAvatar(new File([blob], "perfil.jpg", { type: blob.type || "image/jpeg" }))).then(() => reloadUser()).catch(() => setAvatarError("No se pudo recuperar la foto anterior. Selecciona una imagen JPG, PNG o WebP.")); }, [profile.photo, reloadUser, user]);
 
-  function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => { const next = { ...profile, photo: String(reader.result) }; void uploadAvatar(file).then(() => { saveProfile(next, user?.id); setProfile(next); void reloadUser(); }).catch(() => {}); };
-    reader.readAsDataURL(file);
+  async function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setAvatarError("Usa una imagen JPG, PNG o WebP de máximo 5 MB.");
+      return;
+    }
+    setAvatarSaving(true);
+    setAvatarError(null);
+    try {
+      await uploadAvatar(file);
+      const next = { ...profile, photo: undefined };
+      saveProfile(next, user?.id);
+      setProfile(next);
+      await reloadUser();
+    } catch (error) {
+      setAvatarError(error instanceof Error ? error.message : "No se pudo guardar la foto de perfil.");
+    } finally {
+      setAvatarSaving(false);
+    }
   }
 
   return (
     <PageLayout active="home" className="profile-page">
       <EmailVerificationNotice />
       <div className="profile-welcome">
-        <label className="profile-avatar-picker">
+        <label className="profile-avatar-picker" aria-busy={avatarSaving}>
           {accountAvatar || profile.photo ? <img src={accountAvatar ?? profile.photo} alt="Foto de perfil" /> : <span>{profile.name.trim().charAt(0).toUpperCase() || "D"}</span>}
-          <input type="file" accept="image/*" onChange={selectPhoto} />
-          <em>Cambiar foto</em>
+          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={selectPhoto} disabled={avatarSaving} />
+          <em>{avatarSaving ? "Guardando…" : "Cambiar foto"}</em>
         </label>
         <div>
           <span>MI PERFIL</span>
@@ -50,6 +68,7 @@ export default function Profile() {
           <p className="profile-location-label">{selectedLocation ? `${selectedLocation.name}, ${selectedLocation.context}` : selection?.mode === "automatic" ? "Ubicación actual" : "Zona no seleccionada"}</p>
         </div>
       </div>
+      {avatarError && <p className="profile-avatar-error" role="alert">{avatarError}</p>}
       {user && !user.emailVerified && <p className="profile-verification-status" role="status">Correo pendiente de verificación</p>}
       <section className="profile-links profile-activity-only">
         <h2>Tu actividad</h2>

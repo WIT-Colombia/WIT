@@ -22,3 +22,5 @@
 .profile-signout-confirm{display:grid;gap:8px;min-width:174px;padding:10px;border:1px solid #ebc9cc;border-radius:9px;background:#fff8f8;color:#a23d45;font-size:10px;font-weight:700;text-align:center}
 .profile-signout-confirm>div{display:flex;gap:5px}.profile-signout-confirm button{min-height:27px;flex:1;padding:0 5px;border:1px solid #ebc9cc;border-radius:6px;background:#fff;color:#a23d45;font:inherit;font-size:9px;cursor:pointer}.profile-signout-confirm button:first-child{background:#a23d45;color:#fff}.profile-signout-confirm button:hover{border-color:#dba7ac}
 @media(max-width:500px){.profile-signout-confirm{width:100%;min-width:0}}
+
+.profile-avatar-error{margin:-12px 0 18px;color:#ad3f46;font-size:12px;line-height:1.4}

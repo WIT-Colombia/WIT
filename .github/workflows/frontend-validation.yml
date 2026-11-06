@@ -53,11 +53,39 @@ jobs:
         run: |
           npm run test --workspace=@wit/admin --if-present
           npm run test --workspace=@wit/usuario --if-present
+          npm run test --workspace=@wit/negocios --if-present
           npm run test:location --workspace=@wit/usuario
 
       - name: Build all applications
         working-directory: frontend
         run: npm run build
+
+      - name: Package isolated Pages previews (Usuario and Business only)
+        if: github.event_name == 'pull_request'
+        working-directory: frontend
+        run: |
+          test -s apps/usuario/dist/index.html
+          test -s apps/negocios/dist/index.html
+          test -d apps/usuario/dist/assets
+          test -d apps/negocios/dist/assets
+
+      - name: Save Usuario Pages release candidate
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-usuario-pages-pr-${{ github.event.pull_request.number }}
+          path: frontend/apps/usuario/dist/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Save Business Pages release candidate
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-business-pages-pr-${{ github.event.pull_request.number }}
+          path: frontend/apps/negocios/dist/
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Audit dependencies
         working-directory: frontend

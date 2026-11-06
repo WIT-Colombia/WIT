@@ -1,4 +1,4 @@
-import { BusinessApiError, buildApiUrl, configureAccessTokenProvider, configureUnauthorizedHandler, requestJson } from "./businessApiClient";
+import { BusinessApiError, buildApiUrl, configureAccessTokenProvider, configureUnauthorizedHandler, requestJson, requestPhotoBlob } from "./businessApiClient";
 
 export type BusinessAuthUser = {
   id: string;
@@ -89,14 +89,30 @@ export async function updateProfile(input: { name: string; nickname?: string; av
 }
 
 export async function uploadAvatar(file: File): Promise<void> {
-  const form = new FormData(); form.append("file", file);
-  const response = await fetch(buildApiUrl("/auth/me/avatar"), { method: "POST", body: form, credentials: "include", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined });
-  if (!response.ok) throw new Error("No se pudo guardar la foto de perfil.");
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+    throw new Error("Usa una imagen JPG, PNG o WebP de máximo 5 MB.");
+  }
+  const form = new FormData();
+  form.append("file", file);
+  const send = () => fetch(buildApiUrl("/auth/me/avatar"), {
+    method: "POST",
+    body: form,
+    credentials: "include",
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+  let response = await send();
+  if (response.status === 401) {
+    await refreshSession();
+    response = await send();
+  }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } | null;
+    throw new BusinessApiError(response.status, payload?.error?.code ?? "AVATAR_UPLOAD_FAILED", payload?.error?.message ?? "No se pudo guardar la foto de perfil.");
+  }
 }
-export async function getAvatarBlob(path = "/api/v1/auth/me/avatar"): Promise<Blob> {
-  const response = await fetch(buildApiUrl(path), { credentials: "include", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined });
-  if (!response.ok) throw new Error("No se pudo cargar la foto de perfil.");
-  return response.blob();
+
+export function getAvatarBlob(path = "/api/v1/auth/me/avatar"): Promise<Blob> {
+  return requestPhotoBlob(path);
 }
 
 export async function register(name: string, email: string, password: string): Promise<BusinessAuthUser> {
