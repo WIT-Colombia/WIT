@@ -31,7 +31,21 @@ export function RecoveryPage() {
     const timeout = window.setTimeout(() => navigate("/perfil"), 3000);
     return () => window.clearTimeout(timeout);
   }, [emailMode, navigate, status]);
-  const submitChange = async (event: FormEvent) => {\n    event.preventDefault();\n    if (next.length < 8 || next !== verify || !current) return;\n    setSubmitting(true);\n    setError("");\n    try {\n      await changePassword(current, next);\n      setCurrent(""); setNext(""); setVerify("");\n      setStatus("changed");\n    } catch {\n      setError("No se pudo actualizar la contraseña. Verifica tu contraseña actual e inténtalo de nuevo.");\n    } finally {\n      setSubmitting(false);\n    }\n  };
+  const submitChange = async (event: FormEvent) => {
+    event.preventDefault();
+    if (next.length < 8 || next !== verify || !current) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      await changePassword(current, next);
+      setCurrent(""); setNext(""); setVerify("");
+      setStatus("changed");
+    } catch {
+      setError("No se pudo actualizar la contraseña. Verifica tu contraseña actual e inténtalo de nuevo.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
   const submitRecovery = async (event: FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
