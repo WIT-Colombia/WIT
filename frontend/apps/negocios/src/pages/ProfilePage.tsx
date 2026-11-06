@@ -46,10 +46,14 @@ export function ProfilePage() {
     setAvatarSaving(true);
     try {
       await uploadAvatar(file);
-      void refresh().catch(() => undefined);
-      setAvatarMessage("Foto de perfil actualizada.");
-    } catch {
-      setAvatarMessage("No pudimos guardar la foto. Inténtalo de nuevo.");
+      try {
+        await refresh();
+        setAvatarMessage("Foto de perfil actualizada.");
+      } catch {
+        setAvatarMessage("Foto guardada. Actualiza la página para visualizarla.");
+      }
+    } catch (error) {
+      setAvatarMessage(error instanceof Error ? error.message : "No pudimos guardar la foto. Inténtalo de nuevo.");
       setAvatarMessageIsError(true);
     } finally {
       setAvatarSaving(false);
