@@ -215,9 +215,16 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
 export async function confirmEmail(token: string): Promise<{ user: BusinessAuthUser; autoLogin: boolean }> {
   const result = await requestJson<{ user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }>('/auth/verify-email/confirm', { method: 'POST', body: JSON.stringify({ token }) });
-  if (result.accessToken) accessToken = result.accessToken;
-  sessionState = { status: 'authenticated', user: result.user };
-  return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
+  const hasValidAccessToken = typeof result.accessToken === 'string' && result.accessToken.trim().length > 0;
+  const autoLogin = hasValidAccessToken && result.autoLogin !== false;
+  if (autoLogin) {
+    accessToken = result.accessToken as string;
+    sessionState = { status: 'authenticated', user: result.user };
+  } else {
+    accessToken = null;
+    sessionState = { status: 'unauthenticated' };
+  }
+  return { user: result.user, autoLogin };
 }
 
 export async function requestVerification(email: string): Promise<string> {
