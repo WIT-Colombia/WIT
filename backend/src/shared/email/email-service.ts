@@ -11,8 +11,8 @@ const sender: EmailSender = env.emailMode === 'resend'
   : new DevelopmentEmailSender();
 
 function applicationBaseUrl(application: EmailApplication, path: '/verify-email' | '/recuperar'): string {
-  if (application === 'negocios') return `${env.emailFrontendUrls.negocios.replace(/\\/$/, '')}${path}`;
-  return `${(path === '/verify-email' ? env.emailVerificationUrl : env.passwordResetUrl).replace(/\\/$/, '')}`;
+  if (application === 'negocios') return `${env.emailFrontendUrls.negocios.replace(/\/$/, '')}${path}`;
+  return `${(path === '/verify-email' ? env.emailVerificationUrl : env.passwordResetUrl).replace(/\/$/, '')}`;
 }
 
 /** Sends a fully rendered transactional message through the configured provider. */
