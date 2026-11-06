@@ -209,6 +209,33 @@ export async function logout(): Promise<void> {
   }
 }
 
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await requestJson<void>('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }), ...withAuthorization() });
+}
+
+export function applyEmailConfirmationResult(result: { user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }): { user: BusinessAuthUser; autoLogin: boolean } {
+  const hasValidAccessToken = typeof result.accessToken === "string" && result.accessToken.trim().length > 0;
+  const autoLogin = hasValidAccessToken && result.autoLogin !== false;
+  if (autoLogin) {
+    accessToken = result.accessToken as string;
+    sessionState = { status: "authenticated", user: result.user };
+  } else {
+    accessToken = null;
+    sessionState = { status: "unauthenticated" };
+  }
+  return { user: result.user, autoLogin };
+}
+
+export async function confirmEmail(token: string): Promise<{ user: BusinessAuthUser; autoLogin: boolean }> {
+  const result = await requestJson<{ user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }>('/auth/verify-email/confirm', { method: 'POST', body: JSON.stringify({ token }) });
+  return applyEmailConfirmationResult(result);
+}
+
+export async function requestVerification(email: string): Promise<string> {
+  const result = await requestJson<{ message: string }>('/auth/verify-email/request', { method: 'POST', body: JSON.stringify({ email }) });
+  return result.message;
+}
+
 export async function requestPasswordReset(email: string): Promise<string> {
   const result = await requestJson<{ message: string }>("/auth/password-reset/request", {
     method: "POST",
