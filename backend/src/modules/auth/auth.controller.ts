@@ -52,11 +52,11 @@ function normalizeOrigin(value: string | undefined): string | null {
   }
 }
 
-export function emailApplicationForOrigin(origin: string | undefined): EmailApplication {
+export function emailApplicationForOrigin(origin: string | undefined, options?: { businessOrigin?: string; trustedOrigins?: string[] }): EmailApplication {
   const normalizedOrigin = normalizeOrigin(origin);
   if (!normalizedOrigin) return 'usuario';
-  const authorizedOrigins = new Set(env.trustedOrigins.map((value) => normalizeOrigin(value)).filter((value): value is string => value !== null));
-  const businessOrigin = normalizeOrigin(env.emailFrontendUrls.negocios);
+  const authorizedOrigins = new Set((options?.trustedOrigins ?? env.trustedOrigins).map((value) => normalizeOrigin(value)).filter((value): value is string => value !== null));
+  const businessOrigin = normalizeOrigin(options?.businessOrigin ?? env.emailFrontendUrls.negocios);
   return businessOrigin === normalizedOrigin && authorizedOrigins.has(normalizedOrigin) ? 'negocios' : 'usuario';
 }
 
