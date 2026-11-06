@@ -209,6 +209,17 @@ export async function logout(): Promise<void> {
   }
 }
 
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await requestJson<void>('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }), ...withAuthorization() });
+}
+
+export async function confirmEmail(token: string): Promise<{ user: BusinessAuthUser; autoLogin: boolean }> {
+  const result = await requestJson<{ user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }>('/auth/verify-email/confirm', { method: 'POST', body: JSON.stringify({ token }) });
+  if (result.accessToken) accessToken = result.accessToken;
+  sessionState = { status: 'authenticated', user: result.user };
+  return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
+}
+
 export async function requestPasswordReset(email: string): Promise<string> {
   const result = await requestJson<{ message: string }>("/auth/password-reset/request", {
     method: "POST",
