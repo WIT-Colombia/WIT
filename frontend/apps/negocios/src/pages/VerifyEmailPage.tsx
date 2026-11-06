@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BusinessHeader } from "../components/layout/BusinessHeader";
-import { BusinessApiError } from "../services/businessApiClient";
+import { BusinessBusinessApiError } from "../services/businessApiClient";
 import { confirmEmail, requestVerification } from "../services/businessAuthService";
 
 export default function VerifyEmailPage() {
@@ -26,7 +26,7 @@ export default function VerifyEmailPage() {
       })
       .catch((caught: unknown) => {
         setState("error");
-        setMessage(caught instanceof BusinessApiError ? caught.message : "No pudimos verificar tu correo. Intenta abrir el enlace de nuevo.");
+        setMessage(caught instanceof BusinessBusinessApiError ? caught.message : "No pudimos verificar tu correo. Intenta abrir el enlace de nuevo.");
       });
   }, [token]);
 
@@ -38,7 +38,7 @@ export default function VerifyEmailPage() {
       await requestVerification(email.trim());
       setResent(true);
     } catch (caught) {
-      setMessage(caught instanceof ApiError ? caught.message : "No se pudo solicitar el correo.");
+      setMessage(caught instanceof BusinessApiError ? caught.message : "No se pudo solicitar el correo.");
     } finally {
       setResending(false);
     }
