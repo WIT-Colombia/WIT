@@ -18,7 +18,7 @@ export default function Settings() {
   const [adultConsentOpen, setAdultConsentOpen] = useState(false);
   const [adultFeedback, setAdultFeedback] = useState<string | null>(null);
   const [nicknameCopied, setNicknameCopied] = useState(false);
-  const hasWitPassword = user?.authProviders.includes("EMAIL") ?? false;
+  const hasWitPassword = (user?.authProviders.includes("EMAIL") && !user?.authProviders.includes("GOOGLE")) ?? false;
   useEffect(() => {
     if (!nameDirty) setName(user?.displayName ?? "");
   }, [nameDirty, user?.displayName]);
