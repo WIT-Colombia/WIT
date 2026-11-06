@@ -26,7 +26,7 @@ export default function VerifyEmailPage() {
       })
       .catch((caught: unknown) => {
         setState("error");
-        setMessage(caught instanceof BusinessBusinessApiError ? caught.message : "No pudimos verificar tu correo. Intenta abrir el enlace de nuevo.");
+        setMessage(caught instanceof BusinessApiError ? caught.message : "No pudimos verificar tu correo. Intenta abrir el enlace de nuevo.");
       });
   }, [token]);
 
