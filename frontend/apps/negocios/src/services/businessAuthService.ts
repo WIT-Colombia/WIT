@@ -220,6 +220,11 @@ export async function confirmEmail(token: string): Promise<{ user: BusinessAuthU
   return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
 
+export async function requestVerification(email: string): Promise<string> {
+  const result = await requestJson<{ message: string }>('/auth/verify-email/request', { method: 'POST', body: JSON.stringify({ email }) });
+  return result.message;
+}
+
 export async function requestPasswordReset(email: string): Promise<string> {
   const result = await requestJson<{ message: string }>("/auth/password-reset/request", {
     method: "POST",
