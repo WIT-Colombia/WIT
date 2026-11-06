@@ -24,3 +24,5 @@
 @media(max-width:500px){.profile-signout-confirm{width:100%;min-width:0}}
 
 .profile-avatar-error{margin:-12px 0 18px;color:#ad3f46;font-size:12px;line-height:1.4}
+
+.profile-avatar-notice{margin:-12px 0 18px;color:var(--wit-primary-dark);font-size:12px;line-height:1.4}

@@ -38,6 +38,21 @@ describe("Usuario: subir foto personal", () => {
     expect((options.body as FormData).get("file")).toBeInstanceOf(File);
   });
 
+  it("permite cambiar de fotografía varias veces en la misma sesión", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const first = new File(["primera"], "primera.jpg", { type: "image/jpeg" });
+    const second = new File(["segunda"], "segunda.png", { type: "image/png" });
+
+    await uploadAvatar(first);
+    await uploadAvatar(second);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect((fetchMock.mock.calls[0][1] as RequestInit).body).toBeInstanceOf(FormData);
+    expect(((fetchMock.mock.calls[0][1] as RequestInit).body as FormData).get("file")).toBe(first);
+    expect(((fetchMock.mock.calls[1][1] as RequestInit).body as FormData).get("file")).toBe(second);
+  });
+
   it("renueva la sesión y reintenta una sola vez si recibe 401", async () => {
     vi.mocked(requestJson).mockResolvedValue({ accessToken: "nuevo-token", user: {} });
     const fetchMock = vi.fn()
