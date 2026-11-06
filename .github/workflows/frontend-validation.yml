@@ -53,6 +53,7 @@ jobs:
         run: |
           npm run test --workspace=@wit/admin --if-present
           npm run test --workspace=@wit/usuario --if-present
+          npm run test --workspace=@wit/negocios --if-present
           npm run test:location --workspace=@wit/usuario
 
       - name: Build all applications
