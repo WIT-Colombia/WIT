@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BusinessHeader } from "../components/layout/BusinessHeader";
+import { useBusinessAuth } from "../services/businessAuthContext";
 import { BusinessApiError } from "../services/businessApiClient";
 import { confirmEmail, requestVerification } from "../services/businessAuthService";
 
@@ -14,21 +15,24 @@ export default function VerifyEmailPage() {
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const attempted = useRef(false);
+  const { refresh } = useBusinessAuth();
 
   useEffect(() => {
     if (!token || attempted.current) return;
     attempted.current = true;
     window.history.replaceState({}, document.title, window.location.pathname);
     confirmEmail(token)
-      .then(() => {
+      .then(async (result) => {
+        await refresh();
         setState("success");
         setMessage("Tu correo se verificó correctamente.");
+        return result;
       })
       .catch((caught: unknown) => {
         setState("error");
         setMessage(caught instanceof BusinessApiError ? caught.message : "No pudimos verificar tu correo. Intenta abrir el enlace de nuevo.");
       });
-  }, [token]);
+  }, [refresh, token]);
 
   async function resend(event: FormEvent) {
     event.preventDefault();
