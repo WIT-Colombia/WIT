@@ -42,7 +42,7 @@ function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; d
 const meta = (request: Parameters<RequestHandler>[0]) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
 
 function emailApplicationForRequest(request: Parameters<RequestHandler>[0]): EmailApplication {
-  const origin = request.get('origin')?.trim().replace(/\\/$/, '');
+  const origin = request.get('origin')?.trim().replace(/\/$/, '');
   return origin === env.emailFrontendUrls.negocios ? 'negocios' : 'usuario';
 }
 
