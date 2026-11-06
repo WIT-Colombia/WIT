@@ -6,6 +6,7 @@ import { env } from '../../config/env.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
+import { createAvailableNickname, isNicknameCollision } from './nickname.service.js';
 
 const GOOGLE_STATE_COOKIE = 'wit_google_oauth_state';
 const GOOGLE_STATE_PATH = '/api/v1/auth/google';
@@ -14,7 +15,7 @@ const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
 const googleKeys = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 
 export type GoogleFlow = 'login' | 'link';
-export type GoogleApplication = 'usuario' | 'negocios';
+export type GoogleApplication = 'usuario' | 'negocios' | 'admin';
 export type GoogleState = {
   state: string;
   nonce: string;
@@ -33,6 +34,8 @@ export type GoogleProfile = {
   displayName: string;
   avatarUrl: string | null;
 };
+
+export function isAuthorizedAdminGoogleSub(subject: string): boolean { return env.adminGoogleSubAllowlist.includes(subject); }
 
 export class GoogleOAuthDiagnosticError extends Error {
   constructor(
@@ -83,7 +86,7 @@ function unpackState(value: string): GoogleState {
     throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
   }
   const application = candidate.application === undefined ? 'usuario' : candidate.application;
-  if (application !== 'usuario' && application !== 'negocios') throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
+  if (application !== 'usuario' && application !== 'negocios' && application !== 'admin') throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
   return { ...candidate, application } as GoogleState;
 }
 
@@ -156,28 +159,37 @@ export async function verifyGoogleCode(code: string, state: GoogleState): Promis
 }
 
 export async function resolveGoogleUser(profile: GoogleProfile, state: GoogleState): Promise<{ userId: string; created: boolean }> {
-  return prisma.$transaction(async (transaction) => {
-    const existingIdentity = await transaction.authIdentity.findUnique({ where: { provider_providerSubject: { provider: 'GOOGLE', providerSubject: profile.subject } }, select: { userId: true, user: { select: { status: true } } } });
-    if (existingIdentity) {
-      if (existingIdentity.user.status !== 'ACTIVE') throw new AppError(403, 'ACCOUNT_UNAVAILABLE', 'La cuenta no está disponible.');
-      if (state.flow === 'link' && state.userId !== existingIdentity.userId) throw new AppError(409, 'GOOGLE_IDENTITY_IN_USE', 'Esta cuenta de Google ya está vinculada a otra cuenta.');
-      return { userId: existingIdentity.userId, created: false };
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      return await prisma.$transaction(async (transaction) => {
+        const existingIdentity = await transaction.authIdentity.findUnique({ where: { provider_providerSubject: { provider: 'GOOGLE', providerSubject: profile.subject } }, select: { userId: true, user: { select: { status: true } } } });
+        if (existingIdentity) {
+          if (existingIdentity.user.status !== 'ACTIVE') throw new AppError(403, 'ACCOUNT_UNAVAILABLE', 'La cuenta no está disponible.');
+          if (state.flow === 'link' && state.userId !== existingIdentity.userId) throw new AppError(409, 'GOOGLE_IDENTITY_IN_USE', 'Esta cuenta de Google ya está vinculada a otra cuenta.');
+          return { userId: existingIdentity.userId, created: false };
+        }
+        if (state.flow === 'link') {
+          if (!state.userId) throw new AppError(400, 'GOOGLE_LINK_INVALID', 'No se pudo iniciar la vinculación.');
+          const owner = await transaction.user.findUnique({ where: { id: state.userId }, select: { id: true, status: true, emailNormalized: true } });
+          if (!owner || owner.status !== 'ACTIVE') throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
+          const emailOwner = await transaction.user.findUnique({ where: { emailNormalized: profile.email }, select: { id: true } });
+          if (emailOwner && emailOwner.id !== owner.id) throw new AppError(409, 'GOOGLE_EMAIL_IN_USE', 'El correo de Google ya pertenece a otra cuenta.');
+          await transaction.authIdentity.create({ data: { userId: owner.id, provider: 'GOOGLE', providerSubject: profile.subject, verifiedAt: new Date() } });
+          return { userId: owner.id, created: false };
+        }
+        const emailOwner = await transaction.user.findUnique({ where: { emailNormalized: profile.email }, select: { id: true } });
+        if (emailOwner) throw new AppError(409, 'GOOGLE_LINK_REQUIRED', 'Inicia sesión con tu cuenta WIT para vincular Google.');
+        if (!state.consent) throw new AppError(400, 'GOOGLE_CONSENT_REQUIRED', 'Acepta los términos para crear tu cuenta con Google.');
+        const nickname = await createAvailableNickname(transaction, profile.displayName.slice(0, 120));
+        const user = await transaction.user.create({ data: { displayName: profile.displayName.slice(0, 120), nickname, emailNormalized: profile.email, avatarUrl: profile.avatarUrl, authIdentities: { create: { provider: 'GOOGLE', providerSubject: profile.subject, verifiedAt: new Date() } } }, select: { id: true } });
+        return { userId: user.id, created: true };
+      });
+    } catch (error) {
+      if (isNicknameCollision(error)) continue;
+      throw error;
     }
-    if (state.flow === 'link') {
-      if (!state.userId) throw new AppError(400, 'GOOGLE_LINK_INVALID', 'No se pudo iniciar la vinculación.');
-      const owner = await transaction.user.findUnique({ where: { id: state.userId }, select: { id: true, status: true, emailNormalized: true } });
-      if (!owner || owner.status !== 'ACTIVE') throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
-      const emailOwner = await transaction.user.findUnique({ where: { emailNormalized: profile.email }, select: { id: true } });
-      if (emailOwner && emailOwner.id !== owner.id) throw new AppError(409, 'GOOGLE_EMAIL_IN_USE', 'El correo de Google ya pertenece a otra cuenta.');
-      await transaction.authIdentity.create({ data: { userId: owner.id, provider: 'GOOGLE', providerSubject: profile.subject, verifiedAt: new Date() } });
-      return { userId: owner.id, created: false };
-    }
-    const emailOwner = await transaction.user.findUnique({ where: { emailNormalized: profile.email }, select: { id: true } });
-    if (emailOwner) throw new AppError(409, 'GOOGLE_LINK_REQUIRED', 'Inicia sesión con tu cuenta WIT para vincular Google.');
-    if (!state.consent) throw new AppError(400, 'GOOGLE_CONSENT_REQUIRED', 'Acepta los términos para crear tu cuenta con Google.');
-    const user = await transaction.user.create({ data: { displayName: profile.displayName.slice(0, 120), emailNormalized: profile.email, avatarUrl: profile.avatarUrl, authIdentities: { create: { provider: 'GOOGLE', providerSubject: profile.subject, verifiedAt: new Date() } } }, select: { id: true } });
-    return { userId: user.id, created: true };
-  });
+  }
+  throw new AppError(503, 'NICKNAME_GENERATION_UNAVAILABLE', 'No pudimos generar un nickname disponible. Intenta nuevamente.');
 }
 
 export async function findSessionUserId(refreshToken: string): Promise<string | undefined> {
