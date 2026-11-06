@@ -8,6 +8,7 @@ import type { LoginInput, RegisterInput } from './auth.schemas.js';
 import { sendVerificationRequest } from './auth-token.service.js';
 import { sendWelcomeEmail } from '../../shared/email/email-service.js';
 import { shouldRequireEmailVerification } from './email-login-policy.js';
+import type { EmailApplication } from '../../shared/email/email-brand.js';
 import { createAvailableNickname, isNicknameCollision } from './nickname.service.js';
 
 const invalidCredentials = () => new AppError(401, 'INVALID_CREDENTIALS', 'Correo o contraseña incorrectos.');
@@ -35,7 +36,7 @@ export async function issueSession(userId: string, requestMeta?: { userAgent?: s
   return { accessToken: await createAccessToken({ userId, sessionId: session.id }), refreshToken };
 }
 
-export async function register(input: RegisterInput, _requestMeta?: { userAgent?: string; ipAddress?: string }) {
+export async function register(input: RegisterInput, _requestMeta?: { userAgent?: string; ipAddress?: string }, application: EmailApplication = 'usuario') {
   const emailNormalized = normalizeEmail(input.email);
   const passwordHash = await argon2.hash(input.password, { type: argon2.argon2id });
   for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -54,9 +55,9 @@ export async function register(input: RegisterInput, _requestMeta?: { userAgent?
       });
       const result = { user: await getCurrentUser(user.id) };
       let verificationEmailSent = true;
-      try { await sendVerificationRequest(emailNormalized); }
+      try { await sendVerificationRequest(emailNormalized, application); }
       catch { verificationEmailSent = false; console.warn('Registration verification email could not be sent'); }
-      try { await sendWelcomeEmail(emailNormalized, user.displayName); }
+      try { await sendWelcomeEmail(emailNormalized, user.displayName, application); }
       catch { console.warn('Registration welcome email could not be sent'); }
       return { ...result, user: { ...result.user, verificationEmailSent } };
     } catch (error) {
