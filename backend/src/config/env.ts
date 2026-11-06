@@ -86,6 +86,11 @@ const googleFrontendUrls = Object.freeze({
   negocios: process.env.GOOGLE_FRONTEND_URL_NEGOCIOS?.trim() ?? 'http://localhost:5174',
   staging: process.env.GOOGLE_FRONTEND_URL_STAGING?.trim() ?? 'https://staging.xamuko.com',
 });
+const emailFrontendUrls = Object.freeze({
+  usuario: process.env.EMAIL_FRONTEND_URL_USUARIO?.trim() ?? googleFrontendUrls.usuario,
+  negocios: process.env.EMAIL_FRONTEND_URL_NEGOCIOS?.trim() ?? googleFrontendUrls.negocios,
+});
+
 const googleBackendUrl = process.env.GOOGLE_BACKEND_URL?.trim() ?? 'http://localhost:3000';
 
 const adminGoogleSubAllowlist = Object.freeze((process.env.ADMIN_GOOGLE_SUB_ALLOWLIST ?? '').split(',').map(value => value.trim()).filter(Boolean));
@@ -112,6 +117,7 @@ export const env = Object.freeze({
   resendApiKey,
   emailApiUrl,
   emailLogoUrl,
+  emailFrontendUrls,
   smtpHost: process.env.SMTP_HOST?.trim(),
   smtpPort: process.env.SMTP_PORT?.trim(),
   smtpUser: process.env.SMTP_USER?.trim(),
