@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BusinessHeader } from "../components/layout/BusinessHeader";
-import { BusinessBusinessApiError } from "../services/businessApiClient";
+import { BusinessApiError } from "../services/businessApiClient";
 import { confirmEmail, requestVerification } from "../services/businessAuthService";
 
 export default function VerifyEmailPage() {
