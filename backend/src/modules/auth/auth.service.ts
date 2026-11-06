@@ -8,24 +8,13 @@ import type { LoginInput, RegisterInput } from './auth.schemas.js';
 import { sendVerificationRequest } from './auth-token.service.js';
 import { sendWelcomeEmail } from '../../shared/email/email-service.js';
 import { shouldRequireEmailVerification } from './email-login-policy.js';
+import { createAvailableNickname, isNicknameCollision } from './nickname.service.js';
 
 const invalidCredentials = () => new AppError(401, 'INVALID_CREDENTIALS', 'Correo o contraseña incorrectos.');
 const unverifiedEmail = () => new AppError(403, 'EMAIL_NOT_VERIFIED', 'Verifica tu correo electrónico antes de iniciar sesión.');
 
 function normalizeEmail(email: string): string {
   return email.trim().toLocaleLowerCase('en-US');
-}
-
-async function createUniqueNickname(displayName: string): Promise<string> {
-  const base = displayName.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('en-US').replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '').slice(0, 24) || 'usuario';
-  let candidate = `@${base}`;
-  let suffix = 2;
-  while (await prisma.user.findUnique({ where: { nickname: candidate }, select: { id: true } })) {
-    const suffixText = `.${suffix}`;
-    candidate = `@${base.slice(0, 32 - suffixText.length - 1)}${suffixText}`;
-    suffix += 1;
-  }
-  return candidate;
 }
 
 function refreshExpiresAt(persistent: boolean): Date {
@@ -49,32 +38,36 @@ export async function issueSession(userId: string, requestMeta?: { userAgent?: s
 export async function register(input: RegisterInput, _requestMeta?: { userAgent?: string; ipAddress?: string }) {
   const emailNormalized = normalizeEmail(input.email);
   const passwordHash = await argon2.hash(input.password, { type: argon2.argon2id });
-  const nickname = await createUniqueNickname(input.name.trim());
-  try {
-    const user = await prisma.user.create({
-      data: {
-        displayName: input.name.trim(),
-        nickname,
-        emailNormalized,
-        authIdentities: {
-          create: { provider: 'EMAIL', providerSubject: emailNormalized, passwordHash },
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const nickname = await createAvailableNickname(prisma, input.name.trim());
+    try {
+      const user = await prisma.user.create({
+        data: {
+          displayName: input.name.trim(),
+          nickname,
+          emailNormalized,
+          authIdentities: {
+            create: { provider: 'EMAIL', providerSubject: emailNormalized, passwordHash },
+          },
         },
-      },
-      select: { id: true, publicId: true, displayName: true, emailNormalized: true },
-    });
-    const result = { user: await getCurrentUser(user.id) };
-    let verificationEmailSent = true;
-    try { await sendVerificationRequest(emailNormalized); }
-    catch { verificationEmailSent = false; console.warn('Registration verification email could not be sent'); }
-    try { await sendWelcomeEmail(emailNormalized, user.displayName); }
-    catch { console.warn('Registration welcome email could not be sent'); }
-    return { ...result, user: { ...result.user, verificationEmailSent } };
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      throw new AppError(409, 'EMAIL_UNAVAILABLE', 'Este correo ya tiene una cuenta en WIT. Inicia sesión.', { email: 'Este correo ya tiene una cuenta en WIT. Inicia sesión.' });
+        select: { id: true, publicId: true, displayName: true, emailNormalized: true },
+      });
+      const result = { user: await getCurrentUser(user.id) };
+      let verificationEmailSent = true;
+      try { await sendVerificationRequest(emailNormalized); }
+      catch { verificationEmailSent = false; console.warn('Registration verification email could not be sent'); }
+      try { await sendWelcomeEmail(emailNormalized, user.displayName); }
+      catch { console.warn('Registration welcome email could not be sent'); }
+      return { ...result, user: { ...result.user, verificationEmailSent } };
+    } catch (error) {
+      if (isNicknameCollision(error)) continue;
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new AppError(409, 'EMAIL_UNAVAILABLE', 'Este correo ya tiene una cuenta en WIT. Inicia sesión.', { email: 'Este correo ya tiene una cuenta en WIT. Inicia sesión.' });
+      }
+      throw error;
     }
-    throw error;
   }
+  throw new AppError(503, 'NICKNAME_GENERATION_UNAVAILABLE', 'No pudimos generar un nickname disponible. Intenta nuevamente.');
 }
 
 export async function login(input: LoginInput, requestMeta?: { userAgent?: string; ipAddress?: string }) {
