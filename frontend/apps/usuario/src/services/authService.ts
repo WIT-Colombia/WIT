@@ -129,9 +129,26 @@ export async function updateProfile(input: ProfileUpdate): Promise<AuthUser> {
   return result.user;
 }
 export async function uploadAvatar(file: File): Promise<void> {
-  const form = new FormData(); form.append("file", file);
-  const response = await fetch("/api/v1/auth/me/avatar", { method: "POST", body: form, credentials: "include", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined });
-  if (!response.ok) throw new Error("No se pudo guardar la foto de perfil.");
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+    throw new Error("Usa una imagen JPG, PNG o WebP de máximo 5 MB.");
+  }
+  const form = new FormData();
+  form.append("file", file);
+  const send = () => fetch(buildApiUrl("/api/v1/auth/me/avatar"), {
+    method: "POST",
+    body: form,
+    credentials: "include",
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+  let response = await send();
+  if (response.status === 401) {
+    await refreshSession();
+    response = await send();
+  }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } | null;
+    throw new ApiError(response.status, payload?.error?.code ?? "AVATAR_UPLOAD_FAILED", payload?.error?.message ?? "No se pudo guardar la foto de perfil.");
+  }
 }
 
 const ADULT_CONTENT_CONDITIONS_VERSION = "2026-10-17";
