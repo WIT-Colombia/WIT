@@ -18,6 +18,7 @@ export default function Profile() {
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarNotice, setAvatarNotice] = useState<string | null>(null);
   const unreadNotifications = getNotifications().filter((item) => !item.read).length;
   const { selection } = useLocationContext();
   const selectedLocation = selection?.locality ?? null;
@@ -32,23 +33,34 @@ export default function Profile() {
   async function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
     const file = input.files?.[0];
-    input.value = "";
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      input.value = "";
+      setAvatarNotice(null);
       setAvatarError("Usa una imagen JPG, PNG o WebP de máximo 5 MB.");
       return;
     }
     setAvatarSaving(true);
     setAvatarError(null);
+    setAvatarNotice(null);
     try {
       await uploadAvatar(file);
+      // The upload already succeeded. A subsequent profile refresh must not
+      // be presented as a storage failure (notably on mobile Safari).
       const next = { ...profile, photo: undefined };
-      saveProfile(next, user?.id);
       setProfile(next);
-      await reloadUser();
+      try { saveProfile(next, user?.id); } catch { /* Local cache is optional; the avatar is stored on the server. */ }
+      try {
+        await reloadUser();
+        setAvatarNotice("Foto de perfil actualizada.");
+      } catch {
+        setAvatarNotice("Foto guardada. Recarga la página si todavía no ves el cambio.");
+      }
     } catch (error) {
       setAvatarError(error instanceof Error ? error.message : "No se pudo guardar la foto de perfil.");
     } finally {
+      // Keep the selected File available until the upload finishes on iOS.
+      input.value = "";
       setAvatarSaving(false);
     }
   }
@@ -69,6 +81,7 @@ export default function Profile() {
         </div>
       </div>
       {avatarError && <p className="profile-avatar-error" role="alert">{avatarError}</p>}
+      {avatarNotice && <p className="profile-avatar-notice" role="status">{avatarNotice}</p>}
       {user && !user.emailVerified && <p className="profile-verification-status" role="status">Correo pendiente de verificación</p>}
       <section className="profile-links profile-activity-only">
         <h2>Tu actividad</h2>
