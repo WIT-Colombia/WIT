@@ -3,6 +3,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { sendPasswordResetEmail, sendSecurityNotificationEmail, sendVerificationEmail } from '../../shared/email/email-service.js';
+import type { EmailApplication } from '../../shared/email/email-brand.js';
 
 type TokenType = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
 
@@ -26,14 +27,14 @@ async function issueToken(userId: string, type: TokenType, ttlMs: number): Promi
 }
 
 
-export async function sendVerificationRequest(emailNormalized: string): Promise<void> {
+export async function sendVerificationRequest(emailNormalized: string, application: EmailApplication = 'usuario'): Promise<void> {
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || identity.verifiedAt || identity.user.status !== 'ACTIVE') return;
   const token = await issueToken(identity.userId, 'EMAIL_VERIFICATION', 24 * 60 * 60 * 1000);
-  await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName);
+  await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName, application);
 }
 
 export async function confirmEmail(token: string): Promise<string> {
@@ -41,14 +42,14 @@ export async function confirmEmail(token: string): Promise<string> {
   return record.userId;
 }
 
-export async function sendPasswordResetRequest(emailNormalized: string): Promise<void> {
+export async function sendPasswordResetRequest(emailNormalized: string, application: EmailApplication = 'usuario'): Promise<void> {
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || !identity.verifiedAt || identity.user.status !== 'ACTIVE') return;
   const token = await issueToken(identity.userId, 'PASSWORD_RESET', 30 * 60 * 1000);
-  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName);
+  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName, application);
 }
 
 export async function resetPassword(token: string, passwordHash: string): Promise<string> {
