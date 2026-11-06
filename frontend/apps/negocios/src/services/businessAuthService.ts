@@ -213,18 +213,22 @@ export async function changePassword(currentPassword: string, newPassword: strin
   await requestJson<void>('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }), ...withAuthorization() });
 }
 
-export async function confirmEmail(token: string): Promise<{ user: BusinessAuthUser; autoLogin: boolean }> {
-  const result = await requestJson<{ user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }>('/auth/verify-email/confirm', { method: 'POST', body: JSON.stringify({ token }) });
-  const hasValidAccessToken = typeof result.accessToken === 'string' && result.accessToken.trim().length > 0;
+export function applyEmailConfirmationResult(result: { user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }): { user: BusinessAuthUser; autoLogin: boolean } {
+  const hasValidAccessToken = typeof result.accessToken === "string" && result.accessToken.trim().length > 0;
   const autoLogin = hasValidAccessToken && result.autoLogin !== false;
   if (autoLogin) {
     accessToken = result.accessToken as string;
-    sessionState = { status: 'authenticated', user: result.user };
+    sessionState = { status: "authenticated", user: result.user };
   } else {
     accessToken = null;
-    sessionState = { status: 'unauthenticated' };
+    sessionState = { status: "unauthenticated" };
   }
   return { user: result.user, autoLogin };
+}
+
+export async function confirmEmail(token: string): Promise<{ user: BusinessAuthUser; autoLogin: boolean }> {
+  const result = await requestJson<{ user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }>('/auth/verify-email/confirm', { method: 'POST', body: JSON.stringify({ token }) });
+  return applyEmailConfirmationResult(result);
 }
 
 export async function requestVerification(email: string): Promise<string> {
