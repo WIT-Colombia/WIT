@@ -27,7 +27,7 @@ export default function Profile() {
     if (!user) return;
     setProfile(() => ({ ...getProfile(user.id), name: user.displayName, email: user.emailNormalized ?? "" }));
   }, [user]);
-  useEffect(() => { const savedPhoto = profile.photo; if (!user || user.avatarUrl || !savedPhoto?.startsWith("data:image/")) return; void fetch(savedPhoto).then(response => response.blob()).then(blob => uploadAvatar(new File([blob], "perfil.jpg", { type: blob.type || "image/jpeg" }))).then(() => reloadUser()).catch(() => {}); }, [profile.photo, reloadUser, user]);
+  useEffect(() => { const savedPhoto = profile.photo; if (!user || user.avatarUrl || !savedPhoto?.startsWith("data:image/")) return; void fetch(savedPhoto).then(response => response.blob()).then(blob => uploadAvatar(new File([blob], "perfil.jpg", { type: blob.type || "image/jpeg" }))).then(() => reloadUser()).catch(() => setAvatarError("No se pudo recuperar la foto anterior. Selecciona una imagen JPG, PNG o WebP.")); }, [profile.photo, reloadUser, user]);
 
   async function selectPhoto(event: ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
