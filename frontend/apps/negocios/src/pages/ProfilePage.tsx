@@ -20,7 +20,7 @@ export function ProfilePage() {
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarMessage, setAvatarMessage] = useState<string | null>(null);
   const [avatarMessageIsError, setAvatarMessageIsError] = useState(false);
-  const visibleNickname = authUser?.nickname ?? account.nickname;
+  const visibleNickname = authUser?.nickname ?? "";
   const hasPasswordOnly = (authUser?.authProviders.includes("EMAIL") && !authUser?.authProviders.includes("GOOGLE")) ?? false;
   useEffect(() => {
     setDraft(account);
