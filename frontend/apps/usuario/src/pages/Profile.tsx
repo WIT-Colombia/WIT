@@ -77,6 +77,7 @@ export default function Profile() {
         <div>
           <span>MI PERFIL</span>
           <h1>Hola{profile.name ? `, ${profile.name}` : ""}</h1>
+          {user?.nickname && <p>{user.nickname}</p>}
           <p className="profile-location-label">{selectedLocation ? `${selectedLocation.name}, ${selectedLocation.context}` : selection?.mode === "automatic" ? "Ubicación actual" : "Zona no seleccionada"}</p>
         </div>
       </div>
