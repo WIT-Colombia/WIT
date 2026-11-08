@@ -54,8 +54,30 @@ if (!['development', 'resend'].includes(emailMode)) {
   throw new Error('EMAIL_MODE debe ser development o resend.');
 }
 const emailFrom = process.env.EMAIL_FROM?.trim() ?? 'XAMUKO <notificaciones@xamuko.com>';
-const emailVerificationUrl = process.env.EMAIL_VERIFICATION_URL?.trim() ?? 'http://localhost:5173/verify-email';
-const passwordResetUrl = process.env.PASSWORD_RESET_URL?.trim() ?? 'http://localhost:5173/reset-password';
+const emailVerificationUrl = process.env.EMAIL_VERIFICATION_URL_USUARIO?.trim()
+  ?? process.env.EMAIL_VERIFICATION_URL?.trim()
+  ?? (nodeEnv === 'production' ? 'https://user.xamuko.com/verify-email' : 'http://localhost:5173/verify-email');
+const passwordResetUrl = process.env.PASSWORD_RESET_URL_USUARIO?.trim()
+  ?? process.env.PASSWORD_RESET_URL?.trim()
+  ?? (nodeEnv === 'production' ? 'https://user.xamuko.com/reset-password' : 'http://localhost:5173/reset-password');
+const businessBaseUrl = (process.env.EMAIL_FRONTEND_URL_NEGOCIOS?.trim()
+  ?? process.env.GOOGLE_FRONTEND_URL_NEGOCIOS?.trim()
+  ?? (nodeEnv === 'production' ? 'https://business.xamuko.com' : 'http://localhost:5174')).replace(/\/$/, '');
+const businessVerificationUrl = process.env.EMAIL_VERIFICATION_URL_NEGOCIOS?.trim() ?? `${businessBaseUrl}/verify-email`;
+const businessPasswordResetUrl = process.env.PASSWORD_RESET_URL_NEGOCIOS?.trim() ?? `${businessBaseUrl}/recuperar`;
+const emailVerificationTtlMinutes = Number(process.env.EMAIL_VERIFICATION_TTL_MINUTES ?? '15');
+if (!Number.isInteger(emailVerificationTtlMinutes) || emailVerificationTtlMinutes !== 15)
+  throw new Error('EMAIL_VERIFICATION_TTL_MINUTES debe ser 15.');
+for (const [key, value] of Object.entries({
+  EMAIL_VERIFICATION_URL_USUARIO: emailVerificationUrl, PASSWORD_RESET_URL_USUARIO: passwordResetUrl,
+  EMAIL_VERIFICATION_URL_NEGOCIOS: businessVerificationUrl, PASSWORD_RESET_URL_NEGOCIOS: businessPasswordResetUrl,
+})) {
+  try {
+    const url = new URL(value);
+    if (!['http:', 'https:'].includes(url.protocol) || (nodeEnv === 'production' && url.protocol !== 'https:') || url.search || url.hash || !url.pathname)
+      throw new Error('invalid');
+  } catch { throw new Error(`${key} requiere URL absoluta, sin query ni fragmento y HTTPS en producción.`); }
+}
 // RESEND_API_KEY is the canonical name. EMAIL_API_KEY remains a backwards-compatible fallback
 // for existing local environments and is never logged or exposed.
 const resendApiKey = process.env.RESEND_API_KEY?.trim() ?? process.env.EMAIL_API_KEY?.trim();
@@ -114,6 +136,9 @@ export const env = Object.freeze({
   emailFrom,
   emailVerificationUrl,
   passwordResetUrl,
+  businessVerificationUrl,
+  businessPasswordResetUrl,
+  emailVerificationTtlMinutes,
   resendApiKey,
   emailApiUrl,
   emailLogoUrl,
