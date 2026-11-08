@@ -2,7 +2,7 @@ export type NavigationItem = { path: string; label: string; icon: string; group:
 export type NavigationGroup = { id: string; label: string; items: NavigationItem[] };
 
 export const navigationGroups: NavigationGroup[] = [
-  { id: 'inicio', label: 'Inicio y resumen ejecutivo', items: [
+  { id: 'inicio', label: 'Inicio', items: [
     { path: '/dashboard', label: 'Inicio', icon: 'home', group: 'inicio', description: 'Estado general de XAMUKO.' },
   ] },
   { id: 'plataforma', label: 'Gestión de la plataforma', items: [
