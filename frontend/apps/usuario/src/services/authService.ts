@@ -5,6 +5,7 @@ export type AuthUser = {
   emailVerified: boolean;
   authProviders: Array<"EMAIL" | "GOOGLE" | "APPLE">;
   verificationEmailSent?: boolean;
+  verificationExpiresAt?: string;
   id: string;
   publicId: string;
   displayName: string;
