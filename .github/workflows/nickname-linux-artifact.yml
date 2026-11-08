@@ -1,0 +1,71 @@
+# This already-registered workflow path is overridden ONLY on PR #215's branch.
+# Other branches retain their artifact builder. No push/pull_request triggers here.
+name: PR215 disposable real systemd validation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: nickname215-systemd-validation
+  cancel-in-progress: false
+jobs:
+  systemd:
+    if: github.ref == 'refs/heads/infra/nickname-214-deploy-procedure-20261107'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.4'
+      - name: Require real Linux x86_64 with systemd PID1
+        run: |
+          mkdir -p evidence
+          uname -a | tee evidence/uname.txt
+          cat /proc/1/comm | tee evidence/pid1.txt
+          test "$(uname -m)" = x86_64
+          test "$(cat /proc/1/comm)" = systemd
+          systemctl --version | tee evidence/systemd.txt
+          test "$(node --version)" = v22.23.4
+          sudo install -m 0755 "$(command -v node)" /usr/bin/node-22
+      - name: Validate original pinned archive and all internal hashes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/WIT-Colombia/WIT/actions/artifacts/13602035007/zip > /tmp/pr214-artifact.zip
+          mkdir /tmp/pr214-archive
+          unzip -q /tmp/pr214-artifact.zip -d /tmp/pr214-archive
+          python3 - <<'PY'
+          import importlib.util,json,pathlib,tempfile
+          spec=importlib.util.spec_from_file_location('procedure','deploy/nickname214/procedure.py')
+          p=importlib.util.module_from_spec(spec);spec.loader.exec_module(p)
+          candidates=list(pathlib.Path('/tmp/pr214-archive').rglob('*.tar.gz'))
+          assert len(candidates)==1
+          with tempfile.TemporaryDirectory() as d:
+              out=pathlib.Path(d)/'package'
+              p.extract(candidates[0],out)
+              count=len((out/'FILES.sha256').read_text().splitlines())
+              assert count==18134,count
+          pathlib.Path('evidence/archive.json').write_text(json.dumps(dict(sha256=p.DIGEST,internal_hashes=count,status='PASS'))+'\n')
+          PY
+      - name: Unit and archive rejection tests
+        run: |
+          cd deploy/nickname214
+          sha256sum -c procedure.sha256
+          python3 -m unittest -v test_procedure 2>&1 | tee ../../../evidence/unit-tests.txt
+      - name: Real systemd integration with disposable fixtures
+        run: |
+          sudo env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin \
+            XAMUKO_DISPOSABLE_TEST=github-hosted-pr215 \
+            TEST_EVIDENCE="$GITHUB_WORKSPACE/evidence" \
+            python3 deploy/nickname214/integration_systemd.py 2>&1 | tee evidence/integration.log
+      - name: Preserve evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr215-real-systemd-${{ github.run_id }}
+          path: evidence/
+          retention-days: 14
