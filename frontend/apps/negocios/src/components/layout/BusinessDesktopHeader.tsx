@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useBusinessStore } from "../../services/businessStore";
-import { BusinessProfileThumbnail, BusinessIndicatorRow, SidebarIcon, formatSedeLabel } from "./Sidebar";
+import { BusinessProfileThumbnail, BusinessIndicatorRow, SidebarIcon } from "./Sidebar";
 
 export function BusinessDesktopHeader() {
   const { businesses, business, notifications, persistentNotificationCount, setBusiness } = useBusinessStore();
