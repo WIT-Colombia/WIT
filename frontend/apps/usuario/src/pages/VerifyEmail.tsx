@@ -4,9 +4,10 @@ import { SiteHeader } from "../components/SiteHeader";
 import { ApiError } from "../services/httpClient";
 import { confirmEmail, requestVerification } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
+import { clearPendingVerificationEmail, getPendingVerificationEmail } from "../services/pendingVerification";
 import "./VerifyEmail.css";
 
-type VerificationState = "pending" | "loading" | "success" | "error";
+type VerificationState = "pending" | "loading" | "success" | "error" | "unavailable";
 
 function MailIllustration() {
   return <svg className="verify-email-artwork" viewBox="0 0 240 220" fill="none" aria-hidden="true">
@@ -56,11 +57,11 @@ export default function VerifyEmail() {
   const { isAuthenticated, reloadUser, status: authStatus } = useAuth();
   const inFlight = useRef(false);
   const hasAttempted = useRef(false);
-  const [state, setState] = useState<VerificationState>(token ? "loading" : "pending");
+  const [email] = useState(getPendingVerificationEmail);
+  const [state, setState] = useState<VerificationState>(token ? "loading" : email ? "pending" : "unavailable");
   const [message, setMessage] = useState("");
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
-  const [email, setEmail] = useState(() => params.get("email")?.trim() ?? "");
 
   useEffect(() => {
     if (!token || authStatus === "loading" || hasAttempted.current) return;
@@ -71,6 +72,7 @@ export default function VerifyEmail() {
     confirmEmail(token)
       .then(async (result) => {
         setState("success");
+        clearPendingVerificationEmail();
         setMessage("Tu correo se verificó correctamente.");
         if (result.autoLogin || isAuthenticated) {
           try {
@@ -90,6 +92,7 @@ export default function VerifyEmail() {
 
   async function resend(event: FormEvent) {
     event.preventDefault();
+    if (!email || (state !== "pending" && state !== "error")) return;
     setResending(true);
     setResent(false);
     setMessage("");
@@ -106,7 +109,8 @@ export default function VerifyEmail() {
   const heading = state === "success" ? "¡Correo verificado!"
     : state === "loading" ? "Verificando tu correo electrónico"
       : state === "error" ? "No pudimos verificar tu correo"
-        : "Revisa tu correo electrónico";
+        : state === "unavailable" ? "Inicia tu registro para continuar"
+          : "Revisa tu correo electrónico";
 
   return <main className="verify-email-page">
     <SiteHeader active="home" />
@@ -119,6 +123,9 @@ export default function VerifyEmail() {
         {state === "pending" && <p className="verify-email-description">
           Enviamos un enlace de verificación a tu correo. Haz clic en el enlace para activar tu cuenta en <strong>XAMUKO</strong>.
         </p>}
+        {state === "unavailable" && <p className="verify-email-description" role="status">
+          No encontramos una solicitud de verificación en esta pestaña. Regresa al registro para continuar con tu correo electrónico.
+        </p>}
         {state === "loading" && <p className="verify-email-description" role="status">
           Confirmando tu correo de forma segura…
         </p>}
@@ -129,26 +136,31 @@ export default function VerifyEmail() {
           Tu correo se verificó correctamente. Tu cuenta de <strong>XAMUKO</strong> está lista.
         </p>}
 
+        {(state === "pending" || state === "error") && email && <div className="verify-email-recipient" aria-label="Correo registrado, no editable">
+          <SmallMailIcon />
+          <div><span>Correo electrónico del registro</span><strong>{email}</strong></div>
+          <span className="verify-email-recipient-lock" aria-hidden="true">🔒</span>
+        </div>}
+
         {state === "pending" && <div className="verify-email-timer" aria-label="Tiempo de verificación previsto: 15 minutos">
           <span className="verify-email-timer-badge"><ClockIcon /><strong>15:00</strong></span>
           <p>Tienes 15 minutos para verificar tu correo.</p>
         </div>}
 
-        {(state === "pending" || state === "error") && <form className="verify-email-resend" onSubmit={resend}>
-          {!email.trim() && <label htmlFor="verify-email-address">Correo electrónico
-            <input id="verify-email-address" type="email" value={email} onChange={event => setEmail(event.target.value)} required autoComplete="email" placeholder="tu@correo.com" />
-          </label>}
-          <button type="submit" disabled={resending || !email.trim()}>
+        {(state === "pending" || state === "error") && email && <form className="verify-email-resend" onSubmit={resend}>
+          <button type="submit" disabled={resending}>
             <RefreshIcon />{resending ? "Enviando correo…" : "Reenviar correo de verificación"}
           </button>
           {resent && <p className="verify-email-feedback is-success" role="status">Si la cuenta es elegible, recibirás un nuevo enlace de verificación.</p>}
           {message && state === "pending" && <p className="verify-email-feedback is-error" role="alert">{message}</p>}
         </form>}
 
+        {state === "unavailable" && <Link className="verify-email-primary-link" to="/register">Volver al registro</Link>}
+        {(state === "error" && !email) && <Link className="verify-email-primary-link" to="/register">Volver al registro</Link>}
         {state === "loading" && <div className="verify-email-progress" role="status" aria-label="Verificación en curso"><span /></div>}
         {state === "success" && <Link className="verify-email-primary-link" to="/register?mode=login&next=%2Fprofile">Iniciar sesión</Link>}
 
-        {(state === "pending" || state === "error") && <div className="verify-email-help">
+        {(state === "pending" || state === "error") && Boolean(email) && <div className="verify-email-help">
           <span className="verify-email-help-icon"><SmallMailIcon /></span>
           <div><strong>¿No ves el correo?</strong><p>Revisa tu carpeta de spam o correo no deseado.</p></div>
         </div>}
