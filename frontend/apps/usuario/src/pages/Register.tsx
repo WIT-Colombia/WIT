@@ -114,6 +114,7 @@ export default function Register() {
             <h2>{registration ? "Crea tu cuenta en XAMUKO" : "Inicia sesión en XAMUKO"}</h2>
             <p>{registration ? "Descubre negocios, productos y servicios en tu ciudad." : "Descubre negocios, productos y servicios en tu ciudad."}</p>
           </div>
+          {message && <p className="register-status" role="alert">{message}</p>}
           <div className="register-social-options">
             <button type="button" className="register-provider-button" onClick={() => { if (registration && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; } startGoogleLogin({ returnTo, consent: registration ? accepted : true, rememberMe }); }}>
               <GoogleIcon/><span>Continuar con Google</span>
@@ -144,7 +145,7 @@ export default function Register() {
             {registration && <label className="user-auth-field user-auth-referral">Código de referido (opcional)<input disabled value="" placeholder="Ingresa un código de referido"/></label>}
             {registration && <label className="register-legal-check"><input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)}/><span>Acepto los <Link to="/legal/terms?from=register">Términos y condiciones</Link> y la <Link to="/legal/privacy?from=register">Política de privacidad</Link>.</span></label>}
             {!registration && <label className="register-legal-check"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)}/><span>Mantener mi sesión iniciada</span></label>}
-            {message && <p className="register-status" role="status">{message}</p>}
+            
             <button className="register-submit" type="submit" disabled={submitDisabled}>{submitting ? "Procesando…" : registration ? "Crear mi cuenta" : "Iniciar sesión"}<span aria-hidden="true">→</span></button>
           </form>
           {!registration && <Link className="register-mode-switch register-forgot-link" to="/recover-password">¿Olvidaste tu contraseña?</Link>}
