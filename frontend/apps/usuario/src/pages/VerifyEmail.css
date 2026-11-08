@@ -46,3 +46,12 @@
 @media(max-width:700px){.verify-email-scene{min-height:0;padding:20px 14px 32px}.verify-email-card{width:min(100%,470px);padding:21px 18px 19px;border-radius:16px;box-shadow:0 8px 25px #351c880a}.verify-email-hero{height:98px;margin-bottom:7px}.verify-email-artwork{width:106px;height:98px}.verify-email-card h1{font-size:clamp(20px,5.3vw,24px);letter-spacing:-.5px}.verify-email-description{font-size:12px;line-height:1.55}.verify-email-timer{margin:15px auto 17px}.verify-email-timer-badge{min-height:44px;min-width:126px}.verify-email-timer-badge svg{width:21px;height:21px}.verify-email-timer-badge strong{font-size:23px}.verify-email-timer>p{font-size:11px}.verify-email-resend>button,.verify-email-primary-link{min-height:44px;font-size:12px}.verify-email-help{margin-top:16px;padding:10px 12px}.verify-email-footer{margin-top:14px;padding-top:12px}.verify-email-footer a{font-size:12px}.verify-email-success-illustration{width:80px;height:80px;border-width:7px;font-size:37px}}
 @media(max-width:370px){.verify-email-scene{padding-inline:10px}.verify-email-card{padding:18px 13px}.verify-email-card h1{font-size:19px}.verify-email-resend>button{font-size:11px;gap:6px}.verify-email-help p{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.verify-email-progress span{animation:none}.verify-email-resend>button,.verify-email-primary-link{transition:none}}
+
+/* Locked registration address; read-only informational display. */
+.verify-email-recipient{display:flex;align-items:center;gap:11px;max-width:455px;margin:17px auto 0;padding:10px 13px;border:1px solid #dce5f7;border-radius:10px;background:#f8faff;text-align:left}
+.verify-email-recipient>svg{flex:none;width:22px;height:22px;color:#7b3ffb}
+.verify-email-recipient>div{display:grid;gap:3px;min-width:0;flex:1}
+.verify-email-recipient>div>span{color:#64748b;font-size:11px;font-weight:600}
+.verify-email-recipient strong{display:block;min-width:0;overflow-wrap:anywhere;color:#0f172a;font-size:13px;font-weight:750}
+.verify-email-recipient-lock{flex:none;font-size:15px;opacity:.65}
+@media(max-width:700px){.verify-email-recipient{gap:9px;margin-top:14px;padding:9px 11px}.verify-email-recipient>div>span{font-size:10px}.verify-email-recipient strong{font-size:12px}}

@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../services/httpClient";
 import { validateEmail } from "../services/emailValidation";
 import { getRememberedEmail, startGoogleLogin } from "../services/authService";
+import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
 import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
 import authReference from "../assets/auth-reference-users2.avif";
 import "./Register.css";
@@ -73,9 +74,11 @@ export default function Register() {
     try {
       if (mode === "register") {
         await register(name.trim(), email.trim(), password);
-        navigate(`/verify-email?pending=1&email=${encodeURIComponent(email.trim())}`, { replace: true });
+        rememberPendingVerificationEmail(email.trim());
+        navigate("/verify-email?pending=1", { replace: true });
       } else {
         await login(email.trim(), password, rememberMe);
+        clearPendingVerificationEmail();
         navigate(returnTo, { replace: true });
       }
     } catch (error) {
@@ -149,7 +152,7 @@ export default function Register() {
             <button className="register-submit" type="submit" disabled={submitDisabled}>{submitting ? "Procesando…" : registration ? "Crear mi cuenta" : "Iniciar sesión"}<span aria-hidden="true">→</span></button>
           </form>
           {!registration && <Link className="register-mode-switch register-forgot-link" to="/recover-password">¿Olvidaste tu contraseña?</Link>}
-          {requiresVerification && <Link className="register-mode-switch" to={`/verify-email?pending=1&email=${encodeURIComponent(email.trim())}`}>Reenviar correo de verificación</Link>}
+          {requiresVerification && <Link className="register-mode-switch" to="/verify-email?pending=1" onClick={() => rememberPendingVerificationEmail(email.trim())}>Reenviar correo de verificación</Link>}
           <button className="register-mode-switch user-auth-mode-switch" type="button" onClick={() => { setMode(registration ? "login" : "register"); setMessage(""); }}>{registration ? "¿Ya tienes una cuenta? Inicia sesión" : "¿No tienes una cuenta? Crear cuenta"}</button>
         </div>
       </section>
