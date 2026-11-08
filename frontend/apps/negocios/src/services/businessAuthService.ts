@@ -11,6 +11,8 @@ export type BusinessAuthUser = {
   status: "ACTIVE" | "SUSPENDED" | "DELETED";
   emailVerified: boolean;
   authProviders: string[];
+  verificationEmailSent?: boolean;
+  verificationExpiresAt?: string;
 };
 
 type AuthResponse = { user: BusinessAuthUser; accessToken: string };

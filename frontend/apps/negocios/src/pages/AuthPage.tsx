@@ -63,8 +63,8 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     setRequiresVerification(false);
     try {
       if (register) {
-        await signUp(name, email, password);
-        rememberPendingVerificationEmail(email);
+        const created = await signUp(name, email, password);
+        rememberPendingVerificationEmail(email, created.verificationExpiresAt, created.verificationEmailSent !== false);
         navigate("/verify-email?pending=1", { replace: true });
       } else {
         await signIn(email, password, rememberMe);
