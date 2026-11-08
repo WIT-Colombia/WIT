@@ -17,11 +17,11 @@ export default function Legal() {
   const description = "Documento jurídico en revisión antes de su entrada en vigor.";
   return <PageLayout className="legal-page">
     <div className="legal-layout">
+      <Link className="legal-back legal-back--top" to={returnTo}>← Volver a {returnLabel}</Link>
       <aside className="legal-sidebar"><span className="legal-eyebrow">CENTRO LEGAL</span><h1>{title}</h1><p>{description}</p><nav aria-label="Documentos legales"><Link className={isTerms ? "active" : ""} to={`/legal/terms?from=${fromRegister ? "register" : "settings"}`}>Términos y condiciones</Link><Link className={page === "privacy" ? "active" : ""} to={`/legal/privacy?from=${fromRegister ? "register" : "settings"}`}>Política de privacidad</Link></nav></aside>
       <article className="legal-card legal-document"><div className="legal-document-heading"><span className="legal-eyebrow">XAMUKO USUARIOS · BORRADOR LEGAL</span><h2>{title}</h2><p>BORRADOR EN REVISIÓN · No constituye la versión contractual vigente. Datos del operador y procedimientos pendientes de validación.</p></div>
         <nav className="legal-toc" aria-label="Contenido del documento"><strong>En este documento</strong>{sections.map(s => <a key={s.id} href={`#${s.id}`}>{s.title}</a>)}</nav>
         {sections.map(s => <section className="legal-section" id={s.id} key={s.id}><h3>{s.title}</h3>{s.paragraphs.map((paragraph,i) => <p key={i}>{paragraph}</p>)}</section>)}
-        <Link className="legal-back" to={returnTo}>← Volver a {returnLabel}</Link>
       </article>
     </div>
   </PageLayout>;
