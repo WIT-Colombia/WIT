@@ -31,7 +31,7 @@
 .verify-email-help p{margin:0;color:#64748b;font-size:11px;line-height:1.45}
 .verify-email-footer{max-width:455px;margin:16px auto 0;padding-top:13px;border-top:1px solid #e2e8f0}
 .verify-email-footer a{display:inline-flex;align-items:center;gap:7px;color:#2563eb;font-size:12px;font-weight:750;text-decoration:none}
-.verify-email-footer a:hover{text-decoration:underline}
+.verify-email-footer a:hover{text-decoration:none}
 .verify-email-footer a>span{font-size:20px;line-height:1}
 .verify-email-feedback{margin:2px 0 0;padding:9px 10px;border-radius:9px;font-size:11px;line-height:1.45;text-align:left}
 .verify-email-feedback.is-success{border:1px solid #b9e4d2;background:#f1f9f5;color:#166b43}
