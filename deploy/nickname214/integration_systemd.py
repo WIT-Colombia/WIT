@@ -106,7 +106,7 @@ http.createServer((q,r)=>{r.setHeader('Content-Type','application/json');r.end(J
         os.environ['PATH'] = str(adapters) + ':/usr/sbin:/usr/bin:/sbin:/bin'
         # A shared, private network for the disposable live API, HTTP mock and fake DB.
         # The smoke gets its own additional namespace from the installer itself.
-        mock = work / 'http.py'
+        mock = work / 'frontend_mock.py'
         mock.write_text('from http.server import HTTPServer,BaseHTTPRequestHandler\nclass H(BaseHTTPRequestHandler):\n def do_GET(self):\n  self.send_response(200);self.end_headers();self.wfile.write(b"disposable frontend")\n def log_message(self,*a): pass\nHTTPServer(("127.0.0.1",8080),H).serve_forever()\n')
         cmd('systemd-run', '-p', 'Type=exec', '--unit=xamuko-test-http', '-p', 'PrivateNetwork=yes', '/usr/bin/python3', str(mock))
         db = work / 'db.py'
