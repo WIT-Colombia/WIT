@@ -35,7 +35,7 @@ function metadataMentionsNickname(value: unknown, key = ''): boolean {
   if (value === null || value === undefined) return false;
   if (typeof value === 'string' || typeof value === 'number') {
     const text = String(value).toLowerCase();
-    return /target|constraint|index|column|field|nickname/.test(key.toLowerCase()) && text.includes('nickname');
+    return /target|constraint|index|column|field|nickname/.test(key.toLowerCase()) && (text === 'nickname' || text === 'user_nickname_key');
   }
   if (Array.isArray(value)) return value.some((item) => metadataMentionsNickname(item, key));
   if (typeof value === 'object') {

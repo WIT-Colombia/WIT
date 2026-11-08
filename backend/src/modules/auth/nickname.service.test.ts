@@ -47,3 +47,25 @@ test('nickname collision detection ignores email unique violations', () => {
   }) as Prisma.PrismaClientKnownRequestError;
   assert.equal(isNicknameCollision(error), false);
 });
+
+test('nickname collision detection matches only complete column and constraint identifiers', () => {
+  const cases = [
+    { meta: { target: 'nickname' }, expected: true },
+    { meta: { target: ['nickname'] }, expected: true },
+    { meta: { target: 'User_nickname_key' }, expected: true },
+    { meta: { driverAdapterError: { cause: { constraint: { fields: ['nickname'] } } } }, expected: true },
+    { meta: { driverAdapterError: { cause: { constraint: { index: 'User_nickname_key' } } } }, expected: true },
+    { meta: { target: 'not_nickname' }, expected: false },
+    { meta: { target: ['not_nickname'] }, expected: false },
+    { meta: { target: 'User_nickname_key_extra' }, expected: false },
+    { meta: { driverAdapterError: { cause: { constraint: 'Other_nickname_key' } } }, expected: false },
+    { meta: { driverAdapterError: { cause: { constraint: { fields: ['not_nickname'] } } } }, expected: false },
+  ];
+  for (const { meta, expected } of cases) {
+    const error = Object.assign(Object.create(Prisma.PrismaClientKnownRequestError.prototype), {
+      code: 'P2002',
+      meta,
+    }) as Prisma.PrismaClientKnownRequestError;
+    assert.equal(isNicknameCollision(error), expected, JSON.stringify(meta));
+  }
+});
