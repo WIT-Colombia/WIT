@@ -952,3 +952,8 @@
     align-self: stretch;
   }
 }
+
+/* Separación del aviso de consentimiento respecto al botón de Google. */
+.user-auth-card .register-status + .register-social-options {
+  margin-top: 12px;
+}
