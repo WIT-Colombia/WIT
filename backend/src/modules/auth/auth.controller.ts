@@ -56,7 +56,8 @@ export function emailApplicationForOrigin(origin: string | undefined, options?: 
   const normalizedOrigin = normalizeOrigin(origin);
   if (!normalizedOrigin) return 'usuario';
   const authorizedOrigins = new Set((options?.trustedOrigins ?? env.trustedOrigins).map((value) => normalizeOrigin(value)).filter((value): value is string => value !== null));
-  const businessOrigin = normalizeOrigin(options?.businessOrigin ?? env.emailFrontendUrls.negocios);
+  // The explicit Business verification URL is authoritative when legacy frontend variables are absent.
+  const businessOrigin = normalizeOrigin(options?.businessOrigin ?? new URL(env.businessVerificationUrl).origin);
   return businessOrigin === normalizedOrigin && authorizedOrigins.has(normalizedOrigin) ? 'negocios' : 'usuario';
 }
 

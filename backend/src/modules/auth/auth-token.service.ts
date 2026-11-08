@@ -2,6 +2,7 @@ import { consumeVerificationToken } from './verification-confirmation.js';
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
 import { env } from '../../config/env.js';
+import { verificationDeadline } from './verification-expiry.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { sendPasswordResetEmail, sendSecurityNotificationEmail, sendVerificationEmail } from '../../shared/email/email-service.js';
 import type { EmailApplication } from '../../shared/email/email-brand.js';
@@ -23,7 +24,7 @@ async function issueToken(userId: string, type: TokenType, ttlMs: number): Promi
       orderBy: { createdAt: 'desc' },
       select: { expiresAt: true },
     }) : null;
-    const expiresAt = previous?.expiresAt ?? new Date(now.getTime() + ttlMs);
+    const expiresAt = verificationDeadline(now, previous?.expiresAt ?? null, ttlMs);
     await transaction.authToken.updateMany({
       where: { userId, type, consumedAt: null, expiresAt: { gt: now } },
       data: { consumedAt: now },
