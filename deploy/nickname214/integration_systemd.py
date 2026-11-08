@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+import time
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('procedure', HERE / 'procedure.py')
@@ -107,16 +108,21 @@ http.createServer((q,r)=>{r.setHeader('Content-Type','application/json');r.end(J
         # The smoke gets its own additional namespace from the installer itself.
         mock = work / 'http.py'
         mock.write_text('from http.server import HTTPServer,BaseHTTPRequestHandler\nclass H(BaseHTTPRequestHandler):\n def do_GET(self):\n  self.send_response(200);self.end_headers();self.wfile.write(b"disposable frontend")\n def log_message(self,*a): pass\nHTTPServer(("127.0.0.1",8080),H).serve_forever()\n')
-        cmd('systemd-run', '--unit=xamuko-test-http', '-p', 'PrivateNetwork=yes', '/usr/bin/python3', str(mock))
+        cmd('systemd-run', '-p', 'Type=exec', '--unit=xamuko-test-http', '-p', 'PrivateNetwork=yes', '/usr/bin/python3', str(mock))
         db = work / 'db.py'
         db.write_text('import socket\ns=socket.socket();s.bind(("127.0.0.1",3306));s.listen()\nwhile True:\n c,a=s.accept();c.sendall(b"DISPOSABLE-FAKE-DB\\n");c.close()\n')
-        cmd('systemd-run','--unit=xamuko-test-db','-p','PrivateNetwork=yes','-p','JoinsNamespaceOf=xamuko-test-http.service','/usr/bin/python3',str(db))
+        cmd('systemd-run','-p','Type=exec','--unit=xamuko-test-db','-p','PrivateNetwork=yes','-p','JoinsNamespaceOf=xamuko-test-http.service','/usr/bin/python3',str(db))
         unit = Path('/etc/systemd/system/xamuko-api.service')
         unit.write_text('[Unit]\nJoinsNamespaceOf=xamuko-test-http.service\n[Service]\nUser=ssm-user\nPrivateNetwork=yes\nWorkingDirectory='+str(p.ROOT / 'current/backend')+'\nEnvironmentFile='+str(p.ROOT / 'current/xamuko-api.env')+'\nExecStart='+p.NODE+' '+str(p.ROOT / 'current/backend/dist/server.js')+'\n')
         cmd('systemctl','daemon-reload')
         cmd('systemctl','start','xamuko-api')
         # Enter the fake-live network for installer HTTP checks; systemd D-Bus stays real.
         pid = cmd('systemctl','show','xamuko-test-http','-p','MainPID','--value')
+        for _ in range(30):
+            if pid != '0': break
+            time.sleep(0.1)
+            pid = cmd('systemctl','show','xamuko-test-http','-p','MainPID','--value')
+        assert pid != '0', cmd('journalctl','-u','xamuko-test-http','--no-pager','-n','30')
         import ctypes
         fd = os.open('/proc/'+pid+'/ns/net', os.O_RDONLY)
         assert ctypes.CDLL(None, use_errno=True).setns(fd, 0) == 0
@@ -162,6 +168,8 @@ http.createServer((q,r)=>{r.setHeader('Content-Type','application/json');r.end(J
         evidence['status'] = 'PASS'
     finally:
         evidence.setdefault('status','FAIL')
+        if evidence['status'] != 'PASS':
+            print(cmd('journalctl','--no-pager','-n','60',*[x for u in units for x in ('-u',u)],check=False))
         for unit in units:
             cmd('systemctl','stop',unit,check=False)
         evidence['units_inactive'] = all(cmd('systemctl','is-active',u,check=False) != 'active' for u in units)
