@@ -1,3 +1,4 @@
+import { withUniqueNickname } from './nickname.service.js';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { parseCookie, stringifySetCookie } from 'cookie';
 import { jwtVerify, createRemoteJWKSet, type JWTPayload } from 'jose';
@@ -177,7 +178,7 @@ export async function resolveGoogleUser(profile: GoogleProfile, state: GoogleSta
     const emailOwner = await transaction.user.findUnique({ where: { emailNormalized: profile.email }, select: { id: true } });
     if (emailOwner) throw new AppError(409, 'GOOGLE_LINK_REQUIRED', 'Inicia sesión con tu cuenta WIT para vincular Google.');
     if (!state.consent) throw new AppError(400, 'GOOGLE_CONSENT_REQUIRED', 'Acepta los términos para crear tu cuenta con Google.');
-    const user = await transaction.user.create({ data: { displayName: profile.displayName.slice(0, 120), emailNormalized: profile.email, avatarUrl: profile.avatarUrl, authIdentities: { create: { provider: 'GOOGLE', providerSubject: profile.subject, verifiedAt: new Date() } } }, select: { id: true } });
+    const user = await withUniqueNickname(transaction, profile.displayName, (nickname) => transaction.user.create({ data: { nickname, displayName: profile.displayName.slice(0, 120), emailNormalized: profile.email, avatarUrl: profile.avatarUrl, authIdentities: { create: { provider: 'GOOGLE', providerSubject: profile.subject, verifiedAt: new Date() } } }, select: { id: true } }));
     return { userId: user.id, created: true };
   });
 }
