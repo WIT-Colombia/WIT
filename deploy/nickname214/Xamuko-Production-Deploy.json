@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "2.2",
+  "description": "Pinned nickname PR214 only; install separately; default read-only check; no bootstrap or explicit rollback",
+  "parameters": {
+    "Action": {
+      "type": "String",
+      "default": "check",
+      "allowedValues": [
+        "check",
+        "deploy"
+      ]
+    },
+    "ArtifactBucket": {
+      "type": "String",
+      "default": "",
+      "allowedPattern": "^$|^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$"
+    },
+    "ArtifactVersionId": {
+      "type": "String",
+      "default": "",
+      "allowedPattern": "^[A-Za-z0-9._~+/=-]{0,1024}$"
+    }
+  },
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "name": "pinnedNickname214",
+      "precondition": {
+        "StringEquals": [
+          "platformType",
+          "Linux"
+        ]
+      },
+      "inputs": {
+        "timeoutSeconds": "900",
+        "runCommand": [
+          "#!/bin/bash\nset -euo pipefail\nexport PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nwrapper=/usr/local/sbin/xamuko-nickname214-deploy\n[[ $(stat -c '%u:%a' \"$wrapper\") == 0:755 && ! -L \"$wrapper\" ]]\nprintf '%s  %s\\n' '0e5948388f237c37de9d8ec67f134a2c00a72c4c71d868155e8d4df59b2ba704' \"$wrapper\" | sha256sum -c -\nif [[ \"{{ Action }}\" == check ]]; then\n  exec /usr/bin/python3 \"$wrapper\" check\nfi\nexec /usr/bin/python3 \"$wrapper\" deploy \"{{ ArtifactBucket }}\" \"{{ ArtifactVersionId }}\"\n"
+        ]
+      }
+    }
+  ]
+}
