@@ -32,3 +32,26 @@ Ante un fallo de entrega: revisar el evento en Resend, corregir dominio/remitent
 ## Variables pendientes
 
 No se encontraron secretos ni variables de Actions con `gh secret list`/`gh variable list`. Por tanto, el código está listo pero el repositorio no demuestra que producción tenga `RESEND_API_KEY` ni `EMAIL_MODE=resend`. No se hicieron cambios de credenciales, DNS, facturación ni producción.
+
+## Configuración explícita de XAMUKO Usuario y Business (noviembre de 2026)
+
+Una sola `RESEND_API_KEY` sirve para ambas aplicaciones; los cuatro enlaces son **rutas**, no claves independientes.
+
+Configurar **exclusivamente en el backend de producción** (`/opt/xamuko/api/backend/.env` mediante sesión SSM autorizada, sin guardar secretos en Git ni Cloudflare Pages):
+
+```dotenv
+EMAIL_MODE=resend
+EMAIL_FROM="XAMUKO <notificaciones@xamuko.com>"
+EMAIL_VERIFICATION_TTL_MINUTES=15
+EMAIL_VERIFICATION_URL_USUARIO=https://user.xamuko.com/verify-email
+EMAIL_VERIFICATION_URL_NEGOCIOS=https://business.xamuko.com/verify-email
+PASSWORD_RESET_URL_USUARIO=https://user.xamuko.com/reset-password
+PASSWORD_RESET_URL_NEGOCIOS=https://business.xamuko.com/recuperar
+# RESEND_API_KEY se proporciona de forma privada en la instancia; nunca imprimirla.
+```
+
+Conservar `AUTH_TRUSTED_ORIGINS` e incluir `https://user.xamuko.com` y `https://business.xamuko.com` sin sobrescribir los otros orígenes existentes. Verificar el dominio `xamuko.com` y el remitente `notificaciones@xamuko.com` en el panel Resend. Después, reiniciar `xamuko-api` durante una ventana de mantenimiento y probar con cuentas nuevas en cada aplicación. El conector GitHub no lee ni cambia el contenido de `.env` en EC2; **no declarar Resend operativo sin prueba real**.
+
+Al registrarse, el backend devuelve `user.verificationExpiresAt` (ISO 8601) solamente si el correo se envió sin error. El contador en Usuario/Business calcula el tiempo restante respecto de esa fecha, aunque la pestaña se refresque. Un reenvío de un enlace aún vigente invalida el anterior sin ampliar los 15 minutos originales. Por seguridad, la ruta pública de reenvío continúa devolviendo una respuesta genérica sin exponer si la cuenta existe.
+
+**Limitación pendiente:** El esquema actual continúa creando `User` y `AuthIdentity` antes de confirmar. Los 15 minutos invalidan el enlace, pero **no eliminan automáticamente el usuario no verificado** ni permiten por sí mismos repetir el registro con el mismo correo. Esto requiere una futura migración de solicitudes de registro pendientes, separada y probada antes de activarse.
