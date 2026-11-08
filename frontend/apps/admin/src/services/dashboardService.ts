@@ -1,29 +1,39 @@
-import { listAdminReviews, listReviewReports, type AdminReview, type AdminReviewReport } from './adminApiClient';
+import { listAdminReviews, listReviewReports, listVerificationRequests, type AdminReview, type AdminReviewReport } from './adminApiClient';
 import { can } from './adminService';
 import type { Admin } from '../types/admin';
 
 export type DashboardSnapshot = {
-  publishedReviews: number | null;
+  pendingVerifications: number | null;
+  pendingReports: number | null;
   recentReviews: AdminReview[];
   recentReports: AdminReviewReport[];
+  verificationError: boolean;
   reviewError: boolean;
 };
 
-// The current Admin API exposes reviews and reports, but no platform-wide
-// analytics, membership, subscription, or finance totals.
+// The current Admin API has no platform-wide business/user totals, revenue,
+// growth history, or general activity feed. Keep those values unavailable.
 export async function loadDashboardSnapshot(admin: Admin): Promise<DashboardSnapshot> {
-  if (!can(admin, 'content:moderate')) return { publishedReviews: null, recentReviews: [], recentReports: [], reviewError: false };
-  const [reviewsResult, reportsResult] = await Promise.allSettled([listAdminReviews(1, 100), listReviewReports()]);
-  const reviews = reviewsResult.status === 'fulfilled' ? reviewsResult.value.reviews : [];
-  // A page total includes moderated and removed records. Only show a complete
-  // published count when every review fits in the returned page.
-  const total = reviewsResult.status === 'fulfilled' && reviewsResult.value.pagination.total <= reviews.length
-    ? reviews.filter(review => review.status === 'PUBLISHED').length
-    : null;
+  const canReviewContent = can(admin, 'content:moderate');
+  const canReviewVerifications = can(admin, 'verification:write');
+  const [reviewsResult, reportsResult, verificationsResult] = await Promise.allSettled([
+    canReviewContent ? listAdminReviews(1, 100) : Promise.resolve(null),
+    canReviewContent ? listReviewReports() : Promise.resolve(null),
+    canReviewVerifications ? listVerificationRequests() : Promise.resolve(null),
+  ]);
+  const reviewsOk = reviewsResult.status === 'fulfilled' && reviewsResult.value !== null;
+  const reportsOk = reportsResult.status === 'fulfilled' && reportsResult.value !== null;
+  const verificationsOk = verificationsResult.status === 'fulfilled' && verificationsResult.value !== null;
+  const reviews = reviewsResult.status === 'fulfilled' && reviewsResult.value ? reviewsResult.value.reviews : [];
+  const reports = reportsResult.status === 'fulfilled' && reportsResult.value ? reportsResult.value.reports : [];
+  const verifications = verificationsResult.status === 'fulfilled' && verificationsResult.value ? verificationsResult.value.requests : [];
+
   return {
-    publishedReviews: total,
+    pendingVerifications: verificationsOk ? verifications.filter(item => ['PENDING', 'INFORMATION'].includes(item.status)).length : null,
+    pendingReports: reportsOk ? reports.filter(item => item.status === 'PENDING').length : null,
     recentReviews: reviews.filter(review => review.status === 'PUBLISHED').slice(0, 4),
-    recentReports: reportsResult.status === 'fulfilled' ? reportsResult.value.reports.slice(0, 4) : [],
-    reviewError: reviewsResult.status === 'rejected' || reportsResult.status === 'rejected',
+    recentReports: reports.slice(0, 4),
+    verificationError: canReviewVerifications && !verificationsOk,
+    reviewError: canReviewContent && (!reviewsOk || !reportsOk),
   };
 }
