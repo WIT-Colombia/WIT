@@ -9,6 +9,9 @@ permissions:
 concurrency:
   group: nickname215-systemd-validation
   cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
 jobs:
   systemd:
     if: github.ref == 'refs/heads/infra/nickname-214-deploy-procedure-20261107'
@@ -55,7 +58,7 @@ jobs:
         run: |
           cd deploy/nickname214
           sha256sum -c procedure.sha256
-          python3 -m unittest -v test_procedure 2>&1 | tee ../../../evidence/unit-tests.txt
+          python3 -m unittest -v test_procedure 2>&1 | tee ../../evidence/unit-tests.txt
       - name: Real systemd integration with disposable fixtures
         run: |
           sudo env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin \

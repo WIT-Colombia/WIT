@@ -131,9 +131,12 @@ http.createServer((q,r)=>{r.setHeader('Content-Type','application/json');r.end(J
         # READY exists only inside this fresh, synthetic VM fixture, never AWS/production.
         (p.ROOT / 'READY').write_text(f'nickname214 {p.COMMIT} {p.DIGEST}')
         (p.ROOT / 'READY').chmod(0o600)
+        trusted_wrapper = work / 'procedure.py'
+        shutil.copyfile(HERE / 'procedure.py', trusted_wrapper)
+        trusted_wrapper.chmod(0o755)
         with open('/run/lock/xamuko-deploy.lock','a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            result = subprocess.run(['/usr/bin/python3',str(HERE / 'procedure.py'),'check'],capture_output=True,text=True)
+            result = subprocess.run(['/usr/bin/python3',str(trusted_wrapper),'check'],capture_output=True,text=True)
             assert result.returncode != 0 and 'temporarily unavailable' in result.stderr
         evidence['tests'].append('missing approval and real flock contention rejected')
         for fault, message in [('smoke','Smoke did not start'),('activation','Health deadline exceeded')]:
