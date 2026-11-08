@@ -2,7 +2,7 @@
 
 Scope: backend hotfix `a467b4e01131f38dc05dc713a4b84717bb709753` only, based on production `deb9c284b1ca008bb802683e85a338e1d0b139eb`. This infrastructure branch starts at that base and contains no functional hotfix or integration commits. Review against `review/nickname-production-base-20261107`; do not merge into main/staging/integration to deploy it.
 
-The existing deploy.sh, GitHub-release wrapper, bootstrap and workflows are deliberately not activated or modified. They disagree about environment paths, Node, frontend and storage. This dedicated root-owned wrapper replaces none of them implicitly. SSM document is a proposed replacement for the reported absent Xamuko-Production-Deploy, installed only in a later authorized infrastructure phase. Never invoke bootstrap, production workflows or a poller for this package.
+The existing deploy.sh, GitHub-release wrapper, bootstrap and deployment workflows are deliberately not activated or modified. The already-registered nickname-linux-artifact.yml path has a manual-only validation definition on this PR branch; its artifact-builder branch remains intact. They disagree about environment paths, Node, frontend and storage. This dedicated root-owned wrapper replaces none of them implicitly. SSM document is a proposed replacement for the reported absent Xamuko-Production-Deploy, installed only in a later authorized infrastructure phase. Never invoke bootstrap, production workflows or a poller for this package.
 
 ## Behavior
 
@@ -33,3 +33,21 @@ Limits: this desktop has no Docker executable. Local fixtures do not execute rea
 6. Execute approved document `Action=check` (later explicit authorization), which acquires lock and reads live state but never creates READY. Require disposable Linux validation and all checks approved first. Record wrapper/document hashes, object VersionId, env backup checksum (not contents), recovery base, frontend fingerprint and verifier evidence in the approval record.
 7. READY must be produced by the authorized readiness process only after those gates. This wrapper requires a root-owned 0600 regular file whose complete content is `nickname214 a467b4e01131f38dc05dc713a4b84717bb709753 72008bcf659f346912f944eb35de6431dee12e2a8d82bafa28325056319151df`. No command to create it is supplied or executed here. An old bootstrap READY is insufficient.
 8. Only on a later explicit deployment instruction: send SSM command to that instance with document version/hash pinned, Action=deploy, approved bucket and immutable VersionId. Monitor command to completion. Keep the preserved base and env backup for supervised recovery. No commands in this document have been sent.
+
+## Manual real-systemd validation (PR branch only)
+
+Workflow: `.github/workflows/nickname-linux-artifact.yml`, manually dispatched against `infra/nickname-214-deploy-procedure-20261107` only. The existing registered workflow path allows dispatch without modifying the default branch. It has no push/pull-request triggers, AWS credentials, OIDC permission or deployment steps. Ubuntu 24.04 is accepted only after Linux x86_64, PID1 systemd and Node 22.23.4 are observed. A runner with another PID1 fails rather than claiming a systemd pass.
+
+`integration_systemd.py` requires root and an explicit disposable-test marker and refuses an existing deployment root/verifier. It uses real systemctl/systemd-run, service users, process working directories, flock, network/mount isolation and the installer logic. AWS download, public HTTPS, Nginx and the persistent verifier are explicit test adapters. The database is a fake TCP fixture, not a real MySQL integration. Fixture READY is created only in the fresh hosted VM to exercise the approval gate; no production READY is created.
+
+The synthetic package injects only its checksum into the extractor; the original pinned production archive is independently downloaded and fully validated, including 18,134 file hashes. This distinction matters: synthetic service recovery does not prove production database compatibility or execute the real backend against MySQL. Production AWS inventory, Amazon Linux compatibility and deployment authorization remain separate gates.
+
+For AWS inventory, run `cloudshell-inventory-readonly.sh` in an existing authorized CloudShell session. It verifies the expected account, describes the SSM agent and sends only the listed read operations through the existing AWS-RunShellScript document. It prints no environment contents, creates no custom SSM document/S3 object/READY, and performs no deploy or rollback. Work has no AWS credentials; this script has not been sent to production.
+
+### Recorded result — 2026-11-07 America/Bogota
+
+PASS: https://github.com/WIT-Colombia/WIT/actions/runs/42442900948/job/128615720581 on test commit `4086b4cd02b1a05c2699cbd01c8f67f4233cfbfe`. Ubuntu 24.04 x86_64; PID1 `systemd`; systemd 255.4-1ubuntu8.18; Node v22.23.4. All 16 unit/archive rejection tests passed, pinned real TAR extraction verified 18,134 internal hashes, and six recorded real-systemd integration scenarios passed. All disposable units stopped. Evidence: https://github.com/WIT-Colombia/WIT/actions/runs/42442900948/artifacts/13602226890 .
+
+Earlier runs 42442613344, 42442735203 and 42442824759 failed due to evidence-path and HTTP mock setup errors; none is counted as an integration pass. Their fixes changed only validation files. The original procedure, checksum and SSM proposal are unchanged. Action runtime emits a Node 20 deprecation warning (actions forced to Node 24); tested backend interpreter remains exactly Node 22.23.4.
+
+AWS STS still returns NoCredentials in Work. EC2 compatibility inventory has NOT run. No EC2 deploy/rollback, production READY, S3 upload, custom SSM document creation, merge or change to PR #214 occurred. Connected Cloudflare checks automatically generated branch previews after commits; these are not production deployment workflows invoked by this validation.

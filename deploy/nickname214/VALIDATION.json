@@ -1,0 +1,28 @@
+{
+  "pid1": "systemd",
+  "arch": "x86_64",
+  "systemd": "systemd 255 (255.4-1ubuntu8.18)",
+  "node": "v22.23.4",
+  "scope": "synthetic package; real systemd/processes/namespaces; separate pinned archive validation",
+  "tests": [
+    "HTTP mock and fake DB reachable only in disposable live namespace",
+    "real systemd preflight, MainPID cwd, User, EnvironmentFile, ExecStart, Node",
+    "missing approval and real flock contention rejected",
+    "smoke failure recovered exact base; candidate removed; previous unchanged",
+    "activation failure recovered exact base; candidate removed; previous unchanged",
+    "success: real isolated smoke, atomic activation, health and VERIFIED"
+  ],
+  "status": "PASS",
+  "units_inactive": true,
+  "run_url": "https://github.com/WIT-Colombia/WIT/actions/runs/42442900948",
+  "job_url": "https://github.com/WIT-Colombia/WIT/actions/runs/42442900948/job/128615720581",
+  "artifact_url": "https://github.com/WIT-Colombia/WIT/actions/runs/42442900948/artifacts/13602226890",
+  "tested_commit": "4086b4cd02b1a05c2699cbd01c8f67f4233cfbfe",
+  "archive": {
+    "sha256": "72008bcf659f346912f944eb35de6431dee12e2a8d82bafa28325056319151df",
+    "internal_hashes": 18134,
+    "status": "PASS"
+  },
+  "aws_inventory": "NOT RUN: NoCredentials",
+  "production_changes": false
+}
