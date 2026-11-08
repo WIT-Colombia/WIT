@@ -4,6 +4,7 @@ import { useBusinessStore } from "../services/businessStore";
 import { useBusinessAuth } from "../services/businessAuthContext";
 import { BusinessApiError } from "../services/businessApiClient";
 import { getRememberedEmail, resolveBusinessNext, startGoogleLogin } from "../services/businessAuthService";
+import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
 import { BusinessHeader } from "../components/layout/BusinessHeader";
 import xamukoLogo from "../assets/XAMUKO-V1-transparent.avif";
 
@@ -52,21 +53,26 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [requiresVerification, setRequiresVerification] = useState(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (register && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; }
     if (register && password !== confirmation) { setMessage("Las contraseñas no coinciden."); return; }
     setLoading(true);
     setMessage("");
+    setRequiresVerification(false);
     try {
       if (register) {
         await signUp(name, email, password);
-        navigate("/login?registered=1", { replace: true });
+        rememberPendingVerificationEmail(email);
+        navigate("/verify-email?pending=1", { replace: true });
       } else {
         await signIn(email, password, rememberMe);
+        clearPendingVerificationEmail();
         navigate("/inicio", { replace: true });
       }
     } catch (error) {
+      setRequiresVerification(error instanceof BusinessApiError && error.code === "EMAIL_NOT_VERIFIED");
       setMessage(error instanceof BusinessApiError ? error.message : "No se pudo completar la solicitud.");
     } finally {
       setLoading(false);
@@ -103,6 +109,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
           <button type="submit" className="action-button auth-submit" disabled={loading}>{loading ? "Conectando…" : register ? "Crear mi cuenta" : "Iniciar sesión"}</button>
         </form>
         {!register && <Link className="auth-forgot" to="/recuperar?mode=email">¿Olvidaste tu contraseña?</Link>}
+        {requiresVerification && <Link className="auth-forgot" to="/verify-email?pending=1" onClick={() => rememberPendingVerificationEmail(email)}>Reenviar correo de verificación</Link>}
         <button className="auth-mode-switch" type="button" onClick={() => navigate(register ? "/login" : "/registro")}>{register ? "¿Ya tienes una cuenta? Iniciar sesión" : "¿No tienes una cuenta? Crear cuenta"}</button>
         <Link className="auth-preview-button" to="/preview">Entrar en vista previa demo</Link>
       </section>
