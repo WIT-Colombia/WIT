@@ -1,4 +1,5 @@
 import argon2 from 'argon2';
+import { withUniqueNickname } from './nickname.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { env } from '../../config/env.js';
@@ -14,18 +15,6 @@ const unverifiedEmail = () => new AppError(403, 'EMAIL_NOT_VERIFIED', 'Verifica 
 
 function normalizeEmail(email: string): string {
   return email.trim().toLocaleLowerCase('en-US');
-}
-
-async function createUniqueNickname(displayName: string): Promise<string> {
-  const base = displayName.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('en-US').replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '').slice(0, 24) || 'usuario';
-  let candidate = `@${base}`;
-  let suffix = 2;
-  while (await prisma.user.findUnique({ where: { nickname: candidate }, select: { id: true } })) {
-    const suffixText = `.${suffix}`;
-    candidate = `@${base.slice(0, 32 - suffixText.length - 1)}${suffixText}`;
-    suffix += 1;
-  }
-  return candidate;
 }
 
 function refreshExpiresAt(persistent: boolean): Date {
@@ -49,9 +38,8 @@ export async function issueSession(userId: string, requestMeta?: { userAgent?: s
 export async function register(input: RegisterInput, _requestMeta?: { userAgent?: string; ipAddress?: string }) {
   const emailNormalized = normalizeEmail(input.email);
   const passwordHash = await argon2.hash(input.password, { type: argon2.argon2id });
-  const nickname = await createUniqueNickname(input.name.trim());
   try {
-    const user = await prisma.user.create({
+    const user = await withUniqueNickname(prisma, input.name.trim(), (nickname) => prisma.user.create({
       data: {
         displayName: input.name.trim(),
         nickname,
@@ -61,7 +49,7 @@ export async function register(input: RegisterInput, _requestMeta?: { userAgent?
         },
       },
       select: { id: true, publicId: true, displayName: true, emailNormalized: true },
-    });
+    }));
     const result = { user: await getCurrentUser(user.id) };
     let verificationEmailSent = true;
     try { await sendVerificationRequest(emailNormalized); }
