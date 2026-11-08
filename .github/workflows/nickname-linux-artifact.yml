@@ -1,0 +1,166 @@
+name: Isolated nickname Linux artifact
+on:
+  push:
+    branches: [ci/nickname-linux-artifact-20261107]
+    paths: [.github/workflows/nickname-linux-artifact.yml]
+permissions:
+  contents: read
+concurrency:
+  group: nickname-linux-artifact
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: xamuko_test
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot" --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      NODE_ENV: development
+      DATABASE_URL: mysql://test:test@127.0.0.1:3306/xamuko_test
+      AUTH_ACCESS_TOKEN_SECRET: ci-test-secret-not-for-production-0123456789
+      GOOGLE_CLIENT_ID: xamuko-test.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: test-secret-not-real
+      ADMIN_PASSKEY_ACTIVATION_CODE_HASH: 5c55a2f6a1da4768a635d45e8b0e0ba1bae9786b6a8e3351c435800bcf852aea
+      ADMIN_GOOGLE_SUB_ALLOWLIST: ci-admin-google-sub
+      ADMIN_WEBAUTHN_RP_ID: 127.0.0.1
+      ADMIN_WEBAUTHN_ORIGIN: http://127.0.0.1
+      SOURCE_SHA: a467b4e01131f38dc05dc713a4b84717bb709753
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a467b4e01131f38dc05dc713a4b84717bb709753
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable source and scope
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD^{tree})" = a6a7caa8b54973d56bd5917a4fe2e1a79ebd9d61
+          test "$(git rev-parse HEAD^)" = deb9c284b1ca008bb802683e85a338e1d0b139eb
+          printf '%s\n' backend/src/modules/auth/auth.service.ts backend/src/modules/auth/google-oauth.service.ts backend/src/modules/auth/nickname.service.test.ts backend/src/modules/auth/nickname.service.ts > /tmp/expected
+          git diff --name-only HEAD^ HEAD > /tmp/actual
+          diff -u /tmp/expected /tmp/actual
+          git diff --exit-code HEAD^ HEAD -- package.json package-lock.json prisma ../frontend ../deploy
+          test "$(uname -m)" = x86_64
+      - name: Clean install, audit, generate, test and compile
+        run: |
+          set -euo pipefail
+          npm ci
+          npm audit --omit=dev --audit-level=moderate
+          npm run prisma:generate
+          npx prisma migrate deploy
+          node --import tsx --test src/modules/auth/nickname.service.test.ts src/modules/auth/google-oauth.test.ts
+          npm run typecheck
+          npm run build
+          npm test
+      - name: Package runtime only
+        run: |
+          set -euo pipefail
+          mkdir -p release ../release-artifacts
+          cp package.json package-lock.json prisma.config.ts tsconfig.json release/
+          cp -a dist prisma release/
+          NODE_ENV=production npm ci --omit=dev --prefix release
+          printf '%s\n' "$SOURCE_SHA" > release/RELEASE_COMMIT
+          cd release
+          node --input-type=module -e 'import fs from "node:fs";import os from "node:os";import crypto from "node:crypto"; const hash=p=>crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");fs.writeFileSync("MANIFEST.json",JSON.stringify({sourceSha:process.env.SOURCE_SHA,sourceTree:"a6a7caa8b54973d56bd5917a4fe2e1a79ebd9d61",baseSha:"deb9c284b1ca008bb802683e85a338e1d0b139eb",node:process.version,platform:process.platform,arch:process.arch,kernel:os.release(),lockSha256:hash("package-lock.json"),schemaSha256:hash("prisma/schema.prisma"),prismaEngine:"Prisma 7 generated client with adapter-mariadb; JavaScript query compiler",run:process.env.GITHUB_RUN_ID},null,2)+"\n")'
+          test -s dist/generated/prisma/client.js
+          test -s dist/server.js
+          test -d node_modules/@prisma/client
+          test -z "$(find . -type f \( -name '.env*' -o -name '*.pem' -o -name '*.key' -o -name '*.log' \) -print -quit)"
+          find . -type f ! -name FILES.sha256 -print0 | sort -z | xargs -0 sha256sum > FILES.sha256
+          sha256sum -c FILES.sha256 > /dev/null
+          cd ..
+          archive="xamuko-backend-$SOURCE_SHA.tar.gz"
+          tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -czf "../release-artifacts/$archive" -C release .
+          cd ../release-artifacts
+          sha256sum "$archive" > "$archive.sha256"
+          cp ../backend/release/MANIFEST.json .
+          tar -tzf "$archive" > archive-list.txt
+          sha256sum -c "$archive.sha256"
+          cat "$archive.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nickname-linux-candidate-a467b4e
+          path: release-artifacts/
+          retention-days: 14
+          if-no-files-found: error
+  verify-clean-linux:
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    env:
+      SOURCE_SHA: a467b4e01131f38dc05dc713a4b84717bb709753
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: nickname-linux-candidate-a467b4e
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify archive in clean Linux filesystem
+        run: |
+          set -euo pipefail
+          cd candidate
+          sha256sum -c "xamuko-backend-$SOURCE_SHA.tar.gz.sha256"
+          python3 - <<'PY'
+          import tarfile, pathlib, os
+          with tarfile.open('xamuko-backend-'+os.environ['SOURCE_SHA']+'.tar.gz') as tf:
+              for m in tf:
+                  p=pathlib.PurePosixPath(m.name)
+                  assert not p.is_absolute() and '..' not in p.parts, m.name
+                  assert not (m.isdev() or m.isfifo() or m.islnk()), m.name
+                  if m.issym():
+                      assert not pathlib.PurePosixPath(m.linkname).is_absolute(), m.name
+                      target=pathlib.Path(os.path.normpath(str(p.parent/m.linkname)))
+                      assert '..' not in target.parts, m.name
+          PY
+          mkdir ../clean
+          tar -xzf "xamuko-backend-$SOURCE_SHA.tar.gz" -C ../clean
+          cd ../clean
+          sha256sum -c FILES.sha256 > /dev/null
+          test "$(cat RELEASE_COMMIT)" = "$SOURCE_SHA"
+          node_home="$(dirname "$(dirname "$(command -v node)")")"
+          docker pull --platform linux/amd64 amazonlinux:2023
+          docker image inspect amazonlinux:2023 --format '{{json .RepoDigests}}' | tee ../candidate/linux-image.json
+          docker run --rm --platform linux/amd64 --network none -v "$PWD:/package:ro" -v "$node_home:/node:ro" -w /package amazonlinux:2023 /node/bin/node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import fs from "node:fs";
+            import argon2 from "argon2";
+            import { PrismaClient } from "./dist/generated/prisma/client.js";
+            import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+            assert.equal(process.platform,"linux"); assert.equal(process.arch,"x64"); assert.equal(process.versions.node.split(".")[0],"22");
+            const hash=await argon2.hash("isolated-fake-password"); assert(await argon2.verify(hash,"isolated-fake-password"));
+            const adapter=new PrismaMariaDb({host:"127.0.0.1",port:9,user:"fake",password:"fake",database:"fake"});
+            const prisma=new PrismaClient({adapter}); await prisma.$disconnect();
+            console.log(JSON.stringify({node:process.version,platform:process.platform,arch:process.arch,argon2:"hash/verify OK",prisma:"generated client and MariaDB adapter load OK",network:"disabled"}));
+          ' | tee ../candidate/native-smoke.txt
+          docker run --rm --platform linux/amd64 --network none -v "$PWD:/package:ro" -v "$node_home:/node:ro" -w /package -e NODE_ENV=test -e DATABASE_URL=mysql://fake:fake@127.0.0.1:9/fake -e AUTH_ACCESS_TOKEN_SECRET=ci-test-secret-not-for-production-0123456789 -e HOST=127.0.0.1 -e PORT=3001 amazonlinux:2023 /node/bin/node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import {spawn} from "node:child_process";
+            const child=spawn(process.execPath,["dist/server.js"],{stdio:"inherit",env:process.env});
+            try {let ok=false;for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,250));try{const res=await fetch("http://127.0.0.1:3001/api/v1/health");const h=await res.json();assert.equal(res.status,200);assert.equal(h.status,"ok");assert.equal(h.service,"wit-backend");ok=true;break;}catch{if(child.exitCode!==null)break;}}assert(ok,"isolated HTTP health failed");console.log("HTTP health OK; fake DB; no production access; NODE_ENV=test");}finally{child.kill("SIGTERM");await new Promise(r=>child.on("exit",r));}
+          ' | tee ../candidate/http-smoke.txt
+          cd ../candidate
+          sha256sum -c "xamuko-backend-$SOURCE_SHA.tar.gz.sha256"
+          printf 'Verified on clean Amazon Linux 2023 x86_64, Node 22; isolated HTTP health, argon2 hash/verify, generated Prisma client and adapter load. Database and production TLS not exercised.\n' > VERIFICATION.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nickname-linux-verified-a467b4e
+          path: candidate/
+          retention-days: 14
+          if-no-files-found: error
