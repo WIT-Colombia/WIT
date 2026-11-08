@@ -31,8 +31,20 @@ export async function createAvailableNickname(db: UserLookup, displayName: strin
   throw new Error('No se pudo generar un nickname disponible.');
 }
 
+function metadataMentionsNickname(value: unknown, key = ''): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const text = String(value).toLowerCase();
+    return /target|constraint|index|column|field|nickname/.test(key.toLowerCase()) && text.includes('nickname');
+  }
+  if (Array.isArray(value)) return value.some((item) => metadataMentionsNickname(item, key));
+  if (typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).some(([childKey, childValue]) => metadataMentionsNickname(childValue, childKey));
+  }
+  return false;
+}
+
 export function isNicknameCollision(error: unknown): boolean {
-  return error instanceof Prisma.PrismaClientKnownRequestError
-    && error.code === 'P2002'
-    && (Array.isArray(error.meta?.target) ? error.meta.target : [error.meta?.target]).some((field) => String(field).toLowerCase().includes('nickname'));
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') return false;
+  return metadataMentionsNickname(error.meta);
 }
