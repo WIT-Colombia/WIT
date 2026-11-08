@@ -4,7 +4,7 @@ import { BusinessHeader } from "../components/layout/BusinessHeader";
 import { BusinessApiError } from "../services/businessApiClient";
 import { confirmEmail, requestVerification } from "../services/businessAuthService";
 import { useBusinessAuth } from "../services/businessAuthContext";
-import { clearPendingVerificationEmail, getPendingVerificationEmail } from "../services/pendingVerification";
+import { clearPendingVerificationEmail, getPendingVerification } from "../services/pendingVerification";
 import "./VerifyEmailPage.css";
 
 type VerificationState = "pending" | "loading" | "success" | "error" | "unavailable";
@@ -57,11 +57,24 @@ export default function VerifyEmailPage() {
   const { refresh } = useBusinessAuth();
   const inFlight = useRef(false);
   const hasAttempted = useRef(false);
-  const [email] = useState(getPendingVerificationEmail);
+  const [registration] = useState(getPendingVerification);
+  const email = registration.email;
+  const expiry = registration.expiresAt;
   const [state, setState] = useState<VerificationState>(token ? "loading" : email ? "pending" : "unavailable");
+  const [secondsRemaining, setSecondsRemaining] = useState<number | null>(() => expiry ? Math.max(0, Math.ceil((Date.parse(expiry) - Date.now()) / 1000)) : null);
   const [message, setMessage] = useState("");
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+
+  useEffect(() => {
+    if (!expiry || state !== "pending") return;
+    const update = () => setSecondsRemaining(Math.max(0, Math.ceil((Date.parse(expiry) - Date.now()) / 1000)));
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, [expiry, state]);
+  const clock = secondsRemaining === null ? null :
+    `${String(Math.floor(secondsRemaining / 60)).padStart(2, "0")}:${String(secondsRemaining % 60).padStart(2, "0")}`;
 
   useEffect(() => {
     if (!token || hasAttempted.current) return;
@@ -121,7 +134,7 @@ export default function VerifyEmailPage() {
         </div>
         <h1 id="verify-email-title">{heading}</h1>
         {state === "pending" && <p className="verify-email-description">
-          Enviamos un enlace de verificación a tu correo. Haz clic en el enlace para activar tu cuenta en <strong>XAMUKO Business</strong>.
+          {registration.emailSent ? "Enviamos un enlace de verificación a tu correo." : "No pudimos enviar el enlace inicial. Solicita un nuevo correo."} Haz clic en el enlace para activar tu cuenta en <strong>XAMUKO Business</strong>.
         </p>}
         {state === "unavailable" && <p className="verify-email-description" role="status">
           No encontramos una solicitud de verificación en esta pestaña. Regresa al registro para continuar con tu correo electrónico.
@@ -142,10 +155,11 @@ export default function VerifyEmailPage() {
           <span className="verify-email-recipient-lock" aria-hidden="true">🔒</span>
         </div>}
 
-        {state === "pending" && <div className="verify-email-timer" aria-label="Tiempo de verificación previsto: 15 minutos">
-          <span className="verify-email-timer-badge"><ClockIcon /><strong>15:00</strong></span>
-          <p>Tienes 15 minutos para verificar tu correo.</p>
+        {state === "pending" && clock !== null && !(resent && secondsRemaining === 0) && <div className="verify-email-timer" role="timer" aria-label="Tiempo restante para verificar el correo">
+          <span className="verify-email-timer-badge"><ClockIcon /><strong>{clock}</strong></span>
+          <p>{secondsRemaining === 0 ? "El enlace ha vencido. Solicita uno nuevo para continuar." : "Tienes 15 minutos desde el envío original para verificar tu correo."}</p>
         </div>}
+        {state === "pending" && clock === null && <p className="verify-email-expiry-note">Cuando recibas el enlace, tendrás 15 minutos para verificar tu correo.</p>}
 
         {(state === "pending" || state === "error") && email && <form className="verify-email-resend" onSubmit={resend}>
           <button type="submit" disabled={resending}>
