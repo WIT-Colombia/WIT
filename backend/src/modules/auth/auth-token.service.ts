@@ -1,40 +1,48 @@
 import { consumeVerificationToken } from './verification-confirmation.js';
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
+import { env } from '../../config/env.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { sendPasswordResetEmail, sendSecurityNotificationEmail, sendVerificationEmail } from '../../shared/email/email-service.js';
 import type { EmailApplication } from '../../shared/email/email-brand.js';
 
 type TokenType = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
+type IssuedToken = { rawToken: string; expiresAt: Date };
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-async function issueToken(userId: string, type: TokenType, ttlMs: number): Promise<string> {
+async function issueToken(userId: string, type: TokenType, ttlMs: number): Promise<IssuedToken> {
   const rawToken = randomBytes(48).toString('base64url');
-  const now = new Date();
-  await prisma.$transaction(async (transaction) => {
+  return prisma.$transaction(async (transaction) => {
+    const now = new Date();
+    // Resending invalidates the earlier link without extending its first 15-minute window.
+    const previous = type === 'EMAIL_VERIFICATION' ? await transaction.authToken.findFirst({
+      where: { userId, type, consumedAt: null, expiresAt: { gt: now } },
+      orderBy: { createdAt: 'desc' },
+      select: { expiresAt: true },
+    }) : null;
+    const expiresAt = previous?.expiresAt ?? new Date(now.getTime() + ttlMs);
     await transaction.authToken.updateMany({
       where: { userId, type, consumedAt: null, expiresAt: { gt: now } },
       data: { consumedAt: now },
     });
-    await transaction.authToken.create({
-      data: { userId, type, tokenHash: hashToken(rawToken), expiresAt: new Date(now.getTime() + ttlMs) },
-    });
+    await transaction.authToken.create({ data: { userId, type, tokenHash: hashToken(rawToken), expiresAt } });
+    return { rawToken, expiresAt };
   });
-  return rawToken;
 }
 
 
-export async function sendVerificationRequest(emailNormalized: string, application: EmailApplication = 'usuario'): Promise<void> {
+export async function sendVerificationRequest(emailNormalized: string, application: EmailApplication = 'usuario'): Promise<{ expiresAt: Date } | null> {
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
-  if (!identity || identity.verifiedAt || identity.user.status !== 'ACTIVE') return;
-  const token = await issueToken(identity.userId, 'EMAIL_VERIFICATION', 24 * 60 * 60 * 1000);
-  await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName, application);
+  if (!identity || identity.verifiedAt || identity.user.status !== 'ACTIVE') return null;
+  const { rawToken, expiresAt } = await issueToken(identity.userId, 'EMAIL_VERIFICATION', env.emailVerificationTtlMinutes * 60 * 1000);
+  await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, rawToken, identity.user.displayName, application);
+  return { expiresAt };
 }
 
 export async function confirmEmail(token: string): Promise<string> {
@@ -48,8 +56,8 @@ export async function sendPasswordResetRequest(emailNormalized: string, applicat
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || !identity.verifiedAt || identity.user.status !== 'ACTIVE') return;
-  const token = await issueToken(identity.userId, 'PASSWORD_RESET', 30 * 60 * 1000);
-  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName, application);
+  const { rawToken } = await issueToken(identity.userId, 'PASSWORD_RESET', 30 * 60 * 1000);
+  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, rawToken, identity.user.displayName, application);
 }
 
 export async function resetPassword(token: string, passwordHash: string): Promise<string> {

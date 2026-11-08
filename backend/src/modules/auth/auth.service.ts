@@ -55,11 +55,17 @@ export async function register(input: RegisterInput, _requestMeta?: { userAgent?
       });
       const result = { user: await getCurrentUser(user.id) };
       let verificationEmailSent = true;
-      try { await sendVerificationRequest(emailNormalized, application); }
-      catch { verificationEmailSent = false; console.warn('Registration verification email could not be sent'); }
+      let verificationExpiresAt: string | undefined;
+      try {
+        const issued = await sendVerificationRequest(emailNormalized, application);
+        verificationExpiresAt = issued?.expiresAt.toISOString();
+      } catch {
+        verificationEmailSent = false;
+        console.warn('Registration verification email could not be sent');
+      }
       try { await sendWelcomeEmail(emailNormalized, user.displayName, application); }
       catch { console.warn('Registration welcome email could not be sent'); }
-      return { ...result, user: { ...result.user, verificationEmailSent } };
+      return { ...result, user: { ...result.user, verificationEmailSent, verificationExpiresAt } };
     } catch (error) {
       if (isNicknameCollision(error)) continue;
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
