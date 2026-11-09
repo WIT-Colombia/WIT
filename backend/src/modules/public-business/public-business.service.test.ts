@@ -274,6 +274,117 @@ test('scope virtual exige modalidad VIRTUAL ACTIVE para negocios, productos y se
   assert.equal(result.pagination.services.total, 1);
 });
 
+
+test('Virtual: todos los destacados preceden a pioneros y negocios cercanos sin importar distancia ni página', async () => {
+  const pro = {
+    plan: 'PRO', status: 'ACTIVE',
+    startsAt: new Date('2020-01-01T00:00:00.000Z'),
+    expiresAt: new Date('2099-01-01T00:00:00.000Z'),
+    revokedAt: null, specialActivation: false,
+  };
+  const business = (id: string, name: string, latitude: number, featured = false, pioneer = false) => ({
+    ...publicBusiness, publicId: id, name,
+    location: { ...publicBusiness.location, latitude, longitude: -76.303 },
+    subscriptions: featured ? [pro] : [],
+    brand: { pioneer: pioneer ? { number: 1 } : null },
+  });
+  const source = [
+    business('pioneer-nearby', 'Pionero cercano', 3.539, false, true),
+    business('free-nearby', 'Gratis cercano', 3.539),
+    business('pro-four', 'Destacado cuatro', 12, true),
+    business('pro-two', 'Destacado dos', 11, true),
+    business('pro-three', 'Destacado tres', 10, true),
+    business('pro-one', 'Destacado uno', 9, true),
+  ];
+  const db = {
+    business: { findMany: async ({ where }: any) => {
+      assert.deepEqual(where.modalities, { some: { type: 'VIRTUAL', status: 'ACTIVE' } });
+      return source;
+    } },
+    businessOffer: { findMany: async () => [] },
+  } as any;
+
+  const first = await searchPublicUniversal(parseUniversalSearchInput({
+    scope: 'virtual', latitude: '3.539', longitude: '-76.303',
+    radiusKm: '1', businessPageSize: '3',
+  }), db);
+  const second = await searchPublicUniversal(parseUniversalSearchInput({
+    scope: 'virtual', latitude: '3.539', longitude: '-76.303',
+    radiusKm: '1', businessPageSize: '3', businessPage: '2',
+  }), db);
+  assert.equal(first.pagination.businesses.total, 6);
+  assert.equal(first.pagination.businesses.totalPages, 2);
+  assert.deepEqual(
+    [...first.businesses, ...second.businesses].map(item => item.publicId),
+    ['pro-four', 'pro-two', 'pro-three', 'pro-one', 'free-nearby', 'pioneer-nearby'],
+  );
+  assert.equal(first.businesses.every(item => item.isFeatured), true);
+  assert.equal(second.businesses[0].isFeatured, true);
+  assert.equal(second.businesses[1].isFeatured, false);
+});
+
+test('Virtual: productos y servicios se ordenan por precio efectivo antes de paginar; sin precio van al final', async () => {
+  const owner = {
+    ...publicBusiness, publicId: 'online-store', name: 'Tienda virtual',
+    subscriptions: [], brand: { pioneer: null },
+  };
+  const offer = (kind: 'PRODUCT' | 'SERVICE', id: string, name: string, amount: string | null, sale?: string) => ({
+    ...publicBusiness.offers[0],
+    id, kind, name, description: null,
+    priceAmount: amount, currency: 'COP', priceText: amount === null ? 'A convenir' : null,
+    category: publicBusiness.category, photos: [],
+    promotions: sale ? [{
+      type: 'OFFER', originalPrice: amount, promotionalPrice: sale,
+      startsAt: new Date('2026-01-01T00:00:00.000Z'),
+      endsAt: new Date('2099-01-01T00:00:00.000Z'),
+      photos: [], id: 'sale-' + id, conditions: null,
+    }] : [],
+    business: {
+      publicId: owner.publicId, name: owner.name,
+      description: owner.description, category: owner.category, location: owner.location,
+    },
+  });
+  const source = [
+    offer('PRODUCT', 'expensive', 'Caro', '10000'),
+    offer('PRODUCT', 'without-price', 'Sin precio', null),
+    offer('PRODUCT', 'discount', 'Descuento vigente', '20000', '2000'),
+    offer('PRODUCT', 'cheap', 'Barato', '1000'),
+  ];
+  const services = [
+    offer('SERVICE', 'service-no-price', 'Cotización', null),
+    offer('SERVICE', 'service-expensive', 'Caro', '70000'),
+    offer('SERVICE', 'service-cheap', 'Barato', '900'),
+  ];
+  const db = {
+    business: { findMany: async () => [owner] },
+    businessOffer: { findMany: async ({ where }: any) => {
+      assert.equal(where.business.modalities.some.type, 'VIRTUAL');
+      assert.equal(where.business.modalities.some.status, 'ACTIVE');
+      return where.kind === 'PRODUCT' ? source : services;
+    } },
+  } as any;
+  const first = await searchPublicUniversal(parseUniversalSearchInput({
+    scope: 'virtual', productPageSize: '2', servicePageSize: '2',
+  }), db);
+  const second = await searchPublicUniversal(parseUniversalSearchInput({
+    scope: 'virtual', productPage: '2', productPageSize: '2',
+    servicePage: '2', servicePageSize: '2',
+  }), db);
+  assert.deepEqual(
+    [...first.products, ...second.products].map(item => item.id),
+    ['cheap', 'discount', 'expensive', 'without-price'],
+  );
+  assert.deepEqual(
+    [...first.services, ...second.services].map(item => item.id),
+    ['service-cheap', 'service-expensive', 'service-no-price'],
+  );
+  assert.equal(first.products[1].price.amount, '2000');
+  assert.equal(first.pagination.products.total, 4);
+  assert.equal(first.pagination.products.totalPages, 2);
+  assert.equal(first.pagination.services.total, 3);
+  assert.equal(first.pagination.services.totalPages, 2);
+});
+
 test('scope ciudad limita las tres pestañas por municipio y departamento sin requerir GPS', async () => {
   const makeBusiness = (publicId: string, cityName: string, regionName: string) => ({
     ...publicBusiness,
