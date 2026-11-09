@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../services/httpClient";
 import { validateEmail } from "../services/emailValidation";
 import { getRememberedEmail, startGoogleLogin } from "../services/authService";
+import { isValidBusinessReferralCode } from "../utils/businessReferralCode";
 import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
 import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
 import authReference from "../assets/auth-reference-users2.avif";
@@ -54,11 +55,14 @@ export default function Register() {
   const [message, setMessage] = useState(() => params.get("verified") === "1" ? "Correo verificado. Inicia sesión para comenzar a explorar." : "");
   const [requiresVerification, setRequiresVerification] = useState(false);
   const [accepted, setAccepted] = useState(false);
+  const [referralCode, setReferralCode] = useState(() => params.get("ref") ?? "");
   const [submitting, setSubmitting] = useState(false);
   const returnTo = "/home";
   const passwordError = mode === "register" && (fieldErrors.password || (password.length > 0 && password.length < 8 ? "Tu contraseña debe tener al menos 8 caracteres." : ""));
   const confirmPasswordError = mode === "register" && confirmPassword.length > 0 && password !== confirmPassword ? "Las contraseñas no coinciden." : "";
   const hasPasswordErrors = Boolean(passwordError || confirmPasswordError);
+  const referralError = mode === "register" && referralCode.trim() && !isValidBusinessReferralCode(referralCode)
+    ? "El código debe tener el formato XMK seguido de 32 caracteres." : fieldErrors.referralCode ?? "";
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -67,13 +71,14 @@ export default function Register() {
     if (validationError) setEmailError("Ingresa un correo electrónico válido.");
     if (mode === "register" && (!name.trim() || validationError)) return;
     if (mode === "register" && (hasPasswordErrors || password.length < 8 || password !== confirmPassword)) return;
+    if (mode === "register" && referralError) { setMessage("Revisa el código de referido."); return; }
     if (mode === "register" && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; }
     setSubmitting(true);
     setMessage("");
     setRequiresVerification(false);
     try {
       if (mode === "register") {
-        const created = await register(name.trim(), email.trim(), password);
+        const created = await register(name.trim(), email.trim(), password, referralCode.trim() || undefined);
         rememberPendingVerificationEmail(email.trim(), created.verificationExpiresAt, created.verificationEmailSent !== false);
         navigate("/verify-email?pending=1", { replace: true });
       } else {
@@ -119,7 +124,7 @@ export default function Register() {
           </div>
           {message && <p className="register-status" role="alert">{message}</p>}
           <div className="register-social-options">
-            <button type="button" className="register-provider-button" onClick={() => { if (registration && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; } startGoogleLogin({ returnTo, consent: registration ? accepted : true, rememberMe }); }}>
+            <button type="button" className="register-provider-button" onClick={() => { if (registration && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; } if (registration && referralError) { setMessage("Revisa el código de referido."); return; } startGoogleLogin({ returnTo, consent: registration ? accepted : true, rememberMe, referralCode: registration ? referralCode.trim() || undefined : undefined }); }}>
               <GoogleIcon/><span>Continuar con Google</span>
             </button>
           </div>
@@ -145,7 +150,11 @@ export default function Register() {
               <span className="user-auth-input-wrap"><LockIcon/><input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" minLength={8} required placeholder="Repite tu contraseña" aria-invalid={Boolean(confirmPasswordError)} aria-describedby={confirmPasswordError ? "register-confirm-password-error" : undefined}/><button type="button" className="password-visibility" onClick={() => setShowConfirmPassword((visible) => !visible)} aria-label={showConfirmPassword ? "Ocultar confirmación de contraseña" : "Mostrar confirmación de contraseña"}><EyeIcon hidden={!showConfirmPassword}/></button></span>
               {confirmPasswordError && <small id="register-confirm-password-error" className="field-error" role="alert">{confirmPasswordError}</small>}
             </label>}
-            {registration && <label className="user-auth-field user-auth-referral">Código de referido (opcional)<input disabled value="" placeholder="Ingresa un código de referido"/></label>}
+            {registration && <label className={`user-auth-field user-auth-referral${referralError ? " field-invalid" : ""}`}>Código de referido (opcional)
+              <input value={referralCode} onChange={(event) => { setReferralCode(event.target.value.toUpperCase()); setFieldErrors((errors) => ({ ...errors, referralCode: "" })); }} maxLength={40} autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XMK-..." aria-invalid={Boolean(referralError)} aria-describedby={referralError ? "register-referral-error" : undefined}/>
+              {referralCode.trim() && !referralError && <small className="user-auth-referral-note">Tu registro quedará asociado al negocio que te invitó.</small>}
+              {referralError && <small id="register-referral-error" className="field-error" role="alert">{referralError}</small>}
+            </label>}
             {registration && <label className="register-legal-check"><input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)}/><span>Acepto los <Link to="/legal/terms?from=register">Términos y condiciones</Link> y la <Link to="/legal/privacy?from=register">Política de privacidad</Link>.</span></label>}
             {!registration && <label className="register-legal-check"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)}/><span>Mantener mi sesión iniciada</span></label>}
             
