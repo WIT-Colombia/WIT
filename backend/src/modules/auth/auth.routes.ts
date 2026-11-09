@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { prisma } from '../../config/prisma.js';
+import { findEligibleReferralBusiness } from './business-referral.service.js';
 import { Router } from 'express';
 import multer from 'multer';
 import rateLimit from 'express-rate-limit';
@@ -44,6 +46,26 @@ const loginAccountRateLimit = rateLimit({
     response.setHeader('Retry-After', String(LOGIN_ACCOUNT_WINDOW_SECONDS));
     response.status(429).json({ error: { code: 'AUTH_RATE_LIMITED', message: 'Demasiados intentos para esta cuenta. Intenta más tarde.' } });
   },
+});
+const referralCheckRateLimit = rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false });
+authRouter.get('/referrals/validate', referralCheckRateLimit, async (request, response, next) => {
+  try {
+    const code = typeof request.query.code === 'string' ? request.query.code.trim().toUpperCase() : '';
+    if (!/^XMK-[A-F0-9]{32}$/.test(code)) {
+      response.status(200).json({ valid: false });
+      return;
+    }
+    try {
+      await findEligibleReferralBusiness(prisma, code);
+      response.status(200).json({ valid: true });
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'INVALID_REFERRAL_CODE') {
+        response.status(200).json({ valid: false });
+        return;
+      }
+      throw error;
+    }
+  } catch (error) { next(error); }
 });
 authRouter.get('/referrals/availability', (_request, response) => { response.status(200).json({ enabled: true }); });
 // Frontends must not POST to an older AWS backend that still creates
