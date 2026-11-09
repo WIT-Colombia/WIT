@@ -20,16 +20,16 @@ export function Layout() {
   useEffect(() => {
     let active = true;
     let objectUrl: string | null = null;
-    const source = admin?.avatarUrl?.trim();
+    const source = admin?.avatarUrl?.trim() || null;
     setAvatarSrc(null);
-    if (!source) return;
     let avatarPath: string | null = null;
     try {
       const parsed = new URL(source, window.location.origin);
       if (/^\/api\/v\d+\/auth\/me\/avatar\/?$/.test(parsed.pathname)) avatarPath = `${parsed.pathname}${parsed.search}`;
     } catch { /* Keep an unparseable image URL as a direct source below. */ }
-    if (!avatarPath) { setAvatarSrc(source); return; }
-    void fetchOwnAvatar(avatarPath)
+    if (source && !avatarPath) { setAvatarSrc(source); return; }
+    const avatarRequest = avatarPath ? fetchOwnAvatar(avatarPath) : fetchOwnAvatar();
+    void avatarRequest
       .then(blob => { if (active) { objectUrl = URL.createObjectURL(blob); setAvatarSrc(objectUrl); } })
       .catch(() => { if (active) setAvatarSrc(null); });
     return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
