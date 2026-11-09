@@ -9,6 +9,7 @@ import type { LoginInput, RegisterInput } from './auth.schemas.js';
 import { sendVerificationRequest } from './auth-token.service.js';
 import { sendWelcomeEmail } from '../../shared/email/email-service.js';
 import { shouldRequireEmailVerification } from './email-login-policy.js';
+import type { EmailApplication } from '../../shared/email/email-brand.js';
 
 const invalidCredentials = () => new AppError(401, 'INVALID_CREDENTIALS', 'Correo o contraseña incorrectos.');
 const unverifiedEmail = () => new AppError(403, 'EMAIL_NOT_VERIFIED', 'Verifica tu correo electrónico antes de iniciar sesión.');
@@ -35,7 +36,7 @@ export async function issueSession(userId: string, requestMeta?: { userAgent?: s
   return { accessToken: await createAccessToken({ userId, sessionId: session.id }), refreshToken };
 }
 
-export async function register(input: RegisterInput, _requestMeta?: { userAgent?: string; ipAddress?: string }) {
+export async function register(input: RegisterInput, _requestMeta?: { userAgent?: string; ipAddress?: string }, application: EmailApplication = 'usuario') {
   const emailNormalized = normalizeEmail(input.email);
   const passwordHash = await argon2.hash(input.password, { type: argon2.argon2id });
   try {
@@ -52,11 +53,14 @@ export async function register(input: RegisterInput, _requestMeta?: { userAgent?
     }));
     const result = { user: await getCurrentUser(user.id) };
     let verificationEmailSent = true;
-    try { await sendVerificationRequest(emailNormalized); }
-    catch { verificationEmailSent = false; console.warn('Registration verification email could not be sent'); }
-    try { await sendWelcomeEmail(emailNormalized, user.displayName); }
+    let verificationExpiresAt: string | undefined;
+    try {
+      const issued = await sendVerificationRequest(emailNormalized, application);
+      verificationExpiresAt = issued?.expiresAt.toISOString();
+    } catch { verificationEmailSent = false; console.warn('Registration verification email could not be sent'); }
+    try { await sendWelcomeEmail(emailNormalized, user.displayName, application); }
     catch { console.warn('Registration welcome email could not be sent'); }
-    return { ...result, user: { ...result.user, verificationEmailSent } };
+    return { ...result, user: { ...result.user, verificationEmailSent, verificationExpiresAt } };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       throw new AppError(409, 'EMAIL_UNAVAILABLE', 'Este correo ya tiene una cuenta en WIT. Inicia sesión.', { email: 'Este correo ya tiene una cuenta en WIT. Inicia sesión.' });
