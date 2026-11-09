@@ -3,3 +3,5 @@ export function cx(...classes: Array<string | false | null | undefined>): string
 }
 
 export { API_BASE_URL, buildApiUrl } from './api';
+
+export { normalizeImageForUpload, validateUploadImageSource, isSupportedUploadImage, PHOTO_INPUT_ACCEPT, PhotoUploadError, MAX_UPLOAD_IMAGE_BYTES } from './imageUpload';

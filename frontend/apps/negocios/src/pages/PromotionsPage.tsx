@@ -1,3 +1,4 @@
+import { normalizeImageForUpload, PHOTO_INPUT_ACCEPT } from "@wit/utils";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { PageHeader } from "../components/common/PageHeader";
 import { useBusinessStore } from "../services/businessStore";
@@ -49,6 +50,7 @@ export function PromotionsPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [form, setForm] = useState<FormValue>(createBlank);
   const [files, setFiles] = useState<File[]>([]);
+  const [processingPhotos, setProcessingPhotos] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [removalTarget, setRemovalTarget] = useState<BusinessPromotion | null>(null);
   const [proDialog, setProDialog] = useState(false);
@@ -117,12 +119,22 @@ export function PromotionsPage() {
     const originalPrice = item.priceAmount ?? item.priceText?.replace(/[^\d.,-]/g, "").replace(/\.(?=\d{3}(?:\D|$))/g, "").replace(",", ".") ?? "";
     setForm(current => ({ ...current, relatedOfferId: item.id, type: "OFFER", title: item.name, description: item.description ?? "", category: item.category ?? "", originalPrice, promotionalPrice: "" }));
   };
-  const addFiles = (selected: FileList | null) => {
-    if (!selected) return;
-    const max = limits?.maxPhotos ?? 1;
-    const valid = Array.from(selected).filter(file => file.type.startsWith("image/") && file.size <= 5 * 1024 * 1024);
-    setFiles(current => [...current, ...valid].slice(0, Math.max(0, max - (editing?.photos.length ?? 0))));
-    if (valid.length !== selected.length) setError("Agrega imágenes JPG, PNG o WebP de máximo 5 MB.");
+  const addFiles = async (selected: FileList | null) => {
+    const requested = Array.from(selected ?? []);
+    if (!requested.length || processingPhotos) return;
+    const available = Math.max(0, (limits?.maxPhotos ?? 1) - (editing?.photos.length ?? 0) - files.length);
+    if (requested.length > available) { setError("Has alcanzado el límite de imágenes de esta publicación."); return; }
+    setProcessingPhotos(true);
+    setError("");
+    try {
+      const photos: File[] = [];
+      for (const file of requested) photos.push(await normalizeImageForUpload(file));
+      setFiles(current => [...current, ...photos]);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudieron procesar las fotografías.");
+    } finally {
+      setProcessingPhotos(false);
+    }
   };
   const removeSavedPhoto = async (photoId: string) => {
     if (!editing || !business.id) return;
@@ -174,14 +186,14 @@ export function PromotionsPage() {
         <label>Título <i>*</i><input required maxLength={120} value={form.title} onChange={event => setField("title", event.target.value)} placeholder="Ej. 2x1 en productos seleccionados" /></label>
         <label>Descripción <i>*</i><textarea required maxLength={500} value={form.description} onChange={event => setField("description", event.target.value)} placeholder="Describe tu oferta o promoción…" /><small className="promotion-counter">{form.description.length}/500</small></label>
         <label>Condiciones <span>(opcional)</span><textarea maxLength={500} value={form.conditions} onChange={event => setField("conditions", event.target.value)} placeholder="Días, productos incluidos u otras condiciones" /></label>
-        <div className="promotion-photo-label">Imágenes <span>(máximo {limits?.maxPhotos ?? 1})</span> <small>JPG, PNG o WebP, hasta 5 MB</small></div><div className="promotion-photos">{editing?.photos.map(photo => <div className="promotion-photo" key={photo.id}><PromotionPhotoImage url={photo.url}/><button type="button" aria-label="Quitar fotografía" onClick={() => void removeSavedPhoto(photo.id)}>×</button></div>)}{files.map((file, index) => <div className="promotion-photo" key={`${file.name}-${file.lastModified}`}><img src={filePreviews[index]} alt=""/><button type="button" aria-label="Quitar fotografía" onClick={() => setFiles(current => current.filter((_, itemIndex) => itemIndex !== index))}>×</button></div>)}{(editing?.photos.length ?? 0) + files.length < (limits?.maxPhotos ?? 1) && <button className="promotion-photo-add" type="button" onClick={() => fileInput.current?.click()}>＋<span>Agregar fotos</span></button>}<input ref={fileInput} hidden type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={event => { addFiles(event.target.files); event.target.value = ""; }} /></div>
+        <div className="promotion-photo-label">Imágenes <span>(máximo {limits?.maxPhotos ?? 1})</span> <small>JPG, PNG o WebP, hasta 5 MB</small></div><div className="promotion-photos">{editing?.photos.map(photo => <div className="promotion-photo" key={photo.id}><PromotionPhotoImage url={photo.url}/><button type="button" aria-label="Quitar fotografía" onClick={() => void removeSavedPhoto(photo.id)}>×</button></div>)}{files.map((file, index) => <div className="promotion-photo" key={`${file.name}-${file.lastModified}`}><img src={filePreviews[index]} alt=""/><button type="button" aria-label="Quitar fotografía" onClick={() => setFiles(current => current.filter((_, itemIndex) => itemIndex !== index))}>×</button></div>)}{(editing?.photos.length ?? 0) + files.length < (limits?.maxPhotos ?? 1) && <button className="promotion-photo-add" type="button" disabled={processingPhotos} onClick={() => fileInput.current?.click()}>＋<span>{processingPhotos ? "Procesando…" : "Agregar fotos"}</span></button>}<input ref={fileInput} hidden type="file" accept={PHOTO_INPUT_ACCEPT} multiple disabled={processingPhotos} onChange={event => { void addFiles(event.target.files); event.target.value = ""; }} /></div>
         {form.type === "OFFER" && <div className="promotion-price-fields"><label>Precio original (COP)<input type="text" inputMode="numeric" required readOnly value={formatCopInput(form.originalPrice)} aria-readonly="true" /></label><label>Precio promocional (COP)<input type="text" inputMode="numeric" required value={formatCopInput(form.promotionalPrice)} onChange={event => setPromotionalPrice(event.target.value)} placeholder="$ 0" /></label></div>}
         {form.type === "PROMOTION" && <label>Precio opcional (COP)<input type="number" min="0" step="1" value={form.promotionalPrice} onChange={event => setField("promotionalPrice", event.target.value)} placeholder="No requerido" /></label>}
         <fieldset><legend>Vigencia</legend><div className="promotion-price-fields"><label>Fecha de inicio <i>*</i><input type="datetime-local" required disabled={!limits?.canSchedule && !editing} value={form.startsAt} onChange={event => setField("startsAt", event.target.value)} /></label><label>Fecha de finalización <i>*</i><input type="datetime-local" required value={form.endsAt} onChange={event => setField("endsAt", event.target.value)} /></label></div>{!limits?.canSchedule && !editing && <small>El plan Básico publica de inmediato, sin programación futura.</small>}</fieldset>
         {limits?.canRecur && <><label>Repetición <span className="promotion-pro-tag">PRO</span><select value={form.recurrence} onChange={event => setField("recurrence", event.target.value)}><option value="NONE">Sin repetición</option><option value="DAILY">Diaria</option><option value="WEEKLY">Semanal</option><option value="MONTHLY">Mensual</option></select></label>{form.recurrence !== "NONE" && <label>Repetir hasta <i>*</i><input type="datetime-local" required min={form.endsAt} value={form.recurrenceUntil} onChange={event => setField("recurrenceUntil", event.target.value)} /></label>}</>}{!limits?.canRecur && <button className="promotion-upgrade-link" type="button" onClick={() => setProDialog(true)}>Repetición de promociones · Conocer Business Pro</button>}
         <label>Categoría <span>(opcional)</span><input maxLength={100} value={form.category} onChange={event => setField("category", event.target.value)} placeholder="Ej. Panadería" /></label>
         {error && <p className="promotions-error" role="alert">{error}</p>}
-        <div className="promotion-editor-actions"><button type="button" className="outline-button" onClick={() => setPreviewOpen(true)}>Vista previa</button><button type="button" className="outline-button" onClick={closeForm}>Cancelar</button><button className="action-button" type="submit" disabled={saving}>{saving ? "Guardando…" : editing ? "Guardar cambios" : "Guardar publicación"}</button></div>
+        <div className="promotion-editor-actions"><button type="button" className="outline-button" onClick={() => setPreviewOpen(true)}>Vista previa</button><button type="button" className="outline-button" onClick={closeForm}>Cancelar</button><button className="action-button" type="submit" disabled={saving || processingPhotos}>{saving ? "Guardando…" : processingPhotos ? "Procesando fotos…" : editing ? "Guardar cambios" : "Guardar publicación"}</button></div>
       </form></aside>}
     </div>
     {previewOpen && <div className="promotion-preview-overlay" role="presentation" onMouseDown={event => event.target === event.currentTarget && setPreviewOpen(false)}><section className="promotion-preview" role="dialog" aria-modal="true" aria-labelledby="promotion-preview-title"><button type="button" className="promotion-preview-close" onClick={() => setPreviewOpen(false)} aria-label="Cerrar vista previa">×</button><span className="promotion-type">{form.type === "OFFER" ? "OFERTA" : "PROMOCIÓN"}</span><h2 id="promotion-preview-title">{form.title || "Título de la publicación"}</h2><p>{form.description || "La descripción aparecerá aquí."}</p>{form.promotionalPrice && <strong>{money(form.promotionalPrice)} {form.originalPrice && <del>{money(form.originalPrice)}</del>}</strong>}<small>{form.startsAt && new Date(form.startsAt).toLocaleString("es-CO")} – {form.endsAt && new Date(form.endsAt).toLocaleString("es-CO")}</small></section></div>}

@@ -1,3 +1,4 @@
+import { normalizeImageForUpload } from "@wit/utils";
 import { BusinessApiError, buildApiUrl, configureAccessTokenProvider, configureUnauthorizedHandler, requestJson, requestPhotoBlob } from "./businessApiClient";
 
 export type BusinessAuthUser = {
@@ -91,11 +92,9 @@ export async function updateProfile(input: { name: string; nickname?: string; av
 }
 
 export async function uploadAvatar(file: File): Promise<void> {
-  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
-    throw new Error("Usa una imagen JPG, PNG o WebP de máximo 5 MB.");
-  }
+  const normalized = await normalizeImageForUpload(file);
   const form = new FormData();
-  form.append("file", file);
+  form.append("file", normalized);
   const send = () => fetch(buildApiUrl("/auth/me/avatar"), {
     method: "POST",
     body: form,

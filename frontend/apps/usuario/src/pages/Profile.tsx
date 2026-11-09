@@ -1,3 +1,4 @@
+import { PHOTO_INPUT_ACCEPT } from "@wit/utils";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getNotifications, getProfile, saveProfile, type UserProfile } from "../services/userDataService";
@@ -34,12 +35,6 @@ export default function Profile() {
     const input = event.currentTarget;
     const file = input.files?.[0];
     if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
-      input.value = "";
-      setAvatarNotice(null);
-      setAvatarError("Usa una imagen JPG, PNG o WebP de máximo 5 MB.");
-      return;
-    }
     setAvatarSaving(true);
     setAvatarError(null);
     setAvatarNotice(null);
@@ -71,7 +66,7 @@ export default function Profile() {
       <div className="profile-welcome">
         <label className="profile-avatar-picker" aria-busy={avatarSaving}>
           {accountAvatar || profile.photo ? <img src={accountAvatar ?? profile.photo} alt="Foto de perfil" /> : <span>{profile.name.trim().charAt(0).toUpperCase() || "D"}</span>}
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={selectPhoto} disabled={avatarSaving} />
+          <input type="file" accept={PHOTO_INPUT_ACCEPT} onChange={selectPhoto} disabled={avatarSaving} />
           <em>{avatarSaving ? "Guardando…" : "Cambiar foto"}</em>
         </label>
         <div>
