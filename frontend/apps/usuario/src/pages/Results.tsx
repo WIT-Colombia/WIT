@@ -153,24 +153,74 @@ export default function Results() {
     setPages({ businesses: 1, products: 1, services: 1 });
   }, [searchKey]);
   async function toggleSection(section: "businesses" | "products" | "services") {
-    const values = section === "businesses" ? [orderedItems.length, businessesVisibleCount, setBusinessesVisibleCount, businessesSectionRef] : section === "products" ? [matchingProducts.length, productsVisibleCount, setProductsVisibleCount, productsSectionRef] : [matchingServices.length, servicesVisibleCount, setServicesVisibleCount, servicesSectionRef];
-    const [total, visible, setVisible, ref] = values as [number, number, (value: number) => void, React.RefObject<HTMLElement>];
-    const sectionTotalPages = totalPages[section];
-    const sectionPage = pages[section];
-    if (visible >= total && sectionPage >= sectionTotalPages) { setVisible(8); ref.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); return; }
-    if (visible < total) { setVisible(Math.min(visible + 8, total)); return; }
+    if (searchStatus !== "ready") return;
+    const values = section === "businesses"
+      ? [orderedItems.length, businessesVisibleCount, setBusinessesVisibleCount, businessesSectionRef]
+      : section === "products"
+        ? [matchingProducts.length, productsVisibleCount, setProductsVisibleCount, productsSectionRef]
+        : [matchingServices.length, servicesVisibleCount, setServicesVisibleCount, servicesSectionRef];
+    const [loaded, visible, setVisible, ref] = values as [
+      number, number, React.Dispatch<React.SetStateAction<number>>, React.RefObject<HTMLElement | null>,
+    ];
+    if (visible < loaded) {
+      setVisible(Math.min(visible + 8, loaded));
+      return;
+    }
+    if (pages[section] >= totalPages[section]) {
+      setVisible(8);
+      ref.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start",
+      });
+      return;
+    }
     if (loadingSection.current) return;
     loadingSection.current = section;
+    setLoadingMore(true);
+    setLoadMoreError(null);
+    const requestedIdentity = requestIdentity;
     try {
-      const result = await searchUniversal({ query, category, latitude: selection?.coordinates?.lat, longitude: selection?.coordinates?.lng, [`${section === "businesses" ? "business" : section.slice(0, -1)}Page`]: sectionPage + 1, businessPageSize: 50, productPageSize: 50, servicePageSize: 50 } as any);
-      if (section === "businesses") setItems((current) => [...current, ...result.businesses.filter((item) => !current.some((existing) => existing.id === item.id))]);
-      if (section === "products") setMatchingProducts((current) => [...current, ...result.products.filter((item) => !current.some((existing) => existing.id === item.id))]);
-      if (section === "services") setMatchingServices((current) => [...current, ...result.services.filter((item) => !current.some((existing) => existing.id === item.id))]);
-      const total = result.pagination?.[section]?.total;
-      if (typeof total === "number") setResultTotals((current) => ({ ...current, [section]: total }));
-      setPages((current) => ({ ...current, [section]: current[section] + 1 }));
-      setVisible(visible + 8);
-    } finally { loadingSection.current = null; }
+      const nextPage = pages[section] + 1;
+      const pageFilter = section === "businesses" ? { businessPage: nextPage }
+        : section === "products" ? { productPage: nextPage }
+        : { servicePage: nextPage };
+      const result = await searchUniversal({
+        query, category,
+        latitude: selection?.coordinates?.lat, longitude: selection?.coordinates?.lng, radiusKm,
+        ...pageFilter,
+        businessPageSize: 50, productPageSize: 50, servicePageSize: 50,
+      });
+      if (currentRequest.current !== requestedIdentity) return;
+      if (section === "businesses") {
+        const rated = await enrichBusinesses(result.businesses, selection?.coordinates);
+        if (currentRequest.current !== requestedIdentity) return;
+        setItems(current => [...current, ...rated.filter(item => !current.some(existing => existing.id === item.id))]);
+      }
+      if (section === "products") {
+        setMatchingProducts(current => [...current, ...result.products.filter(item => !current.some(existing => existing.id === item.id))]);
+      }
+      if (section === "services") {
+        setMatchingServices(current => [...current, ...result.services.filter(item => !current.some(existing => existing.id === item.id))]);
+      }
+      const pagination = result.pagination?.[section];
+      if (typeof pagination?.total === "number") {
+        setResultTotals(current => ({ ...current, [section]: pagination.total }));
+      }
+      if (typeof pagination?.totalPages === "number") {
+        setTotalPages(current => ({ ...current, [section]: pagination.totalPages }));
+      }
+      setPages(current => ({ ...current, [section]: nextPage }));
+      setVisible(current => current + 8);
+    } catch {
+      if (currentRequest.current === requestedIdentity) {
+        setLoadMoreError("No pudimos cargar más resultados. Verifica la conexión e inténtalo de nuevo.");
+      }
+    } finally {
+      if (currentRequest.current === requestedIdentity) {
+        loadingSection.current = null;
+        setLoadingMore(false);
+      }
+    }
   }
   function updateQuery(value: string) { setParams((current) => { const next = new URLSearchParams(current); next.delete("category"); next.delete("searchId"); value.trim() ? next.set("q", value.trim()) : next.delete("q"); return next; }); }
   function confirmSearch(value: string, searchId = createSearchId()) { setParams((current) => { const next = new URLSearchParams(current); next.delete("category"); value.trim() ? next.set("q", value.trim()) : next.delete("q"); next.set("searchId", searchId); return next; }); }
@@ -183,12 +233,27 @@ export default function Results() {
     return () => window.removeEventListener("xamuko:search-confirmed", handleConfirmedSearch);
   }, [setParams]);
   function updateCategory(value: string) { setParams((current) => { const next = new URLSearchParams(current); next.delete("searchId"); value ? next.set("category", value) : next.delete("category"); return next; }); }
+  function updateRadius(value: string) {
+    setParams(current => {
+      const next = new URLSearchParams(current);
+      next.delete("searchId");
+      const radius = selectedRadius(value);
+      if (radius) next.set("radiusKm", String(radius));
+      else next.delete("radiusKm");
+      return next;
+    });
+  }
+
   const locationName = location?.name ?? (selection?.mode === "automatic" ? "tu ubicación" : "esta zona");
   const resultsContext = category
     ? `Mostrando resultados de la categoría “${category}” para ${locationName}${query ? ` · búsqueda: “${query}”` : ""}.`
     : `Resultados para ${locationName}${query ? ` · búsqueda: “${query}”` : ""}.`;
   const mapPath = `/map${searchKey ? `?${searchKey}` : ""}`;
 
-  const sectionButton = (section: "businesses" | "products" | "services", total: number, visible: number, label: string) => total > 8 ? <button className="results-more" type="button" onClick={() => toggleSection(section)} aria-label={visible >= total ? `Volver a mostrar 8 ${label}` : `Ver más ${label}`}>{visible >= total ? `Volver arriba ↑` : `Ver más ${label} ↓`}</button> : null;
+  const sectionButton = (section: "businesses" | "products" | "services", loaded: number, visible: number, label: string) => {
+    if (resultTotals[section] <= 8) return null;
+    const atEnd = visible >= loaded && pages[section] >= totalPages[section];
+    return <button className="results-more" type="button" disabled={loadingMore} onClick={() => { void toggleSection(section); }} aria-label={atEnd ? `Volver a mostrar 8 ${label}` : `Ver más ${label}`}>{loadingMore ? "Cargando…" : atEnd ? "Volver arriba ↑" : `Ver más ${label} ↓`}</button>;
+  };
   return <div className="results-page"><SiteHeader active="explore"/><main className="results-main"><SearchBar onSearch={updateQuery} initialValue={query} hideSubmit/><div className="results-category-chips" aria-label="Categorías"><button className={!category ? "selected" : ""} type="button" onClick={() => updateCategory("")}>Todo</button>{alphabeticalCategories.map((item) => <button className={category === item.name ? "selected" : ""} type="button" key={item.name} onClick={() => updateCategory(category === item.name ? "" : item.name)}>{item.icon} {item.name}</button>)}</div><div className="results-heading"><div className="results-heading__title"><button className="results-back-link" type="button" onClick={() => navigate(-1)}>← <span>Volver</span></button><div><h1>Explora en resultados</h1><p className={category ? "results-context results-context--active" : "results-context"}>{category && <span className="results-context__icon" aria-hidden="true">✓</span>}{resultsContext}</p></div></div><div className="results-heading-links"><Link className="results-map-link" to={mapPath}>⌖ <span>Ver mapa</span></Link></div></div><div className="results-tabs" role="tablist" aria-label="Tipo de resultados"><button type="button" role="tab" aria-selected={activeTab === "businesses"} className={activeTab === "businesses" ? "active" : ""} onClick={() => { manualTabSelection.current = true; setActiveTab("businesses"); }}>Negocios <span>{resultTotals.businesses}</span></button><button type="button" role="tab" aria-selected={activeTab === "products"} className={activeTab === "products" ? "active" : ""} onClick={() => { manualTabSelection.current = true; setActiveTab("products"); }}>Productos <span>{resultTotals.products}</span></button><button type="button" role="tab" aria-selected={activeTab === "services"} className={activeTab === "services" ? "active" : ""} onClick={() => { manualTabSelection.current = true; setActiveTab("services"); }}>Servicios <span>{resultTotals.services}</span></button></div>{likeError && <p className="results-like-error" role="alert">{likeError}</p>}<section className="results-list" aria-label="Resultados encontrados">{activeTab === "businesses" && visibleBusinesses.length > 0 && <section ref={businessesSectionRef} id="results-businesses" className="results-businesses" aria-labelledby="related-businesses-title"><div className="results-section-heading"><h2 id="related-businesses-title">Negocios</h2></div><div className="results-grid">{visibleBusinesses.map((business) => <BusinessCard key={business.id} classicLayout business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void toggleFavorite(business.id); }}/>)}</div>{sectionButton("businesses", orderedItems.length, businessesVisibleCount, "negocios")}</section>}{activeTab === "products" && visibleProducts.length > 0 && <section ref={productsSectionRef} id="results-products" className="results-offers results-offer-group" aria-labelledby="products-title"><h2 id="products-title">Productos</h2><div className="results-offer-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} liked={getOfferLike(product.id).liked} likeCount={isRealOfferId(product.id) ? getOfferLike(product.id).count : getOfferLike(product.id).count || product.likeCount} onLike={() => handleOfferLike(product.id)}/>)}</div>{sectionButton("products", matchingProducts.length, productsVisibleCount, "productos")}</section>}{activeTab === "services" && visibleServices.length > 0 && <section ref={servicesSectionRef} id="results-services" className="results-offers results-offer-group" aria-labelledby="services-title"><h2 id="services-title">Servicios</h2><div className="results-offer-grid">{visibleServices.map((service) => <ServiceCard key={service.id} service={service} liked={getOfferLike(service.id).liked} likeCount={isRealOfferId(service.id) ? getOfferLike(service.id).count : getOfferLike(service.id).count || service.likeCount} onLike={() => handleOfferLike(service.id)}/>)}</div>{sectionButton("services", matchingServices.length, servicesVisibleCount, "servicios")}</section>}{((activeTab === "businesses" && resultTotals.businesses === 0) || (activeTab === "products" && resultTotals.products === 0) || (activeTab === "services" && resultTotals.services === 0)) && <NoResultsState term={query || category} locationName={locationName}/>}</section><AdMobBanner slot="results-footer"/></main><SiteFooter/><BottomNavigation/></div>;
 }
