@@ -18,12 +18,22 @@ export function Layout() {
   useEffect(() => { setOpen(false); setQuery(''); }, [location.pathname, location.search]);
   useEffect(() => { const activeGroup = navigationGroups.find(group => group.id !== 'inicio' && group.items.some(item => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`))); setExpandedGroup(activeGroup?.id ?? null); }, [location.pathname]);
   useEffect(() => {
-    let url: string | null = null;
-    if (!admin?.avatarUrl) { setAvatarSrc(null); return; }
-    if (!admin.avatarUrl.startsWith('/api/v1/auth/me/avatar')) { setAvatarSrc(admin.avatarUrl); return; }
-    void fetchOwnAvatar(admin.avatarUrl).then(blob => { url = URL.createObjectURL(blob); setAvatarSrc(url); }).catch(() => setAvatarSrc(null));
-    return () => { if (url) URL.revokeObjectURL(url); };
-  }, [admin?.avatarUrl]);
+    let active = true;
+    let objectUrl: string | null = null;
+    const source = admin?.avatarUrl?.trim();
+    setAvatarSrc(null);
+    if (!source) return;
+    let avatarPath: string | null = null;
+    try {
+      const parsed = new URL(source, window.location.origin);
+      if (/^\/api\/v\\d+\/auth\/me\/avatar\/?$/.test(parsed.pathname)) avatarPath = `${parsed.pathname}${parsed.search}`;
+    } catch { /* Keep an unparseable image URL as a direct source below. */ }
+    if (!avatarPath) { setAvatarSrc(source); return; }
+    void fetchOwnAvatar(avatarPath)
+      .then(blob => { if (active) { objectUrl = URL.createObjectURL(blob); setAvatarSrc(objectUrl); } })
+      .catch(() => { if (active) setAvatarSrc(null); });
+    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [admin?.id, admin?.avatarUrl]);
   useEffect(() => {
     if (!open) return;
     const previous = document.body.style.overflow; document.body.style.overflow = 'hidden';
@@ -42,7 +52,7 @@ export function Layout() {
   }, [open]);
   const current = navigation.find(item => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`));
   const results = query.trim() ? navigation.filter(item => item.label.toLocaleLowerCase('es').includes(query.trim().toLocaleLowerCase('es'))) : [];
-  const avatar = avatarSrc ? <img src={avatarSrc} alt="" /> : admin?.name?.split(' ').map(part => part[0]).slice(0, 2).join('') || 'A';
+  const avatar = avatarSrc ? <img src={avatarSrc} alt="" onError={() => setAvatarSrc(null)} /> : admin?.name?.split(' ').map(part => part[0]).slice(0, 2).join('') || 'A';
   const navItem = (item: typeof navigation[number]) => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={item.icon} size={18} /><span>{item.label}</span>{item.pending && <small className="nav-pending">Pendiente</small>}</NavLink>;
   return <div className={`app-shell admin-refresh ${verification ? 'verification-preserved' : ''}`}>{isAdminDemoMode && <div className="admin-demo-banner" role="status">Modo de pruebas — Sin acceso a datos reales</div>}
     <a className="skip-link" href="#main">Ir al contenido</a>
