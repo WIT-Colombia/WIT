@@ -11,6 +11,8 @@ export type BusinessAuthUser = {
   status: "ACTIVE" | "SUSPENDED" | "DELETED";
   emailVerified: boolean;
   authProviders: string[];
+  verificationEmailSent?: boolean;
+  verificationExpiresAt?: string;
 };
 
 type AuthResponse = { user: BusinessAuthUser; accessToken: string };
@@ -231,9 +233,10 @@ export async function confirmEmail(token: string): Promise<{ user: BusinessAuthU
   return applyEmailConfirmationResult(result);
 }
 
-export async function requestVerification(email: string): Promise<string> {
-  const result = await requestJson<{ message: string }>('/auth/verify-email/request', { method: 'POST', body: JSON.stringify({ email }) });
-  return result.message;
+export async function requestVerification(email: string): Promise<{ message: string; verificationExpiresAt?: string }> {
+  return requestJson<{ message: string; verificationExpiresAt?: string }>('/auth/verify-email/request', {
+    method: 'POST', body: JSON.stringify({ email }),
+  });
 }
 
 export async function requestPasswordReset(email: string): Promise<string> {
