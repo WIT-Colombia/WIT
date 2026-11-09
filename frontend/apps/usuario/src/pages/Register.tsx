@@ -55,7 +55,9 @@ export default function Register() {
   const [message, setMessage] = useState(() => params.get("verified") === "1" ? "Correo verificado. Inicia sesión para comenzar a explorar." : "");
   const [requiresVerification, setRequiresVerification] = useState(false);
   const [accepted, setAccepted] = useState(false);
-  const [referralCode, setReferralCode] = useState(() => params.get("ref") ?? "");
+  const invitedReferralCode = params.get("ref")?.trim().toUpperCase() ?? "";
+  const [manualReferralCode, setManualReferralCode] = useState("");
+  const referralCode = invitedReferralCode || manualReferralCode;
   const [submitting, setSubmitting] = useState(false);
   const returnTo = "/home";
   const passwordError = mode === "register" && (fieldErrors.password || (password.length > 0 && password.length < 8 ? "Tu contraseña debe tener al menos 8 caracteres." : ""));
@@ -79,7 +81,7 @@ export default function Register() {
     try {
       if (mode === "register") {
         if (referralCode.trim() && !(await isBusinessReferralRegistrationAvailable())) {
-          setMessage("El registro con referidos aún no está disponible en el servidor. Puedes esperar a que lo activemos o borrar el código para crear tu cuenta sin referido.");
+          setMessage("El registro con referidos aún no está disponible en el servidor. Espera a que se active el servicio para conservar la invitación.");
           return;
         }
         const created = await register(name.trim(), email.trim(), password, referralCode.trim() || undefined);
@@ -155,7 +157,7 @@ export default function Register() {
               {confirmPasswordError && <small id="register-confirm-password-error" className="field-error" role="alert">{confirmPasswordError}</small>}
             </label>}
             {registration && <label className={`user-auth-field user-auth-referral${referralError ? " field-invalid" : ""}`}>Código de referido (opcional)
-              <input value={referralCode} onChange={(event) => { setReferralCode(event.target.value.toUpperCase()); setFieldErrors((errors) => ({ ...errors, referralCode: "" })); }} maxLength={40} autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XMK-..." aria-invalid={Boolean(referralError)} aria-describedby={referralError ? "register-referral-error" : undefined}/>
+              {invitedReferralCode ? <output className="user-auth-referral-code" aria-label="Código de referido asignado">{invitedReferralCode}</output> : <input value={manualReferralCode} onChange={(event) => { setManualReferralCode(event.target.value.toUpperCase()); setFieldErrors((errors) => ({ ...errors, referralCode: "" })); }} maxLength={40} autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XMK-..." aria-invalid={Boolean(referralError)} aria-describedby={referralError ? "register-referral-error" : undefined}/>}
               {referralCode.trim() && !referralError && <small className="user-auth-referral-note">Tu registro quedará asociado al negocio que te invitó.</small>}
               {referralError && <small id="register-referral-error" className="field-error" role="alert">{referralError}</small>}
             </label>}
