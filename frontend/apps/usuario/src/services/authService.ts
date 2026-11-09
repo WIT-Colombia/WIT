@@ -45,9 +45,10 @@ export function getRememberedEmail(): string {
   return window.localStorage.getItem(LAST_EMAIL_KEY) ?? "";
 }
 
-export function startGoogleLogin(options: { returnTo?: string; consent?: boolean; rememberMe?: boolean } = {}): void {
+export function startGoogleLogin(options: { returnTo?: string; consent?: boolean; rememberMe?: boolean; referralCode?: string } = {}): void {
   const params = new URLSearchParams({ application: "usuario", rememberMe: options.rememberMe ? "1" : "0", consent: options.consent ? "1" : "0" });
   if (options.returnTo) params.set("next", options.returnTo);
+  if (options.referralCode) params.set("referralCode", options.referralCode);
   window.location.assign(`${buildApiUrl("/auth/google/start")}?${params.toString()}`);
 }
 
@@ -84,8 +85,8 @@ export async function requestBlobWithSession(path: string): Promise<Blob> {
   return response.blob();
 }
 
-export async function register(name: string, credentials: Credentials): Promise<AuthUser> {
-  const result = await requestJson<RegisterResponse>("/api/v1/auth/register", { method: "POST", body: JSON.stringify({ name, ...credentials }) });
+export async function register(name: string, credentials: Credentials, referralCode?: string): Promise<AuthUser> {
+  const result = await requestJson<RegisterResponse>("/api/v1/auth/register", { method: "POST", body: JSON.stringify({ name, ...credentials, ...(referralCode?.trim() ? { referralCode: referralCode.trim().toUpperCase() } : {}) }) });
   return result.user;
 }
 
