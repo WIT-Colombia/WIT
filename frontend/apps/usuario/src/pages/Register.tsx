@@ -73,8 +73,8 @@ export default function Register() {
     setRequiresVerification(false);
     try {
       if (mode === "register") {
-        await register(name.trim(), email.trim(), password);
-        rememberPendingVerificationEmail(email.trim());
+        const created = await register(name.trim(), email.trim(), password);
+        rememberPendingVerificationEmail(email.trim(), created.verificationExpiresAt, created.verificationEmailSent !== false);
         navigate("/verify-email?pending=1", { replace: true });
       } else {
         await login(email.trim(), password, rememberMe);

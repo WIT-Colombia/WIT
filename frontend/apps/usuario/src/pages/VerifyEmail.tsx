@@ -4,7 +4,7 @@ import { SiteHeader } from "../components/SiteHeader";
 import { ApiError } from "../services/httpClient";
 import { confirmEmail, requestVerification } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
-import { clearPendingVerificationEmail, getPendingVerificationEmail } from "../services/pendingVerification";
+import { clearPendingVerificationEmail, getPendingVerification, rememberPendingVerificationEmail } from "../services/pendingVerification";
 import "./VerifyEmail.css";
 
 type VerificationState = "pending" | "loading" | "success" | "error" | "unavailable";
@@ -57,11 +57,24 @@ export default function VerifyEmail() {
   const { isAuthenticated, reloadUser, status: authStatus } = useAuth();
   const inFlight = useRef(false);
   const hasAttempted = useRef(false);
-  const [email] = useState(getPendingVerificationEmail);
+  const [registration] = useState(getPendingVerification);
+  const email = registration.email;
+  const [expiry, setExpiry] = useState<string | null>(registration.expiresAt);
   const [state, setState] = useState<VerificationState>(token ? "loading" : email ? "pending" : "unavailable");
+  const [secondsRemaining, setSecondsRemaining] = useState<number | null>(() => expiry ? Math.max(0, Math.ceil((Date.parse(expiry) - Date.now()) / 1000)) : null);
   const [message, setMessage] = useState("");
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+
+  useEffect(() => {
+    if (!expiry || state !== "pending") return;
+    const update = () => setSecondsRemaining(Math.max(0, Math.ceil((Date.parse(expiry) - Date.now()) / 1000)));
+    update();
+    const interval = window.setInterval(update, 1000);
+    return () => window.clearInterval(interval);
+  }, [expiry, state]);
+  const clock = secondsRemaining === null ? null :
+    `${String(Math.floor(secondsRemaining / 60)).padStart(2, "0")}:${String(secondsRemaining % 60).padStart(2, "0")}`;
 
   useEffect(() => {
     if (!token || authStatus === "loading" || hasAttempted.current) return;
@@ -97,7 +110,14 @@ export default function VerifyEmail() {
     setResent(false);
     setMessage("");
     try {
-      await requestVerification(email.trim());
+      const result = await requestVerification(email.trim());
+      // The backend returns a generic expiry for all valid addresses: no account enumeration.
+      const nextExpiry = result.verificationExpiresAt && Number.isFinite(Date.parse(result.verificationExpiresAt))
+        ? result.verificationExpiresAt : null;
+      rememberPendingVerificationEmail(email, nextExpiry ?? undefined);
+      setExpiry(nextExpiry);
+      setSecondsRemaining(nextExpiry ? Math.max(0, Math.ceil((Date.parse(nextExpiry) - Date.now()) / 1000)) : null);
+      setState("pending");
       setResent(true);
     } catch (caught) {
       setMessage(caught instanceof ApiError ? caught.message : "No se pudo solicitar el correo.");
@@ -121,7 +141,7 @@ export default function VerifyEmail() {
         </div>
         <h1 id="verify-email-title">{heading}</h1>
         {state === "pending" && <p className="verify-email-description">
-          Enviamos un enlace de verificación a tu correo. Haz clic en el enlace para activar tu cuenta en <strong>XAMUKO</strong>.
+          {registration.emailSent ? "Enviamos un enlace de verificación a tu correo." : "No pudimos enviar el enlace inicial. Solicita un nuevo correo."} Haz clic en el enlace para activar tu cuenta en <strong>XAMUKO</strong>.
         </p>}
         {state === "unavailable" && <p className="verify-email-description" role="status">
           No encontramos una solicitud de verificación en esta pestaña. Regresa al registro para continuar con tu correo electrónico.
@@ -142,10 +162,11 @@ export default function VerifyEmail() {
           <span className="verify-email-recipient-lock" aria-hidden="true">🔒</span>
         </div>}
 
-        {state === "pending" && <div className="verify-email-timer" aria-label="Tiempo de verificación previsto: 15 minutos">
-          <span className="verify-email-timer-badge"><ClockIcon /><strong>15:00</strong></span>
-          <p>Tienes 15 minutos para verificar tu correo.</p>
+        {state === "pending" && clock !== null && <div className="verify-email-timer" role="timer" aria-label="Tiempo restante para verificar el correo">
+          <span className="verify-email-timer-badge"><ClockIcon /><strong>{clock}</strong></span>
+          <p>{secondsRemaining === 0 ? "El enlace ha vencido. Solicita uno nuevo para continuar." : "Tienes 15 minutos desde el último envío para verificar tu correo."}</p>
         </div>}
+        {state === "pending" && clock === null && <p className="verify-email-expiry-note">Cuando recibas el enlace, tendrás 15 minutos para verificar tu correo.</p>}
 
         {(state === "pending" || state === "error") && email && <form className="verify-email-resend" onSubmit={resend}>
           <button type="submit" disabled={resending}>
