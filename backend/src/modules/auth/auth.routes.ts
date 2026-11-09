@@ -46,6 +46,11 @@ const loginAccountRateLimit = rateLimit({
   },
 });
 authRouter.get('/referrals/availability', (_request, response) => { response.status(200).json({ enabled: true }); });
+// Frontends must not POST to an older AWS backend that still creates
+// unverified users and credits referrals at registration time.
+authRouter.get('/registration-policy', (_request, response) => {
+  response.status(200).json({ emailVerificationRequiredBeforeCreation: true });
+});
 authRouter.post('/register', authRateLimit, requireTrustedOrigin, registerController);
 authRouter.post('/login', loginAccountRateLimit, loginRateLimit, requireTrustedOrigin, loginController);
 // Restoring a valid session is not a login attempt. Keep a separate abuse limit.
