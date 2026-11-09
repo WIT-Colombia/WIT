@@ -11,6 +11,7 @@ export type UniversalSearchResult = { businesses: Business[]; products: Product[
  */
 export async function searchUniversal(filters: BusinessFilters & {
   latitude?: number; longitude?: number; radiusKm?: number;
+  scope?: "city" | "virtual"; city?: string; region?: string;
   businessPage?: number; productPage?: number; servicePage?: number;
   businessPageSize?: number; productPageSize?: number; servicePageSize?: number;
 } = {}): Promise<UniversalSearchResult> {

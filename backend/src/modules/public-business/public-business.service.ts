@@ -16,6 +16,10 @@ export type PublicBusinessListInput = {
 export type PublicUniversalSearchInput = {
   query: string;
   category?: string;
+  /** city = selected municipality; virtual = active virtual modality regardless of distance. */
+  scope?: 'city' | 'virtual';
+  city?: string;
+  region?: string;
   latitude?: number;
   longitude?: number;
   radiusKm?: number;
@@ -299,12 +303,23 @@ export function parseUniversalSearchInput(query: Record<string, unknown>): Publi
   const latitude = optionalNumber(query.latitude, 'latitude');
   const longitude = optionalNumber(query.longitude, 'longitude');
   const radiusKm = optionalNumber(query.radiusKm, 'radiusKm');
+  const scopeValue = query.scope;
+  if (scopeValue !== undefined && scopeValue !== '' && scopeValue !== 'city' && scopeValue !== 'virtual') {
+    throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'Modalidad de búsqueda no admitida.');
+  }
+  const scope = scopeValue === 'city' || scopeValue === 'virtual' ? scopeValue : undefined;
+  const city = typeof query.city === 'string' ? query.city.trim() : '';
+  const region = typeof query.region === 'string' ? query.region.trim() : '';
+  if (scope === 'city' && (!city || city.length > 160 || region.length > 160)) {
+    throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'Selecciona una ciudad válida para la búsqueda.');
+  }
   if (latitude !== undefined && (latitude < -90 || latitude > 90)) throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'latitude está fuera de rango.');
   if (longitude !== undefined && (longitude < -180 || longitude > 180)) throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'longitude está fuera de rango.');
   if (radiusKm !== undefined && (radiusKm <= 0 || radiusKm > 500)) throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'radiusKm está fuera de rango.');
   return {
     query: typeof query.q === 'string' ? query.q.trim() : '',
     category: typeof query.category === 'string' && query.category.trim() ? query.category.trim() : undefined,
+    scope, city: scope === 'city' ? city : undefined, region: scope === 'city' && region ? region : undefined,
     latitude, longitude, radiusKm,
     businessPage: validatePositiveInteger(query.businessPage, 1, 1_000_000, 'businessPage'),
     businessPageSize: validatePositiveInteger(query.businessPageSize, 12, 50, 'businessPageSize'),
@@ -406,7 +421,12 @@ function searchRank(fields: { name?: unknown; category?: unknown; offer?: unknow
 
 export async function searchPublicUniversal(input: PublicUniversalSearchInput, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
-  const businessWhere = publicBusinessWhere(canViewAdult);
+  // A virtual business must have its VIRTUAL modality ACTIVE, not just registered.
+  // Applying the predicate to the owning business also filters products/services.
+  const businessWhere: Prisma.BusinessWhereInput = {
+    ...publicBusinessWhere(canViewAdult),
+    ...(input.scope === 'virtual' ? { modalities: { some: { type: 'VIRTUAL', status: 'ACTIVE' } } } : {}),
+  };
   const terms = searchTerms(input.query);
   const categoryTerms = searchTerms(input.category);
   const offerWhere: any = {
@@ -420,6 +440,10 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
     db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
   ]);
   const categoryMatches = (item: any) => !categoryTerms.length || matchesSearch([item.category?.code, item.category?.translations?.[0]?.name], categoryTerms);
+  const inSelectedCity = (value: any) => input.scope !== 'city' || (
+    normalizeSearchText(value?.location?.cityName) === normalizeSearchText(input.city)
+    && (!input.region || normalizeSearchText(value?.location?.regionName) === normalizeSearchText(input.region))
+  );
   const inRadius = (value: any) => input.latitude !== undefined && input.longitude !== undefined && input.radiusKm !== undefined ? distanceKm(input.latitude, input.longitude, value) <= input.radiusKm : true;
   const sortNearby = (a: any, b: any) => input.latitude !== undefined && input.longitude !== undefined ? distanceKm(input.latitude, input.longitude, a) - distanceKm(input.latitude, input.longitude, b) : 0;
   const matchingOffers = [...products, ...services].filter((item: any) => categoryMatches(item) && (terms.length ? searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, offer: item.name, description: item.description }, terms) > 0 : true));
@@ -428,10 +452,10 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   // Cuando el usuario solicita un radio, los negocios sin coordenadas públicas
   // verificables quedan fuera (distanceKm devuelve Infinity). Sin radio, se
   // conserva el comportamiento actual y no se aplica ningún filtro geográfico.
-  const filteredBusinesses = businessItems.filter(({ item, rank }) => categoryMatches(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId))).sort((a, b) => pioneerPriority(b.item) - pioneerPriority(a.item) || featuredPriority(b.item) - featuredPriority(a.item) || b.rank - a.rank || sortNearby(a.item, b.item) || String(a.item.publicId).localeCompare(String(b.item.publicId))).map(({ item }) => summary(item));
+  const filteredBusinesses = businessItems.filter(({ item, rank }) => categoryMatches(item) && inSelectedCity(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId))).sort((a, b) => pioneerPriority(b.item) - pioneerPriority(a.item) || featuredPriority(b.item) - featuredPriority(a.item) || b.rank - a.rank || sortNearby(a.item, b.item) || String(a.item.publicId).localeCompare(String(b.item.publicId))).map(({ item }) => summary(item));
   const mapOffer = (item: any) => ({ ...offer(item.business.publicId, item), business: { publicId: item.business.publicId, name: item.business.name, location: location(item.business.location) } });
-  const filteredProducts = products.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item.business)).sort((a: any, b: any) => sortNearby(a.business, b.business)).map(mapOffer);
-  const filteredServices = services.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item.business)).sort((a: any, b: any) => sortNearby(a.business, b.business)).map(mapOffer);
+  const filteredProducts = products.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business)).sort((a: any, b: any) => sortNearby(a.business, b.business)).map(mapOffer);
+  const filteredServices = services.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business)).sort((a: any, b: any) => sortNearby(a.business, b.business)).map(mapOffer);
   const businessResult = universalPagination(filteredBusinesses, input.businessPage, input.businessPageSize);
   const productResult = universalPagination(filteredProducts, input.productPage, input.productPageSize);
   const serviceResult = universalPagination(filteredServices, input.servicePage, input.servicePageSize);
