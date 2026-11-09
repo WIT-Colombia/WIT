@@ -12,6 +12,7 @@ import { BusinessCard, ProductCard, ServiceCard } from "../components/EntityCard
 import { NoResultsState } from "../components/NoResultsState";
 import { AdMobBanner } from "../components/AdMobBanner";
 import { distanceBetweenCoordinates } from "../utils/coordinates";
+import { resolveResultsArea } from "../utils/searchArea";
 import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { recordBusinessEvent } from "../services/analyticsService";
 import { useFavorites } from "../services/favoritesService";
@@ -23,12 +24,6 @@ function createDemoResults() {
   const generatedProducts = Array.from({ length: 50 }, (_, index) => { const business = generatedBusinesses[index]; return { id: `demo-product-${index + 1}`, businessId: business.id, businessName: business.name, name: `Producto de prueba ${index + 1}`, description: `Descripción del producto de prueba ${index + 1}.`, image: business.image, price: 10000 + index * 500, priceLabel: `$${(10000 + index * 500).toLocaleString("es-CO")} COP` } satisfies Product; });
   const generatedServices = Array.from({ length: 50 }, (_, index) => { const business = generatedBusinesses[index]; return { id: `demo-service-${index + 1}`, businessId: business.id, businessName: business.name, name: `Servicio de prueba ${index + 1}`, description: `Descripción del servicio de prueba ${index + 1}.`, image: business.image, priceLabel: `$${(20000 + index * 750).toLocaleString("es-CO")} COP` } satisfies Service; });
   return { businesses: generatedBusinesses, products: generatedProducts, services: generatedServices };
-}
-
-const radiusOptions = [1, 3, 10] as const;
-function selectedRadius(value: string | null): number | undefined {
-  const radius = Number(value);
-  return value && radiusOptions.some(option => option === radius) ? radius : undefined;
 }
 
 async function enrichBusinesses(businesses: Business[], coordinates?: { lat: number; lng: number }): Promise<Business[]> {
@@ -70,7 +65,7 @@ export default function Results() {
   const [totalPages, setTotalPages] = useState({ businesses: 1, products: 1, services: 1 });
   const [resultTotals, setResultTotals] = useState({ businesses: 0, products: 0, services: 0 });
   const [loadedSearchKey, setLoadedSearchKey] = useState<string | null>(null);
-  const [searchStatus, setSearchStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [searchStatus, setSearchStatus] = useState<"loading" | "ready" | "error" | "location-required">("loading");
   const [retryIndex, setRetryIndex] = useState(0);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -82,21 +77,19 @@ export default function Results() {
   const servicesSectionRef = useRef<HTMLElement>(null);
   const query = params.get("q") ?? "";
   const category = params.get("category") ?? "";
-  const configuredRadius = selectedRadius(params.get("radiusKm"));
   const demoMode = import.meta.env.VITE_E2E_REAL_ONLY !== "true" && import.meta.env.DEV && params.get("demo") === "150";
   const { selection } = useLocationContext();
   const location = selection?.locality ?? null;
-  const requestedScope = params.get("scope");
-  const searchScope: "city" | "virtual" | undefined = requestedScope === "virtual"
-    ? "virtual"
-    : requestedScope === "city" && location?.name ? "city" : undefined;
-  const radiusKm = !searchScope && selection?.coordinates ? configuredRadius : undefined;
-  const scopeValue = searchScope ?? (radiusKm ? String(radiusKm) : "");
-  // Virtual listings are location-independent; city listings use municipality and department.
-  const searchLocationParams = searchScope === "virtual"
+  const searchArea = resolveResultsArea(params, Boolean(selection?.coordinates), location?.name, location?.context);
+  const searchScope = searchArea.kind === "virtual" || searchArea.kind === "city" ? searchArea.kind : undefined;
+  const radiusKm = searchArea.kind === "radius" ? searchArea.radiusKm : undefined;
+  const scopeValue = searchScope ?? String(radiusKm ?? 1);
+  const locationRequired = searchArea.kind === "location-required";
+  // None of these modes can accidentally fall back to an unrestricted API query.
+  const searchLocationParams = searchArea.kind === "virtual"
     ? { scope: "virtual" as const }
-    : searchScope === "city"
-      ? { scope: "city" as const, city: location?.name, region: location?.context }
+    : searchArea.kind === "city"
+      ? { scope: "city" as const, city: searchArea.city, region: searchArea.region }
       : { latitude: selection?.coordinates?.lat, longitude: selection?.coordinates?.lng, radiusKm };
   const searchKey = params.toString();
   const requestIdentity = `${searchKey}|loc:${selection?.coordinates?.lat ?? ""},${selection?.coordinates?.lng ?? ""}|${location?.name ?? ""}|${location?.context ?? ""}`;
@@ -110,6 +103,12 @@ export default function Results() {
     setLoadMoreError(null);
     setLoadingMore(false);
     loadingSection.current = null;
+    if (locationRequired && !demoMode) {
+      setItems([]); setMatchingProducts([]); setMatchingServices([]);
+      setResultTotals({ businesses: 0, products: 0, services: 0 });
+      setSearchStatus("location-required");
+      return;
+    }
     if (demoMode) {
       const demo = createDemoResults();
       setItems(demo.businesses); setMatchingProducts(demo.products); setMatchingServices(demo.services);
@@ -143,7 +142,7 @@ export default function Results() {
         setSearchStatus("error");
       } });
     return () => { current = false; };
-  }, [query, category, selection, radiusKm, searchScope, location?.name, location?.context, demoMode, searchKey, retryIndex]);
+  }, [query, category, selection, radiusKm, searchScope, locationRequired, location?.name, location?.context, demoMode, searchKey, retryIndex]);
 
   // The virtual API already orders ALL featured businesses before the rest.
   // Never reapply physical-distance/pioneer ranking or limit featured spots to three.
@@ -257,10 +256,7 @@ export default function Results() {
       next.delete("radiusKm");
       if (value === "city" && location?.name) next.set("scope", "city");
       else if (value === "virtual") next.set("scope", "virtual");
-      else {
-        const radius = selectedRadius(value);
-        if (radius && selection?.coordinates) next.set("radiusKm", String(radius));
-      }
+      else if (selection?.coordinates && ["1", "3", "10"].includes(value)) next.set("radiusKm", value);
       return next;
     });
   }
@@ -281,7 +277,6 @@ export default function Results() {
   <label htmlFor="results-distance-select">
     Buscar en
     <select id="results-distance-select" value={scopeValue} onChange={event => updateScope(event.target.value)}>
-      <option value="">Sin límite</option>
       <option value="1" disabled={!selection?.coordinates}>1 km</option>
       <option value="3" disabled={!selection?.coordinates}>3 km</option>
       <option value="10" disabled={!selection?.coordinates}>10 km</option>
@@ -293,10 +288,8 @@ export default function Results() {
     ? "Solo negocios con modalidad virtual activa y sus productos y servicios, sin límite de distancia."
     : searchScope === "city"
       ? `Negocios, productos y servicios registrados en ${locationName}.`
-      : radiusKm
-        ? `Mostrando opciones dentro de ${radiusKm} km.`
-        : !selection?.coordinates && !location?.name
-          ? "Selecciona una ubicación para habilitar distancia o ciudad; Virtual está disponible."
-          : "Busca en todas las zonas disponibles."}</span>
-</div><div className="results-heading"><div className="results-heading__title"><button className="results-back-link" type="button" onClick={() => navigate(-1)}>← <span>Volver</span></button><div><h1>Explora en resultados</h1><p className={category ? "results-context results-context--active" : "results-context"}>{category && <span className="results-context__icon" aria-hidden="true">✓</span>}{resultsContext}</p></div></div><div className="results-heading-links">{searchScope !== "virtual" && <Link className="results-map-link" to={mapPath}>⌖ <span>Ver mapa</span></Link>}</div></div><div className="results-tabs" role="tablist" aria-label="Tipo de resultados"><button type="button" role="tab" aria-selected={activeTab === "businesses"} className={activeTab === "businesses" ? "active" : ""} onClick={() => { manualTabSelection.current = true; setActiveTab("businesses"); }}>Negocios <span>{resultTotals.businesses}</span></button><button type="button" role="tab" aria-selected={activeTab === "products"} className={activeTab === "products" ? "active" : ""} onClick={() => { manualTabSelection.current = true; setActiveTab("products"); }}>Productos <span>{resultTotals.products}</span></button><button type="button" role="tab" aria-selected={activeTab === "services"} className={activeTab === "services" ? "active" : ""} onClick={() => { manualTabSelection.current = true; setActiveTab("services"); }}>Servicios <span>{resultTotals.services}</span></button></div>{searchStatus === "loading" && <p className="results-request-state" role="status">Buscando negocios, productos y servicios…</p>}{searchStatus === "error" && <div className="results-request-state results-request-state--error" role="alert"><p>No pudimos consultar los resultados. Comprueba tu conexión e inténtalo de nuevo.</p><button type="button" onClick={() => setRetryIndex(current => current + 1)}>Reintentar búsqueda</button></div>}{loadMoreError && searchStatus === "ready" && <p className="results-request-state results-request-state--error" role="alert">{loadMoreError}</p>}{likeError && <p className="results-like-error" role="alert">{likeError}</p>}<section className="results-list" aria-label="Resultados encontrados">{searchStatus === "ready" && activeTab === "businesses" && visibleBusinesses.length > 0 && <section ref={businessesSectionRef} id="results-businesses" className="results-businesses" aria-labelledby="related-businesses-title"><div className="results-section-heading"><h2 id="related-businesses-title">Negocios</h2></div><div className="results-grid">{visibleBusinesses.map((business) => <BusinessCard key={business.id} classicLayout business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void toggleFavorite(business.id); }}/>)}</div>{sectionButton("businesses", orderedItems.length, businessesVisibleCount, "negocios")}</section>}{searchStatus === "ready" && activeTab === "products" && visibleProducts.length > 0 && <section ref={productsSectionRef} id="results-products" className="results-offers results-offer-group" aria-labelledby="products-title"><h2 id="products-title">Productos</h2><div className="results-offer-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} liked={getOfferLike(product.id).liked} likeCount={isRealOfferId(product.id) ? getOfferLike(product.id).count : getOfferLike(product.id).count || product.likeCount} onLike={() => handleOfferLike(product.id)}/>)}</div>{sectionButton("products", matchingProducts.length, productsVisibleCount, "productos")}</section>}{searchStatus === "ready" && activeTab === "services" && visibleServices.length > 0 && <section ref={servicesSectionRef} id="results-services" className="results-offers results-offer-group" aria-labelledby="services-title"><h2 id="services-title">Servicios</h2><div className="results-offer-grid">{visibleServices.map((service) => <ServiceCard key={service.id} service={service} liked={getOfferLike(service.id).liked} likeCount={isRealOfferId(service.id) ? getOfferLike(service.id).count : getOfferLike(service.id).count || service.likeCount} onLike={() => handleOfferLike(service.id)}/>)}</div>{sectionButton("services", matchingServices.length, servicesVisibleCount, "servicios")}</section>}{searchStatus === "ready" && ((activeTab === "businesses" && resultTotals.businesses === 0) || (activeTab === "products" && resultTotals.products === 0) || (activeTab === "services" && resultTotals.services === 0)) && <NoResultsState term={query || category} locationName={locationName} radiusKm={radiusKm} virtualOnly={searchScope === "virtual"}/>}</section><AdMobBanner slot="results-footer"/></main><SiteFooter/><BottomNavigation/></div>;
+      : locationRequired
+      ? "Selecciona una ubicación para buscar por distancia o ciudad; Virtual sigue disponible."
+      : `Mostrando opciones dentro de ${radiusKm ?? 1} km.`}</span>
+</div><div className="results-heading"><div className="results-heading__title"><button className="results-back-link" type="button" onClick={() => navigate(-1)}>← <span>Volver</span></button><div><h1>Explora en resultados</h1><p className={category ? "results-context results-context--active" : "results-context"}>{category && <span className="results-context__icon" aria-hidden="true">✓</span>}{resultsContext}</p></div></div><div className="results-heading-links">{searchScope !== "virtual" && <Link className="results-map-link" to={mapPath}>⌖ <span>Ver mapa</span></Link>}</div></div><div className="results-tabs" role="tablist" aria-label="Tipo de resultados"><button type="button" role="tab" aria-selected={activeTab === "businesses"} className={activeTab === "businesses" ? "active" : ""} onClick={() => { manualTabSelection.current = true; setActiveTab("businesses"); }}>Negocios <span>{resultTotals.businesses}</span></button><button type="button" role="tab" aria-selected={activeTab === "products"} className={activeTab === "products" ? "active" : ""} onClick={() => { manualTabSelection.current = true; setActiveTab("products"); }}>Productos <span>{resultTotals.products}</span></button><button type="button" role="tab" aria-selected={activeTab === "services"} className={activeTab === "services" ? "active" : ""} onClick={() => { manualTabSelection.current = true; setActiveTab("services"); }}>Servicios <span>{resultTotals.services}</span></button></div>{searchStatus === "loading" && <p className="results-request-state" role="status">Buscando negocios, productos y servicios…</p>}{searchStatus === "location-required" && <p className="results-request-state" role="status">Para buscar negocios cerca de ti, <Link to="/location">selecciona una ubicación</Link> o elige Virtual.</p>}{searchStatus === "error" && <div className="results-request-state results-request-state--error" role="alert"><p>No pudimos consultar los resultados. Comprueba tu conexión e inténtalo de nuevo.</p><button type="button" onClick={() => setRetryIndex(current => current + 1)}>Reintentar búsqueda</button></div>}{loadMoreError && searchStatus === "ready" && <p className="results-request-state results-request-state--error" role="alert">{loadMoreError}</p>}{likeError && <p className="results-like-error" role="alert">{likeError}</p>}<section className="results-list" aria-label="Resultados encontrados">{searchStatus === "ready" && activeTab === "businesses" && visibleBusinesses.length > 0 && <section ref={businessesSectionRef} id="results-businesses" className="results-businesses" aria-labelledby="related-businesses-title"><div className="results-section-heading"><h2 id="related-businesses-title">Negocios</h2></div><div className="results-grid">{visibleBusinesses.map((business) => <BusinessCard key={business.id} classicLayout business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void toggleFavorite(business.id); }}/>)}</div>{sectionButton("businesses", orderedItems.length, businessesVisibleCount, "negocios")}</section>}{searchStatus === "ready" && activeTab === "products" && visibleProducts.length > 0 && <section ref={productsSectionRef} id="results-products" className="results-offers results-offer-group" aria-labelledby="products-title"><h2 id="products-title">Productos</h2><div className="results-offer-grid">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} liked={getOfferLike(product.id).liked} likeCount={isRealOfferId(product.id) ? getOfferLike(product.id).count : getOfferLike(product.id).count || product.likeCount} onLike={() => handleOfferLike(product.id)}/>)}</div>{sectionButton("products", matchingProducts.length, productsVisibleCount, "productos")}</section>}{searchStatus === "ready" && activeTab === "services" && visibleServices.length > 0 && <section ref={servicesSectionRef} id="results-services" className="results-offers results-offer-group" aria-labelledby="services-title"><h2 id="services-title">Servicios</h2><div className="results-offer-grid">{visibleServices.map((service) => <ServiceCard key={service.id} service={service} liked={getOfferLike(service.id).liked} likeCount={isRealOfferId(service.id) ? getOfferLike(service.id).count : getOfferLike(service.id).count || service.likeCount} onLike={() => handleOfferLike(service.id)}/>)}</div>{sectionButton("services", matchingServices.length, servicesVisibleCount, "servicios")}</section>}{searchStatus === "ready" && ((activeTab === "businesses" && resultTotals.businesses === 0) || (activeTab === "products" && resultTotals.products === 0) || (activeTab === "services" && resultTotals.services === 0)) && <NoResultsState term={query || category} locationName={locationName} radiusKm={radiusKm} virtualOnly={searchScope === "virtual"}/>}</section><AdMobBanner slot="results-footer"/></main><SiteFooter/><BottomNavigation/></div>;
 }
