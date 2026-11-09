@@ -7,6 +7,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
 import { createAvailableNickname, isNicknameCollision } from './nickname.service.js';
+import { attributeNewUserReferral } from './business-referral.service.js';
 
 const GOOGLE_STATE_COOKIE = 'wit_google_oauth_state';
 const GOOGLE_STATE_PATH = '/api/v1/auth/google';
@@ -26,6 +27,8 @@ export type GoogleState = {
   rememberMe: boolean;
   consent: boolean;
   userId?: string;
+  /** Signed in OAuth state; credited only when Google creates a new Usuario account. */
+  referralCode?: string;
 };
 
 export type GoogleProfile = {
@@ -85,6 +88,9 @@ function unpackState(value: string): GoogleState {
   if (typeof candidate.state !== 'string' || typeof candidate.nonce !== 'string' || typeof candidate.verifier !== 'string' || typeof candidate.returnTo !== 'string' || (candidate.flow !== 'login' && candidate.flow !== 'link')) {
     throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
   }
+  if (candidate.referralCode !== undefined && (typeof candidate.referralCode !== 'string' || candidate.referralCode.length > 40)) {
+    throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
+  }
   const application = candidate.application === undefined ? 'usuario' : candidate.application;
   if (application !== 'usuario' && application !== 'negocios' && application !== 'admin') throw new AppError(400, 'GOOGLE_STATE_INVALID', 'La solicitud de Google no es válida.');
   return { ...candidate, application } as GoogleState;
@@ -109,8 +115,12 @@ export function getGoogleState(request: Request): GoogleState {
   return unpackState(raw);
 }
 
-export function createGoogleAuthorization(requested: { flow: GoogleFlow; application?: GoogleApplication; returnTo?: unknown; rememberMe?: boolean; consent?: boolean; userId?: string }): { state: GoogleState; url: string } {
+export function createGoogleAuthorization(requested: { flow: GoogleFlow; application?: GoogleApplication; returnTo?: unknown; rememberMe?: boolean; consent?: boolean; userId?: string; referralCode?: unknown }): { state: GoogleState; url: string } {
   const { clientId, redirectUri } = requireGoogleConfig();
+  const referralCode = requested.referralCode;
+  if (referralCode !== undefined && (typeof referralCode !== 'string' || referralCode.length > 40)) {
+    throw new AppError(400, 'INVALID_REFERRAL_CODE', 'El código de referido no es válido.');
+  }
   const state: GoogleState = {
     state: randomBytes(32).toString('base64url'),
     nonce: randomBytes(32).toString('base64url'),
@@ -121,6 +131,7 @@ export function createGoogleAuthorization(requested: { flow: GoogleFlow; applica
     rememberMe: requested.rememberMe === true,
     consent: requested.consent === true,
     ...(requested.userId ? { userId: requested.userId } : {}),
+    ...(requested.flow === 'login' && (requested.application ?? 'usuario') === 'usuario' && typeof referralCode === 'string' && referralCode.trim() ? { referralCode: referralCode.trim().toUpperCase() } : {}),
   };
   const challenge = createHash('sha256').update(state.verifier).digest('base64url');
   const params = new URLSearchParams({ client_id: clientId, redirect_uri: redirectUri, response_type: 'code', scope: 'openid email profile', state: state.state, nonce: state.nonce, code_challenge: challenge, code_challenge_method: 'S256', access_type: 'online', prompt: 'select_account' });
@@ -182,6 +193,7 @@ export async function resolveGoogleUser(profile: GoogleProfile, state: GoogleSta
         if (!state.consent) throw new AppError(400, 'GOOGLE_CONSENT_REQUIRED', 'Acepta los términos para crear tu cuenta con Google.');
         const nickname = await createAvailableNickname(transaction, profile.displayName.slice(0, 120));
         const user = await transaction.user.create({ data: { displayName: profile.displayName.slice(0, 120), nickname, emailNormalized: profile.email, avatarUrl: profile.avatarUrl, authIdentities: { create: { provider: 'GOOGLE', providerSubject: profile.subject, verifiedAt: new Date() } } }, select: { id: true } });
+        await attributeNewUserReferral(transaction, user.id, state.application === 'usuario' ? state.referralCode : undefined);
         return { userId: user.id, created: true };
       });
     } catch (error) {
