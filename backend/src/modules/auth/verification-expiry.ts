@@ -1,5 +1,4 @@
-/** Keep an active email-verification window fixed when a link is resent. */
-export function verificationDeadline(now: Date, previousExpiry: Date | null, ttlMs: number): Date {
-  if (previousExpiry && previousExpiry.getTime() > now.getTime()) return previousExpiry;
-  return new Date(now.getTime() + ttlMs);
+/** Every issuance has its own 15-minute window, including a successful resend. */
+export function verificationDeadline(issuedAt: Date, ttlMs: number): Date {
+  return new Date(issuedAt.getTime() + ttlMs);
 }

@@ -154,7 +154,17 @@ export const loginController: RequestHandler = async (request, response, next) =
 export const refreshController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (!token) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.'); const result = await refresh(token, meta(request)); response.setHeader('Cache-Control', 'no-store'); response.status(200).json(result); } catch (error) { next(error); } };
 export const logoutController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (token) await logout(token); clearRefreshCookie(response); response.status(204).send(); } catch (error) { next(error); } };
 export const meController: RequestHandler = async (request, response, next) => { try { response.status(200).json({ user: await getCurrentUser((request as AuthenticatedRequest).auth.userId) }); } catch (error) { next(error); } };
-export const requestVerificationController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US'), emailApplicationForRequest(request)); response.status(202).json({ message: 'Si la cuenta es elegible, recibirás un correo.' }); } catch (error) { next(error); } };
+export const requestVerificationController: RequestHandler = async (request, response, next) => {
+  try {
+    const { email } = parse(emailRequestSchema, request.body);
+    // Supply the same public expiry to every syntactically valid email, regardless of
+    // account existence/verification status, to avoid exposing account eligibility.
+    const issuedAt = new Date();
+    await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US'), emailApplicationForRequest(request), issuedAt);
+    const verificationExpiresAt = new Date(issuedAt.getTime() + env.emailVerificationTtlMinutes * 60 * 1000).toISOString();
+    response.status(202).json({ message: 'Si la cuenta es elegible, recibirás un correo.', verificationExpiresAt });
+  } catch (error) { next(error); }
+};
 export const confirmEmailController: RequestHandler = async (request, response, next) => {
   try {
     const userId = await confirmEmail(parse(emailTokenSchema, request.body).token);

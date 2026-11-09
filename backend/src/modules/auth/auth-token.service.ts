@@ -14,17 +14,13 @@ function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-async function issueToken(userId: string, type: TokenType, ttlMs: number): Promise<IssuedToken> {
+async function issueToken(userId: string, type: TokenType, ttlMs: number, issuedAt?: Date): Promise<IssuedToken> {
   const rawToken = randomBytes(48).toString('base64url');
   return prisma.$transaction(async (transaction) => {
     const now = new Date();
-    // Resending invalidates the earlier link without extending its first 15-minute window.
-    const previous = type === 'EMAIL_VERIFICATION' ? await transaction.authToken.findFirst({
-      where: { userId, type, consumedAt: null, expiresAt: { gt: now } },
-      orderBy: { createdAt: 'desc' },
-      select: { expiresAt: true },
-    }) : null;
-    const expiresAt = verificationDeadline(now, previous?.expiresAt ?? null, ttlMs);
+    // Every new verification email receives a fresh 15-minute deadline. Previously issued
+    // verification links are revoked in this transaction, even when not yet expired.
+    const expiresAt = verificationDeadline(issuedAt ?? now, ttlMs);
     await transaction.authToken.updateMany({
       where: { userId, type, consumedAt: null, expiresAt: { gt: now } },
       data: { consumedAt: now },
@@ -35,13 +31,13 @@ async function issueToken(userId: string, type: TokenType, ttlMs: number): Promi
 }
 
 
-export async function sendVerificationRequest(emailNormalized: string, application: EmailApplication = 'usuario'): Promise<{ expiresAt: Date } | null> {
+export async function sendVerificationRequest(emailNormalized: string, application: EmailApplication = 'usuario', issuedAt?: Date): Promise<{ expiresAt: Date } | null> {
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || identity.verifiedAt || identity.user.status !== 'ACTIVE') return null;
-  const { rawToken, expiresAt } = await issueToken(identity.userId, 'EMAIL_VERIFICATION', env.emailVerificationTtlMinutes * 60 * 1000);
+  const { rawToken, expiresAt } = await issueToken(identity.userId, 'EMAIL_VERIFICATION', env.emailVerificationTtlMinutes * 60 * 1000, issuedAt);
   await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, rawToken, identity.user.displayName, application);
   return { expiresAt };
 }
