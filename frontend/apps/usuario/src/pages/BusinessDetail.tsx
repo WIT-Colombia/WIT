@@ -21,6 +21,7 @@ import { BusinessReportDialog } from "../components/BusinessReportDialog";
 import { activeBusinessContext, consumeBusinessVisitContext, recordBusinessEvent } from "../services/analyticsService";
 import { listPublicReviews, type PublicReview } from "../services/reviewsService";
 import registrationInvitePerson from "../assets/registration-invite-person.avif";
+import { businessReferralCode } from "../utils/businessReferralCode";
 import { isHorizontalDominantGesture } from "../utils/gestureDirection";
 import "./BusinessDetail.css";
 import "./BusinessDetailEnhancements.css";
@@ -232,6 +233,7 @@ export default function BusinessDetail() {
   const openNow = Boolean(todayHours && !todayHours.isClosed && todayHours.hours.includes("–") && currentTime >= todayHours.hours.slice(0, 5) && currentTime < todayHours.hours.slice(-5));
   const galleryImages = Array.from(new Set([business.image, ...(business.gallery ?? [])].filter(Boolean))).slice(0, 10);
   const showRegistrationInvite = authStatus === "anonymous" && !isBusinessPreview;
+  const inviteCode = businessReferralCode(currentBusiness.id);
   const cleanPublicUrl = getPublicBusinessUrl(id);
   async function share() { if (!cleanPublicUrl) { setMessage("No se pudo compartir el enlace."); setShareOpen(false); return; } const result = await shareLink(currentBusiness.name, `Descubre ${currentBusiness.name} en XAMUKO.`, cleanPublicUrl); setMessage(result === "copied" ? "Enlace copiado." : result === "unavailable" ? "No se pudo compartir el enlace." : ""); setShareOpen(false); }
   function startPopularDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -289,7 +291,7 @@ export default function BusinessDetail() {
           <div className="business-registration-invite-content">
             <strong>¡{currentBusiness.name} te invita a unirte a <span>XAMUKO</span>!</strong>
             <p>Descubre negocios cerca de ti, guarda tus favoritos y comparte tus experiencias</p>
-            <Link to={`/register?next=${encodeURIComponent(`/business/${encodeURIComponent(currentBusiness.id)}`)}`}>Crear mi cuenta gratis <span aria-hidden="true">→</span></Link>
+            <Link to={`/register?next=${encodeURIComponent(`/business/${encodeURIComponent(currentBusiness.id)}`)}${inviteCode ? `&ref=${encodeURIComponent(inviteCode)}` : ""}`}>Crear mi cuenta gratis <span aria-hidden="true">→</span></Link>
           </div>
         </aside>}
         {(business.email || business.website) && <div className="business-header-links">{business.email && (isBusinessPreview ? <button type="button" disabled>Correo electrónico ↗</button> : <a href={`mailto:${business.email}`}>Correo electrónico ↗</a>)}{business.website && (isBusinessPreview ? <button type="button" className="business-website-button" disabled><span>Visitar sitio web</span></button> : <a className="business-website-button" href={business.website} target="_blank" rel="noopener noreferrer"><svg className="business-website-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.4 3.3 5.4 3.3 9S14.2 18.6 12 21c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3Z"/></svg><span>Visitar sitio web</span></a>)}</div>}

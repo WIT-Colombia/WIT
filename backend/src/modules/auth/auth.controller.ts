@@ -83,7 +83,7 @@ function googleCallbackUrl(application: GoogleApplication, query: Record<string,
 
 export const googleStartController: RequestHandler = (request, response, next) => {
   try {
-    const authorization = createGoogleAuthorization({ application: googleApplication(request.query.application), flow: 'login', returnTo: request.query.next, rememberMe: request.query.rememberMe === '1', consent: request.query.consent === '1' });
+    const authorization = createGoogleAuthorization({ application: googleApplication(request.query.application), flow: 'login', returnTo: request.query.next, rememberMe: request.query.rememberMe === '1', consent: request.query.consent === '1', referralCode: request.query.referralCode });
     setGoogleStateCookie(response, authorization.state);
     response.redirect(authorization.url);
   } catch (error) { next(error); }

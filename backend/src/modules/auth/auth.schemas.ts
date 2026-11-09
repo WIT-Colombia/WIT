@@ -7,6 +7,7 @@ export const registerSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email,
   password,
+  referralCode: z.string().trim().max(40).optional(),
 }).strict();
 
 export const loginSchema = z.object({ email, password, rememberMe: z.boolean().optional().default(false) }).strict();
