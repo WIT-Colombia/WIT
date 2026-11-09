@@ -47,14 +47,18 @@ export async function beginPendingRegistration(input: RegisterInput, application
     },
   });
 
-  let verificationEmailSent = true;
   try {
     await sendVerificationEmail(emailNormalized, rawToken, input.name.trim(), application);
   } catch {
-    verificationEmailSent = false;
+    // A failed delivery must not look like a successful registration attempt.
+    // Only delete the exact pending token: a concurrent retry may already have replaced it.
+    await prisma.pendingEmailRegistration.deleteMany({
+      where: { emailNormalized, tokenHash: hashToken(rawToken) },
+    });
     console.warn('Pending registration verification email could not be sent');
+    throw new AppError(503, 'VERIFICATION_EMAIL_UNAVAILABLE', 'No pudimos enviar el correo de verificación. Intenta registrarte nuevamente.');
   }
-  return { email: emailNormalized, verificationExpiresAt: expiresAt.toISOString(), verificationEmailSent };
+  return { email: emailNormalized, verificationExpiresAt: expiresAt.toISOString(), verificationEmailSent: true };
 }
 
 /** Retry only an unexpired signup intent. Never change its password or referrer. */
@@ -64,7 +68,8 @@ export async function resendPendingRegistration(emailNormalized: string): Promis
   const now = new Date();
   if (pending.expiresAt <= now) {
     await prisma.pendingEmailRegistration.deleteMany({ where: { id: pending.id, expiresAt: { lte: now } } });
-    return true;
+    // Do not advertise a new verification deadline when there is no valid signup.
+    throw new AppError(410, 'PENDING_REGISTRATION_EXPIRED', 'La solicitud de registro venció. Regístrate nuevamente para recibir un enlace nuevo.');
   }
   const rawToken = freshToken();
   const expiresAt = emailActionLinkExpiresAt(now);
@@ -74,7 +79,12 @@ export async function resendPendingRegistration(emailNormalized: string): Promis
   });
   if (updated.count === 1) {
     const application: EmailApplication = pending.application === 'negocios' ? 'negocios' : 'usuario';
-    await sendVerificationEmail(pending.emailNormalized, rawToken, pending.displayName, application);
+    try {
+      await sendVerificationEmail(pending.emailNormalized, rawToken, pending.displayName, application);
+    } catch {
+      console.warn('Pending registration verification resend could not be sent');
+      throw new AppError(503, 'VERIFICATION_EMAIL_UNAVAILABLE', 'No pudimos reenviar el correo. Inténtalo nuevamente.');
+    }
   }
   return true;
 }
