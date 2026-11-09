@@ -4,34 +4,18 @@ import { listPublicBusinesses, getPublicBusiness, listPublicProducts, listPublic
 export type BusinessFilters = { query?: string; category?: string };
 export type UniversalSearchResult = { businesses: Business[]; products: Product[]; services: Service[]; pagination?: any };
 
-function normalizeUniversalSearch(value: unknown): string {
-  return typeof value === "string" ? value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-CO").replace(/[^\p{L}\p{N}\s]+/gu, " ").replace(/\s+/g, " ").trim() : "";
-}
-
-function matchesUniversalQuery(query: string | undefined, fields: unknown[]): boolean {
-  const terms = normalizeUniversalSearch(query).split(" ").filter(Boolean);
-  if (!terms.length) return true;
-  const text = fields.map(normalizeUniversalSearch).filter(Boolean).join(" ");
-  return terms.every((term) => text.includes(term));
-}
-
-export async function searchUniversal(filters: BusinessFilters & { latitude?: number; longitude?: number; radiusKm?: number; businessPage?: number; productPage?: number; servicePage?: number; businessPageSize?: number; productPageSize?: number; servicePageSize?: number } = {}): Promise<UniversalSearchResult> {
-  const result = await searchPublicUniversal(filters);
-  if (!filters.query?.trim()) return result;
-  // Defensive filtering prevents an older API process or a stale response from
-  // displaying records unrelated to the query currently visible in the UI.
-  const businesses = result.businesses.filter((item) => matchesUniversalQuery(filters.query, [item.name, item.category, item.address, item.description, ...item.tags]));
-  const products = result.products.filter((item) => matchesUniversalQuery(filters.query, [item.name, item.description, item.businessName]));
-  const services = result.services.filter((item) => matchesUniversalQuery(filters.query, [item.name, item.description, item.businessName]));
-  // The UI applies this final relevance guard, so its tab totals must describe
-  // the same collection that is actually rendered, never an older/raw total.
-  const pagination = {
-    ...result.pagination,
-    businesses: { ...result.pagination?.businesses, total: businesses.length, totalPages: businesses.length ? 1 : 0 },
-    products: { ...result.pagination?.products, total: products.length, totalPages: products.length ? 1 : 0 },
-    services: { ...result.pagination?.services, total: services.length, totalPages: services.length ? 1 : 0 },
-  };
-  return { businesses, products, services, pagination };
+/**
+ * The public API uses `q` (not `query`) and performs filtering BEFORE
+ * pagination. Do not filter page-sized responses again here: doing so loses
+ * matches on later pages and corrupts total counts.
+ */
+export async function searchUniversal(filters: BusinessFilters & {
+  latitude?: number; longitude?: number; radiusKm?: number;
+  businessPage?: number; productPage?: number; servicePage?: number;
+  businessPageSize?: number; productPageSize?: number; servicePageSize?: number;
+} = {}): Promise<UniversalSearchResult> {
+  const { query, ...apiFilters } = filters;
+  return searchPublicUniversal({ ...apiFilters, q: query?.trim() });
 }
 
 const BUSINESS_CACHE_TTL_MS = 30_000;
