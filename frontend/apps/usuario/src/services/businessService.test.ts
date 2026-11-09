@@ -56,6 +56,30 @@ describe("XAMUKO Usuario: resultados universales", () => {
     expect(searchPublicUniversal).toHaveBeenCalledWith({ q: "café" });
   });
 
+  it("mantiene el mismo alcance virtual para Negocios, Productos y Servicios", async () => {
+    const result = {
+      businesses: [{ id: "virtual-1" }] as any, products: [{ id: "producto-virtual-1" }] as any,
+      services: [{ id: "servicio-virtual-1" }] as any,
+      pagination: { businesses: { total: 1 }, products: { total: 1 }, services: { total: 1 } },
+    };
+    vi.mocked(searchPublicUniversal).mockResolvedValueOnce(result);
+    const actual = await searchUniversal({ query: "pan", scope: "virtual", businessPage: 2 });
+    expect(searchPublicUniversal).toHaveBeenCalledWith({ q: "pan", scope: "virtual", businessPage: 2 });
+    expect(actual).toBe(result);
+  });
+
+  it("filtra por ciudad y departamento sin exigir coordenadas GPS", async () => {
+    const result = {
+      businesses: [], products: [], services: [],
+      pagination: { businesses: { total: 0 }, products: { total: 0 }, services: { total: 0 } },
+    };
+    vi.mocked(searchPublicUniversal).mockResolvedValueOnce(result);
+    await searchUniversal({ query: "barbería", scope: "city", city: "Palmira", region: "Valle del Cauca" });
+    expect(searchPublicUniversal).toHaveBeenCalledWith({
+      q: "barbería", scope: "city", city: "Palmira", region: "Valle del Cauca",
+    });
+  });
+
   it("propaga un fallo del API para no presentarlo como cero resultados", async () => {
     vi.mocked(searchPublicUniversal).mockRejectedValueOnce(new Error("Network unavailable"));
     await expect(searchUniversal({ query: "motos" })).rejects.toThrow("Network unavailable");
