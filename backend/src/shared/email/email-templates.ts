@@ -83,7 +83,6 @@ ${brand.name} · ${tagline}`,
 }
 
 export function renderVerificationEmail(input: TemplateInput, application: EmailApplication = 'usuario'): EmailMessage {
- const brand = emailBrandFor(application);
  const url = linkFor(input.baseUrl,input.token);
  const safeUrl = escapeHtml(url);
  const safeName = input.displayName?.trim() ? escapeHtml(input.displayName.trim()) : 'ahí';
