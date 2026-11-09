@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import type { Product } from "../data/mockData";
 import { ProductCard } from "./EntityCards";
-import { isHorizontalDominantGesture } from "../utils/gestureDirection";
+import { isHorizontalDominantGesture, isMouseDragPointer } from "../utils/gestureDirection";
 import "./NewProductsBanner.css";
 import "./NewProductsBannerEnhancements.css";
 
@@ -32,7 +32,7 @@ export function NewProductsBanner({ products, likedIds, onLike, getLikeCount }: 
   }, [showAll, products.length]);
 
   function startDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = listRef.current;
     if (!list) return;
     dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
