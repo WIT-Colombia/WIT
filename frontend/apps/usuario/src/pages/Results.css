@@ -475,3 +475,29 @@
 /* Preserve horizontal carousels while allowing vertical page scrolling on touch. */
 .results-category-chips,
 .results-tabs-scroll { touch-action: pan-x pan-y; }
+
+
+/* Buscador geográfico opcional: nunca oculta establecimientos sin selección explícita. */
+.results-main > .results-distance-filter{order:5}
+.results-main > .results-tabs{order:6}
+.results-main > .results-request-state{order:7}
+.results-main > .results-like-error{order:7}
+.results-main > .results-list{order:8}
+.results-main > .admob-banner{order:9}
+.results-distance-filter{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;padding:10px 14px;border:1px solid #e1d8ff;border-radius:13px;background:#fff;color:var(--xamuko-navy)}
+.results-distance-filter label{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:700}
+.results-distance-filter select{min-height:38px;padding:6px 28px 6px 11px;border:1px solid #d8ccff;border-radius:9px;background:#f8f6ff;color:var(--xamuko-violet);font:inherit;font-size:12px;cursor:pointer}
+.results-distance-filter select:disabled{opacity:.6;cursor:not-allowed}
+.results-distance-filter span{font-size:12px;color:var(--xamuko-muted)}
+.results-request-state{width:100%;padding:17px 18px;margin:0 0 18px;border:1px solid #ded4ff;border-radius:13px;background:#fff;color:var(--xamuko-navy);font-size:13px}
+.results-request-state--error{border-color:#ebc6c6;background:#fffafa}
+.results-request-state--error p{margin:0 0 12px}
+.results-request-state button{min-height:36px;padding:0 14px;border:1px solid #d8ccff;border-radius:10px;background:#f1edff;color:var(--xamuko-violet);font:inherit;font-weight:700;cursor:pointer}
+.results-more:disabled{opacity:.65;cursor:wait}
+.results-page .results-offers > .results-more{display:flex}
+@media(max-width:620px){
+  .results-distance-filter{gap:6px;padding:10px 12px;margin-bottom:15px}
+  .results-distance-filter label{gap:8px;font-size:11px}
+  .results-distance-filter select{min-height:36px;font-size:11px}
+  .results-distance-filter span{width:100%;font-size:10px}
+}

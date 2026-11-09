@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { AppError } from '../../shared/errors/app-error.js';
 import { publicBusinessRouter } from './public-business.routes.js';
-import { getPublicBusiness, getPublicPhotoContent, listPublicBusinesses, listPublicPhotos, parsePublicBusinessListInput, publicBusinessRules } from './public-business.service.js';
+import { getPublicBusiness, getPublicPhotoContent, listPublicBusinesses, listPublicPhotos, parsePublicBusinessListInput, parseUniversalSearchInput, publicBusinessRules, searchPublicUniversal } from './public-business.service.js';
 
 const publicBusiness = {
   id: 'business-id', publicId: 'public-business-id', name: 'Café público', sede: null, adultOnly: false, description: 'Descripción visible',
@@ -177,4 +177,60 @@ test('la preferencia persistida permite ver contenido ADULT_18 sin convertirla e
   } as any;
   const result = await getPublicBusiness(publicBusiness.publicId, db, { userId: 'verified-user' });
   assert.deepEqual(result.products.map((item: { id: string }) => item.id), ['product-id', 'adult-product-id']);
+});
+
+test('la búsqueda universal respeta q, radio geográfico y paginación tras filtrar', async () => {
+  const near = { ...publicBusiness, publicId: 'near', name: 'Café cercano', brand: { pioneer: null }, subscriptions: [] };
+  const far = {
+    ...near, publicId: 'far', name: 'Café lejano',
+    location: { ...publicBusiness.location, latitude: 3.92, longitude: -76.303 },
+  };
+  const privateLocation = {
+    ...near, publicId: 'private', name: 'Café reservado',
+    location: { ...publicBusiness.location, visibility: 'PRIVATE' },
+  };
+  const makeOffer = (business: typeof near, kind: 'PRODUCT' | 'SERVICE') => ({
+    ...publicBusiness.offers[0],
+    id: `${business.publicId}-${kind.toLowerCase()}`,
+    name: kind === 'PRODUCT' ? 'Café de origen' : 'Servicio de café',
+    kind, category: publicBusiness.category, promotions: [], photos: [],
+    business: {
+      publicId: business.publicId, name: business.name,
+      description: business.description, category: business.category, location: business.location,
+    },
+  });
+  const db = {
+    business: { findMany: async () => [near, far, privateLocation] },
+    businessOffer: {
+      findMany: async ({ where }: any) => [near, far, privateLocation].map(business => makeOffer(business, where.kind)),
+    },
+  } as any;
+
+  const withRadius = await searchPublicUniversal(parseUniversalSearchInput({
+    q: '  CAFÉ  ', latitude: '3.539', longitude: '-76.303', radiusKm: '5',
+    businessPageSize: '1', productPageSize: '1', servicePageSize: '1',
+  }), db);
+  assert.deepEqual(withRadius.businesses.map(item => item.publicId), ['near']);
+  assert.deepEqual(withRadius.products.map(item => item.business.publicId), ['near']);
+  assert.deepEqual(withRadius.services.map(item => item.business.publicId), ['near']);
+  assert.equal(withRadius.pagination.businesses.total, 1);
+  assert.equal(withRadius.pagination.products.total, 1);
+  assert.equal(withRadius.pagination.services.total, 1);
+  assert.equal(withRadius.pagination.businesses.totalPages, 1);
+
+  const noRadius = await searchPublicUniversal(parseUniversalSearchInput({
+    q: 'café', latitude: '3.539', longitude: '-76.303', businessPage: '2',
+    businessPageSize: '1', productPageSize: '1', servicePageSize: '1',
+  }), db);
+  assert.equal(noRadius.pagination.businesses.total, 3);
+  assert.equal(noRadius.pagination.businesses.totalPages, 3);
+  assert.equal(noRadius.businesses.length, 1);
+  assert.equal(noRadius.pagination.businesses.page, 2);
+});
+
+test('el radio solo admite distancias válidas, sin cambiar la búsqueda general por defecto', () => {
+  assert.equal(parseUniversalSearchInput({ q: 'motos' }).query, 'motos');
+  assert.equal(parseUniversalSearchInput({ q: 'motos' }).radiusKm, undefined);
+  assert.throws(() => parseUniversalSearchInput({ radiusKm: '-5' }), AppError);
+  assert.throws(() => parseUniversalSearchInput({ radiusKm: '501' }), AppError);
 });

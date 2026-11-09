@@ -14,8 +14,8 @@ import { loadGoogleMaps } from "../services/googleMapsLoader";
 import { rememberBusinessVisitContext } from "../services/analyticsService";
 import "./Map.css";
 
-const radiusSteps = [1, 3, 5, Number.POSITIVE_INFINITY];
-const radiusLabels = ["1 km", "3 km", "5 km", "toda la ciudad"];
+const radiusSteps = [1, 3, 5, 10, 25, 50, Number.POSITIVE_INFINITY];
+const radiusLabels = ["1 km", "3 km", "5 km", "10 km", "25 km", "50 km", "toda la ciudad"];
 
 export default function Map() {
   const [params, setParams] = useSearchParams();
@@ -25,7 +25,11 @@ export default function Map() {
   const [items, setItems] = useState<Business[]>([]);
   const [resultsVisibleCount, setResultsVisibleCount] = useState(8);
   const { favorites, toggleFavorite } = useFavorites();
-  const [radiusIndex, setRadiusIndex] = useState(0);
+  const [radiusIndex, setRadiusIndex] = useState(() => {
+    const requested = Number(params.get("radiusKm"));
+    const option = radiusSteps.indexOf(requested);
+    return params.get("radiusKm") && option >= 0 ? option : 0;
+  });
   const { selection } = useLocationContext();
   const location = selection?.locality ?? null;
   const [manualCenter, setManualCenter] = useState<Coordinates | null>(null);

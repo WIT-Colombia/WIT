@@ -357,6 +357,8 @@ export async function listPublicBusinesses(input: PublicBusinessListInput, db: P
 }
 
 function distanceKm(latitude: number, longitude: number, value: any) {
+  // Never use hidden/private coordinates to determine a public search result.
+  if (value?.location?.visibility !== 'PUBLIC') return Number.POSITIVE_INFINITY;
   const lat = value?.location?.latitude === null || value?.location?.latitude === undefined ? null : Number(value.location.latitude);
   const lng = value?.location?.longitude === null || value?.location?.longitude === undefined ? null : Number(value.location.longitude);
   if (lat === null || lng === null) return Number.POSITIVE_INFINITY;
@@ -428,8 +430,8 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   // conserva el comportamiento actual y no se aplica ningún filtro geográfico.
   const filteredBusinesses = businessItems.filter(({ item, rank }) => categoryMatches(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId))).sort((a, b) => pioneerPriority(b.item) - pioneerPriority(a.item) || featuredPriority(b.item) - featuredPriority(a.item) || b.rank - a.rank || sortNearby(a.item, b.item) || String(a.item.publicId).localeCompare(String(b.item.publicId))).map(({ item }) => summary(item));
   const mapOffer = (item: any) => ({ ...offer(item.business.publicId, item), business: { publicId: item.business.publicId, name: item.business.name, location: location(item.business.location) } });
-  const filteredProducts = products.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item)).sort(sortNearby).map(mapOffer);
-  const filteredServices = services.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item)).sort(sortNearby).map(mapOffer);
+  const filteredProducts = products.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item.business)).sort((a: any, b: any) => sortNearby(a.business, b.business)).map(mapOffer);
+  const filteredServices = services.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inRadius(item.business)).sort((a: any, b: any) => sortNearby(a.business, b.business)).map(mapOffer);
   const businessResult = universalPagination(filteredBusinesses, input.businessPage, input.businessPageSize);
   const productResult = universalPagination(filteredProducts, input.productPage, input.productPageSize);
   const serviceResult = universalPagination(filteredServices, input.servicePage, input.servicePageSize);
