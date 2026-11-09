@@ -50,6 +50,14 @@ export function getRememberedEmail(): string {
   return window.localStorage.getItem(LAST_EMAIL_KEY) ?? "";
 }
 
+/** Validate an existing, eligible business code without creating a referral. */
+export async function validateBusinessReferralCode(code: string, signal?: AbortSignal): Promise<boolean> {
+  const response = await fetch(buildApiUrl(`/api/v1/auth/referrals/validate?code=${encodeURIComponent(code)}`), { signal, cache: "no-store" });
+  if (!response.ok) throw new Error("No pudimos validar el código de referido.");
+  const result = await response.json() as { valid: boolean };
+  return result.valid === true;
+}
+
 export function startGoogleLogin(options: { returnTo?: string; consent?: boolean; rememberMe?: boolean; referralCode?: string } = {}): void {
   const params = new URLSearchParams({ application: "usuario", rememberMe: options.rememberMe ? "1" : "0", consent: options.consent ? "1" : "0" });
   if (options.returnTo) params.set("next", options.returnTo);
