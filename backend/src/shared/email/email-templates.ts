@@ -1,6 +1,7 @@
 import type { EmailMessage } from './email-sender.js';
 import { emailBrandFor, type EmailApplication } from './email-brand.js';
 import { renderBrandedEmailLayout } from './branded-email-layout.js';
+import { EMAIL_ACTION_LINK_TTL_MINUTES } from './email-link-expiration.js';
 
 type TemplateInput = { to: string; token: string; baseUrl: string; displayName?: string; logoUrl?: string };
 type NoticeInput = { to: string; displayName?: string; application?: EmailApplication; logoUrl?: string };
@@ -49,7 +50,7 @@ export function renderVerificationEmail(input: TemplateInput, application: Email
   </style>
 </head>
 <body style="margin:0;padding:0;background:#f8f7fc;color:#080a27;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Confirma tu correo electrónico en XAMUKO. El enlace es válido por 15 minutos.</div>
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Confirma tu correo electrónico en XAMUKO. El enlace es válido por ${EMAIL_ACTION_LINK_TTL_MINUTES} minutos.</div>
   <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;background:#f8f7fc;">
     <tr><td class="mail-shell" align="center" style="padding:24px 12px 36px;">
       <table role="presentation" class="mail-card" border="0" cellpadding="0" cellspacing="0" width="760" style="width:100%;max-width:760px;border:1px solid #8337ff;border-radius:18px;border-spacing:0;background:#ffffff;box-shadow:0 12px 22px rgba(35,21,95,.10);">
@@ -97,7 +98,7 @@ export function renderVerificationEmail(input: TemplateInput, application: Email
                     <img class="notice-icon-img" src="{{asset_base_url}}/icono-reloj.png" alt="" width="68" style="display:block;width:68px;max-width:100%;height:auto;border:0;">
                   </td>
                   <td style="border-left:2px solid #6a13d3;padding:2px 0 2px 14px;" valign="middle">
-                    <p class="notice-text" style="margin:0 0 4px;color:#090a28;font-size:18px;line-height:1.4;">Este enlace vence en <strong style="color:#6207c9;font-weight:800;">15 minutos</strong> y solo puede utilizarse una vez.</p>
+                    <p class="notice-text" style="margin:0 0 4px;color:#090a28;font-size:18px;line-height:1.4;">Este enlace vence en <strong style="color:#6207c9;font-weight:800;">${EMAIL_ACTION_LINK_TTL_MINUTES} minutos</strong> y solo puede utilizarse una vez.</p>
                     <p class="notice-text" style="margin:0;color:#34345d;font-size:17px;line-height:1.45;">Si no solicitaste este correo, puedes ignorarlo con tranquilidad.</p>
                   </td>
                 </tr>
@@ -124,7 +125,7 @@ Confirma tu correo para completar la activación de tu cuenta de ${brandName}.
 
 Verificar correo: ${url}
 
-Este enlace vence en 15 minutos y solo puede utilizarse una vez. Si no solicitaste este correo, puedes ignorarlo con tranquilidad.
+Este enlace vence en ${EMAIL_ACTION_LINK_TTL_MINUTES} minutos y solo puede utilizarse una vez. Si no solicitaste este correo, puedes ignorarlo con tranquilidad.
 
 XAMUKO · Lo que necesitas, está más cerca.`;
  return {to:input.to,subject:`Verifica tu correo electrónico de ${brandName}`,html,text};
@@ -135,7 +136,7 @@ export function renderPasswordResetEmail(input: TemplateInput, application: Emai
   const brand = emailBrandFor(application);
   const title = 'Recupera tu contraseña';
   const intro = `Solicitaste cambiar la contraseña de tu cuenta de ${brand.name}.`;
-  const notice = 'Este enlace vence en 15 minutos y solo puede utilizarse una vez.';
+  const notice = `Este enlace vence en ${EMAIL_ACTION_LINK_TTL_MINUTES} minutos y solo puede utilizarse una vez.`;
   const footnote = 'Si no solicitaste este correo, puedes ignorarlo con tranquilidad.';
   const html = renderBrandedEmailLayout({
     kind: 'password-reset', brandName: brand.name, displayName: input.displayName, title,
