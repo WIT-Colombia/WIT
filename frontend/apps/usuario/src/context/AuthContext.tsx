@@ -6,7 +6,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   status: "loading" | "authenticated" | "anonymous";
   isAuthenticated: boolean;
-  register: (name: string, email: string, password: string) => Promise<AuthUser>;
+  register: (name: string, email: string, password: string, referralCode?: string) => Promise<AuthUser>;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   reloadUser: () => Promise<void>;
   restoreSession: () => Promise<void>;
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession: async () => { const next = await restoreSession(); setUser(next); setStatus("authenticated"); },
     status,
     isAuthenticated: status === "authenticated",
-    register: async (name, email, password) => { const created = await register(name, { email, password }); setUser(null); setStatus("anonymous"); return created; },
+    register: async (name, email, password, referralCode) => { const created = await register(name, { email, password }, referralCode); setUser(null); setStatus("anonymous"); return created; },
     login: async (email, password, rememberMe = true) => { setUser(await login({ email, password }, rememberMe)); setStatus("authenticated"); },
     logout: async () => { await logout(); setUser(null); setStatus("anonymous"); },
   }), [status, user]);
