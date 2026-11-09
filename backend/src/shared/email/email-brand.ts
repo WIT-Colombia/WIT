@@ -19,14 +19,14 @@ const brands: Record<EmailApplication, EmailBrand> = {
   },
   negocios: {
     application: 'negocios',
-    name: 'WIT Negocios',
+    name: 'XAMUKO Business',
     primary: '#2563eb',
     primaryDark: '#1749b8',
     primaryLight: '#eaf2ff',
   },
   admin: {
     application: 'admin',
-    name: 'WIT Admin',
+    name: 'XAMUKO Admin',
     primary: '#6D5AE6',
     primaryDark: '#5142B5',
     primaryLight: '#E9E6FF',

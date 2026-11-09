@@ -1,8 +1,9 @@
 import type { EmailMessage } from './email-sender.js';
 import { emailBrandFor, type EmailApplication } from './email-brand.js';
+import { renderBrandedEmailLayout } from './branded-email-layout.js';
 
 type TemplateInput = { to: string; token: string; baseUrl: string; displayName?: string; logoUrl?: string };
-type NoticeInput = { to: string; displayName?: string; application?: EmailApplication };
+type NoticeInput = { to: string; displayName?: string; application?: EmailApplication; logoUrl?: string };
 
 function escapeHtml(value: string): string {
   const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
@@ -11,75 +12,6 @@ function escapeHtml(value: string): string {
 
 function linkFor(baseUrl: string, token: string): string {
   return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
-}
-
-function renderBase(title: string, intro: string, actionLabel: string, url: string, expiry: string, displayName?: string, application: EmailApplication = 'usuario', logoUrl?: string): { html: string; text: string } {
-  const brand = emailBrandFor(application);
-  const isXamuko = application === 'usuario';
-  const buttonBackground = isXamuko ? 'linear-gradient(110deg,#7B3FFB 0%,#2563EB 100%)' : brand.primary;
-  const tagline = isXamuko ? 'Lo que necesitas, está más cerca.' : 'Encuentra lo que necesitas, más cerca.';
-  const safeName = displayName?.trim() ? escapeHtml(displayName.trim()) : 'ahí';
-  const safeTitle = escapeHtml(title);
-  const safeIntro = escapeHtml(intro);
-  const safeActionLabel = escapeHtml(actionLabel);
-  const safeExpiry = escapeHtml(expiry);
-  const safeUrl = escapeHtml(url);
-  const safeLogoUrl = logoUrl ? escapeHtml(logoUrl) : '';
-  const logoMarkup = isXamuko && safeLogoUrl
-    ? `<img src="${safeLogoUrl}" alt="${brand.name}" width="180" style="display:block;width:180px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;">`
-    : `<span style="color:${brand.primary};font-size:26px;line-height:1;font-weight:800;letter-spacing:-1px;">${brand.name}</span>`;
-  return {
-    html: `<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>${safeTitle} | ${brand.name}</title>
-    <style>
-      @media only screen and (max-width: 620px) {
-        .mail-shell { padding: 24px 12px !important; }
-        .mail-card { border-radius: 12px !important; }
-        .mail-card-inner { padding: 28px 24px !important; }
-        .mail-button { display: block !important; text-align: center !important; }
-      }
-    </style>
-  </head>
-  <body style="margin:0;padding:0;background:#f1f4f2;color:#17211d;font-family:Arial,Helvetica,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background:#f1f4f2;">
-      <tr>
-        <td class="mail-shell" align="center" style="padding:56px 16px;">
-          <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="mail-card" style="width:100%;max-width:600px;border-collapse:separate;background:#ffffff;border:1px solid #e0e8e3;border-radius:16px;box-shadow:0 8px 28px rgba(23,33,29,0.06);">
-            <tr>
-              <td class="mail-card-inner" style="padding:40px;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
-                  <tr><td style="padding:0 0 32px;">${logoMarkup}<span style="display:block;margin-top:9px;color:#64748B;font-size:12px;line-height:1.3;font-weight:600;letter-spacing:.1px;">${tagline}</span></td></tr>
-                  <tr><td style="padding:0 0 10px;color:#17211d;font-size:16px;line-height:1.5;">Hola, ${safeName}.</td></tr>
-                  <tr><td style="padding:0 0 16px;color:#17211d;font-size:28px;line-height:1.2;font-weight:700;letter-spacing:-0.4px;">${safeTitle}</td></tr>
-                  <tr><td style="padding:0 0 28px;color:#526058;font-size:16px;line-height:1.65;">${safeIntro}</td></tr>
-                  <tr><td style="padding:0 0 28px;"><a class="mail-button" href="${safeUrl}" style="display:inline-block;padding:14px 24px;background:${buttonBackground};border:1px solid ${brand.primary};border-radius:8px;color:#ffffff;font-size:16px;line-height:1.2;font-weight:700;text-decoration:none;">${safeActionLabel}</a></td></tr>
-                  <tr><td style="padding:20px 0 0;border-top:1px solid #e8eeea;color:#69766f;font-size:13px;line-height:1.6;">Este enlace vence en ${safeExpiry} y solo puede utilizarse una vez. Si no solicitaste este correo, puedes ignorarlo con tranquilidad.</td></tr>
-                  <tr><td style="padding:32px 0 0;color:#9aa59f;font-size:12px;line-height:1.5;">${brand.name} · ${tagline}</td></tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`,
-    text: `Hola, ${displayName?.trim() || 'ahí'}.
-
-${title}
-
-${intro}
-
-${actionLabel}: ${url}
-
-Este enlace vence en ${expiry} y solo puede utilizarse una vez. Si no solicitaste este correo, puedes ignorarlo con tranquilidad.
-
-${brand.name} · ${tagline}`,
-  };
 }
 
 export function renderVerificationEmail(input: TemplateInput, application: EmailApplication = 'usuario'): EmailMessage {
@@ -201,27 +133,58 @@ XAMUKO · Lo que necesitas, está más cerca.`;
 export function renderPasswordResetEmail(input: TemplateInput, application: EmailApplication = 'usuario'): EmailMessage {
   const url = linkFor(input.baseUrl, input.token);
   const brand = emailBrandFor(application);
-  return { to: input.to, subject: `Recupera tu contraseña de ${brand.name}`, ...renderBase('Recupera tu contraseña', `Solicitaste cambiar la contraseña de tu cuenta de ${brand.name}.`, 'Restablecer contraseña', url, '30 minutos', input.displayName, application, input.logoUrl) };
+  const title = 'Recupera tu contraseña';
+  const intro = `Solicitaste cambiar la contraseña de tu cuenta de ${brand.name}.`;
+  const notice = 'Este enlace vence en 15 minutos y solo puede utilizarse una vez.';
+  const footnote = 'Si no solicitaste este correo, puedes ignorarlo con tranquilidad.';
+  const html = renderBrandedEmailLayout({
+    kind: 'password-reset', brandName: brand.name, displayName: input.displayName, title,
+    description: intro, notice, footnote, logoUrl: input.logoUrl,
+    action: { label: 'Restablecer contraseña', url },
+  });
+  const text = `Hola, ${input.displayName?.trim() || 'ahí'}.
+
+${title}
+
+${intro}
+
+Restablecer contraseña: ${url}
+
+${notice} ${footnote}
+
+${brand.name} · Lo que necesitas, está más cerca.`;
+  return { to: input.to, subject: `Recupera tu contraseña de ${brand.name}`, html, text };
 }
 
-function renderNotice(input: NoticeInput, title: string, intro: string, subject: string): EmailMessage {
+function renderNotice(input: NoticeInput, title: string, intro: string, subject: string, kind: 'welcome' | 'security'): EmailMessage {
   const application = input.application ?? 'usuario';
   const brand = emailBrandFor(application);
-  const safeName = input.displayName?.trim() ? escapeHtml(input.displayName.trim()) : 'ahí';
-  const safeTitle = escapeHtml(title);
-  const safeIntro = escapeHtml(intro);
-  return {
-    to: input.to,
-    subject: `${subject} · ${brand.name}`,
-    html: `<html lang="es"><body style="font-family:Arial,Helvetica,sans-serif;background:#f1f4f2;padding:32px;color:#17211d"><main style="max-width:600px;margin:auto;background:#fff;padding:36px;border:1px solid #e0e8e3;border-radius:16px"><p>Hola, ${safeName}.</p><h1>${safeTitle}</h1><p>${safeIntro}</p><p style="color:#69766f">Si no reconoces esta actividad, cambia tu contraseña y contacta a soporte.</p><p>${brand.name}</p></main></body></html>`,
-    text: `Hola, ${input.displayName?.trim() || 'ahí'}.\n\n${title}\n\n${intro}\n\nSi no reconoces esta actividad, cambia tu contraseña y contacta a soporte.\n\n${brand.name}`,
-  };
+  const isSecurity = kind === 'security';
+  const notice = isSecurity ? 'Mantén el control de la seguridad de tu cuenta.' : 'Tu cuenta ya está creada.';
+  const footnote = isSecurity
+    ? 'Si no reconoces esta actividad, cambia tu contraseña desde la aplicación y contacta a soporte.'
+    : 'Si aún no has verificado tu correo, consulta el mensaje de verificación para completar la activación.';
+  const html = renderBrandedEmailLayout({
+    kind, brandName: brand.name, displayName: input.displayName, title,
+    description: intro, notice, footnote, logoUrl: input.logoUrl,
+  });
+  const text = `Hola, ${input.displayName?.trim() || 'ahí'}.
+
+${title}
+
+${intro}
+
+${notice}
+${footnote}
+
+${brand.name} · Lo que necesitas, está más cerca.`;
+  return { to: input.to, subject: `${subject} · ${brand.name}`, html, text };
 }
 
 export function renderWelcomeEmail(input: NoticeInput): EmailMessage {
-  return renderNotice(input, 'Te damos la bienvenida a XAMUKO', 'Tu cuenta ya está creada. Verifica tu correo para empezar a descubrir lo que necesitas cerca.', 'Bienvenido a XAMUKO');
+  return renderNotice(input, 'Te damos la bienvenida a XAMUKO', 'Tu cuenta ya está creada. Verifica tu correo para empezar a descubrir lo que necesitas cerca.', 'Bienvenido', 'welcome');
 }
 
 export function renderSecurityNotificationEmail(input: NoticeInput, action = 'Se actualizó la seguridad de tu cuenta'): EmailMessage {
-  return renderNotice(input, action, 'Te avisamos de este cambio para que puedas mantener el control de tu cuenta.', 'Aviso de seguridad');
+  return renderNotice(input, action, 'Te avisamos de este cambio para que puedas mantener el control de tu cuenta.', 'Aviso de seguridad', 'security');
 }

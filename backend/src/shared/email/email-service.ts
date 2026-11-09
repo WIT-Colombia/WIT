@@ -31,11 +31,11 @@ export async function sendPasswordResetEmail(to: string, token: string, displayN
 }
 
 export async function sendWelcomeEmail(to: string, displayName?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  const message = renderWelcomeEmail({ to, displayName, application });
+  const message = renderWelcomeEmail({ to, displayName, application, logoUrl: env.emailLogoUrl });
   await sendTransactionalEmail({ ...message, eventType: 'welcome', idempotencyKey: `welcome/${createHash('sha256').update(`${application}:${to}`).digest('hex')}` });
 }
 
 export async function sendSecurityNotificationEmail(to: string, displayName?: string, action?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  const message = renderSecurityNotificationEmail({ to, displayName, application }, action);
+  const message = renderSecurityNotificationEmail({ to, displayName, application, logoUrl: env.emailLogoUrl }, action);
   await sendTransactionalEmail({ ...message, eventType: 'security_notification', idempotencyKey: `security_notification/${createHash('sha256').update(`${application}:${to}:${action ?? 'account-security'}`).digest('hex')}` });
 }
