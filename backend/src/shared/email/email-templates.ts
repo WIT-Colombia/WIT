@@ -87,42 +87,94 @@ export function renderVerificationEmail(input: TemplateInput, application: Email
  const safeUrl = escapeHtml(url);
  const safeName = input.displayName?.trim() ? escapeHtml(input.displayName.trim()) : 'ahí';
  const brandName = application === 'negocios' ? 'XAMUKO Business' : 'XAMUKO';
- const logo = input.logoUrl
-  ? `<img src="${escapeHtml(input.logoUrl)}" alt="XAMUKO" width="230" style="display:block;width:230px;max-width:100%;height:auto;border:0;">`
-  : `<strong style="font-family:Arial,Helvetica,sans-serif;color:#090a27;font-size:38px;font-weight:800;letter-spacing:-1.5px;">XAMUKO</strong>`;
- const html = `<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Verifica tu correo | XAMUKO</title>
-<style>@media only screen and (max-width:640px){.email-shell{padding:10px 7px!important}.email-card{width:100%!important}.email-content{padding:12px 20px 20px!important}.greeting{font-size:24px!important}.hero-left{display:block!important;width:100%!important;padding:5px 0!important;text-align:center!important}.hero-right{display:block!important;width:100%!important;padding:10px 0!important;text-align:center!important}.hero-line{display:none!important}.hero-title{font-size:32px!important}.hero-desc{font-size:17px!important}.cta-wrap{width:100%!important}.notice-text{font-size:14px!important}.notice-icon{width:52px!important}.email-footer{padding:20px 12px!important}}</style></head>
-<body style="margin:0;padding:0;background:#f9f7fe;color:#0b0b2b;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Confirma tu correo en XAMUKO. Enlace de verificación: 15 minutos.</div>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background:#f9f7fe;"><tr><td align="center" class="email-shell" style="padding:24px 12px 36px;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-card" width="760" style="width:100%;max-width:760px;border:1px solid #8735fc;border-radius:18px;box-shadow:0 12px 24px rgba(40,18,96,.1);border-collapse:separate;background:#fff;overflow:hidden;">
-<tr><td style="height:13px;padding:0;background:#8641f9;background-image:linear-gradient(100deg,#fff 30%,#eee4ff 57%,#66a4ff 79%,#8849ff);"></td></tr>
-<tr><td style="padding:24px 34px 8px;background:#fff;background-image:linear-gradient(110deg,#fff 55%,#eee2ff 85%,#e1d4ff 100%);">
-${logo}<p style="margin:5px 0 0;color:#24234c;font-size:16px;">Lo que necesitas, está más cerca.</p></td></tr>
-<tr><td class="email-content" style="padding:16px 34px 25px;">
-<p class="greeting" style="margin:0 0 10px;font-size:30px;line-height:1.4;color:#0b0b2b;">Hola, <strong style="color:#5c08c7;font-weight:800;">${safeName}</strong>.</p>
-<div style="width:59px;height:5px;background:#670bc9;border-radius:5px;margin:0 0 25px;"></div>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
-<tr><td class="hero-left" width="36%" align="center" valign="middle" style="padding:0 18px 0 0;width:36%;">
-<table role="presentation" width="214" cellspacing="0" cellpadding="0" style="width:214px;height:214px;border-collapse:separate;background:#f0eaff;background-image:radial-gradient(circle,#f5efff 2%,#e9dfff 70%,#fff 100%);border-radius:120px;">
-<tr><td align="center" valign="middle" style="font-size:0;"><span style="display:inline-block;font-size:125px;line-height:1;color:#8041f4;">&#9993;</span><span style="display:inline-block;background:#7423e0;color:white;font-size:31px;font-weight:800;border:5px solid white;border-radius:50%;width:46px;height:46px;line-height:46px;margin-left:-60px;vertical-align:top;">&#10003;</span></td></tr></table>
-</td><td class="hero-line" width="1" style="border-left:1px solid #aea5c8;width:1px;font-size:0;">&nbsp;</td>
-<td class="hero-right" valign="middle" style="padding:0 0 0 26px;">
-<h1 class="hero-title" style="margin:0 0 14px;color:#090a28;font-size:40px;line-height:1.08;letter-spacing:-1px;font-weight:800;">Verifica tu correo <span style="color:#6207c7;">electrónico</span></h1>
-<p class="hero-desc" style="margin:0 0 20px;color:#3b3965;font-size:20px;line-height:1.45;">Confirma tu correo para completar la activación de tu cuenta de ${brandName}.</p>
-<table role="presentation" class="cta-wrap" cellpadding="0" cellspacing="0" width="308" style="width:308px;max-width:100%;border-collapse:separate;"><tr><td bgcolor="#7106cb" align="center" style="border-radius:14px;background:#7106cb;background-image:linear-gradient(180deg,#bf55ff,#810cd1 48%,#5203a8);">
-<a href="${safeUrl}" target="_blank" style="display:block;padding:16px 10px;color:#fff;font-size:23px;line-height:1.25;font-weight:800;text-decoration:none;white-space:nowrap;border-radius:14px;">&#9993;&nbsp; Verificar correo</a></td></tr></table>
-</td></tr></table>
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:separate;margin-top:27px;background:#f1ebff;border-radius:15px;"><tr>
-<td class="notice-icon" width="82" align="center" valign="middle" style="width:82px;padding:14px 8px;color:#6c0cca;font-size:47px;">&#9716;</td>
-<td valign="middle" style="padding:12px 13px;border-left:2px solid #791cd8;">
-<p class="notice-text" style="margin:0 0 5px;font-size:18px;line-height:1.4;color:#0b0b2b;">Este enlace vence en <strong style="color:#6807cc;">15 minutos</strong> y solo puede utilizarse una vez.</p>
-<p class="notice-text" style="margin:0;color:#33335c;font-size:17px;line-height:1.45;">Si no solicitaste este correo, puedes ignorarlo con tranquilidad.</p></td></tr></table>
-</td></tr>
-<tr><td class="email-footer" style="padding:23px 34px;border-top:1px solid #e5d5ff;background:#fff;background-image:linear-gradient(11deg,#6aa4ff,#eee0ff 10%,#fff 24%);text-align:center;"><strong style="font-size:28px;color:#090a28;letter-spacing:-.6px;">XAMUKO</strong><span style="padding:0 14px;color:#9890b5;">│</span><span style="font-size:16px;color:#25244c;">Lo que necesitas, está más cerca.</span></td></tr>
-</table><p style="margin:15px 0 0;color:#76738a;font-size:11px;">Correo automático de XAMUKO. Por favor, no respondas a este mensaje.</p>
-</td></tr></table></body></html>`;
+ const html = String.raw`<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Verifica tu correo electrónico | XAMUKO</title>
+  <style>
+    @media only screen and (max-width: 660px) {
+      .mail-shell { padding: 12px 8px !important; }
+      .mail-card { width:100% !important; border-radius: 15px !important; }
+      .mail-body { padding: 0 20px !important; }
+      .greeting { font-size: 21px !important; padding-top: 15px !important; }
+      .mail-grid { width:100% !important; }
+      .hero-col { display:block !important; width:100% !important; max-width:100% !important; text-align:center !important; }
+      .hero-art { width:190px !important; max-width:70% !important; height:auto !important; margin:auto !important; }
+      .hero-divider { display:none !important; }
+      .hero-copy { display:block !important; width:100% !important; padding: 10px 0 0 !important; text-align:center !important; }
+      .hero-title { font-size:30px !important; line-height:1.08 !important; }
+      .hero-description { font-size:16px !important; line-height:1.45 !important; }
+      .mail-btn { width:100% !important; text-align:center !important; }
+      .mail-btn-text { font-size:19px !important; }
+      .notice { padding:14px 12px !important; }
+      .notice-icon { width:48px !important; }
+      .notice-text { font-size:13px !important; line-height:1.5 !important; }
+      .notice-icon-img { width:44px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f8f7fc;color:#080a27;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Confirma tu correo electrónico en XAMUKO. El enlace es válido por 15 minutos.</div>
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;background:#f8f7fc;">
+    <tr><td class="mail-shell" align="center" style="padding:24px 12px 36px;">
+      <table role="presentation" class="mail-card" border="0" cellpadding="0" cellspacing="0" width="760" style="width:100%;max-width:760px;border:1px solid #8337ff;border-radius:18px;border-spacing:0;background:#ffffff;box-shadow:0 12px 22px rgba(35,21,95,.10);">
+        <tr><td style="padding:0;line-height:0;font-size:0;"><img src="{{asset_base_url}}/cabecera-xamuko.png" alt="XAMUKO. Lo que necesitas, está más cerca." width="758" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:17px 17px 0 0;"></td></tr>
+        <tr><td class="mail-body" style="padding:0 46px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+            <tr><td class="greeting" style="padding:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:31px;line-height:1.35;font-weight:400;letter-spacing:-.7px;color:#090c28;">
+              Hola, <strong style="color:#5b07bf;font-weight:800;">{{nombre}}</strong>.
+            </td></tr>
+            <tr><td style="padding:9px 0 21px;"><div style="width:54px;height:5px;background:#670bd1;border-radius:4px;"></div></td></tr>
+          </table>
+          <table role="presentation" class="mail-grid" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;table-layout:fixed;">
+            <tr>
+              <td class="hero-col" width="36%" align="center" valign="middle" style="width:36%;padding:0 20px 0 0;">
+                <img class="hero-art" src="{{asset_base_url}}/ilustracion-correo.png" width="253" alt="Ilustración de un sobre con una verificación confirmada" style="display:block;width:253px;max-width:100%;height:auto;border:0;">
+              </td>
+              <td class="hero-divider" width="1" style="width:1px;border-left:1px solid #a59fbe;font-size:0;line-height:0;">&nbsp;</td>
+              <td class="hero-copy" align="left" valign="middle" style="padding:0 0 0 26px;">
+                <h1 class="hero-title" style="margin:0 0 12px;color:#060728;font-family:Arial,Helvetica,sans-serif;font-size:41px;font-weight:800;line-height:1.07;letter-spacing:-1px;">Verifica tu correo<br><span style="color:#5d07bf;">electrónico</span></h1>
+                <p class="hero-description" style="margin:0 0 18px;color:#383663;font-family:Arial,Helvetica,sans-serif;font-size:21px;line-height:1.4;letter-spacing:-.25px;">Confirma tu correo para completar la activación de tu cuenta de {{app_name}}.</p>
+                <table role="presentation" class="mail-btn" border="0" cellspacing="0" cellpadding="0" width="305" style="width:305px;max-width:100%;border-collapse:separate;">
+                  <tr><td align="center" bgcolor="#750cc9" style="border-radius:15px;background-color:#7206cb;background-image:linear-gradient(180deg,#bf53ff 0%,#810bd1 47%,#5202a9 100%);">
+                    <a href="{{verification_url}}" target="_blank" style="display:block;padding:12px 8px;text-decoration:none;color:#ffffff;font-size:25px;font-weight:800;line-height:1.2;white-space:nowrap;border-radius:15px;">
+                      <img src="{{asset_base_url}}/icono-sobre-blanco.png" alt="" width="32" height="26" style="display:inline-block;vertical-align:middle;margin-right:10px;border:0;"> <span class="mail-btn-text" style="vertical-align:middle;color:#ffffff;">Verificar correo</span>
+                    </a>
+                  </td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+          <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;border-collapse:separate;margin-top:22px;">
+            <tr><td class="notice" bgcolor="#f0eaff" style="padding:13px 19px;border-radius:15px;background:#f1ebff;">
+              <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="border-collapse:collapse;">
+                <tr>
+                  <td class="notice-icon" width="86" align="center" valign="middle" style="width:86px;padding-right:12px;">
+                    <img class="notice-icon-img" src="{{asset_base_url}}/icono-reloj.png" alt="" width="68" style="display:block;width:68px;max-width:100%;height:auto;border:0;">
+                  </td>
+                  <td style="border-left:2px solid #6a13d3;padding:2px 0 2px 14px;" valign="middle">
+                    <p class="notice-text" style="margin:0 0 4px;color:#090a28;font-size:18px;line-height:1.4;">Este enlace vence en <strong style="color:#6207c9;font-weight:800;">15 minutos</strong> y solo puede utilizarse una vez.</p>
+                    <p class="notice-text" style="margin:0;color:#34345d;font-size:17px;line-height:1.45;">Si no solicitaste este correo, puedes ignorarlo con tranquilidad.</p>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:14px 0 0;line-height:0;font-size:0;"><img src="{{asset_base_url}}/pie-xamuko.png" alt="XAMUKO. Lo que necesitas, está más cerca." width="758" style="display:block;width:100%;height:auto;border:0;border-radius:0 0 17px 17px;"></td></tr>
+      </table>
+      <p style="margin:14px 0 0;color:#71718b;font-size:11px;line-height:1.6;">Correo automático de XAMUKO. Por favor, no respondas a este mensaje.</p>
+    </td></tr>
+  </table>
+</body>
+</html>`
+  .replaceAll('{{asset_base_url}}', 'https://xamuko.com/assets/email/verify')
+  .replaceAll('{{nombre}}', safeName)
+  .replaceAll('{{app_name}}', escapeHtml(brandName))
+  .replaceAll('{{verification_url}}', safeUrl);
  const text = `Hola, ${input.displayName?.trim() || 'ahí'}.
 
 Verifica tu correo electrónico
