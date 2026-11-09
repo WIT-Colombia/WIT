@@ -45,6 +45,7 @@ const loginAccountRateLimit = rateLimit({
     response.status(429).json({ error: { code: 'AUTH_RATE_LIMITED', message: 'Demasiados intentos para esta cuenta. Intenta más tarde.' } });
   },
 });
+authRouter.get('/referrals/availability', (_request, response) => { response.status(200).json({ enabled: true }); });
 authRouter.post('/register', authRateLimit, requireTrustedOrigin, registerController);
 authRouter.post('/login', loginAccountRateLimit, loginRateLimit, requireTrustedOrigin, loginController);
 // Restoring a valid session is not a login attempt. Keep a separate abuse limit.
