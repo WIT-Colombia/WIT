@@ -121,7 +121,16 @@ export function renderVerificationEmail(input: TemplateInput, application: Email
   <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;background:#f8f7fc;">
     <tr><td class="mail-shell" align="center" style="padding:24px 12px 36px;">
       <table role="presentation" class="mail-card" border="0" cellpadding="0" cellspacing="0" width="760" style="width:100%;max-width:760px;border:1px solid #8337ff;border-radius:18px;border-spacing:0;background:#ffffff;box-shadow:0 12px 22px rgba(35,21,95,.10);">
-        <tr><td style="padding:0;line-height:0;font-size:0;"><img src="{{asset_base_url}}/cabecera-xamuko.png" alt="XAMUKO. Lo que necesitas, está más cerca." width="758" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:17px 17px 0 0;"></td></tr>
+        <tr><td style="padding:0;line-height:0;font-size:0;background:#ffffff;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td align="left" valign="middle" width="58%" style="width:58%;padding:18px 0 12px 30px;background:#ffffff;">
+                <img class="brand-header-logo" src="https://xamuko.com/assets/xamuko-logo.png" alt="XAMUKO · Descubre · Apoya · Disfruta" width="305" style="display:block;width:305px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;">
+              </td>
+              <td valign="top" width="42%" height="110" bgcolor="#8b4af5" style="width:42%;height:110px;background-color:#8b4af5;background-image:linear-gradient(135deg,#e2bbfa 0%,#aa70fa 45%,#3885f7 100%);border-bottom-left-radius:110px;font-size:0;line-height:0;">&nbsp;</td>
+            </tr>
+          </table>
+        </td></tr>
         <tr><td class="mail-body" style="padding:0 46px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
             <tr><td class="greeting" style="padding:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:31px;line-height:1.35;font-weight:400;letter-spacing:-.7px;color:#090c28;">

@@ -57,8 +57,8 @@ test('supports the admin brand variant through a server-selected application', (
 
 test('renders the approved hosted XAMUKO artwork and preserves the reset email fallback', () => {
   const withLogo = renderVerificationEmail({ to: 'person@example.test', token: 'token', baseUrl: 'https://usuario.example/verify-email', logoUrl: 'https://cdn.example/xamuko.png' });
-  assert.match(withLogo.html, /src="https:\/\/xamuko\.com\/assets\/email\/verify\/cabecera-xamuko\.png"/);
-  assert.match(withLogo.html, /alt="XAMUKO\. Lo que necesitas, está más cerca\."/);
+  assert.match(withLogo.html, /src="https:\/\/xamuko\.com\/assets\/xamuko-logo\.png"/);
+  assert.match(withLogo.html, /alt="XAMUKO · Descubre · Apoya · Disfruta"/);
   for (const asset of ['ilustracion-correo.png', 'icono-reloj.png', 'icono-sobre-blanco.png', 'pie-xamuko.png']) {
     assert.ok(withLogo.html.includes('https://xamuko.com/assets/email/verify/' + asset));
   }
