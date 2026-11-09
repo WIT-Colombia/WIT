@@ -357,6 +357,8 @@ export async function listPublicBusinesses(input: PublicBusinessListInput, db: P
 }
 
 function distanceKm(latitude: number, longitude: number, value: any) {
+  // Never use hidden/private coordinates to determine a public search result.
+  if (value?.location?.visibility !== 'PUBLIC') return Number.POSITIVE_INFINITY;
   const lat = value?.location?.latitude === null || value?.location?.latitude === undefined ? null : Number(value.location.latitude);
   const lng = value?.location?.longitude === null || value?.location?.longitude === undefined ? null : Number(value.location.longitude);
   if (lat === null || lng === null) return Number.POSITIVE_INFINITY;
