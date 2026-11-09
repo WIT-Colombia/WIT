@@ -4,7 +4,7 @@ import { BusinessHeader } from "../components/layout/BusinessHeader";
 import { BusinessApiError } from "../services/businessApiClient";
 import { confirmEmail, requestVerification } from "../services/businessAuthService";
 import { useBusinessAuth } from "../services/businessAuthContext";
-import { clearPendingVerificationEmail, getPendingVerification } from "../services/pendingVerification";
+import { clearPendingVerificationEmail, getPendingVerification, rememberPendingVerificationEmail } from "../services/pendingVerification";
 import "./VerifyEmailPage.css";
 
 type VerificationState = "pending" | "loading" | "success" | "error" | "unavailable";
@@ -59,7 +59,7 @@ export default function VerifyEmailPage() {
   const hasAttempted = useRef(false);
   const [registration] = useState(getPendingVerification);
   const email = registration.email;
-  const expiry = registration.expiresAt;
+  const [expiry, setExpiry] = useState<string | null>(registration.expiresAt);
   const [state, setState] = useState<VerificationState>(token ? "loading" : email ? "pending" : "unavailable");
   const [secondsRemaining, setSecondsRemaining] = useState<number | null>(() => expiry ? Math.max(0, Math.ceil((Date.parse(expiry) - Date.now()) / 1000)) : null);
   const [message, setMessage] = useState("");
@@ -110,7 +110,14 @@ export default function VerifyEmailPage() {
     setResent(false);
     setMessage("");
     try {
-      await requestVerification(email.trim());
+      const result = await requestVerification(email.trim());
+      // The backend returns a generic expiry for all valid addresses: no account enumeration.
+      const nextExpiry = result.verificationExpiresAt && Number.isFinite(Date.parse(result.verificationExpiresAt))
+        ? result.verificationExpiresAt : null;
+      rememberPendingVerificationEmail(email, nextExpiry ?? undefined);
+      setExpiry(nextExpiry);
+      setSecondsRemaining(nextExpiry ? Math.max(0, Math.ceil((Date.parse(nextExpiry) - Date.now()) / 1000)) : null);
+      setState("pending");
       setResent(true);
     } catch (caught) {
       setMessage(caught instanceof BusinessApiError ? caught.message : "No se pudo solicitar el correo.");
@@ -155,9 +162,9 @@ export default function VerifyEmailPage() {
           <span className="verify-email-recipient-lock" aria-hidden="true">🔒</span>
         </div>}
 
-        {state === "pending" && clock !== null && !(resent && secondsRemaining === 0) && <div className="verify-email-timer" role="timer" aria-label="Tiempo restante para verificar el correo">
+        {state === "pending" && clock !== null && <div className="verify-email-timer" role="timer" aria-label="Tiempo restante para verificar el correo">
           <span className="verify-email-timer-badge"><ClockIcon /><strong>{clock}</strong></span>
-          <p>{secondsRemaining === 0 ? "El enlace ha vencido. Solicita uno nuevo para continuar." : "Tienes 15 minutos desde el envío original para verificar tu correo."}</p>
+          <p>{secondsRemaining === 0 ? "El enlace ha vencido. Solicita uno nuevo para continuar." : "Tienes 15 minutos desde el último envío para verificar tu correo."}</p>
         </div>}
         {state === "pending" && clock === null && <p className="verify-email-expiry-note">Cuando recibas el enlace, tendrás 15 minutos para verificar tu correo.</p>}
 

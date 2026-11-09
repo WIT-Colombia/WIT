@@ -183,9 +183,10 @@ export async function confirmEmail(token: string): Promise<{ user: AuthUser; aut
   return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
 
-export async function requestVerification(email: string): Promise<string> {
-  const result = await requestJson<MessageResponse>("/api/v1/auth/verify-email/request", { method: "POST", body: JSON.stringify({ email }) });
-  return result.message;
+export async function requestVerification(email: string): Promise<{ message: string; verificationExpiresAt?: string }> {
+  return requestJson<{ message: string; verificationExpiresAt?: string }>("/api/v1/auth/verify-email/request", {
+    method: "POST", body: JSON.stringify({ email }),
+  });
 }
 
 export function clearAccessToken(): void { accessToken = null; }
