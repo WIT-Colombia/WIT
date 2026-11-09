@@ -23,10 +23,12 @@ export function Layout() {
     const source = admin?.avatarUrl?.trim() || null;
     setAvatarSrc(null);
     let avatarPath: string | null = null;
-    try {
-      const parsed = new URL(source, window.location.origin);
-      if (/^\/api\/v\d+\/auth\/me\/avatar\/?$/.test(parsed.pathname)) avatarPath = `${parsed.pathname}${parsed.search}`;
-    } catch { /* Keep an unparseable image URL as a direct source below. */ }
+    if (source) {
+      try {
+        const parsed = new URL(source, window.location.origin);
+        if (/^\/api\/v\d+\/auth\/me\/avatar\/?$/.test(parsed.pathname)) avatarPath = `${parsed.pathname}${parsed.search}`;
+      } catch { /* Keep an unparseable image URL as a direct source below. */ }
+    }
     if (source && !avatarPath) { setAvatarSrc(source); return; }
     const avatarRequest = avatarPath ? fetchOwnAvatar(avatarPath) : fetchOwnAvatar();
     void avatarRequest
