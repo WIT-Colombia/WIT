@@ -111,7 +111,7 @@ describe("Usuario: registro solo después de verificar correo", () => {
   });
 
   it("el backend nuevo recibe el registro pendiente, no devuelve un User real", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => new Response(
       JSON.stringify({ emailVerificationRequiredBeforeCreation: true }),
       { status: 200, headers: { "content-type": "application/json" } },
     )));
