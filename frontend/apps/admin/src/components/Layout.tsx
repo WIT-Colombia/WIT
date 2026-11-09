@@ -26,7 +26,7 @@ export function Layout() {
     let avatarPath: string | null = null;
     try {
       const parsed = new URL(source, window.location.origin);
-      if (/^\/api\/v\\d+\/auth\/me\/avatar\/?$/.test(parsed.pathname)) avatarPath = `${parsed.pathname}${parsed.search}`;
+      if (/^\/api\/v\d+\/auth\/me\/avatar\/?$/.test(parsed.pathname)) avatarPath = `${parsed.pathname}${parsed.search}`;
     } catch { /* Keep an unparseable image URL as a direct source below. */ }
     if (!avatarPath) { setAvatarSrc(source); return; }
     void fetchOwnAvatar(avatarPath)
