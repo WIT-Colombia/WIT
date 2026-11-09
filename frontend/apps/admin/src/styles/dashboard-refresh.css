@@ -95,6 +95,23 @@
 .admin-refresh .xa-pr216-growth-track>div{width:100%;background:linear-gradient(180deg,#7b3ffb,#2563eb);border-radius:6px 6px 0 0}
 .admin-refresh .xa-pr216-growth-column>span{padding-bottom:7px;color:#64748b;font-size:9px;white-space:nowrap}
 
+/* Encabezado Admin: jerarquía visual, controles reales y espaciado uniforme. */
+.admin-refresh .admin-header{min-height:72px;height:auto;padding:10px 24px;gap:20px}
+.admin-refresh .admin-header .header-context{flex-shrink:0;gap:12px;font-size:12px}
+.admin-refresh .admin-header .header-tools{margin-left:auto;gap:14px}
+.admin-refresh .admin-header .global-search{min-width:180px;max-width:340px;flex:1 1 220px}
+.admin-refresh .admin-header .xa-date-filter{min-height:36px;padding:5px 10px;font-size:11px}
+.admin-refresh .admin-header .xa-date-filter input{font-size:11px}
+.admin-refresh .notification-link:after{content:none}
+.admin-refresh .admin-header .xa-profile-link{padding-left:16px;gap:10px}
+.admin-refresh .admin-header .header-avatar{width:36px;height:36px}
+.admin-refresh .dashboard-header .header-context{display:flex}
+.admin-refresh .dashboard-header .header-tools{justify-content:flex-end;gap:14px}
+.admin-refresh .dashboard-header .global-search{max-width:340px}
+.admin-refresh .dashboard-header .xa-date-filter{margin-left:0}
+@media(max-width:900px){.admin-refresh .admin-header{padding:9px 16px;gap:12px}.admin-refresh .admin-header .header-tools{gap:9px}.admin-refresh .admin-header .global-search{min-width:120px}}
+@media(max-width:620px){.admin-refresh .admin-header{min-height:56px;padding:8px 12px;gap:7px}.admin-refresh .admin-header .header-tools{margin-left:0;gap:8px}.admin-refresh .admin-header .global-search{min-width:0;max-width:none;flex:0 0 100%}.admin-refresh .dashboard-header .global-search{max-width:none}.admin-refresh .admin-header .xa-date-filter{min-height:32px;padding:3px 6px}.admin-refresh .admin-header .xa-profile-link{padding-left:8px}}
+
 /* Shared visual system for all Admin modules. */
 .admin-refresh .page-section{min-width:0}
 .admin-refresh .page-heading{align-items:flex-end;gap:16px;margin:0 auto 17px;padding:10px 0 2px}
