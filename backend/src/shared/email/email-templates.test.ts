@@ -8,11 +8,11 @@ test('renders a verification message with an encoded one-time link', () => {
   assert.match(message.subject, /Verifica/);
   assert.match(message.text, /token%20with%20spaces/);
   assert.match(message.html, /&lt;Persona&gt;/);
-  assert.match(message.html, /24 horas/);
-  assert.match(message.html, /max-width:600px/);
-  assert.match(message.html, /padding:40px/);
-  assert.match(message.html, /background:linear-gradient\(110deg,#7B3FFB 0%,#2563EB 100%\)/);
-  assert.match(message.html, /XAMUKO · Lo que necesitas, está más cerca\./);
+  assert.match(message.html, /15 minutos/);
+  assert.match(message.html, /max-width:760px/);
+  assert.match(message.html, /class="email-content"/);
+  assert.match(message.html, /background-image:linear-gradient\(180deg,#bf55ff,#810cd1 48%,#5203a8\)/);
+  assert.match(message.text, /XAMUKO · Lo que necesitas, está más cerca\./);
   assert.doesNotMatch(message.html, /WIT/);
 });
 
@@ -41,10 +41,10 @@ test('escapes dynamic values in the HTML while preserving the plain-text link', 
 
 test('uses the official brand variant without changing the secure link', () => {
   const message = renderVerificationEmail({ to: 'person@example.test', token: 'verification-token', baseUrl: 'https://negocios.wit.example/verify-email', displayName: 'Negocio' }, 'negocios');
-  assert.match(message.html, /WIT Negocios/);
-  assert.match(message.html, /background:#2563eb/);
+  assert.match(message.html, /XAMUKO Business/);
+  assert.match(message.html, /background:#7106cb/);
   assert.match(message.html, /https:\/\/negocios\.wit\.example\/verify-email\?token=verification-token/);
-  assert.match(message.text, /WIT Negocios · Encuentra lo que necesitas/);
+  assert.match(message.text, /XAMUKO · Lo que necesitas, está más cerca/);
 });
 
 test('supports the admin brand variant through a server-selected application', () => {
