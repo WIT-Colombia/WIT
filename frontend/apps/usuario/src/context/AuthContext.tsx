@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ApiError } from "../services/httpClient";
-import { getMe, login, logout, refreshSession, register, restoreSession, type AuthUser } from "../services/authService";
+import { getMe, login, logout, refreshSession, register, restoreSession, type AuthUser, type PendingRegistrationInfo } from "../services/authService";
 
 type AuthContextValue = {
   user: AuthUser | null;
   status: "loading" | "authenticated" | "anonymous";
   isAuthenticated: boolean;
-  register: (name: string, email: string, password: string, referralCode?: string) => Promise<AuthUser>;
+  register: (name: string, email: string, password: string, referralCode?: string) => Promise<PendingRegistrationInfo>;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   reloadUser: () => Promise<void>;
   restoreSession: () => Promise<void>;
