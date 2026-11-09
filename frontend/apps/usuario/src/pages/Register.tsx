@@ -1,9 +1,9 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../services/httpClient";
 import { validateEmail } from "../services/emailValidation";
-import { getRememberedEmail, startGoogleLogin, isBusinessReferralRegistrationAvailable } from "../services/authService";
+import { getRememberedEmail, startGoogleLogin, isBusinessReferralRegistrationAvailable, validateBusinessReferralCode } from "../services/authService";
 import { isValidBusinessReferralCode } from "../utils/businessReferralCode";
 import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
 import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
@@ -59,12 +59,29 @@ export default function Register() {
   const [manualReferralCode, setManualReferralCode] = useState("");
   const referralCode = invitedReferralCode || manualReferralCode;
   const [submitting, setSubmitting] = useState(false);
+  const [referralValidation, setReferralValidation] = useState<{ code: string; status: "valid" | "invalid" | "unavailable" } | null>(null);
+  const normalizedReferral = referralCode.trim().toUpperCase();
+  const referralFormatValid = isValidBusinessReferralCode(normalizedReferral);
+  const referralChecking = Boolean(normalizedReferral && referralFormatValid && referralValidation?.code !== normalizedReferral);
+  useEffect(() => {
+    if (!normalizedReferral || !referralFormatValid) return;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      void validateBusinessReferralCode(normalizedReferral, controller.signal)
+        .then(valid => { if (!controller.signal.aborted) setReferralValidation({ code: normalizedReferral, status: valid ? "valid" : "invalid" }); })
+        .catch(() => { if (!controller.signal.aborted) setReferralValidation({ code: normalizedReferral, status: "unavailable" }); });
+    }, 350);
+    return () => { window.clearTimeout(timeout); controller.abort(); };
+  }, [normalizedReferral, referralFormatValid]);
   const returnTo = "/home";
   const passwordError = mode === "register" && (fieldErrors.password || (password.length > 0 && password.length < 8 ? "Tu contraseña debe tener al menos 8 caracteres." : ""));
   const confirmPasswordError = mode === "register" && confirmPassword.length > 0 && password !== confirmPassword ? "Las contraseñas no coinciden." : "";
   const hasPasswordErrors = Boolean(passwordError || confirmPasswordError);
   const referralError = mode === "register" && referralCode.trim() && !isValidBusinessReferralCode(referralCode)
-    ? "El código debe tener el formato XMK seguido de 32 caracteres." : fieldErrors.referralCode ?? "";
+    ? "El código debe tener el formato XMK seguido de 32 caracteres."
+    : normalizedReferral && referralValidation?.code === normalizedReferral && referralValidation.status === "invalid" ? "Este código de referido no existe o no está disponible."
+    : normalizedReferral && referralValidation?.code === normalizedReferral && referralValidation.status === "unavailable" ? "No pudimos comprobar el código. Intenta nuevamente."
+    : fieldErrors.referralCode ?? "";
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -73,7 +90,7 @@ export default function Register() {
     if (validationError) setEmailError("Ingresa un correo electrónico válido.");
     if (mode === "register" && (!name.trim() || validationError)) return;
     if (mode === "register" && (hasPasswordErrors || password.length < 8 || password !== confirmPassword)) return;
-    if (mode === "register" && referralError) { setMessage("Revisa el código de referido."); return; }
+    if (mode === "register" && (referralError || referralChecking)) { setMessage("Espera a que validemos el código de referido."); return; }
     if (mode === "register" && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; }
     setSubmitting(true);
     setMessage("");
@@ -104,7 +121,7 @@ export default function Register() {
   }
 
   const registration = mode === "register";
-  const submitDisabled = submitting || status === "loading" || (registration && hasPasswordErrors);
+  const submitDisabled = submitting || status === "loading" || (registration && (hasPasswordErrors || Boolean(referralError) || referralChecking));
 
   return <main className="register-page user-auth-page">
     <div className={`user-auth-layout${registration ? " is-register" : " is-login"}`}>
@@ -130,7 +147,7 @@ export default function Register() {
           </div>
           {message && <p className="register-status" role="alert">{message}</p>}
           <div className="register-social-options">
-            <button type="button" className="register-provider-button" onClick={async () => { if (registration && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; } if (registration && referralError) { setMessage("Revisa el código de referido."); return; } if (registration && referralCode.trim() && !(await isBusinessReferralRegistrationAvailable())) { setMessage("El registro con referidos aún no está disponible en el servidor. Puedes esperar a que lo activemos o borrar el código para crear tu cuenta sin referido."); return; } startGoogleLogin({ returnTo, consent: registration ? accepted : true, rememberMe, referralCode: registration ? referralCode.trim() || undefined : undefined }); }}>
+            <button type="button" className="register-provider-button" onClick={async () => { if (registration && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; } if (registration && (referralError || referralChecking)) { setMessage("Espera a que validemos el código de referido."); return; } if (registration && referralCode.trim() && !(await isBusinessReferralRegistrationAvailable())) { setMessage("El registro con referidos aún no está disponible en el servidor. Puedes esperar a que lo activemos o borrar el código para crear tu cuenta sin referido."); return; } startGoogleLogin({ returnTo, consent: registration ? accepted : true, rememberMe, referralCode: registration ? referralCode.trim() || undefined : undefined }); }}>
               <GoogleIcon/><span>Continuar con Google</span>
             </button>
           </div>
@@ -158,7 +175,8 @@ export default function Register() {
             </label>}
             {registration && <label className={`user-auth-field user-auth-referral${referralError ? " field-invalid" : ""}`}>Código de referido (opcional)
               {invitedReferralCode ? <output className="user-auth-referral-code" aria-label="Código de referido asignado">{invitedReferralCode}</output> : <input value={manualReferralCode} onChange={(event) => { setManualReferralCode(event.target.value.toUpperCase()); setFieldErrors((errors) => ({ ...errors, referralCode: "" })); }} maxLength={40} autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="XMK-..." aria-invalid={Boolean(referralError)} aria-describedby={referralError ? "register-referral-error" : undefined}/>}
-              {referralCode.trim() && !referralError && <small className="user-auth-referral-note">Tu registro quedará asociado al negocio que te invitó.</small>}
+              {referralChecking && <small className="user-auth-referral-note" role="status">Comprobando código de referido…</small>}
+              {referralValidation?.code === normalizedReferral && referralValidation.status === "valid" && !referralError && <small className="user-auth-referral-note">✓ Código válido. Tu registro quedará asociado al negocio que te invitó.</small>}
               {referralError && <small id="register-referral-error" className="field-error" role="alert">{referralError}</small>}
             </label>}
             {registration && <label className="register-legal-check"><input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)}/><span>Acepto los <Link to="/legal/terms?from=register">Términos y condiciones</Link> y la <Link to="/legal/privacy?from=register">Política de privacidad</Link>.</span></label>}
