@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { requestJson } from "./httpClient";
-import { clearAccessToken, uploadAvatar } from "./authService";
+import { clearAccessToken, uploadAvatar, register, isVerifiedFirstRegistrationAvailable } from "./authService";
 import { normalizeImageForUpload } from "@wit/utils";
 
 vi.mock("@wit/utils", () => ({
@@ -96,5 +96,40 @@ describe("Usuario: subir foto personal", () => {
     await expect(uploadAvatar(new File(["foto"], "foto.heic", { type: "image/heic" })))
       .rejects.toThrow("No se pudo convertir la foto HEIC.");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("Usuario: registro solo después de verificar correo", () => {
+  afterEach(() => { vi.clearAllMocks(); vi.unstubAllGlobals(); });
+
+  it("no envía registro a un backend antiguo que crea usuarios antes de verificar", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
+    await expect(register("Persona", { email: "nuevo@example.test", password: "claveSegura123" })).rejects.toMatchObject({
+      status: 503, code: "REGISTRATION_UPGRADE_PENDING",
+    });
+    expect(requestJson).not.toHaveBeenCalledWith("/api/v1/auth/register", expect.anything());
+  });
+
+  it("el backend nuevo recibe el registro pendiente, no devuelve un User real", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ emailVerificationRequiredBeforeCreation: true }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    )));
+    expect(await isVerifiedFirstRegistrationAvailable()).toBe(true);
+    const pending = {
+      email: "nuevo@example.test",
+      verificationExpiresAt: "2026-11-09T12:15:00.000Z",
+      verificationEmailSent: true,
+    };
+    vi.mocked(requestJson).mockResolvedValueOnce({ pending });
+    const created = await register("Persona Nueva", { email: "nuevo@example.test", password: "claveSegura123" }, "XMK-12345678123441238123123456789ABC");
+    expect(created).toEqual(pending);
+    expect(requestJson).toHaveBeenCalledWith("/api/v1/auth/register", expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({
+        name: "Persona Nueva", email: "nuevo@example.test",
+        password: "claveSegura123", referralCode: "XMK-12345678123441238123123456789ABC",
+      }),
+    }));
   });
 });
