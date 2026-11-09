@@ -148,7 +148,7 @@ export const googleCallbackController: RequestHandler = async (request, response
   }
 };
 
-export const registerController: RequestHandler = async (request, response, next) => { try { const result = await register(parse(registerSchema, request.body), meta(request), emailApplicationForRequest(request)); response.status(201).json(result); } catch (error) { next(error); } };
+export const registerController: RequestHandler = async (request, response, next) => { try { const result = await register(parse(registerSchema, request.body), meta(request), emailApplicationForRequest(request)); response.status(202).json(result); } catch (error) { next(error); } };
 export const loginController: RequestHandler = async (request, response, next) => { try { const input = parse(loginSchema, request.body); const result = await login(input, meta(request)); setRefreshCookie(response, result.refreshToken, input.rememberMe); const { refreshToken: _refreshToken, ...publicResult } = result; response.status(200).json(publicResult); } catch (error) { next(error); } };
 export const refreshController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (!token) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.'); const result = await refresh(token, meta(request)); response.setHeader('Cache-Control', 'no-store'); response.status(200).json(result); } catch (error) { next(error); } };
 export const logoutController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (token) await logout(token); clearRefreshCookie(response); response.status(204).send(); } catch (error) { next(error); } };
