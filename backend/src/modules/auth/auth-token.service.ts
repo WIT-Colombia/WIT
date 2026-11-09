@@ -48,7 +48,7 @@ export async function sendPasswordResetRequest(emailNormalized: string, applicat
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || !identity.verifiedAt || identity.user.status !== 'ACTIVE') return;
-  const token = await issueToken(identity.userId, 'PASSWORD_RESET', 30 * 60 * 1000);
+  const token = await issueToken(identity.userId, 'PASSWORD_RESET', 15 * 60 * 1000);
   await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName, application);
 }
 
