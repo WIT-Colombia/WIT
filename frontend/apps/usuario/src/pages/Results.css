@@ -575,3 +575,19 @@
     display: flex;
   }
 }
+
+/*
+ * Result cards use a fixed responsive grid, not a horizontal carousel.
+ * Legacy mobile carousel rules set touch-action: pan-x on Negocios.
+ * This later override explicitly allows vertical scrolling when the
+ * finger starts on a business, product or service card.
+ */
+.results-page .results-businesses .results-grid,
+.results-page .results-offers.results-offer-group .results-offer-grid {
+  touch-action: pan-y;
+  overscroll-behavior-x: auto;
+  overflow-x: visible;
+  scroll-snap-type: none;
+  user-select: auto;
+  cursor: auto;
+}
