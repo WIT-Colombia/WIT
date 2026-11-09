@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { requestJson } from "./httpClient";
 import { clearAccessToken, uploadAvatar } from "./authService";
+import { normalizeImageForUpload } from "@wit/utils";
 
 vi.mock("@wit/utils", () => ({
   buildApiUrl: (path: string) => `https://api.xamuko.com${path}`,
+  // Transport tests mock normalization; imageUpload.test.ts tests real conversion.
+  normalizeImageForUpload: vi.fn(async (file: File) => file),
 }));
 vi.mock("./httpClient", () => ({
   configureSession: vi.fn(),
@@ -75,11 +78,23 @@ describe("Usuario: subir foto personal", () => {
     await expect(uploadAvatar(photo())).rejects.toThrow("No se pudo guardar la fotografía.");
   });
 
-  it("rechaza formatos y tamaños no admitidos antes de enviar", async () => {
+  it("envía como JPEG la foto HEIC convertida por el procesador compartido", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const original = new File(["foto"], "foto.heic", { type: "image/heic" });
+    const converted = new File(["foto"], "foto.jpg", { type: "image/jpeg" });
+    vi.mocked(normalizeImageForUpload).mockResolvedValueOnce(converted);
+    await uploadAvatar(original);
+    expect(normalizeImageForUpload).toHaveBeenCalledWith(original);
+    expect(((fetchMock.mock.calls[0][1] as RequestInit).body as FormData).get("file")).toBe(converted);
+  });
+
+  it("detiene el envío y muestra el error del procesador cuando no puede leer la foto", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    await expect(uploadAvatar(new File(["foto"], "foto.heic", { type: "image/heic" }))).rejects.toThrow("JPG, PNG o WebP");
-    await expect(uploadAvatar(new File([new Uint8Array(5 * 1024 * 1024 + 1)], "grande.png", { type: "image/png" }))).rejects.toThrow("máximo 5 MB");
+    vi.mocked(normalizeImageForUpload).mockRejectedValueOnce(new Error("No se pudo convertir la foto HEIC."));
+    await expect(uploadAvatar(new File(["foto"], "foto.heic", { type: "image/heic" })))
+      .rejects.toThrow("No se pudo convertir la foto HEIC.");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
