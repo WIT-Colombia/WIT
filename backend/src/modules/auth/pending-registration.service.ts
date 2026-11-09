@@ -79,7 +79,12 @@ export async function resendPendingRegistration(emailNormalized: string): Promis
   });
   if (updated.count === 1) {
     const application: EmailApplication = pending.application === 'negocios' ? 'negocios' : 'usuario';
-    await sendVerificationEmail(pending.emailNormalized, rawToken, pending.displayName, application);
+    try {
+      await sendVerificationEmail(pending.emailNormalized, rawToken, pending.displayName, application);
+    } catch {
+      console.warn('Pending registration verification resend could not be sent');
+      throw new AppError(503, 'VERIFICATION_EMAIL_UNAVAILABLE', 'No pudimos reenviar el correo. Inténtalo nuevamente.');
+    }
   }
   return true;
 }
