@@ -73,6 +73,7 @@ export default function VerifyEmailPage() {
     const interval = window.setInterval(update, 1000);
     return () => window.clearInterval(interval);
   }, [expiry, state]);
+  const expiredPending = state === "pending" && expiry !== null && secondsRemaining === 0;
   const clock = secondsRemaining === null ? null :
     `${String(Math.floor(secondsRemaining / 60)).padStart(2, "0")}:${String(secondsRemaining % 60).padStart(2, "0")}`;
 
@@ -105,7 +106,7 @@ export default function VerifyEmailPage() {
 
   async function resend(event: FormEvent) {
     event.preventDefault();
-    if (!email || (state !== "pending" && state !== "error")) return;
+    if (!email || expiredPending || (state !== "pending" && state !== "error")) return;
     setResending(true);
     setResent(false);
     setMessage("");
@@ -164,11 +165,11 @@ export default function VerifyEmailPage() {
 
         {state === "pending" && clock !== null && <div className="verify-email-timer" role="timer" aria-label="Tiempo restante para verificar el correo">
           <span className="verify-email-timer-badge"><ClockIcon /><strong>{clock}</strong></span>
-          <p>{secondsRemaining === 0 ? "El enlace ha vencido. Solicita uno nuevo para continuar." : "Tienes 15 minutos desde el último envío para verificar tu correo."}</p>
+          <p>{secondsRemaining === 0 ? "El enlace venció. Vuelve a registrarte para obtener uno nuevo." : "Tienes 15 minutos desde el último envío para verificar tu correo."}</p>
         </div>}
         {state === "pending" && clock === null && <p className="verify-email-expiry-note">Cuando recibas el enlace, tendrás 15 minutos para verificar tu correo.</p>}
 
-        {(state === "pending" || state === "error") && email && <form className="verify-email-resend" onSubmit={resend}>
+        {(state === "pending" || state === "error") && email && !expiredPending && <form className="verify-email-resend" onSubmit={resend}>
           <button type="submit" disabled={resending}>
             <RefreshIcon />{resending ? "Enviando correo…" : "Reenviar correo de verificación"}
           </button>
@@ -177,6 +178,7 @@ export default function VerifyEmailPage() {
         </form>}
 
         {state === "unavailable" && <Link className="verify-email-primary-link" to="/registro">Volver al registro</Link>}
+        {expiredPending && <Link className="verify-email-primary-link" to="/registro">Iniciar un nuevo registro</Link>}
         {(state === "error" && !email) && <Link className="verify-email-primary-link" to="/registro">Volver al registro</Link>}
         {state === "loading" && <div className="verify-email-progress" role="status" aria-label="Verificación en curso"><span /></div>}
         {state === "success" && <Link className="verify-email-primary-link" to="/login">Iniciar sesión</Link>}
