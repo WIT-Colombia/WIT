@@ -5,6 +5,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import { sendPasswordResetEmail, sendSecurityNotificationEmail, sendVerificationEmail } from '../../shared/email/email-service.js';
 import type { EmailApplication } from '../../shared/email/email-brand.js';
 import { emailActionLinkExpiresAt } from '../../shared/email/email-link-expiration.js';
+import { resendPendingRegistration, confirmPendingRegistration } from './pending-registration.service.js';
 
 type TokenType = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
 
@@ -29,6 +30,10 @@ async function issueToken(userId: string, type: TokenType): Promise<string> {
 
 
 export async function sendVerificationRequest(emailNormalized: string, application: EmailApplication = 'usuario'): Promise<void> {
+  // New registrations are still pending; reissue their one-time mail token
+  // without creating a User or resetting their original referral attribution.
+  if (await resendPendingRegistration(emailNormalized)) return;
+  // Preserve compatibility with existing legacy accounts pending verification.
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
@@ -39,6 +44,9 @@ export async function sendVerificationRequest(emailNormalized: string, applicati
 }
 
 export async function confirmEmail(token: string): Promise<string> {
+  const createdUserId = await confirmPendingRegistration(token);
+  if (createdUserId) return createdUserId;
+  // Older unverified accounts retain their previously issued AuthToken links.
   const record = await prisma.$transaction((transaction) => consumeVerificationToken(transaction, token));
   return record.userId;
 }

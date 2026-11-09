@@ -1,16 +1,12 @@
 import argon2 from 'argon2';
-import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { env } from '../../config/env.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { createAccessToken, createRefreshToken, hashRefreshToken } from '../../shared/auth/tokens.js';
 import type { LoginInput, RegisterInput } from './auth.schemas.js';
-import { sendVerificationRequest } from './auth-token.service.js';
-import { sendWelcomeEmail } from '../../shared/email/email-service.js';
 import { shouldRequireEmailVerification } from './email-login-policy.js';
 import type { EmailApplication } from '../../shared/email/email-brand.js';
-import { createAvailableNickname, isNicknameCollision } from './nickname.service.js';
-import { attributeNewUserReferral } from './business-referral.service.js';
+import { beginPendingRegistration } from './pending-registration.service.js';
 
 const invalidCredentials = () => new AppError(401, 'INVALID_CREDENTIALS', 'Correo o contraseña incorrectos.');
 const unverifiedEmail = () => new AppError(403, 'EMAIL_NOT_VERIFIED', 'Verifica tu correo electrónico antes de iniciar sesión.');
@@ -38,42 +34,8 @@ export async function issueSession(userId: string, requestMeta?: { userAgent?: s
 }
 
 export async function register(input: RegisterInput, _requestMeta?: { userAgent?: string; ipAddress?: string }, application: EmailApplication = 'usuario') {
-  const emailNormalized = normalizeEmail(input.email);
-  const passwordHash = await argon2.hash(input.password, { type: argon2.argon2id });
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const nickname = await createAvailableNickname(prisma, input.name.trim());
-    try {
-      const user = await prisma.$transaction(async (tx) => {
-        const created = await tx.user.create({
-          data: {
-            displayName: input.name.trim(),
-            nickname,
-            emailNormalized,
-            authIdentities: {
-              create: { provider: 'EMAIL', providerSubject: emailNormalized, passwordHash },
-            },
-          },
-          select: { id: true, publicId: true, displayName: true, emailNormalized: true },
-        });
-        await attributeNewUserReferral(tx, created.id, input.referralCode);
-        return created;
-      });
-      const result = { user: await getCurrentUser(user.id) };
-      let verificationEmailSent = true;
-      try { await sendVerificationRequest(emailNormalized, application); }
-      catch { verificationEmailSent = false; console.warn('Registration verification email could not be sent'); }
-      try { await sendWelcomeEmail(emailNormalized, user.displayName, application); }
-      catch { console.warn('Registration welcome email could not be sent'); }
-      return { ...result, user: { ...result.user, verificationEmailSent } };
-    } catch (error) {
-      if (isNicknameCollision(error)) continue;
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new AppError(409, 'EMAIL_UNAVAILABLE', 'Este correo ya tiene una cuenta en WIT. Inicia sesión.', { email: 'Este correo ya tiene una cuenta en WIT. Inicia sesión.' });
-      }
-      throw error;
-    }
-  }
-  throw new AppError(503, 'NICKNAME_GENERATION_UNAVAILABLE', 'No pudimos generar un nickname disponible. Intenta nuevamente.');
+  // No User, AuthIdentity or referral exists before the mailbox owner confirms.
+  return { pending: await beginPendingRegistration(input, application) };
 }
 
 export async function login(input: LoginInput, requestMeta?: { userAgent?: string; ipAddress?: string }) {

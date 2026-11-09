@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { requestJson, requestPhotoBlob } from "./businessApiClient";
-import { clearAccessToken, getAvatarBlob, uploadAvatar } from "./businessAuthService";
+import { clearAccessToken, getAvatarBlob, uploadAvatar, register, isVerifiedFirstRegistrationAvailable } from "./businessAuthService";
 
 vi.mock("./businessApiClient", () => ({
   buildApiUrl: (path: string) => `https://api.xamuko.com/api/v1${path.startsWith("/api/v1/") ? path.slice("/api/v1".length) : path}`,
@@ -64,5 +64,33 @@ describe("Business: foto personal", () => {
     vi.mocked(requestPhotoBlob).mockResolvedValue(blob);
     await expect(getAvatarBlob("/api/v1/auth/me/avatar?v=123")).resolves.toBe(blob);
     expect(requestPhotoBlob).toHaveBeenCalledWith("/api/v1/auth/me/avatar?v=123");
+  });
+});
+
+describe("Business: registro condicionado a verificar el correo", () => {
+  afterEach(() => { vi.clearAllMocks(); vi.unstubAllGlobals(); });
+
+  it("no crea cuentas en un backend antiguo que no admita registro pendiente", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
+    await expect(register("Propietario", "nuevo@example.test", "claveSegura123")).rejects.toMatchObject({
+      status: 503, code: "REGISTRATION_UPGRADE_PENDING",
+    });
+    expect(requestJson).not.toHaveBeenCalledWith("/auth/register", expect.anything());
+  });
+
+  it("devuelve la solicitud pendiente sin crear sesión ni usuario", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => new Response(
+      JSON.stringify({ emailVerificationRequiredBeforeCreation: true }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    )));
+    expect(await isVerifiedFirstRegistrationAvailable()).toBe(true);
+    const pending = {
+      email: "nuevo@example.test",
+      verificationExpiresAt: "2026-11-09T12:15:00.000Z",
+      verificationEmailSent: true,
+    };
+    vi.mocked(requestJson).mockResolvedValueOnce({ pending });
+    expect(await register("Propietario", "nuevo@example.test", "claveSegura123")).toEqual(pending);
+    expect(requestJson).toHaveBeenCalledWith("/auth/register", expect.objectContaining({ method: "POST" }));
   });
 });

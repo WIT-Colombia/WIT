@@ -17,7 +17,12 @@ export type BusinessAuthUser = {
 };
 
 type AuthResponse = { user: BusinessAuthUser; accessToken: string };
-type RegisterResponse = { user: BusinessAuthUser };
+export type PendingBusinessRegistration = {
+  email: string;
+  verificationExpiresAt: string;
+  verificationEmailSent: boolean;
+};
+type RegisterResponse = { pending: PendingBusinessRegistration };
 
 export type BusinessSessionState =
   | { status: "unchecked" }
@@ -116,12 +121,28 @@ export function getAvatarBlob(path = "/api/v1/auth/me/avatar"): Promise<Blob> {
   return requestPhotoBlob(path);
 }
 
-export async function register(name: string, email: string, password: string): Promise<BusinessAuthUser> {
+export async function isVerifiedFirstRegistrationAvailable(): Promise<boolean> {
+  try {
+    const response = await fetch(buildApiUrl("/auth/registration-policy"), {
+      credentials: "include", headers: { Accept: "application/json" }, cache: "no-store",
+    });
+    if (!response.ok) return false;
+    const policy = await response.json() as { emailVerificationRequiredBeforeCreation?: boolean };
+    return policy.emailVerificationRequiredBeforeCreation === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function register(name: string, email: string, password: string): Promise<PendingBusinessRegistration> {
+  if (!(await isVerifiedFirstRegistrationAvailable())) {
+    throw new BusinessApiError(503, "REGISTRATION_UPGRADE_PENDING", "Estamos actualizando el registro seguro por correo. Intenta nuevamente más tarde.");
+  }
   const result = await requestJson<RegisterResponse>("/auth/register", {
     method: "POST",
     body: JSON.stringify({ name, email, password }),
   });
-  return result.user;
+  return result.pending;
 }
 
 export async function login(email: string, password: string, rememberMe = false): Promise<BusinessAuthUser> {

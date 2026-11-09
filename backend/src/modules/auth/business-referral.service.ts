@@ -19,18 +19,16 @@ export function publicIdForReferralCode(value: string): string | null {
 }
 
 /**
- * Called only when a NEW user account is created, inside the user-creation
- * database transaction. A failed or invalid referral rolls back signup.
+ * Check a submitted referral while it is still pending; this never creates a
+ * BusinessReferral or changes the business counter.
  */
-export async function attributeNewUserReferral(
-  tx: Pick<Prisma.TransactionClient, 'business' | 'businessReferral' | 'businessReferralCounter'>,
-  userId: string,
-  referralCode?: string,
-): Promise<void> {
-  if (!referralCode?.trim()) return;
+export async function findEligibleReferralBusiness(
+  db: Pick<Prisma.TransactionClient, 'business'>,
+  referralCode: string,
+) {
   const publicId = publicIdForReferralCode(referralCode);
   if (!publicId) throw new AppError(400, 'INVALID_REFERRAL_CODE', 'El código de referido no es válido.');
-  const business = await tx.business.findFirst({
+  const business = await db.business.findFirst({
     where: {
       publicId,
       lifecycleStatus: 'ACTIVE',
@@ -41,6 +39,20 @@ export async function attributeNewUserReferral(
     select: { id: true, createdById: true },
   });
   if (!business) throw new AppError(400, 'INVALID_REFERRAL_CODE', 'El código de referido no corresponde a un negocio disponible.');
+  return business;
+}
+
+/**
+ * Called only when a NEW user account is created, inside the user-creation
+ * database transaction. A failed or invalid referral rolls back signup.
+ */
+export async function attributeNewUserReferral(
+  tx: Pick<Prisma.TransactionClient, 'business' | 'businessReferral' | 'businessReferralCounter'>,
+  userId: string,
+  referralCode?: string,
+): Promise<void> {
+  if (!referralCode?.trim()) return;
+  const business = await findEligibleReferralBusiness(tx, referralCode);
   if (business.createdById === userId) throw new AppError(400, 'REFERRAL_SELF_NOT_ALLOWED', 'El propietario no puede ser su propio referido.');
   const inserted = await tx.businessReferral.createMany({
     data: { businessId: business.id, referredUserId: userId, validatedAt: new Date() },

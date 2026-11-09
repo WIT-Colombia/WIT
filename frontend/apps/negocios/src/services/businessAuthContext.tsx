@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
   type BusinessAuthUser,
+  type PendingBusinessRegistration,
   type BusinessSessionState,
   getRememberedEmail,
   login,
@@ -14,7 +15,7 @@ type BusinessAuthContextValue = {
   state: BusinessSessionState;
   user: BusinessAuthUser | null;
   signIn: (email: string, password: string, rememberMe: boolean) => Promise<BusinessAuthUser>;
-  signUp: (name: string, email: string, password: string) => Promise<BusinessAuthUser>;
+  signUp: (name: string, email: string, password: string) => Promise<PendingBusinessRegistration>;
   signOut: () => Promise<void>;
   rememberedEmail: string;
   refresh: () => Promise<BusinessSessionState>;

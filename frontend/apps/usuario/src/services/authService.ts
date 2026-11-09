@@ -27,7 +27,12 @@ export type AdultContentPreference = {
 
 type AuthResponse = { user: AuthUser; accessToken: string };
 type PasswordResetResponse = { user: AuthUser; accessToken?: string; autoLogin?: boolean };
-type RegisterResponse = { user: AuthUser };
+export type PendingRegistrationInfo = {
+  email: string;
+  verificationExpiresAt: string;
+  verificationEmailSent: boolean;
+};
+type RegisterResponse = { pending: PendingRegistrationInfo };
 type Credentials = { email: string; password: string };
 type MessageResponse = { message: string };
 
@@ -104,9 +109,34 @@ export async function isBusinessReferralRegistrationAvailable(): Promise<boolean
   }
 }
 
-export async function register(name: string, credentials: Credentials, referralCode?: string): Promise<AuthUser> {
-  const result = await requestJson<RegisterResponse>("/api/v1/auth/register", { method: "POST", body: JSON.stringify({ name, ...credentials, ...(referralCode?.trim() ? { referralCode: referralCode.trim().toUpperCase() } : {}) }) });
-  return result.user;
+/**
+ * Registration must never reach an older API that creates unverified Users
+ * and credits business referrals before mailbox confirmation.
+ */
+export async function isVerifiedFirstRegistrationAvailable(): Promise<boolean> {
+  try {
+    const response = await fetch(buildApiUrl("/api/v1/auth/registration-policy"), {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (!response.ok) return false;
+    const policy = await response.json() as { emailVerificationRequiredBeforeCreation?: boolean };
+    return policy.emailVerificationRequiredBeforeCreation === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function register(name: string, credentials: Credentials, referralCode?: string): Promise<PendingRegistrationInfo> {
+  if (!(await isVerifiedFirstRegistrationAvailable())) {
+    throw new ApiError(503, "REGISTRATION_UPGRADE_PENDING", "Estamos actualizando el registro seguro por correo. Intenta nuevamente más tarde.");
+  }
+  const result = await requestJson<RegisterResponse>("/api/v1/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name, ...credentials, ...(referralCode?.trim() ? { referralCode: referralCode.trim().toUpperCase() } : {}) }),
+  });
+  return result.pending;
 }
 
 export async function login(credentials: Credentials, rememberMe = true): Promise<AuthUser> {

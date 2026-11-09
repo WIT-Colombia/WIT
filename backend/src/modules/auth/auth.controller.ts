@@ -17,6 +17,7 @@ import { getPreferredLocation, savePreferredLocation } from './location.service.
 import { preferredLocationSchema } from './location.schemas.js';
 import { readOwnAvatar, uploadAvatar } from './avatar.service.js';
 import type { EmailApplication } from '../../shared/email/email-brand.js';
+import { emailActionLinkExpiresAt } from '../../shared/email/email-link-expiration.js';
 
 function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ path: PropertyKey[] }> } } }, value: unknown): T {
   const result = schema.safeParse(value);
@@ -148,12 +149,16 @@ export const googleCallbackController: RequestHandler = async (request, response
   }
 };
 
-export const registerController: RequestHandler = async (request, response, next) => { try { const result = await register(parse(registerSchema, request.body), meta(request), emailApplicationForRequest(request)); response.status(201).json(result); } catch (error) { next(error); } };
+export const registerController: RequestHandler = async (request, response, next) => { try { const result = await register(parse(registerSchema, request.body), meta(request), emailApplicationForRequest(request)); response.status(202).json(result); } catch (error) { next(error); } };
 export const loginController: RequestHandler = async (request, response, next) => { try { const input = parse(loginSchema, request.body); const result = await login(input, meta(request)); setRefreshCookie(response, result.refreshToken, input.rememberMe); const { refreshToken: _refreshToken, ...publicResult } = result; response.status(200).json(publicResult); } catch (error) { next(error); } };
 export const refreshController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (!token) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.'); const result = await refresh(token, meta(request)); response.setHeader('Cache-Control', 'no-store'); response.status(200).json(result); } catch (error) { next(error); } };
 export const logoutController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (token) await logout(token); clearRefreshCookie(response); response.status(204).send(); } catch (error) { next(error); } };
 export const meController: RequestHandler = async (request, response, next) => { try { response.status(200).json({ user: await getCurrentUser((request as AuthenticatedRequest).auth.userId) }); } catch (error) { next(error); } };
-export const requestVerificationController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US'), emailApplicationForRequest(request)); response.status(202).json({ message: 'Si la cuenta es elegible, recibirás un correo.' }); } catch (error) { next(error); } };
+export const requestVerificationController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US'), emailApplicationForRequest(request)); response.status(202).json({
+  message: 'Si la cuenta es elegible, recibirás un correo.',
+  // A generic 15-minute expiry for all addresses avoids account enumeration.
+  verificationExpiresAt: emailActionLinkExpiresAt(new Date()).toISOString(),
+}); } catch (error) { next(error); } };
 export const confirmEmailController: RequestHandler = async (request, response, next) => {
   try {
     const userId = await confirmEmail(parse(emailTokenSchema, request.body).token);
