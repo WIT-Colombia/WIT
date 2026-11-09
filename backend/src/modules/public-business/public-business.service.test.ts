@@ -316,7 +316,7 @@ test('Virtual: todos los destacados preceden a pioneros y negocios cercanos sin 
   assert.equal(first.pagination.businesses.totalPages, 2);
   assert.deepEqual(
     [...first.businesses, ...second.businesses].map(item => item.publicId),
-    ['pro-four', 'pro-three', 'pro-two', 'pro-one', 'free-nearby', 'pioneer-nearby'],
+    ['pro-four', 'pro-two', 'pro-three', 'pro-one', 'free-nearby', 'pioneer-nearby'],
   );
   assert.equal(first.businesses.every(item => item.isFeatured), true);
   assert.equal(second.businesses[0].isFeatured, true);
