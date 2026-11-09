@@ -9,6 +9,7 @@ import { confirmEmail, resetPassword, sendPasswordResetRequest, sendVerification
 import argon2 from 'argon2';
 import { clearRefreshCookie, getRefreshToken, setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
 import { env } from '../../config/env.js';
+import { emailApplicationForOrigin } from './email-application.js';
 import { createGoogleAuthorization, clearGoogleStateCookie, isAuthorizedAdminGoogleSub, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode, type GoogleApplication } from './google-oauth.service.js';
 import { createAdminPendingOAuth } from '../admin/admin-pending-oauth.service.js';
 import { createGoogleDiagnostic, logGoogleDiagnostic, type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
@@ -39,6 +40,8 @@ function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; d
 }
 
 const meta = (request: Parameters<RequestHandler>[0]) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
+const applicationForRequest = (request: Parameters<RequestHandler>[0]) =>
+  emailApplicationForOrigin(request.get('origin') ?? undefined, new URL(env.businessVerificationUrl).origin, env.trustedOrigins);
 
 function googleErrorCode(error: unknown): string {
   const publicError = error instanceof GoogleOAuthDiagnosticError ? error.publicError : error;
@@ -124,12 +127,21 @@ export const googleCallbackController: RequestHandler = async (request, response
   }
 };
 
-export const registerController: RequestHandler = async (request, response, next) => { try { const result = await register(parse(registerSchema, request.body), meta(request)); response.status(201).json(result); } catch (error) { next(error); } };
+export const registerController: RequestHandler = async (request, response, next) => { try { const result = await register(parse(registerSchema, request.body), meta(request), applicationForRequest(request)); response.status(201).json(result); } catch (error) { next(error); } };
 export const loginController: RequestHandler = async (request, response, next) => { try { const input = parse(loginSchema, request.body); const result = await login(input, meta(request)); setRefreshCookie(response, result.refreshToken, input.rememberMe); const { refreshToken: _refreshToken, ...publicResult } = result; response.status(200).json(publicResult); } catch (error) { next(error); } };
 export const refreshController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (!token) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.'); const result = await refresh(token, meta(request)); response.setHeader('Cache-Control', 'no-store'); response.status(200).json(result); } catch (error) { next(error); } };
 export const logoutController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (token) await logout(token); clearRefreshCookie(response); response.status(204).send(); } catch (error) { next(error); } };
 export const meController: RequestHandler = async (request, response, next) => { try { response.status(200).json({ user: await getCurrentUser((request as AuthenticatedRequest).auth.userId) }); } catch (error) { next(error); } };
-export const requestVerificationController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US')); response.status(202).json({ message: 'Si la cuenta es elegible, recibirás un correo.' }); } catch (error) { next(error); } };
+export const requestVerificationController: RequestHandler = async (request, response, next) => {
+  try {
+    const { email } = parse(emailRequestSchema, request.body);
+    const issuedAt = new Date();
+    await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US'), applicationForRequest(request), issuedAt);
+    // Always return a generic expiry, including for nonexistent or verified accounts.
+    const verificationExpiresAt = new Date(issuedAt.getTime() + env.emailVerificationTtlMinutes * 60 * 1000).toISOString();
+    response.status(202).json({ message: 'Si la cuenta es elegible, recibirás un correo.', verificationExpiresAt });
+  } catch (error) { next(error); }
+};
 export const confirmEmailController: RequestHandler = async (request, response, next) => {
   try {
     const userId = await confirmEmail(parse(emailTokenSchema, request.body).token);
@@ -144,7 +156,7 @@ export const confirmEmailController: RequestHandler = async (request, response, 
     }
   } catch (error) { next(error); }
 };
-export const requestPasswordResetController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendPasswordResetRequest(email.trim().toLocaleLowerCase('en-US')); response.status(202).json({ message: 'Si la cuenta existe, recibirás instrucciones para continuar.' }); } catch (error) { next(error); } };
+export const requestPasswordResetController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendPasswordResetRequest(email.trim().toLocaleLowerCase('en-US'), applicationForRequest(request)); response.status(202).json({ message: 'Si la cuenta existe, recibirás instrucciones para continuar.' }); } catch (error) { next(error); } };
 export const confirmPasswordResetController: RequestHandler = async (request, response, next) => {
   try {
     const input = parse(passwordResetConfirmSchema, request.body);

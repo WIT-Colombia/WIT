@@ -10,18 +10,23 @@ const sender: EmailSender = env.emailMode === 'resend'
   ? new ResendEmailSender(env.resendApiKey as string, env.emailApiUrl, env.emailFrom)
   : new DevelopmentEmailSender();
 
+function applicationBaseUrl(application: EmailApplication, path: 'verification' | 'reset'): string {
+  if (application === 'negocios') return path === 'verification' ? env.businessVerificationUrl : env.businessPasswordResetUrl;
+  return path === 'verification' ? env.emailVerificationUrl : env.passwordResetUrl;
+}
+
 /** Sends a fully rendered transactional message through the configured provider. */
 export async function sendTransactionalEmail(message: EmailMessage): Promise<void> {
   await sender.send(message);
 }
 
 export async function sendVerificationEmail(to: string, token: string, displayName?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  const message = renderVerificationEmail({ to, token, displayName, baseUrl: env.emailVerificationUrl, logoUrl: env.emailLogoUrl }, application);
+  const message = renderVerificationEmail({ to, token, displayName, baseUrl: applicationBaseUrl(application, 'verification'), logoUrl: env.emailLogoUrl }, application);
   await sendTransactionalEmail({ ...message, eventType: 'email_verification', idempotencyKey: `email_verification/${createHash('sha256').update(token).digest('hex')}` });
 }
 
 export async function sendPasswordResetEmail(to: string, token: string, displayName?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  const message = renderPasswordResetEmail({ to, token, displayName, baseUrl: env.passwordResetUrl, logoUrl: env.emailLogoUrl }, application);
+  const message = renderPasswordResetEmail({ to, token, displayName, baseUrl: applicationBaseUrl(application, 'reset'), logoUrl: env.emailLogoUrl }, application);
   await sendTransactionalEmail({ ...message, eventType: 'password_reset', idempotencyKey: `password_reset/${createHash('sha256').update(token).digest('hex')}` });
 }
 
