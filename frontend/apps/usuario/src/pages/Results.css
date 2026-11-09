@@ -477,7 +477,7 @@
 .results-tabs-scroll { touch-action: pan-x pan-y; }
 
 
-/* Buscador geográfico opcional: nunca oculta establecimientos sin selección explícita. */
+/* Buscador geográfico: 1 km predeterminado; Ciudad sin GPS y Virtual explícitos. */
 .results-main > .results-distance-filter{order:5}
 .results-main > .results-tabs{order:6}
 .results-main > .results-request-state{order:7}
