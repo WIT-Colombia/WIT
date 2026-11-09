@@ -145,7 +145,12 @@ export default function Results() {
     return () => { current = false; };
   }, [query, category, selection, radiusKm, searchScope, location?.name, location?.context, demoMode, searchKey, retryIndex]);
 
-  const orderedItems = useMemo(() => prioritizeFeaturedByDistance(items, 3), [items]);
+  // The virtual API already orders ALL featured businesses before the rest.
+  // Never reapply physical-distance/pioneer ranking or limit featured spots to three.
+  const orderedItems = useMemo(
+    () => searchScope === "virtual" ? items : prioritizeFeaturedByDistance(items, 3),
+    [items, searchScope],
+  );
   const visibleBusinesses = orderedItems.slice(0, businessesVisibleCount);
   const visibleProducts = matchingProducts.slice(0, productsVisibleCount);
   const visibleServices = matchingServices.slice(0, servicesVisibleCount);
