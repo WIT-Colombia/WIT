@@ -85,7 +85,7 @@ ${brand.name} · ${tagline}`,
 export function renderVerificationEmail(input: TemplateInput, application: EmailApplication = 'usuario'): EmailMessage {
   const url = linkFor(input.baseUrl, input.token);
   const brand = emailBrandFor(application);
-  return { to: input.to, subject: `Verifica tu correo electrónico de ${brand.name}`, ...renderBase('Verifica tu correo electrónico', `Confirma tu correo para completar la activación de tu cuenta de ${brand.name}.`, 'Verificar correo', url, '24 horas', input.displayName, application, input.logoUrl) };
+  return { to: input.to, subject: `Verifica tu correo electrónico de ${brand.name}`, ...renderBase('Verifica tu correo electrónico', `Confirma tu correo para completar la activación de tu cuenta de ${brand.name}.`, 'Verificar correo', url, '15 minutos', input.displayName, application, input.logoUrl) };
 }
 
 export function renderPasswordResetEmail(input: TemplateInput, application: EmailApplication = 'usuario'): EmailMessage {
