@@ -19,7 +19,7 @@ Todos los flujos de prueba sustituyen `fetch`; no se envían correos reales.
 
 Configurar los valores anteriores como secreto/variable en el entorno de despliegue, sin guardarlos en Git. `EMAIL_MODE=resend` requiere `RESEND_API_KEY`. Antes de activar el envío, verificar el dominio en Resend y mantener `EMAIL_FROM` dentro de un dominio verificado.
 
-En esta instalación, el archivo real es `/opt/xamuko/api/backend/.env` y permanece fuera del artefacto de Git, con permisos restringidos. La preparación segura consiste en editar ese archivo desde una sesión SSM autorizada, conservar todas las variables existentes y establecer únicamente `EMAIL_MODE=resend` y `EMAIL_FROM="XAMUKO <notificaciones@xamuko.com>"`; la clave se añade como `RESEND_API_KEY` sin mostrarla en la consola. Después se debe validar el formato, reiniciar `xamuko-api` durante una ventana acordada y comprobar `/api/v1/health`. No se debe poner la clave en GitHub Actions porque el transporte actual de despliegue por polling no la necesita.
+En esta instalación, el archivo real es `/opt/xamuko/deploy/current/xamuko-api.env` y permanece fuera del artefacto de Git, con permisos restringidos. La preparación segura consiste en editar ese archivo desde una sesión SSM autorizada, conservar todas las variables existentes y establecer únicamente `EMAIL_MODE=resend` y `EMAIL_FROM="XAMUKO <notificaciones@xamuko.com>"`; la clave se añade como `RESEND_API_KEY` sin mostrarla en la consola. Después se debe validar el formato, reiniciar `xamuko-api` durante una ventana acordada y comprobar `/api/v1/health`. No se debe poner la clave en GitHub Actions porque el transporte actual de despliegue por polling no la necesita.
 
 La consulta DNS pública observada el 28-10-2026 muestra SPF de Hostinger (`include:_spf.mail.hostinger.com`), MX de Hostinger y un registro TXT en `resend._domainkey.xamuko.com`. No se puede confirmar desde DNS si ese DKIM corresponde al proyecto Resend; hay que comparar el valor que muestra Resend. No se modificó DNS.
 
@@ -37,7 +37,7 @@ No se encontraron secretos ni variables de Actions con `gh secret list`/`gh vari
 
 Una sola `RESEND_API_KEY` sirve para ambas aplicaciones; los cuatro enlaces son **rutas**, no claves independientes.
 
-Configurar **exclusivamente en el backend de producción** (`/opt/xamuko/api/backend/.env` mediante sesión SSM autorizada, sin guardar secretos en Git ni Cloudflare Pages):
+Configurar **exclusivamente en el backend de producción** (`/opt/xamuko/deploy/current/xamuko-api.env` mediante sesión SSM autorizada, sin guardar secretos en Git ni Cloudflare Pages):
 
 ```dotenv
 EMAIL_MODE=resend
@@ -52,6 +52,14 @@ PASSWORD_RESET_URL_NEGOCIOS=https://business.xamuko.com/recuperar
 
 Conservar `AUTH_TRUSTED_ORIGINS` e incluir `https://user.xamuko.com` y `https://business.xamuko.com` sin sobrescribir los otros orígenes existentes. Verificar el dominio `xamuko.com` y el remitente `notificaciones@xamuko.com` en el panel Resend. Después, reiniciar `xamuko-api` durante una ventana de mantenimiento y probar con cuentas nuevas en cada aplicación. El conector GitHub no lee ni cambia el contenido de `.env` en EC2; **no declarar Resend operativo sin prueba real**.
 
-Al registrarse, el backend devuelve `user.verificationExpiresAt` (ISO 8601) solamente si el correo se envió sin error. El contador en Usuario/Business calcula el tiempo restante respecto de esa fecha, aunque la pestaña se refresque. Un reenvío de un enlace aún vigente invalida el anterior sin ampliar los 15 minutos originales. Por seguridad, la ruta pública de reenvío continúa devolviendo una respuesta genérica sin exponer si la cuenta existe.
+Al registrarse, el backend devuelve `user.verificationExpiresAt` (ISO 8601) solamente si el correo se envió sin error. El contador en Usuario/Business calcula el tiempo restante respecto de esa fecha, aunque la pestaña se refresque. Cada reenvío correcto genera un token nuevo de un solo uso e invalida en la misma transacción los enlaces anteriores de esa cuenta, aunque todavía no hayan vencido. El contador de Usuario y Business se reinicia con una nueva vigencia de 15 minutos calculada por el backend. Los enlaces emitidos antes de este despliegue también quedan sujetos al máximo de 15 minutos desde su creación: no conservan su antigua vigencia de 24 horas.
+
+La ruta de reenvío devuelve el mismo mensaje y una fecha de vencimiento calculada del mismo modo para **cualquier correo sintácticamente válido**, exista o no una cuenta elegible. Esto evita revelar la existencia de cuentas por el contenido de la respuesta. El frontend reinicia el contador solo al recibir una respuesta satisfactoria del backend.
 
 **Limitación pendiente:** El esquema actual continúa creando `User` y `AuthIdentity` antes de confirmar. Los 15 minutos invalidan el enlace, pero **no eliminan automáticamente el usuario no verificado** ni permiten por sí mismos repetir el registro con el mismo correo. Esto requiere una futura migración de solicitudes de registro pendientes, separada y probada antes de activarse.
+
+## Despliegue observado el 8 de noviembre de 2026
+
+La producción utiliza `/opt/xamuko/deploy/current/xamuko-api.env` (archivo `600 root:root`), y `systemd` carga dicho fichero. Cada release copia la configuración de la versión anterior; la ruta `current` es un symlink a la release activa. Se confirmó `EMAIL_MODE=resend` y la existencia de `RESEND_API_KEY` sin exponer el secreto. El usuario instaló las cinco variables nuevas y preservó los permisos.
+
+El archivo de versión válido en esta instalación es `/opt/xamuko/deploy/current/backend/RELEASE_COMMIT` (no `/opt/xamuko/deploy/current/COMMIT`). Las herramientas de despliegue por GitHub Release están instaladas, pero `GITHUB_RELEASE_POLL_ENABLED` no existe y el temporizador automático está inactivo. No asumir que fusionar el PR despliega la API. Activación del polling o despliegue manual requieren verificación específica y seguimiento del estado del backend antes de validar frontend contra producción.

@@ -5,7 +5,7 @@ import { consumeVerificationToken } from './verification-confirmation.js';
 
 const token = 'synthetic-verification-token-only-for-tests';
 function fixture(overrides = {}) {
-  const record = { id: 'token-id', userId: 'user-id', type: 'EMAIL_VERIFICATION', consumedAt: null as Date | null, expiresAt: new Date(Date.now() + 60_000), ...overrides };
+  const record = { id: 'token-id', userId: 'user-id', type: 'EMAIL_VERIFICATION', consumedAt: null as Date | null, createdAt: new Date(), expiresAt: new Date(Date.now() + 60_000), ...overrides };
   let verifiedAt: Date | null = null;
   let queriedHash = '';
   const transaction = {
@@ -47,5 +47,15 @@ test('missing tokens cannot verify an identity', async () => {
   const f = fixture();
   f.transaction.authToken.findUnique = (async () => null) as unknown as typeof f.transaction.authToken.findUnique;
   await assert.rejects(consumeVerificationToken(f.transaction, token), { code: 'INVALID_AUTH_TOKEN' });
+  assert.equal(f.verified(), null);
+});
+
+test('legacy 24-hour links older than 15 minutes are rejected even if expiresAt is in the future', async () => {
+  const f = fixture({
+    createdAt: new Date(Date.now() - 16 * 60_000),
+    expiresAt: new Date(Date.now() + 23 * 60 * 60_000),
+  });
+  await assert.rejects(consumeVerificationToken(f.transaction, token), { code: 'INVALID_AUTH_TOKEN' });
+  assert.equal(f.record.consumedAt, null);
   assert.equal(f.verified(), null);
 });
