@@ -19,7 +19,7 @@ export function getPendingVerification(): PendingVerification {
   try {
     const stored = window.sessionStorage.getItem(PENDING_EMAIL_KEY) ?? "";
     // Backwards compatibility for any pending registration from the old interface.
-    if (validEmail(stored)) return { email: stored.trim().toLocaleLowerCase("en-US"), expiresAt: null, emailSent: true };
+    if (!stored.trimStart().startsWith("{") && validEmail(stored)) return { email: stored.trim().toLocaleLowerCase("en-US"), expiresAt: null, emailSent: true };
     const parsed: unknown = JSON.parse(stored);
     if (!parsed || typeof parsed !== "object" || !("email" in parsed)) throw new Error("No registration");
     const record = parsed as Record<string, unknown>;
