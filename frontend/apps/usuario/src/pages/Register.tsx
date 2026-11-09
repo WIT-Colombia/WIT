@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../services/httpClient";
 import { validateEmail } from "../services/emailValidation";
-import { getRememberedEmail, startGoogleLogin } from "../services/authService";
+import { getRememberedEmail, startGoogleLogin, isBusinessReferralRegistrationAvailable } from "../services/authService";
 import { isValidBusinessReferralCode } from "../utils/businessReferralCode";
 import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
 import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
@@ -78,6 +78,10 @@ export default function Register() {
     setRequiresVerification(false);
     try {
       if (mode === "register") {
+        if (referralCode.trim() && !(await isBusinessReferralRegistrationAvailable())) {
+          setMessage("El registro con referidos aún no está disponible en el servidor. Puedes esperar a que lo activemos o borrar el código para crear tu cuenta sin referido.");
+          return;
+        }
         const created = await register(name.trim(), email.trim(), password, referralCode.trim() || undefined);
         rememberPendingVerificationEmail(email.trim(), created.verificationExpiresAt, created.verificationEmailSent !== false);
         navigate("/verify-email?pending=1", { replace: true });
@@ -124,7 +128,7 @@ export default function Register() {
           </div>
           {message && <p className="register-status" role="alert">{message}</p>}
           <div className="register-social-options">
-            <button type="button" className="register-provider-button" onClick={() => { if (registration && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; } if (registration && referralError) { setMessage("Revisa el código de referido."); return; } startGoogleLogin({ returnTo, consent: registration ? accepted : true, rememberMe, referralCode: registration ? referralCode.trim() || undefined : undefined }); }}>
+            <button type="button" className="register-provider-button" onClick={async () => { if (registration && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; } if (registration && referralError) { setMessage("Revisa el código de referido."); return; } if (registration && referralCode.trim() && !(await isBusinessReferralRegistrationAvailable())) { setMessage("El registro con referidos aún no está disponible en el servidor. Puedes esperar a que lo activemos o borrar el código para crear tu cuenta sin referido."); return; } startGoogleLogin({ returnTo, consent: registration ? accepted : true, rememberMe, referralCode: registration ? referralCode.trim() || undefined : undefined }); }}>
               <GoogleIcon/><span>Continuar con Google</span>
             </button>
           </div>
