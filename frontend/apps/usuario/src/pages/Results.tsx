@@ -121,7 +121,7 @@ export default function Results() {
     searchUniversal({ query, category, ...searchLocationParams, businessPageSize: 50, productPageSize: 50, servicePageSize: 50 })
       .then(async ({ businesses: foundBusinesses, products: foundProducts, services: foundServices, pagination }) => {
         if (!current) return;
-        const hydratedBusinesses = await enrichBusinesses(foundBusinesses, searchScope === "virtual" ? undefined : selection?.coordinates);
+        const hydratedBusinesses = await enrichBusinesses(foundBusinesses, selection?.coordinates);
         if (!current) return;
         setItems(hydratedBusinesses);
         setMatchingProducts(foundProducts);

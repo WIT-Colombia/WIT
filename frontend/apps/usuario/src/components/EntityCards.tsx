@@ -26,6 +26,10 @@ function formatDistance(distanceKm: number): string {
 }
 
 function businessProximityLabel(business: Business): string {
+  const types = business.modalityTypes ?? [];
+  const hasPhysicalLocation = types.includes("PHYSICAL");
+  const isVirtualOnly = types.includes("VIRTUAL") && !hasPhysicalLocation && !types.includes("DELIVERY");
+  if (isVirtualOnly) return "Virtual";
   return getBusinessCoordinates(business) && Number.isFinite(business.distanceKm) ? `A ${formatDistance(business.distanceKm)}` : "Sin distancia";
 }
 

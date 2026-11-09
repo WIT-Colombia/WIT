@@ -957,3 +957,18 @@
 .user-auth-card .register-status + .register-social-options {
   margin-top: 12px;
 }
+
+/* Invitation codes from business profiles are informational, never editable. */
+.user-auth-referral-code {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 15px;
+  border: 1px solid var(--border-color, #d7dce5);
+  border-radius: 14px;
+  background: #f5f7fb;
+  color: #333a4b;
+  font: inherit;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
