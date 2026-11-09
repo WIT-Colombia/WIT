@@ -452,10 +452,37 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   // Cuando el usuario solicita un radio, los negocios sin coordenadas públicas
   // verificables quedan fuera (distanceKm devuelve Infinity). Sin radio, se
   // conserva el comportamiento actual y no se aplica ningún filtro geográfico.
-  const filteredBusinesses = businessItems.filter(({ item, rank }) => categoryMatches(item) && inSelectedCity(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId))).sort((a, b) => pioneerPriority(b.item) - pioneerPriority(a.item) || featuredPriority(b.item) - featuredPriority(a.item) || b.rank - a.rank || sortNearby(a.item, b.item) || String(a.item.publicId).localeCompare(String(b.item.publicId))).map(({ item }) => summary(item));
+  const filteredBusinesses = businessItems
+    .filter(({ item, rank }) => categoryMatches(item) && inSelectedCity(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId)))
+    .sort((a, b) => input.scope === 'virtual'
+      // In Virtual, ALL featured businesses go first irrespective of location or pioneer status.
+      // Stable relevance/name/id tie-breakers keep server pagination deterministic.
+      ? featuredPriority(b.item) - featuredPriority(a.item) || b.rank - a.rank || String(a.item.name).localeCompare(String(b.item.name), 'es') || String(a.item.publicId).localeCompare(String(b.item.publicId))
+      : pioneerPriority(b.item) - pioneerPriority(a.item) || featuredPriority(b.item) - featuredPriority(a.item) || b.rank - a.rank || sortNearby(a.item, b.item) || String(a.item.publicId).localeCompare(String(b.item.publicId)))
+    .map(({ item }) => summary(item));
   const mapOffer = (item: any) => ({ ...offer(item.business.publicId, item), business: { publicId: item.business.publicId, name: item.business.name, location: location(item.business.location) } });
-  const filteredProducts = products.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business)).sort((a: any, b: any) => sortNearby(a.business, b.business)).map(mapOffer);
-  const filteredServices = services.filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business)).sort((a: any, b: any) => sortNearby(a.business, b.business)).map(mapOffer);
+  // Sort virtual offers by the actual displayed price (including an active promotion).
+  // Offers without a numeric price go last; tie-breakers are stable between pages.
+  const virtualPrice = (item: any): number => {
+    const amount = item.price?.amount;
+    if (amount === null || amount === undefined || amount === '') return Number.POSITIVE_INFINITY;
+    const numeric = Number(amount);
+    return Number.isFinite(numeric) && numeric >= 0 ? numeric : Number.POSITIVE_INFINITY;
+  };
+  const sortVirtualPrice = (a: any, b: any) =>
+    virtualPrice(a) - virtualPrice(b) || String(a.name).localeCompare(String(b.name), 'es') || String(a.id).localeCompare(String(b.id));
+  const filteredProducts = products
+    .filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
+    .sort((a: any, b: any) => input.scope === 'virtual' ? 0 : sortNearby(a.business, b.business))
+    .map(mapOffer);
+  const filteredServices = services
+    .filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
+    .sort((a: any, b: any) => input.scope === 'virtual' ? 0 : sortNearby(a.business, b.business))
+    .map(mapOffer);
+  if (input.scope === 'virtual') {
+    filteredProducts.sort(sortVirtualPrice);
+    filteredServices.sort(sortVirtualPrice);
+  }
   const businessResult = universalPagination(filteredBusinesses, input.businessPage, input.businessPageSize);
   const productResult = universalPagination(filteredProducts, input.productPage, input.productPageSize);
   const serviceResult = universalPagination(filteredServices, input.servicePage, input.servicePageSize);
