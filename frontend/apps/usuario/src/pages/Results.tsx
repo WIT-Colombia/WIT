@@ -25,6 +25,30 @@ function createDemoResults() {
   return { businesses: generatedBusinesses, products: generatedProducts, services: generatedServices };
 }
 
+const radiusOptions = [3, 5, 10, 25, 50] as const;
+function selectedRadius(value: string | null): number | undefined {
+  const radius = Number(value);
+  return value && radiusOptions.some(option => option === radius) ? radius : undefined;
+}
+
+async function enrichBusinesses(businesses: Business[], coordinates?: { lat: number; lng: number }): Promise<Business[]> {
+  return Promise.all(businesses.map(async (business) => {
+    let rating = business.rating;
+    let reviewCount = business.reviewCount;
+    try {
+      const response = await listPublicReviews(business.id, 1, 1);
+      rating = response.summary?.average ?? rating;
+      reviewCount = response.summary?.total ?? reviewCount;
+    } catch { /* A review outage must not hide a published business. */ }
+    return {
+      ...business, rating, reviewCount,
+      distanceKm: coordinates && business.coordinates
+        ? distanceBetweenCoordinates(coordinates, business.coordinates)
+        : Number.POSITIVE_INFINITY,
+    };
+  }));
+}
+
 export default function Results() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -46,6 +70,10 @@ export default function Results() {
   const [totalPages, setTotalPages] = useState({ businesses: 1, products: 1, services: 1 });
   const [resultTotals, setResultTotals] = useState({ businesses: 0, products: 0, services: 0 });
   const [loadedSearchKey, setLoadedSearchKey] = useState<string | null>(null);
+  const [searchStatus, setSearchStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [retryIndex, setRetryIndex] = useState(0);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [activeTab, setActiveTab] = useState<"businesses" | "products" | "services">("businesses");
   const manualTabSelection = useRef(false);
   const loadingSection = useRef<"businesses" | "products" | "services" | null>(null);
@@ -54,51 +82,38 @@ export default function Results() {
   const servicesSectionRef = useRef<HTMLElement>(null);
   const query = params.get("q") ?? "";
   const category = params.get("category") ?? "";
+  const configuredRadius = selectedRadius(params.get("radiusKm"));
   const demoMode = import.meta.env.VITE_E2E_REAL_ONLY !== "true" && import.meta.env.DEV && params.get("demo") === "150";
   const { selection } = useLocationContext();
   const location = selection?.locality ?? null;
-  // Real searches must always reach the public API. The previous location/demo
-  // gate skipped the request in E2E and made every search appear empty.
-  const canShowCatalog = true;
+  const radiusKm = selection?.coordinates ? configuredRadius : undefined;
   const searchKey = params.toString();
+  const requestIdentity = `${searchKey}|loc:${selection?.coordinates?.lat ?? ""},${selection?.coordinates?.lng ?? ""}`;
+  const currentRequest = useRef(requestIdentity);
+  currentRequest.current = requestIdentity;
 
   useEffect(() => {
     let current = true;
+    setSearchStatus("loading");
+    setLoadedSearchKey(null);
+    setLoadMoreError(null);
+    setLoadingMore(false);
+    loadingSection.current = null;
     if (demoMode) {
       const demo = createDemoResults();
       setItems(demo.businesses); setMatchingProducts(demo.products); setMatchingServices(demo.services);
       setResultTotals({ businesses: 50, products: 50, services: 50 }); setTotalPages({ businesses: 1, products: 1, services: 1 }); setPages({ businesses: 1, products: 1, services: 1 });
       setLoadedSearchKey(searchKey);
-      return;
-    }
-    if (!canShowCatalog) {
-      setItems([]);
-      setMatchingProducts([]);
-      setMatchingServices([]);
-      setResultTotals({ businesses: 0, products: 0, services: 0 });
-      setTotalPages({ businesses: 1, products: 1, services: 1 });
-      setLoadedSearchKey(searchKey);
+      setSearchStatus("ready");
       return;
     }
     manualTabSelection.current = false;
-    searchUniversal({ query, category, latitude: selection?.coordinates?.lat, longitude: selection?.coordinates?.lng, businessPageSize: 50, productPageSize: 50, servicePageSize: 50 })
+    searchUniversal({ query, category, latitude: selection?.coordinates?.lat, longitude: selection?.coordinates?.lng, radiusKm, businessPageSize: 50, productPageSize: 50, servicePageSize: 50 })
       .then(async ({ businesses: foundBusinesses, products: foundProducts, services: foundServices, pagination }) => {
         if (!current) return;
-        const ratedBusinesses = await Promise.all(foundBusinesses.map(async (business) => {
-          try {
-            const response = await listPublicReviews(business.id, 1, 1);
-            return {
-              ...business,
-              rating: response.summary?.average ?? business.rating,
-              reviewCount: response.summary?.total ?? business.reviewCount,
-            };
-          } catch {
-            return business;
-          }
-        }));
+        const hydratedBusinesses = await enrichBusinesses(foundBusinesses, selection?.coordinates);
         if (!current) return;
-        const userCoordinates = selection?.coordinates;
-        setItems(ratedBusinesses.map((business) => ({ ...business, distanceKm: userCoordinates && business.coordinates ? distanceBetweenCoordinates(userCoordinates, business.coordinates) : Number.POSITIVE_INFINITY })));
+        setItems(hydratedBusinesses);
         setMatchingProducts(foundProducts);
         setMatchingServices(foundServices);
         setPages({ businesses: 1, products: 1, services: 1 });
@@ -106,12 +121,18 @@ export default function Results() {
         const totals = { businesses: pagination?.businesses?.total ?? foundBusinesses.length, products: pagination?.products?.total ?? foundProducts.length, services: pagination?.services?.total ?? foundServices.length };
         setResultTotals(totals);
         setLoadedSearchKey(searchKey);
+        setSearchStatus("ready");
         // Choose the first non-empty category only when this search response
         // completes. Manual tab changes remain untouched until the next search.
         if (!manualTabSelection.current) setActiveTab(totals.businesses > 0 ? "businesses" : totals.products > 0 ? "products" : "services");
-      }).catch(() => { if (current) { setItems([]); setMatchingProducts([]); setMatchingServices([]); setResultTotals({ businesses: 0, products: 0, services: 0 }); setLoadedSearchKey(searchKey); } });
+      }).catch(() => { if (current) {
+        setItems([]); setMatchingProducts([]); setMatchingServices([]);
+        setResultTotals({ businesses: 0, products: 0, services: 0 });
+        setLoadedSearchKey(null);
+        setSearchStatus("error");
+      } });
     return () => { current = false; };
-  }, [query, category, canShowCatalog, selection, demoMode, searchKey]);
+  }, [query, category, selection, radiusKm, demoMode, searchKey, retryIndex]);
 
   const orderedItems = useMemo(() => prioritizeFeaturedByDistance(items, 3), [items]);
   const visibleBusinesses = orderedItems.slice(0, businessesVisibleCount);
