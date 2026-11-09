@@ -7,8 +7,9 @@ import type { EmailApplication } from '../../shared/email/email-brand.js';
 import { sendVerificationEmail, sendWelcomeEmail } from '../../shared/email/email-service.js';
 import { emailActionLinkExpiresAt } from '../../shared/email/email-link-expiration.js';
 import type { RegisterInput } from './auth.schemas.js';
-import { attributeNewUserReferral, findEligibleReferralBusiness } from './business-referral.service.js';
-import { createAvailableNickname, isNicknameCollision } from './nickname.service.js';
+import { findEligibleReferralBusiness } from './business-referral.service.js';
+import { createUserFromConfirmedPending } from './pending-registration-confirmation.js';
+import { isNicknameCollision } from './nickname.service.js';
 
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const freshToken = () => randomBytes(48).toString('base64url');
@@ -91,40 +92,9 @@ export async function confirmPendingRegistration(token: string): Promise<string 
 
   for (let attempt = 0; attempt < 8; attempt += 1) {
     try {
-      const userId = await prisma.$transaction(async (tx) => {
-        const now = new Date();
-        const consumed = await tx.pendingEmailRegistration.deleteMany({
-          where: { id: pending.id, tokenHash: hashToken(token), expiresAt: { gt: now } },
-        });
-        if (consumed.count !== 1) throw new AppError(400, 'INVALID_AUTH_TOKEN', 'El enlace no es válido o ya expiró.');
-
-        const nickname = await createAvailableNickname(tx, pending.displayName);
-        const user = await tx.user.create({
-          data: {
-            displayName: pending.displayName,
-            nickname,
-            emailNormalized: pending.emailNormalized,
-            authIdentities: {
-              create: {
-                provider: 'EMAIL', providerSubject: pending.emailNormalized,
-                passwordHash: pending.passwordHash, verifiedAt: now,
-              },
-            },
-          },
-          select: { id: true },
-        });
-
-        if (pending.referralCode) {
-          try {
-            // The business may have become unavailable after the invitation.
-            // Do not block the verified person's account in that case.
-            await attributeNewUserReferral(tx, user.id, pending.referralCode);
-          } catch (error) {
-            if (!(error instanceof AppError) || !['INVALID_REFERRAL_CODE', 'REFERRAL_SELF_NOT_ALLOWED'].includes(error.code)) throw error;
-          }
-        }
-        return user.id;
-      });
+      const userId = await prisma.$transaction((tx) =>
+        createUserFromConfirmedPending(tx, pending, hashToken(token)),
+      );
 
       // Never welcome someone whose email has not actually been verified.
       try {
