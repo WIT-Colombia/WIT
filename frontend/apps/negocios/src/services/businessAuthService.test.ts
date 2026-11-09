@@ -79,7 +79,7 @@ describe("Business: registro condicionado a verificar el correo", () => {
   });
 
   it("devuelve la solicitud pendiente sin crear sesión ni usuario", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => new Response(
       JSON.stringify({ emailVerificationRequiredBeforeCreation: true }),
       { status: 200, headers: { "content-type": "application/json" } },
     )));
