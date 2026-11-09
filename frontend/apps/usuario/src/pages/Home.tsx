@@ -21,7 +21,7 @@ import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { createAnalyticsInteractionId } from "../services/analyticsService";
 import { listPublicReviews } from "../services/reviewsService";
 import xamukoLocalHero from "../assets/xamuko-local-hero.avif";
-import { isHorizontalDominantGesture } from "../utils/gestureDirection";
+import { isHorizontalDominantGesture, isMouseDragPointer } from "../utils/gestureDirection";
 import "./Home.css";
 import "./HomeChanges.css";
 import "./HomeAdjustments.css";
@@ -399,7 +399,7 @@ export default function Home() {
   }
 
   function startBannerDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     bannerDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: event.currentTarget.scrollLeft, moved: false };
     pauseBannerForInteraction();
     setBannerDragging(false);
@@ -433,7 +433,7 @@ export default function Home() {
   }
 
   function startFeaturedDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = featuredListRef.current;
     if (!list) return;
     featuredDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
@@ -464,7 +464,7 @@ export default function Home() {
   }
 
   function startCategoryDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = categoryListRef.current;
     if (!list) return;
     categoryDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
@@ -495,7 +495,7 @@ export default function Home() {
   }
 
   function startNearbyDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = nearbyListRef.current;
     if (!list) return;
     nearbyDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
@@ -526,7 +526,7 @@ export default function Home() {
   }
 
   function startOffersDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = offersListRef.current;
     if (!list) return;
     offersDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
