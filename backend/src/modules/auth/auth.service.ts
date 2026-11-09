@@ -10,6 +10,7 @@ import { sendWelcomeEmail } from '../../shared/email/email-service.js';
 import { shouldRequireEmailVerification } from './email-login-policy.js';
 import type { EmailApplication } from '../../shared/email/email-brand.js';
 import { createAvailableNickname, isNicknameCollision } from './nickname.service.js';
+import { attributeNewUserReferral } from './business-referral.service.js';
 
 const invalidCredentials = () => new AppError(401, 'INVALID_CREDENTIALS', 'Correo o contraseña incorrectos.');
 const unverifiedEmail = () => new AppError(403, 'EMAIL_NOT_VERIFIED', 'Verifica tu correo electrónico antes de iniciar sesión.');
@@ -42,16 +43,20 @@ export async function register(input: RegisterInput, _requestMeta?: { userAgent?
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const nickname = await createAvailableNickname(prisma, input.name.trim());
     try {
-      const user = await prisma.user.create({
-        data: {
-          displayName: input.name.trim(),
-          nickname,
-          emailNormalized,
-          authIdentities: {
-            create: { provider: 'EMAIL', providerSubject: emailNormalized, passwordHash },
+      const user = await prisma.$transaction(async (tx) => {
+        const created = await tx.user.create({
+          data: {
+            displayName: input.name.trim(),
+            nickname,
+            emailNormalized,
+            authIdentities: {
+              create: { provider: 'EMAIL', providerSubject: emailNormalized, passwordHash },
+            },
           },
-        },
-        select: { id: true, publicId: true, displayName: true, emailNormalized: true },
+          select: { id: true, publicId: true, displayName: true, emailNormalized: true },
+        });
+        await attributeNewUserReferral(tx, created.id, input.referralCode);
+        return created;
       });
       const result = { user: await getCurrentUser(user.id) };
       let verificationEmailSent = true;
