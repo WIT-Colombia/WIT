@@ -85,6 +85,25 @@ export async function requestBlobWithSession(path: string): Promise<Blob> {
   return response.blob();
 }
 
+/**
+ * The Usuario frontend can deploy before AWS. Never submit referralCode to an
+ * older strict backend, where it would reject an otherwise valid signup.
+ */
+export async function isBusinessReferralRegistrationAvailable(): Promise<boolean> {
+  try {
+    const response = await fetch(buildApiUrl("/api/v1/auth/referrals/availability"), {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (!response.ok) return false;
+    const result = await response.json() as { enabled?: boolean };
+    return result.enabled === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function register(name: string, credentials: Credentials, referralCode?: string): Promise<AuthUser> {
   const result = await requestJson<RegisterResponse>("/api/v1/auth/register", { method: "POST", body: JSON.stringify({ name, ...credentials, ...(referralCode?.trim() ? { referralCode: referralCode.trim().toUpperCase() } : {}) }) });
   return result.user;
