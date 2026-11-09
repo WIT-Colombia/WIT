@@ -228,6 +228,91 @@ test('la búsqueda universal respeta q, radio geográfico y paginación tras fil
   assert.equal(noRadius.pagination.businesses.page, 2);
 });
 
+test('scope virtual exige modalidad VIRTUAL ACTIVE para negocios, productos y servicios', async () => {
+  const virtualBusiness = {
+    ...publicBusiness, publicId: 'virtual-001', name: 'Panadería Online',
+    subscriptions: [], brand: { pioneer: null },
+  };
+  const physicalBusiness = { ...virtualBusiness, publicId: 'local-001', name: 'Panadería Local' };
+  const queriedBusinessWhere: any[] = [];
+  const queriedOfferWhere: any[] = [];
+  const makeOffer = (business: typeof virtualBusiness, kind: 'PRODUCT' | 'SERVICE') => ({
+    ...publicBusiness.offers[0],
+    id: `${business.publicId}-${kind}`, kind, name: kind === 'PRODUCT' ? 'Pan' : 'Reparto',
+    description: null, category: publicBusiness.category, photos: [], promotions: [],
+    business: {
+      publicId: business.publicId, name: business.name, description: business.description,
+      category: business.category, location: business.location,
+    },
+  });
+  const db = {
+    business: { findMany: async ({ where }: any) => {
+      queriedBusinessWhere.push(where);
+      return where.modalities?.some?.status === 'ACTIVE' && where.modalities.some.type === 'VIRTUAL'
+        ? [virtualBusiness] : [virtualBusiness, physicalBusiness];
+    } },
+    businessOffer: { findMany: async ({ where }: any) => {
+      queriedOfferWhere.push(where);
+      const source = where.business.modalities?.some?.type === 'VIRTUAL' ? [virtualBusiness] : [virtualBusiness, physicalBusiness];
+      return source.map(business => makeOffer(business, where.kind));
+    } },
+  } as any;
+  const query = parseUniversalSearchInput({ scope: 'virtual' });
+  const result = await searchPublicUniversal(query, db);
+  assert.equal(queriedBusinessWhere[0].modalities.some.type, 'VIRTUAL');
+  assert.equal(queriedBusinessWhere[0].modalities.some.status, 'ACTIVE');
+  assert.equal(queriedOfferWhere.length, 2);
+  for (const offerWhere of queriedOfferWhere) {
+    assert.equal(offerWhere.business.modalities.some.type, 'VIRTUAL');
+    assert.equal(offerWhere.business.modalities.some.status, 'ACTIVE');
+  }
+  assert.deepEqual(result.businesses.map(x => x.publicId), ['virtual-001']);
+  assert.deepEqual(result.products.map(x => x.business.publicId), ['virtual-001']);
+  assert.deepEqual(result.services.map(x => x.business.publicId), ['virtual-001']);
+  assert.equal(result.pagination.businesses.total, 1);
+  assert.equal(result.pagination.products.total, 1);
+  assert.equal(result.pagination.services.total, 1);
+});
+
+test('scope ciudad limita las tres pestañas por municipio y departamento sin requerir GPS', async () => {
+  const makeBusiness = (publicId: string, cityName: string, regionName: string) => ({
+    ...publicBusiness,
+    publicId, name: 'Panadería', subscriptions: [], brand: { pioneer: null },
+    location: { ...publicBusiness.location, cityName, regionName },
+  });
+  const palmira = makeBusiness('palmira', 'Palmira', 'Valle del Cauca');
+  const cali = makeBusiness('cali', 'Cali', 'Valle del Cauca');
+  const palmiraOther = makeBusiness('palmira-otro', 'Palmira', 'Otro departamento');
+  const collection = [palmira, cali, palmiraOther];
+  const makeOffer = (business: typeof palmira, kind: 'PRODUCT' | 'SERVICE') => ({
+    ...publicBusiness.offers[0],
+    id: `${business.publicId}-${kind}`, kind, name: 'Pan casero',
+    description: null, category: publicBusiness.category, photos: [], promotions: [],
+    business: { publicId: business.publicId, name: business.name, description: business.description,
+      category: business.category, location: business.location },
+  });
+  const db = {
+    business: { findMany: async () => collection },
+    businessOffer: { findMany: async ({ where }: any) => collection.map(business => makeOffer(business, where.kind)) },
+  } as any;
+  const query = parseUniversalSearchInput({ scope: 'city', city: 'PALMIRA', region: 'Valle del Cauca' });
+  const result = await searchPublicUniversal(query, db);
+  assert.deepEqual(result.businesses.map(x => x.publicId), ['palmira']);
+  assert.deepEqual(result.products.map(x => x.business.publicId), ['palmira']);
+  assert.deepEqual(result.services.map(x => x.business.publicId), ['palmira']);
+  assert.equal(result.pagination.businesses.total, 1);
+  assert.equal(result.pagination.products.total, 1);
+  assert.equal(result.pagination.services.total, 1);
+});
+
+test('el scope valida los parámetros y Sin límite mantiene la búsqueda general', () => {
+  assert.equal(parseUniversalSearchInput({ q: 'pan' }).scope, undefined);
+  assert.equal(parseUniversalSearchInput({ scope: 'virtual' }).scope, 'virtual');
+  assert.equal(parseUniversalSearchInput({ scope: 'city', city: 'Palmira', region: 'Valle del Cauca' }).city, 'Palmira');
+  assert.throws(() => parseUniversalSearchInput({ scope: 'city' }), AppError);
+  assert.throws(() => parseUniversalSearchInput({ scope: 'falso' }), AppError);
+});
+
 test('el radio solo admite distancias válidas, sin cambiar la búsqueda general por defecto', () => {
   assert.equal(parseUniversalSearchInput({ q: 'motos' }).query, 'motos');
   assert.equal(parseUniversalSearchInput({ q: 'motos' }).radiusKm, undefined);
