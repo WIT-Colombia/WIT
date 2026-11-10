@@ -27,6 +27,32 @@ test('Google OAuth state preserves the explicit Business application', () => {
   assert.equal(recovered.returnTo, '/mis-negocios');
 });
 
+test('Google OAuth state preserves Admin application without granting a session', () => {
+  const authorization = createGoogleAuthorization({ application: 'admin', flow: 'login', returnTo: '/dashboard', consent: true });
+  const headers: string[] = [];
+  setGoogleStateCookie({ appendHeader: (_name: string, value: string) => headers.push(value) } as never, authorization.state);
+  const cookie = headers[0].split(';', 1)[0];
+  const recovered = getGoogleState({ headers: { cookie } } as never);
+  assert.equal(recovered.application, 'admin');
+  assert.equal(recovered.flow, 'login');
+  assert.equal(recovered.returnTo, '/dashboard');
+  assert.equal(recovered.state, authorization.state.state);
+  assert.match(headers[0], /HttpOnly/);
+});
+
+test('Google new-user signup carries the attributed business code in signed OAuth state', () => {
+  const referralCode = 'XMK-12345678123441238123123456789ABC';
+  const authorization = createGoogleAuthorization({ application: 'usuario', flow: 'login', consent: true, referralCode });
+  const headers: string[] = [];
+  setGoogleStateCookie({ appendHeader: (_name: string, value: string) => headers.push(value) } as never, authorization.state);
+  const recovered = getGoogleState({ headers: { cookie: headers[0].split(';', 1)[0] } } as never);
+  assert.equal(recovered.referralCode, referralCode);
+  const separateBusinessApp = createGoogleAuthorization({ application: 'negocios', flow: 'login', consent: true, referralCode });
+  assert.equal(separateBusinessApp.state.referralCode, undefined);
+  const link = createGoogleAuthorization({ application: 'usuario', flow: 'link', consent: true, referralCode, userId: 'existing' });
+  assert.equal(link.state.referralCode, undefined);
+});
+
 test('Google OAuth return paths cannot redirect outside WIT', () => {
   assert.equal(safeGoogleReturnTo('https://evil.example'), '/home');
   assert.equal(safeGoogleReturnTo('//evil.example'), '/home');

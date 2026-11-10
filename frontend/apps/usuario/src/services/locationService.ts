@@ -10,23 +10,6 @@ export type LocationSelection =
   | { mode: "manual"; locality: Locality; country: "Colombia"; coordinates?: Coordinates }
   | { mode: "automatic"; coordinates: Coordinates; locality?: Locality; country?: "Colombia"; cityResolution?: "pending" | "resolved" | "unavailable" };
 
-const DEFAULT_LOCALITY_ID = "76520";
-const DEFAULT_COORDINATES: Coordinates = { lat: 3.5394, lng: -76.3036 };
-
-function defaultSelection(): LocationSelection | null {
-  const locality = getColombianAdministrativeDivisions().municipalities.find((item) => item.id === DEFAULT_LOCALITY_ID);
-  return locality ? { mode: "manual", locality, country: "Colombia", coordinates: DEFAULT_COORDINATES } : null;
-}
-
-function defaultLocality(): Locality | null {
-  const fallback = defaultSelection();
-  return fallback?.mode === "manual" ? fallback.locality : null;
-}
-
-function coordinatesForLocality(locality: Locality): Coordinates | undefined {
-  return locality.id === DEFAULT_LOCALITY_ID ? DEFAULT_COORDINATES : undefined;
-}
-
 function isCoordinates(value: unknown): value is Coordinates {
   if (!value || typeof value !== "object") return false;
   const coordinates = value as Partial<Coordinates>;
@@ -45,21 +28,23 @@ function findCanonicalLocality(value: unknown): Locality | null {
     && (typeof candidate.departmentCode !== "string" || item.departmentCode === candidate.departmentCode)) ?? null;
 }
 
+// Preserve the known city centre only when Palmira was explicitly selected.
+// This is never used as a default location for a new visitor.
+function coordinatesForLocality(locality: Locality): Coordinates | undefined {
+  return locality.id === "76520" ? { lat: 3.5394, lng: -76.3036 } : undefined;
+}
+
 function notify(): void {
   window.dispatchEvent(new Event(LOCATION_EVENT));
 }
 
 export function getLocationSelection(): LocationSelection | null {
   const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) {
-    const fallback = defaultSelection();
-    if (fallback) localStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
-    return fallback;
-  }
+  if (!saved) return null;
   try {
     const parsed = JSON.parse(saved) as Partial<LocationSelection> & Locality;
     if (parsed.mode === "automatic" && isCoordinates(parsed.coordinates)) {
-      const locality = findCanonicalLocality(parsed.locality) ?? defaultLocality();
+      const locality = findCanonicalLocality(parsed.locality);
       const cityResolution = parsed.cityResolution === "pending" || parsed.cityResolution === "unavailable" || parsed.cityResolution === "resolved"
         ? parsed.cityResolution
         : parsed.locality ? "resolved" : "pending";
@@ -77,9 +62,7 @@ export function getLocationSelection(): LocationSelection | null {
     // Remove malformed local state below.
   }
   localStorage.removeItem(STORAGE_KEY);
-  const fallback = defaultSelection();
-  if (fallback) localStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
-  return fallback;
+  return null;
 }
 
 export function getSelectedLocation(): Locality | null {
@@ -87,18 +70,39 @@ export function getSelectedLocation(): Locality | null {
   return selection?.locality ?? null;
 }
 
-export function saveSelectedLocation(location: Locality): void {
-  const fallback = defaultSelection();
-  const selected = findCanonicalLocality(location) ?? (fallback?.mode === "manual" ? fallback.locality : null);
+export function saveSelectedLocation(location: Locality, coordinates?: Coordinates): void {
+  const selected = findCanonicalLocality(location);
   if (!selected) return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: "manual", locality: selected, country: "Colombia", coordinates: coordinatesForLocality(selected) } satisfies LocationSelection));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: "manual", locality: selected, country: "Colombia", coordinates: coordinates ?? coordinatesForLocality(selected) } satisfies LocationSelection));
   notify();
+}
+
+export async function resolveCoordinatesForLocality(locality: Locality): Promise<Coordinates | undefined> {
+  const known = coordinatesForLocality(locality);
+  if (known) return known;
+  try {
+    const maps = await loadGoogleMaps();
+    const Geocoder = maps.Geocoder;
+    if (!Geocoder) return undefined;
+    return await new Promise<Coordinates | undefined>((resolve) => {
+      new Geocoder().geocode({ address: locality.name + ", " + locality.context + ", Colombia" }, (results, status) => {
+        const point = results?.[0]?.geometry?.location;
+        resolve(status === "OK" && point ? { lat: point.lat(), lng: point.lng() } : undefined);
+      });
+    });
+  } catch {
+    return undefined;
+  }
 }
 
 export function saveAutomaticLocation(coordinates: Coordinates, locality?: Locality, cityResolution: "pending" | "resolved" | "unavailable" = "pending"): void {
   if (!isCoordinates(coordinates)) return;
   const current = getLocationSelection();
-  const activeLocality = locality ?? current?.locality ?? defaultLocality();
+  // Only preserve the previously resolved city when the GPS position is identical.
+  // A new device position must never inherit a manually chosen or stale municipality.
+  const sameAutomaticPosition = current?.mode === "automatic"
+    && current.coordinates.lat === coordinates.lat && current.coordinates.lng === coordinates.lng;
+  const activeLocality = findCanonicalLocality(locality) ?? (sameAutomaticPosition ? current.locality : undefined);
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: "automatic", coordinates, cityResolution, ...(activeLocality ? { locality: activeLocality, country: "Colombia" } : {}) } satisfies LocationSelection));
   notify();
 }

@@ -36,6 +36,7 @@ type GoogleMapsNamespace = {
   SymbolPath?: { CIRCLE: unknown };
   LatLngBounds: new () => GoogleBounds;
   Geocoder?: new () => GoogleGeocoder;
+  event?: { trigger: (instance: GoogleMapInstance, eventName: string) => void };
 };
 
 export type GoogleMapsApi = GoogleMapsNamespace;

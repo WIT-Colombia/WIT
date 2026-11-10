@@ -414,6 +414,23 @@ model AuthIdentity {
   @@index([userId])
 }
 
+/// Temporary, unverified signup intent. Not a User account and not a referral.
+ /// The verification token is stored only as a SHA-256 hash; expiration is 15 minutes.
+model PendingEmailRegistration {
+  id              String   @id @default(uuid()) @db.Char(36)
+  emailNormalized String   @unique @db.VarChar(320)
+  displayName     String   @db.VarChar(120)
+  passwordHash    String   @db.VarChar(255)
+  referralCode    String?  @db.VarChar(40)
+  application     String   @default("usuario") @db.VarChar(16)
+  tokenHash       String   @unique @db.VarChar(64)
+  expiresAt       DateTime @db.DateTime(3)
+  createdAt       DateTime @default(now()) @db.DateTime(3)
+  updatedAt       DateTime @updatedAt @db.DateTime(3)
+
+  @@index([expiresAt])
+}
+
 model AuthToken {
   id         String        @id @default(uuid()) @db.Char(36)
   userId     String        @db.Char(36)
@@ -1303,4 +1320,64 @@ model BusinessAnalyticsEvent {
   @@index([businessId, eventType, searchTerm, createdAt], map: "BusinessAnalyticsEvent_biz_evt_term_created_idx")
   @@index([actorUserId, createdAt])
   @@index([dedupeKey])
+}
+
+
+model AdminWebAuthnCredential {
+  id            String   @id @default(uuid()) @db.Char(36)
+  userId        String   @db.Char(36)
+  credentialId  String   @unique @db.VarChar(512)
+  publicKey     Bytes    @db.VarBinary(1024)
+  counter       BigInt   @default(0)
+  transports    String?  @db.VarChar(255)
+  createdAt     DateTime @default(now()) @db.DateTime(3)
+  lastUsedAt    DateTime? @db.DateTime(3)
+  revokedAt     DateTime?
+  @@index([userId, revokedAt])
+}
+
+model AdminWebAuthnChallenge {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
+  challenge  String   @unique @db.VarChar(255)
+  purpose    String   @db.VarChar(32)
+  expiresAt  DateTime @db.DateTime(3)
+  consumedAt DateTime? @db.DateTime(3)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  @@index([userId, purpose, expiresAt])
+}
+
+model AdminSession {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
+  tokenHash  String   @unique @db.VarChar(255)
+  expiresAt  DateTime @db.DateTime(3)
+  revokedAt  DateTime? @db.DateTime(3)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  lastSeenAt DateTime? @db.DateTime(3)
+  @@index([userId, expiresAt])
+  @@index([revokedAt])
+}
+
+model AdminPendingOAuth {
+  id          String    @id @default(uuid()) @db.Char(36)
+  googleSub   String    @db.VarChar(255)
+  tokenHash   String    @unique @db.VarChar(64)
+  expiresAt   DateTime  @db.DateTime(3)
+  consumedAt  DateTime? @db.DateTime(3)
+  createdAt   DateTime  @default(now()) @db.DateTime(3)
+  @@index([googleSub, expiresAt])
+  @@index([expiresAt])
+}
+
+
+model AdminPasskeyActivation {
+  id         String   @id @default(uuid()) @db.Char(36)
+  googleSub  String   @db.VarChar(255)
+  tokenHash  String   @unique @db.VarChar(64)
+  expiresAt  DateTime @db.DateTime(3)
+  consumedAt DateTime? @db.DateTime(3)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  @@index([googleSub, expiresAt])
+  @@index([expiresAt])
 }

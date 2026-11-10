@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { alphabeticalCategories, type Business } from "../data/mockData";
 import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
+import { hydrateBusinessRatings } from "../services/publicBusinessApi";
 import { useLocationContext } from "../context/LocationContext";
 import { useFavorites } from "../services/favoritesService";
 import { BusinessCard } from "../components/EntityCards";
@@ -10,11 +11,11 @@ import { distanceBetweenCoordinates, getBusinessCoordinates, getCoordinateDestin
 import { LocationAvailabilityNotice } from "../components/LocationAvailabilityNotice";
 import { PageLayout } from "../components/PageLayout";
 import { loadGoogleMaps } from "../services/googleMapsLoader";
+import { MAP_RADII_KM, resolveMapRadiusIndex } from "../utils/searchArea";
 import { rememberBusinessVisitContext } from "../services/analyticsService";
 import "./Map.css";
 
-const radiusSteps = [1, 3, 5, Number.POSITIVE_INFINITY];
-const radiusLabels = ["1 km", "3 km", "5 km", "toda la ciudad"];
+const radiusLabels = ["1 km", "3 km", "5 km", "10 km", "Ciudad"];
 
 export default function Map() {
   const [params, setParams] = useSearchParams();
@@ -24,9 +25,12 @@ export default function Map() {
   const [items, setItems] = useState<Business[]>([]);
   const [resultsVisibleCount, setResultsVisibleCount] = useState(8);
   const { favorites, toggleFavorite } = useFavorites();
-  const [radiusIndex, setRadiusIndex] = useState(0);
   const { selection } = useLocationContext();
   const location = selection?.locality ?? null;
+  const radiusIndex = resolveMapRadiusIndex(params, Boolean(location?.name));
+  const radiusKm = MAP_RADII_KM[radiusIndex] ?? null;
+  const cityScope = radiusIndex === MAP_RADII_KM.length;
+  const maxRadiusIndex = location?.name ? MAP_RADII_KM.length : MAP_RADII_KM.length - 1;
   const [manualCenter, setManualCenter] = useState<Coordinates | null>(null);
   const [manualCenterState, setManualCenterState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [manualCenterError, setManualCenterError] = useState("UNKNOWN");
@@ -69,21 +73,64 @@ export default function Map() {
     return () => { active = false; };
   }, [manualAddress]);
   const center: Coordinates | null = selection?.mode === "automatic" ? selection.coordinates : selection?.coordinates ?? manualCenter;
-  useEffect(() => { let active = true; const userCoordinates = selection?.coordinates; void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng, radiusKm: radiusSteps[radiusIndex] === Number.POSITIVE_INFINITY ? undefined : radiusSteps[radiusIndex] }).then(({ businesses: foundBusinesses, products, services }) => { if (!active) return; const byId = new globalThis.Map(foundBusinesses.map((business) => [business.id, business])); [...products, ...services].forEach((offer) => { if (!byId.has(offer.businessId)) byId.set(offer.businessId, { id: offer.businessId, name: offer.businessName ?? "Negocio", category: "Resultados relacionados", rating: 0, reviewCount: 0, distanceKm: Number.POSITIVE_INFINITY, isOpen: true, address: "Ubicación no pública", image: "", tags: [], coordinates: offer.businessCoordinates }); }); setItems([...byId.values()].map((business) => ({ ...business, distanceKm: userCoordinates && business.coordinates ? distanceBetweenCoordinates(userCoordinates, business.coordinates) : Number.POSITIVE_INFINITY }))); }).catch(() => { if (active) setItems([]); }); return () => { active = false; }; }, [query, category, selection, radiusIndex]);
+  useEffect(() => {
+    let active = true;
+    // Manual city selections may obtain their coordinates asynchronously.
+    // Never call the API with no scope and no location.
+    if (!center) { setItems([]); return () => { active = false; }; }
+    const searchArea = cityScope && location?.name
+      ? { scope: "city" as const, city: location.name, region: location.context }
+      : { latitude: center.lat, longitude: center.lng, radiusKm: radiusKm ?? 1 };
+    void searchUniversal({ query, category, ...searchArea, businessPageSize: 50 })
+      .then(async ({ businesses: foundBusinesses, products, services }) => {
+        const ratedBusinesses = await hydrateBusinessRatings(foundBusinesses);
+        if (!active) return;
+        const byId = new globalThis.Map(ratedBusinesses.map((business) => [business.id, business]));
+        [...products, ...services].forEach((offer) => {
+          if (!byId.has(offer.businessId)) {
+            byId.set(offer.businessId, {
+              id: offer.businessId, name: offer.businessName ?? "Negocio",
+              category: "Resultados relacionados", rating: 0, reviewCount: 0,
+              distanceKm: Number.POSITIVE_INFINITY, isOpen: true,
+              address: "Ubicación no pública", image: "", tags: [],
+              coordinates: offer.businessCoordinates,
+            });
+          }
+        });
+        setItems([...byId.values()].map((business) => ({
+          ...business,
+          distanceKm: business.coordinates
+            ? distanceBetweenCoordinates(center, business.coordinates)
+            : Number.POSITIVE_INFINITY,
+        })));
+      }).catch(() => { if (active) setItems([]); });
+    return () => { active = false; };
+  }, [query, category, center?.lat, center?.lng, radiusIndex, cityScope, radiusKm, location?.name, location?.context]);
   const ordered = useMemo(() => prioritizeFeaturedByDistance(items), [items]);
   const visible = ordered.filter((business) => {
     const point = getBusinessCoordinates(business);
-    return Boolean(point && center && (radiusSteps[radiusIndex] === Number.POSITIVE_INFINITY || distanceBetweenCoordinates(center, point) <= radiusSteps[radiusIndex]));
+    return Boolean(point && center && (cityScope || (radiusKm !== null && distanceBetweenCoordinates(center, point) <= radiusKm)));
   });
   useEffect(() => { setResultsVisibleCount(8); }, [query, category, radiusIndex, selection]);
   const visibleResults = visible.slice(0, resultsVisibleCount);
   const hasMoreResults = resultsVisibleCount < visible.length;
   const resultsAtEnd = visible.length > 8 && !hasMoreResults;
-  const nextRadiusIndex = Math.min(radiusIndex + 1, radiusSteps.length - 1);
-  const radiusActionLabel = radiusIndex === radiusSteps.length - 1 ? "Radio máximo" : `Ampliar a ${radiusLabels[nextRadiusIndex]}`;
+  const nextRadiusIndex = Math.min(radiusIndex + 1, maxRadiusIndex);
+  const radiusActionLabel = radiusIndex >= maxRadiusIndex ? "Cobertura máxima" : `Ampliar a ${radiusLabels[nextRadiusIndex]}`;
   const handleRadiusChange = useCallback((nextIndex: number) => {
-    setRadiusIndex((current) => current === nextIndex ? current : Math.max(0, Math.min(nextIndex, radiusSteps.length - 1)));
-  }, []);
+    const safeIndex = Math.max(0, Math.min(nextIndex, maxRadiusIndex));
+    setParams(current => {
+      const next = new URLSearchParams(current);
+      next.delete("scope");
+      next.delete("radiusKm");
+      if (safeIndex === MAP_RADII_KM.length && location?.name) {
+        next.set("scope", "city");
+      } else {
+        next.set("radiusKm", String(MAP_RADII_KM[safeIndex] ?? 1));
+      }
+      return next;
+    });
+  }, [setParams, location?.name, maxRadiusIndex]);
   const visibleLocation = location?.name ?? (selection?.mode === "automatic" ? "tu ubicación actual" : "una zona seleccionada");
   const userLocation = selection?.mode === "automatic" && getCoordinateDestination(selection.coordinates) ? selection.coordinates : null;
   const mapContext = (business: Business) => ({ source: 'map' as const, category: business.category, isFeatured: business.plan === 'premium' || business.isFeatured });
@@ -95,6 +142,8 @@ export default function Map() {
     setParams((current) => {
       const next = new URLSearchParams(current);
       if (value) next.set("category", value); else next.delete("category");
+      next.delete("scope");
+      next.set("radiusKm", "1");
       return next;
     });
   }
@@ -104,5 +153,5 @@ export default function Map() {
     ? `Mostrando negocios de la categoría “${category}”${query ? ` · búsqueda: “${query}”` : ""}`
     : query ? `búsqueda: “${query}”` : "";
   const mapHeading = category ? `${mapFilters} cerca de ${visibleLocation}` : `Resultados para ${visibleLocation}${mapFilters ? ` · ${mapFilters}` : ""}`;
-  return <PageLayout active="explore" className="map-page"><div className="map-page-heading"><div><h1>Explora en el mapa</h1><p className={category ? "map-context map-context--active" : "map-context"}>{category && <span className="map-context__icon" aria-hidden="true">✓</span>}{mapHeading} dentro de {radiusLabels[radiusIndex]}.</p></div><Link to={`/results${params.toString() ? `?${params.toString()}` : ""}`}>Ver resultados en lista →</Link></div><div className="map-controls"><label className="map-search">⌕<span className="sr-only">Buscar en el mapa</span><input value={query} onChange={(event) => { setQuery(event.target.value); setRadiusIndex(0); }} placeholder="¿Qué estás buscando?"/></label></div><div className="map-category-chips"><button className={!category ? "selected" : ""} type="button" onClick={() => { updateCategory(""); setRadiusIndex(0); }}>Todo</button>{alphabeticalCategories.map((item) => <button className={category === item.name ? "selected" : ""} type="button" key={item.name} onClick={() => { updateCategory(category === item.name ? "" : item.name); setRadiusIndex(0); }}>{item.icon} {item.name}</button>)}</div>{!selection ? <LocationAvailabilityNotice location={location} query={query}/> : mapResolving ? <div className="map-content"><section className="map-canvas"><div className="dynamic-map dynamic-map-fallback" role="status"><b>Ubicando la ciudad…</b><p>Estamos obteniendo su centro geográfico para preparar el mapa.</p></div></section></div> : mapUnavailable ? <div className="map-content"><section className="map-canvas"><div className="dynamic-map dynamic-map-fallback" role="status"><b>No pudimos ubicar esta ciudad</b><p>{manualCenterError === "GEOCODING_REJECTED" ? "Google Maps rechazó la geocodificación. Revisa que Maps JavaScript API, Geocoding y la facturación estén habilitados para esta clave." : "Selecciona otra ubicación o permite la ubicación del navegador para explorar el mapa."}</p><Link to="/location">Cambiar ubicación</Link></div></section></div> : <div className="map-content"><section className="map-canvas"><GoogleDynamicMap businesses={visible} center={center} userLocation={userLocation} radiusKm={radiusSteps[radiusIndex] === Number.POSITIVE_INFINITY ? null : radiusSteps[radiusIndex]} radiusLabels={radiusLabels} radiusIndex={radiusIndex} onRadiusChange={handleRadiusChange} onBusinessOpen={openBusiness}/></section><aside className="map-results"><div className="map-results-heading"><div><b>{visible.length} lugares</b><span>Radio actual: {radiusLabels[radiusIndex]}</span></div><button className="map-expand-button" type="button" onClick={() => handleRadiusChange(nextRadiusIndex)} disabled={radiusIndex === radiusSteps.length - 1}>{radiusActionLabel}</button></div>{visible.length ? <><div className="map-results-grid">{visibleResults.map((business) => <BusinessCard key={business.id} business={business} analyticsContext={mapContext(business)} favorite={favorites.includes(business.id)} onFavorite={() => { void toggleFavorite(business.id); }}/>)}</div>{visible.length > 8 && <button className="map-results-more" type="button" onClick={() => { if (resultsAtEnd) { setResultsVisibleCount(8); document.querySelector('.map-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } else setResultsVisibleCount((count) => Math.min(count + 8, visible.length)); }}>{resultsAtEnd ? 'Volver arriba ↑' : 'Ver más ↓'}</button>}</> : <div className="map-empty" role="status"><span className="map-empty__icon" aria-hidden="true">⌕</span><b>Ubicación no disponible</b><p>Solo mostramos negocios que tienen coordenadas verificadas dentro del radio seleccionado.</p><div className="map-empty__actions"><button type="button" onClick={() => handleRadiusChange(nextRadiusIndex)} disabled={radiusIndex === radiusSteps.length - 1}>{radiusActionLabel} <span aria-hidden="true">→</span></button><Link to="/search">Cambiar búsqueda</Link></div></div>}</aside></div>}</PageLayout>;
+  return <PageLayout active="explore" className="map-page"><div className="map-page-heading"><div><h1>Explora en el mapa</h1><p className={category ? "map-context map-context--active" : "map-context"}>{category && <span className="map-context__icon" aria-hidden="true">✓</span>}{mapHeading} {cityScope ? "en la ciudad seleccionada" : `a ${radiusKm ?? 1} km`}.</p></div><Link to={`/results${params.toString() ? `?${params.toString()}` : ""}`}>Ver resultados en lista →</Link></div><div className="map-controls"><label className="map-search">⌕<span className="sr-only">Buscar en el mapa</span><input value={query} onChange={(event) => { setQuery(event.target.value); handleRadiusChange(0); }} placeholder="¿Qué estás buscando?"/></label></div><div className="map-category-chips"><button className={!category ? "selected" : ""} type="button" onClick={() => { updateCategory(""); }}>Todo</button>{alphabeticalCategories.map((item) => <button className={category === item.name ? "selected" : ""} type="button" key={item.name} onClick={() => { updateCategory(category === item.name ? "" : item.name); }}>{item.icon} {item.name}</button>)}</div>{!selection ? <LocationAvailabilityNotice location={location} query={query}/> : mapResolving ? <div className="map-content"><section className="map-canvas"><div className="dynamic-map dynamic-map-fallback" role="status"><b>Ubicando la ciudad…</b><p>Estamos obteniendo su centro geográfico para preparar el mapa.</p></div></section></div> : mapUnavailable ? <div className="map-content"><section className="map-canvas"><div className="dynamic-map dynamic-map-fallback" role="status"><b>No pudimos ubicar esta ciudad</b><p>{manualCenterError === "GEOCODING_REJECTED" ? "Google Maps rechazó la geocodificación. Revisa que Maps JavaScript API, Geocoding y la facturación estén habilitados para esta clave." : "Selecciona otra ubicación o permite la ubicación del navegador para explorar el mapa."}</p><Link to="/location">Cambiar ubicación</Link></div></section></div> : <div className="map-content"><section className="map-canvas"><GoogleDynamicMap businesses={visible} center={center} userLocation={userLocation} radiusKm={radiusKm} radiusLabels={radiusLabels} radiusIndex={radiusIndex} cityAvailable={Boolean(location?.name)} onRadiusChange={handleRadiusChange} onBusinessOpen={openBusiness}/></section><aside className="map-results"><div className="map-results-heading"><div><b>{visible.length} lugares</b><span>Cobertura actual: {radiusLabels[radiusIndex]}</span></div><button className="map-expand-button" type="button" onClick={() => handleRadiusChange(nextRadiusIndex)} disabled={radiusIndex >= maxRadiusIndex}>{radiusActionLabel}</button></div>{visible.length ? <><div className="map-results-grid">{visibleResults.map((business) => <BusinessCard key={business.id} business={business} analyticsContext={mapContext(business)} favorite={favorites.includes(business.id)} onFavorite={() => { void toggleFavorite(business.id); }}/>)}</div>{visible.length > 8 && <button className="map-results-more" type="button" onClick={() => { if (resultsAtEnd) { setResultsVisibleCount(8); document.querySelector('.map-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } else setResultsVisibleCount((count) => Math.min(count + 8, visible.length)); }}>{resultsAtEnd ? 'Volver arriba ↑' : 'Ver más ↓'}</button>}</> : <div className="map-empty" role="status"><span className="map-empty__icon" aria-hidden="true">⌕</span><b>Ubicación no disponible</b><p>{cityScope ? "Solo aparecen negocios del municipio seleccionado que tengan una ubicación pública verificable." : "Solo mostramos negocios que tienen coordenadas verificadas dentro del radio seleccionado."}</p><div className="map-empty__actions"><button type="button" onClick={() => handleRadiusChange(nextRadiusIndex)} disabled={radiusIndex >= maxRadiusIndex}>{radiusActionLabel} <span aria-hidden="true">→</span></button><Link to="/search">Cambiar búsqueda</Link></div></div>}</aside></div>}</PageLayout>;
 }

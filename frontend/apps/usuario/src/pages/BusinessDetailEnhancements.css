@@ -416,3 +416,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+/* Photo strips keep horizontal swipes without blocking vertical page scrolling. */
+.business-detail-gallery-strip,
+.business-gallery-thumbs { touch-action: pan-x pan-y; }

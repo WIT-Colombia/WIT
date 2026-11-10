@@ -1,40 +1,223 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { InterestList } from "../components/dashboard/InterestList";
-import { MetricCard } from "../components/dashboard/MetricCard";
-import { metrics } from "../data/dashboard.mock";
-import { businessCatalog } from "../data/business.mock";
+import { PersistedPhoto } from "../components/common/PersistedPhoto";
+import { BusinessProfileThumbnail } from "../components/layout/Sidebar";
+import { getPublicBusinessUrl } from "../config/publicApp";
+import { businessApi, type BusinessStatisticsDashboard } from "../services/businessApiClient";
 import { useBusinessStore } from "../services/businessStore";
+import { shareLink } from "../../../usuario/src/utils/share";
+import { formatCategoryName, visibleBusinessStatus } from "../services/realBusinessAdapter";
+import type { BusinessDetails } from "../types/business";
+import "./DashboardPage.css";
+
+type Period = BusinessStatisticsDashboard["period"];
+type MetricKey = keyof Pick<BusinessStatisticsDashboard["metrics"], "businessViews" | "searchAppearances" | "whatsappClicks" | "phoneClicks" | "directionsClicks">;
+
+const metricDefinitions: Array<{ key: MetricKey; label: string; detail: string; icon: string }> = [
+  { key: "businessViews", label: "Visualizaciones", detail: "Visitas a tu ficha", icon: "◉" },
+  { key: "searchAppearances", label: "Apariciones en búsquedas", detail: "Veces que apareciste", icon: "⌕" },
+  { key: "whatsappClicks", label: "Clics en WhatsApp", detail: "Contactos iniciados", icon: "◌" },
+  { key: "phoneClicks", label: "Clics en llamar", detail: "Interés por teléfono", icon: "⌕" },
+  { key: "directionsClicks", label: "Cómo llegar", detail: "Solicitudes de ruta", icon: "⌖" },
+];
+
+const periods: Array<{ value: Period; label: string }> = [
+  { value: "day", label: "Hoy" }, { value: "week", label: "7 días" }, { value: "month", label: "30 días" },
+  { value: "year", label: "12 meses" }, { value: "all", label: "Todo el historial" },
+];
+
+const number = (value: number) => value.toLocaleString("es-CO");
+const publicProfileUrl = (business: BusinessDetails) => getPublicBusinessUrl(business.publicId);
+
+function BusinessImage({ src, name, className, alt, isPreview = false, objectPosition }: { src?: string; name: string; className: string; alt: string; isPreview?: boolean; objectPosition?: string }) {
+  const safeSrc = isPreview && src?.startsWith("/api/") ? undefined : src;
+  return <span className={`${className}${safeSrc ? " has-image" : ""}`} aria-label={safeSrc ? undefined : alt}>
+    {!className.includes("business-home-cover") && <span className="business-home-image-fallback" aria-hidden="true">{name.trim().charAt(0).toLocaleUpperCase("es-CO") || "X"}</span>}
+    {safeSrc && <PersistedPhoto src={safeSrc} alt={alt} className="business-home-photo" style={objectPosition ? { objectPosition } : undefined} />}
+  </span>;
+}
+
+function SelectedBusinessProfileImage({ business, className, isPreview = false }: { business: BusinessDetails; className: string; isPreview?: boolean }) {
+  const previewBusiness = isPreview && business.profileImage?.startsWith("/api/") ? { ...business, profileImage: undefined } : business;
+  return <span className={className}><BusinessProfileThumbnail business={previewBusiness} /></span>;
+}
+
+function VisitChart({ points }: { points: Array<{ label: string; value: number }> }) {
+  const validPoints = points.filter(point => Number.isFinite(point.value) && point.value >= 0);
+  if (!validPoints.length || validPoints.every(point => point.value === 0)) {
+    return <div className="business-home-chart-empty"><span aria-hidden="true">⌁</span><strong>Aún no hay actividad para mostrar</strong><p>La evolución aparecerá cuando existan visualizaciones registradas.</p></div>;
+  }
+  const max = Math.max(1, ...validPoints.map(point => point.value));
+  const coords = validPoints.map((point, index) => ({
+    x: validPoints.length === 1 ? 50 : 20 + index * 560 / (validPoints.length - 1),
+    y: 180 - point.value / max * 145,
+  }));
+  const line = coords.map(point => `${point.x},${point.y}`).join(" ");
+  const area = `20,180 ${line} ${coords.at(-1)?.x ?? 20},180`;
+  const labelIndexes = [...new Set([0, Math.floor((validPoints.length - 1) / 2), validPoints.length - 1])];
+  return <div className="business-home-chart-wrap">
+    <svg className="business-home-chart" viewBox="0 0 600 220" role="img" aria-label={`Visualizaciones: ${validPoints.map(point => `${point.label}, ${number(point.value)}`).join("; ")}`}>
+      <defs><linearGradient id="business-home-chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7b3ffb" stopOpacity=".2"/><stop offset="100%" stopColor="#7b3ffb" stopOpacity="0"/></linearGradient></defs>
+      {[35, 83, 131, 180].map(y => <line key={y} x1="20" y1={y} x2="580" y2={y} className="business-home-chart-gridline" />)}
+      <polygon points={area} fill="url(#business-home-chart-fill)" />
+      <polyline points={line} className="business-home-chart-line" />
+      {coords.map((point, index) => <circle key={`${validPoints[index].label}-${index}`} cx={point.x} cy={point.y} r="3.5" className="business-home-chart-dot"><title>{validPoints[index].label}: {number(validPoints[index].value)}</title></circle>)}
+    </svg>
+    <div className="business-home-chart-labels">{labelIndexes.map(index => <span key={`${validPoints[index].label}-${index}`}>{validPoints[index].label}</span>)}</div>
+  </div>;
+}
+
+function QuickAction({ to, title, description, icon, disabled = false }: { to?: string; title: string; description: string; icon: string; disabled?: boolean }) {
+  const content = <><span className="business-home-action-icon" aria-hidden="true">{icon}</span><span className="business-home-action-copy"><strong>{title}</strong><small>{description}</small></span><span className="business-home-action-arrow" aria-hidden="true">↗</span></>;
+  return to && !disabled ? <Link className="business-home-action" to={to}>{content}</Link> : <div className="business-home-action unavailable" aria-disabled="true" title={description}>{content}</div>;
+}
 
 export function DashboardPage() {
-  const { account, business, businesses, preferences } = useBusinessStore();
+  const { business, businesses } = useBusinessStore();
   const location = useLocation();
   const isPreview = location.pathname === "/preview" || location.pathname.startsWith("/preview/");
-  const firstName = account.name.split(" ")[0];
-  const demoBusiness = isPreview && Boolean(businessCatalog[business.name]);
-  const personalBusiness = businesses.length === 0 || business.isNew || !demoBusiness;
-  const businessItems = demoBusiness ? (business.catalog ?? businessCatalog[business.name] ?? []) : (business.catalog ?? []);
-  const products = businessItems.filter(item => item.kind === "product" && item.active && item.interest > 0).sort((a,b) => b.interest-a.interest).slice(0,3);
-  const services = businessItems.filter(item => item.kind === "service" && item.active && item.interest > 0).sort((a,b) => b.interest-a.interest).slice(0,3);
-  const dashboardMetrics = personalBusiness ? metrics.map(metric => ({ ...metric, value: "0", trend: "0%" })) : metrics;
-  const rating = personalBusiness ? 0 : (business.rating ?? 0);
-  const reviewCount = personalBusiness ? 0 : (business.reviewCount ?? 0);
-  const businessVisibility = preferences.visibilityByBusiness?.[business.name];
-  const visibilityUntil = (businessVisibility?.visibilityUntil ?? preferences.visibilityUntil) ? new Date(businessVisibility?.visibilityUntil ?? preferences.visibilityUntil!) : null;
-  const visibilityActive = Boolean((businessVisibility?.profileVisible ?? preferences.profileVisible) && visibilityUntil && visibilityUntil.getTime() > Date.now());
-  const visibilityDaysLeft = visibilityUntil ? Math.ceil((visibilityUntil.getTime() - Date.now()) / (24 * 60 * 60 * 1000)) : null;
-  const visibilityUrgency = visibilityDaysLeft !== null && visibilityActive ? (visibilityDaysLeft <= 3 ? "critical" : visibilityDaysLeft <= 7 ? "warning" : "") : "";
-  const statusLabel = !visibilityActive ? "No visible en XAMUKO" : business.status === "Pendiente" ? "Verificación pendiente" : business.status;
-  const statusHint = !visibilityActive ? "Activa la visibilidad desde Configuración" : visibilityUntil ? `${visibilityDaysLeft !== null && visibilityDaysLeft <= 7 ? `Vence en ${visibilityDaysLeft} ${visibilityDaysLeft === 1 ? "día" : "días"} · ` : ""}Visible hasta el ${visibilityUntil.toLocaleDateString("es-CO", { day: "numeric", month: "short" })}` : "Estado de tu negocio en XAMUKO";
-  const businessIndex = Math.max(0, businesses.findIndex(item => item.name === business.name));
-  const completionChecks: [string, string | number | undefined][] = [["Nombre comercial", business.name], ["Categoría", business.category], ["Descripción", business.description], ["Ciudad", business.city], ["Dirección", business.address], ["Teléfono", business.phone], ["Horario de atención", business.hours], ["Fotos de tu negocio", business.coverImage || business.images?.length]];
-  const missingFields = completionChecks.filter(([, value]) => !value).map(([label]) => label);
-  const profileCompletion = businesses.length === 0 ? 0 : Math.round((completionChecks.length - missingFields.length) / completionChecks.length * 100);
-  const today = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" }).format(new Date()).toUpperCase();
-  return <>
-    <section className="dashboard-heading"><div><p className="welcome">{today}</p><h1>Buenos días, {firstName} <span aria-hidden="true">👋</span></h1><p className="dashboard-subtitle">Aquí tienes un resumen de cómo va <strong className="dashboard-business-name"><span aria-hidden="true">▣</span>{business.name}</strong>.</p></div><div className={`business-status ${!visibilityActive || business.status !== "Verificado" ? "pending" : ""} ${visibilityUrgency}`}><span className="verified-icon">{visibilityActive && business.status === "Verificado" ? "✓" : "!"}</span><div><strong>{statusLabel}</strong><small>{statusHint}</small>{!visibilityActive && <Link to="/configuracion">Configurar visibilidad →</Link>}</div></div></section>
-    <section className="quick-actions" aria-label="Accesos rápidos"><Link className="primary-action" to={`/mis-negocios/editar/${businessIndex}`}><span>✎</span>Editar negocio</Link><Link to="/productos?nuevo=1"><span>＋</span>Agregar producto</Link><Link to="/servicios?nuevo=1"><span>＋</span>Agregar servicio</Link><Link to="/opiniones"><span>☆</span>Ver opiniones</Link></section>
-    <section><div className="section-title-row"><div><h2>Tu actividad reciente</h2><p>Últimos 30 días</p></div><Link className="period-selector" to="/estadisticas">Ver estadísticas →</Link></div><div className="metrics-grid">{dashboardMetrics.map(metric => <MetricCard key={metric.label} metric={metric} />)}</div></section>
-    <section className="completion-card"><div className="completion-copy"><span className="section-kicker">PERFIL DEL NEGOCIO</span><h2>{profileCompletion === 100 ? "Tu información está completa" : "Haz que tu negocio destaque más"}</h2><p>{profileCompletion === 100 ? "Tu tienda ya tiene todos los datos necesarios para comenzar." : `Completa algunos datos para que las personas encuentren mejor ${business.name}.`}</p><Link className="text-button" to="/mi-negocio">{profileCompletion === 100 ? "Revisar perfil →" : "Completar perfil →"}</Link></div><div className="completion-progress" role="img" aria-label={`Perfil completado al ${profileCompletion} por ciento`}><svg viewBox="0 0 120 120"><circle className="progress-track" cx="60" cy="60" r="49"/><circle className="progress-value" cx="60" cy="60" r="49" pathLength="100" strokeDasharray={`${profileCompletion} 100`}/></svg><div><strong>{profileCompletion}%</strong><span>completo</span></div></div><div className="completion-tasks"><strong>{profileCompletion === 100 ? "Todo listo" : "Aún puedes agregar"}</strong><ul>{profileCompletion === 100 ? <li>Datos obligatorios completos</li> : missingFields.map(field => <li key={field}>{field}</li>)}</ul></div></section>
-    <section className="bottom-grid"><InterestList title="Productos con más interés" description="Lo que más miran las personas" items={products} to="/productos" /><InterestList title="Servicios más consultados" description="Interés de los últimos 30 días" items={services} to="/servicios" /><section className="rating-card"><div className="section-title-row"><div><h2>Tu reputación</h2><p>Opiniones de tu negocio</p></div><Link className="subtle-button" to="/opiniones">Ver opiniones</Link></div><div className="rating-summary"><strong>{rating.toFixed(1)}</strong><div><span className="stars">{rating ? "★★★★★" : "☆☆☆☆☆"}</span><p>Basado en {reviewCount} calificaciones</p></div></div><div className="rating-bars">{[[5,72],[4,19],[3,6],[2,2],[1,1]].map(([star,value]) => <div key={star}><span>{star} ★</span><i><b style={{width:`${personalBusiness ? 0 : value}%`}} /></i><small>{personalBusiness ? 0 : value}%</small></div>)}</div></section></section>
-  </>;
+  const [period, setPeriod] = useState<Period>("month");
+  const [data, setData] = useState<BusinessStatisticsDashboard | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [shareStatus, setShareStatus] = useState("");
+  const [proUnlocked, setProUnlocked] = useState<boolean | null>(null);
+  const [reviewSummary, setReviewSummary] = useState<{ average: number | null; total: number } | null>(null);
+  const realBusiness = business.source === "real" && Boolean(business.id);
+  const canReadAnalytics = !isPreview && realBusiness && (business.role === "Propietario" || business.permissions?.includes("READ_ANALYTICS"));
+  const businessIndex = Math.max(0, businesses.findIndex(item => item.id === business.id || item.name === business.name));
+  const profileUrl = publicProfileUrl(business);
+  const verified = visibleBusinessStatus(business) === "Verificado";
+  const businessStatus = business.isOpen === true ? "Abierto ahora" : business.isOpen === false ? "Cerrado" : visibleBusinessStatus(business);
+  const periodLabel = periods.find(item => item.value === period)?.label.toLocaleLowerCase("es-CO") ?? "período seleccionado";
+
+  useEffect(() => {
+    setData(null);
+    setError(false);
+    setLoading(Boolean(canReadAnalytics));
+    if (!business.id || !canReadAnalytics) return;
+    const controller = new AbortController();
+    void businessApi.getStatisticsDashboard(business.id, period, controller.signal)
+      .then(result => { if (!controller.signal.aborted) setData(result); })
+      .catch(() => { if (!controller.signal.aborted) setError(true); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [business.id, canReadAnalytics, period, retry]);
+
+  useEffect(() => {
+    let active = true;
+    setProUnlocked(null);
+    if (isPreview || !realBusiness || !business.id) return () => { active = false; };
+    void businessApi.getCatalogLimits(business.id).then(result => { if (active) setProUnlocked(result.plan === "PRO"); }).catch(() => { if (active) setProUnlocked(null); });
+    return () => { active = false; };
+  }, [business.id, isPreview, realBusiness]);
+
+  useEffect(() => {
+    let active = true;
+    setReviewSummary(null);
+    if (isPreview || !realBusiness || !business.publicId) return () => { active = false; };
+    void businessApi.listReviews(business.publicId, 1, 1).then(result => {
+      if (active) setReviewSummary({ average: result.summary.average, total: result.summary.total });
+    }).catch(() => { if (active) setReviewSummary(null); });
+    return () => { active = false; };
+  }, [business.publicId, isPreview, realBusiness]);
+
+  const currentDate = useMemo(() => new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" }).format(new Date()), []);
+  const availableActions = {
+    edit: business.role === "Propietario" || Boolean(business.permissions?.includes("EDIT_BUSINESS")),
+    catalog: business.role === "Propietario" || Boolean(business.permissions?.includes("MANAGE_CATALOG")),
+    promotions: business.role === "Propietario" || Boolean(business.permissions?.includes("MANAGE_PROMOTIONS")),
+  };
+
+  const shareBusiness = async () => {
+    if (!profileUrl) return;
+    const result = await shareLink(business.name, `Conoce ${business.name} en XAMUKO.`, profileUrl);
+    setShareStatus(result === "shared" ? "Enlace compartido." : result === "copied" ? "Enlace copiado." : "No fue posible compartir el enlace desde este dispositivo.");
+  };
+
+  const rating = business.rating;
+  const currentRating = reviewSummary?.average ?? rating;
+  const reviewCount = reviewSummary?.total ?? business.reviewCount;
+  const address = [business.address, business.additionalAddressInfo, business.city, business.regionName].filter(Boolean).join(", ");
+  const categoryLabel = formatCategoryName(business.category.replace(/[-_]+/g, " "));
+  const showEmptyAccount = !business.name;
+
+  return <div className="business-home">
+    <div className="business-home-heading">
+      <div><span className="business-home-eyebrow">CENTRO DE CONTROL</span><h1>Inicio</h1><p>{currentDate.charAt(0).toLocaleUpperCase("es-CO") + currentDate.slice(1)} · Un resumen de tu negocio en XAMUKO.</p></div>
+      {business.name && <div className="business-home-selected"><span>NEGOCIO SELECCIONADO</span><strong>{business.name}</strong><small>{business.role}</small></div>}
+    </div>
+
+    {showEmptyAccount ? <section className="business-home-no-business"><span aria-hidden="true">⌂</span><h2>Selecciona o crea tu negocio</h2><p>Cuando elijas un establecimiento, aquí encontrarás su actividad y accesos de gestión.</p><Link className="business-home-primary" to="/mis-negocios">Ir a mis negocios <span aria-hidden="true">→</span></Link></section> : <>
+      <section className="business-home-hero" aria-label={`Perfil de ${business.name}`}>
+        <BusinessImage src={business.coverImage} name={business.name} className="business-home-cover" alt={`Portada de ${business.name}`} isPreview={isPreview} objectPosition={business.coverImagePosition ? `${business.coverImagePosition.x}% ${business.coverImagePosition.y}%` : undefined} />
+        <div className="business-home-hero-shade" />
+        <div className="business-home-hero-content">
+          <SelectedBusinessProfileImage business={business} className="business-home-profile" isPreview={isPreview} />
+          <div className="business-home-business-copy"><div className="business-home-name-line"><h2>{business.name}</h2>{verified && <span className="business-home-verified" title="Negocio verificado" aria-label="Negocio verificado">✓</span>}</div><p>{[categoryLabel, business.city].filter(Boolean).join(" · ")}</p>{business.description && <p className="business-home-description">{business.description}</p>}{businessStatus && <span className={`business-home-status${business.isOpen === false ? " closed" : ""}`}>{business.isOpen === true && <i />}{businessStatus}</span>}</div>
+          <div className="business-home-hero-actions">
+            {profileUrl ? <a className="business-home-button glass" href={profileUrl} target="_blank" rel="noreferrer"><span aria-hidden="true">↗</span>Ver en XAMUKO</a> : <span className="business-home-button glass disabled" aria-disabled="true" title="Este negocio aún no tiene un perfil público">Perfil público no disponible</span>}
+            <button className="business-home-button glass" type="button" onClick={() => void shareBusiness()} disabled={!profileUrl}><span aria-hidden="true">↗</span>Compartir</button>
+            {availableActions.edit && <Link className="business-home-button glass" to={`/mis-negocios/editar/${businessIndex}`}><span aria-hidden="true">✎</span>Editar negocio</Link>}
+          </div>
+        </div>
+      </section>
+      {shareStatus && <p className="business-home-share-status" role="status">{shareStatus}</p>}
+
+      <section className="business-home-section" aria-labelledby="business-home-metrics-title">
+        <div className="business-home-section-heading"><div><span className="business-home-eyebrow">RESUMEN DE ACTIVIDAD</span><h2 id="business-home-metrics-title">Rendimiento de tu negocio</h2></div><div className="business-home-period"><label htmlFor="business-home-period">Período</label><select id="business-home-period" value={period} onChange={event => setPeriod(event.target.value as Period)}>{periods.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div></div>
+        {error && <div className="business-home-alert" role="alert">No pudimos cargar las estadísticas de {business.name}. <button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar</button></div>}
+        {!error && !canReadAnalytics && <p className="business-home-muted-note">{isPreview ? "La vista previa no usa métricas simuladas." : realBusiness ? "Tu cuenta no tiene acceso a las estadísticas de este negocio." : "Las estadísticas aparecerán cuando el negocio esté conectado."}</p>}
+        <div className="business-home-metrics">
+          {metricDefinitions.map((metric, index) => {
+            const current = data?.metrics[metric.key];
+            const previous = data?.previous?.[metric.key];
+            const change = current !== undefined && previous !== undefined && previous > 0 ? Math.round((current - previous) / previous * 100) : null;
+            return <article className={`business-home-metric metric-${index + 1}`} key={metric.key} aria-busy={loading}>
+              <span className="business-home-metric-icon" aria-hidden="true">{metric.icon}</span><div className="business-home-metric-copy"><span>{metric.label}</span><strong>{loading ? "…" : current === undefined ? "—" : number(current)}</strong><small>{loading ? "Cargando" : metric.detail}</small></div>
+              {change !== null && <span className={`business-home-change${change < 0 ? " negative" : ""}`}>{change > 0 ? "+" : ""}{change}%</span>}
+            </article>;
+          })}
+        </div>
+      </section>
+
+      <div className="business-home-main-grid">
+        <section className="business-home-panel business-home-performance" aria-labelledby="business-home-performance-title">
+          <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">VISIBILIDAD</span><h2 id="business-home-performance-title">Evolución de visualizaciones</h2><p>Actividad de {business.name} · {periodLabel}</p></div><span className="business-home-chart-icon" aria-hidden="true">↗</span></div>
+          {loading ? <div className="business-home-chart-loading" aria-live="polite">Cargando actividad…</div> : data ? <VisitChart points={data.trends.businessViews} /> : <div className="business-home-chart-empty"><span aria-hidden="true">⌁</span><strong>{error ? "Gráfica no disponible" : "Sin datos para graficar"}</strong><p>{error ? "Intenta cargar las estadísticas nuevamente." : "La gráfica mostrará únicamente visualizaciones registradas por la API."}</p></div>}
+        </section>
+
+        <section className="business-home-panel business-home-details" aria-labelledby="business-home-details-title">
+          <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">TU ESTABLECIMIENTO</span><h2 id="business-home-details-title">Información del negocio</h2></div><SelectedBusinessProfileImage business={business} className="business-home-details-avatar" isPreview={isPreview} /></div>
+          {((currentRating != null) || (reviewCount ?? 0) > 0) && <div className="business-home-rating"><span aria-hidden="true">★</span><strong>{currentRating == null ? "—" : currentRating.toFixed(1)}</strong><small>{reviewCount === undefined ? "Calificación disponible" : `${number(reviewCount)} ${reviewCount === 1 ? "opinión" : "opiniones"}`}</small></div>}
+          <dl className="business-home-info-list">
+            {address && <div><dt><span aria-hidden="true">⌖</span>Ubicación</dt><dd>{address}</dd></div>}
+            {business.isOpen !== undefined && <div><dt><span aria-hidden="true">◷</span>Estado</dt><dd className={business.isOpen ? "open" : "closed"}>{business.isOpen ? "Abierto ahora" : "Cerrado"}</dd></div>}
+            {business.hours && <div><dt><span aria-hidden="true">◷</span>Horario</dt><dd>{business.hours}</dd></div>}
+            {business.phone && <div><dt><span aria-hidden="true">⌕</span>Teléfono</dt><dd><a href={`tel:${business.phone.replace(/[^+\d]/g, "")}`}>{business.phone}</a></dd></div>}
+            {business.website && <div><dt><span aria-hidden="true">↗</span>Sitio web</dt><dd><a href={/^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`} target="_blank" rel="noreferrer">{business.website}</a></dd></div>}
+            {!address && !business.hours && !business.phone && !business.website && currentRating == null && !(reviewCount ?? 0) && <li className="business-home-info-empty">Todavía no hay información adicional registrada.</li>}
+          </dl>
+          {profileUrl && <a className="business-home-profile-link" href={profileUrl} target="_blank" rel="noreferrer">Ver perfil público <span aria-hidden="true">↗</span></a>}
+        </section>
+      </div>
+
+      <section className="business-home-panel business-home-actions-section" aria-labelledby="business-home-actions-title">
+        <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">GESTIÓN DIARIA</span><h2 id="business-home-actions-title">Acciones rápidas</h2></div></div>
+        <div className="business-home-actions-grid">
+          <QuickAction title="Crear publicación" description="Esta opción aún no está disponible." icon="＋" disabled />
+          <QuickAction title="Nueva promoción" description="Abre ofertas y promociones" icon="％" to={availableActions.promotions ? "/ofertas" : undefined} disabled={!availableActions.promotions} />
+          <QuickAction title="Actualizar galería" description="La gestión de galería no está disponible en esta versión." icon="▧" disabled />
+          <QuickAction title="Productos y servicios" description="Gestiona tu catálogo" icon="◇" to={availableActions.catalog ? "/productos" : undefined} disabled={!availableActions.catalog} />
+          <QuickAction title="Editar información" description="Actualiza los datos del negocio" icon="✎" to={availableActions.edit ? `/mis-negocios/editar/${businessIndex}` : undefined} disabled={!availableActions.edit} />
+        </div>
+        {(business.role !== "Propietario" && (!availableActions.catalog || !availableActions.edit || !availableActions.promotions)) && <p className="business-home-muted-note">Algunas acciones requieren permisos del propietario del negocio.</p>}
+      </section>
+
+      <section className="business-home-pro" aria-labelledby="business-home-pro-title">
+        <div className="business-home-pro-mark" aria-hidden="true">♛</div><div className="business-home-pro-copy"><span className="business-home-eyebrow">MÁS HERRAMIENTAS PARA CRECER</span><h2 id="business-home-pro-title">Business PRO</h2><p>5 estadísticas gratuitas · 20 estadísticas PRO · 5 desbloqueables por nivel.</p></div><div className="business-home-pro-status"><span>{proUnlocked === true ? "Plan activo" : proUnlocked === false ? "Plan Básico" : "Plan sin verificar"}</span><small>{proUnlocked === true ? "Acceso Business PRO vigente" : "La contratación del plan no está disponible en esta versión."}</small></div><Link to="/estadisticas" className="business-home-pro-link">Ver estadísticas <span aria-hidden="true">→</span></Link>
+      </section>
+    </>}
+  </div>;
 }

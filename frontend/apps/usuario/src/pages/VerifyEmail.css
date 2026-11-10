@@ -1,6 +1,61 @@
-.verification-success { display:grid; justify-items:center; gap:12px; margin:14px 0 8px; padding:26px 22px; border:1px solid #e1d6ff; border-radius:16px; background:#f7f3ff; text-align:center; }
-.verification-success__icon { display:grid; width:48px; height:48px; place-items:center; border-radius:50%; background:var(--xamuko-violet); color:#fff; font-size:25px; font-weight:800; box-shadow:0 8px 18px #7b3ffb33; }
-.verification-success h3 { margin:0; color:var(--xamuko-navy); font-size:17px; letter-spacing:-.2px; }
-.verification-success p { max-width:290px; margin:0; color:var(--xamuko-muted); font-size:12px; line-height:1.55; }
-.verification-success a { display:inline-flex; min-height:44px; align-items:center; justify-content:center; margin-top:4px; padding:0 22px; border-radius:12px; background:var(--xamuko-gradient); color:#fff; font-size:12px; font-weight:700; text-decoration:none; box-shadow:0 9px 20px #5731dc2b; }
-.verification-success a:hover { background:linear-gradient(110deg,#6c2ff1,#1f58d2); box-shadow:0 12px 24px #5731dc3b; }
+/* XAMUKO Usuario — compact verification page, official white/violet/blue/cyan palette.
+   Isolated to /verify-email. Does not change token verification, resend or expiry. */
+.verify-email-page{min-height:100vh;min-height:100dvh;background:#fff;color:#0f172a;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.verify-email-page *{box-sizing:border-box}
+.verify-email-scene{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:calc(100vh - 92px);min-height:calc(100dvh - 92px);padding:20px 16px 34px;background:radial-gradient(ellipse at 50% 8%,#f6f3ff 0%,#fff 63%)}
+.verify-email-scene::before{position:absolute;z-index:-1;right:-95px;top:-145px;width:245px;height:235px;border-radius:50%;background:#7b3ffb;opacity:.075;content:"";pointer-events:none}
+.verify-email-scene::after{position:absolute;z-index:-1;left:-100px;bottom:-160px;width:285px;height:250px;border-radius:50%;background:#22d3ee;opacity:.085;content:"";pointer-events:none}
+.verify-email-card{width:min(100%,570px);margin:0 auto;padding:24px 34px 22px;border:1px solid #e8e9f7;border-radius:20px;background:#fff;box-shadow:0 12px 34px #351c880c;text-align:center}
+.verify-email-hero{display:flex;align-items:center;justify-content:center;height:112px;margin:0 auto 8px}
+.verify-email-artwork{display:block;width:122px;height:112px;filter:drop-shadow(0 5px 12px #7b3ffb12)}
+.verify-email-card h1{margin:0;color:#0f172a;font-size:clamp(22px,2.7vw,27px);font-weight:800;letter-spacing:-.7px;line-height:1.22;text-wrap:balance}
+.verify-email-description{max-width:455px;margin:10px auto 0;color:#64748b;font-size:13px;line-height:1.55;text-wrap:pretty}
+.verify-email-description strong{color:#7b3ffb;font-weight:800}
+.verify-email-timer{margin:17px auto 19px}
+.verify-email-timer-badge{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:137px;min-height:49px;padding:6px 13px;border-radius:13px;background:#f1ebff;color:#7b3ffb}
+.verify-email-timer-badge svg{width:24px;height:24px;flex:none}
+.verify-email-timer-badge strong{color:#0f172a;font-size:25px;font-weight:800;line-height:1;letter-spacing:-.7px;font-variant-numeric:tabular-nums}
+.verify-email-timer>p{margin:8px 0 0;color:#64748b;font-size:12px;line-height:1.4}
+.verify-email-resend{display:grid;gap:9px;width:min(100%,410px);margin:0 auto}
+.verify-email-resend>label{display:grid;gap:6px;color:#334155;font-size:12px;font-weight:700;text-align:left}
+.verify-email-resend input{width:100%;min-height:43px;padding:0 12px;border:1px solid #d6ddeb;border-radius:9px;background:#fff;color:#0f172a;font:inherit;font-size:16px;outline:none}
+.verify-email-resend input:focus{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb1a}
+.verify-email-resend>button,.verify-email-primary-link{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:46px;padding:10px 14px;border:0;border-radius:10px;background:#2563eb;box-shadow:0 4px 11px #2563eb21;color:#fff;font:inherit;font-size:13px;font-weight:750;line-height:1.3;text-decoration:none;cursor:pointer;transition:background-color .15s ease,box-shadow .15s ease}
+.verify-email-resend>button:hover,.verify-email-primary-link:hover{background:#1d4ed8;box-shadow:0 5px 13px #2563eb2a}
+.verify-email-resend>button:disabled{cursor:wait;opacity:.65}
+.verify-email-resend>button svg{width:18px;height:18px;flex:none}
+.verify-email-help{display:flex;align-items:center;gap:11px;max-width:455px;min-height:60px;margin:18px auto 0;padding:11px 14px;border:1px solid #e9eaff;border-radius:11px;background:#f8faff;color:#0f172a;text-align:left}
+.verify-email-help-icon{display:grid;place-items:center;flex:none;width:27px;height:27px;color:#7b3ffb}
+.verify-email-help-icon svg{width:25px;height:25px}
+.verify-email-help strong{display:block;margin-bottom:3px;font-size:12px;font-weight:800;line-height:1.25}
+.verify-email-help p{margin:0;color:#64748b;font-size:11px;line-height:1.45}
+.verify-email-footer{max-width:455px;margin:16px auto 0;padding-top:13px;border-top:1px solid #e2e8f0}
+.verify-email-footer a{display:inline-flex;align-items:center;gap:7px;color:#2563eb;font-size:12px;font-weight:750;text-decoration:none}
+.verify-email-footer a:hover{text-decoration:none}
+.verify-email-footer a>span{font-size:20px;line-height:1}
+.verify-email-feedback{margin:2px 0 0;padding:9px 10px;border-radius:9px;font-size:11px;line-height:1.45;text-align:left}
+.verify-email-feedback.is-success{border:1px solid #b9e4d2;background:#f1f9f5;color:#166b43}
+.verify-email-feedback.is-error{border:1px solid #ffc5c5;background:#fff4f4;color:#9f2525}
+.verify-email-progress{display:grid;place-items:center;min-height:55px}
+.verify-email-progress span{display:block;width:28px;height:28px;border:3px solid #e4d9ff;border-top-color:#7b3ffb;border-radius:50%;animation:verify-email-spin .85s linear infinite}
+@keyframes verify-email-spin{to{transform:rotate(360deg)}}
+.verify-email-success-illustration{display:grid;place-items:center;width:93px;height:93px;border:8px solid #eae1ff;border-radius:50%;background:linear-gradient(125deg,#7b3ffb,#2563eb);box-shadow:0 8px 18px #7b3ffb1c;color:white;font-size:43px;font-weight:800}
+.verify-email-primary-link{width:min(100%,325px);margin:20px auto 0}
+.verify-email-page :is(a,button,input):focus-visible{outline:2px solid #2563eb;outline-offset:3px}
+@media(min-width:701px) and (max-width:1100px){.verify-email-scene{min-height:calc(100dvh - 90px);padding:24px 20px 40px}.verify-email-card{width:min(100%,540px);padding:24px 32px 23px}}
+@media(max-width:700px){.verify-email-scene{min-height:0;padding:20px 14px 32px}.verify-email-card{width:min(100%,470px);padding:21px 18px 19px;border-radius:16px;box-shadow:0 8px 25px #351c880a}.verify-email-hero{height:98px;margin-bottom:7px}.verify-email-artwork{width:106px;height:98px}.verify-email-card h1{font-size:clamp(20px,5.3vw,24px);letter-spacing:-.5px}.verify-email-description{font-size:12px;line-height:1.55}.verify-email-timer{margin:15px auto 17px}.verify-email-timer-badge{min-height:44px;min-width:126px}.verify-email-timer-badge svg{width:21px;height:21px}.verify-email-timer-badge strong{font-size:23px}.verify-email-timer>p{font-size:11px}.verify-email-resend>button,.verify-email-primary-link{min-height:44px;font-size:12px}.verify-email-help{margin-top:16px;padding:10px 12px}.verify-email-footer{margin-top:14px;padding-top:12px}.verify-email-footer a{font-size:12px}.verify-email-success-illustration{width:80px;height:80px;border-width:7px;font-size:37px}}
+@media(max-width:370px){.verify-email-scene{padding-inline:10px}.verify-email-card{padding:18px 13px}.verify-email-card h1{font-size:19px}.verify-email-resend>button{font-size:11px;gap:6px}.verify-email-help p{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.verify-email-progress span{animation:none}.verify-email-resend>button,.verify-email-primary-link{transition:none}}
+
+/* Locked registration address; read-only informational display. */
+.verify-email-recipient{display:flex;align-items:center;gap:11px;max-width:455px;margin:17px auto 0;padding:10px 13px;border:1px solid #dce5f7;border-radius:10px;background:#f8faff;text-align:left}
+.verify-email-recipient>svg{flex:none;width:22px;height:22px;color:#7b3ffb}
+.verify-email-recipient>div{display:grid;gap:3px;min-width:0;flex:1}
+.verify-email-recipient>div>span{color:#64748b;font-size:11px;font-weight:600}
+.verify-email-recipient strong{display:block;min-width:0;overflow-wrap:anywhere;color:#0f172a;font-size:13px;font-weight:750}
+.verify-email-recipient-lock{flex:none;font-size:15px;opacity:.65}
+@media(max-width:700px){.verify-email-recipient{gap:9px;margin-top:14px;padding:9px 11px}.verify-email-recipient>div>span{font-size:10px}.verify-email-recipient strong{font-size:12px}}
+
+/* Countdown fallback when no server-issued expiry is available (e.g. an old login). */
+.verify-email-expiry-note{max-width:410px;margin:15px auto 18px;color:#64748b;font-size:12px;line-height:1.5;text-align:center}
+.verify-email-timer[role=timer] .verify-email-timer-badge strong{font-variant-numeric:tabular-nums}

@@ -2,11 +2,11 @@ export type NavigationItem = { path: string; label: string; icon: string; group:
 export type NavigationGroup = { id: string; label: string; items: NavigationItem[] };
 
 export const navigationGroups: NavigationGroup[] = [
-  { id: 'inicio', label: 'Inicio y resumen ejecutivo', items: [
+  { id: 'inicio', label: 'Inicio', items: [
     { path: '/dashboard', label: 'Inicio', icon: 'home', group: 'inicio', description: 'Estado general de XAMUKO.' },
   ] },
   { id: 'plataforma', label: 'Gestión de la plataforma', items: [
-    { path: '/businesses', label: 'Negocios', icon: 'store', group: 'plataforma', description: 'Directorio administrativo de negocios.', pending: true },
+    { path: '/businesses', label: 'Negocios', icon: 'store', group: 'plataforma', description: 'Directorio y gestión administrativa de negocios.' },
     { path: '/users', label: 'Usuarios', icon: 'users', group: 'plataforma', description: 'Gestión de usuarios pendiente de API.', pending: true },
     { path: '/verifications', label: 'Verificaciones', icon: 'shield', group: 'plataforma', description: 'Revisión documental de negocios.' },
     { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Gestión de contenido pendiente de API.', pending: true },

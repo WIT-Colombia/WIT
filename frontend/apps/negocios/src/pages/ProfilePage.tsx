@@ -1,3 +1,4 @@
+import { PHOTO_INPUT_ACCEPT } from "@wit/utils";
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -20,7 +21,7 @@ export function ProfilePage() {
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarMessage, setAvatarMessage] = useState<string | null>(null);
   const [avatarMessageIsError, setAvatarMessageIsError] = useState(false);
-  const visibleNickname = authUser?.nickname ?? account.nickname;
+  const visibleNickname = authUser?.nickname ?? "";
   const hasPasswordOnly = (authUser?.authProviders.includes("EMAIL") && !authUser?.authProviders.includes("GOOGLE")) ?? false;
   useEffect(() => {
     setDraft(account);
@@ -38,19 +39,17 @@ export function ProfilePage() {
     if (!file) return;
     setAvatarMessage(null);
     setAvatarMessageIsError(false);
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
-      setAvatarMessage("Usa una imagen JPG, PNG o WebP de máximo 5 MB.");
-      setAvatarMessageIsError(true);
-      input.value = "";
-      return;
-    }
     setAvatarSaving(true);
     try {
       await uploadAvatar(file);
-      void refresh().catch(() => undefined);
-      setAvatarMessage("Foto de perfil actualizada.");
-    } catch {
-      setAvatarMessage("No pudimos guardar la foto. Inténtalo de nuevo.");
+      try {
+        await refresh();
+        setAvatarMessage("Foto de perfil actualizada.");
+      } catch {
+        setAvatarMessage("Foto guardada. Actualiza la página para visualizarla.");
+      }
+    } catch (error) {
+      setAvatarMessage(error instanceof Error ? error.message : "No pudimos guardar la foto. Inténtalo de nuevo.");
       setAvatarMessageIsError(true);
     } finally {
       setAvatarSaving(false);
@@ -83,5 +82,5 @@ export function ProfilePage() {
       setSavingProfile(false);
     }
   };
-  return <><PageHeader eyebrow="MI CUENTA" title="Mi perfil" description="Actualiza tus datos personales y de acceso." /><div className="profile-layout"><section className="surface-card"><div className="profile-hero"><label className="account-avatar large profile-avatar-upload" aria-busy={avatarSaving}>{avatarSrc ? <img src={avatarSrc} alt="Foto de perfil" /> : account.name.split(" ").map(part => part[0]).slice(0,2).join("")}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={changeAvatar} disabled={avatarSaving} aria-label="Cambiar foto de perfil" /><em>{avatarSaving ? "Guardando…" : "Cambiar foto"}</em></label><div><h2>{account.name}</h2><p>{visibleNickname || "Sin registrar"} · Cuenta personal</p>{avatarMessage && <small className={`profile-avatar-message${avatarMessageIsError ? " is-error" : ""}`} role="status">{avatarMessage}</small>}</div></div><form onSubmit={save} className="profile-form"><div className="form-grid"><FormField label="Nombre completo" name="name" value={draft.name} onChange={change} required /><label className="form-field"><span>Nickname único</span><div className="nickname-copy-field"><input type="text" name="nickname" value={visibleNickname || "Sin registrar"} readOnly aria-readonly="true" /><button type="button" className="nickname-copy-button" onClick={() => void copyNickname()} disabled={!visibleNickname}>{nicknameCopied ? "Copiado" : "Copiar"}</button></div><small>Este nickname es único y no puede repetirse.</small></label><label className="form-field"><span>Correo electrónico</span><input type="email" value={draft.email} readOnly aria-readonly="true" /><small>El correo de acceso no se puede modificar desde aquí.</small></label></div><div className="form-actions profile-save-actions"><button className="action-button" type="submit" disabled={savingProfile}>{savingProfile ? "Guardando…" : "Guardar cambios"}</button>{profileMessage && <span className={`profile-save-message${profileMessage.kind === "error" ? " is-error" : ""}`} role="status">{profileMessage.text}</span>}</div><div className="profile-account-links">{hasPasswordOnly && <Link className="outline-button" to="/recuperar">Cambiar contraseña →</Link>}<Link className="outline-button" to="/legal/terms?from=perfil">Términos y condiciones →</Link></div></form><div className="profile-logout-area"><div><strong>¿Terminaste por hoy?</strong><small>Puedes volver cuando quieras.</small></div>{confirmingLogout ? <div className="profile-logout-confirm"><span>¿Cerrar sesión?</span><div><button className="profile-logout-confirm-yes" type="button" onClick={() => void signOut().then(() => navigate("/login"))}>Sí, cerrar</button><button className="profile-logout-confirm-cancel" type="button" onClick={() => setConfirmingLogout(false)}>Cancelar</button></div></div> : <button className="profile-logout" type="button" onClick={() => setConfirmingLogout(true)}>Cerrar sesión</button>}</div></section></div></>;
+  return <><PageHeader eyebrow="MI CUENTA" title="Mi perfil" description="Actualiza tus datos personales y de acceso." /><div className="profile-layout"><section className="surface-card"><div className="profile-hero"><label className="account-avatar large profile-avatar-upload" aria-busy={avatarSaving}>{avatarSrc ? <img src={avatarSrc} alt="Foto de perfil" /> : account.name.split(" ").map(part => part[0]).slice(0,2).join("")}<input type="file" accept={PHOTO_INPUT_ACCEPT} onChange={changeAvatar} disabled={avatarSaving} aria-label="Cambiar foto de perfil" /><em>{avatarSaving ? "Guardando…" : "Cambiar foto"}</em></label><div><h2>{account.name}</h2><p>{visibleNickname || "Sin registrar"} · Cuenta personal</p>{avatarMessage && <small className={`profile-avatar-message${avatarMessageIsError ? " is-error" : ""}`} role="status">{avatarMessage}</small>}</div></div><form onSubmit={save} className="profile-form"><div className="form-grid"><FormField label="Nombre completo" name="name" value={draft.name} onChange={change} required /><label className="form-field"><span>Nickname único</span><div className="nickname-copy-field"><input type="text" name="nickname" value={visibleNickname || "Sin registrar"} readOnly aria-readonly="true" /><button type="button" className="nickname-copy-button" onClick={() => void copyNickname()} disabled={!visibleNickname}>{nicknameCopied ? "Copiado" : "Copiar"}</button></div><small>Este nickname es único y no puede repetirse.</small></label><label className="form-field"><span>Correo electrónico</span><input type="email" value={draft.email} readOnly aria-readonly="true" /><small>El correo de acceso no se puede modificar desde aquí.</small></label></div><div className="form-actions profile-save-actions"><button className="action-button" type="submit" disabled={savingProfile}>{savingProfile ? "Guardando…" : "Guardar cambios"}</button>{profileMessage && <span className={`profile-save-message${profileMessage.kind === "error" ? " is-error" : ""}`} role="status">{profileMessage.text}</span>}</div><div className="profile-account-links">{hasPasswordOnly && <Link className="outline-button" to="/recuperar">Cambiar contraseña →</Link>}<Link className="outline-button" to="/legal/terms?from=perfil">Términos y condiciones →</Link></div></form><div className="profile-logout-area"><div><strong>¿Terminaste por hoy?</strong><small>Puedes volver cuando quieras.</small></div>{confirmingLogout ? <div className="profile-logout-confirm"><span>¿Cerrar sesión?</span><div><button className="profile-logout-confirm-yes" type="button" onClick={() => void signOut().then(() => navigate("/login"))}>Sí, cerrar</button><button className="profile-logout-confirm-cancel" type="button" onClick={() => setConfirmingLogout(false)}>Cancelar</button></div></div> : <button className="profile-logout" type="button" onClick={() => setConfirmingLogout(true)}>Cerrar sesión</button>}</div></section></div></>;
 }

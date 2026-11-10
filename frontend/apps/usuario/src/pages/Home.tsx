@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@wit/ui";
 import { businesses as sampleBusinesses, categories, products as sampleProducts, type Business } from "../data/mockData";
 import { useLocationContext } from "../context/LocationContext";
+import { LocationStarter } from "../components/LocationStarter";
 import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
 import { listPublicBusinesses, listPublicProducts, listPublicPromotions, listPublicServices } from "../services/publicBusinessApi";
 import { requestBlobWithSession } from "../services/authService";
@@ -18,7 +19,9 @@ import { getLikeIds, toggleLike } from "../services/userDataService";
 import { useFavorites } from "../services/favoritesService";
 import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
 import { createAnalyticsInteractionId } from "../services/analyticsService";
-import xamukoLocalHero from "../assets/xamuko-local-hero.png";
+import { listPublicReviews } from "../services/reviewsService";
+import xamukoLocalHero from "../assets/xamuko-local-hero.avif";
+import { isHorizontalDominantGesture, isMouseDragPointer } from "../utils/gestureDirection";
 import "./Home.css";
 import "./HomeChanges.css";
 import "./HomeAdjustments.css";
@@ -135,22 +138,22 @@ export default function Home() {
   const [bannerDragging, setBannerDragging] = useState(false);
   const bannerViewportRef = useRef<HTMLDivElement>(null);
   const bannerGroupRef = useRef<HTMLDivElement>(null);
-  const bannerDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const bannerDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreBannerClickRef = useRef(false);
   const bannerResumeTimerRef = useRef<number | null>(null);
   const featuredListRef = useRef<HTMLDivElement>(null);
-  const featuredDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const featuredDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreFeaturedClickRef = useRef(false);
   const categoryListRef = useRef<HTMLDivElement>(null);
-  const categoryDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const categoryDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreCategoryClickRef = useRef(false);
   const nearbyListRef = useRef<HTMLDivElement>(null);
-  const nearbyDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const nearbyDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreNearbyClickRef = useRef(false);
   const [showAllOffers, setShowAllOffers] = useState(false);
   const [offersScroll, setOffersScroll] = useState({ left: 0, max: 0 });
   const offersListRef = useRef<HTMLDivElement>(null);
-  const offersDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const offersDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreOffersClickRef = useRef(false);
   const { selection } = useLocationContext();
   const selectedLocation = selection?.locality ?? null;
@@ -180,11 +183,24 @@ export default function Home() {
     let current = true;
     setCatalogState("loading");
     const userCoordinates = selection?.coordinates;
-    void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng }).then(({ businesses, products }) => {
+    void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng }).then(async ({ businesses, products }) => {
+      if (!current) return;
+      const ratedBusinesses = await Promise.all(businesses.map(async (business) => {
+        try {
+          const response = await listPublicReviews(business.id, 1, 1);
+          return {
+            ...business,
+            rating: response.summary?.average ?? business.rating,
+            reviewCount: response.summary?.total ?? business.reviewCount,
+          };
+        } catch {
+          return business;
+        }
+      }));
       if (!current) return;
       setCatalogState("ready");
       setCatalogProducts(products);
-      setItems(businesses.map((business) => ({
+      setItems(ratedBusinesses.map((business) => ({
         ...business,
         distanceKm: distanceBetween(userCoordinates, business.coordinates),
       })));
@@ -383,8 +399,8 @@ export default function Home() {
   }
 
   function startBannerDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    bannerDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: event.currentTarget.scrollLeft, moved: false };
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
+    bannerDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: event.currentTarget.scrollLeft, moved: false };
     pauseBannerForInteraction();
     setBannerDragging(false);
   }
@@ -393,7 +409,8 @@ export default function Home() {
     const drag = bannerDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     const distance = event.clientX - drag.startX;
-    if (Math.abs(distance) > 4) {
+    const distanceY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(distance, distanceY, 4)) {
       drag.moved = true;
       setBannerDragging(true);
       if (!event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.setPointerCapture(event.pointerId);
@@ -416,10 +433,10 @@ export default function Home() {
   }
 
   function startFeaturedDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = featuredListRef.current;
     if (!list) return;
-    featuredDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    featuredDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
 
   function moveFeaturedDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -427,7 +444,8 @@ export default function Home() {
     const list = featuredListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -446,10 +464,10 @@ export default function Home() {
   }
 
   function startCategoryDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = categoryListRef.current;
     if (!list) return;
-    categoryDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    categoryDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
 
   function moveCategoryDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -457,7 +475,8 @@ export default function Home() {
     const list = categoryListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -476,10 +495,10 @@ export default function Home() {
   }
 
   function startNearbyDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = nearbyListRef.current;
     if (!list) return;
-    nearbyDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    nearbyDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
 
   function moveNearbyDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -487,7 +506,8 @@ export default function Home() {
     const list = nearbyListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -506,10 +526,10 @@ export default function Home() {
   }
 
   function startOffersDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = offersListRef.current;
     if (!list) return;
-    offersDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    offersDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
 
   function moveOffersDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -517,7 +537,8 @@ export default function Home() {
     const list = offersListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -536,11 +557,10 @@ export default function Home() {
   }
 
   return <div className="home-page home-v2">
-    <div className="home-topbar">
-      <SiteHeader active="home" onSearchChange={setQuery} />
-    </div>
+    <SiteHeader active="home" onSearchChange={setQuery} />
 
     <main id="inicio">
+      <LocationStarter />
 
       <section className="home-city-banner-section" aria-label={`Descubre negocios cerca de ${locationLabel}`}><div className="home-city-banner"><img src={xamukoLocalHero} alt="Comercios locales de la ciudad"/><div className="home-city-banner__shade"/><span className="home-city-banner__location"><Icon name="pin"/>{cityName}</span><p className="home-city-banner__signature" aria-hidden="true">Nuestra gente,<br/>nuestra ciudad.</p><div className="home-city-banner__copy"><span>EXPLORA TU CIUDAD</span><h2>Lo local está<br/><em>más cerca</em> de ti</h2><p>Encuentra negocios, productos y servicios que hacen especial a tu comunidad.</p><Link to="/map" className="home-city-banner__action"><Icon name="map"/>Explorar negocios</Link></div></div></section>
 

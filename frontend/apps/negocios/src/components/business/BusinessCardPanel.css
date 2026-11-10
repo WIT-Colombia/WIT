@@ -22,9 +22,11 @@
 .business-card-panel-notice{padding:11px 12px;border:1px solid #dbeafe;border-radius:8px;background:#f8fbff;color:#526b8a}
 .business-card-panel-actions{display:grid;gap:8px;min-width:0}
 .business-card-panel-actions>button{display:flex;align-items:center;justify-content:center;width:100%;min-height:40px;margin:0;padding:9px 12px;border-radius:7px;font-size:12px;line-height:1.4}
+/* Direct links preserve the browser download gesture and look exactly like buttons. */
+.business-card-panel-actions>a{display:flex;align-items:center;justify-content:center;width:100%;min-height:40px;margin:0;padding:9px 12px;border-radius:7px;font-size:12px;line-height:1.4;text-decoration:none;text-align:center}
 .business-card-panel-actions>button:disabled{border:1px solid #e2e8f0;background:#f1f5f9;color:#64748b;box-shadow:none;cursor:not-allowed;opacity:1}
 .business-card-panel-benefits-note{color:#64748b;font-size:10px;line-height:1.5;text-align:center}
-.business-card-benefits-overlay{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;padding:20px;background:#0f172a80}
+.business-card-benefits-overlay{position:fixed;z-index:2147483000;inset:0;display:grid;place-items:center;box-sizing:border-box;min-height:100dvh;padding:20px;background:#0f172a80;overscroll-behavior:contain}
 .business-card-benefits-dialog{display:grid;gap:18px;width:min(100%,390px);max-height:calc(100dvh - 40px);overflow:auto;padding:22px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;box-shadow:0 24px 55px #0f172a40}
 .business-card-benefits-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 .business-card-benefits-heading p{margin:0 0 4px;color:#64748b;font-size:11px;line-height:1.4}
@@ -59,3 +61,6 @@
 
 /* Keep the approved portrait card centred while its two export formats are offered. */
 .business-card-panel-preview{display:grid;place-items:center;min-width:0}
+
+/* Keep the modal and its close button visible above the sticky header on phones. */
+@media(max-width:600px){.business-card-benefits-overlay{padding:max(12px,env(safe-area-inset-top,0px)) 12px max(12px,env(safe-area-inset-bottom,0px))}.business-card-benefits-dialog{width:100%;max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}}

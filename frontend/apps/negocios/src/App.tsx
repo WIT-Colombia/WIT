@@ -24,9 +24,11 @@ import { RecoveryPage } from "./pages/RecoveryPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { NoBusinessPage } from "./pages/NoBusinessPage";
 import { HelpPage } from "./pages/HelpPage";
+import { SupportPage } from "./pages/SupportPage";
 import BusinessPublicPreviewPage from "./pages/BusinessPublicPreviewPage";
 import { BusinessAuthProvider } from "./services/businessAuthContext";
 import GoogleCallback from "./pages/GoogleCallback";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 function BusinessPermissionRoute({ children, permission, ownerOnly = false }: { children: ReactNode; permission?: string; ownerOnly?: boolean }) {
   const { business, businessesReady } = useBusinessStore();
@@ -45,13 +47,15 @@ export default function App() {
     <Route path="/login" element={<AuthPage mode="login" />} />
     <Route path="/registro" element={<AuthPage mode="register" />} />
     <Route path="/auth/google/callback" element={<GoogleCallback />} />
+    <Route path="/verify-email" element={<VerifyEmailPage />} />
     <Route path="/recuperar" element={<RecoveryPage />} />
     <Route path="/bienvenida" element={<WelcomePage />} />
     <Route path="/sin-negocio" element={<NoBusinessPage />} />
     <Route path="/legal/:page" element={<LegalPage />} />
     <Route path="/preview" element={<AppShell demoMode />}><Route index element={<DashboardPage />} /></Route>
     <Route element={<AppShell />}>
-      <Route path="/" element={<DashboardPage />} />
+      <Route path="/" element={<Navigate to="/inicio" replace />} />
+      <Route path="/inicio" element={<DashboardPage />} />
       <Route path="/mi-negocio" element={<BusinessPermissionRoute permission="EDIT_BUSINESS"><SelectedBusinessPage /></BusinessPermissionRoute>} />
       <Route path="/mis-negocios" element={<BusinessPage />} />
       <Route path="/mis-negocios/nuevo" element={<BusinessCreatePage />} />
@@ -72,6 +76,8 @@ export default function App() {
       <Route path="/perfil" element={<ProfilePage />} />
       <Route path="/mas" element={<MorePage />} />
       <Route path="/ayuda" element={<HelpPage />} />
+      <Route path="/soporte" element={<SupportPage />} />
+      <Route path="/sugerencias" element={<SupportPage mode="suggestion" />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></BusinessStoreProvider></BusinessAuthProvider>;

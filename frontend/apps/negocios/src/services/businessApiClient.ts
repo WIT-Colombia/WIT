@@ -1,3 +1,6 @@
+import { buildApiUrl, normalizeImageForUpload } from '@wit/utils';
+export { buildApiUrl };
+
 export type ApiErrorPayload = {
   error?: {
     code?: string;
@@ -22,13 +25,6 @@ export class BusinessApiError extends Error {
   }
 }
 
-type RuntimeImportMeta = ImportMeta & {
-  env?: Record<string, string | undefined>;
-};
-
-const configuredBaseUrl = (import.meta as RuntimeImportMeta).env?.VITE_API_BASE_URL?.trim();
-export const API_BASE_URL = configuredBaseUrl || "/api/v1";
-
 let accessTokenProvider: (() => string | null) | null = null;
 let unauthorizedHandler: (() => Promise<boolean>) | null = null;
 
@@ -42,13 +38,6 @@ export function configureUnauthorizedHandler(handler: (() => Promise<boolean>) |
   unauthorizedHandler = handler;
 }
 
-export function buildApiUrl(path: string): string {
-  if (/^https?:\/\//i.test(path)) return path;
-  const base = API_BASE_URL.replace(/\/+$/, "");
-  const suffix = path.startsWith("/") ? path : `/${path}`;
-  if (base.endsWith("/api/v1") && suffix.startsWith("/api/v1/")) return `${base}${suffix.slice("/api/v1".length)}`;
-  return `${base}${suffix}`;
-}
 
 async function requestJsonInternal<T>(path: string, init: RequestInit, retryUnauthorized: boolean): Promise<T> {
   const headers = new Headers(init.headers);
@@ -80,7 +69,11 @@ async function requestJsonInternal<T>(path: string, init: RequestInit, retryUnau
 
   if (response.status === 401 && retryUnauthorized && unauthorizedHandler && !/^\/auth\//.test(path)) {
     const refreshed = await unauthorizedHandler();
-    if (refreshed) return requestJsonInternal<T>(path, init, false);
+    if (refreshed) {
+      const retryHeaders = new Headers(init.headers);
+      retryHeaders.delete("Authorization");
+      return requestJsonInternal<T>(path, { ...init, headers: retryHeaders }, false);
+    }
   }
 
   if (!response.ok) {
@@ -299,7 +292,7 @@ export const businessApi = {
   updatePromotion: (businessId: string, promotionId: string, input: Record<string, unknown>) => requestJson<{ promotion: BusinessPromotion }>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
   finishPromotion: (businessId: string, promotionId: string) => requestJson<{ promotion: BusinessPromotion }>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}/finish`, { method: 'POST' }),
   deletePromotion: (businessId: string, promotionId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}`, { method: 'DELETE' }),
-  uploadPromotionPhoto: (businessId: string, promotionId: string, file: File) => { const form = new FormData(); form.append('file', file); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}/photos`, form); },
+  uploadPromotionPhoto: async (businessId: string, promotionId: string, file: File) => { const normalizedFile = await normalizeImageForUpload(file); const form = new FormData(); form.append('file', normalizedFile); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}/photos`, form); },
   deletePromotionPhoto: (businessId: string, promotionId: string, photoId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/promotions/${encodeURIComponent(promotionId)}/photos/${encodeURIComponent(photoId)}`, { method: 'DELETE' }),
   update: (businessId: string, input: Record<string, unknown>) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}`, { method: 'PATCH', body: JSON.stringify(input) }),
   publishBusiness: (businessId: string) => requestJson<{ business: RealBusiness }>(`/businesses/${encodeURIComponent(businessId)}/publish`, { method: 'POST' }),
@@ -317,9 +310,9 @@ export const businessApi = {
   reactivateModality: (businessId: string, modalityId: string) => requestJson<{ modality: RealModality }>(`/businesses/${encodeURIComponent(businessId)}/modalities/${encodeURIComponent(modalityId)}/reactivate`, { method: 'POST' }),
   retireModality: (businessId: string, modalityId: string) => requestJson<{ modality: RealModality }>(`/businesses/${encodeURIComponent(businessId)}/modalities/${encodeURIComponent(modalityId)}/retire`, { method: 'POST' }),
   listPhotos: (businessId: string) => requestJson<{ photos: RealPhoto[] }>(`/businesses/${encodeURIComponent(businessId)}/photos`),
-  uploadPhoto: (businessId: string, file: File, cover = false) => { const form = new FormData(); form.append('file', file); form.append('cover', String(cover)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos`, form); },
-  uploadOfferPhoto: (businessId: string, offerId: string, file: File) => { const form = new FormData(); form.append('file', file); form.append('offerId', offerId); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos`, form); },
-  uploadCoverPhoto: (businessId: string, file: File, position: { x: number; y: number }) => { const form = new FormData(); form.append('file', file); form.append('positionX', String(position.x)); form.append('positionY', String(position.y)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/cover-photo`, form); },
+  uploadPhoto: async (businessId: string, file: File, cover = false) => { const normalizedFile = await normalizeImageForUpload(file); const form = new FormData(); form.append('file', normalizedFile); form.append('cover', String(cover)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos`, form); },
+  uploadOfferPhoto: async (businessId: string, offerId: string, file: File) => { const normalizedFile = await normalizeImageForUpload(file); const form = new FormData(); form.append('file', normalizedFile); form.append('offerId', offerId); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos`, form); },
+  uploadCoverPhoto: async (businessId: string, file: File, position: { x: number; y: number }) => { const normalizedFile = await normalizeImageForUpload(file); const form = new FormData(); form.append('file', normalizedFile); form.append('positionX', String(position.x)); form.append('positionY', String(position.y)); return requestMultipart<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/cover-photo`, form); },
   setProfilePhoto: (businessId: string, photoId: string | null, position: { x: number; y: number }) => requestJson<{ photo: RealPhoto | null }>(`/businesses/${encodeURIComponent(businessId)}/profile-photo`, { method: 'PUT', body: JSON.stringify({ photoId, positionX: position.x, positionY: position.y }) }),
   deletePhoto: (businessId: string, photoId: string) => requestJson<void>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}`, { method: 'DELETE' }),
   setPhotoCover: (businessId: string, photoId: string, position: { x: number; y: number }) => requestJson<{ photo: RealPhoto }>(`/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}/cover`, { method: 'POST', body: JSON.stringify({ positionX: position.x, positionY: position.y }) }),

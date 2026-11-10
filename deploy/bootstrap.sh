@@ -3,9 +3,18 @@
 set -Eeuo pipefail
 umask 022
 [[ $EUID == 0 ]] || exit 64
-here=$(cd "$(dirname "$0")" && pwd)
 base=/opt/xamuko/deploy
-[[ ! -e $base ]] || { echo 'Existing deployment directory: inspect before continuing'; exit 65; }
+if [[ ${1:-} == --validate-only ]]; then
+  [[ -d $base && -L $base/current && -f $base/READY ]] || { echo 'Existing deployment layout is not ready' >&2; exit 78; }
+  current=$(readlink -f "$base/current")
+  [[ -f "$current/backend/xamuko-api.env" ]] || { echo 'Active xamuko-api.env missing' >&2; exit 78; }
+  [[ $(stat -c '%a' "$current/backend/xamuko-api.env") == 600 ]] || { echo 'xamuko-api.env must be mode 600' >&2; exit 78; }
+  [[ $(systemctl show xamuko-api -p User --value) == ssm-user ]] || { echo 'Unexpected service user' >&2; exit 78; }
+  echo 'Existing production layout validated; no changes made'
+  exit 0
+fi
+here=$(cd "$(dirname "$0")" && pwd)
+[[ ! -e $base ]] || { echo 'Existing deployment directory: use --validate-only; refusing bootstrap' >&2; exit 65; }
 [[ -f /opt/xamuko/api/backend/.env && -s /opt/xamuko/api/backend/dist/server.js ]]
 [[ -s /var/www/xamuko/index.html ]]
 [[ $(systemctl show xamuko-api -p User --value) == ssm-user ]]
@@ -24,7 +33,6 @@ cp -a /etc/nginx/conf.d/xamuko-web.conf "$base/backups/xamuko-web.conf"
 cp -a /etc/systemd/system/xamuko-api.service "$base/backups/xamuko-api.service"
 install -m 0755 "$here/deploy.sh" /usr/local/sbin/xamuko-deploy
 install -m 0755 "$here/build.sh" /usr/local/libexec/xamuko-build
-# Only PUBLIC Vite settings belong here. Backend secrets stay in their existing file.
 install -m 0644 /dev/null /etc/xamuko-deploy/frontend.env
 initial=$base/releases/bootstrap
 mkdir "$initial"
@@ -40,7 +48,6 @@ install -d -o ssm-user -g ssm-user -m 0700 /opt/xamuko/api/backend/storage
 ln -s /opt/xamuko/api/backend/.env "$initial/backend/.env"
 ln -s /opt/xamuko/api/backend/storage "$initial/backend/storage"
 ln -s "$initial" "$base/current"
-# Preserve the currently running version as an explicit rollback target.
 restore() {
   local status=$?
   trap - ERR

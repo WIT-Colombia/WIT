@@ -1,0 +1,40 @@
+name: XAMUKO Admin production diagnostics
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [integration/preserve-all-20261029]
+    paths:
+      - '.github/workflows/admin-production-diagnostics.yml'
+      - 'scripts/admin-production-probe.mjs'
+  push:
+    branches: [integration/preserve-all-20261029]
+    paths:
+      - '.github/workflows/admin-production-diagnostics.yml'
+      - 'scripts/admin-production-probe.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-production-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  public-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      DEPLOY_ENABLED: ${{ vars.XAMUKO_PRODUCTION_DEPLOY_ENABLED }}
+      ROLE_CONFIGURED: ${{ vars.XAMUKO_PRODUCTION_DEPLOY_ROLE_ARN != '' }}
+      INSTANCE_CONFIGURED: ${{ vars.XAMUKO_PRODUCTION_INSTANCE_ID != '' }}
+      BUCKET_CONFIGURED: ${{ vars.XAMUKO_PRODUCTION_ARTIFACT_BUCKET != '' }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Probe HTTPS, password route, CORS and anonymous access
+        run: node scripts/admin-production-probe.mjs

@@ -16,8 +16,9 @@ export function LegalPage() {
   return <main className="legal-page">
     <BusinessHeader />
     <div className="legal-layout">
+      <Link className="text-link legal-back legal-back-top" to={backPath}>← Volver a {originLabel}</Link>
       <aside className="legal-sidebar"><span className="page-eyebrow">CENTRO LEGAL</span><h1>{isTerms ? "Términos y condiciones" : "Política de privacidad"}</h1><p>Información clara para usar XAMUKO Business con confianza.</p><nav aria-label="Documentos legales"><Link className={isTerms ? "active" : ""} to={legalPath("terms")}>Términos y condiciones</Link><Link className={!isTerms ? "active" : ""} to={legalPath("privacy")}>Política de privacidad</Link></nav></aside>
-      <article className="legal-card legal-document"><Link className="text-link legal-back legal-back-top" to={backPath}>← Volver a {originLabel}</Link><div className="legal-document-heading"><span className="page-eyebrow">XAMUKO BUSINESS · BORRADOR LEGAL</span><h2>{isTerms ? "Términos y condiciones" : "Política de privacidad"}</h2><p>BORRADOR EN REVISIÓN · No constituye la versión contractual vigente. Datos del operador y procedimientos pendientes de validación.</p></div>
+      <article className="legal-card legal-document"><div className="legal-document-heading"><span className="page-eyebrow">XAMUKO BUSINESS · BORRADOR LEGAL</span><h2>{isTerms ? "Términos y condiciones" : "Política de privacidad"}</h2><p>BORRADOR EN REVISIÓN · No constituye la versión contractual vigente. Datos del operador y procedimientos pendientes de validación.</p></div>
         <nav className="legal-toc" aria-label="Contenido del documento"><strong>En este documento</strong>{sections.map(s => <a key={s.id} href={`#${s.id}`}>{s.title}</a>)}</nav>
         {sections.map(s => <section className="legal-section" id={s.id} key={s.id}><h3>{s.title}</h3>{s.paragraphs.map((paragraph,i) => <p key={i}>{paragraph}</p>)}</section>)}
       </article>

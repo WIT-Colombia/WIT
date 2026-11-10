@@ -1,7 +1,6 @@
 import { Prisma, type PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 
 export const adminPermissions = ['BUSINESSES_READ', 'CATALOG_READ', 'REPORTS_REVIEW', 'CONTENT_MODERATE', 'AUDIT_READ', 'ADMINS_MANAGE', 'PIONEER_MANAGE'] as const;
 export type AdminPermission = typeof adminPermissions[number] | 'FINANCE_READ' | 'FINANCE_MANAGE';
@@ -21,16 +20,7 @@ export async function getAdminContext(userId: string, db: Db = prisma): Promise<
 }
 
 export function requireAdmin(permission?: AdminPermission) {
-  return async (request: any, _response: any, next: any) => {
-    try {
-      const auth = (request as AuthenticatedRequest).auth;
-      const context = await getAdminContext(auth.userId);
-      if (!context) throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'No tienes acceso administrativo.');
-      if (permission && !context.permissions.includes(permission)) throw new AppError(403, 'ADMIN_PERMISSION_DENIED', 'No tienes permisos para esta acción.');
-      request.admin = context;
-      next();
-    } catch (error) { next(error); }
-  };
+  return async (request: any, _response: any, next: any) => { try { const { requireAdminSession } = await import('./admin-session.service.js'); const session = await requireAdminSession(request); const context = await getAdminContext(session.userId); if (!context) throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'No tienes acceso administrativo.'); if (permission && !context.permissions.includes(permission)) throw new AppError(403, 'ADMIN_PERMISSION_DENIED', 'No tienes permisos para esta acción.'); request.auth = { userId: session.userId, sessionId: 'admin' }; request.admin = context; next(); } catch (error) { next(error); } };
 }
 
 export function adminFromRequest(request: any): AdminContext {

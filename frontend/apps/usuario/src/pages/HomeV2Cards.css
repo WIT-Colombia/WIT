@@ -908,3 +908,18 @@
     color: var(--xamuko-violet);
   }
 }
+
+/*
+ * Touch-first navigation: let WebKit / browsers decide the gesture axis.
+ * Carousels remain horizontally scrollable, but touching a card must never
+ * prevent vertical page scrolling (iPhone, iPad, Android, and tablets).
+ * Mouse dragging remains supported by the JS mouse-only handlers.
+ */
+.home-page.home-v2 .home-business-banner__viewport,
+.home-page.home-v2 .category-list,
+.home-page.home-v2 .home-featured-section .business-grid,
+.home-page.home-v2 .home-nearby-section .business-grid,
+.home-page.home-v2 .new-products__list,
+.home-page.home-v2 .special-offers__list {
+  touch-action: auto;
+}

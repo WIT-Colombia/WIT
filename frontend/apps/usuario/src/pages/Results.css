@@ -388,3 +388,206 @@
 @media(max-width:700px){.results-page .results-main{padding-top:8px}}
 @media(min-width:701px) and (max-width:1100px){.results-page .results-main{padding-top:8px}.results-page .results-heading{margin-top:12px}}
 .results-main > .search-bar { display: none; }
+
+
+/* Resultados: encabezado estable, sin solapamientos entre título y acciones. */
+.results-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 88px;
+}
+.results-heading__title { display: contents; }
+.results-heading__title > div { grid-column: 2; min-width: 0; text-align: center; }
+.results-heading__title .results-back-link {
+  position: static;
+  grid-column: 1;
+  grid-row: 1;
+  transform: none;
+  white-space: nowrap;
+}
+.results-heading-links {
+  position: static;
+  grid-column: 3;
+  grid-row: 1;
+  transform: none;
+  justify-self: end;
+}
+.results-heading h1 { max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  .results-heading {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    row-gap: 12px;
+    min-height: 0;
+    margin-top: 18px;
+  }
+  .results-heading__title > div {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .results-heading__title .results-back-link {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+  .results-heading-links {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+  .results-heading h1 { font-size: clamp(22px, 7vw, 28px); line-height: 1.12; }
+  .results-heading p { font-size: 12px; }
+}
+
+
+/* La calificación debe permanecer visible dentro de la tarjeta en resultados móviles. */
+@media (max-width: 620px) {
+  .results-page .results-businesses .entity-rating {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+}
+
+
+/* La estrella de calificación de Resultados siempre debe usar el amarillo oficial. */
+.results-page .entity-rating .entity-rating__star { color: #f5b53d !important; }
+
+
+/* Resultados: tarjetas compactas como antes (4 columnas escritorio, 3 tablet, 2 móvil). */
+.results-page .results-businesses .entity-business-card .entity-card__heading .entity-rating {
+  position: static;
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.results-page .results-businesses .entity-business-card .entity-card__heading > div { min-width: 0; }
+
+/* La calificación numérica de resultados siempre es negra, incluso para destacados. */
+.results-page .results-businesses .entity-rating,
+.results-page .results-businesses .entity-business-card--featured .entity-rating { color: var(--wit-text-primary) !important; }
+.results-page .results-businesses .entity-rating .entity-rating__star { color: #f5b53d !important; }
+
+
+/* Preserve horizontal carousels while allowing vertical page scrolling on touch. */
+.results-category-chips,
+.results-tabs-scroll { touch-action: pan-x pan-y; }
+
+
+/* Buscador geográfico: 1 km predeterminado; Ciudad sin GPS y Virtual explícitos. */
+.results-main > .results-distance-filter{order:5}
+.results-main > .results-tabs{order:6}
+.results-main > .results-request-state{order:7}
+.results-main > .results-like-error{order:7}
+.results-main > .results-list{order:8}
+.results-main > .admob-banner{order:9}
+.results-distance-filter{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;padding:10px 14px;border:1px solid #e1d8ff;border-radius:13px;background:#fff;color:var(--xamuko-navy)}
+.results-distance-filter label{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:700}
+.results-distance-filter select{min-height:38px;padding:6px 28px 6px 11px;border:1px solid #d8ccff;border-radius:9px;background:#f8f6ff;color:var(--xamuko-violet);font:inherit;font-size:12px;cursor:pointer}
+.results-distance-filter select:disabled{opacity:.6;cursor:not-allowed}
+.results-distance-filter span{font-size:12px;color:var(--xamuko-muted)}
+.results-request-state{width:100%;padding:17px 18px;margin:0 0 18px;border:1px solid #ded4ff;border-radius:13px;background:#fff;color:var(--xamuko-navy);font-size:13px}
+.results-request-state--error{border-color:#ebc6c6;background:#fffafa}
+.results-request-state--error p{margin:0 0 12px}
+.results-request-state button{min-height:36px;padding:0 14px;border:1px solid #d8ccff;border-radius:10px;background:#f1edff;color:var(--xamuko-violet);font:inherit;font-weight:700;cursor:pointer}
+.results-more:disabled{opacity:.65;cursor:wait}
+.results-page .results-offers > .results-more{display:flex}
+@media(max-width:620px){
+  .results-distance-filter{gap:6px;padding:10px 12px;margin-bottom:15px}
+  .results-distance-filter label{gap:8px;font-size:11px}
+  .results-distance-filter select{min-height:36px;font-size:11px}
+  .results-distance-filter span{width:100%;font-size:10px}
+}
+
+
+/*
+ * Resultados: Productos y Servicios tienen la MISMA cuadrícula que Negocios.
+ * Estas reglas específicas neutralizan los estilos históricos de carrusel
+ * (display:flex, scroll horizontal y ancho flex-basis) sin afectar a Inicio.
+ */
+.results-page .results-offers.results-offer-group .results-offer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: row;
+  gap: 14px;
+  width: 100%;
+  margin-right: 0;
+  padding: 0;
+  overflow: visible;
+  scroll-snap-type: none;
+  scrollbar-width: auto;
+  touch-action: pan-y;
+  cursor: auto;
+  user-select: auto;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card {
+  display: flex;
+  flex: initial;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  scroll-snap-align: none;
+  overflow: hidden;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-card__image {
+  display: block;
+  width: 100%;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-card__content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+@media (max-width: 1100px) and (min-width: 701px) {
+  .results-page .results-offers.results-offer-group .results-offer-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .results-page .results-offers.results-offer-group .results-offer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card {
+    height: auto;
+    min-height: 238px;
+    max-height: none;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-card__image {
+    height: 118px;
+    min-height: 118px;
+    max-height: 118px;
+    flex: 0 0 118px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-card__content {
+    min-width: 0;
+    padding: 9px 10px 8px;
+  }
+  .results-page .results-offers.results-offer-group > .results-more {
+    display: flex;
+  }
+}
+
+/*
+ * Result cards use a fixed responsive grid, not a horizontal carousel.
+ * Legacy mobile carousel rules set touch-action: pan-x on Negocios.
+ * This later override explicitly allows vertical scrolling when the
+ * finger starts on a business, product or service card.
+ */
+.results-page .results-businesses .results-grid,
+.results-page .results-offers.results-offer-group .results-offer-grid {
+  touch-action: pan-y;
+  overscroll-behavior-x: auto;
+  overflow-x: visible;
+  scroll-snap-type: none;
+  user-select: auto;
+  cursor: auto;
+}

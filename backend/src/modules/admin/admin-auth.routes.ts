@@ -1,0 +1,66 @@
+import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
+import { env } from '../../config/env.js';
+import { prisma } from '../../config/prisma.js';
+import { AppError } from '../../shared/errors/app-error.js';
+import { readAdminPendingOAuth, consumeAdminPendingOAuth, clearAdminPendingOAuth } from './admin-pending-oauth.service.js';
+import { beginAuthentication, finishAuthentication } from './admin-webauthn.service.js';
+import { issueAdminSession, requireAdminSession, revokeAdminSession } from './admin-session.service.js';
+import { beginPasskeyActivation, finishPasskeyActivation } from './admin-passkey-activation.service.js';
+import { getAdminContext, adminSession } from './admin-auth.service.js';
+import { login } from '../auth/auth.service.js';
+import { loginSchema } from '../auth/auth.schemas.js';
+import { setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
+import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
+import { LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from '../auth/auth-rate-limit-policy.js';
+
+const adminPasswordRateLimit = rateLimit({ windowMs: env.nodeEnv === 'development' ? 60 * 1000 : LOGIN_IP_WINDOW_SECONDS * 1000, limit: env.nodeEnv === 'development' ? 60 : LOGIN_RATE_LIMIT, standardHeaders: 'draft-8', legacyHeaders: false });
+
+const requestMeta = (request: any) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
+
+export const adminAuthRouter = Router();
+adminAuthRouter.use((request, response, next) => { response.setHeader('Cache-Control', 'no-store'); if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return next(); return requireTrustedOrigin(request, response, next); });
+
+async function userIdForGoogleSub(googleSub: string): Promise<string> {
+  const identity = await prisma.authIdentity.findUnique({ where: { provider_providerSubject: { provider: 'GOOGLE', providerSubject: googleSub } }, select: { userId: true } });
+  if (!identity) throw new AppError(403, 'ADMIN_IDENTITY_NOT_LINKED', 'La identidad Google autorizada aún no está vinculada a una cuenta.');
+  return identity.userId;
+}
+
+adminAuthRouter.post('/password', adminPasswordRateLimit, requireTrustedOrigin, async (request, response, next) => {
+  try {
+    const parsed = loginSchema.safeParse(request.body);
+    if (!parsed.success) throw new AppError(400, 'INVALID_INPUT', 'Revisa el correo y la contraseña.');
+    const result = await login(parsed.data, requestMeta(request));
+    const context = await getAdminContext(result.user.id);
+    if (!context || context.role !== 'SUPER_ADMIN') throw new AppError(403, 'ADMIN_ACCESS_DENIED', 'La cuenta no tiene acceso administrativo.');
+    const csrfToken = await issueAdminSession(response, result.user.id, parsed.data.rememberMe);
+    setRefreshCookie(response, result.refreshToken, parsed.data.rememberMe);
+    response.json({ authenticated: true, csrfToken, admin: await adminSession(result.user.id) });
+  } catch (error) { next(error); }
+});
+
+adminAuthRouter.get('/webauthn/options', async (request, response, next) => {
+  try {
+    const googleSub = await readAdminPendingOAuth(request);
+    response.json(await beginAuthentication(await userIdForGoogleSub(googleSub)));
+  } catch (error) { next(error); }
+});
+
+adminAuthRouter.post('/webauthn/verify', async (request, response, next) => {
+  try {
+    const googleSub = await readAdminPendingOAuth(request);
+    const userId = await userIdForGoogleSub(googleSub);
+    const verified = await finishAuthentication(userId, request.body);
+    await consumeAdminPendingOAuth(request);
+    clearAdminPendingOAuth(response);
+    const csrfToken = await issueAdminSession(response, userId, request.body?.rememberMe === true);
+    response.json({ verified: verified.verified, adminSession: true, csrfToken });
+  } catch (error) { next(error); }
+});
+
+adminAuthRouter.get('/session', async (request, response, next) => { try { const session = await requireAdminSession(request); response.json({ authenticated: true, userId: session.userId, csrfToken: session.csrf }); } catch (error) { next(error); } });
+adminAuthRouter.post('/logout', async (request, response, next) => { try { await requireAdminSession(request); await revokeAdminSession(request, response); response.status(204).send(); } catch (error) { next(error); } });
+
+adminAuthRouter.get('/passkey/activation/options', async (request, response, next) => { try { response.json(await beginPasskeyActivation(request, response)); } catch (error) { next(error); } });
+adminAuthRouter.post('/passkey/activation/verify', async (request, response, next) => { try { response.json(await finishPasskeyActivation(request)); } catch (error) { next(error); } });

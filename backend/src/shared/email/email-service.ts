@@ -10,27 +10,32 @@ const sender: EmailSender = env.emailMode === 'resend'
   ? new ResendEmailSender(env.resendApiKey as string, env.emailApiUrl, env.emailFrom)
   : new DevelopmentEmailSender();
 
+function applicationBaseUrl(application: EmailApplication, path: '/verify-email' | '/recuperar'): string {
+  if (application === 'negocios') return `${env.emailFrontendUrls.negocios.replace(/\/$/, '')}${path}`;
+  return `${(path === '/verify-email' ? env.emailVerificationUrl : env.passwordResetUrl).replace(/\/$/, '')}`;
+}
+
 /** Sends a fully rendered transactional message through the configured provider. */
 export async function sendTransactionalEmail(message: EmailMessage): Promise<void> {
   await sender.send(message);
 }
 
 export async function sendVerificationEmail(to: string, token: string, displayName?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  const message = renderVerificationEmail({ to, token, displayName, baseUrl: env.emailVerificationUrl, logoUrl: env.emailLogoUrl }, application);
+  const message = renderVerificationEmail({ to, token, displayName, baseUrl: applicationBaseUrl(application, '/verify-email'), logoUrl: env.emailLogoUrl }, application);
   await sendTransactionalEmail({ ...message, eventType: 'email_verification', idempotencyKey: `email_verification/${createHash('sha256').update(token).digest('hex')}` });
 }
 
 export async function sendPasswordResetEmail(to: string, token: string, displayName?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  const message = renderPasswordResetEmail({ to, token, displayName, baseUrl: env.passwordResetUrl, logoUrl: env.emailLogoUrl }, application);
+  const message = renderPasswordResetEmail({ to, token, displayName, baseUrl: applicationBaseUrl(application, '/recuperar'), logoUrl: env.emailLogoUrl }, application);
   await sendTransactionalEmail({ ...message, eventType: 'password_reset', idempotencyKey: `password_reset/${createHash('sha256').update(token).digest('hex')}` });
 }
 
 export async function sendWelcomeEmail(to: string, displayName?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  const message = renderWelcomeEmail({ to, displayName, application });
+  const message = renderWelcomeEmail({ to, displayName, application, logoUrl: env.emailLogoUrl });
   await sendTransactionalEmail({ ...message, eventType: 'welcome', idempotencyKey: `welcome/${createHash('sha256').update(`${application}:${to}`).digest('hex')}` });
 }
 
 export async function sendSecurityNotificationEmail(to: string, displayName?: string, action?: string, application: EmailApplication = 'usuario'): Promise<void> {
-  const message = renderSecurityNotificationEmail({ to, displayName, application }, action);
+  const message = renderSecurityNotificationEmail({ to, displayName, application, logoUrl: env.emailLogoUrl }, action);
   await sendTransactionalEmail({ ...message, eventType: 'security_notification', idempotencyKey: `security_notification/${createHash('sha256').update(`${application}:${to}:${action ?? 'account-security'}`).digest('hex')}` });
 }

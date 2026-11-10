@@ -1,12 +1,14 @@
 const logo = "/assets/xamuko-logo.png";
 const reference = "/assets/xamuko-reference.png";
 
+import { publicUrls } from "./config/publicUrls";
+
 const destinations = {
-  businessLogin: "http://127.0.0.1:5174/login",
-  businessRegister: "http://127.0.0.1:5174/registro",
-  userLogin: "http://127.0.0.1:5173/register?mode=login",
-  userRegister: "http://127.0.0.1:5173/register",
-  explore: "http://127.0.0.1:5173/home",
+  businessLogin: `${publicUrls.business}/login`,
+  businessRegister: `${publicUrls.business}/registro`,
+  userLogin: `${publicUrls.usuario}/register?mode=login`,
+  userRegister: `${publicUrls.usuario}/register`,
+  explore: `${publicUrls.usuario}/home`,
 } as const;
 
 function CardPhoto({ viewBox, className = '' }: { viewBox: string; className?: string }) {

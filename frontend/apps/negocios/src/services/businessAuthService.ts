@@ -1,4 +1,5 @@
-import { BusinessApiError, buildApiUrl, configureAccessTokenProvider, configureUnauthorizedHandler, requestJson } from "./businessApiClient";
+import { normalizeImageForUpload } from "@wit/utils";
+import { BusinessApiError, buildApiUrl, configureAccessTokenProvider, configureUnauthorizedHandler, requestJson, requestPhotoBlob } from "./businessApiClient";
 
 export type BusinessAuthUser = {
   id: string;
@@ -11,11 +12,17 @@ export type BusinessAuthUser = {
   status: "ACTIVE" | "SUSPENDED" | "DELETED";
   emailVerified: boolean;
   authProviders: string[];
+  verificationEmailSent?: boolean;
+  verificationExpiresAt?: string;
 };
 
 type AuthResponse = { user: BusinessAuthUser; accessToken: string };
-type RegisterResponse = { user: BusinessAuthUser };
-type SessionPreference = { rememberMe: boolean };
+export type PendingBusinessRegistration = {
+  email: string;
+  verificationExpiresAt: string;
+  verificationEmailSent: boolean;
+};
+type RegisterResponse = { pending: PendingBusinessRegistration };
 
 export type BusinessSessionState =
   | { status: "unchecked" }
@@ -36,17 +43,14 @@ configureUnauthorizedHandler(async () => {
   try {
     await refreshSession();
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    // A failed connection or rate limit is not proof of a revoked session.
+    throw error;
   }
 });
 
 function storage(): Storage | undefined {
   return typeof window === "undefined" ? undefined : window.localStorage;
-}
-
-function readRememberMe(): boolean {
-  return storage()?.getItem(REMEMBER_SESSION_KEY) === "1";
 }
 
 function saveSessionPreference(email: string, rememberMe: boolean): void {
@@ -76,12 +80,12 @@ export function getSessionState(): BusinessSessionState {
 }
 
 export function resolveBusinessNext(value: string | null): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/mis-negocios";
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/inicio";
   try {
     const path = new URL(value, "http://xamuko-business.local").pathname;
-    if (["/login", "/registro", "/recuperar", "/bienvenida"].includes(path)) return "/mis-negocios";
+    if (["/login", "/registro", "/recuperar", "/bienvenida"].includes(path)) return "/inicio";
   } catch {
-    return "/mis-negocios";
+    return "/inicio";
   }
   return value;
 }
@@ -93,22 +97,52 @@ export async function updateProfile(input: { name: string; nickname?: string; av
 }
 
 export async function uploadAvatar(file: File): Promise<void> {
-  const form = new FormData(); form.append("file", file);
-  const response = await fetch(buildApiUrl("/auth/me/avatar"), { method: "POST", body: form, credentials: "include", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined });
-  if (!response.ok) throw new Error("No se pudo guardar la foto de perfil.");
-}
-export async function getAvatarBlob(path = "/api/v1/auth/me/avatar"): Promise<Blob> {
-  const response = await fetch(buildApiUrl(path), { credentials: "include", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined });
-  if (!response.ok) throw new Error("No se pudo cargar la foto de perfil.");
-  return response.blob();
+  const normalized = await normalizeImageForUpload(file);
+  const form = new FormData();
+  form.append("file", normalized);
+  const send = () => fetch(buildApiUrl("/auth/me/avatar"), {
+    method: "POST",
+    body: form,
+    credentials: "include",
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+  let response = await send();
+  if (response.status === 401) {
+    await refreshSession();
+    response = await send();
+  }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } | null;
+    throw new BusinessApiError(response.status, payload?.error?.code ?? "AVATAR_UPLOAD_FAILED", payload?.error?.message ?? "No se pudo guardar la foto de perfil.");
+  }
 }
 
-export async function register(name: string, email: string, password: string): Promise<BusinessAuthUser> {
+export function getAvatarBlob(path = "/api/v1/auth/me/avatar"): Promise<Blob> {
+  return requestPhotoBlob(path);
+}
+
+export async function isVerifiedFirstRegistrationAvailable(): Promise<boolean> {
+  try {
+    const response = await fetch(buildApiUrl("/auth/registration-policy"), {
+      credentials: "include", headers: { Accept: "application/json" }, cache: "no-store",
+    });
+    if (!response.ok) return false;
+    const policy = await response.json() as { emailVerificationRequiredBeforeCreation?: boolean };
+    return policy.emailVerificationRequiredBeforeCreation === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function register(name: string, email: string, password: string): Promise<PendingBusinessRegistration> {
+  if (!(await isVerifiedFirstRegistrationAvailable())) {
+    throw new BusinessApiError(503, "REGISTRATION_UPGRADE_PENDING", "Estamos actualizando el registro seguro por correo. Intenta nuevamente más tarde.");
+  }
   const result = await requestJson<RegisterResponse>("/auth/register", {
     method: "POST",
     body: JSON.stringify({ name, email, password }),
   });
-  return result.user;
+  return result.pending;
 }
 
 export async function login(email: string, password: string, rememberMe = false): Promise<BusinessAuthUser> {
@@ -128,7 +162,7 @@ export async function refreshSession(): Promise<BusinessAuthUser> {
   if (Date.now() < refreshBlockedUntil && refreshBlockError) throw refreshBlockError;
   refreshInFlight = requestJson<AuthResponse>("/auth/refresh", {
     method: "POST",
-    body: JSON.stringify({ rememberMe: readRememberMe() } satisfies SessionPreference),
+    body: "{}",
   })
     .then((result) => {
       accessToken = result.accessToken;
@@ -186,15 +220,43 @@ export function startGoogleLogin(options: { returnTo?: string; consent?: boolean
 }
 
 export async function logout(): Promise<void> {
-  try {
-    await requestJson<void>("/auth/logout", { method: "POST", body: "{}" });
-  } finally {
+  await refreshInFlight?.catch(() => undefined);
+  await requestJson<void>("/auth/logout", { method: "POST", body: "{}" });
+  {
     accessToken = null;
     const localStorage = storage();
     localStorage?.removeItem(REMEMBER_SESSION_KEY);
     localStorage?.removeItem(LAST_EMAIL_KEY);
     sessionState = { status: "unauthenticated" };
   }
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await requestJson<void>('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }), ...withAuthorization() });
+}
+
+export function applyEmailConfirmationResult(result: { user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }): { user: BusinessAuthUser; autoLogin: boolean } {
+  const hasValidAccessToken = typeof result.accessToken === "string" && result.accessToken.trim().length > 0;
+  const autoLogin = hasValidAccessToken && result.autoLogin !== false;
+  if (autoLogin) {
+    accessToken = result.accessToken as string;
+    sessionState = { status: "authenticated", user: result.user };
+  } else {
+    accessToken = null;
+    sessionState = { status: "unauthenticated" };
+  }
+  return { user: result.user, autoLogin };
+}
+
+export async function confirmEmail(token: string): Promise<{ user: BusinessAuthUser; autoLogin: boolean }> {
+  const result = await requestJson<{ user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }>('/auth/verify-email/confirm', { method: 'POST', body: JSON.stringify({ token }) });
+  return applyEmailConfirmationResult(result);
+}
+
+export async function requestVerification(email: string): Promise<{ message: string; verificationExpiresAt?: string }> {
+  return requestJson<{ message: string; verificationExpiresAt?: string }>('/auth/verify-email/request', {
+    method: 'POST', body: JSON.stringify({ email }),
+  });
 }
 
 export async function requestPasswordReset(email: string): Promise<string> {

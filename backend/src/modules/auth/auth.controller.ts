@@ -4,17 +4,20 @@ import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 import { getCurrentUser, issueSession, login, logout, refresh, register } from './auth.service.js';
 import { changePassword, updateAdultContentPreference, updateProfile } from './account.service.js';
 import { loginSchema, registerSchema } from './auth.schemas.js';
-import { adultContentPreferenceSchema, changePasswordSchema, emailRequestSchema, emailTokenSchema, passwordResetConfirmSchema, profileUpdateSchema, sessionPreferenceSchema } from './auth.schemas.js';
+import { adultContentPreferenceSchema, changePasswordSchema, emailRequestSchema, emailTokenSchema, passwordResetConfirmSchema, profileUpdateSchema } from './auth.schemas.js';
 import { confirmEmail, resetPassword, sendPasswordResetRequest, sendVerificationRequest } from './auth-token.service.js';
 import argon2 from 'argon2';
 import { clearRefreshCookie, getRefreshToken, setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
 import { env } from '../../config/env.js';
-import { createGoogleAuthorization, clearGoogleStateCookie, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode, type GoogleApplication } from './google-oauth.service.js';
+import { createGoogleAuthorization, clearGoogleStateCookie, isAuthorizedAdminGoogleSub, findSessionUserId, getGoogleState, resolveGoogleUser, safeGoogleReturnTo, setGoogleStateCookie, verifyGoogleCode, type GoogleApplication } from './google-oauth.service.js';
+import { createAdminPendingOAuth } from '../admin/admin-pending-oauth.service.js';
 import { createGoogleDiagnostic, logGoogleDiagnostic, type GoogleDiagnosticCategory, type GoogleDiagnosticStage } from './google-diagnostics.js';
 import { GoogleOAuthDiagnosticError } from './google-oauth.service.js';
 import { getPreferredLocation, savePreferredLocation } from './location.service.js';
 import { preferredLocationSchema } from './location.schemas.js';
 import { readOwnAvatar, uploadAvatar } from './avatar.service.js';
+import type { EmailApplication } from '../../shared/email/email-brand.js';
+import { emailActionLinkExpiresAt } from '../../shared/email/email-link-expiration.js';
 
 function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; data?: T; error?: { issues: Array<{ path: PropertyKey[] }> } } }, value: unknown): T {
   const result = schema.safeParse(value);
@@ -39,6 +42,29 @@ function parse<T>(schema: { safeParse: (value: unknown) => { success: boolean; d
 
 const meta = (request: Parameters<RequestHandler>[0]) => ({ userAgent: request.get('user-agent')?.slice(0, 512), ipAddress: request.ip });
 
+function normalizeOrigin(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (!['http:', 'https:'].includes(url.protocol) || url.pathname !== '/' || url.search || url.hash) return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+export function emailApplicationForOrigin(origin: string | undefined, options?: { businessOrigin?: string; trustedOrigins?: string[] }): EmailApplication {
+  const normalizedOrigin = normalizeOrigin(origin);
+  if (!normalizedOrigin) return 'usuario';
+  const authorizedOrigins = new Set((options?.trustedOrigins ?? env.trustedOrigins).map((value) => normalizeOrigin(value)).filter((value): value is string => value !== null));
+  const businessOrigin = normalizeOrigin(options?.businessOrigin ?? env.emailFrontendUrls.negocios);
+  return businessOrigin === normalizedOrigin && authorizedOrigins.has(normalizedOrigin) ? 'negocios' : 'usuario';
+}
+
+function emailApplicationForRequest(request: Parameters<RequestHandler>[0]): EmailApplication {
+  return emailApplicationForOrigin(request.get('origin') ?? undefined);
+}
+
 function googleErrorCode(error: unknown): string {
   const publicError = error instanceof GoogleOAuthDiagnosticError ? error.publicError : error;
   return publicError instanceof AppError && ['GOOGLE_NOT_CONFIGURED', 'GOOGLE_STATE_INVALID', 'GOOGLE_APPLICATION_INVALID', 'GOOGLE_PROVIDER_ERROR', 'GOOGLE_IDENTITY_INVALID', 'GOOGLE_LINK_REQUIRED', 'GOOGLE_CONSENT_REQUIRED', 'GOOGLE_IDENTITY_IN_USE', 'GOOGLE_EMAIL_IN_USE'].includes(publicError.code) ? publicError.code : 'GOOGLE_AUTH_FAILED';
@@ -46,7 +72,7 @@ function googleErrorCode(error: unknown): string {
 
 function googleApplication(value: unknown): GoogleApplication {
   if (value === undefined || value === '') return 'usuario';
-  if (value === 'usuario' || value === 'negocios') return value;
+  if (value === 'usuario' || value === 'negocios' || value === 'admin') return value;
   throw new AppError(400, 'GOOGLE_APPLICATION_INVALID', 'La aplicación de inicio de sesión no es válida.');
 }
 
@@ -58,7 +84,7 @@ function googleCallbackUrl(application: GoogleApplication, query: Record<string,
 
 export const googleStartController: RequestHandler = (request, response, next) => {
   try {
-    const authorization = createGoogleAuthorization({ application: googleApplication(request.query.application), flow: 'login', returnTo: request.query.next, rememberMe: request.query.rememberMe === '1', consent: request.query.consent === '1' });
+    const authorization = createGoogleAuthorization({ application: googleApplication(request.query.application), flow: 'login', returnTo: request.query.next, rememberMe: request.query.rememberMe === '1', consent: request.query.consent === '1', referralCode: request.query.referralCode });
     setGoogleStateCookie(response, authorization.state);
     response.redirect(authorization.url);
   } catch (error) { next(error); }
@@ -91,13 +117,21 @@ export const googleCallbackController: RequestHandler = async (request, response
       const linkedUserId = refreshToken ? await findSessionUserId(refreshToken) : undefined;
       if (!linkedUserId || linkedUserId !== state.userId) throw new AppError(401, 'UNAUTHENTICATED', 'Autenticación requerida.');
     }
+    if (stateApplication === 'admin') {
+      if (state.flow !== 'login') throw new AppError(400, 'GOOGLE_STATE_INVALID', 'El acceso Admin requiere un inicio de sesión Google nuevo.');
+      if (!isAuthorizedAdminGoogleSub(profile.subject)) throw new AppError(403, 'ADMIN_GOOGLE_SUB_DENIED', 'La identidad Google no está autorizada para XAMUKO Admin.');
+      await createAdminPendingOAuth(response, profile.subject);
+      clearGoogleStateCookie(response);
+      response.redirect(googleCallbackUrl('admin', { next: safeGoogleReturnTo(stateReturnTo) }));
+      return;
+    }
     stage = 'user_resolution';
     let resolved: Awaited<ReturnType<typeof resolveGoogleUser>>;
     try { resolved = await resolveGoogleUser(profile, state); } catch (error) { throw new GoogleOAuthDiagnosticError('user_resolution', error instanceof AppError ? 'application_rejected' : 'database_failure', error); }
     if (state.flow === 'login') {
       stage = 'session_creation';
       let session: Awaited<ReturnType<typeof issueSession>>;
-      try { session = await issueSession(resolved.userId, meta(request)); } catch (error) { throw new GoogleOAuthDiagnosticError('session_creation', 'session_failure', error); }
+      try { session = await issueSession(resolved.userId, meta(request), state.rememberMe); } catch (error) { throw new GoogleOAuthDiagnosticError('session_creation', 'session_failure', error); }
       setRefreshCookie(response, session.refreshToken, state.rememberMe);
     }
     clearGoogleStateCookie(response);
@@ -115,12 +149,16 @@ export const googleCallbackController: RequestHandler = async (request, response
   }
 };
 
-export const registerController: RequestHandler = async (request, response, next) => { try { const result = await register(parse(registerSchema, request.body), meta(request)); response.status(201).json(result); } catch (error) { next(error); } };
+export const registerController: RequestHandler = async (request, response, next) => { try { const result = await register(parse(registerSchema, request.body), meta(request), emailApplicationForRequest(request)); response.status(202).json(result); } catch (error) { next(error); } };
 export const loginController: RequestHandler = async (request, response, next) => { try { const input = parse(loginSchema, request.body); const result = await login(input, meta(request)); setRefreshCookie(response, result.refreshToken, input.rememberMe); const { refreshToken: _refreshToken, ...publicResult } = result; response.status(200).json(publicResult); } catch (error) { next(error); } };
-export const refreshController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (!token) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.'); const preference = parse(sessionPreferenceSchema, request.body ?? {}); const result = await refresh(token, meta(request)); setRefreshCookie(response, result.refreshToken, preference.rememberMe); const { refreshToken: _refreshToken, ...publicResult } = result; response.status(200).json(publicResult); } catch (error) { next(error); } };
+export const refreshController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (!token) throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'El token de renovación no es válido.'); const result = await refresh(token, meta(request)); response.setHeader('Cache-Control', 'no-store'); response.status(200).json(result); } catch (error) { next(error); } };
 export const logoutController: RequestHandler = async (request, response, next) => { try { const token = getRefreshToken(request); if (token) await logout(token); clearRefreshCookie(response); response.status(204).send(); } catch (error) { next(error); } };
 export const meController: RequestHandler = async (request, response, next) => { try { response.status(200).json({ user: await getCurrentUser((request as AuthenticatedRequest).auth.userId) }); } catch (error) { next(error); } };
-export const requestVerificationController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US')); response.status(202).json({ message: 'Si la cuenta es elegible, recibirás un correo.' }); } catch (error) { next(error); } };
+export const requestVerificationController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendVerificationRequest(email.trim().toLocaleLowerCase('en-US'), emailApplicationForRequest(request)); response.status(202).json({
+  message: 'Si la cuenta es elegible, recibirás un correo.',
+  // A generic 15-minute expiry for all addresses avoids account enumeration.
+  verificationExpiresAt: emailActionLinkExpiresAt(new Date()).toISOString(),
+}); } catch (error) { next(error); } };
 export const confirmEmailController: RequestHandler = async (request, response, next) => {
   try {
     const userId = await confirmEmail(parse(emailTokenSchema, request.body).token);
@@ -135,14 +173,14 @@ export const confirmEmailController: RequestHandler = async (request, response, 
     }
   } catch (error) { next(error); }
 };
-export const requestPasswordResetController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendPasswordResetRequest(email.trim().toLocaleLowerCase('en-US')); response.status(202).json({ message: 'Si la cuenta existe, recibirás instrucciones para continuar.' }); } catch (error) { next(error); } };
+export const requestPasswordResetController: RequestHandler = async (request, response, next) => { try { const { email } = parse(emailRequestSchema, request.body); await sendPasswordResetRequest(email.trim().toLocaleLowerCase('en-US'), emailApplicationForRequest(request)); response.status(202).json({ message: 'Si la cuenta existe, recibirás instrucciones para continuar.' }); } catch (error) { next(error); } };
 export const confirmPasswordResetController: RequestHandler = async (request, response, next) => {
   try {
     const input = parse(passwordResetConfirmSchema, request.body);
     const userId = await resetPassword(input.token, await argon2.hash(input.password, { type: argon2.argon2id }));
     const user = await getCurrentUser(userId);
     try {
-      const session = await issueSession(userId, meta(request));
+      const session = await issueSession(userId, meta(request), input.rememberMe);
       setRefreshCookie(response, session.refreshToken, input.rememberMe);
       response.status(200).json({ user, accessToken: session.accessToken });
     } catch {

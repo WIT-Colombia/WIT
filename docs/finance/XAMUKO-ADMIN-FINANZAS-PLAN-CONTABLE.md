@@ -1,7 +1,7 @@
 # XAMUKO Admin · Finanzas, contabilidad e impuestos
 **Especificación de producto para revisión · v0.1 · 1 de noviembre de 2026**
 
-> **Estado:** DISEÑO PROPUESTO; no implementado ni publicado. No sustituye el trabajo de un contador público ni constituye estados financieros certificados.  
+> **Estado:** DISEÑO PROPUESTO; no implementado ni publicado. No sustituye el trabajo de un contador público ni constituye estados financieros certificados.
 > **Origen:** decisiones del fundador para XAMUKO. No modifica los estatutos ni el Registro Maestro de Decisiones.
 
 ## 1. Propósito y principios

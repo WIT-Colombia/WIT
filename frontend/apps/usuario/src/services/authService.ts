@@ -1,9 +1,11 @@
-import { ApiError, requestJson } from "./httpClient";
+import { ApiError, configureSession, requestJson } from "./httpClient";
+import { buildApiUrl, normalizeImageForUpload } from "@wit/utils";
 
 export type AuthUser = {
   emailVerified: boolean;
   authProviders: Array<"EMAIL" | "GOOGLE" | "APPLE">;
   verificationEmailSent?: boolean;
+  verificationExpiresAt?: string;
   id: string;
   publicId: string;
   displayName: string;
@@ -25,12 +27,18 @@ export type AdultContentPreference = {
 
 type AuthResponse = { user: AuthUser; accessToken: string };
 type PasswordResetResponse = { user: AuthUser; accessToken?: string; autoLogin?: boolean };
-type RegisterResponse = { user: AuthUser };
+export type PendingRegistrationInfo = {
+  email: string;
+  verificationExpiresAt: string;
+  verificationEmailSent: boolean;
+};
+type RegisterResponse = { pending: PendingRegistrationInfo };
 type Credentials = { email: string; password: string };
 type MessageResponse = { message: string };
 
 let accessToken: string | null = null;
 let refreshInFlight: Promise<AuthUser> | null = null;
+configureSession(() => accessToken, refreshSession);
 const REMEMBER_SESSION_KEY = "wit-auth-remember-session";
 const LAST_EMAIL_KEY = "wit-auth-last-email";
 
@@ -42,10 +50,19 @@ export function getRememberedEmail(): string {
   return window.localStorage.getItem(LAST_EMAIL_KEY) ?? "";
 }
 
-export function startGoogleLogin(options: { returnTo?: string; consent?: boolean; rememberMe?: boolean } = {}): void {
+/** Validate an existing, eligible business code without creating a referral. */
+export async function validateBusinessReferralCode(code: string, signal?: AbortSignal): Promise<boolean> {
+  const response = await fetch(buildApiUrl(`/api/v1/auth/referrals/validate?code=${encodeURIComponent(code)}`), { signal, cache: "no-store" });
+  if (!response.ok) throw new Error("No pudimos validar el código de referido.");
+  const result = await response.json() as { valid: boolean };
+  return result.valid === true;
+}
+
+export function startGoogleLogin(options: { returnTo?: string; consent?: boolean; rememberMe?: boolean; referralCode?: string } = {}): void {
   const params = new URLSearchParams({ application: "usuario", rememberMe: options.rememberMe ? "1" : "0", consent: options.consent ? "1" : "0" });
   if (options.returnTo) params.set("next", options.returnTo);
-  window.location.assign(`/api/v1/auth/google/start?${params.toString()}`);
+  if (options.referralCode) params.set("referralCode", options.referralCode);
+  window.location.assign(`${buildApiUrl("/auth/google/start")}?${params.toString()}`);
 }
 
 function saveSessionPreference(email: string, rememberMe: boolean): void {
@@ -66,7 +83,7 @@ export function requestWithSession<T>(path: string, init: RequestInit = {}): Pro
 }
 
 export async function requestBlobWithSession(path: string): Promise<Blob> {
-  const send = () => fetch(path, { credentials: "include", headers: withAuthorization().headers });
+  const send = () => fetch(buildApiUrl(path), { credentials: "include", headers: withAuthorization().headers, cache: "no-store" });
   let response = await send();
   if (response.status === 401) {
     try {
@@ -81,9 +98,53 @@ export async function requestBlobWithSession(path: string): Promise<Blob> {
   return response.blob();
 }
 
-export async function register(name: string, credentials: Credentials): Promise<AuthUser> {
-  const result = await requestJson<RegisterResponse>("/api/v1/auth/register", { method: "POST", body: JSON.stringify({ name, ...credentials }) });
-  return result.user;
+/**
+ * The Usuario frontend can deploy before AWS. Never submit referralCode to an
+ * older strict backend, where it would reject an otherwise valid signup.
+ */
+export async function isBusinessReferralRegistrationAvailable(): Promise<boolean> {
+  try {
+    const response = await fetch(buildApiUrl("/api/v1/auth/referrals/availability"), {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (!response.ok) return false;
+    const result = await response.json() as { enabled?: boolean };
+    return result.enabled === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Registration must never reach an older API that creates unverified Users
+ * and credits business referrals before mailbox confirmation.
+ */
+export async function isVerifiedFirstRegistrationAvailable(): Promise<boolean> {
+  try {
+    const response = await fetch(buildApiUrl("/api/v1/auth/registration-policy"), {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (!response.ok) return false;
+    const policy = await response.json() as { emailVerificationRequiredBeforeCreation?: boolean };
+    return policy.emailVerificationRequiredBeforeCreation === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function register(name: string, credentials: Credentials, referralCode?: string): Promise<PendingRegistrationInfo> {
+  if (!(await isVerifiedFirstRegistrationAvailable())) {
+    throw new ApiError(503, "REGISTRATION_UPGRADE_PENDING", "Estamos actualizando el registro seguro por correo. Intenta nuevamente más tarde.");
+  }
+  const result = await requestJson<RegisterResponse>("/api/v1/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name, ...credentials, ...(referralCode?.trim() ? { referralCode: referralCode.trim().toUpperCase() } : {}) }),
+  });
+  return result.pending;
 }
 
 export async function login(credentials: Credentials, rememberMe = true): Promise<AuthUser> {
@@ -95,7 +156,7 @@ export async function login(credentials: Credentials, rememberMe = true): Promis
 
 export async function refreshSession(): Promise<AuthUser> {
   if (refreshInFlight) return refreshInFlight;
-  refreshInFlight = requestJson<AuthResponse>("/api/v1/auth/refresh", { method: "POST", body: JSON.stringify({ rememberMe: readRememberSession() }) })
+  refreshInFlight = requestJson<AuthResponse>("/api/v1/auth/refresh", { method: "POST", body: "{}" })
     .then((result) => { accessToken = result.accessToken; return result.user; })
     .finally(() => { refreshInFlight = null; });
   return refreshInFlight;
@@ -107,18 +168,13 @@ export async function restoreSession(): Promise<AuthUser> {
 }
 
 export async function getMe(): Promise<AuthUser> {
-  try {
-    return (await requestJson<{ user: AuthUser }>("/api/v1/auth/me", withAuthorization())).user;
-  } catch (error) {
-    if (!(error instanceof ApiError) || error.status !== 401) throw error;
-    const refreshed = await refreshSession();
-    return (await requestJson<{ user: AuthUser }>("/api/v1/auth/me", withAuthorization())).user ?? refreshed;
-  }
+  return (await requestJson<{ user: AuthUser }>("/api/v1/auth/me", withAuthorization())).user;
 }
 
 export async function logout(): Promise<void> {
-  try { await requestJson<void>("/api/v1/auth/logout", { method: "POST", body: "{}" }); }
-  finally {
+  await refreshInFlight?.catch(() => undefined);
+  await requestJson<void>("/api/v1/auth/logout", { method: "POST", body: "{}" });
+  {
     accessToken = null;
     window.localStorage.removeItem(REMEMBER_SESSION_KEY);
     window.localStorage.removeItem(LAST_EMAIL_KEY);
@@ -132,9 +188,24 @@ export async function updateProfile(input: ProfileUpdate): Promise<AuthUser> {
   return result.user;
 }
 export async function uploadAvatar(file: File): Promise<void> {
-  const form = new FormData(); form.append("file", file);
-  const response = await fetch("/api/v1/auth/me/avatar", { method: "POST", body: form, credentials: "include", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined });
-  if (!response.ok) throw new Error("No se pudo guardar la foto de perfil.");
+  const normalized = await normalizeImageForUpload(file);
+  const form = new FormData();
+  form.append("file", normalized);
+  const send = () => fetch(buildApiUrl("/api/v1/auth/me/avatar"), {
+    method: "POST",
+    body: form,
+    credentials: "include",
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+  let response = await send();
+  if (response.status === 401) {
+    await refreshSession();
+    response = await send();
+  }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } | null;
+    throw new ApiError(response.status, payload?.error?.code ?? "AVATAR_UPLOAD_FAILED", payload?.error?.message ?? "No se pudo guardar la foto de perfil.");
+  }
 }
 
 const ADULT_CONTENT_CONDITIONS_VERSION = "2026-10-17";
@@ -168,9 +239,10 @@ export async function confirmEmail(token: string): Promise<{ user: AuthUser; aut
   return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
 
-export async function requestVerification(email: string): Promise<string> {
-  const result = await requestJson<MessageResponse>("/api/v1/auth/verify-email/request", { method: "POST", body: JSON.stringify({ email }) });
-  return result.message;
+export async function requestVerification(email: string): Promise<{ message: string; verificationExpiresAt?: string }> {
+  return requestJson<{ message: string; verificationExpiresAt?: string }>("/api/v1/auth/verify-email/request", {
+    method: "POST", body: JSON.stringify({ email }),
+  });
 }
 
 export function clearAccessToken(): void { accessToken = null; }

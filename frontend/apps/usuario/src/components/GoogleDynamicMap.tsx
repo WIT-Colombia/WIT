@@ -11,6 +11,7 @@ type GoogleDynamicMapProps = {
   radiusKm: number | null;
   radiusLabels: string[];
   radiusIndex: number;
+  cityAvailable: boolean;
   onRadiusChange: (index: number) => void;
   onBusinessOpen?: (business: Business) => void;
 };
@@ -19,7 +20,7 @@ function formatDistance(distanceKm: number): string {
   return distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} km`;
 }
 
-export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, radiusLabels, radiusIndex, onRadiusChange, onBusinessOpen }: GoogleDynamicMapProps) {
+export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, radiusLabels, radiusIndex, cityAvailable, onRadiusChange, onBusinessOpen }: GoogleDynamicMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GoogleMapInstance | null>(null);
   const mapsRef = useRef<Awaited<ReturnType<typeof loadGoogleMaps>> | null>(null);
@@ -40,16 +41,31 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
     if (!center) { setState("ready"); return; }
     if (mapRef.current) { mapRef.current.setCenter(center); return; }
     let active = true;
+    let resizeObserver: ResizeObserver | undefined;
     void loadGoogleMaps().then((maps) => {
       if (!active || !containerRef.current) return;
       mapsRef.current = maps;
-      mapRef.current = new maps.Map(containerRef.current, { center, zoom: zoomForRadius(radiusKm), mapTypeId: "roadmap", mapTypeControl: false, zoomControl: false, streetViewControl: false, fullscreenControl: false, gestureHandling: "greedy" });
+      const map = new maps.Map(containerRef.current, { center, zoom: zoomForRadius(radiusKm), mapTypeId: "roadmap", mapTypeControl: false, zoomControl: false, streetViewControl: false, fullscreenControl: false, gestureHandling: "greedy" });
+      mapRef.current = map;
+      const notifyResize = () => {
+        if (!active || !mapRef.current) return;
+        maps.event?.trigger(mapRef.current, "resize");
+        mapRef.current.setCenter(center);
+      };
+      requestAnimationFrame(notifyResize);
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObserver = new ResizeObserver(() => requestAnimationFrame(notifyResize));
+        resizeObserver.observe(containerRef.current);
+      }
       setState("ready");
     }).catch((error: unknown) => {
       if (import.meta.env.DEV) console.error("[XAMUKO Usuario] Error al inicializar el mapa", error);
       if (active) setState(error instanceof Error && error.message === "GOOGLE_MAPS_JS_KEY_MISSING" ? "missing-key" : "error");
     });
-    return () => { active = false; };
+    return () => {
+      active = false;
+      resizeObserver?.disconnect();
+    };
   }, [centerKey]);
 
   useEffect(() => {
@@ -126,5 +142,5 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
   if (!center) return <div className="dynamic-map dynamic-map-fallback" role="status"><b>Ubicación no disponible</b><p>Necesitamos una ubicación confirmada para mostrar el mapa.</p></div>;
   if (state === "missing-key") return <div className="dynamic-map dynamic-map-fallback" role="status"><b>Mapa interactivo pendiente de configuración</b><p>Configura una clave de Maps JavaScript API restringida para este entorno.</p></div>;
   if (state === "error") return <div className="dynamic-map dynamic-map-fallback" role="status"><b>No pudimos cargar el mapa</b><p>Intenta nuevamente más tarde.</p></div>;
-  return <div className="dynamic-map"><div ref={containerRef} className="dynamic-map__canvas" aria-label="Mapa interactivo de negocios" /><div className="dynamic-map__type-control" role="group" aria-label="Tipo de mapa"><button type="button" className={mapType === "roadmap" ? "is-active" : ""} onClick={() => changeMapType("roadmap")}>Mapa</button><button type="button" className={mapType === "satellite" ? "is-active" : ""} onClick={() => changeMapType("satellite")}>Satélite</button></div><div className="dynamic-map__right-controls"><button type="button" onClick={centerOnSelection} aria-label="Centrar en mi ubicación" title="Centrar en mi ubicación">⌖</button><div className="dynamic-map__zoom-controls"><button type="button" onClick={() => changeZoom(1)} aria-label="Acercar">+</button><button type="button" onClick={() => changeZoom(-1)} aria-label="Alejar">−</button></div><button type="button" onClick={() => { void toggleFullscreen(); }} aria-label="Pantalla completa" title="Pantalla completa">⛶</button></div><div className="dynamic-map__radius-control" role="group" aria-label="Radio de búsqueda">{radiusLabels.map((label, index) => <button className={radiusIndex === index ? "is-active" : ""} type="button" key={label} onClick={() => onRadiusChange(index)}>{label === "toda la ciudad" ? "Ciudad" : label}</button>)}</div>{selectedBusiness && <article className="dynamic-map__business-card"><button className="dynamic-map__card-close" type="button" onClick={() => setSelectedBusinessId(null)} aria-label="Cerrar información">×</button>{selectedBusiness.image && <img src={selectedBusiness.image} alt="" />}{selectedBusiness.image ? <div className="dynamic-map__business-copy">{selectedBusiness.category && <span>{selectedBusiness.category}</span>}<b>{selectedBusiness.name}</b>{Number.isFinite(selectedBusiness.distanceKm) && <small>A {formatDistance(selectedBusiness.distanceKm)}</small>}{selectedBusiness.reviewCount > 0 && <small>★ {selectedBusiness.rating.toFixed(1)} ({selectedBusiness.reviewCount})</small>}<button type="button" onClick={() => onBusinessOpen?.(selectedBusiness)}>Ver negocio</button></div> : <div className="dynamic-map__business-copy dynamic-map__business-copy--no-image">{selectedBusiness.category && <span>{selectedBusiness.category}</span>}<b>{selectedBusiness.name}</b><button type="button" onClick={() => onBusinessOpen?.(selectedBusiness)}>Ver negocio</button></div>}</article>}{notice && <p className="dynamic-map__notice" role="status">{notice}</p>}{state === "loading" && <div className="dynamic-map__loading">Cargando mapa…</div>}</div>;
+  return <div className="dynamic-map"><div ref={containerRef} className="dynamic-map__canvas" aria-label="Mapa interactivo de negocios" /><div className="dynamic-map__type-control" role="group" aria-label="Tipo de mapa"><button type="button" className={mapType === "roadmap" ? "is-active" : ""} onClick={() => changeMapType("roadmap")}>Mapa</button><button type="button" className={mapType === "satellite" ? "is-active" : ""} onClick={() => changeMapType("satellite")}>Satélite</button></div><div className="dynamic-map__right-controls"><button type="button" onClick={centerOnSelection} aria-label="Centrar en mi ubicación" title="Centrar en mi ubicación">⌖</button><div className="dynamic-map__zoom-controls"><button type="button" onClick={() => changeZoom(1)} aria-label="Acercar">+</button><button type="button" onClick={() => changeZoom(-1)} aria-label="Alejar">−</button></div><button type="button" onClick={() => { void toggleFullscreen(); }} aria-label="Pantalla completa" title="Pantalla completa">⛶</button></div><div className="dynamic-map__radius-control" role="group" aria-label="Radio de búsqueda">{radiusLabels.map((label, index) => <button className={radiusIndex === index ? "is-active" : ""} type="button" key={label} disabled={label === "Ciudad" && !cityAvailable} onClick={() => onRadiusChange(index)}>{label}</button>)}</div>{selectedBusiness && <article className="dynamic-map__business-card"><button className="dynamic-map__card-close" type="button" onClick={() => setSelectedBusinessId(null)} aria-label="Cerrar información">×</button>{selectedBusiness.image && <img src={selectedBusiness.image} alt="" />}{selectedBusiness.image ? <div className="dynamic-map__business-copy">{selectedBusiness.category && <span>{selectedBusiness.category}</span>}<b>{selectedBusiness.name}</b>{Number.isFinite(selectedBusiness.distanceKm) && <small>A {formatDistance(selectedBusiness.distanceKm)}</small>}{selectedBusiness.reviewCount > 0 && <small>★ {selectedBusiness.rating.toFixed(1)} ({selectedBusiness.reviewCount})</small>}<button type="button" onClick={() => onBusinessOpen?.(selectedBusiness)}>Ver negocio</button></div> : <div className="dynamic-map__business-copy dynamic-map__business-copy--no-image">{selectedBusiness.category && <span>{selectedBusiness.category}</span>}<b>{selectedBusiness.name}</b><button type="button" onClick={() => onBusinessOpen?.(selectedBusiness)}>Ver negocio</button></div>}</article>}{notice && <p className="dynamic-map__notice" role="status">{notice}</p>}{state === "loading" && <div className="dynamic-map__loading">Cargando mapa…</div>}</div>;
 }

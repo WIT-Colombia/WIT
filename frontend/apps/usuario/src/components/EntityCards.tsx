@@ -11,7 +11,7 @@ import { createAnalyticsInteractionId, rememberBusinessVisitContext, type Analyt
 import "./EntityCards.css";
 import "./EntityCardsEnhancements.css";
 
-type BusinessCardProps = { business: Business; favorite?: boolean; onFavorite?: () => void; onContact?: () => void; analyticsContext?: AnalyticsContext };
+type BusinessCardProps = { business: Business; favorite?: boolean; onFavorite?: () => void; onContact?: () => void; classicLayout?: boolean; analyticsContext?: AnalyticsContext };
 type ProductCardProps = { product: Product; liked?: boolean; likeCount?: number; onLike?: () => void; readOnly?: boolean; analyticsContext?: AnalyticsContext };
 type ServiceCardProps = { service: Service; liked?: boolean; likeCount?: number; onLike?: () => void; readOnly?: boolean; analyticsContext?: AnalyticsContext };
 
@@ -26,15 +26,18 @@ function formatDistance(distanceKm: number): string {
 }
 
 function businessProximityLabel(business: Business): string {
+  const types = business.modalityTypes ?? [];
+  const hasPhysicalLocation = types.includes("PHYSICAL");
+  const isVirtualOnly = types.includes("VIRTUAL") && !hasPhysicalLocation && !types.includes("DELIVERY");
+  if (isVirtualOnly) return "Virtual";
   return getBusinessCoordinates(business) && Number.isFinite(business.distanceKm) ? `A ${formatDistance(business.distanceKm)}` : "Sin distancia";
 }
 
 function OfferPrice({ current, original }: { current: string; original?: string }) {
-  void original;
-  return <strong>{current}</strong>;
+  return <strong className="entity-offer-price"><span>{current}</span>{original && <del>{original}</del>}</strong>;
 }
 
-export function BusinessCard({ business, favorite = false, onFavorite, onContact, analyticsContext }: BusinessCardProps) {
+export function BusinessCard({ business, favorite = false, onFavorite, onContact, classicLayout = false, analyticsContext }: BusinessCardProps) {
   const requireAccount = useAccountGate();
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,7 +49,7 @@ export function BusinessCard({ business, favorite = false, onFavorite, onContact
   const openBusinessWithKeyboard = (event: KeyboardEvent<HTMLElement>) => { if ((event.key === "Enter" || event.key === " ") && !(event.target as HTMLElement).closest("button, a")) { event.preventDefault(); open(); } };
   return <article className={`entity-card entity-business-card${isFeatured ? " entity-business-card--featured" : ""}`} role="link" tabIndex={0} onClick={openBusiness} onKeyDown={openBusinessWithKeyboard}>
     <div className="entity-card__image"><img src={business.image} alt={business.name} loading="lazy"/>{!business.pioneerNumber && (business.plan === "premium" || business.isFeatured) && <span className="entity-featured">Destacado</span>}<PioneerBadge pioneerNumber={business.pioneerNumber} /><span className={`entity-open${business.isOpen ? " is-open" : ""}`}><i/>{business.isOpen ? "Abierto" : "Cerrado"}</span>{onFavorite && <button className={`entity-action entity-favorite${favorite ? " is-active" : ""}`} type="button" aria-label={favorite ? `Quitar ${business.name} de favoritos` : `Guardar ${business.name} en favoritos`} title={favorite ? "Quitar de favoritos" : "Guardar en favoritos"} aria-pressed={favorite} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.preventDefault(); event.stopPropagation(); requireAccount(onFavorite); }}><HeartIcon/></button>}</div>
-    <div className="entity-card__content"><div className="entity-card__heading"><div><p>{business.category}</p>{publicationState === "pending" ? <span className="entity-verified entity-pending">• Verificación pendiente</span> : business.isVerified && <span className="entity-verified">✓ Verificado</span>}<h3>{business.name}</h3></div><span className="entity-rating">★ {business.rating.toFixed(1)} <small>({business.reviewCount})</small></span></div>
+    <div className="entity-card__content"><div className="entity-card__heading">{classicLayout ? <><div><p>{business.category}</p>{publicationState === "pending" ? <span className="entity-verified entity-pending">• Verificación pendiente</span> : business.isVerified && <span className="entity-verified">✓ Verificado</span>}<h3>{business.name}</h3></div><span className="entity-rating"><span className="entity-rating__star" aria-hidden="true">★</span> {business.rating.toFixed(1)} <small>({business.reviewCount})</small></span></> : <div><h3>{business.name}</h3>{publicationState === "pending" ? <span className="entity-verified entity-pending">• Verificación pendiente</span> : business.isVerified && <span className="entity-verified">✓ Verificado</span>}<div className="entity-business-meta"><p>{business.category}</p><span className="entity-rating"><span className="entity-rating__star" aria-hidden="true">★</span> {business.rating.toFixed(1)} <small>({business.reviewCount})</small></span></div></div>}</div>
       <p className="entity-address">⌖ {business.address}</p><p className="entity-business-description" title={business.description}>{business.description}</p><div className="entity-card__actions"><span>{businessProximityLabel(business)}</span><div>{onContact ? <button className="entity-view" type="button" onClick={onContact}>Contactar <span>→</span></button> : <Link className="entity-view" to={`/business/${business.id}`} onClick={(event) => { event.stopPropagation(); rememberBusinessVisitContext(business.id, analyticsContext ?? inferredContext); }}>Ver negocio <span>→</span></Link>}</div></div>
     </div>
   </article>;

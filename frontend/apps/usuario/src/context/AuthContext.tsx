@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ApiError } from "../services/httpClient";
-import { getMe, login, logout, refreshSession, register, restoreSession, type AuthUser } from "../services/authService";
+import { getMe, login, logout, refreshSession, register, restoreSession, type AuthUser, type PendingRegistrationInfo } from "../services/authService";
 
 type AuthContextValue = {
   user: AuthUser | null;
   status: "loading" | "authenticated" | "anonymous";
   isAuthenticated: boolean;
-  register: (name: string, email: string, password: string) => Promise<AuthUser>;
+  register: (name: string, email: string, password: string, referralCode?: string) => Promise<PendingRegistrationInfo>;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   reloadUser: () => Promise<void>;
   restoreSession: () => Promise<void>;
@@ -21,11 +21,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    refreshSession()
-      .then(() => getMe())
-      .then((currentUser) => { if (active) { setUser(currentUser); setStatus("authenticated"); } })
-      .catch((error: unknown) => { if (active && error instanceof ApiError && error.status === 401) { setUser(null); setStatus("anonymous"); } else if (active) { setUser(null); setStatus("anonymous"); } })
-    return () => { active = false; };
+    let timer: ReturnType<typeof setTimeout>;
+    const restore = () => {
+      refreshSession().then((currentUser) => {
+        if (active) { setUser(currentUser); setStatus("authenticated"); }
+      }).catch((error: unknown) => {
+        if (!active) return;
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          setUser(null); setStatus("anonymous");
+        } else {
+          // Preserve loading during network/5xx/429 failures; guards must wait.
+          timer = setTimeout(restore, error instanceof ApiError && error.retryAfterSeconds ? error.retryAfterSeconds * 1000 : 5000);
+        }
+      });
+    };
+    restore();
+    window.addEventListener("online", restore);
+    return () => { active = false; clearTimeout(timer); window.removeEventListener("online", restore); };
   }, []);
 
   useEffect(() => {
@@ -45,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession: async () => { const next = await restoreSession(); setUser(next); setStatus("authenticated"); },
     status,
     isAuthenticated: status === "authenticated",
-    register: async (name, email, password) => { const created = await register(name, { email, password }); setUser(null); setStatus("anonymous"); return created; },
+    register: async (name, email, password, referralCode) => { const created = await register(name, { email, password }, referralCode); setUser(null); setStatus("anonymous"); return created; },
     login: async (email, password, rememberMe = true) => { setUser(await login({ email, password }, rememberMe)); setStatus("authenticated"); },
     logout: async () => { await logout(); setUser(null); setStatus("anonymous"); },
   }), [status, user]);

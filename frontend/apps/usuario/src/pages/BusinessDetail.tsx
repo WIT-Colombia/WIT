@@ -20,7 +20,9 @@ import { PublicBusinessDigitalCard } from "../components/PublicBusinessDigitalCa
 import { BusinessReportDialog } from "../components/BusinessReportDialog";
 import { activeBusinessContext, consumeBusinessVisitContext, recordBusinessEvent } from "../services/analyticsService";
 import { listPublicReviews, type PublicReview } from "../services/reviewsService";
-import registrationInvitePerson from "../assets/registration-invite-person.png";
+import registrationInvitePerson from "../assets/registration-invite-person.avif";
+import { businessReferralCode } from "../utils/businessReferralCode";
+import { isHorizontalDominantGesture } from "../utils/gestureDirection";
 import "./BusinessDetail.css";
 import "./BusinessDetailEnhancements.css";
 import "./BusinessReviewEnhancements.css";
@@ -87,7 +89,7 @@ export default function BusinessDetail() {
   const headerTouchStartX = useRef<number | null>(null);
   const headerSwipeDetected = useRef(false);
   const popularListRef = useRef<HTMLDivElement>(null);
-  const popularDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const popularDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const { favorites, toggleFavorite } = useFavorites(); const [message, setMessage] = useState(""); const requireAccount = useAccountGate();
   const [business, setBusiness] = useState<Business | null>(null);
   const [businessProducts, setBusinessProducts] = useState<Product[]>([]);
@@ -231,6 +233,7 @@ export default function BusinessDetail() {
   const openNow = Boolean(todayHours && !todayHours.isClosed && todayHours.hours.includes("–") && currentTime >= todayHours.hours.slice(0, 5) && currentTime < todayHours.hours.slice(-5));
   const galleryImages = Array.from(new Set([business.image, ...(business.gallery ?? [])].filter(Boolean))).slice(0, 10);
   const showRegistrationInvite = authStatus === "anonymous" && !isBusinessPreview;
+  const inviteCode = businessReferralCode(currentBusiness.id);
   const cleanPublicUrl = getPublicBusinessUrl(id);
   async function share() { if (!cleanPublicUrl) { setMessage("No se pudo compartir el enlace."); setShareOpen(false); return; } const result = await shareLink(currentBusiness.name, `Descubre ${currentBusiness.name} en XAMUKO.`, cleanPublicUrl); setMessage(result === "copied" ? "Enlace copiado." : result === "unavailable" ? "No se pudo compartir el enlace." : ""); setShareOpen(false); }
   const whatsappShareUrl = cleanPublicUrl
@@ -240,14 +243,15 @@ export default function BusinessDetail() {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const list = popularListRef.current;
     if (!list) return;
-    popularDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startScrollLeft: list.scrollLeft, moved: false };
+    popularDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
   }
   function movePopularDrag(event: ReactPointerEvent<HTMLDivElement>) {
     const drag = popularDragRef.current;
     const list = popularListRef.current;
     if (!drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
-    if (Math.abs(delta) > 6) drag.moved = true;
+    const deltaY = event.clientY - drag.startY;
+    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
     if (drag.moved) {
       event.preventDefault();
       if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
@@ -290,7 +294,7 @@ export default function BusinessDetail() {
           <div className="business-registration-invite-content">
             <strong>¡{currentBusiness.name} te invita a unirte a <span>XAMUKO</span>!</strong>
             <p>Descubre negocios cerca de ti, guarda tus favoritos y comparte tus experiencias</p>
-            <Link to={`/register?next=${encodeURIComponent(`/business/${encodeURIComponent(currentBusiness.id)}`)}`}>Crear mi cuenta gratis <span aria-hidden="true">→</span></Link>
+            <Link to={`/register?next=${encodeURIComponent(`/business/${encodeURIComponent(currentBusiness.id)}`)}${inviteCode ? `&ref=${encodeURIComponent(inviteCode)}` : ""}`}>Crear mi cuenta gratis <span aria-hidden="true">→</span></Link>
           </div>
         </aside>}
         {(business.email || business.website) && <div className="business-header-links">{business.email && (isBusinessPreview ? <button type="button" disabled>Correo electrónico ↗</button> : <a href={`mailto:${business.email}`}>Correo electrónico ↗</a>)}{business.website && (isBusinessPreview ? <button type="button" className="business-website-button" disabled><span>Visitar sitio web</span></button> : <a className="business-website-button" href={business.website} target="_blank" rel="noopener noreferrer"><svg className="business-website-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.4 3.3 5.4 3.3 9S14.2 18.6 12 21c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3Z"/></svg><span>Visitar sitio web</span></a>)}</div>}

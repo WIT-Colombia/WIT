@@ -204,3 +204,42 @@ export async function downloadBusinessCard({ card, business, qrImageUrl, format 
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
+/**
+ * Prepare both print files before the user taps Download. Safari requires a
+ * ready download URL to preserve the original user gesture on mobile.
+ */
+export type PreparedBusinessCard = { blob: Blob; filename: string };
+
+function businessCardFilename(business: BusinessDetails, format: BusinessCardDownloadFormat): string {
+  const safeId = (business.publicId || business.id || "negocio").replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 70);
+  return "XAMUKO-" + safeId + "-15x23.5cm." + format;
+}
+
+function assertBusinessCardQr(card: HTMLElement, qrImageUrl: string): void {
+  const shownQr = card.querySelector<HTMLImageElement>(".business-digital-card__qr > img");
+  if (!qrImageUrl || !shownQr || (shownQr.currentSrc || shownQr.src) !== qrImageUrl) {
+    throw new Error("El código QR aún no está listo para descargar.");
+  }
+}
+
+export async function prepareBusinessCard({ card, business, qrImageUrl, format }: BusinessCardDownloadOptions): Promise<PreparedBusinessCard> {
+  assertBusinessCardQr(card, qrImageUrl);
+  const canvas = await renderBusinessCardCanvas(card);
+  const blob = format === "png"
+    ? await canvasToBlob(canvas, "image/png")
+    : await businessCardPdfFromJpeg(await canvasToBlob(canvas, "image/jpeg", 0.96));
+  return { blob, filename: businessCardFilename(business, format) };
+}
+
+export async function prepareBusinessCardDownloads(
+  { card, business, qrImageUrl }: Omit<BusinessCardDownloadOptions, "format">,
+): Promise<Record<BusinessCardDownloadFormat, PreparedBusinessCard>> {
+  assertBusinessCardQr(card, qrImageUrl);
+  const canvas = await renderBusinessCardCanvas(card);
+  const png = await canvasToBlob(canvas, "image/png");
+  const pdf = await businessCardPdfFromJpeg(await canvasToBlob(canvas, "image/jpeg", 0.96));
+  return {
+    pdf: { blob: pdf, filename: businessCardFilename(business, "pdf") },
+    png: { blob: png, filename: businessCardFilename(business, "png") },
+  };
+}

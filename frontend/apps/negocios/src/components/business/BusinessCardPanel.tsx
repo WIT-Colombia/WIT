@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { BusinessDetails } from "../../types/business";
 import { BusinessCardFace, type BusinessCardLevel } from "./BusinessDigitalCard";
 import { developmentReferralTestFor, recognitionLevelFor, recognitionLevels, recognitionRange } from "../../config/businessRecognition";
 import { getPublicBusinessUrl } from "../../config/publicApp";
 import { shareLink } from "../../../../usuario/src/utils/share";
 import { generateBusinessQrPng, isPermanentBusinessQrUrl } from "../../utils/businessQr";
-import { downloadBusinessCard, type BusinessCardDownloadFormat } from "../../utils/businessCardDownload";
+import { prepareBusinessCardDownloads, type BusinessCardDownloadFormat } from "../../utils/businessCardDownload";
 import "./BusinessCardPanel.css";
 
 /** Data supplied by the referral integration when valid referrals become available. */
@@ -26,8 +27,9 @@ export function BusinessCardPanel({ business, cardData }: Props) {
   const [sharing, setSharing] = useState(false);
   const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
   const [qrError, setQrError] = useState(false);
-  const [downloading, setDownloading] = useState<BusinessCardDownloadFormat | null>(null);
   const [downloadError, setDownloadError] = useState("");
+  const [imageRevision, setImageRevision] = useState(0);
+  const [preparedDownloads, setPreparedDownloads] = useState<Record<BusinessCardDownloadFormat, { url: string; filename: string }> | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [benefitsOpen, setBenefitsOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<BusinessCardLevel>("BASIC");
@@ -69,43 +71,85 @@ export function BusinessCardPanel({ business, cardData }: Props) {
     setSharing(false);
   };
 
-  const downloadCard = async (format: BusinessCardDownloadFormat) => {
-    if (!qrImageUrl || !permanentQr || downloading) return;
-    const card = cardRef.current?.querySelector<HTMLElement>(".business-digital-card");
-    if (!card) return;
-    setDownloading(format);
+  // Generate both files once the QR and all visible images have loaded.
+  // A direct, prebuilt <a download> preserves Safari's user activation and
+  // starts saving with a single tap, without a second confirmation link.
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrls: string[] = [];
+    setPreparedDownloads(null);
     setDownloadError("");
-    try {
-      await downloadBusinessCard({ card, business, qrImageUrl, format });
-    } catch (cause) {
-      setDownloadError(cause instanceof Error ? cause.message : "No se pudo preparar la tarjeta. Intenta de nuevo.");
-    } finally {
-      setDownloading(null);
-    }
-  };
+    if (!permanentQr || !qrImageUrl) return;
+
+    const card = cardRef.current?.querySelector<HTMLElement>(".business-digital-card");
+    const qr = card?.querySelector<HTMLImageElement>(".business-digital-card__qr > img");
+    if (!card || !qr?.complete || !qr.naturalWidth) return;
+
+    const prepare = async () => {
+      // Photo and logo are filled asynchronously in the Business card.
+      await Promise.all(Array.from(card.querySelectorAll<HTMLImageElement>("img")).map(async image => {
+        if (!image.complete && image.src) {
+          try { await image.decode(); } catch { /* preparation reports unusable images */ }
+        }
+      }));
+      if (cancelled) return;
+      const files = await prepareBusinessCardDownloads({ card, business, qrImageUrl });
+      if (cancelled) return;
+      const pdfUrl = URL.createObjectURL(files.pdf.blob);
+      const pngUrl = URL.createObjectURL(files.png.blob);
+      objectUrls = [pdfUrl, pngUrl];
+      setPreparedDownloads({
+        pdf: { url: pdfUrl, filename: files.pdf.filename },
+        png: { url: pngUrl, filename: files.png.filename },
+      });
+    };
+    void prepare().catch(cause => {
+      if (!cancelled) setDownloadError(cause instanceof Error ? cause.message : "No se pudo preparar la tarjeta.");
+    });
+    return () => {
+      cancelled = true;
+      objectUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [
+    permanentQr, qrImageUrl, imageRevision, currentLevel.level,
+    business.id, business.publicId, business.name, business.category,
+    business.city, business.sede, business.pioneerNumber,
+    business.profilePhotoId, business.profileImage,
+  ]);
 
   useEffect(() => {
     if (!benefitsOpen) return;
     setSelectedLevel(currentLevel?.level ?? "BASIC");
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     closeBenefitsRef.current?.focus();
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setBenefitsOpen(false); };
     document.addEventListener("keydown", closeOnEscape);
-    return () => { document.removeEventListener("keydown", closeOnEscape); previous?.focus(); };
+    return () => { document.removeEventListener("keydown", closeOnEscape); document.body.style.overflow = previousOverflow; previous?.focus(); };
   }, [benefitsOpen, currentLevel?.level]);
 
   return <aside className="business-card-panel" aria-labelledby="business-card-panel-title">
     <div className="business-card-panel-heading"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M3 9h18M7 14h4M7 17h7" /></svg></span><div><h2 id="business-card-panel-title">Mi tarjeta XAMUKO {testReferrals !== null && <small>MODO PRUEBA</small>}</h2><p>Comparte tu negocio con la comunidad.</p></div></div>
     <div className="business-card-panel-content">
       {referralState === 'loading' && <p className="business-card-panel-reference">Consultando referidos válidos…</p>}
-      <div className="business-card-panel-preview" ref={cardRef}><BusinessCardFace business={business} level={currentLevel?.level} publicUrl={publicUrl} qrImageUrl={qrImageUrl} qrIsPermanent={permanentQr} /></div>
+      <div className="business-card-panel-preview" ref={cardRef} onLoadCapture={() => setImageRevision(value => value + 1)}><BusinessCardFace business={business} level={currentLevel?.level} publicUrl={publicUrl} qrImageUrl={qrImageUrl} qrIsPermanent={permanentQr} /></div>
       <dl className="business-card-panel-stats"><div><dt>Nivel actual</dt><dd>{hasReferralData ? currentLevel.name : referralState === 'loading' ? 'Cargando…' : 'No disponible'}</dd></div><div><dt>Referidos válidos</dt><dd>{hasReferralData ? referredUsers.toLocaleString("es-CO") : referralState === 'loading' ? 'Cargando…' : 'No disponible'}</dd></div></dl>
       {hasReferralData && nextLevel && progressPercent !== null ? <div className="business-card-panel-progress"><div><span>Siguiente nivel: <strong>{nextLevel.name}</strong></span><strong>{referredUsers.toLocaleString("es-CO")} / {nextLevel.min.toLocaleString("es-CO")}</strong></div><progress max="100" value={progressPercent} aria-label={`Progreso hacia ${nextLevel.name}`} /></div> : hasReferralData ? <p className="business-card-panel-pending">Nivel máximo alcanzado.</p> : <p className="business-card-panel-pending">{referralState === 'loading' ? 'Estamos consultando tu progreso.' : 'No fue posible consultar tus referidos. Intenta recargar la página.'}</p>}
       {(!hasReferralData || !qrImageUrl || !permanentQr) && <p className="business-card-panel-notice">{hasReferralData ? '' : referralState === 'loading' ? 'El nivel se actualizará al confirmar los referidos válidos. ' : 'El contador de referidos no está disponible en este momento. '}{!publicUrl ? "Configura la URL pública de user.xamuko.com para generar el QR definitivo." : qrError ? "No se pudo generar el código QR." : !qrImageUrl ? "Generando el código QR…" : !permanentQr ? "Vista local de prueba: configura user.xamuko.com para habilitar descarga y compartir definitivos." : ""}</p>}
-      <div className="business-card-panel-actions business-card-panel-actions--qr"><button type="button" className="outline-button" disabled={!permanentQr || !qrImageUrl || Boolean(downloading)} onClick={() => void downloadCard("pdf")} title="PDF a tamaño real: 15 × 23,5 cm">{downloading === "pdf" ? "Preparando PDF…" : "Descargar PDF"}</button><button type="button" className="outline-button" disabled={!permanentQr || !qrImageUrl || Boolean(downloading)} onClick={() => void downloadCard("png")} title="Imagen PNG de 1772 × 2776 píxeles">{downloading === "png" ? "Preparando PNG…" : "Descargar PNG"}</button><button type="button" className="action-button" disabled={!permanentQr || !qrImageUrl || sharing} onClick={() => void share()} title={permanentQr ? "Compartir la ficha pública" : "Disponible con una URL pública HTTPS de XAMUKO"}>{sharing ? "Compartiendo…" : "Compartir"}</button><button type="button" className="outline-button" onClick={() => setBenefitsOpen(true)}>Beneficios del nivel</button></div>
+      <div className="business-card-panel-actions business-card-panel-actions--qr">
+        {preparedDownloads
+          ? <a className="outline-button" href={preparedDownloads.pdf.url} download={preparedDownloads.pdf.filename} title="PDF a tamaño real: 15 × 23,5 cm">Descargar PDF</a>
+          : <button type="button" className="outline-button" disabled title="PDF a tamaño real: 15 × 23,5 cm">{permanentQr && qrImageUrl ? "Preparando PDF…" : "Descargar PDF"}</button>}
+        {preparedDownloads
+          ? <a className="outline-button" href={preparedDownloads.png.url} download={preparedDownloads.png.filename} title="Imagen PNG de 1772 × 2776 píxeles">Descargar PNG</a>
+          : <button type="button" className="outline-button" disabled title="Imagen PNG de 1772 × 2776 píxeles">{permanentQr && qrImageUrl ? "Preparando PNG…" : "Descargar PNG"}</button>}
+        <button type="button" className="action-button" disabled={!permanentQr || !qrImageUrl || sharing} onClick={() => void share()} title={permanentQr ? "Compartir la ficha pública" : "Disponible con una URL pública HTTPS de XAMUKO"}>{sharing ? "Compartiendo…" : "Compartir"}</button>
+        <button type="button" className="outline-button" onClick={() => setBenefitsOpen(true)}>Beneficios del nivel</button>
+      </div>
       {downloadError && <p className="business-card-panel-notice" role="alert">{downloadError}</p>}
       {shareMessage && <p className="business-card-panel-message" role="status">{shareMessage}</p>}
     </div>
-    {benefitsOpen && <div className="business-card-benefits-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setBenefitsOpen(false); }}><section className="business-card-benefits-dialog" role="dialog" aria-modal="true" aria-labelledby="business-card-benefits-title"><div className="business-card-benefits-heading"><div><p>{hasReferralData ? `Nivel actual: ${currentLevel.name}` : "Nivel inicial: Principiante"}</p><h3 id="business-card-benefits-title">Beneficios del nivel</h3></div><button ref={closeBenefitsRef} type="button" className="business-card-benefits-close" aria-label="Cerrar beneficios" onClick={() => setBenefitsOpen(false)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button></div><div className="business-card-level-tabs" role="tablist" aria-label="Niveles de reconocimiento">{recognitionLevels.map((item, index) => <button type="button" role="tab" key={item.level} aria-selected={selected.level === item.level} className={`${selected.level === item.level ? "selected" : ""}${currentLevel.level === item.level ? " is-current" : ""}`} onClick={() => setSelectedLevel(item.level)}><span>{currentLevel.level === item.level ? "★ " : hasReferralData && currentIndex >= index ? "✓ " : "🔒 "}{item.name}</span><small>{recognitionRange(item)}</small></button>)}</div><section className="business-card-level-detail" aria-labelledby="selected-card-level-title"><div><p>{recognitionRange(selected)}</p><h4 id="selected-card-level-title">Nivel {selected.name}</h4></div><span className={selectedUnlocked === true ? "is-unlocked" : selectedUnlocked === false ? "is-locked" : "is-pending"}>{selected.level === "BASIC" && currentLevel.level === "BASIC" ? "Nivel actual" : !hasReferralData && selected.level === "BASIC" ? "Nivel inicial" : selectedUnlocked === true ? "✓ Desbloqueado" : selectedUnlocked === false ? "🔒 Pendiente" : "Pendiente de sincronizar"}</span></section><ul className="business-card-benefits-list"><li><strong>Business Básico</strong><p>Productos: hasta {selected.productLimit}. Servicios: hasta {selected.serviceLimit}.</p></li><li><strong>Business Pro</strong><p>{selected.proDiscount}% de descuento en Business Pro.</p></li><li><strong>Estadísticas exclusivas acumuladas</strong><p>Además de las 5 estadísticas gratuitas.</p>{cumulativeStatistics.length ? <ul className={selectedUnlocked === true ? "is-unlocked" : "is-pending"}>{cumulativeStatistics.map(statistic => <li key={statistic}>{statistic}</li>)}</ul> : <p>No hay estadísticas exclusivas en este nivel.</p>}</li></ul>{selected.level !== "DIAMOND" && <p className="business-card-next-level">Para alcanzar {recognitionLevels[selectedIndex + 1].name}: reúne {recognitionLevels[selectedIndex + 1].min.toLocaleString("es-CO")} referidos válidos.</p>}{selected.level === "DIAMOND" && <p className="business-card-next-level">Incluye las cinco estadísticas exclusivas al alcanzar 500 o más referidos válidos.</p>}<button type="button" className="action-button" onClick={() => setBenefitsOpen(false)}>Entendido</button></section></div>}
+    {benefitsOpen && createPortal(<div className="business-card-benefits-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setBenefitsOpen(false); }}><section className="business-card-benefits-dialog" role="dialog" aria-modal="true" aria-labelledby="business-card-benefits-title"><div className="business-card-benefits-heading"><div><p>{hasReferralData ? `Nivel actual: ${currentLevel.name}` : "Nivel inicial: Principiante"}</p><h3 id="business-card-benefits-title">Beneficios del nivel</h3></div><button ref={closeBenefitsRef} type="button" className="business-card-benefits-close" aria-label="Cerrar beneficios" onClick={() => setBenefitsOpen(false)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button></div><div className="business-card-level-tabs" role="tablist" aria-label="Niveles de reconocimiento">{recognitionLevels.map((item, index) => <button type="button" role="tab" key={item.level} aria-selected={selected.level === item.level} className={`${selected.level === item.level ? "selected" : ""}${currentLevel.level === item.level ? " is-current" : ""}`} onClick={() => setSelectedLevel(item.level)}><span>{currentLevel.level === item.level ? "★ " : hasReferralData && currentIndex >= index ? "✓ " : "🔒 "}{item.name}</span><small>{recognitionRange(item)}</small></button>)}</div><section className="business-card-level-detail" aria-labelledby="selected-card-level-title"><div><p>{recognitionRange(selected)}</p><h4 id="selected-card-level-title">Nivel {selected.name}</h4></div><span className={selectedUnlocked === true ? "is-unlocked" : selectedUnlocked === false ? "is-locked" : "is-pending"}>{selected.level === "BASIC" && currentLevel.level === "BASIC" ? "Nivel actual" : !hasReferralData && selected.level === "BASIC" ? "Nivel inicial" : selectedUnlocked === true ? "✓ Desbloqueado" : selectedUnlocked === false ? "🔒 Pendiente" : "Pendiente de sincronizar"}</span></section><ul className="business-card-benefits-list"><li><strong>Business Básico</strong><p>Productos: hasta {selected.productLimit}. Servicios: hasta {selected.serviceLimit}.</p></li><li><strong>Business Pro</strong><p>{selected.proDiscount}% de descuento en Business Pro.</p></li><li><strong>Estadísticas exclusivas acumuladas</strong><p>Además de las 5 estadísticas gratuitas.</p>{cumulativeStatistics.length ? <ul className={selectedUnlocked === true ? "is-unlocked" : "is-pending"}>{cumulativeStatistics.map(statistic => <li key={statistic}>{statistic}</li>)}</ul> : <p>No hay estadísticas exclusivas en este nivel.</p>}</li></ul>{selected.level !== "DIAMOND" && <p className="business-card-next-level">Para alcanzar {recognitionLevels[selectedIndex + 1].name}: reúne {recognitionLevels[selectedIndex + 1].min.toLocaleString("es-CO")} referidos válidos.</p>}{selected.level === "DIAMOND" && <p className="business-card-next-level">Incluye las cinco estadísticas exclusivas al alcanzar 500 o más referidos válidos.</p>}<button type="button" className="action-button" onClick={() => setBenefitsOpen(false)}>Entendido</button></section></div>, document.body)}
   </aside>;
 }

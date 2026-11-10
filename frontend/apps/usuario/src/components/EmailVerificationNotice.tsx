@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { requestVerification } from "../services/authService";
 import { ApiError } from "../services/httpClient";
+import { rememberPendingVerificationEmail } from "../services/pendingVerification";
 import "./EmailVerificationNotice.css";
 
 function MailIcon() {
@@ -36,7 +37,9 @@ export function EmailVerificationNotice() {
     setMessage("");
     setMessageKind("");
     try {
-      setMessage(await requestVerification(currentUser.emailNormalized));
+      const result = await requestVerification(currentUser.emailNormalized);
+      setMessage(result.message);
+      rememberPendingVerificationEmail(currentUser.emailNormalized, result.verificationExpiresAt);
       setMessageKind("success");
       setRetryAt(Date.now() + 60_000);
     } catch (error) {

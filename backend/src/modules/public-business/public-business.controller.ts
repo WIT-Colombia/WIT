@@ -39,6 +39,6 @@ export const listPublicOffersController: RequestHandler = async (req, res, next)
 export const publicPhotoContentController: RequestHandler = async (req, res, next) => {
   try {
     const content = await getPublicPhotoContent(req.params.publicId as string, req.params.photoId as string, undefined, viewer(req));
-    res.set('Cache-Control', 'public, max-age=3600').type(content.mimeType).sendFile(content.path, error => { if (error && !res.headersSent) next(error); });
+    res.set('Cache-Control', 'public, max-age=3600').type(content.mimeType).send(content.content);
   } catch (error) { next(error); }
 };

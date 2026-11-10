@@ -19,13 +19,13 @@ async function review(id: string) {
   return row;
 }
 
-function publicReview(row: any) { return { id: row.id, businessId: row.business.publicId, userId: row.user.publicId, author: row.user.displayName, rating: row.rating, comment: row.comment, createdAt: row.createdAt, updatedAt: row.updatedAt, response: row.response ? { body: row.response.body, createdAt: row.response.createdAt, updatedAt: row.response.updatedAt } : null }; }
+function publicReview(row: any) { return { id: row.id, businessId: row.business.publicId, businessPhotoUrl: row.business.profilePhoto?.id ? `/api/v1/public/businesses/${encodeURIComponent(row.business.publicId)}/photos/${encodeURIComponent(row.business.profilePhoto.id)}/content` : null, userId: row.user.publicId, author: row.user.displayName, rating: row.rating, comment: row.comment, createdAt: row.createdAt, updatedAt: row.updatedAt, response: row.response ? { body: row.response.body, createdAt: row.response.createdAt, updatedAt: row.response.updatedAt } : null }; }
 
 export async function listReviews(identifier: string, page = 1, pageSize = 20) {
   const b = await business(identifier, true); const size = Math.min(Math.max(pageSize, 1), 50); const skip = (Math.max(page, 1) - 1) * size;
   const where = { businessId: b.id, status: 'PUBLISHED' as BusinessReviewModerationStatus };
   const [rows, total, aggregate, groups] = await Promise.all([
-    prisma.businessReview.findMany({ where, skip, take: size, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }], include: { user: { select: { publicId: true, displayName: true } }, business: { select: { publicId: true } }, response: true } }),
+    prisma.businessReview.findMany({ where, skip, take: size, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }], include: { user: { select: { publicId: true, displayName: true } }, business: { select: { publicId: true, profilePhoto: { select: { id: true } } } }, response: true } }),
     prisma.businessReview.count({ where }), prisma.businessReview.aggregate({ where, _avg: { rating: true } }), prisma.businessReview.groupBy({ by: ['rating'], where, _count: { _all: true } }),
   ]);
   const distribution = Object.fromEntries([1,2,3,4,5].map(r => [r, groups.find(g => g.rating === r)?._count._all ?? 0]));
@@ -34,8 +34,8 @@ export async function listReviews(identifier: string, page = 1, pageSize = 20) {
 
 export async function listMyReviews(userId: string, page = 1, pageSize = 20) {
   const size = Math.min(Math.max(pageSize, 1), 50); const safePage = Math.max(page, 1); const where = { userId, status: 'PUBLISHED' as BusinessReviewModerationStatus };
-  const [rows, total] = await Promise.all([prisma.businessReview.findMany({ where, skip: (safePage - 1) * size, take: size, orderBy: { createdAt: 'desc' }, include: { user: { select: { publicId: true, displayName: true } }, business: { select: { publicId: true, name: true } }, response: true } }), prisma.businessReview.count({ where })]);
-  return { reviews: rows.map(row => ({ ...publicReview({ ...row, business: { publicId: row.business.publicId }, user: row.user }), businessName: row.business.name })), pagination: { page: safePage, pageSize: size, total, totalPages: Math.ceil(total / size) } };
+  const [rows, total] = await Promise.all([prisma.businessReview.findMany({ where, skip: (safePage - 1) * size, take: size, orderBy: { createdAt: 'desc' }, include: { user: { select: { publicId: true, displayName: true } }, business: { select: { publicId: true, name: true, profilePhoto: { select: { id: true } } } }, response: true } }), prisma.businessReview.count({ where })]);
+  return { reviews: rows.map(row => ({ ...publicReview({ ...row, business: { publicId: row.business.publicId, profilePhoto: row.business.profilePhoto }, user: row.user }), businessName: row.business.name })), pagination: { page: safePage, pageSize: size, total, totalPages: Math.ceil(total / size) } };
 }
 
 export async function createReview(userId: string, identifier: string, rating: number, comment: string) {

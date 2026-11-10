@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { prisma } from '../../config/prisma.js';
+import { findEligibleReferralBusiness } from './business-referral.service.js';
 import { Router } from 'express';
 import multer from 'multer';
 import rateLimit from 'express-rate-limit';
@@ -9,6 +11,7 @@ import { changePasswordController, confirmEmailController, confirmPasswordResetC
 import { LOGIN_ACCOUNT_WINDOW_SECONDS, LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from './auth-rate-limit-policy.js';
 
 export const authRouter = Router();
+authRouter.use((_request, response, next) => { response.setHeader('Cache-Control', 'no-store'); next(); });
 const avatarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
 const authRateLimitWindowMs = env.nodeEnv === 'development' ? 60 * 1000 : 15 * 60 * 1000;
 const authRateLimitLimit = env.nodeEnv === 'development' ? 60 : 10;
@@ -44,10 +47,38 @@ const loginAccountRateLimit = rateLimit({
     response.status(429).json({ error: { code: 'AUTH_RATE_LIMITED', message: 'Demasiados intentos para esta cuenta. Intenta más tarde.' } });
   },
 });
+const referralCheckRateLimit = rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false });
+authRouter.get('/referrals/validate', referralCheckRateLimit, async (request, response, next) => {
+  try {
+    const code = typeof request.query.code === 'string' ? request.query.code.trim().toUpperCase() : '';
+    if (!/^XMK-[A-F0-9]{32}$/.test(code)) {
+      response.status(200).json({ valid: false });
+      return;
+    }
+    try {
+      await findEligibleReferralBusiness(prisma, code);
+      response.status(200).json({ valid: true });
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'INVALID_REFERRAL_CODE') {
+        response.status(200).json({ valid: false });
+        return;
+      }
+      throw error;
+    }
+  } catch (error) { next(error); }
+});
+authRouter.get('/referrals/availability', (_request, response) => { response.status(200).json({ enabled: true }); });
+// Frontends must not POST to an older AWS backend that still creates
+// unverified users and credits referrals at registration time.
+authRouter.get('/registration-policy', (_request, response) => {
+  response.status(200).json({ emailVerificationRequiredBeforeCreation: true });
+});
 authRouter.post('/register', authRateLimit, requireTrustedOrigin, registerController);
 authRouter.post('/login', loginAccountRateLimit, loginRateLimit, requireTrustedOrigin, loginController);
-authRouter.post('/refresh', authRateLimit, requireTrustedOrigin, refreshController);
-authRouter.post('/logout', authRateLimit, requireTrustedOrigin, logoutController);
+// Restoring a valid session is not a login attempt. Keep a separate abuse limit.
+const refreshRateLimit = rateLimit({ windowMs: 60 * 1000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false });
+authRouter.post('/refresh', refreshRateLimit, requireTrustedOrigin, refreshController);
+authRouter.post('/logout', requireTrustedOrigin, logoutController);
 authRouter.get('/me', requireAuth, meController);
 authRouter.get('/me/avatar', requireAuth, ownAvatarController);
 authRouter.post('/me/avatar', requireAuth, requireTrustedOrigin, avatarUpload.single('file'), uploadAvatarController);

@@ -7,6 +7,7 @@ import { BusinessCard } from "../components/EntityCards";
 import { PageLayout } from "../components/PageLayout";
 import { HeartIcon } from "../components/ActionIcons";
 import { useLocationContext } from "../context/LocationContext";
+import { listPublicReviews } from "../services/reviewsService";
 import { distanceBetweenCoordinates, getBusinessCoordinates } from "../utils/coordinates";
 import "./Favorites.css";
 
@@ -14,7 +15,7 @@ export default function Favorites() {
   const { favorites: favoriteIds, toggleFavorite } = useFavorites();
   const { selection } = useLocationContext();
   const [publicBusinesses, setPublicBusinesses] = useState<typeof businesses>([]);
-  useEffect(() => { void listPublicBusinesses().then(setPublicBusinesses).catch(() => setPublicBusinesses([])); }, []);
+  useEffect(() => { void listPublicBusinesses().then(async (items) => { const rated = await Promise.all(items.map(async (business) => { try { const response = await listPublicReviews(business.id, 1, 1); return { ...business, rating: response.summary?.average ?? business.rating, reviewCount: response.summary?.total ?? business.reviewCount }; } catch { return business; } })); setPublicBusinesses(rated); }).catch(() => setPublicBusinesses([])); }, []);
   const [visibleCount, setVisibleCount] = useState(12);
   const savedStores = useMemo(() => [...businesses, ...publicBusinesses]
     .filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index && favoriteIds.includes(item.id))

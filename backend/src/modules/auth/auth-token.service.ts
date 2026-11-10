@@ -3,6 +3,9 @@ import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { sendPasswordResetEmail, sendSecurityNotificationEmail, sendVerificationEmail } from '../../shared/email/email-service.js';
+import type { EmailApplication } from '../../shared/email/email-brand.js';
+import { emailActionLinkExpiresAt } from '../../shared/email/email-link-expiration.js';
+import { resendPendingRegistration, confirmPendingRegistration } from './pending-registration.service.js';
 
 type TokenType = 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
 
@@ -10,7 +13,7 @@ function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-async function issueToken(userId: string, type: TokenType, ttlMs: number): Promise<string> {
+async function issueToken(userId: string, type: TokenType): Promise<string> {
   const rawToken = randomBytes(48).toString('base64url');
   const now = new Date();
   await prisma.$transaction(async (transaction) => {
@@ -19,36 +22,43 @@ async function issueToken(userId: string, type: TokenType, ttlMs: number): Promi
       data: { consumedAt: now },
     });
     await transaction.authToken.create({
-      data: { userId, type, tokenHash: hashToken(rawToken), expiresAt: new Date(now.getTime() + ttlMs) },
+      data: { userId, type, tokenHash: hashToken(rawToken), expiresAt: emailActionLinkExpiresAt(now) },
     });
   });
   return rawToken;
 }
 
 
-export async function sendVerificationRequest(emailNormalized: string): Promise<void> {
+export async function sendVerificationRequest(emailNormalized: string, application: EmailApplication = 'usuario'): Promise<void> {
+  // New registrations are still pending; reissue their one-time mail token
+  // without creating a User or resetting their original referral attribution.
+  if (await resendPendingRegistration(emailNormalized)) return;
+  // Preserve compatibility with existing legacy accounts pending verification.
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || identity.verifiedAt || identity.user.status !== 'ACTIVE') return;
-  const token = await issueToken(identity.userId, 'EMAIL_VERIFICATION', 24 * 60 * 60 * 1000);
-  await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName);
+  const token = await issueToken(identity.userId, 'EMAIL_VERIFICATION');
+  await sendVerificationEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName, application);
 }
 
 export async function confirmEmail(token: string): Promise<string> {
+  const createdUserId = await confirmPendingRegistration(token);
+  if (createdUserId) return createdUserId;
+  // Older unverified accounts retain their previously issued AuthToken links.
   const record = await prisma.$transaction((transaction) => consumeVerificationToken(transaction, token));
   return record.userId;
 }
 
-export async function sendPasswordResetRequest(emailNormalized: string): Promise<void> {
+export async function sendPasswordResetRequest(emailNormalized: string, application: EmailApplication = 'usuario'): Promise<void> {
   const identity = await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: emailNormalized } },
     select: { userId: true, verifiedAt: true, user: { select: { displayName: true, emailNormalized: true, status: true } } },
   });
   if (!identity || !identity.verifiedAt || identity.user.status !== 'ACTIVE') return;
-  const token = await issueToken(identity.userId, 'PASSWORD_RESET', 30 * 60 * 1000);
-  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName);
+  const token = await issueToken(identity.userId, 'PASSWORD_RESET');
+  await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName, application);
 }
 
 export async function resetPassword(token: string, passwordHash: string): Promise<string> {

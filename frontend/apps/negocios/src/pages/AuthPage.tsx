@@ -4,8 +4,9 @@ import { useBusinessStore } from "../services/businessStore";
 import { useBusinessAuth } from "../services/businessAuthContext";
 import { BusinessApiError } from "../services/businessApiClient";
 import { getRememberedEmail, resolveBusinessNext, startGoogleLogin } from "../services/businessAuthService";
+import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
 import { BusinessHeader } from "../components/layout/BusinessHeader";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
+import xamukoLogo from "../assets/XAMUKO-V1-transparent.avif";
 
 function GoogleIcon() { return <svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.5 9.5 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8V33A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4v-5.1H5.8a20 20 0 0 0 0 17.6l6.8-5.1Z"/><path fill="#EA4335" d="M24 12c3 0 5.6 1 7.7 3l5.8-5.8A19.4 19.4 0 0 0 24 4 20 20 0 0 0 5.8 15.2l6.8 5.1C14.2 15.6 18.7 12 24 12Z"/></svg>; }
 const providers = [{ name: "Google", Icon: GoogleIcon }];
@@ -52,22 +53,26 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [requiresVerification, setRequiresVerification] = useState(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (register && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; }
     if (register && password !== confirmation) { setMessage("Las contraseñas no coinciden."); return; }
     setLoading(true);
     setMessage("");
+    setRequiresVerification(false);
     try {
       if (register) {
-        await signUp(name, email, password);
-        navigate("/login?registered=1", { replace: true });
+        const created = await signUp(name, email, password);
+        rememberPendingVerificationEmail(email, created.verificationExpiresAt, created.verificationEmailSent !== false);
+        navigate("/verify-email?pending=1", { replace: true });
       } else {
         await signIn(email, password, rememberMe);
-        const next = resolveBusinessNext(new URLSearchParams(window.location.search).get("next"));
-        navigate(next, { replace: true });
+        clearPendingVerificationEmail();
+        navigate("/inicio", { replace: true });
       }
     } catch (error) {
+      setRequiresVerification(error instanceof BusinessApiError && error.code === "EMAIL_NOT_VERIFIED");
       setMessage(error instanceof BusinessApiError ? error.message : "No se pudo completar la solicitud.");
     } finally {
       setLoading(false);
@@ -104,6 +109,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
           <button type="submit" className="action-button auth-submit" disabled={loading}>{loading ? "Conectando…" : register ? "Crear mi cuenta" : "Iniciar sesión"}</button>
         </form>
         {!register && <Link className="auth-forgot" to="/recuperar?mode=email">¿Olvidaste tu contraseña?</Link>}
+        {requiresVerification && <Link className="auth-forgot" to="/verify-email?pending=1" onClick={() => rememberPendingVerificationEmail(email)}>Reenviar correo de verificación</Link>}
         <button className="auth-mode-switch" type="button" onClick={() => navigate(register ? "/login" : "/registro")}>{register ? "¿Ya tienes una cuenta? Iniciar sesión" : "¿No tienes una cuenta? Crear cuenta"}</button>
         <Link className="auth-preview-button" to="/preview">Entrar en vista previa demo</Link>
       </section>
