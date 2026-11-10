@@ -25,12 +25,21 @@ function formatDistance(distanceKm: number): string {
   return `${distanceKm.toFixed(1)} km`;
 }
 
-function businessProximityLabel(business: Business): string {
+export function businessProximityLabel(business: Business): string {
   const types = business.modalityTypes ?? [];
   const hasPhysicalLocation = types.includes("PHYSICAL");
-  const isVirtualWithoutPhysical = types.includes("VIRTUAL") && !hasPhysicalLocation;
-  if (isVirtualWithoutPhysical) return "Virtual";
-  return getBusinessCoordinates(business) && Number.isFinite(business.distanceKm) ? `A ${formatDistance(business.distanceKm)}` : "Sin distancia";
+  const hasVirtual = types.includes("VIRTUAL");
+  // A virtual business has no meaningful travel distance if it has no physical location.
+  if (hasVirtual && !hasPhysicalLocation) return "Virtual";
+  // Delivery-only businesses do not have a storefront distance either.
+  if (types.includes("DELIVERY") && !hasPhysicalLocation) return "A domicilio";
+  // Preserve distances for verified physical businesses, including mixed modalities.
+  if (getBusinessCoordinates(business) && Number.isFinite(business.distanceKm)) {
+    return `A ${formatDistance(business.distanceKm)}`;
+  }
+  // A mixed physical/virtual business without verifiable distance can still be visited online.
+  if (hasVirtual) return "Virtual";
+  return "Sin distancia";
 }
 
 function OfferPrice({ current, original }: { current: string; original?: string }) {
