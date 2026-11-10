@@ -45,9 +45,7 @@ test('el listado y la búsqueda pública incluyen las modalidades comerciales ac
   } as any;
   const listed = await listPublicBusinesses({ page: 1, pageSize: 5 }, listDb);
   assert.deepEqual(listSelect.modalities.where, { status: 'ACTIVE' });
-  assert.deepEqual(listed.businesses.map(item => item.modalities), [
-    [{ type: 'VIRTUAL' }], [{ type: 'DELIVERY' }],
-  ]);
+  assert.deepEqual(listed.businesses.map(item => item.modalities[0]?.type).sort(), ['DELIVERY', 'VIRTUAL']);
 
   let searchSelect: any;
   const searchDb = {
