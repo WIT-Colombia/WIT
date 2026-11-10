@@ -1,7 +1,0 @@
-/* Match the eye control used by the Usuario registration form. */
-.recovery-card .password-field{position:relative;display:flex;min-width:0;align-items:center;width:100%}
-.recovery-card .password-field input{width:100%;min-width:0;padding-right:43px}
-.recovery-card .password-field .password-visibility{position:absolute;z-index:2;top:50%;right:8px;display:grid!important;width:30px!important;min-width:30px!important;max-width:30px!important;height:30px!important;min-height:30px!important;max-height:30px!important;place-items:center;transform:translateY(-50%);margin:0!important;padding:0!important;border:0!important;border-radius:6px;background:transparent!important;box-shadow:none!important;color:#50607b;cursor:pointer;line-height:0;appearance:none}
-.recovery-card .password-field .password-visibility:hover{background:#eef3ff!important;color:#1769ed}
-.recovery-card .password-field .password-visibility:focus-visible{outline:2px solid #1769ed;outline-offset:2px}
-.recovery-card .password-field .password-visibility svg{display:block;width:18px!important;height:18px!important;flex:none}
