@@ -54,7 +54,7 @@ export default function VerifyEmail() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [token] = useState(() => params.get("token")?.trim() ?? "");
-  const { isAuthenticated, reloadUser, status: authStatus } = useAuth();
+  const { completeVerification } = useAuth();
   const inFlight = useRef(false);
   const hasAttempted = useRef(false);
   const [registration] = useState(getPendingVerification);
@@ -78,31 +78,30 @@ export default function VerifyEmail() {
     `${String(Math.floor(secondsRemaining / 60)).padStart(2, "0")}:${String(secondsRemaining % 60).padStart(2, "0")}`;
 
   useEffect(() => {
-    if (!token || authStatus === "loading" || hasAttempted.current) return;
+    if (!token || hasAttempted.current) return;
     hasAttempted.current = true;
     window.history.replaceState({}, document.title, window.location.pathname);
     if (inFlight.current) return;
     inFlight.current = true;
     confirmEmail(token)
       .then(async (result) => {
-        setState("success");
         clearPendingVerificationEmail();
-        setMessage("Tu correo se verificó correctamente.");
-        if (result.autoLogin || isAuthenticated) {
-          try {
-            await reloadUser();
-            navigate("/profile", { replace: true });
-          } catch {
-            navigate("/register?mode=login&next=%2Fprofile&verified=1", { replace: true });
-          }
+        setState("success");
+        if (result.autoLogin) {
+          // The API has already verified the account and returned an access token.
+          // Apply its authenticated user immediately; no second sign-in is needed.
+          completeVerification(result.user);
+          navigate("/home", { replace: true });
+          return;
         }
+        setMessage("Tu correo está verificado, pero no pudimos iniciar sesión automáticamente. Inicia sesión para continuar.");
       })
       .catch((caught: unknown) => {
         setState("error");
         setMessage(caught instanceof ApiError ? caught.message : "No pudimos conectar. Intenta abrir el enlace de nuevo.");
       })
       .finally(() => { inFlight.current = false; });
-  }, [authStatus, isAuthenticated, navigate, reloadUser, token]);
+  }, [completeVerification, navigate, token]);
 
   async function resend(event: FormEvent) {
     event.preventDefault();
@@ -154,7 +153,7 @@ export default function VerifyEmail() {
           {message || "El enlace no es válido o ya expiró. Puedes solicitar uno nuevo aquí mismo."}
         </p>}
         {state === "success" && <p className="verify-email-description" role="status">
-          Tu correo se verificó correctamente. Tu cuenta de <strong>XAMUKO</strong> está lista.
+          {message || <>Tu correo se verificó correctamente. Tu cuenta de <strong>XAMUKO</strong> está lista.</>}
         </p>}
 
         {(state === "pending" || state === "error") && email && <div className="verify-email-recipient" aria-label="Correo registrado, no editable">
@@ -181,7 +180,7 @@ export default function VerifyEmail() {
         {expiredPending && <Link className="verify-email-primary-link" to="/register">Iniciar un nuevo registro</Link>}
         {(state === "error" && !email) && <Link className="verify-email-primary-link" to="/register">Volver al registro</Link>}
         {state === "loading" && <div className="verify-email-progress" role="status" aria-label="Verificación en curso"><span /></div>}
-        {state === "success" && <Link className="verify-email-primary-link" to="/register?mode=login&next=%2Fprofile">Iniciar sesión</Link>}
+        {state === "success" && <Link className="verify-email-primary-link" to="/register?mode=login&next=%2Fhome&verified=1">Iniciar sesión</Link>}
 
         {(state === "pending" || state === "error") && Boolean(email) && <div className="verify-email-help">
           <span className="verify-email-help-icon"><SmallMailIcon /></span>
