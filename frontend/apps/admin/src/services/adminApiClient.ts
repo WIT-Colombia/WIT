@@ -13,6 +13,9 @@ export async function listAdminCategories() { return (await request<{ categories
 export type AdminUserRecord = { id: string; publicId: string; displayName: string; emailNormalized: string | null; status: string; createdAt: string; lastLoginAt: string | null };
 export type AdminUserPage = { users: AdminUserRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
 export function listAdminUsers(q = '', page = 1) { return request<AdminUserPage>(`/admin/users?q=${encodeURIComponent(q)}&page=${page}`); }
+export type AdminOfferRecord = { id: string; name: string; kind: string; active: boolean; publicationStatus: string; deletedAt: string | null; updatedAt: string; business: { id: string; name: string } };
+export type AdminOfferPage = { offers: AdminOfferRecord[]; pagination: { page: number; total: number; totalPages: number } };
+export function listAdminOffers(page = 1) { return request<AdminOfferPage>(`/admin/content?page=${page}`); }
 export type AdminDashboardStats = {
   generatedAt: string;
   totals: { users: number; businesses: number; businessesVerified: number; reviewsPublished: number; businessProActive: number };

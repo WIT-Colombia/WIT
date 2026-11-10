@@ -41,6 +41,18 @@ adminRouter.get('/users', requireAdmin('ADMINS_MANAGE'), async (req, res, next) 
     res.json({ users, pagination: { page, pageSize: 20, total, totalPages: Math.ceil(total / 20) } });
   } catch (error) { next(error); }
 });
+adminRouter.get('/content', requireAdmin('CATALOG_READ'), async (req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    const rawPage = Number(req.query.page);
+    const page = Number.isFinite(rawPage) ? Math.max(1, Math.min(100000, Math.floor(rawPage))) : 1;
+    const [total, offers] = await Promise.all([
+      prisma.businessOffer.count(),
+      prisma.businessOffer.findMany({ select: { id: true, name: true, kind: true, active: true, publicationStatus: true, deletedAt: true, updatedAt: true, business: { select: { id: true, name: true } } }, orderBy: { updatedAt: 'desc' }, skip: (page - 1) * 20, take: 20 }),
+    ]);
+    res.json({ offers, pagination: { page, pageSize: 20, total, totalPages: Math.ceil(total / 20) } });
+  } catch (error) { next(error); }
+});
 adminRouter.get('/dashboard/stats', requireAdmin(), async (_req, res, next) => {
   try {
     res.setHeader('Cache-Control', 'no-store');

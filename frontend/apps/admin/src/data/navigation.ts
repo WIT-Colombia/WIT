@@ -9,7 +9,7 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/businesses', label: 'Negocios', icon: 'store', group: 'plataforma', description: 'Directorio y gestión administrativa de negocios.' },
     { path: '/users', label: 'Usuarios', icon: 'users', group: 'plataforma', description: 'Consulta de cuentas reales según permisos.' },
     { path: '/verifications', label: 'Verificaciones', icon: 'shield', group: 'plataforma', description: 'Revisión documental de negocios.' },
-    { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Gestión de contenido pendiente de API.', pending: true },
+    { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Consulta de productos y servicios reales.' },
     { path: '/reviews', label: 'Opiniones', icon: 'star', group: 'plataforma', description: 'Consulta de opiniones reales.' },
     { path: '/reports', label: 'Reportes', icon: 'flag', group: 'plataforma', description: 'Revisión de reportes de opiniones.' },
     { path: '/pioneers', label: 'Negocios Pioneros', icon: 'star', group: 'plataforma', description: 'Registro y asignaciones de pioneros.' },
