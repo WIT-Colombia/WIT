@@ -177,7 +177,7 @@ export const requestPasswordResetController: RequestHandler = async (request, re
 export const confirmPasswordResetController: RequestHandler = async (request, response, next) => {
   try {
     const input = parse(passwordResetConfirmSchema, request.body);
-    const userId = await resetPassword(input.token, await argon2.hash(input.password, { type: argon2.argon2id }));
+    const userId = await resetPassword(input.token, await argon2.hash(input.password, { type: argon2.argon2id }), emailApplicationForRequest(request));
     const user = await getCurrentUser(userId);
     try {
       const session = await issueSession(userId, meta(request), input.rememberMe);
@@ -196,4 +196,4 @@ export const ownAvatarController: RequestHandler = async (request, response, nex
 export const updateAdultContentPreferenceController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; const preference = await updateAdultContentPreference(auth.userId, parse(adultContentPreferenceSchema, request.body)); response.status(200).json({ preference }); } catch (error) { next(error); } };
 export const getPreferredLocationController: RequestHandler = async (request, response, next) => { try { response.status(200).json({ location: await getPreferredLocation((request as AuthenticatedRequest).auth.userId) }); } catch (error) { next(error); } };
 export const savePreferredLocationController: RequestHandler = async (request, response, next) => { try { const location = await savePreferredLocation((request as AuthenticatedRequest).auth.userId, parse(preferredLocationSchema, request.body)); response.status(200).json({ location }); } catch (error) { next(error); } };
-export const changePasswordController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; await changePassword(auth.userId, auth.sessionId, parse(changePasswordSchema, request.body)); response.status(204).send(); } catch (error) { next(error); } };
+export const changePasswordController: RequestHandler = async (request, response, next) => { try { const auth = (request as AuthenticatedRequest).auth; await changePassword(auth.userId, auth.sessionId, parse(changePasswordSchema, request.body), emailApplicationForRequest(request)); response.status(204).send(); } catch (error) { next(error); } };

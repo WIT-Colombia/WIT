@@ -34,6 +34,11 @@ const REMEMBER_SESSION_KEY = "xamuko-business-remember-session";
 const LAST_EMAIL_KEY = "xamuko-business-last-email";
 let accessToken: string | null = null;
 let refreshInFlight: Promise<BusinessAuthUser> | null = null;
+let sessionRevision = 0;
+function adoptAccessToken(token: string): void {
+  sessionRevision += 1;
+  accessToken = token;
+}
 let refreshBlockedUntil = 0;
 let refreshBlockError: BusinessApiError | null = null;
 let sessionState: BusinessSessionState = { status: "unchecked" };
@@ -150,7 +155,7 @@ export async function login(email: string, password: string, rememberMe = false)
     method: "POST",
     body: JSON.stringify({ email, password, rememberMe }),
   });
-  accessToken = result.accessToken;
+  adoptAccessToken(result.accessToken);
   saveSessionPreference(email, rememberMe);
   const confirmed = (await requestJson<{ user: BusinessAuthUser }>("/auth/me", withAuthorization())).user;
   sessionState = { status: "authenticated", user: confirmed };
@@ -160,19 +165,22 @@ export async function login(email: string, password: string, rememberMe = false)
 export async function refreshSession(): Promise<BusinessAuthUser> {
   if (refreshInFlight) return refreshInFlight;
   if (Date.now() < refreshBlockedUntil && refreshBlockError) throw refreshBlockError;
+  const revision = sessionRevision;
   refreshInFlight = requestJson<AuthResponse>("/auth/refresh", {
     method: "POST",
     body: "{}",
   })
     .then((result) => {
-      accessToken = result.accessToken;
-      refreshBlockedUntil = 0;
-      refreshBlockError = null;
-      sessionState = { status: "authenticated", user: result.user };
+      if (revision === sessionRevision) {
+        accessToken = result.accessToken;
+        refreshBlockedUntil = 0;
+        refreshBlockError = null;
+        sessionState = { status: "authenticated", user: result.user };
+      }
       return result.user;
     })
     .catch((error: unknown) => {
-      if (error instanceof BusinessApiError && error.status === 429 && error.retryAfterSeconds) {
+      if (revision === sessionRevision && error instanceof BusinessApiError && error.status === 429 && error.retryAfterSeconds) {
         refreshBlockedUntil = Date.now() + error.retryAfterSeconds * 1000;
         refreshBlockError = error;
       }
@@ -195,11 +203,14 @@ export async function getMe(): Promise<BusinessAuthUser> {
 }
 
 export async function restoreSession(): Promise<BusinessSessionState> {
+  const revision = sessionRevision;
   try {
     const user = await refreshSession();
+    if (revision !== sessionRevision) return sessionState;
     sessionState = { status: "authenticated", user };
     return sessionState;
   } catch (error) {
+    if (revision !== sessionRevision) return sessionState;
     if (error instanceof BusinessApiError && error.status === 401) {
       sessionState = { status: "unauthenticated" };
       return sessionState;
@@ -223,6 +234,7 @@ export async function logout(): Promise<void> {
   await refreshInFlight?.catch(() => undefined);
   await requestJson<void>("/auth/logout", { method: "POST", body: "{}" });
   {
+    sessionRevision += 1;
     accessToken = null;
     const localStorage = storage();
     localStorage?.removeItem(REMEMBER_SESSION_KEY);
@@ -238,6 +250,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
 export function applyEmailConfirmationResult(result: { user: BusinessAuthUser; accessToken?: string; autoLogin?: boolean }): { user: BusinessAuthUser; autoLogin: boolean } {
   const hasValidAccessToken = typeof result.accessToken === "string" && result.accessToken.trim().length > 0;
   const autoLogin = hasValidAccessToken && result.autoLogin !== false;
+  sessionRevision += 1;
   if (autoLogin) {
     accessToken = result.accessToken as string;
     sessionState = { status: "authenticated", user: result.user };
@@ -272,11 +285,12 @@ export async function confirmPasswordReset(token: string, password: string, reme
     method: "POST",
     body: JSON.stringify({ token, password, rememberMe }),
   });
-  if (result.accessToken) accessToken = result.accessToken;
+  if (result.accessToken) adoptAccessToken(result.accessToken);
   return { autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
 
 export function clearAccessToken(): void {
+  sessionRevision += 1;
   accessToken = null;
   sessionState = { status: "unauthenticated" };
 }

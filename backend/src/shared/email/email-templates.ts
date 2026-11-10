@@ -164,7 +164,7 @@ function renderNotice(input: NoticeInput, title: string, intro: string, subject:
   const notice = isSecurity ? 'Mantén el control de la seguridad de tu cuenta.' : 'Tu cuenta ya está creada.';
   const footnote = isSecurity
     ? 'Si no reconoces esta actividad, cambia tu contraseña desde la aplicación y contacta a soporte.'
-    : 'Si aún no has verificado tu correo, consulta el mensaje de verificación para completar la activación.';
+    : `Ya puedes iniciar sesión en ${brand.name}.`;
   const html = renderBrandedEmailLayout({
     kind, brandName: brand.name, displayName: input.displayName, title,
     description: intro, notice, footnote, logoUrl: input.logoUrl,
@@ -183,7 +183,7 @@ ${brand.name} · Lo que necesitas, está más cerca.`;
 }
 
 export function renderWelcomeEmail(input: NoticeInput): EmailMessage {
-  return renderNotice(input, 'Te damos la bienvenida a XAMUKO', 'Tu cuenta ya está creada. Verifica tu correo para empezar a descubrir lo que necesitas cerca.', 'Bienvenido', 'welcome');
+  return renderNotice(input, 'Te damos la bienvenida a XAMUKO', 'Tu correo está verificado y tu cuenta está activa. Ya puedes empezar a descubrir lo que necesitas cerca.', 'Bienvenido', 'welcome');
 }
 
 export function renderSecurityNotificationEmail(input: NoticeInput, action = 'Se actualizó la seguridad de tu cuenta'): EmailMessage {

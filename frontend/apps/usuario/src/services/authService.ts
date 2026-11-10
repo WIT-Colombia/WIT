@@ -38,6 +38,11 @@ type MessageResponse = { message: string };
 
 let accessToken: string | null = null;
 let refreshInFlight: Promise<AuthUser> | null = null;
+let sessionRevision = 0;
+function adoptAccessToken(token: string): void {
+  sessionRevision += 1;
+  accessToken = token;
+}
 configureSession(() => accessToken, refreshSession);
 const REMEMBER_SESSION_KEY = "wit-auth-remember-session";
 const LAST_EMAIL_KEY = "wit-auth-last-email";
@@ -149,15 +154,20 @@ export async function register(name: string, credentials: Credentials, referralC
 
 export async function login(credentials: Credentials, rememberMe = true): Promise<AuthUser> {
   const result = await requestJson<AuthResponse>("/api/v1/auth/login", { method: "POST", body: JSON.stringify({ ...credentials, rememberMe }) });
-  accessToken = result.accessToken;
+  adoptAccessToken(result.accessToken);
   saveSessionPreference(credentials.email, rememberMe);
   return result.user;
 }
 
 export async function refreshSession(): Promise<AuthUser> {
   if (refreshInFlight) return refreshInFlight;
+  const revision = sessionRevision;
   refreshInFlight = requestJson<AuthResponse>("/api/v1/auth/refresh", { method: "POST", body: "{}" })
-    .then((result) => { accessToken = result.accessToken; return result.user; })
+    .then((result) => {
+      // A verification/login completed while refresh was pending: never replace its token.
+      if (revision === sessionRevision) accessToken = result.accessToken;
+      return result.user;
+    })
     .finally(() => { refreshInFlight = null; });
   return refreshInFlight;
 }
@@ -175,6 +185,7 @@ export async function logout(): Promise<void> {
   await refreshInFlight?.catch(() => undefined);
   await requestJson<void>("/api/v1/auth/logout", { method: "POST", body: "{}" });
   {
+    sessionRevision += 1;
     accessToken = null;
     window.localStorage.removeItem(REMEMBER_SESSION_KEY);
     window.localStorage.removeItem(LAST_EMAIL_KEY);
@@ -229,13 +240,13 @@ export async function requestPasswordReset(email: string): Promise<string> {
 
 export async function confirmPasswordReset(token: string, password: string, rememberMeOverride?: boolean): Promise<{ user: AuthUser; autoLogin: boolean }> {
   const result = await requestJson<PasswordResetResponse>("/api/v1/auth/password-reset/confirm", { method: "POST", body: JSON.stringify({ token, password, rememberMe: rememberMeOverride ?? readRememberSession() }) });
-  if (result.accessToken) accessToken = result.accessToken;
+  if (result.accessToken) adoptAccessToken(result.accessToken);
   return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
 
 export async function confirmEmail(token: string): Promise<{ user: AuthUser; autoLogin: boolean }> {
   const result = await requestJson<PasswordResetResponse>("/api/v1/auth/verify-email/confirm", { method: "POST", body: JSON.stringify({ token }) });
-  if (result.accessToken) accessToken = result.accessToken;
+  if (result.accessToken) adoptAccessToken(result.accessToken);
   return { user: result.user, autoLogin: Boolean(result.accessToken) && result.autoLogin !== false };
 }
 
@@ -245,7 +256,7 @@ export async function requestVerification(email: string): Promise<{ message: str
   });
 }
 
-export function clearAccessToken(): void { accessToken = null; }
+export function clearAccessToken(): void { sessionRevision += 1; accessToken = null; }
 
 
 export type PreferredLocation = { city: string; region: string | null; country: string; name: string; latitude: number | null; longitude: number | null; mode: "MANUAL" | "GPS"; resolution: "PENDING" | "RESOLVED" | "UNAVAILABLE"; updatedAt: string | null };

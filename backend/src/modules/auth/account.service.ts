@@ -3,6 +3,8 @@ import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { getCurrentUser } from './auth.service.js';
+import { sendSecurityNotificationEmail } from '../../shared/email/email-service.js';
+import type { EmailApplication } from '../../shared/email/email-brand.js';
 import type { AdultContentPreferenceInput, ChangePasswordInput, ProfileUpdateInput } from './auth.schemas.js';
 
 export async function updateProfile(userId: string, input: ProfileUpdateInput) {
@@ -27,8 +29,8 @@ export async function updateAdultContentPreference(userId: string, input: AdultC
   return { enabled: user.adultContentEnabled, acceptedAt: user.adultContentAcceptedAt, conditionsVersion: user.adultContentAcceptedVersion, revokedAt: user.adultContentRevokedAt, ageVerified: false };
 }
 
-export async function changePassword(userId: string, currentSessionId: string, input: ChangePasswordInput): Promise<void> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { emailNormalized: true } });
+export async function changePassword(userId: string, currentSessionId: string, input: ChangePasswordInput, application: EmailApplication = 'usuario'): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { emailNormalized: true, displayName: true } });
   const identity = user?.emailNormalized ? await prisma.authIdentity.findUnique({
     where: { provider_providerSubject: { provider: 'EMAIL', providerSubject: user.emailNormalized } },
     select: { id: true, passwordHash: true },
@@ -48,4 +50,14 @@ export async function changePassword(userId: string, currentSessionId: string, i
     await transaction.authIdentity.update({ where: { id: identity.id }, data: { passwordHash } });
     await transaction.session.updateMany({ where: { userId, id: { not: currentSessionId }, revokedAt: null }, data: { revokedAt: now } });
   });
+
+  // Never notify before the password change commits. Email delivery problems
+  // must not undo a successfully updated password.
+  if (user?.emailNormalized) {
+    try {
+      await sendSecurityNotificationEmail(user.emailNormalized, user.displayName, 'Se cambió la contraseña de tu cuenta', application);
+    } catch {
+      console.warn('Password change security notification could not be sent');
+    }
+  }
 }
