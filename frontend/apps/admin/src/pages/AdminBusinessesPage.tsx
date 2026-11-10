@@ -117,7 +117,7 @@ export function AdminBusinessesPage() {
         </>}
       </>}
     </section>
-    {rows.length === 0 && !loading && !error && data && <section className="businesses-empty-preview" aria-hidden="true"><StoreIllustration /><strong>No se encontraron negocios</strong><span>Intenta ajustar los filtros de búsqueda o crear un nuevo negocio.</span></section>}
+    {rows.length > 0 && !loading && !error && data && <section className="businesses-empty-preview" aria-hidden="true"><StoreIllustration /><strong>No se encontraron negocios</strong><span>Intenta ajustar los filtros de búsqueda o crear un nuevo negocio.</span></section>}
   </div>;
 }
 
