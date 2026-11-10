@@ -100,7 +100,7 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 .admin-refresh .sidebar-footer strong { color: #fff; }
 .admin-refresh .sidebar-footer small { color: #94A3B8; }
 
-.admin-refresh .admin-main { margin-left: 256px; min-width: 0; }
+.admin-refresh .admin-main { margin-left: 256px; width: calc(100% - 256px); min-width: 0; }
 .admin-refresh .admin-header {
   min-height: 76px;
   padding: 0 32px;
@@ -137,7 +137,7 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 }
 .admin-refresh .icon-button:hover { color: var(--admin-blue); background: #EFF6FF; border-color: #BFDBFE; }
 .admin-refresh .notification-link { position: relative; }
-.admin-refresh .notification-link::after { content: ""; position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--admin-green); border: 2px solid #fff; }
+.admin-refresh .notification-link::after { content: none; }
 .admin-refresh .xa-profile-link { min-height: 46px; padding: 4px 8px 4px 5px; gap: 9px; border-radius: 13px; color: var(--admin-ink); }
 .admin-refresh .xa-profile-link:hover { background: #F8FAFC; }
 .admin-refresh .xa-profile-copy strong { font-size: 12px; font-weight: 800; }
@@ -168,7 +168,7 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 .admin-refresh .metric-card:nth-child(2) .metric-icon { background: #F3E8FF; color: var(--admin-violet); }
 .admin-refresh .metric-value { margin-top: 14px; font-size: 28px; font-weight: 850; letter-spacing: -.045em; }
 .admin-refresh .metric-label { color: #64748B; font-size: 12px; font-weight: 700; }
-.admin-refresh .metric-change { color: var(--admin-green); font-weight: 800; font-size: 12px; }
+.admin-refresh .metric-change { font-weight: 800; font-size: 12px; }
 
 .admin-refresh .dashboard-grid { gap: 20px; }
 .admin-refresh .panel {
@@ -176,7 +176,6 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius);
   box-shadow: var(--admin-shadow-soft);
-  overflow: hidden;
 }
 .admin-refresh .panel-heading { min-height: 66px; padding: 18px 22px; border-bottom: 1px solid var(--admin-divider); }
 .admin-refresh .panel-heading h2,
@@ -231,7 +230,7 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 .admin-refresh .finance-table-wrap,
 .admin-refresh .business-table-wrap,
 .admin-refresh .records-table-wrap { max-width: 100%; overflow-x: auto; }
-.admin-refresh table { width: 100%; min-width: 700px; border-collapse: separate; border-spacing: 0; }
+.admin-refresh table { width: 100%; border-collapse: separate; border-spacing: 0; }
 .admin-refresh thead th { padding: 13px 18px; background: #F8FAFC; color: #64748B; border-bottom: 1px solid var(--admin-border); font-size: 10px; font-weight: 850; letter-spacing: .09em; text-align: left; text-transform: uppercase; white-space: nowrap; }
 .admin-refresh tbody td { padding: 15px 18px; color: #334155; border-bottom: 1px solid var(--admin-divider); font-size: 13px; vertical-align: middle; }
 .admin-refresh tbody tr:hover td { background: #FAFBFF; }
@@ -246,7 +245,7 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 .admin-refresh .form-grid { gap: 14px; }
 .admin-refresh label,
 .admin-refresh .field-label { color: #334155; font-size: 12px; font-weight: 800; }
-.admin-refresh input,
+.admin-refresh input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 .admin-refresh select,
 .admin-refresh textarea,
 .admin-refresh .form-control {
@@ -258,7 +257,7 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
   outline: none;
   transition: border-color .18s ease, box-shadow .18s ease;
 }
-.admin-refresh input:focus,
+.admin-refresh input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
 .admin-refresh select:focus,
 .admin-refresh textarea:focus,
 .admin-refresh .form-control:focus { border-color: var(--admin-blue); box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
@@ -362,20 +361,17 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 
 @media (max-width: 1100px) {
   .admin-refresh .admin-sidebar { width: 236px; }
-  .admin-refresh .admin-main { margin-left: 236px; }
+  .admin-refresh .admin-main { margin-left: 236px; width: calc(100% - 236px); }
   .admin-refresh .admin-header { padding: 0 22px; }
   .admin-refresh .global-search { width: 220px; }
 }
-@media (max-width: 820px) {
+@media (max-width: 900px) {
   .admin-refresh .admin-sidebar { width: 272px; transform: translateX(-102%); z-index: 40; }
   .admin-refresh .admin-sidebar.is-open { transform: translateX(0); }
-  .admin-refresh .admin-main { margin-left: 0; }
+  .admin-refresh .admin-main { margin-left: 0; width: 100%; }
   .admin-refresh .admin-header { min-height: 68px; padding: 0 16px; }
   .admin-refresh .menu-toggle { display: inline-flex; }
   .admin-refresh .header-tools { gap: 7px; }
-  .admin-refresh .global-search { width: 42px; padding: 0; }
-  .admin-refresh .global-search input { width: 0; opacity: 0; pointer-events: none; }
-  .admin-refresh .xa-date-filter { display: none; }
   .admin-refresh .xa-profile-copy { display: none; }
   .admin-refresh .workspace { padding: 26px 18px 34px; }
   .admin-refresh .workspace-footer { padding: 0 18px 18px; }
@@ -383,7 +379,6 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 @media (max-width: 560px) {
   .admin-refresh .admin-header { gap: 8px; }
   .admin-refresh .xa-header-breadcrumb { font-size: 12px; }
-  .admin-refresh .notification-link { display: none; }
   .admin-refresh .workspace { padding: 22px 14px 28px; }
   .admin-refresh .page-heading { margin-bottom: 20px; }
   .admin-refresh .page-heading h1 { font-size: 25px; }
@@ -396,7 +391,19 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
   .admin-refresh .form-grid,
   .admin-refresh .filter-bar,
   .admin-refresh .toolbar { grid-template-columns: 1fr; }
-  .admin-refresh .primary,
-  .admin-refresh .primary-button,
-  .admin-refresh .action-button { width: 100%; justify-content: center; }
+}
+
+/* Keep search and month controls compact without changing their functionality. */
+.admin-refresh .admin-header .global-search input,
+.admin-refresh .admin-header .xa-date-filter input {
+  min-height: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.admin-refresh :focus-visible { outline: 3px solid #7B3FFB; outline-offset: 2px; }
+@media (max-width: 620px) {
+  .admin-refresh .admin-header .global-search { width: 100%; flex-basis: 100%; }
+  .admin-refresh .admin-header .global-search input { width: 100%; opacity: 1; pointer-events: auto; }
 }
