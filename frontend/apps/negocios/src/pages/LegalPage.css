@@ -1,0 +1,64 @@
+/* Only legal documents opened from the authenticated Business profile.
+   Registration and guest documents keep their existing full-screen styling. */
+.business-legal-embedded.legal-page {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 0 54px;
+  background: transparent;
+}
+.business-legal-embedded .legal-layout {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  align-items: start;
+  column-gap: clamp(20px, 3vw, 44px);
+  row-gap: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+.business-legal-embedded .legal-back-top {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin: 0 0 22px;
+}
+.business-legal-embedded .legal-sidebar {
+  min-width: 0;
+}
+.business-legal-embedded .legal-document {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
+@media (max-width: 1050px) {
+  .business-legal-embedded .legal-layout {
+    grid-template-columns: minmax(0, 190px) minmax(0, 1fr);
+    column-gap: 20px;
+  }
+  .business-legal-embedded .legal-document {
+    padding: 26px 24px;
+  }
+}
+@media (max-width: 800px) {
+  .business-legal-embedded.legal-page {
+    padding: 8px 0 34px;
+  }
+  .business-legal-embedded .legal-layout {
+    display: block;
+    width: 100%;
+  }
+  .business-legal-embedded .legal-back-top {
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  .business-legal-embedded .legal-sidebar {
+    position: static;
+    margin-bottom: 14px;
+  }
+  .business-legal-embedded .legal-document {
+    margin: 0;
+    padding: 24px 20px;
+  }
+}
