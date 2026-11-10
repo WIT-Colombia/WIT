@@ -1,7 +1,7 @@
-/* Reuse the same visible/hidden eye used on XAMUKO Usuario registration. */
-.recovery-card .recovery-password-field{position:relative;display:flex;align-items:center;width:100%}
-.recovery-card .recovery-password-field input{width:100%;padding-right:50px}
-.recovery-card .recovery-password-field button.recovery-password-visibility{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:34px;height:34px;min-height:0;margin:0;padding:0;border:0;border-radius:7px;background:transparent;box-shadow:none;color:#61708b;cursor:pointer}
-.recovery-card .recovery-password-field button.recovery-password-visibility:hover{background:#eef3ff;color:#1769ed}
-.recovery-card .recovery-password-field button.recovery-password-visibility:focus-visible{outline:2px solid #1769ed;outline-offset:2px}
-.recovery-card .recovery-password-visibility svg{display:block;width:19px;height:19px}
+/* Match the eye control used by the Usuario registration form. */
+.recovery-card .password-field{position:relative;display:flex;min-width:0;align-items:center;width:100%}
+.recovery-card .password-field input{width:100%;min-width:0;padding-right:43px}
+.recovery-card .password-field .password-visibility{position:absolute;z-index:2;top:50%;right:8px;display:grid!important;width:30px!important;min-width:30px!important;max-width:30px!important;height:30px!important;min-height:30px!important;max-height:30px!important;place-items:center;transform:translateY(-50%);margin:0!important;padding:0!important;border:0!important;border-radius:6px;background:transparent!important;box-shadow:none!important;color:#50607b;cursor:pointer;line-height:0;appearance:none}
+.recovery-card .password-field .password-visibility:hover{background:#eef3ff!important;color:#1769ed}
+.recovery-card .password-field .password-visibility:focus-visible{outline:2px solid #1769ed;outline-offset:2px}
+.recovery-card .password-field .password-visibility svg{display:block;width:18px!important;height:18px!important;flex:none}
