@@ -9,7 +9,7 @@ const paths: Record<IconName, ReactNode> = {
   shield: <path d="m12 2 8 3v6c0 6-8 11-8 11S4 17 4 11V5l8-3Zm-4 9 3 3 5-6"/>,
   devices: <><rect x="2" y="3" width="15" height="13" rx="1"/><path d="M6 21h8m-4-5v5"/><rect x="15" y="9" width="7" height="13" rx="1"/><path d="M18 19h1"/></>,
   growth: <path d="M4 21v-6m6 6V11m6 10V7m5-3-7 6-4-4-7 6M16 3h6v6"/>,
-  rocket: <><path d="M9 15 4 20l1-6m4 1 6-6m-6 6 5 2c5-4 7-9 7-14-5 0-10 2-14 7l2 5Zm-2-5-4 1 1-5 6-1m4 12-1 4 5-1 1-6M5 19l-2 3m5-2-1 2"/><circle cx="16" cy="8" r="2"/></>,
+  rocket: <><path d="M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2M12 15l-3-3a22 22 0 0 1 3-6c3.6-3.6 9-3 9-3s.6 5.4-3 9a22 22 0 0 1-6 3Z"/><path d="M9 12H4s.5-3 2-4c1.7-1.1 5 0 5 0m1 7v5s3-.5 4-2c1.1-1.7 0-5 0-5"/><circle cx="16" cy="8" r="1.5"/></>,
   arrow: <path d="M3 12h18m-7-7 7 7-7 7"/>,
   chevron: <path d="m6 9 6 6 6-6"/>, check: <path d="m4 12 5 5L20 6"/>,
   menu: <path d="M3 6h18M3 12h18M3 18h18"/>, close: <path d="m5 5 14 14M19 5 5 19"/>,

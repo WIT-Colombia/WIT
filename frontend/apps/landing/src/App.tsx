@@ -18,11 +18,15 @@ const faqs = [
 
 // Crop only illustration regions; page copy, navigation, cards and controls are DOM.
 function Artwork({ viewBox, className = "" }: { viewBox: string; className?: string }) {
-  return <svg className={className} viewBox={viewBox} aria-hidden="true" focusable="false"><image href={artwork} width="1169" height="1280"/></svg>;
+  const isDevices = !className;
+  return <svg className={className} viewBox={viewBox} preserveAspectRatio={className === "portrait" ? "xMidYMax slice" : "xMidYMid meet"} aria-hidden="true" focusable="false">
+    {isDevices && <defs><clipPath id="devices-artwork-crop"><path d="M534 55h635v393H598L534 85Z"/></clipPath></defs>}
+    <image href={artwork} width="1169" height="1280" clipPath={isDevices ? "url(#devices-artwork-crop)" : undefined}/>
+  </svg>;
 }
 function Brand({ footer = false }: { footer?: boolean }) {
   return <a className={`brand${footer ? " brand-light" : ""}`} href="#inicio" aria-label="XAMUKO, inicio">
-    <svg className="brand-mark" viewBox="40 80 390 510" aria-hidden="true"><image href="/assets/xamuko-logo.png" width="2048" height="680"/></svg>
+    <svg className="brand-mark" viewBox="40 80 390 510" aria-hidden="true"><image href="/assets/definitiva/official-logo.png" width="2048" height="680"/></svg>
     <span><strong>XAMUKO</strong><small>Lo que necesitas, está más cerca.</small></span>
   </a>;
 }
@@ -57,7 +61,12 @@ export function App() {
     setMobileOpen(false); setSelector(null);
     if (id === "planes" || id === "preguntas") {
       event.preventDefault(); window.history.pushState(null, "", `#${id}`); setHash(`#${id}`); setExtraSection(id);
-      requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
+      requestAnimationFrame(() => {
+        const section = document.getElementById(id);
+        section?.setAttribute("tabindex", "-1");
+        section?.scrollIntoView({ block: "start" });
+        section?.focus({ preventScroll: true });
+      });
     }
   }
   function accountSelector(kind: "login" | "register") {
@@ -84,7 +93,7 @@ export function App() {
         <div className="header-actions">{accountSelector("login")}{accountSelector("register")}</div>
       </div>
     </div></header>
-    <main id="contenido">
+    <main id="contenido" tabIndex={-1}>
       <section className="hero" id="inicio" aria-labelledby="hero-title">
         <div className="hero-city" aria-hidden="true"/><div className="hero-wave wave-back" aria-hidden="true"/><div className="hero-wave wave-front" aria-hidden="true"/>
         <div className="hero-inner"><div className="hero-copy">
@@ -102,7 +111,7 @@ export function App() {
             <div className="audience-content"><span className="audience-icon"><Icon name="user"/></span><h2 id="users-title">Para <span>usuarios</span></h2><p>Encuentra y accede fácilmente<br className="desktop-break"/> a los negocios de tu ciudad.</p><ul>{userBenefits.map(text => <li key={text}><Icon name="check"/>{text}</li>)}</ul><a className="button primary audience-button" href={destinations.userRegister}>Soy usuario<Icon name="arrow"/></a></div>
           </section>
           <section className="audience-card business-card" id="negocios" aria-labelledby="business-title">
-            <svg className="portrait" viewBox="0 0 246 242" aria-hidden="true"><defs><clipPath id="merchant-crop"><path d="M0 0h208v80l38 20v142H0Z"/></clipPath></defs><g clipPath="url(#merchant-crop)"><image href={artwork} x="-595" y="-454" width="1169" height="1280"/></g></svg>
+            <svg className="portrait" viewBox="0 0 246 242" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><clipPath id="merchant-crop"><path d="M0 0h208v80l38 20v142H0Z"/></clipPath></defs><g clipPath="url(#merchant-crop)"><image href={artwork} x="-595" y="-454" width="1169" height="1280"/></g></svg>
             <div className="audience-content"><span className="audience-icon"><Icon name="shop"/></span><h2 id="business-title">Para <span>negocios</span></h2><p>Da visibilidad a tu negocio,<br className="desktop-break"/> atrae más clientes y hazlo crecer.</p><ul>{businessBenefits.map(text => <li key={text}><Icon name="check"/>{text}</li>)}</ul><a className="button blue audience-button" href={destinations.businessRegister}>Soy un negocio<Icon name="arrow"/></a></div>
           </section>
         </div>
