@@ -168,3 +168,56 @@
 .admin-refresh .xa-module-footer a{display:inline-flex;align-items:center;gap:6px;flex:none;color:var(--xa-violet);font-size:10px;font-weight:700}
 .admin-refresh .xa-module-footer a svg{transform:rotate(180deg)}
 @media(max-width:700px){.admin-refresh .page-heading{align-items:flex-start;flex-direction:column}.admin-refresh .business-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-refresh .xa-module-page{padding:17px 0 24px}.admin-refresh .xa-module-title-row h1{font-size:21px}.admin-refresh .xa-module-status-card{grid-template-columns:auto minmax(0,1fr);gap:12px;padding:15px}.admin-refresh .xa-module-source{grid-column:2;padding:9px 0 0;border-top:1px solid var(--xa-border);border-left:0}.admin-refresh .xa-module-footer{align-items:flex-start;flex-direction:column}}
+
+/* Screenshot-matched shell, scoped to the businesses directory */
+.businesses-layout .admin-sidebar{width:74px;padding:15px 10px 12px}
+.businesses-layout .admin-main{margin-left:74px;width:calc(100% - 74px)}
+.businesses-layout .sidebar-brand{height:54px;min-height:54px;padding:0 0 10px;justify-content:center;overflow:hidden}
+.businesses-layout .brand{height:38px;width:52px;overflow:hidden}
+.businesses-layout .xa-brand-combo{width:52px;height:38px;overflow:hidden}
+.businesses-layout .xa-brand-logo{width:52px;height:38px}
+.businesses-layout .xa-brand-logo img{width:152px;max-width:none}
+.businesses-layout .xa-brand-subline,.businesses-layout .sidebar-footer>div:not(.avatar),.businesses-layout .sidebar-footer>button{display:none}
+.businesses-layout .admin-sidebar nav{margin:12px 0;gap:4px}
+.businesses-layout .xa-nav-section{border:0}
+.businesses-layout .xa-nav-section>summary{display:none}
+.businesses-layout .xa-nav-section-items{display:grid!important;padding:0 0 7px;gap:5px}
+.businesses-layout .nav-item{justify-content:center;min-height:44px;width:44px;margin:0 auto;padding:0;border-radius:10px}
+.businesses-layout .nav-item>span,.businesses-layout .nav-pending{display:none}
+.businesses-layout .nav-item svg{width:20px;height:20px}
+.businesses-layout .sidebar-footer{justify-content:center;padding:10px 0}
+.businesses-layout .admin-header{height:69px;padding:0 24px;gap:22px}
+.businesses-layout .header-context{min-width:0}
+.businesses-layout .xa-header-breadcrumb{display:none}
+.businesses-layout .menu-toggle{width:40px;height:40px}
+.businesses-layout .header-tools{flex:1}
+.businesses-layout .global-search{min-width:min(43vw,365px);height:42px;border-radius:22px;background:#fff}
+.businesses-layout .global-search input{font-size:13px}
+.businesses-layout .notification-link{width:38px;height:38px}
+.businesses-layout .workspace{padding:22px 20px 25px}
+.businesses-layout .workspace-footer{display:none}
+.businesses-layout .businesses-page{max-width:1400px;margin:0 auto}
+.businesses-layout .businesses-directory{overflow:hidden}
+.businesses-layout .business-table-wrap{overflow-x:auto}
+.businesses-layout .businesses-table{min-width:720px}
+.businesses-layout .business-row-actions{display:flex;align-items:center;gap:5px}
+.businesses-layout .businesses-empty-preview{min-height:360px;margin-top:16px;border:1px solid #e1e4ef;border-radius:18px;background:linear-gradient(145deg,#fff,#fbfbff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#17203a}
+.businesses-layout .businesses-empty-preview .business-empty-illustration{width:300px;height:150px;margin:0}
+.businesses-layout .businesses-empty-preview strong{font-size:28px;letter-spacing:-.7px}
+.businesses-layout .businesses-empty-preview span{font-size:15px;color:#737c92}
+@media(max-width:900px){
+.businesses-layout .admin-sidebar{width:74px}
+.businesses-layout .admin-main{margin-left:74px;width:calc(100% - 74px)}
+.businesses-layout .admin-header{padding:0 15px}
+.businesses-layout .workspace{padding:18px 13px}
+}
+@media(max-width:650px){
+.businesses-layout .admin-header{height:58px;padding:0 9px;gap:8px}
+.businesses-layout .header-tools{gap:5px}
+.businesses-layout .global-search{min-width:0;flex:1}
+.businesses-layout .xa-profile-link{display:none}
+.businesses-layout .workspace{padding:15px 10px}
+.businesses-layout .businesses-empty-preview{min-height:285px}
+.businesses-layout .businesses-empty-preview strong{font-size:21px}
+.businesses-layout .businesses-empty-preview span{font-size:12px;text-align:center}
+}
