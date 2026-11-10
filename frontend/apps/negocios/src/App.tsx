@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { AppShell } from "./components/layout/AppShell";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -50,6 +50,17 @@ function BusinessRecoveryLayout() {
   return state.status === "authenticated" ? <AppShell /> : <Outlet />;
 }
 
+// Legal documents are standalone during registration, but use the Business
+// sidebar and desktop header when opened from an authenticated profile.
+function BusinessLegalLayout() {
+  const { state } = useBusinessAuth();
+  const location = useLocation();
+  const fromProfile = new URLSearchParams(location.search).get("from") === "perfil";
+  if (!fromProfile) return <Outlet />;
+  if (state.status === "unchecked") return <main className="auth-page"><p className="auth-status">Comprobando tu sesión…</p></main>;
+  return state.status === "authenticated" ? <AppShell /> : <Outlet />;
+}
+
 export default function App() {
   return <BusinessAuthProvider><BusinessStoreProvider><Routes>
     <Route path="/login" element={<AuthPage mode="login" />} />
@@ -59,7 +70,7 @@ export default function App() {
     <Route element={<BusinessRecoveryLayout />}><Route path="/recuperar" element={<RecoveryPage />} /></Route>
     <Route path="/bienvenida" element={<WelcomePage />} />
     <Route path="/sin-negocio" element={<NoBusinessPage />} />
-    <Route path="/legal/:page" element={<LegalPage />} />
+    <Route element={<BusinessLegalLayout />}><Route path="/legal/:page" element={<LegalPage />} /></Route>
     <Route path="/preview" element={<AppShell demoMode />}><Route index element={<DashboardPage />} /></Route>
     <Route element={<AppShell />}>
       <Route path="/" element={<Navigate to="/inicio" replace />} />
