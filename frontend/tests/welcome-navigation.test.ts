@@ -16,3 +16,12 @@ test("location screen logos also navigate to home", () => {
   assert.match(header, /<Link className="brand" to="\/home" aria-label="XAMUKO, inicio">/);
   assert.match(manual, /<SiteHeader\s*\/>/);
 });
+
+test("verified Usuario and Business sessions navigate to their home routes without another login", () => {
+  const usuario = readFileSync(new URL("../apps/usuario/src/pages/VerifyEmail.tsx", import.meta.url), "utf8");
+  const business = readFileSync(new URL("../apps/negocios/src/pages/VerifyEmailPage.tsx", import.meta.url), "utf8");
+  assert.match(usuario, /if \(result\.autoLogin\) \{[\s\S]*?completeVerification\(result\.user\);\s*navigate\("\/home", \{ replace: true \}\);/);
+  assert.match(business, /if \(result\.autoLogin\) \{[\s\S]*?completeVerification\(result\.user\);\s*navigate\("\/inicio", \{ replace: true \}\);/);
+  assert.doesNotMatch(usuario, /navigate\("\/profile"/);
+  assert.doesNotMatch(business, /navigate\("\/login"/);
+});
