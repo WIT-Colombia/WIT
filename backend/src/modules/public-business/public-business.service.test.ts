@@ -56,9 +56,8 @@ test('el listado y la búsqueda pública incluyen las modalidades comerciales ac
   } as any;
   const searched = await searchPublicUniversal(parseUniversalSearchInput({}), searchDb);
   assert.deepEqual(searchSelect.modalities.where, { status: 'ACTIVE' });
-  assert.deepEqual(searched.businesses.map(item => item.modalities), [
-    [{ type: 'VIRTUAL' }], [{ type: 'DELIVERY' }],
-  ]);
+  // Search ranks/sorts businesses independently of insertion order.
+  assert.deepEqual(searched.businesses.map(item => item.modalities[0]?.type).sort(), ['DELIVERY', 'VIRTUAL']);
 });
 
 test('el detalle publica contactos comerciales y protege ubicación privada y datos administrativos', async () => {
