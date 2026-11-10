@@ -10,11 +10,12 @@ const businessSelect = {
   category: { select: { translations: { where: { locale: 'es' }, select: { name: true }, take: 1 } } },
 } as const;
 
-export async function listAdminBusinesses(query: { q?: string; page?: number; pageSize?: number }) {
+export async function listAdminBusinesses(query: { q?: string; page?: number; pageSize?: number; status?: string }) {
   const q = (query.q ?? '').trim().slice(0, 100);
   const page = Number.isFinite(query.page) ? Math.max(1, Math.min(100000, Math.floor(query.page!))) : 1;
   const pageSize = Number.isFinite(query.pageSize) ? Math.min(100, Math.max(1, Math.floor(query.pageSize!))) : 20;
-  const where = q ? { name: { contains: q } } : {};
+  const publicationStatus = query.status === 'active' ? 'PUBLISHED' : query.status === 'review' ? 'REVIEW' : query.status === 'inactive' ? 'UNPUBLISHED' : undefined;
+  const where = { deletionStatus: { not: 'DELETED' as const }, ...(q ? { name: { contains: q } } : {}), ...(publicationStatus ? { publicationStatus } : {}) };
   const [total, businesses] = await Promise.all([
     prisma.business.count({ where }),
     prisma.business.findMany({ where, select: businessSelect, orderBy: { updatedAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
