@@ -54,7 +54,7 @@ export default function VerifyEmailPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [token] = useState(() => params.get("token")?.trim() ?? "");
-  const { refresh } = useBusinessAuth();
+  const { completeVerification } = useBusinessAuth();
   const inFlight = useRef(false);
   const hasAttempted = useRef(false);
   const [registration] = useState(getPendingVerification);
@@ -85,24 +85,23 @@ export default function VerifyEmailPage() {
     inFlight.current = true;
     confirmEmail(token)
       .then(async (result) => {
-        setState("success");
         clearPendingVerificationEmail();
-        setMessage("Tu correo se verificó correctamente.");
+        setState("success");
         if (result.autoLogin) {
-          try {
-            const restored = await refresh();
-            if (restored.status === "authenticated") navigate("/inicio", { replace: true });
-          } catch {
-            // The verification already succeeded; display success and let the user sign in.
-          }
+          // The API returned an authenticated user and access token; use them
+          // directly instead of requiring a second refresh/sign-in request.
+          completeVerification(result.user);
+          navigate("/inicio", { replace: true });
+          return;
         }
+        setMessage("Tu correo está verificado, pero no pudimos iniciar sesión automáticamente. Inicia sesión para continuar.");
       })
       .catch((caught: unknown) => {
         setState("error");
         setMessage(caught instanceof BusinessApiError ? caught.message : "No pudimos conectar. Intenta abrir el enlace de nuevo.");
       })
       .finally(() => { inFlight.current = false; });
-  }, [navigate, refresh, token]);
+  }, [completeVerification, navigate, token]);
 
   async function resend(event: FormEvent) {
     event.preventDefault();
@@ -154,7 +153,7 @@ export default function VerifyEmailPage() {
           {message || "El enlace no es válido o ya expiró. Puedes solicitar uno nuevo aquí mismo."}
         </p>}
         {state === "success" && <p className="verify-email-description" role="status">
-          Tu correo se verificó correctamente. Tu cuenta de <strong>XAMUKO Business</strong> está lista.
+          {message || <>Tu correo se verificó correctamente. Tu cuenta de <strong>XAMUKO Business</strong> está lista.</>}
         </p>}
 
         {(state === "pending" || state === "error") && email && <div className="verify-email-recipient" aria-label="Correo registrado, no editable">
