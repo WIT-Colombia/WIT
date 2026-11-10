@@ -10,5 +10,6 @@ import "./styles/responsive.css";
 import "./styles/businesses.css";
 import "./styles/dashboard-refresh.css";
 import "./styles/finance.css";
+import "./styles/enterprise-refresh.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><BrowserRouter><App /></BrowserRouter></React.StrictMode>);

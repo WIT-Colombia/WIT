@@ -2,6 +2,8 @@ import { API_BASE_URL as API_BASE, buildApiUrl } from '@wit/utils';
 export class AdminApiError extends Error { readonly status:number; readonly code:string; constructor(status:number,code:string,message:string){super(message);this.name='AdminApiError';this.status=status;this.code=code;} }
 export type AdminPermission = 'BUSINESSES_READ' | 'CATALOG_READ' | 'REPORTS_REVIEW' | 'CONTENT_MODERATE' | 'AUDIT_READ' | 'ADMINS_MANAGE' | 'PIONEER_MANAGE' | 'FINANCE_READ' | 'FINANCE_MANAGE';
 export type RealAdmin = { user: { id: string; publicId: string; displayName: string; emailNormalized: string | null; avatarUrl: string | null; locale: string }; role: 'ADMIN' | 'SUPER_ADMIN'; permissions: AdminPermission[] };
+export type AdministratorRecord = { id: string; displayName: string; emailNormalized: string | null; status: string; adminRoleAssignments: { role: string; active: boolean }[]; adminPermissionGrants: { permission: string; granted: boolean }[] };
+export async function listAdministrators() { return (await request<{ administrators: AdministratorRecord[] }>('/admin/administrators')).administrators; }
 export type AdminDashboardStats = {
   generatedAt: string;
   totals: { users: number; businesses: number; businessesVerified: number; reviewsPublished: number; businessProActive: number };
