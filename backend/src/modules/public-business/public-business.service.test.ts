@@ -33,6 +33,31 @@ test('solo consulta establecimientos en estados públicos publicables', async ()
   assert.equal('memberships' in result.businesses[0], false);
 });
 
+test('el listado y la búsqueda pública incluyen las modalidades comerciales activas', async () => {
+  const virtual = { ...publicBusiness, publicId: 'virtual-business', name: 'Pastelería virtual', modalities: [{ type: 'VIRTUAL' }] };
+  const delivery = { ...publicBusiness, publicId: 'delivery-business', name: 'Reparto a domicilio', modalities: [{ type: 'DELIVERY' }] };
+  let listSelect: any;
+  const listDb = {
+    business: {
+      count: async () => 2,
+      findMany: async ({ select }: any) => { listSelect = select; return [virtual, delivery]; },
+    },
+  } as any;
+  const listed = await listPublicBusinesses({ page: 1, pageSize: 5 }, listDb);
+  assert.deepEqual(listSelect.modalities.where, { status: 'ACTIVE' });
+  assert.deepEqual(listed.businesses.map(item => item.modalities[0]?.type).sort(), ['DELIVERY', 'VIRTUAL']);
+
+  let searchSelect: any;
+  const searchDb = {
+    business: { findMany: async ({ select }: any) => { searchSelect = select; return [virtual, delivery]; } },
+    businessOffer: { findMany: async () => [] },
+  } as any;
+  const searched = await searchPublicUniversal(parseUniversalSearchInput({}), searchDb);
+  assert.deepEqual(searchSelect.modalities.where, { status: 'ACTIVE' });
+  // Search ranks/sorts businesses independently of insertion order.
+  assert.deepEqual(searched.businesses.map(item => item.modalities[0]?.type).sort(), ['DELIVERY', 'VIRTUAL']);
+});
+
 test('el detalle publica contactos comerciales y protege ubicación privada y datos administrativos', async () => {
   const db = { business: { findFirst: async () => ({ ...publicBusiness, location: { ...publicBusiness.location, visibility: 'PRIVATE' } }) } } as any;
   const result = await getPublicBusiness(publicBusiness.publicId, db);
