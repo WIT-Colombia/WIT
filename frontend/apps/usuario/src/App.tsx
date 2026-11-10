@@ -63,9 +63,36 @@ function ManualLocationRedirect() {
   return <Navigate to={`/location${location.search}${location.hash}`} replace />;
 }
 
+/**
+ * Resend may point at the legacy /reset-password or /recuperar URL.
+ * Keep those links working but show one canonical change-password page.
+ */
+function PasswordResetLinkRedirect() {
+  const location = useLocation();
+  const token = new URLSearchParams(location.search).get("token")?.trim();
+  return token
+    ? <Navigate to={`/change-password${location.search}`} replace />
+    : <Navigate to="/recover-password" replace />;
+}
+
+function RecoverPasswordEntry() {
+  const location = useLocation();
+  return new URLSearchParams(location.search).get("token")?.trim()
+    ? <PasswordResetLinkRedirect />
+    : <RecoverPassword />;
+}
+
+function ChangePasswordEntry() {
+  const location = useLocation();
+  const token = new URLSearchParams(location.search).get("token")?.trim();
+  // A valid reset token authorizes password replacement without a login.
+  // The backend validates and consumes the token; no password is disclosed.
+  return token ? <PasswordRecovery /> : <RequireAccount><PasswordRecovery /></RequireAccount>;
+}
+
 function StandaloneFooter() {
   const { pathname } = useLocation();
-  const authPages = ["/recover-password", "/reset-password", "/verify-email", "/auth/google/callback"];
+  const authPages = ["/recover-password", "/reset-password", "/recuperar", "/change-password", "/verify-email", "/auth/google/callback"];
   return authPages.includes(pathname) ? <SiteFooter /> : null;
 }
 
@@ -107,11 +134,12 @@ export default function App() {
     <Route path="/register-need" element={<RegisterNeed />} />
     <Route path="/report" element={<Report />} />
     <Route path="/register" element={<Register />} />
-    <Route path="/recover-password" element={<RecoverPassword />} />
-    <Route path="/reset-password" element={<PasswordRecovery />} />
+    <Route path="/recover-password" element={<RecoverPasswordEntry />} />
+    <Route path="/reset-password" element={<PasswordResetLinkRedirect />} />
+    <Route path="/recuperar" element={<PasswordResetLinkRedirect />} />
     <Route path="/verify-email" element={<VerifyEmail />} />
     <Route path="/auth/google/callback" element={<GoogleCallback />} />
-    <Route path="/change-password" element={<RequireAccount><PasswordRecovery /></RequireAccount>} />
+    <Route path="/change-password" element={<ChangePasswordEntry />} />
     <Route path="/account" element={<RequireAccount><Navigate to="/settings" replace /></RequireAccount>} />
     <Route path="/legal/:page" element={<Legal />} />
     <Route path="/favorites" element={<RequireAccount><Favorites /></RequireAccount>} />
