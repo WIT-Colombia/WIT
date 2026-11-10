@@ -1,4 +1,4 @@
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { PageLayout } from "../components/PageLayout";
 import "./Legal.css";
 
@@ -7,17 +7,33 @@ const privacySections = [{"id":"legal-0","title":"1. Responsable y ámbito","par
 
 export default function Legal() {
   const { page = "terms" } = useParams();
+  const navigate = useNavigate();
   const [params] = useSearchParams();
   const fromRegister = params.get("from") === "register";
   const returnTo = fromRegister ? "/register" : "/settings";
-  const returnLabel = fromRegister ? "registro" : "ajustes";
+  const handleBack = () => {
+    const referrer = document.referrer;
+    let trustedReferrer = false;
+    try {
+      const hostname = new URL(referrer).hostname;
+      trustedReferrer = hostname === "xamuko.com" || hostname.endsWith(".xamuko.com") || hostname === window.location.hostname;
+    } catch {
+      // No referrer on direct visits.
+    }
+    const routerIndex = (window.history.state as { idx?: number } | null)?.idx;
+    if ((typeof routerIndex === "number" && routerIndex > 0) || (trustedReferrer && window.history.length > 1)) {
+      navigate(-1);
+    } else {
+      navigate(returnTo, { replace: true });
+    }
+  };
   const isTerms = page === "terms";
   const sections = isTerms ? termsSections : privacySections;
   const title = isTerms ? "Términos y condiciones" : "Política de privacidad";
   const description = "Documento jurídico en revisión antes de su entrada en vigor.";
   return <PageLayout className="legal-page">
     <div className="legal-layout">
-      <Link className="legal-back legal-back--top" to={returnTo}>← Volver a {returnLabel}</Link>
+      <button type="button" className="legal-back legal-back--top" onClick={handleBack}>← Volver</button>
       <aside className="legal-sidebar"><span className="legal-eyebrow">CENTRO LEGAL</span><h1>{title}</h1><p>{description}</p><nav aria-label="Documentos legales"><Link className={isTerms ? "active" : ""} to={`/legal/terms?from=${fromRegister ? "register" : "settings"}`}>Términos y condiciones</Link><Link className={page === "privacy" ? "active" : ""} to={`/legal/privacy?from=${fromRegister ? "register" : "settings"}`}>Política de privacidad</Link></nav></aside>
       <article className="legal-card legal-document"><div className="legal-document-heading"><span className="legal-eyebrow">XAMUKO USUARIOS · BORRADOR LEGAL</span><h2>{title}</h2><p>BORRADOR EN REVISIÓN · No constituye la versión contractual vigente. Datos del operador y procedimientos pendientes de validación.</p></div>
         <nav className="legal-toc" aria-label="Contenido del documento"><strong>En este documento</strong>{sections.map(s => <a key={s.id} href={`#${s.id}`}>{s.title}</a>)}</nav>
