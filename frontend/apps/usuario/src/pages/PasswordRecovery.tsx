@@ -14,9 +14,9 @@ type VisiblePasswordProps = { name: string; value: string; onChange: (value: str
 
 function VisiblePasswordInput({ name, value, onChange, autoComplete, minLength }: VisiblePasswordProps) {
   const [visible, setVisible] = useState(false);
-  return <span className="password-input-wrap">
+  return <span className="password-field">
     <input type={visible ? "text" : "password"} value={value} onChange={event => onChange(event.target.value)} autoComplete={autoComplete} minLength={minLength} required />
-    <button type="button" className="password-visibility-toggle" onClick={() => setVisible(show => !show)} aria-label={`${visible ? "Ocultar" : "Mostrar"} ${name.toLowerCase()}`} aria-pressed={visible} title={visible ? "Ocultar contraseña" : "Mostrar contraseña"}><RecoveryEyeIcon hidden={!visible} /></button>
+    <button type="button" className="password-visibility" onClick={() => setVisible(show => !show)} aria-label={`${visible ? "Ocultar" : "Mostrar"} ${name.toLowerCase()}`} aria-pressed={visible} title={visible ? "Ocultar contraseña" : "Mostrar contraseña"}><RecoveryEyeIcon hidden={!visible} /></button>
   </span>;
 }
 
