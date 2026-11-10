@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import type { ReactNode } from "react";
 import { AppShell } from "./components/layout/AppShell";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -26,7 +26,7 @@ import { NoBusinessPage } from "./pages/NoBusinessPage";
 import { HelpPage } from "./pages/HelpPage";
 import { SupportPage } from "./pages/SupportPage";
 import BusinessPublicPreviewPage from "./pages/BusinessPublicPreviewPage";
-import { BusinessAuthProvider } from "./services/businessAuthContext";
+import { BusinessAuthProvider, useBusinessAuth } from "./services/businessAuthContext";
 import GoogleCallback from "./pages/GoogleCallback";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 
@@ -42,13 +42,21 @@ function CollaborationRoute({ children }: { children: ReactNode }) {
   return business.source === "real" && business.role === "Colaborador" ? children : <Navigate to="/" replace />;
 }
 
+// Keep the standard Business sidebar and desktop header for signed-in users.
+ // Password reset links must remain accessible to guests from the login screen.
+function BusinessRecoveryLayout() {
+  const { state } = useBusinessAuth();
+  if (state.status === "unchecked") return <main className="auth-page"><p className="auth-status">Comprobando tu sesión…</p></main>;
+  return state.status === "authenticated" ? <AppShell /> : <Outlet />;
+}
+
 export default function App() {
   return <BusinessAuthProvider><BusinessStoreProvider><Routes>
     <Route path="/login" element={<AuthPage mode="login" />} />
     <Route path="/registro" element={<AuthPage mode="register" />} />
     <Route path="/auth/google/callback" element={<GoogleCallback />} />
     <Route path="/verify-email" element={<VerifyEmailPage />} />
-    <Route path="/recuperar" element={<RecoveryPage />} />
+    <Route element={<BusinessRecoveryLayout />}><Route path="/recuperar" element={<RecoveryPage />} /></Route>
     <Route path="/bienvenida" element={<WelcomePage />} />
     <Route path="/sin-negocio" element={<NoBusinessPage />} />
     <Route path="/legal/:page" element={<LegalPage />} />
