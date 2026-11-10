@@ -1,17 +1,20 @@
 :root {
-  --wit-primary: #6D5AE6;
-  --wit-primary-dark: #5142B5;
-  --wit-primary-light: #E9E6FF;
-  --wit-background: #F5F6FA;
+  --wit-primary: #2563EB;
+  --wit-primary-dark: #1D4ED8;
+  --wit-primary-light: #DBEAFE;
+  --wit-violet: #7B3FFB;
+  --wit-blue: #2563EB;
+  --wit-green: #22C55E;
+  --wit-background: #F8FAFC;
   --wit-surface: #FFFFFF;
-  --wit-sidebar: #171827;
-  --wit-text-primary: #20212D;
-  --wit-text-secondary: #69707D;
-  --wit-text-muted: #8A8E99;
-  --wit-border: #E2E3EA;
-  --wit-divider: #EFF0F4;
-  --wit-radius-sm: 8px;
-  --wit-radius-md: 12px;
-  --wit-radius-lg: 16px;
-  --wit-radius-xl: 20px;
+  --wit-sidebar: #0F172A;
+  --wit-text-primary: #0F172A;
+  --wit-text-secondary: #475569;
+  --wit-text-muted: #94A3B8;
+  --wit-border: #E2E8F0;
+  --wit-divider: #F1F5F9;
+  --wit-radius-sm: 10px;
+  --wit-radius-md: 14px;
+  --wit-radius-lg: 18px;
+  --wit-radius-xl: 22px;
 }
