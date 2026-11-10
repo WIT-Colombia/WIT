@@ -624,3 +624,31 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
   .admin-refresh .verification-actions > div { display: grid; grid-template-columns: 1fr; }
   .admin-refresh .verification-actions button { width: 100%; justify-content: center; }
 }
+
+/* Real administrative directory; values are supplied only by the secured API. */
+.admin-refresh .admin-directory-overview {
+  display: grid;
+  gap: 5px;
+  width: min(320px, 100%);
+  padding: 20px;
+  margin-bottom: 20px;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  box-shadow: var(--admin-shadow-soft);
+}
+.admin-refresh .admin-directory-overview span { color: #64748B; font-size: 12px; font-weight: 750; }
+.admin-refresh .admin-directory-overview strong { color: var(--admin-night); font-size: 30px; line-height: 1.1; }
+.admin-refresh .admin-directory-overview small { color: #94A3B8; font-size: 11px; }
+.admin-refresh .admin-directory-table {
+  max-width: 100%;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  box-shadow: var(--admin-shadow-soft);
+}
+.admin-refresh .admin-directory-table table { min-width: 720px; }
+.admin-refresh .admin-directory-table td:first-child strong,
+.admin-refresh .admin-directory-table td:first-child small { display: block; }
+.admin-refresh .admin-directory-table td:first-child small { margin-top: 4px; color: #64748B; }

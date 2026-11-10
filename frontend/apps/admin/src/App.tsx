@@ -18,6 +18,7 @@ import { getSession, restoreSession, enableDemoSession, isAdminDemoMode } from '
 import { navigation } from './data/navigation';
 import { PendingModulePage } from './pages/PendingModulePage';
 import { FinancialExpensesPage } from './pages/FinancialExpensesPage';
+import { AdministratorsPage } from './pages/AdministratorsPage';
 
 function DemoProtectedRoute() { enableDemoSession(); return <Outlet />; }
 function ProtectedRoute() {
@@ -34,7 +35,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators'];
 
 export default function App() {
   if (isAdminDemoMode) return <Routes><Route element={<DemoProtectedRoute />}><Route element={<Layout />}>
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="/reviews" element={<ReviewsPage />} />
         <Route path="/pioneers" element={<PioneersPage />} />
         <Route path="/financial-reports" element={<FinancialExpensesPage />} />
+        <Route path="/administrators" element={<AdministratorsPage />} />
         {navigation.filter(item => !implementedPaths.includes(item.path)).map(item => <Route key={item.path} path={item.path} element={<PendingModulePage />} />)}
         {['users', 'reports', 'content', 'reviews', 'needs', 'zones', 'categories', 'notifications', 'audit', 'settings'].map(path => <Route key={path} path={`/${path}/:id`} element={<PendingModulePage />} />)}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
