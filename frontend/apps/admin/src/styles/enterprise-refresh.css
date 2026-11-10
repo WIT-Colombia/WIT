@@ -407,3 +407,220 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
   .admin-refresh .admin-header .global-search { width: 100%; flex-basis: 100%; }
   .admin-refresh .admin-header .global-search input { width: 100%; opacity: 1; pointer-events: auto; }
 }
+
+/* Verifications: dedicated review workspace */
+.admin-refresh .page-section:has(.verification-admin-toolbar) {
+  max-width: 1480px;
+}
+.admin-refresh .page-section:has(.verification-admin-toolbar) .page-heading {
+  margin-bottom: 22px;
+}
+.admin-refresh .page-section:has(.verification-admin-toolbar) .page-heading h1 {
+  font-size: clamp(28px, 3vw, 40px);
+}
+.admin-refresh .verification-admin-toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 220px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  box-shadow: var(--admin-shadow-soft);
+}
+.admin-refresh .verification-admin-toolbar input,
+.admin-refresh .verification-admin-toolbar select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 13px;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 11px;
+  color: var(--admin-ink);
+  font-size: 13px;
+}
+.admin-refresh .verification-admin-toolbar input:focus,
+.admin-refresh .verification-admin-toolbar select:focus {
+  background: #fff;
+}
+.admin-refresh .verification-admin-toolbar .secondary-button {
+  min-width: 104px;
+  justify-content: center;
+  background: #EFF6FF;
+}
+.admin-refresh .success-message,
+.admin-refresh .error-message {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 11px 14px;
+  margin: 0 0 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.admin-refresh .success-message { color: #166534; background: #F0FDF4; border: 1px solid #BBF7D0; }
+.admin-refresh .error-message { color: #991B1B; background: #FEF2F2; border: 1px solid #FECACA; }
+.admin-refresh .page-section:has(.verification-admin-toolbar) > .state-panel {
+  padding: 58px 24px;
+  text-align: center;
+}
+.admin-refresh .verification-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr);
+  align-items: start;
+  gap: 18px;
+}
+.admin-refresh .table-card {
+  min-width: 0;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 18px;
+  box-shadow: var(--admin-shadow-soft);
+}
+.admin-refresh .table-card table {
+  min-width: 760px;
+}
+.admin-refresh .table-card thead th {
+  padding: 15px 17px;
+  background: #F8FAFC;
+  font-size: 10px;
+}
+.admin-refresh .table-card tbody td {
+  padding: 16px 17px;
+  font-size: 12px;
+}
+.admin-refresh .table-card tbody tr {
+  cursor: default;
+  transition: background .18s ease;
+}
+.admin-refresh .table-card tbody tr:has(.text-button:hover) td {
+  background: #FAF9FF;
+}
+.admin-refresh .table-card .text-button {
+  min-height: 32px;
+  padding: 0 10px;
+  color: var(--admin-blue);
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.admin-refresh .status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 25px;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: #475569;
+  background: #F1F5F9;
+  font-size: 10px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+.admin-refresh .status-pill.pending { color: #92400E; background: #FEF3C7; }
+.admin-refresh .status-pill.information { color: #1D4ED8; background: #DBEAFE; }
+.admin-refresh .status-pill.approved { color: #166534; background: #DCFCE7; }
+.admin-refresh .status-pill.rejected { color: #991B1B; background: #FEE2E2; }
+.admin-refresh .verification-detail {
+  position: sticky;
+  top: 94px;
+  min-width: 0;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 18px;
+  box-shadow: var(--admin-shadow-soft);
+}
+.admin-refresh .verification-detail h2 {
+  margin: 0 0 8px;
+  color: var(--admin-ink);
+  font-size: 20px;
+  line-height: 1.2;
+}
+.admin-refresh .verification-detail > p {
+  margin: 4px 0;
+  color: #64748B;
+  font-size: 12px;
+}
+.admin-refresh .verification-detail > p strong { color: #334155; }
+.admin-refresh .verification-detail iframe {
+  display: block;
+  width: 100%;
+  height: 340px;
+  margin: 18px 0;
+  background: #F8FAFC;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+}
+.admin-refresh .verification-detail > div:not(.verification-actions) {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  margin: 18px 0;
+  padding: 20px;
+  color: #64748B;
+  background: #F8FAFC;
+  border: 1px dashed #CBD5E1;
+  border-radius: 12px;
+  text-align: center;
+}
+.admin-refresh .verification-actions {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-divider);
+}
+.admin-refresh .verification-actions label {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.admin-refresh .verification-actions label input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  accent-color: var(--admin-violet);
+}
+.admin-refresh .verification-actions textarea {
+  width: 100%;
+  padding: 12px;
+  resize: vertical;
+}
+.admin-refresh .verification-actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-refresh .verification-actions button {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+.admin-refresh .verification-actions .primary-button:disabled,
+.admin-refresh .verification-actions .secondary-button:disabled,
+.admin-refresh .verification-actions .danger-button:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}
+@media (max-width: 1050px) {
+  .admin-refresh .verification-grid { grid-template-columns: 1fr; }
+  .admin-refresh .verification-detail { position: static; }
+}
+@media (max-width: 620px) {
+  .admin-refresh .verification-admin-toolbar { grid-template-columns: 1fr; padding: 12px; }
+  .admin-refresh .verification-admin-toolbar .secondary-button { width: 100%; }
+  .admin-refresh .verification-detail { padding: 16px; border-radius: 14px; }
+  .admin-refresh .verification-detail iframe { height: 300px; }
+  .admin-refresh .verification-actions > div { display: grid; grid-template-columns: 1fr; }
+  .admin-refresh .verification-actions button { width: 100%; justify-content: center; }
+}
