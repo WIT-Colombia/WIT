@@ -61,7 +61,7 @@ export async function sendPasswordResetRequest(emailNormalized: string, applicat
   await sendPasswordResetEmail(identity.user.emailNormalized ?? emailNormalized, token, identity.user.displayName, application);
 }
 
-export async function resetPassword(token: string, passwordHash: string): Promise<string> {
+export async function resetPassword(token: string, passwordHash: string, application: EmailApplication = 'usuario'): Promise<string> {
   const userId = await prisma.$transaction(async (transaction) => {
     const record = await transaction.authToken.findUnique({ where: { tokenHash: hashToken(token) } });
     const now = new Date();
@@ -78,7 +78,7 @@ export async function resetPassword(token: string, passwordHash: string): Promis
   });
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { emailNormalized: true, displayName: true } });
   if (user?.emailNormalized) {
-    try { await sendSecurityNotificationEmail(user.emailNormalized, user.displayName, 'Se cambió la contraseña de tu cuenta'); }
+    try { await sendSecurityNotificationEmail(user.emailNormalized, user.displayName, 'Se cambió la contraseña de tu cuenta', application); }
     catch { console.warn('Password security notification could not be sent'); }
   }
   return userId;

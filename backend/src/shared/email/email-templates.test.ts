@@ -112,3 +112,18 @@ test('uses an authorized hosted HTTPS logo override for reset and notices', () =
     assert.doesNotMatch(message.html, /src="http:\/\//);
   }
 });
+
+test('password change security alerts use the correct brand without exposing credentials or reset links', () => {
+  for (const app of ['usuario', 'negocios'] as const) {
+    const message = renderSecurityNotificationEmail({
+      to: 'person@example.test', displayName: 'Lucía <Ejemplo>', application: app,
+    }, 'Se cambió la contraseña de tu cuenta');
+    const brand = app === 'negocios' ? 'XAMUKO Business' : 'XAMUKO';
+    assert.equal(message.subject, `Aviso de seguridad · ${brand}`);
+    assert.match(message.html, /Se cambió la contraseña de tu cuenta/);
+    assert.match(message.html, /Si no reconoces esta actividad/);
+    assert.match(message.html, /Lucía &lt;Ejemplo&gt;/);
+    assert.match(message.text, new RegExp(brand));
+    assert.doesNotMatch(message.html + message.text, /href="|token=|reset-token|passwordHash/i);
+  }
+});
