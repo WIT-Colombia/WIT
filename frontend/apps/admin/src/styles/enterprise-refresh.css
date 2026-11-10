@@ -695,7 +695,7 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 .admin-refresh .pioneer-progress span { display: block; height: 100%; background: linear-gradient(90deg,#7B3FFB,#2563EB); border-radius: inherit; }
 .admin-refresh .pioneer-directory { overflow: hidden; }
 .admin-refresh .pioneer-directory > .panel-heading { min-height: 84px; padding: 20px 22px; }
-.admin-refresh .pioneer-toolbar { display: grid; grid-template-columns: minmax(220px,1fr) minmax(180px,.55fr) auto; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--admin-divider); }
+.admin-refresh .pioneer-toolbar { display: grid; grid-template-columns: minmax(220px,1fr) minmax(180px,.55fr); gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--admin-divider); }
 .admin-refresh .pioneer-search { display: flex; align-items: center; gap: 9px; min-width: 0; min-height: 42px; padding: 0 12px; color: #64748B; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 11px; }
 .admin-refresh .pioneer-search input { width: 100%; min-width: 0; min-height: 38px; padding: 0; background: transparent; border: 0; box-shadow: none; }
 .admin-refresh .pioneer-search input:focus { box-shadow: none; }
@@ -711,6 +711,10 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 .admin-refresh .pioneer-number svg { color: var(--admin-violet); }
 .admin-refresh .pioneer-business { font-weight: 700; }
 .admin-refresh .pioneer-business svg { color: var(--admin-violet); }
+.admin-refresh .pioneer-business-list { display: grid; justify-items: start; gap: 6px; }
+.admin-refresh .pioneer-business-eye { display: inline-grid; place-items: center; width: 30px; height: 28px; margin-left: 2px; color: #475569; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; text-decoration: none; }
+.admin-refresh .pioneer-business-eye:hover { color: var(--admin-violet); border-color: #C4B5FD; background: #F5F3FF; }
+.admin-refresh .pioneer-business-eye.disabled { color: #94A3B8; cursor: not-allowed; }
 .admin-refresh .pioneer-status { min-height: 27px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .admin-refresh .pioneer-status.occupied { color: #166534; background: #DCFCE7; }
 .admin-refresh .pioneer-status.available { color: #334155; background: #E2E8F0; }
