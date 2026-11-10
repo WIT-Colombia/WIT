@@ -4,6 +4,7 @@ import { BusinessHeader } from "../components/layout/BusinessHeader";
 import { useBusinessStore } from "../services/businessStore";
 import { changePassword, clearAccessToken, confirmPasswordReset, requestPasswordReset } from "../services/businessAuthService";
 import { useBusinessAuth } from "../services/businessAuthContext";
+import "./RecoveryPage.css";
 
 export function RecoveryPage() {
   const { account } = useBusinessStore();
@@ -78,10 +79,16 @@ export function RecoveryPage() {
     const timeout = window.setTimeout(() => navigate(resetMode && !authenticated ? "/login" : "/perfil"), 3000);
     return () => window.clearTimeout(timeout);
   }, [authState.status, navigate, resetMode, status]);
-  return <main className="auth-page">
+  return <main className={`auth-page business-recovery-page ${emailMode ? "business-recovery-email-page" : "business-recovery-password-page"}`}>
     <BusinessHeader />
-    <div className="auth-layout recovery-layout">
-      <section className="recovery-card auth-form-card"><div className="auth-form-heading"><span className="auth-kicker">SEGURIDAD DE LA CUENTA</span><h2>{emailMode ? "Recupera tu contraseña" : "Cambia tu contraseña"}</h2><p>{emailMode ? "Enviaremos un enlace al correo asociado a tu perfil." : "Actualiza tu contraseña de forma rápida y segura."}</p></div>
+    <div className="auth-layout recovery-layout business-recovery-layout">
+      {!emailMode && <div className="business-recovery-intro">
+        <span>SEGURIDAD DE LA CUENTA</span>
+        <h1>Cambia tu contraseña</h1>
+        <p>Actualiza tu contraseña de forma rápida y segura.</p>
+      </div>}
+      <section className="recovery-card auth-form-card business-recovery-card">
+        {emailMode && <div className="auth-form-heading"><span className="auth-kicker">SEGURIDAD DE LA CUENTA</span><h2>Recupera tu contraseña</h2><p>Enviaremos un enlace al correo asociado a tu perfil.</p></div>}
         {emailMode ? status === "sent" ? <p className="auth-status" role="status">Te enviamos un enlace de recuperación a tu correo electrónico.</p> : <form className="auth-form" onSubmit={submitRecovery}><label>Correo electrónico<input type="email" value={email} readOnly aria-readonly="true" required autoComplete="email" /></label><button className="action-button auth-submit" type="submit" disabled={submitting}>{submitting ? "Enviando…" : "Enviar enlace de recuperación"}</button>{error && <p className="form-error" role="alert">{error}</p>}</form> : resetMode ? status === "changed" ? <p className="auth-status" role="status">Tu contraseña se actualizó correctamente.</p> : <form className="auth-form" onSubmit={submitReset}><label>Contraseña actual<input type="text" value="••••••••" readOnly aria-readonly="true" /></label><label>Nueva contraseña<input type="password" value={next} onChange={event => setNext(event.target.value)} required minLength={8} /></label><label>Verificar nueva contraseña<input type="password" value={verify} onChange={event => setVerify(event.target.value)} required minLength={8} /></label>{next && verify && next !== verify && <small className="form-error">Las contraseñas no coinciden.</small>}{error && <p className="form-error" role="alert">{error}</p>}<button className="action-button auth-submit" type="submit" disabled={submitting || next.length < 8 || next !== verify}>{submitting ? "Guardando…" : "Guardar nueva contraseña"}</button></form> : status === "changed" ? <p className="auth-status" role="status">Tu contraseña se actualizó correctamente.</p> : <form className="auth-form" onSubmit={submitChange}><label>Contraseña actual<input type="password" value={current} onChange={event => setCurrent(event.target.value)} required /></label><label>Nueva contraseña<input type="password" value={next} onChange={event => setNext(event.target.value)} required minLength={8} /></label><label>Verificar nueva contraseña<input type="password" value={verify} onChange={event => setVerify(event.target.value)} required minLength={8} /></label>{next && verify && next !== verify && <small className="form-error">Las contraseñas no coinciden.</small>}{error && <p className="form-error" role="alert">{error}</p>}<button className="action-button auth-submit" type="submit" disabled={submitting || !current || next.length < 8 || next !== verify}>{submitting ? "Guardando…" : "Guardar nueva contraseña"}</button></form>}
         {emailMode ? <Link className="recovery-switch recovery-profile-link" to="/perfil">← Regresar al perfil</Link> : <button className="recovery-switch" type="button" onClick={() => { setStatus("idle"); setSearchParams({ mode: "email" }); }}>¿No recuerdas tu contraseña? Recupérala por correo</button>}
         {!emailMode && <Link className="auth-back" to="/perfil">Regresar al perfil</Link>}
