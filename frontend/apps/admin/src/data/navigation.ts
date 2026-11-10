@@ -7,7 +7,7 @@ export const navigationGroups: NavigationGroup[] = [
   ] },
   { id: 'plataforma', label: 'Gestión de la plataforma', items: [
     { path: '/businesses', label: 'Negocios', icon: 'store', group: 'plataforma', description: 'Directorio y gestión administrativa de negocios.' },
-    { path: '/users', label: 'Usuarios', icon: 'users', group: 'plataforma', description: 'Gestión de usuarios pendiente de API.', pending: true },
+    { path: '/users', label: 'Usuarios', icon: 'users', group: 'plataforma', description: 'Consulta de cuentas reales según permisos.' },
     { path: '/verifications', label: 'Verificaciones', icon: 'shield', group: 'plataforma', description: 'Revisión documental de negocios.' },
     { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Gestión de contenido pendiente de API.', pending: true },
     { path: '/reviews', label: 'Opiniones', icon: 'star', group: 'plataforma', description: 'Consulta de opiniones reales.' },

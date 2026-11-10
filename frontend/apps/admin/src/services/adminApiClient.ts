@@ -10,6 +10,9 @@ export function listAdminBusinesses(q = '', page = 1) { return request<AdminBusi
 export async function getAdminBusiness(id: string) { return (await request<{ business: AdminBusinessRecord }>(`/admin/businesses/${encodeURIComponent(id)}`)).business; }
 export type AdminCategoryRecord = { id: string; code: string; active: boolean; sortOrder: number; translations: { locale: string; name: string }[]; _count: { businesses: number; offers: number } };
 export async function listAdminCategories() { return (await request<{ categories: AdminCategoryRecord[] }>('/admin/categories')).categories; }
+export type AdminUserRecord = { id: string; publicId: string; displayName: string; emailNormalized: string | null; status: string; createdAt: string; lastLoginAt: string | null };
+export type AdminUserPage = { users: AdminUserRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
+export function listAdminUsers(q = '', page = 1) { return request<AdminUserPage>(`/admin/users?q=${encodeURIComponent(q)}&page=${page}`); }
 export type AdminDashboardStats = {
   generatedAt: string;
   totals: { users: number; businesses: number; businessesVerified: number; reviewsPublished: number; businessProActive: number };
