@@ -7,21 +7,18 @@ import { GoogleCallbackPage } from './pages/GoogleCallbackPage';
 import { AdminBusinessesPage, AdminBusinessDetailPage } from './pages/AdminBusinessesPage';
 import { AdminCategoriesPage } from './pages/AdminCategoriesPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
-import { MockModulePage } from './pages/MockModulePage';
-import { DemoDashboardPage } from './pages/DemoDashboardPage';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
 import { ReviewReportsPage } from './pages/ReviewReportsPage';
 import { ReviewsPage } from './pages/ReviewsPage';
 import { PioneersPage } from './pages/PioneersPage';
 import { VerificationsPage } from './pages/VerificationsPage';
-import { getSession, restoreSession, enableDemoSession, isAdminDemoMode } from './services/adminService';
+import { getSession, restoreSession } from './services/adminService';
 import { navigation } from './data/navigation';
 import { PendingModulePage } from './pages/PendingModulePage';
 import { FinancialExpensesPage } from './pages/FinancialExpensesPage';
 import { AdministratorsPage } from './pages/AdministratorsPage';
 
-function DemoProtectedRoute() { enableDemoSession(); return <Outlet />; }
 function ProtectedRoute() {
   const [state, setState] = useState<'loading' | 'ready'>(getSession() ? 'ready' : 'loading');
   useEffect(() => {
@@ -39,11 +36,6 @@ function ProtectedRoute() {
 const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators', '/categories', '/users'];
 
 export default function App() {
-  if (isAdminDemoMode) return <Routes><Route element={<DemoProtectedRoute />}><Route element={<Layout />}>
-    <Route index element={<Navigate to="/dashboard" replace />} />
-    <Route path="/dashboard" element={<DemoDashboardPage />} />
-    <Route path="*" element={<MockModulePage />} />
-  </Route></Route></Routes>;
   return <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
