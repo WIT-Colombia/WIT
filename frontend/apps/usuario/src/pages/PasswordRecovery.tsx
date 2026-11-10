@@ -6,6 +6,20 @@ import { PageLayout } from "../components/PageLayout";
 import { useAuth } from "../context/AuthContext";
 import "./PasswordRecovery.css";
 
+function RecoveryEyeIcon({ hidden }: { hidden: boolean }) {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/>{hidden && <path d="m4 4 16 16"/>}</svg>;
+}
+
+type VisiblePasswordProps = { name: string; value: string; onChange: (value: string) => void; autoComplete: string; minLength?: number };
+
+function VisiblePasswordInput({ name, value, onChange, autoComplete, minLength }: VisiblePasswordProps) {
+  const [visible, setVisible] = useState(false);
+  return <span className="password-input-wrap">
+    <input type={visible ? "text" : "password"} value={value} onChange={event => onChange(event.target.value)} autoComplete={autoComplete} minLength={minLength} required />
+    <button type="button" className="password-visibility-toggle" onClick={() => setVisible(show => !show)} aria-label={`${visible ? "Ocultar" : "Mostrar"} ${name.toLowerCase()}`} aria-pressed={visible} title={visible ? "Ocultar contraseña" : "Mostrar contraseña"}><RecoveryEyeIcon hidden={!visible} /></button>
+  </span>;
+}
+
 export default function PasswordRecovery() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -44,5 +58,5 @@ export default function PasswordRecovery() {
       setError(caught instanceof ApiError ? caught.message : "No se pudo actualizar la contraseña.");
     } finally { setSaving(false); }
   }
-  return <PageLayout className="password-page"><Link className="offer-detail-back" to="/settings">← Volver a ajustes</Link><div className="user-page-heading"><span>SEGURIDAD DE LA CUENTA</span><h1>Cambia tu contraseña</h1><p>Actualiza tu contraseña de forma rápida y segura.</p></div><section className="password-card"><form onSubmit={submit}><label>Contraseña actual<input type={recoveryMode ? "text" : "password"} value={recoveryMode ? "••••••••" : current} onChange={recoveryMode ? undefined : (event) => setCurrent(event.target.value)} readOnly={recoveryMode} aria-readonly={recoveryMode} autoComplete="current-password" required /></label><label>Nueva contraseña<input type="password" value={next} onChange={(event) => setNext(event.target.value)} autoComplete="new-password" minLength={8} required /><small>Mínimo 8 caracteres.</small></label><label>Verificar nueva contraseña<input type="password" value={confirm} onChange={(event) => setConfirm(event.target.value)} autoComplete="new-password" minLength={8} required /></label>{passwordsMismatch && <small className="password-error" role="alert">Las contraseñas no coinciden.</small>}{visibleError && !passwordsMismatch && <p className="password-error" role="alert">{visibleError}</p>}{saved && <p className="password-success" role="status">Contraseña actualizada correctamente.</p>}<button type="submit" disabled={saving || next !== confirm}>{saving ? "Guardando…" : "Guardar nueva contraseña"}</button></form>{!recoveryMode && <Link className="password-recovery-link" to="/recover-password">¿No recuerdas tu contraseña? Recupérala por correo</Link>}<Link className="password-settings-link" to="/settings">← Volver a configuración</Link></section></PageLayout>;
+  return <PageLayout className="password-page"><Link className="offer-detail-back" to="/settings">← Volver a ajustes</Link><div className="user-page-heading"><span>SEGURIDAD DE LA CUENTA</span><h1>Cambia tu contraseña</h1><p>Actualiza tu contraseña de forma rápida y segura.</p></div><section className="password-card"><form onSubmit={submit}><label>Contraseña actual{recoveryMode ? <><input type="text" value="••••••••" readOnly aria-readonly="true" autoComplete="off" /><small>Verificada mediante el enlace temporal enviado a tu correo. No necesitas introducirla.</small></> : <VisiblePasswordInput name="Contraseña actual" value={current} onChange={setCurrent} autoComplete="current-password" />}</label><label>Nueva contraseña<VisiblePasswordInput name="Nueva contraseña" value={next} onChange={setNext} autoComplete="new-password" minLength={8} /><small>Mínimo 8 caracteres.</small></label><label>Verificar nueva contraseña<VisiblePasswordInput name="Verificar nueva contraseña" value={confirm} onChange={setConfirm} autoComplete="new-password" minLength={8} /></label>{passwordsMismatch && <small className="password-error" role="alert">Las contraseñas no coinciden.</small>}{visibleError && !passwordsMismatch && <p className="password-error" role="alert">{visibleError}</p>}{saved && <p className="password-success" role="status">Contraseña actualizada correctamente.</p>}<button type="submit" disabled={saving || next !== confirm}>{saving ? "Guardando…" : "Guardar nueva contraseña"}</button></form>{!recoveryMode && <Link className="password-recovery-link" to="/recover-password">¿No recuerdas tu contraseña? Recupérala por correo</Link>}<Link className="password-settings-link" to="/settings">← Volver a configuración</Link></section></PageLayout>;
 }
