@@ -13,10 +13,11 @@ check_directory() {
   canonical=$(realpath -e "$candidate") || fail "Almacenamiento sin ruta valida."
   [[ "$canonical" != "$releases_root" && "$canonical" != "$releases_root/"* ]] || fail "Almacenamiento dentro de releases: requiere migracion supervisada."
   [[ "$canonical" != *$'\n'* ]] || fail "Nombre de ruta invalido."
-  runuser -u ssm-user -- test -r "$canonical" &&
-    runuser -u ssm-user -- test -w "$canonical" &&
-    runuser -u ssm-user -- test -x "$canonical" ||
-      fail "ssm-user no tiene acceso de lectura y escritura: $canonical"
+  if ! runuser -u ssm-user -- test -r "$canonical" ||
+    ! runuser -u ssm-user -- test -w "$canonical" ||
+    ! runuser -u ssm-user -- test -x "$canonical"; then
+    fail "ssm-user no tiene acceso de lectura y escritura: $canonical"
+  fi
   checked_dir=$canonical
 }
 # Any explicit environment override takes precedence over the legacy storage
