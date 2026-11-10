@@ -5,6 +5,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { GoogleCallbackPage } from './pages/GoogleCallbackPage';
 import { AdminBusinessesPage, AdminBusinessDetailPage } from './pages/AdminBusinessesPage';
+import { AdminCategoriesPage } from './pages/AdminCategoriesPage';
 import { MockModulePage } from './pages/MockModulePage';
 import { DemoDashboardPage } from './pages/DemoDashboardPage';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
@@ -34,7 +35,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators', '/categories'];
 
 export default function App() {
   if (isAdminDemoMode) return <Routes><Route element={<DemoProtectedRoute />}><Route element={<Layout />}>
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/pioneers" element={<PioneersPage />} />
         <Route path="/financial-reports" element={<FinancialExpensesPage />} />
         <Route path="/administrators" element={<AdministratorsPage />} />
+        <Route path="/categories" element={<AdminCategoriesPage />} />
         {navigation.filter(item => !implementedPaths.includes(item.path)).map(item => <Route key={item.path} path={item.path} element={<PendingModulePage />} />)}
         {['users', 'reports', 'content', 'reviews', 'needs', 'zones', 'categories', 'notifications', 'audit', 'settings'].map(path => <Route key={path} path={`/${path}/:id`} element={<PendingModulePage />} />)}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

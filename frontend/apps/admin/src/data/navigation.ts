@@ -45,7 +45,7 @@ export const navigationGroups: NavigationGroup[] = [
   ] },
   { id: 'configuracion', label: 'Configuración y seguridad', items: [
     { path: '/zones', label: 'Zonas y categorías', icon: 'globe', group: 'configuracion', description: 'Configuración de zonas pendiente de API.', pending: true },
-    { path: '/categories', label: 'Categorías', icon: 'grid', group: 'configuracion', description: 'Administración de categorías pendiente de API.', pending: true },
+    { path: '/categories', label: 'Categorías', icon: 'grid', group: 'configuracion', description: 'Consulta del catálogo real.' },
     { path: '/parameters', label: 'Parámetros', icon: 'settings', group: 'configuracion', description: 'Parámetros pendientes de API.', pending: true },
     { path: '/administrators', label: 'Administradores y accesos', icon: 'users', group: 'configuracion', description: 'Consulta de cuentas y permisos administrativos.' },
     { path: '/audit', label: 'Auditoría', icon: 'shield', group: 'configuracion', description: 'Consulta de auditoría pendiente de API.', pending: true },

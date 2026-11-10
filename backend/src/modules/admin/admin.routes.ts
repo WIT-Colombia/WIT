@@ -5,6 +5,7 @@ import { adminMeController, administratorsController, assignRoleController, perm
 import { requireAdmin } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
+import { prisma } from '../../config/prisma.js';
 
 export const adminRouter = Router();
 adminRouter.get('/me', requireAdmin(), adminMeController);
@@ -15,6 +16,16 @@ adminRouter.get('/businesses', requireAdmin('BUSINESSES_READ'), async (req, res,
 adminRouter.get('/businesses/:id', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
   try { res.setHeader('Cache-Control', 'no-store'); const business = await getAdminBusiness(String(req.params.id)); if (!business) return res.status(404).json({ error: { code: 'BUSINESS_NOT_FOUND', message: 'No encontramos el negocio.' } }); res.json({ business }); }
   catch (error) { next(error); }
+});
+adminRouter.get('/categories', requireAdmin('CATALOG_READ'), async (_req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    const categories = await prisma.category.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { code: 'asc' }],
+      select: { id: true, code: true, active: true, sortOrder: true, translations: { select: { locale: true, name: true } }, _count: { select: { businesses: true, offers: true } } },
+    });
+    res.json({ categories });
+  } catch (error) { next(error); }
 });
 adminRouter.get('/dashboard/stats', requireAdmin(), async (_req, res, next) => {
   try {
