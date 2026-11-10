@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ResendEmailSender } from './resend-email-sender.js';
+import { newSecurityNotificationIdempotencyKey } from './email-event-ids.js';
 
 test('sends the email payload through the configured provider without logging it', async () => {
   const originalFetch = globalThis.fetch;
@@ -85,4 +86,31 @@ test('retries transient responses with the same idempotency key and does not ret
     await new ResendEmailSender('test-api-key', 'https://provider.test/emails', 'WIT <no-reply@example.test>').send({ to: 'person@example.test', subject: 'Subject', text: 'Plain text', html: '<p>HTML</p>', eventType: 'welcome', idempotencyKey: 'welcome/user-1' });
   } finally { globalThis.fetch = originalFetch; globalThis.setTimeout = originalSetTimeout; }
   assert.equal(calls, 3);
+});
+
+test('every successful password change can send a separate security alert', async () => {
+  const originalFetch = globalThis.fetch;
+  const idempotencyKeys: string[] = [];
+  globalThis.fetch = async (_input, init) => {
+    const key = new Headers(init?.headers).get('Idempotency-Key');
+    assert.ok(key);
+    idempotencyKeys.push(key);
+    return new Response('{}', { status: 200 });
+  };
+  try {
+    const sender = new ResendEmailSender('test-api-key', 'https://provider.test/emails', 'XAMUKO <no-reply@example.test>');
+    for (let i = 0; i < 2; i += 1) {
+      await sender.send({
+        to: 'person@example.test', subject: 'Alerta de seguridad',
+        text: 'Se cambió tu contraseña.', html: '<p>Se cambió tu contraseña.</p>',
+        eventType: 'security_notification', idempotencyKey: newSecurityNotificationIdempotencyKey(),
+      });
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  assert.equal(idempotencyKeys.length, 2);
+  assert.match(idempotencyKeys[0], /^security_notification\/[0-9a-f-]{36}$/);
+  assert.notEqual(idempotencyKeys[0], idempotencyKeys[1]);
+  assert.doesNotMatch(idempotencyKeys.join(' '), /person@example\.test/);
 });
