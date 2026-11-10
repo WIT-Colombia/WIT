@@ -1,11 +1,11 @@
 /* Estas reglas se limitan a /recuperar en XAMUKO Business.
    No modificar los estilos generales de autenticación ni las páginas ajenas. */
-.business-recovery-page {
+.auth-page.business-recovery-page {
   min-height: 100vh;
   background: #f7fafc;
   color: #101b36;
 }
-.business-recovery-page .business-header {
+.auth-page.business-recovery-page .business-header {
   display: flex;
 }
 .business-recovery-page .business-recovery-layout {
@@ -173,7 +173,7 @@
   box-shadow: 0 16px 38px rgba(24, 52, 91, .08);
 }
 @media (max-width: 800px) {
-  .business-recovery-page .business-header {
+  .auth-page.business-recovery-page .business-header {
     display: flex;
   }
   .business-recovery-page .business-recovery-layout {
