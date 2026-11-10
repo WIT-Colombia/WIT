@@ -15,6 +15,7 @@ export function Layout() {
   const toggleRef = useRef<HTMLButtonElement>(null); const sidebarRef = useRef<HTMLElement>(null);
   const verification = location.pathname.startsWith('/verifications');
   const dashboardRoute = ['/dashboard', '/summary', '/statistics'].includes(location.pathname);
+  const businessesRoute = location.pathname === '/businesses';
   useEffect(() => { setOpen(false); setQuery(''); }, [location.pathname, location.search]);
   useEffect(() => { const activeGroup = navigationGroups.find(group => group.id !== 'inicio' && group.items.some(item => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`))); setExpandedGroup(activeGroup?.id ?? null); }, [location.pathname]);
   useEffect(() => {
@@ -56,7 +57,7 @@ export function Layout() {
   const results = query.trim() ? navigation.filter(item => item.label.toLocaleLowerCase('es').includes(query.trim().toLocaleLowerCase('es'))) : [];
   const avatar = avatarSrc ? <img src={avatarSrc} alt="" onError={() => setAvatarSrc(null)} /> : admin?.name?.split(' ').map(part => part[0]).slice(0, 2).join('') || 'A';
   const navItem = (item: typeof navigation[number]) => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={item.icon} size={18} /><span>{item.label}</span>{item.pending && <small className="nav-pending">Pendiente</small>}</NavLink>;
-  return <div className={`app-shell admin-refresh ${verification ? 'verification-preserved' : ''}`}>
+  return <div className={`app-shell admin-refresh ${verification ? 'verification-preserved' : ''} ${businessesRoute ? 'businesses-layout' : ''}`}>
     <a className="skip-link" href="#main">Ir al contenido</a>
     {open && <button className="sidebar-backdrop" aria-label="Cerrar navegación" onClick={() => { setOpen(false); toggleRef.current?.focus(); }} />}
     <aside ref={sidebarRef} className={`admin-sidebar ${open ? 'is-open' : ''}`} aria-label="Navegación administrativa">
