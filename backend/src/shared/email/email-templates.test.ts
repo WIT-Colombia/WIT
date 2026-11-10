@@ -75,17 +75,22 @@ test('renders the same approved decorative logo and safe HTTPS markup for verifi
   assert.doesNotMatch(message.html, /\{\{(?:verification_url|nombre|app_name|asset_base_url)\}\}/);
 });
 
-test('welcome email includes branded HTML and guides verification without invented links', () => {
+test('welcome emails confirm verified activation and never ask for verification again', () => {
   const welcome = renderWelcomeEmail({ to: 'person@example.test', displayName: '<Persona>' });
   assert.match(welcome.subject, /Bienvenido · XAMUKO/);
   assert.match(welcome.html, /&lt;Persona&gt;/);
   assert.match(welcome.html, /ilustracion-correo\.png/);
-  assert.match(welcome.html, /Verifica tu correo/);
+  assert.match(welcome.html, /Tu correo está verificado y tu cuenta está activa/);
+  assert.match(welcome.html, /Ya puedes iniciar sesión en XAMUKO/);
   assert.match(welcome.html, /xamuko-logo\.png/);
   assert.doesNotMatch(welcome.html, /href="/);
-  assert.match(welcome.text, /Tu cuenta ya está creada/);
-});
+  assert.match(welcome.text, /Tu correo está verificado y tu cuenta está activa/);
+  assert.doesNotMatch(`${welcome.html} ${welcome.text}`, /verifica tu correo|verificar tu correo/i);
 
+  const business = renderWelcomeEmail({ to: 'business@example.test', application: 'negocios' });
+  assert.match(business.text, /Ya puedes iniciar sesión en XAMUKO Business/);
+  assert.doesNotMatch(`${business.html} ${business.text}`, /verifica tu correo|verificar tu correo/i);
+});
 test('security notice keeps the action safe, with clear guidance and no phishing CTA', () => {
   const security = renderSecurityNotificationEmail({ to: 'person@example.test', displayName: 'Ana & <Persona>' }, 'Se cambió tu contraseña');
   assert.match(security.subject, /Aviso de seguridad · XAMUKO/);
@@ -105,5 +110,20 @@ test('uses an authorized hosted HTTPS logo override for reset and notices', () =
   for (const message of [reset, welcome, security]) {
     assert.match(message.html, /src="https:\/\/cdn\.xamuko\.com\/email\/logo\.png\?a=1&amp;b=2"/);
     assert.doesNotMatch(message.html, /src="http:\/\//);
+  }
+});
+
+test('password change security alerts use the correct brand without exposing credentials or reset links', () => {
+  for (const app of ['usuario', 'negocios'] as const) {
+    const message = renderSecurityNotificationEmail({
+      to: 'person@example.test', displayName: 'Lucía <Ejemplo>', application: app,
+    }, 'Se cambió la contraseña de tu cuenta');
+    const brand = app === 'negocios' ? 'XAMUKO Business' : 'XAMUKO';
+    assert.equal(message.subject, `Aviso de seguridad · ${brand}`);
+    assert.match(message.html, /Se cambió la contraseña de tu cuenta/);
+    assert.match(message.html, /Si no reconoces esta actividad/);
+    assert.match(message.html, /Lucía &lt;Ejemplo&gt;/);
+    assert.match(message.text, new RegExp(brand));
+    assert.doesNotMatch(message.html + message.text, /href="|token=|reset-token|passwordHash/i);
   }
 });
