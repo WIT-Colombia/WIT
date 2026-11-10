@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   type BusinessAuthUser,
   type PendingBusinessRegistration,
@@ -19,24 +19,33 @@ type BusinessAuthContextValue = {
   signOut: () => Promise<void>;
   rememberedEmail: string;
   refresh: () => Promise<BusinessSessionState>;
+  completeVerification: (verifiedUser: BusinessAuthUser) => void;
 };
 
 const AuthContext = createContext<BusinessAuthContextValue | null>(null);
 
 export function BusinessAuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<BusinessSessionState>({ status: "unchecked" });
+  // Do not let an older refresh overwrite the session created after verification.
+  const verificationEpoch = useRef(0);
+  const completeVerification = useCallback((verifiedUser: BusinessAuthUser) => {
+    verificationEpoch.current += 1;
+    setState({ status: "authenticated", user: verifiedUser });
+  }, []);
 
   const refresh = useCallback(async () => {
+    const epoch = verificationEpoch.current;
     const next = await restoreSession();
-    setState(next);
+    if (epoch === verificationEpoch.current) setState(next);
     return next;
   }, []);
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
     const restore = async () => {
+      const epoch = verificationEpoch.current;
       const next = await restoreSession();
-      if (!active) return;
+      if (!active || epoch !== verificationEpoch.current) return;
       setState(next);
       if (next.status === "error") timer = setTimeout(restore, 5000);
     };
@@ -82,7 +91,8 @@ export function BusinessAuthProvider({ children }: { children: ReactNode }) {
     },
     rememberedEmail: getRememberedEmail(),
     refresh,
-  }), [state]);
+    completeVerification,
+  }), [state, refresh, completeVerification]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
