@@ -4,6 +4,18 @@ export type AdminPermission = 'BUSINESSES_READ' | 'CATALOG_READ' | 'REPORTS_REVI
 export type RealAdmin = { user: { id: string; publicId: string; displayName: string; emailNormalized: string | null; avatarUrl: string | null; locale: string }; role: 'ADMIN' | 'SUPER_ADMIN'; permissions: AdminPermission[] };
 export type AdministratorRecord = { id: string; displayName: string; emailNormalized: string | null; status: string; adminRoleAssignments: { role: string; active: boolean }[]; adminPermissionGrants: { permission: string; granted: boolean }[] };
 export async function listAdministrators() { return (await request<{ administrators: AdministratorRecord[] }>('/admin/administrators')).administrators; }
+export type AdminBusinessRecord = { id: string; publicId: string; name: string; description: string | null; email: string | null; phone: string | null; lifecycleStatus: string; publicationStatus: string; visibilityStatus: string; verificationStatus: string; deletionStatus: string; completeness: number; createdAt: string; updatedAt: string; createdBy: { displayName: string; emailNormalized: string | null }; location: { cityName: string; countryCode: string; address: string } | null; category: { translations: { name: string }[] } };
+export type AdminBusinessPage = { businesses: AdminBusinessRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
+export function listAdminBusinesses(q = '', page = 1) { return request<AdminBusinessPage>(`/admin/businesses?q=${encodeURIComponent(q)}&page=${page}`); }
+export async function getAdminBusiness(id: string) { return (await request<{ business: AdminBusinessRecord }>(`/admin/businesses/${encodeURIComponent(id)}`)).business; }
+export type AdminCategoryRecord = { id: string; code: string; active: boolean; sortOrder: number; translations: { locale: string; name: string }[]; _count: { businesses: number; offers: number } };
+export async function listAdminCategories() { return (await request<{ categories: AdminCategoryRecord[] }>('/admin/categories')).categories; }
+export type AdminUserRecord = { id: string; publicId: string; displayName: string; emailNormalized: string | null; status: string; createdAt: string; lastLoginAt: string | null };
+export type AdminUserPage = { users: AdminUserRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
+export function listAdminUsers(q = '', page = 1) { return request<AdminUserPage>(`/admin/users?q=${encodeURIComponent(q)}&page=${page}`); }
+export type AdminOfferRecord = { id: string; name: string; kind: string; active: boolean; publicationStatus: string; deletedAt: string | null; updatedAt: string; business: { id: string; name: string } };
+export type AdminOfferPage = { offers: AdminOfferRecord[]; pagination: { page: number; total: number; totalPages: number } };
+export function listAdminOffers(page = 1) { return request<AdminOfferPage>(`/admin/content?page=${page}`); }
 export type AdminDashboardStats = {
   generatedAt: string;
   totals: { users: number; businesses: number; businessesVerified: number; reviewsPublished: number; businessProActive: number };

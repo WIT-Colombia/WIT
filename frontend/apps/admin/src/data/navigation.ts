@@ -7,9 +7,9 @@ export const navigationGroups: NavigationGroup[] = [
   ] },
   { id: 'plataforma', label: 'Gestión de la plataforma', items: [
     { path: '/businesses', label: 'Negocios', icon: 'store', group: 'plataforma', description: 'Directorio y gestión administrativa de negocios.' },
-    { path: '/users', label: 'Usuarios', icon: 'users', group: 'plataforma', description: 'Gestión de usuarios pendiente de API.', pending: true },
+    { path: '/users', label: 'Usuarios', icon: 'users', group: 'plataforma', description: 'Consulta de cuentas reales según permisos.' },
     { path: '/verifications', label: 'Verificaciones', icon: 'shield', group: 'plataforma', description: 'Revisión documental de negocios.' },
-    { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Gestión de contenido pendiente de API.', pending: true },
+    { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Consulta de productos y servicios reales.' },
     { path: '/reviews', label: 'Opiniones', icon: 'star', group: 'plataforma', description: 'Consulta de opiniones reales.' },
     { path: '/reports', label: 'Reportes', icon: 'flag', group: 'plataforma', description: 'Revisión de reportes de opiniones.' },
     { path: '/pioneers', label: 'Negocios Pioneros', icon: 'star', group: 'plataforma', description: 'Registro y asignaciones de pioneros.' },
@@ -45,7 +45,7 @@ export const navigationGroups: NavigationGroup[] = [
   ] },
   { id: 'configuracion', label: 'Configuración y seguridad', items: [
     { path: '/zones', label: 'Zonas y categorías', icon: 'globe', group: 'configuracion', description: 'Configuración de zonas pendiente de API.', pending: true },
-    { path: '/categories', label: 'Categorías', icon: 'grid', group: 'configuracion', description: 'Administración de categorías pendiente de API.', pending: true },
+    { path: '/categories', label: 'Categorías', icon: 'grid', group: 'configuracion', description: 'Consulta del catálogo real.' },
     { path: '/parameters', label: 'Parámetros', icon: 'settings', group: 'configuracion', description: 'Parámetros pendientes de API.', pending: true },
     { path: '/administrators', label: 'Administradores y accesos', icon: 'users', group: 'configuracion', description: 'Consulta de cuentas y permisos administrativos.' },
     { path: '/audit', label: 'Auditoría', icon: 'shield', group: 'configuracion', description: 'Consulta de auditoría pendiente de API.', pending: true },

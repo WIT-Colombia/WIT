@@ -652,3 +652,24 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 .admin-refresh .admin-directory-table td:first-child strong,
 .admin-refresh .admin-directory-table td:first-child small { display: block; }
 .admin-refresh .admin-directory-table td:first-child small { margin-top: 4px; color: #64748B; }
+
+.admin-refresh .admin-business-search { display: grid; gap: 7px; max-width: 600px; margin-bottom: 18px; }
+.admin-refresh .admin-business-search > div { display: flex; gap: 8px; }
+.admin-refresh .admin-business-search input { flex: 1; min-width: 0; padding: 0 13px; }
+.admin-refresh .admin-business-count { display: flex; align-items: baseline; gap: 8px; margin: 0 0 14px; color: #64748B; font-size: 13px; }
+.admin-refresh .admin-business-count strong { color: var(--admin-night); font-size: 24px; }
+.admin-refresh .admin-business-link { display: inline-flex; padding: 7px 10px; color: var(--admin-blue); background: #EFF6FF; border-radius: 8px; white-space: nowrap; font-size: 12px; font-weight: 750; }
+.admin-refresh .admin-business-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin: 16px 0; color: #64748B; font-size: 12px; }
+.admin-refresh .admin-business-pagination button:disabled { opacity: .5; cursor: not-allowed; }
+.admin-refresh .admin-business-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
+.admin-refresh .admin-business-facts > div { display: grid; gap: 8px; min-width: 0; padding: 18px; background: #fff; border: 1px solid var(--admin-border); border-radius: 14px; }
+.admin-refresh .admin-business-facts span { color: #64748B; font-size: 11px; }
+.admin-refresh .admin-business-facts strong { color: var(--admin-night); overflow-wrap: anywhere; font-size: 13px; }
+.admin-refresh .admin-business-information { padding: 24px; }
+.admin-refresh .admin-business-information h2 { margin: 0 0 18px; font-size: 18px; }
+.admin-refresh .admin-business-information dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin: 0; }
+.admin-refresh .admin-business-information dl div { min-width: 0; padding: 12px 0; border-bottom: 1px solid var(--admin-divider); }
+.admin-refresh .admin-business-information dt { margin-bottom: 5px; color: #64748B; font-size: 11px; }
+.admin-refresh .admin-business-information dd { margin: 0; color: var(--admin-night); overflow-wrap: anywhere; font-size: 13px; font-weight: 650; }
+@media (max-width: 900px) { .admin-refresh .admin-business-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .admin-refresh .admin-business-search > div { flex-direction: column; } .admin-refresh .admin-business-information dl { grid-template-columns: 1fr; } .admin-refresh .admin-business-pagination { justify-content: space-between; gap: 5px; } }
