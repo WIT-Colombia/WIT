@@ -3,7 +3,7 @@ import { DevelopmentEmailSender } from './development-email-sender.js';
 import { ResendEmailSender } from './resend-email-sender.js';
 import type { EmailMessage, EmailSender } from './email-sender.js';
 import { renderPasswordResetEmail, renderSecurityNotificationEmail, renderVerificationEmail, renderWelcomeEmail } from './email-templates.js';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { EmailApplication } from './email-brand.js';
 
 const sender: EmailSender = env.emailMode === 'resend'
@@ -37,5 +37,5 @@ export async function sendWelcomeEmail(to: string, displayName?: string, applica
 
 export async function sendSecurityNotificationEmail(to: string, displayName?: string, action?: string, application: EmailApplication = 'usuario'): Promise<void> {
   const message = renderSecurityNotificationEmail({ to, displayName, application, logoUrl: env.emailLogoUrl }, action);
-  await sendTransactionalEmail({ ...message, eventType: 'security_notification', idempotencyKey: `security_notification/${createHash('sha256').update(`${application}:${to}:${action ?? 'account-security'}`).digest('hex')}` });
+  await sendTransactionalEmail({ ...message, eventType: 'security_notification', idempotencyKey: `security_notification/${randomUUID()}` });
 }
