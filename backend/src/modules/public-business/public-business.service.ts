@@ -228,6 +228,8 @@ function summary(value: any) {
     adultOnly: value.adultOnly,
     description: value.description ?? null,
     category: category(value.category),
+    // Public card labels need the active commercial modalities.
+    modalities: (value.modalities ?? []).map((modality: { type: string }) => ({ type: modality.type })),
     location: location(value.location),
     coverPhoto: photo(value.publicId, value.coverPhoto),
     profilePhoto: photo(value.publicId, value.profilePhoto),
@@ -435,7 +437,7 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
     ...(canViewAdult ? {} : { adultOnly: false }),
   };
   const [businesses, products, services] = await Promise.all([
-    db.business.findMany({ where: businessWhere, select: { publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.business.findMany({ where: businessWhere, select: { publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, modalities: { where: { status: 'ACTIVE' }, select: { type: true } }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
     db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
     db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
   ]);
