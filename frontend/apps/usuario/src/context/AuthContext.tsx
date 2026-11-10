@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ApiError } from "../services/httpClient";
 import { getMe, login, logout, refreshSession, register, restoreSession, type AuthUser, type PendingRegistrationInfo } from "../services/authService";
 
@@ -9,6 +9,7 @@ type AuthContextValue = {
   register: (name: string, email: string, password: string, referralCode?: string) => Promise<PendingRegistrationInfo>;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   reloadUser: () => Promise<void>;
+  completeVerification: (verifiedUser: AuthUser) => void;
   restoreSession: () => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -18,15 +19,18 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthContextValue["status"]>("loading");
+  // Ignore a stale initial refresh after email verification has established a session.
+  const verificationEpoch = useRef(0);
 
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
     const restore = () => {
+      const epoch = verificationEpoch.current;
       refreshSession().then((currentUser) => {
-        if (active) { setUser(currentUser); setStatus("authenticated"); }
+        if (active && epoch === verificationEpoch.current) { setUser(currentUser); setStatus("authenticated"); }
       }).catch((error: unknown) => {
-        if (!active) return;
+        if (!active || epoch !== verificationEpoch.current) return;
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
           setUser(null); setStatus("anonymous");
         } else {
@@ -54,6 +58,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(() => ({
     user,
     reloadUser: async () => { const next = await getMe(); setUser(next); setStatus("authenticated"); },
+    completeVerification: (verifiedUser) => {
+      verificationEpoch.current += 1;
+      setUser(verifiedUser);
+      setStatus("authenticated");
+    },
     restoreSession: async () => { const next = await restoreSession(); setUser(next); setStatus("authenticated"); },
     status,
     isAuthenticated: status === "authenticated",
