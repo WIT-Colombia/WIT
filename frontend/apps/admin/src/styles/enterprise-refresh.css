@@ -245,7 +245,7 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
 .admin-refresh .form-grid { gap: 14px; }
 .admin-refresh label,
 .admin-refresh .field-label { color: #334155; font-size: 12px; font-weight: 800; }
-.admin-refresh input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.admin-refresh :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"])),
 .admin-refresh select,
 .admin-refresh textarea,
 .admin-refresh .form-control {
@@ -257,7 +257,7 @@ body, button, input, select, textarea { font-family: Inter, ui-sans-serif, syste
   outline: none;
   transition: border-color .18s ease, box-shadow .18s ease;
 }
-.admin-refresh input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+.admin-refresh :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"])):focus,
 .admin-refresh select:focus,
 .admin-refresh textarea:focus,
 .admin-refresh .form-control:focus { border-color: var(--admin-blue); box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
