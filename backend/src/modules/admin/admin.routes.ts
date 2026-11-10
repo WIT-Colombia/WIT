@@ -4,9 +4,18 @@ import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-or
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
 import { requireAdmin } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
+import { getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
 
 export const adminRouter = Router();
 adminRouter.get('/me', requireAdmin(), adminMeController);
+adminRouter.get('/businesses', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await listAdminBusinesses({ q: String(req.query.q ?? ''), page: Number(req.query.page) || 1, pageSize: Number(req.query.pageSize) || 20 })); }
+  catch (error) { next(error); }
+});
+adminRouter.get('/businesses/:id', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try { res.setHeader('Cache-Control', 'no-store'); const business = await getAdminBusiness(String(req.params.id)); if (!business) return res.status(404).json({ error: { code: 'BUSINESS_NOT_FOUND', message: 'No encontramos el negocio.' } }); res.json({ business }); }
+  catch (error) { next(error); }
+});
 adminRouter.get('/dashboard/stats', requireAdmin(), async (_req, res, next) => {
   try {
     res.setHeader('Cache-Control', 'no-store');

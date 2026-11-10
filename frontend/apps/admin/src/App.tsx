@@ -4,8 +4,7 @@ import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { GoogleCallbackPage } from './pages/GoogleCallbackPage';
-import { BusinessesPage } from './pages/BusinessesPage';
-import { BusinessDetailShell } from './pages/BusinessDetailShell';
+import { AdminBusinessesPage, AdminBusinessDetailPage } from './pages/AdminBusinessesPage';
 import { MockModulePage } from './pages/MockModulePage';
 import { DemoDashboardPage } from './pages/DemoDashboardPage';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
@@ -54,8 +53,8 @@ export default function App() {
         <Route path="/summary" element={<DashboardPage />} />
         <Route path="/statistics" element={<DashboardPage />} />
         <Route path="/change-password" element={<ChangePasswordPage />} />
-        <Route path="/businesses" element={<BusinessesPage />} />
-        <Route path="/businesses/:id" element={<BusinessDetailShell />} />
+        <Route path="/businesses" element={<AdminBusinessesPage />} />
+        <Route path="/businesses/:id" element={<AdminBusinessDetailPage />} />
         <Route path="/verifications" element={<VerificationsPage />} />
         <Route path="/reports" element={<ReviewReportsPage />} />
         <Route path="/reviews" element={<ReviewsPage />} />

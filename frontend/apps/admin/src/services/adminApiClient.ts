@@ -4,6 +4,10 @@ export type AdminPermission = 'BUSINESSES_READ' | 'CATALOG_READ' | 'REPORTS_REVI
 export type RealAdmin = { user: { id: string; publicId: string; displayName: string; emailNormalized: string | null; avatarUrl: string | null; locale: string }; role: 'ADMIN' | 'SUPER_ADMIN'; permissions: AdminPermission[] };
 export type AdministratorRecord = { id: string; displayName: string; emailNormalized: string | null; status: string; adminRoleAssignments: { role: string; active: boolean }[]; adminPermissionGrants: { permission: string; granted: boolean }[] };
 export async function listAdministrators() { return (await request<{ administrators: AdministratorRecord[] }>('/admin/administrators')).administrators; }
+export type AdminBusinessRecord = { id: string; publicId: string; name: string; description: string | null; email: string | null; phone: string | null; lifecycleStatus: string; publicationStatus: string; visibilityStatus: string; verificationStatus: string; deletionStatus: string; completeness: number; createdAt: string; updatedAt: string; createdBy: { displayName: string; emailNormalized: string | null }; location: { cityName: string; countryCode: string; address: string } | null; category: { translations: { name: string }[] } };
+export type AdminBusinessPage = { businesses: AdminBusinessRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
+export function listAdminBusinesses(q = '', page = 1) { return request<AdminBusinessPage>(`/admin/businesses?q=${encodeURIComponent(q)}&page=${page}`); }
+export async function getAdminBusiness(id: string) { return (await request<{ business: AdminBusinessRecord }>(`/admin/businesses/${encodeURIComponent(id)}`)).business; }
 export type AdminDashboardStats = {
   generatedAt: string;
   totals: { users: number; businesses: number; businessesVerified: number; reviewsPublished: number; businessProActive: number };
