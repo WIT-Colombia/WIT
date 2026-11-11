@@ -233,3 +233,38 @@
     font-size: 9px !important;
   }
 }
+
+/* Consistent 4/3/2 business-card layout across map results.
+   Give the map and the results their own full-width rows so four cards fit. */
+.map-page .map-content {
+  grid-template-columns: minmax(0, 1fr);
+}
+.map-page .map-canvas {
+  position: relative;
+  top: auto;
+  width: 100%;
+}
+.map-page .map-results {
+  min-width: 0;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+.map-page .map-results-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+@media (min-width: 701px) and (max-width: 1024px) {
+  .map-page .map-results-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+@media (max-width: 700px) {
+  .map-page .map-results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
