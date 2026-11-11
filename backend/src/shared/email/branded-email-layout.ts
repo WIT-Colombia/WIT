@@ -24,7 +24,7 @@ const ARTWORK: Record<BrandedEmailKind, string> = {
   security: BASE_URL + '/email/reset/ilustracion-candado.png',
 };
 const CLOCK_URL = BASE_URL + '/email/verify/icono-reloj.png';
-const LOGO_URL = BASE_URL + '/xamuko-logo.png';
+const LOGO_URL = 'https://xamuko.com/brand/xamuko-lockup.png';
 
 function escapeMarkup(text: string): string {
   return text.replace(/[&<>"']/g, character => {
