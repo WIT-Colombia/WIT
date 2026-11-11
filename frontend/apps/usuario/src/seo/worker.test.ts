@@ -50,7 +50,9 @@ describe('public business SEO and privacy', () => {
     expect(html).not.toContain('ref=private');
     expect(result.headers.has('ETag')).toBe(false);
     expect(fetchMock.mock.calls[0][0]).toBe('https://api.xamuko.com/api/v1/public/businesses/public-test');
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ credentials: 'omit', headers: { Accept: 'application/json' } });
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ redirect: 'manual', headers: { Accept: 'application/json' } });
+    expect(fetchMock.mock.calls[0][1]?.headers).not.toHaveProperty('Cookie');
+    expect(fetchMock.mock.calls[0][1]?.headers).not.toHaveProperty('Authorization');
   });
   it('marks previews noindex in the HTTP response', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => Response.json({ business: fixture })));

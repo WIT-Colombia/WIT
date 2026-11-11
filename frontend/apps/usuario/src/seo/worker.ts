@@ -7,7 +7,9 @@ const ID = /^[a-zA-Z0-9-]{1,100}$/;
 const PAGE_SIZE = 20;
 async function publicJson<T>(path: string): Promise<T> {
   // No visitor cookies, Authorization, session restoration or private endpoints.
-  const response = await fetch(PUBLIC_API + path, { credentials: 'omit', redirect: 'error', signal: AbortSignal.timeout(6000), headers: { Accept: 'application/json' } });
+  // Workers rejects redirect:'error'; manual exposes 3xx for rejection below.
+  // A fresh URL request and explicit header allowlist never forward cookies.
+  const response = await fetch(PUBLIC_API + path, { redirect: 'manual', signal: AbortSignal.timeout(6000), headers: { Accept: 'application/json' } });
   if (!response.ok) throw Object.assign(new Error('Public catalog unavailable'), { status: response.status });
   return response.json() as Promise<T>;
 }
