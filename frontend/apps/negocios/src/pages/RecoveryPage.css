@@ -238,3 +238,13 @@
     padding-top: 20px;
   }
 }
+
+/* Match Usuarios recovery structure, with Business blue as the primary accent. */
+.business-recovery-page .business-recovery-layout{align-items:stretch;justify-content:flex-start;gap:0}
+.business-recovery-page .business-recovery-top-back{display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;width:max-content;min-height:36px;margin:0 0 22px;padding:0 13px;border:1px solid #bfdbfe;border-radius:999px;background:#fff;color:#2563eb;font-size:11px;font-weight:700;line-height:1;text-decoration:none;box-shadow:0 5px 14px rgba(37,99,235,.08);transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.business-recovery-page .business-recovery-top-back:hover,.business-recovery-page .business-recovery-top-back:focus-visible{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8;text-decoration:none;transform:translateX(-1px)}
+.business-recovery-page .business-recovery-top-back:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+.business-recovery-page .business-recovery-intro{margin-bottom:24px}
+.business-recovery-page .business-recovery-card{align-self:center}
+.business-recovery-page .business-recovery-card .auth-form input[readonly]{color:#475569;cursor:default}
+.business-recovery-page.business-recovery-workspace .business-recovery-top-back{margin-bottom:22px}
