@@ -6,36 +6,19 @@ import { BusinessApiError } from "../services/businessApiClient";
 import { getRememberedEmail, resolveBusinessNext, startGoogleLogin } from "../services/businessAuthService";
 import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
 import { BusinessHeader } from "../components/layout/BusinessHeader";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.avif";
+import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
+import businessIllustration from "../assets/auth-business-discovery.svg";
+import "./AuthPageVisual.css";
 
 function GoogleIcon() { return <svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.5 9.5 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.9 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8V33A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4v-5.1H5.8a20 20 0 0 0 0 17.6l6.8-5.1Z"/><path fill="#EA4335" d="M24 12c3 0 5.6 1 7.7 3l5.8-5.8A19.4 19.4 0 0 0 24 4 20 20 0 0 0 5.8 15.2l6.8 5.1C14.2 15.6 18.7 12 24 12Z"/></svg>; }
 const providers = [{ name: "Google", Icon: GoogleIcon }];
 
-function AuthIllustration({ register }: { register: boolean }) {
-  return <svg className={`auth-illustration-art${register ? " is-register" : ""}`} viewBox="0 0 720 520" role="img" aria-label="Ilustración de un negocio local en una ciudad">
-    <defs>
-      <linearGradient id="auth-sky" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#31218a"/><stop offset="1" stopColor="#1877dd"/></linearGradient>
-      <linearGradient id="auth-store" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fff"/><stop offset="1" stopColor="#dbeaff"/></linearGradient>
-      <linearGradient id="auth-pin" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#9b4dff"/><stop offset="1" stopColor="#12c9ec"/></linearGradient>
-    </defs>
-    <path fill="url(#auth-sky)" d="M0 0h720v520H0z"/>
-    <circle cx="575" cy="118" r="78" fill="#fa82dc" opacity=".2"/>
-    <path fill="#4b52bc" d="m0 330 122-114 95 88 142-152 110 124 107-96 144 139v201H0z"/>
-    <path fill="#292577" d="m0 385 132-98 126 101 132-125 137 101 102-78 91 72v162H0z"/>
-    <g fill="#243a91" opacity=".9"><path d="M26 321h44v151H26zM83 290h52v182H83zM146 340h43v132h-43zM555 296h58v176h-58zM624 330h62v142h-62z"/></g>
-    <g fill="#7be6ff" opacity=".8"><path d="M39 343h9v13h-9zm20 0h9v13h-9zm36-28h10v14H95zm21 0h10v14h-10zm-21 31h10v14H95zm21 0h10v14h-10zm450-21h10v14h-10zm21 0h10v14h-10zm-21 27h10v14h-10zm21 0h10v14h-10z"/></g>
-    <path fill="url(#auth-store)" d="M155 322h372v174H155z"/>
-    <path fill="#fff" d="M133 316h416l-28-60H161z"/>
-    <path fill="#7b3ffb" d="m133 316 10-60h44l-7 60zm88 0 2-60h44v60zm88 0v-60h44v60zm88 0-2-60h44l8 60zm88 0-10-60h44l18 60z"/>
-    <path fill="#273c9a" d="M190 358h298v17H190zM202 388h111v108H202zM330 388h133v108H330z"/>
-    <path fill="#86ddff" d="M211 399h92v89h-92zm130 0h111v89H341z"/>
-    <path fill="#fff" d="M343 422h107v8H343zm0 20h107v8H343z" opacity=".75"/>
-    <path fill="#ffca7a" d="M212 431h91v57h-91z"/>
-    <path fill="#f4a758" d="M212 451h91v37h-91z"/>
-    <path fill="url(#auth-pin)" d="M574 106c-43 0-77 34-77 77 0 58 77 140 77 140s77-82 77-140c0-43-34-77-77-77Z"/>
-    <circle cx="574" cy="183" r="27" fill="#fff"/>
-    {register && <g transform="translate(495 335) rotate(-8)"><rect width="115" height="130" rx="15" fill="#2439a0"/><path d="m20 95 24-28 20 13 29-48" fill="none" stroke="#23d5ef" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/><path d="m82 31 13 1-2 13" fill="none" stroke="#23d5ef" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/></g>}
-    <path fill="#10195b" d="M0 480q180-46 360 0t360 0v40H0z"/>
+function BenefitIcon({ kind }: { kind: "shop" | "chart" | "content" | "pin" }) {
+  return <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    {kind === "shop" && <><path d="M3 10h18l-2-7H5l-2 7Zm2 0v11h14V10M9 21v-7h6v7M8 3l-1 7m9-7 1 7"/><path d="M3 10c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0"/></>}
+    {kind === "chart" && <><path d="M3 21h18M5 21v-7h3v7m3 0V9h3v12m3 0V3h3v18"/></>}
+    {kind === "content" && <><path d="m3 9 16-5v14L3 13V9Zm4 5 2 7h4l-3-6M19 8l3-1m-3 7 3 1"/></>}
+    {kind === "pin" && <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>}
   </svg>;
 }
 
@@ -82,21 +65,26 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     if (register && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; }
     startGoogleLogin({ returnTo: resolveBusinessNext(new URLSearchParams(window.location.search).get("next")), consent: register ? accepted : true, rememberMe });
   };
-  return <main className="auth-page">
-    <BusinessHeader />
-    <div className="auth-layout">
-      <section className={`auth-story${register ? " is-register" : " is-login"}`}>
-        <div className="auth-panel-brand"><img src={xamukoLogo} alt="XAMUKO" /><strong>Business</strong></div>
-        <h1>{register ? <>Tu negocio en el mapa de <span>más personas</span></> : <>Haz crecer tu negocio con <span>XAMUKO</span></>}</h1>
-        <p>{register ? "Regístrate y empieza a conectar con clientes reales en tu ciudad." : <>Conecta con <span>más personas</span> de tu ciudad y aumenta tu visibilidad.</>}</p>
-        <ul className="auth-story-benefits">{(register ? ["Aumenta tu visibilidad en tu zona.", "Publica tus productos y servicios.", "Haz crecer tu comunidad."] : ["Llega a más clientes cerca de tu negocio.", "Muestra tus productos y servicios.", "Gestiona tu negocio fácilmente."]).map((item, index) => <li key={item}><span aria-hidden="true">{["✦", "★", "⚙"][index]}</span>{item}</li>)}</ul>
-        <AuthIllustration register={register} />
-        <div className="auth-story-tagline">Lo que necesitas,<br />está más cerca</div>
+  return <main className="auth-page business-auth-page">
+    <div className="business-auth-utility"><BusinessHeader /></div>
+    <div className={`auth-layout${register ? " is-register" : " is-login"}`}>
+      <section className="auth-story" aria-label="Descubre XAMUKO Business">
+        <div className="auth-panel-brand"><img src={xamukoLogo} alt="XAMUKO" width="2170" height="725" /><p>Lo que necesitas, está más cerca.</p></div>
+        <div className="business-auth-story-copy">
+          <h1>Haz que más personas<br />encuentren <span>tu negocio</span></h1>
+          <p>Gestiona tu presencia digital, aumenta tu visibilidad y conéctate con clientes cercanos en tu ciudad.</p>
+          <ul className="auth-story-benefits">
+            <li><span><BenefitIcon kind="shop" /></span><div><b>Crea y gestiona tu perfil comercial</b><small>Publica la información de tu negocio, productos y servicios.</small></div></li>
+            <li><span><BenefitIcon kind="chart" /></span><div><b>Consulta estadísticas de tu negocio</b><small>Conoce el rendimiento y la interacción de tus clientes.</small></div></li>
+            <li><span><BenefitIcon kind="content" /></span><div><b>Gestiona contenido y opiniones</b><small>Comparte novedades, promociones y responde a tus clientes mediante las herramientas disponibles.</small></div></li>
+            <li><span><BenefitIcon kind="pin" /></span><div><b>Conecta con clientes cercanos</b><small>Facilita que las personas encuentren tu negocio y se comuniquen directamente contigo.</small></div></li>
+          </ul>
+        </div>
+        <img className="business-auth-illustration" src={businessIllustration} width="800" height="1000" alt="" aria-hidden="true" decoding="async" />
       </section>
-      <section className="auth-form-card">
+      <section className="auth-form-card" aria-label={register ? "Crear cuenta" : "Iniciar sesión"}>
+        <div className="business-auth-mode-tabs" role="group" aria-label="Acceso a tu cuenta"><span className="business-auth-current-mode">{register ? "Registrarme" : "Iniciar sesión"}</span><button className="auth-mode-switch" type="button" aria-label={register ? "¿Ya tienes una cuenta? Iniciar sesión" : "¿No tienes una cuenta? Crear cuenta"} onClick={() => navigate(register ? "/login" : "/registro")}>{register ? "Iniciar sesión" : "Registrarme"}</button></div>
         <div className="auth-form-heading"><h2>{register ? "Crea tu cuenta en XAMUKO Business" : "Inicia sesión en XAMUKO Business"}</h2><p>{register ? "Crea la cuenta del propietario y añade tus negocios después." : "Ingresa para administrar tu negocio."}</p></div>
-        <div className="auth-social-options">{providers.map(({ name: provider, Icon }) => <button key={provider} type="button" className="auth-provider-button" onClick={startGoogle}><Icon /><span>Continuar con {provider}</span></button>)}</div>
-        <div className="auth-divider"><span>o con tu correo</span></div>
         <form onSubmit={submit} className="auth-form">
           {register && <label>Nombre completo<input value={name} onChange={event => setName(event.target.value)} required maxLength={60} autoComplete="name" placeholder="Tu nombre completo" /></label>}
           <label>Correo electrónico<input type="email" value={email} onChange={event => setEmail(event.target.value)} required autoComplete="email" placeholder="tu@correo.com" /></label>
@@ -110,7 +98,8 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
         </form>
         {!register && <Link className="auth-forgot" to="/recuperar?mode=email">¿Olvidaste tu contraseña?</Link>}
         {requiresVerification && <Link className="auth-forgot" to="/verify-email?pending=1" onClick={() => rememberPendingVerificationEmail(email)}>Reenviar correo de verificación</Link>}
-        <button className="auth-mode-switch" type="button" onClick={() => navigate(register ? "/login" : "/registro")}>{register ? "¿Ya tienes una cuenta? Iniciar sesión" : "¿No tienes una cuenta? Crear cuenta"}</button>
+        <div className="auth-divider"><span>o continúa con</span></div>
+        <div className="auth-social-options">{providers.map(({ name: provider, Icon }) => <button key={provider} type="button" className="auth-provider-button" onClick={startGoogle}><Icon /><span>Continuar con {provider}</span></button>)}</div>
         <Link className="auth-preview-button" to="/preview">Entrar en vista previa demo</Link>
       </section>
     </div>
