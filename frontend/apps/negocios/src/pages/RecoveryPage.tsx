@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { BusinessHeader } from "../components/layout/BusinessHeader";
 import { PageHeader } from "../components/common/PageHeader";
 import { useBusinessStore } from "../services/businessStore";
 import { changePassword, clearAccessToken, confirmPasswordReset, requestPasswordReset } from "../services/businessAuthService";
@@ -98,5 +97,5 @@ export function RecoveryPage() {
   const pageClass = `business-recovery-page ${emailMode ? "business-recovery-email-page" : "business-recovery-password-page"}`;
   return signedIn
     ? <div className={`${pageClass} business-recovery-workspace`}>{recoveryBody}</div>
-    : <main className={`auth-page ${pageClass}`}><BusinessHeader />{recoveryBody}</main>;
+    : <main className={`auth-page ${pageClass}`}>{recoveryBody}</main>;
 }
