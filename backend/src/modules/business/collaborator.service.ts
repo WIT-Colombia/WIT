@@ -16,6 +16,22 @@ function validatedPermissions(values: string[]): Permission[] {
   if (unique.some(value => !(allowedPermissions as readonly string[]).includes(value))) throw new AppError(400, 'INVALID_PERMISSION', 'Uno o más permisos no son válidos.');
   return unique as Permission[];
 }
+function publicAvatarUrl(value: string | null | undefined) {
+  if (!value || value.startsWith('private-avatar:')) return null;
+  if (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value)) return value;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? value : null;
+  } catch {
+    return null;
+  }
+}
+function collaboratorAvatarUrl(businessId: string, userId: string, value: string | null | undefined) {
+  if (value?.startsWith('private-avatar:')) {
+    return `/api/v1/businesses/${encodeURIComponent(businessId)}/collaborators/${encodeURIComponent(userId)}/avatar`;
+  }
+  return publicAvatarUrl(value);
+}
 async function owner(userId: string, businessId: string) {
   const m = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId } } });
   if (!m || m.role !== 'OWNER' || m.status !== 'ACTIVE') throw new AppError(403, 'OWNER_REQUIRED', 'Solo el propietario puede administrar colaboradores.');
@@ -28,7 +44,7 @@ export async function listCollaborators(actorId: string, businessId: string) {
   return rows.map(row => {
     const status = row.status === 'INVITED' && row.expiresAt && row.expiresAt <= now ? 'EXPIRED' as const : row.status;
     const canShowAvatar = status === 'ACTIVE' || status === 'SUSPENDED';
-    const avatarUrl = canShowAvatar && row.user.avatarUrl?.startsWith('private-avatar:') ? `/api/v1/businesses/${businessId}/collaborators/${row.user.id}/avatar` : canShowAvatar ? row.user.avatarUrl : null;
+    const avatarUrl = canShowAvatar ? collaboratorAvatarUrl(businessId, row.user.id, row.user.avatarUrl) : null;
     return { ...row, status, user: { ...row.user, avatarUrl } };
   });
 }
@@ -36,9 +52,13 @@ export async function listCollaborators(actorId: string, businessId: string) {
 export async function readCollaboratorAvatar(actorId: string, businessId: string, targetUserId: string) {
   await owner(actorId, businessId);
   const membership = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId: targetUserId } }, select: { status: true, user: { select: { avatarUrl: true } } } });
-  const storageKey = membership?.status === 'ACTIVE' && membership.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
+  const storageKey = membership && ['ACTIVE', 'SUSPENDED'].includes(membership.status) && membership.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
   if (!storageKey || !/^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(storageKey)) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
-  return { content: await readFile(photoStoragePath(storageKey)), mimeType: storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
+  try {
+    return { content: await readFile(photoStoragePath(storageKey)), mimeType: storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
+  } catch {
+    throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
+  }
 }
 async function findCollaboratorRecipient(actorId: string, businessId: string, identifier: string) {
   await owner(actorId, businessId);
@@ -181,5 +201,14 @@ export async function listNotifications(userId: string) {
       ? { membership: { ...row.membership, status: 'EXPIRED' as const } }
       : {}),
   }));
+}
+/**
+ * Remove only the authenticated recipient's inbox entry. The related
+ * membership, invitation and ownership-transfer workflows are untouched.
+ */
+export async function deleteNotification(userId: string, id: string) {
+  const deleted = await prisma.businessNotification.deleteMany({ where: { id, userId } });
+  if (!deleted.count) throw new AppError(404, 'NOTIFICATION_NOT_FOUND', 'Notificación no encontrada.');
+  return { deleted: true };
 }
 export async function markNotificationRead(userId: string,id:string) { const notification=await prisma.businessNotification.findFirst({where:{id,userId},select:{id:true,readAt:true}});if(!notification)throw new AppError(404,'NOTIFICATION_NOT_FOUND','Notificación no encontrada.');if(!notification.readAt)await prisma.businessNotification.update({where:{id},data:{readAt:new Date()}});return {ok:true}; }
