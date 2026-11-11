@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="820" viewBox="0 0 1000 820" fill="none">
+  <title>Ilustración decorativa de un portátil con panel administrativo</title>
+  <desc>Recurso vectorial original. Panel con gráficos, cuentas y estados ilustrativos, sin datos reales ni símbolos externos sobre el computador.</desc>
+  <defs>
+    <linearGradient id="frame" x1="155" y1="150" x2="840" y2="626" gradientUnits="userSpaceOnUse"><stop stop-color="#a7c8f1"/><stop offset=".08" stop-color="#314669"/><stop offset=".4" stop-color="#0c1529"/><stop offset=".82" stop-color="#1e3459"/><stop offset="1" stop-color="#93b9f0"/></linearGradient>
+    <linearGradient id="screen" x1="170" y1="170" x2="810" y2="600" gradientUnits="userSpaceOnUse"><stop stop-color="#0c2146"/><stop offset="1" stop-color="#07152c"/></linearGradient>
+    <linearGradient id="metal" x1="500" y1="593" x2="500" y2="718" gradientUnits="userSpaceOnUse"><stop stop-color="#526782"/><stop offset=".24" stop-color="#bdcee4"/><stop offset=".7" stop-color="#e2eaf8"/><stop offset="1" stop-color="#6d87b7"/></linearGradient>
+    <linearGradient id="lip" x1="63" y1="713" x2="943" y2="713" gradientUnits="userSpaceOnUse"><stop stop-color="#7a98c8"/><stop offset=".12" stop-color="#f1f6ff"/><stop offset=".46" stop-color="#a1b4d2"/><stop offset=".65" stop-color="#e8f0ff"/><stop offset="1" stop-color="#6885b7"/></linearGradient>
+    <linearGradient id="card" x1="500" y1="220" x2="500" y2="570" gradientUnits="userSpaceOnUse"><stop stop-color="#14356b"/><stop offset="1" stop-color="#0e244c"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset=".55" stop-color="#2563eb"/><stop offset="1" stop-color="#7b3ffb"/></linearGradient>
+    <linearGradient id="bars" x1="500" y1="270" x2="500" y2="397" gradientUnits="userSpaceOnUse"><stop stop-color="#b179ff"/><stop offset=".5" stop-color="#7b3ffb"/><stop offset="1" stop-color="#2563eb"/></linearGradient>
+    <linearGradient id="area" x1="480" y1="285" x2="480" y2="396" gradientUnits="userSpaceOnUse"><stop stop-color="#7b3ffb" stop-opacity=".45"/><stop offset="1" stop-color="#7b3ffb" stop-opacity="0"/></linearGradient>
+    <linearGradient id="glass" x1="190" y1="170" x2="650" y2="615" gradientUnits="userSpaceOnUse"><stop stop-color="#d6eeff" stop-opacity=".08"/><stop offset=".5" stop-color="#d6eeff" stop-opacity="0"/></linearGradient>
+    <radialGradient id="halo"><stop stop-color="#2563eb" stop-opacity=".4"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ground"><stop stop-color="#2563eb" stop-opacity=".55"/><stop offset=".48" stop-color="#7b3ffb" stop-opacity=".2"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></radialGradient>
+    <filter id="shadow" x="-25%" y="-30%" width="150%" height="170%"><feGaussianBlur stdDeviation="13"/></filter>
+    <filter id="soft" x="-50%" y="-150%" width="200%" height="400%"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>
+    <pattern id="keys" width="39" height="18" patternUnits="userSpaceOnUse"><rect x="2" y="2" width="33" height="13" rx="2.5" fill="#101c32" stroke="#6981a9" stroke-width=".8"/><path d="M7 6h5" stroke="#d7e5ff" stroke-opacity=".5" stroke-width="1.2"/></pattern>
+  </defs>
+  <ellipse cx="514" cy="457" rx="480" ry="315" fill="url(#halo)"/>
+  <ellipse cx="500" cy="749" rx="490" ry="67" fill="url(#ground)"/>
+  <ellipse cx="501" cy="723" rx="422" ry="19" fill="#020617" opacity=".85" filter="url(#shadow)"/>
+  <ellipse cx="500" cy="740" rx="309" ry="7" fill="#5b9aff" opacity=".45" filter="url(#soft)"/>
+  <!-- Straight display, symmetrical chassis and a shallow, natural keyboard perspective. -->
+  <rect x="145" y="155" width="710" height="464" rx="25" fill="url(#frame)" stroke="#9dc9ff" stroke-opacity=".75" stroke-width="2"/>
+  <path d="M172 156h656c14 0 25 11 25 25v411" stroke="#4ccfff" stroke-opacity=".65" stroke-width="3" filter="url(#glow)"/>
+  <rect x="151" y="161" width="698" height="450" rx="21" fill="#080f1d"/>
+  <circle cx="500" cy="169" r="2.8" fill="#0e244c" stroke="#7093c1" stroke-width="1"/>
+  <circle cx="500" cy="169" r=".8" fill="#38bdf8"/>
+  <rect x="166" y="184" width="668" height="405" rx="9" fill="url(#screen)"/>
+  <!-- Dashboard graphics are decorative, using no real users, credentials or production metrics. -->
+  <path d="M175 184h650a9 9 0 0 1 9 9v36H166v-36a9 9 0 0 1 9-9Z" fill="#102854"/>
+  <circle cx="186" cy="205" r="3" fill="#627ca8"/><circle cx="197" cy="205" r="3" fill="#627ca8"/><circle cx="208" cy="205" r="3" fill="#627ca8"/>
+  <text x="244" y="211" fill="#e2e8f0" font-family="system-ui,sans-serif" font-size="15" font-weight="600">Panel de control</text>
+  <rect x="700" y="198" width="80" height="16" rx="8" fill="#1c3f75"/>
+  <circle cx="795" cy="206" r="10" fill="#334e81"/><path d="M791 206h8m-4-4v8" stroke="#9ab9ed" stroke-width="1.5"/>
+  <path d="M166 229h78v360h-69a9 9 0 0 1-9-9V229Z" fill="#0b1d3d"/>
+  <rect x="180" y="246" width="49" height="42" rx="8" fill="url(#blue)"/>
+  <g stroke="#d8e8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m194 267 10-8 11 8m-18-2v12h15v-12m-10 12v-7h6v7"/>
+    <circle cx="204" cy="316" r="5"/><path d="M195 335v-4a9 9 0 0 1 18 0v4m3-22a4 4 0 0 1 0 8m1 5a7 7 0 0 1 6 7"/>
+    <path d="M195 382v-10m9 10v-22m9 22v-16"/>
+    <circle cx="204" cy="421" r="6"/><path d="m201 409 6 0 2 4 4 1 2 6-2 5-4 1-2 5h-6l-2-5-4-1-2-5 2-6 4-1 2-4Z"/>
+    <path d="m204 459 13 5v9c0 8-13 13-13 13s-13-5-13-13v-9l13-5Z"/><path d="m198 472 4 4 8-9"/>
+    <path d="M196 548h17m-8-6 8 6-8 6M196 536h-6v24h6" opacity=".65"/>
+  </g>
+  <!-- Activity overview -->
+  <rect x="261" y="246" width="339" height="174" rx="12" fill="url(#card)" stroke="#355590" stroke-opacity=".6"/>
+  <text x="278" y="270" fill="#dce9ff" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Actividad de la plataforma</text>
+  <rect x="278" y="281" width="67" height="5" rx="2.5" fill="#466395"/>
+  <g stroke="#6c8fc0" stroke-opacity=".17"><path d="M284 316h297M284 343h297M284 370h297M284 397h297"/></g>
+  <path d="m291 383 52-18 45 5 50-37 46 7 45-35 45-15v107H291Z" fill="url(#area)"/>
+  <g fill="url(#bars)"><rect x="292" y="376" width="24" height="21" rx="2"/><rect x="334" y="365" width="24" height="32" rx="2"/><rect x="376" y="354" width="24" height="43" rx="2"/><rect x="418" y="342" width="24" height="55" rx="2"/><rect x="460" y="330" width="24" height="67" rx="2"/><rect x="502" y="315" width="24" height="82" rx="2"/><rect x="544" y="299" width="24" height="98" rx="2"/></g>
+  <path d="m291 360 52-21 45 9 50-33 46 5 45-34 45-12" stroke="#b794ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#cdb3ff"><circle cx="291" cy="360" r="3"/><circle cx="343" cy="339" r="3"/><circle cx="388" cy="348" r="3"/><circle cx="438" cy="315" r="3"/><circle cx="484" cy="320" r="3"/><circle cx="529" cy="286" r="3"/><circle cx="574" cy="274" r="3"/></g>
+  <!-- Distribution -->
+  <rect x="614" y="246" width="201" height="174" rx="12" fill="url(#card)" stroke="#355590" stroke-opacity=".6"/>
+  <text x="631" y="270" fill="#dce9ff" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Ecosistema</text>
+  <circle cx="715" cy="339" r="44" stroke="#203e73" stroke-width="20"/>
+  <circle cx="715" cy="339" r="44" stroke="#38bdf8" stroke-width="20" stroke-dasharray="94 277" transform="rotate(-90 715 339)"/>
+  <circle cx="715" cy="339" r="44" stroke="#7b3ffb" stroke-width="20" stroke-dasharray="100 277" stroke-dashoffset="-94" transform="rotate(-90 715 339)"/>
+  <circle cx="715" cy="339" r="44" stroke="#2563eb" stroke-width="20" stroke-dasharray="83 277" stroke-dashoffset="-194" transform="rotate(-90 715 339)"/>
+  <circle cx="715" cy="339" r="24" fill="#0e244c"/>
+  <g fill="#8facd6"><rect x="663" y="401" width="29" height="3" rx="1.5"/><rect x="706" y="401" width="29" height="3" rx="1.5"/><rect x="749" y="401" width="29" height="3" rx="1.5"/></g>
+  <!-- Accounts -->
+  <rect x="261" y="434" width="339" height="137" rx="12" fill="url(#card)" stroke="#355590" stroke-opacity=".6"/>
+  <text x="278" y="457" fill="#dce9ff" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Usuarios y negocios</text>
+  <g fill="#325d9a"><circle cx="289" cy="480" r="9"/><circle cx="289" cy="514" r="9"/><circle cx="289" cy="548" r="9"/></g>
+  <g stroke="#aed7ff" stroke-width="1.4" stroke-linecap="round"><path d="M284 484c0-6 10-6 10 0m-8-6a3 3 0 1 0 6 0 3 3 0 0 0-6 0M284 518c0-6 10-6 10 0m-8-6a3 3 0 1 0 6 0 3 3 0 0 0-6 0M284 552c0-6 10-6 10 0m-8-6a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/></g>
+  <g fill="#a3bde3"><rect x="310" y="475" width="101" height="4" rx="2"/><rect x="310" y="509" width="114" height="4" rx="2"/><rect x="310" y="543" width="90" height="4" rx="2"/></g>
+  <g fill="#486b9e"><rect x="310" y="484" width="68" height="3" rx="1.5"/><rect x="310" y="518" width="82" height="3" rx="1.5"/><rect x="310" y="552" width="61" height="3" rx="1.5"/></g>
+  <g fill="#22c55e"><rect x="556" y="472" width="16" height="16" rx="4"/><rect x="556" y="506" width="16" height="16" rx="4"/><rect x="556" y="540" width="16" height="16" rx="4"/></g>
+  <path d="m560 479 3 3 5-5m-8 36 3 3 5-5m-8 36 3 3 5-5" stroke="#ecfdf5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Security is contained within the screen. No external shield or floating symbol. -->
+  <rect x="614" y="434" width="201" height="137" rx="12" fill="url(#card)" stroke="#355590" stroke-opacity=".6"/>
+  <text x="631" y="457" fill="#dce9ff" font-family="system-ui,sans-serif" font-size="11" font-weight="600">Control de acceso</text>
+  <rect x="693" y="492" width="43" height="34" rx="7" fill="url(#blue)" stroke="#70cfff" stroke-width="1.5"/>
+  <path d="M703 492v-8a12 12 0 0 1 24 0v8" stroke="#72c7ff" stroke-width="4"/>
+  <circle cx="715" cy="505" r="3" fill="#e0f2fe"/><path d="M715 508v6" stroke="#e0f2fe" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="681" cy="549" r="3" fill="#22c55e"/><rect x="690" y="546" width="61" height="5" rx="2.5" fill="#486b9e"/>
+  <rect x="166" y="184" width="668" height="405" rx="9" fill="url(#glass)"/>
+  <path d="M160 606h680" stroke="#2a4166" stroke-width="2"/>
+  <!-- Keyboard and palm rest contain no decorative objects. -->
+  <path d="M151 615h698l86 81c7 7 6 13-2 16H67c-8-3-9-9-2-16l86-81Z" fill="url(#metal)" stroke="#afc7e8" stroke-width="1.5"/>
+  <path d="M193 625h614l52 44H141l52-44Z" fill="#263b59" stroke="#6380a9"/>
+  <path d="M201 629h598l44 35H157l44-35Z" fill="url(#keys)"/>
+  <path d="M342 668h316l10 7H332l10-7Z" fill="#101c32" stroke="#7690b4" stroke-width=".7"/>
+  <path d="M383 681h234l21 24H362l21-24Z" fill="#8da5c8" fill-opacity=".45" stroke="#6883aa" stroke-width="1"/>
+  <path d="M67 712h866v8c0 6-9 10-22 10H89c-13 0-22-4-22-10v-8Z" fill="url(#lip)"/>
+  <path d="M437 712h126l-6 5h-114l-6-5Z" fill="#6c86ad"/>
+  <path d="M94 725h812" stroke="#e1edff" stroke-width="1.3" stroke-opacity=".6"/>
+  <path d="M101 734h798" stroke="#2563eb" stroke-width="2" opacity=".6" filter="url(#glow)"/>
+</svg>

@@ -32,6 +32,8 @@ describe('XAMUKO Admin: acceso con cuenta existente', () => {
     expect(screen.queryByRole('button', { name: /continuar con google/i })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Código de activación inicial')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /passkey/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /registr|crear cuenta/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /registr|crear cuenta/i })).not.toBeInTheDocument();
   });
 
   it('entra únicamente cuando el backend acepta la cuenta administrativa', async () => {
@@ -51,5 +53,33 @@ describe('XAMUKO Admin: acceso con cuenta existente', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('La cuenta no tiene acceso administrativo.');
     expect(screen.queryByText('Panel administrativo autorizado')).not.toBeInTheDocument();
+  });
+
+  it('conserva recordar sesión, visibilidad y bloqueo durante el acceso', async () => {
+    let finishLogin!: () => void;
+    auth.authenticateWithPassword.mockImplementationOnce(() => new Promise<void>(resolve => { finishLogin = resolve; }));
+    showLogin();
+    fireEvent.change(screen.getByLabelText('Correo electrónico'), { target: { value: 'admin@example.test' } });
+    const passwordInput = screen.getByLabelText('Contraseña');
+    fireEvent.change(passwordInput, { target: { value: 'una-clave-de-prueba' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar contraseña' }));
+    expect(passwordInput).toHaveAttribute('type', 'text');
+    fireEvent.click(screen.getByRole('button', { name: 'Ocultar contraseña' }));
+    expect(passwordInput).toHaveAttribute('type', 'password');
+    fireEvent.click(screen.getByLabelText('Mantener sesión iniciada'));
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
+    expect(auth.authenticateWithPassword).toHaveBeenCalledWith('admin@example.test', 'una-clave-de-prueba', true);
+    expect(screen.getByRole('button', { name: 'Iniciando sesión…' })).toBeDisabled();
+    expect(screen.getByLabelText('Correo electrónico')).toBeDisabled();
+    expect(passwordInput).toBeDisabled();
+    finishLogin();
+    expect(await screen.findByText('Panel administrativo autorizado')).toBeInTheDocument();
+  });
+
+  it('conserva la redirección de una sesión administrativa existente', async () => {
+    auth.getSession.mockReturnValue({ id: 'super-admin' });
+    showLogin();
+    expect(await screen.findByText('Panel administrativo autorizado')).toBeInTheDocument();
+    expect(auth.authenticateWithPassword).not.toHaveBeenCalled();
   });
 });
