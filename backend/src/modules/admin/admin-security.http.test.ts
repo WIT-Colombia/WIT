@@ -163,13 +163,17 @@ test('directorios Admin exigen sesion y exponen solo consultas paginadas autoriz
       } else if (path.includes('/users')) {
         assert.ok(Array.isArray(payload.users));
         assert.equal(typeof payload.pagination.total, 'number');
-        assert.ok(payload.users.some((u: any) => u.id === fixture.userId));
+
         assert.ok(payload.users.every((u: any) => !('passwordHash' in u) && !('authIdentities' in u)));
       } else {
         assert.ok(Array.isArray(payload.offers));
         assert.equal(typeof payload.pagination.total, 'number');
       }
     }
+    const filteredUsers = await request(`/api/v1/admin/users?q=${encodeURIComponent(fixture.email)}&page=1`, { headers });
+    assert.equal(filteredUsers.status, 200);
+    const filteredPayload = await filteredUsers.json() as any;
+    assert.ok(filteredPayload.users.some((u: any) => u.id === fixture.userId));
     const nonexistentBusiness = await request(`/api/v1/admin/businesses/${fixture.userId}`, { headers });
     assert.equal(nonexistentBusiness.status, 404);
   } finally { await fixture.cleanup(); }
