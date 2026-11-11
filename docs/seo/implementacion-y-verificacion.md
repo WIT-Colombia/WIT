@@ -75,7 +75,7 @@ Pruebas automatizadas: formularios de Usuarios/Business, flujo de login/registro
 
 Pendiente de una preview autorizada y de la integración posterior:
 
-1. Confirmar que Pages sirve el artefacto avanzado con binding ASSETS y `_routes.json`, no subir únicamente los assets estáticos. Comprobar URLs limpias, Worker, subrequests al API y cabeceras reales. No se ha publicado este cambio.
+1. El artefacto avanzado de Pages y ASSETS ya se comprobaron en la preview indicada abajo. Tras una integración/publicación autorizada, repetir URLs limpias, Worker, sitemaps en host canónico y cabeceras de producción; no publicar únicamente assets estáticos. No se ha publicado en producción.
 2. Reglas de cuenta Cloudflare, DNS, redirección `www`, caché, robots externos y posibles cabeceras globales X-Robots-Tag no se pudieron inspeccionar por falta de acceso confirmado a la cuenta. El comportamiento HTTP actual sí fue auditado. No se modificó infraestructura.
 3. Medir Lighthouse/Rich Results Test y Core Web Vitals sobre la preview/URL publicada. No se han ejecutado los validadores externos de Google ni se afirma indexación.
 4. SSR/hidratación completa de fichas dinámicas: fase posterior compatible con Vite + React y un renderer público común. Requiere revisar providers que hoy dependen del navegador y obtener todos los datos públicos en servidor; no se sustituyó contenido por HTML oculto ni se migró de framework.
@@ -96,3 +96,15 @@ No hay Search Console conectado ni evidencia de páginas nuevas indexadas. No se
 ## Entrega
 
 Rama `seo/public-ecosystem`, base `integration/preserve-all-20261029`. Lista completa en [archivos-modificados.md](archivos-modificados.md). No fusionar ni publicar hasta revisar el PR y verificar una preview. Compilaciones completas de Landing, Usuarios y Business exitosas; 103 pruebas automatizadas exitosas en total (75 Usuarios, 11 formulario Business, 6 servicios Business, 6 Landing y 5 sobre los artefactos construidos). Las pruebas de login/registro utilizan mocks; no se han creado cuentas, enviado correos o iniciado sesiones reales.
+
+## Preview y CI verificadas
+
+Código funcional verificado: `cb57b2d`, PR [#302](https://github.com/WIT-Colombia/WIT/pull/302), sin fusionar.
+
+- [Landing](https://557fc069.xamuko-landing.pages.dev/): HTTP 200; contenido React prerenderizado presente en el HTML inicial y título SEO correcto.
+- [Usuarios](https://495dcf0a.xamuko-usuario.pages.dev/register): HTTP 200 y noindex. Una ficha real consultada desde el API anónimo a través del Worker devolvió HTTP 200, canonical oficial y LocalBusiness en el HTML inicial. El host de preview lleva noindex; `/sitemap.xml` devuelve 404 allí deliberadamente para no exponer índices de previews.
+- [Business](https://b186ac63.xamuko-business.pages.dev/registro): HTTP 200, título específico y noindex.
+- El Worker utiliza `redirect: manual`: `redirect: error` no está implementado por Cloudflare Workers. Se rechazan los 3xx en lugar de seguirlos, con encabezados públicos explícitos y sin copiar cookies/Authorization del visitante.
+- La consulta posterior a `https://user.xamuko.com/register` seguía devolviendo el documento anterior (sin estos nuevos metadatos): no se ha publicado en producción.
+- GitHub **Frontend validation: success**, y construcciones Pages de las tres aplicaciones autorizadas exitosas. Dos workflows de backend continúan fallando por tipado `BusinessWhereInput`/`publicationStatus` en código no modificado; no se corrigieron archivos backend ajenos al alcance SEO.
+- Estas pruebas HTTP de preview verifican los metadatos y el acceso servidor→API. El login/registro con credenciales reales, CORS de sesiones sobre previews y los validadores externos de Google no se han dado por probados.
