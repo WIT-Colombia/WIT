@@ -1,5 +1,5 @@
 /* Shared Business frame. Page-specific layouts and existing breakpoints stay local. */
-.business-shell-workspace{display:flex;flex-direction:column;min-height:100vh;min-width:0;width:100%;background:#f2f6ff;color:#0f172a}
+.business-shell-workspace{display:flex;flex-direction:column;min-height:100vh;min-width:0;width:100%;background:#e3edff;color:#0f172a}
 .business-app .business-shell-sidebar{z-index:120;display:flex;flex-direction:column;gap:0;overflow-y:auto;overflow-x:hidden;padding:20px 13px 16px;border:0;background:#172b50;color:#fff;scrollbar-width:thin;scrollbar-color:#334155 transparent}
 .business-app .sidebar-brand{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:54px;margin:0 7px 22px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .business-app .sidebar-brand-artwork{position:relative;display:block;width:172px;height:58px}
