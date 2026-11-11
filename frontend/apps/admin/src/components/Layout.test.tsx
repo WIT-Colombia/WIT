@@ -11,12 +11,14 @@ const profile = { user: { id: 'test-admin', displayName: 'Perfil de prueba', ema
 let currentProfile = profile;
 let validSession = true;
 let failLogout = false;
+let failCsrfOnce = false;
 let failAvatar = false;
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const fetcher = vi.fn(async (url: string | URL | Request, _init?: RequestInit) => {
   const path = String(url);
   if (path.endsWith('/admin/auth/password')) { validSession = true; return json({ admin: currentProfile, csrfToken: 'test-csrf' }); }
   if (path.endsWith('/admin/auth/logout')) {
+    if (failCsrfOnce) { failCsrfOnce = false; return json({ error: { code: 'ADMIN_CSRF_INVALID' } }, 403); }
     if (failLogout) return json({ error: { message: 'offline' } }, 500);
     validSession = false; return new Response(null, { status: 204 });
   }
@@ -38,7 +40,7 @@ const group = (id: string) => document.getElementById(`nav-${id}`)!.closest('det
 const toggle = (id: string) => fireEvent.click(group(id).querySelector('summary')!);
 
 beforeEach(async () => {
-  currentProfile = profile; validSession = true; failLogout = false; failAvatar = false;
+  currentProfile = profile; validSession = true; failLogout = false; failCsrfOnce = false; failAvatar = false;
   vi.stubGlobal('fetch', fetcher); fetcher.mockClear();
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
   vi.stubGlobal('URL', class extends URL { static createObjectURL = vi.fn(() => 'blob:test-avatar'); static revokeObjectURL = vi.fn(); });
@@ -93,7 +95,7 @@ describe('Sidebar aprobado de Admin', () => {
     expect(within(sidebar()).getByText(profile.user.displayName)).toBeInTheDocument();
     expect(within(sidebar()).getByText('Administrador principal')).toBeInTheDocument();
     await waitFor(() => expect(sidebar().querySelector('.avatar img')).toHaveAttribute('src', 'blob:test-avatar'));
-    const request = fetcher.mock.calls.find(([url]) => String(url).includes('/auth/me/avatar'))!;
+    const request = fetcher.mock.calls.find(([url]) => String(url).includes('/admin/auth/me/avatar'))!;
     expect(request[1]?.credentials).toBe('include');
     expect(new Headers(request[1]?.headers).get('Accept')).toBe('image/*');
   });
@@ -135,6 +137,11 @@ describe('Sidebar aprobado de Admin', () => {
     expect(request[1]?.method).toBe('POST');
     expect(request[1]?.credentials).toBe('include');
     expect(new Headers(request[1]?.headers).get('X-Admin-CSRF')).toBe('test-csrf');
+    const urls = fetcher.mock.calls.map(([url]) => String(url));
+    const sessionCheck = urls.findIndex(path => path.endsWith('/admin/auth/session'));
+    const logoutCall = urls.findIndex(path => path.endsWith('/admin/auth/logout'));
+    expect(sessionCheck).toBeGreaterThanOrEqual(0);
+    expect(logoutCall).toBeGreaterThan(sessionCheck);
   });
 
   it('informa un fallo de logout y conserva la sesión sin redirigir', async () => {
@@ -163,6 +170,26 @@ describe('Sidebar aprobado de Admin', () => {
     finishRefresh(json({ authenticated: true, csrfToken: 'test-csrf' }));
     expect(await screen.findByText('Acceso')).toBeInTheDocument();
     expect(getSession()).toBeNull();
+  });
+
+  it('recupera el CSRF y reintenta el logout una vez si el servidor lo rechaza', async () => {
+    failCsrfOnce = true; show();
+    fireEvent.click(within(sidebar()).getByRole('button', { name: 'Cerrar sesión' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cerrar sesión' }));
+    expect(await screen.findByText('Acceso')).toBeInTheDocument();
+    const requests = fetcher.mock.calls.map(([url]) => String(url));
+    expect(requests.filter(url => url.endsWith('/admin/auth/session'))).toHaveLength(2);
+    expect(requests.filter(url => url.endsWith('/admin/auth/logout'))).toHaveLength(2);
+    expect(getSession()).toBeNull();
+  });
+
+  it('sale del frontend si la sesión administrativa ya caducó', async () => {
+    show(); validSession = false;
+    fireEvent.click(within(sidebar()).getByRole('button', { name: 'Cerrar sesión' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cerrar sesión' }));
+    expect(await screen.findByText('Acceso')).toBeInTheDocument();
+    expect(getSession()).toBeNull();
+    expect(fetcher.mock.calls.some(([url]) => String(url).endsWith('/admin/auth/logout'))).toBe(false);
   });
 
   it('rechaza volver a una ruta protegida después del logout', async () => {
