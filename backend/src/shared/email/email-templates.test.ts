@@ -69,7 +69,7 @@ test('supports the Admin brand without leaking the old WIT identity', () => {
 test('renders the same approved decorative logo and safe HTTPS markup for verification', () => {
   const message = renderVerificationEmail({ to: 'person@example.test', token: 'token', baseUrl: 'https://usuario.example/verify-email', logoUrl: 'https://cdn.example/xamuko.png' });
   assert.match(message.html, /src="https:\/\/xamuko\.com\/brand\/xamuko-symbol\.jpg"/);
-  for (const asset of ['ilustracion-correo.png', 'icono-reloj.png', 'icono-sobre-blanco.png', 'pie-xamuko.png']) {
+  for (const asset of ['ilustracion-correo.png', 'icono-reloj.png', 'icono-sobre-blanco.png']) {
     assert.ok(message.html.includes('https://xamuko.com/assets/email/verify/' + asset));
   }
   assert.doesNotMatch(message.html, /\{\{(?:verification_url|nombre|app_name|asset_base_url)\}\}/);

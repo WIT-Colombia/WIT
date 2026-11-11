@@ -106,7 +106,7 @@ export function renderVerificationEmail(input: TemplateInput, application: Email
             </td></tr>
           </table>
         </td></tr>
-        <tr><td style="padding:14px 0 0;line-height:0;font-size:0;"><img src="{{asset_base_url}}/pie-xamuko.png" alt="XAMUKO. Lo que necesitas, está más cerca." width="758" style="display:block;width:100%;height:auto;border:0;border-radius:0 0 17px 17px;"></td></tr>
+        <tr><td align="center" bgcolor="#7B3FFB" style="padding:12px 0;background:#7B3FFB;background-image:linear-gradient(110deg,#7B3FFB 0%,#2563EB 100%);border-radius:0 0 17px 17px;"><img src="https://xamuko.com/brand/xamuko-symbol.jpg" alt="XAMUKO" width="48" height="48" style="display:block;width:48px;height:48px;object-fit:contain;background:#fff;border:0;border-radius:8px;"></td></tr>
       </table>
       <p style="margin:14px 0 0;color:#71718b;font-size:11px;line-height:1.6;">Correo automático de XAMUKO. Por favor, no respondas a este mensaje.</p>
     </td></tr>
