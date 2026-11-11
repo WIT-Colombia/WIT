@@ -40,11 +40,12 @@ it('Admin: network failure is retryable; only invalid authentication clears sess
   await expect(auth.restoreSession()).resolves.toBeNull();
 });
 it('Admin: forwards persistent preference and CSRF, without browser-readable token storage', async () => {
-  const fetcher = vi.fn().mockResolvedValueOnce(json({ admin: { user: {} }, csrfToken: 'csrf' })).mockResolvedValueOnce(new Response(null, { status: 204 }));
+  const fetcher = vi.fn().mockResolvedValueOnce(json({ admin: { user: {} }, csrfToken: 'csrf' })).mockResolvedValueOnce(json({ authenticated: true, csrfToken: 'csrf-fresh' })).mockResolvedValueOnce(new Response(null, { status: 204 }));
   vi.stubGlobal('fetch', fetcher);
   const api = await import('./adminApiClient'); await api.adminLogin('a@example.test', 'fixture', true); await api.adminSessionLogout();
   expect(JSON.parse(fetcher.mock.calls[0][1].body).rememberMe).toBe(true);
-  expect(new Headers(fetcher.mock.calls[1][1].headers).get('X-Admin-CSRF')).toBe('csrf');
+  expect(fetcher.mock.calls[1][0]).toContain('/admin/auth/session');
+  expect(new Headers(fetcher.mock.calls[2][1].headers).get('X-Admin-CSRF')).toBe('csrf-fresh');
 });
 
 it('Admin: sensitive reauthentication opens login without treating ordinary 403 as logout', async () => {

@@ -32,7 +32,15 @@ let accessToken: string | null = null;
 // The API cookie belongs to api.xamuko.com and cannot be read by the Admin UI.
 // Recover its CSRF counterpart through credentialed, CORS-protected API responses.
 let adminCsrfToken = '';
-export async function fetchOwnAvatar(path = `${API_BASE}/auth/me/avatar`): Promise<Blob> { const target = /^https?:\/\//i.test(path) ? path : buildApiUrl(path); const response = await fetch(target, headers({ headers: { Accept: 'image/*' } })); if (!response.ok) throw new Error('No se pudo cargar la foto de perfil.'); return response.blob(); }
+export async function fetchOwnAvatar(path = `${API_BASE}/auth/me/avatar`): Promise<Blob> {
+  // Regular user avatars require a Bearer token. Admin has a separate,
+  // HttpOnly cookie scoped to /api/v1/admin, so use its protected endpoint.
+  const ownPath = path.replace(/^\/api\/v1\/auth\/me\/avatar(?=\?|$)/, `${API_BASE}/admin/auth/me/avatar`);
+  const target = /^https?:\/\//i.test(ownPath) ? ownPath : buildApiUrl(ownPath);
+  const response = await fetch(target, headers({ headers: { Accept: 'image/*' } }));
+  if (!response.ok) throw new Error('No se pudo cargar la foto de perfil.');
+  return response.blob();
+}
 function headers(init: RequestInit = {}) { const value = new Headers(init.headers); if (!['GET', 'HEAD', 'OPTIONS'].includes((init.method ?? 'GET').toUpperCase()) && adminCsrfToken) value.set('X-Admin-CSRF', adminCsrfToken); if (!value.has('Accept')) value.set('Accept', 'application/json'); if (init.body && !value.has('Content-Type')) value.set('Content-Type', 'application/json'); if (accessToken) value.set('Authorization', `Bearer ${accessToken}`); return { ...init, headers: value, credentials: 'include' as RequestCredentials }; }
 async function request<T>(path: string, init: RequestInit = {}) { const response = await fetch(buildApiUrl(path), headers(init)); const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string }; csrfToken?: unknown } & T; if (!response.ok) { const code=payload?.error?.code ?? 'UNKNOWN_ERROR'; const message=payload?.error?.message ?? 'No se pudo completar la solicitud.'; if (code === 'ADMIN_REAUTH_REQUIRED') window.location.assign('/login?reauth=1'); throw new AdminApiError(response.status, code, message); } if (payload && typeof payload.csrfToken === 'string') adminCsrfToken = payload.csrfToken; return payload; }
 export async function adminLogin(email: string, password: string, rememberMe: boolean) { return (await request<{ admin: RealAdmin }>('/admin/auth/password', { method: 'POST', body: JSON.stringify({ email, password, rememberMe }) })).admin; }
@@ -96,4 +104,23 @@ export async function finishAdminPasskeyActivation(code: string, credential: Pub
   return request('/admin/auth/passkey/activation/verify', { method: 'POST', headers: { 'X-Admin-Activation-Code': code }, body: JSON.stringify({ id: credential.id, rawId: toBase64Url(credential.rawId), type: credential.type, response: { clientDataJSON: toBase64Url(response.clientDataJSON), attestationObject: toBase64Url(response.attestationObject), transports: response.getTransports?.() ?? [] } }) });
 }
 
-export async function adminSessionLogout() { try { return await request('/admin/auth/logout', { method: 'POST', body: '{}' }); } finally { adminCsrfToken = ''; accessToken = null; } }
+export async function adminSessionLogout() {
+  try {
+    // Refresh the token tied to the currently authenticated Admin cookie.
+    await getAdminSession();
+    try {
+      await request('/admin/auth/logout', { method: 'POST', body: '{}' });
+    } catch (error) {
+      if (!(error instanceof AdminApiError && error.code === 'ADMIN_CSRF_INVALID')) throw error;
+      // A concurrent session refresh may have changed the token; retry once.
+      await getAdminSession();
+      await request('/admin/auth/logout', { method: 'POST', body: '{}' });
+    }
+  } catch (error) {
+    // The server has already invalidated or expired this session.
+    if (!(error instanceof AdminApiError && error.status === 401)) throw error;
+  }
+  // Never drop the local CSRF token while an active Admin session might remain.
+  adminCsrfToken = '';
+  accessToken = null;
+}

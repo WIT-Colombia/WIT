@@ -11,12 +11,14 @@ describe('sesión administrativa entre subdominios', () => {
   it('recupera CSRF al recargar y lo envía con cookies al cerrar sesión', async () => {
     const fetcher = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ authenticated: true, userId: 'admin', csrfToken: 'api-csrf-token' }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ authenticated: true, userId: 'admin', csrfToken: 'api-csrf-token' }), { status: 200 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetcher);
     const api = await import('./adminApiClient');
     await api.getAdminSession();
     await api.adminSessionLogout();
-    const [url, init] = fetcher.mock.calls[1]!;
+    expect(fetcher.mock.calls[1]![0]).toBe('https://api.xamuko.com/api/v1/admin/auth/session');
+    const [url, init] = fetcher.mock.calls[2]!;
     expect(url).toBe('https://api.xamuko.com/api/v1/admin/auth/logout');
     expect(init.credentials).toBe('include');
     expect(new Headers(init.headers).get('X-Admin-CSRF')).toBe('api-csrf-token');
