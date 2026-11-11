@@ -227,9 +227,7 @@
   width: min(100%,480px);
   margin: 0;
 }
-.business-recovery-page.business-recovery-workspace.business-recovery-email-page .business-recovery-layout {
-  padding-top: clamp(20px, 4vh, 50px);
-}
+
 @media(max-width:800px) {
   .business-recovery-page.business-recovery-workspace .business-recovery-layout {
     width: 100%;
