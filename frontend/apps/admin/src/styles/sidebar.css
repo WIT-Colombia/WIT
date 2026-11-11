@@ -24,6 +24,7 @@
   gap: 8px;
 }
 .admin-refresh .sidebar-brand .xa-brand-logo {
+  position: relative;
   width: 160px;
   height: auto;
   flex: 0 1 160px;
@@ -33,6 +34,13 @@
   width: 100%;
   height: auto;
   object-fit: contain;
+}
+.admin-refresh .sidebar-brand .xa-brand-logo .xa-brand-wordmark {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 0 0 23%);
+  filter: brightness(0) invert(1);
+  pointer-events: none;
 }
 .admin-refresh .sidebar-brand .xa-admin-tag {
   flex: none;

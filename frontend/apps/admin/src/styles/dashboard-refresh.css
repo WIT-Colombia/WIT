@@ -169,23 +169,23 @@
 .admin-refresh .xa-module-footer a svg{transform:rotate(180deg)}
 @media(max-width:700px){.admin-refresh .page-heading{align-items:flex-start;flex-direction:column}.admin-refresh .business-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-refresh .xa-module-page{padding:17px 0 24px}.admin-refresh .xa-module-title-row h1{font-size:21px}.admin-refresh .xa-module-status-card{grid-template-columns:auto minmax(0,1fr);gap:12px;padding:15px}.admin-refresh .xa-module-source{grid-column:2;padding:9px 0 0;border-top:1px solid var(--xa-border);border-left:0}.admin-refresh .xa-module-footer{align-items:flex-start;flex-direction:column}}
 
-/* Screenshot-matched shell, scoped to the businesses directory */
-.businesses-layout .admin-sidebar{width:74px;padding:15px 10px 12px}
-.businesses-layout .admin-main{margin-left:74px;width:calc(100% - 74px)}
-.businesses-layout .sidebar-brand{height:54px;min-height:54px;padding:0 0 10px;justify-content:center;overflow:hidden}
-.businesses-layout .brand{height:38px;width:52px;overflow:hidden}
-.businesses-layout .xa-brand-combo{width:52px;height:38px;overflow:hidden}
-.businesses-layout .xa-brand-logo{width:52px;height:38px}
-.businesses-layout .xa-brand-logo img{width:152px;max-width:none}
-.businesses-layout .xa-brand-subline,.businesses-layout .sidebar-footer>div:not(.avatar),.businesses-layout .sidebar-footer>button{display:none}
-.businesses-layout .admin-sidebar nav{margin:12px 0;gap:4px}
-.businesses-layout .xa-nav-section{border:0}
-.businesses-layout .xa-nav-section>summary{display:none}
-.businesses-layout .xa-nav-section-items{display:grid!important;padding:0 0 7px;gap:5px}
-.businesses-layout .nav-item{justify-content:center;min-height:44px;width:44px;margin:0 auto;padding:0;border-radius:10px}
-.businesses-layout .nav-item>span,.businesses-layout .nav-pending{display:none}
-.businesses-layout .nav-item svg{width:20px;height:20px}
-.businesses-layout .sidebar-footer{justify-content:center;padding:10px 0}
+/* Businesses directory header and content; navigation uses the shared sidebar. */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 .businesses-layout .admin-header{height:69px;padding:0 24px;gap:22px}
 .businesses-layout .header-context{min-width:0}
 .businesses-layout .xa-header-breadcrumb{display:none}
@@ -206,8 +206,8 @@
 .businesses-layout .businesses-empty-preview strong{font-size:28px;letter-spacing:-.7px}
 .businesses-layout .businesses-empty-preview span{font-size:15px;color:#737c92}
 @media(max-width:900px){
-.businesses-layout .admin-sidebar{width:74px}
-.businesses-layout .admin-main{margin-left:74px;width:calc(100% - 74px)}
+
+
 .businesses-layout .admin-header{padding:0 15px}
 .businesses-layout .workspace{padding:18px 13px}
 }
