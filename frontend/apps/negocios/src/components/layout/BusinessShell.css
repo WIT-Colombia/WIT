@@ -82,11 +82,11 @@
 .business-app .body-layout>.sidebar,.business-desktop-header{display:none}
 .business-app .business-shell-workspace{padding-top:0}
 .business-institutional-footer{margin:0 20px 0;padding:22px 0 95px}
-.business-app .mobile-topbar{z-index:1400;background:#fff;border-bottom:1px solid #dbeafe;box-shadow:0 3px 16px #0f172a08}
+.business-app .mobile-topbar{z-index:1400;background:#fff;border-bottom:1px solid #dce6f5;box-shadow:0 3px 12px #1e40af12}
 .business-app .mobile-menu-button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;width:40px;height:40px;padding:9px;border:0;border-radius:8px;background:transparent;color:#0f172a;box-shadow:none}
 .business-app .mobile-menu-button span{display:block;width:22px;height:2px;margin:0;border-radius:1px;background:currentColor}
 .business-app .mobile-menu-button:hover{background:#eff6ff;color:#2563eb}
-.business-app .mobile-business-picker{border:1px solid #dbe7fa!important;background:#f8fbff!important;box-shadow:none!important;color:#0f172a!important}
+.business-app .mobile-business-picker{border:1px solid #e1e8f3!important;background:#fbfdff!important;box-shadow:none!important;color:#0f172a!important}
 .business-app .mobile-business-copy>strong{color:#0f172a}
 .business-app .mobile-business-copy>small{color:#64748b}
 .business-app .mobile-business-chevron{color:#2563eb}
