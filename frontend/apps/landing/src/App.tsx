@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { destinations } from "./config/destinations";
 import { Icon, type IconName } from "./Icons";
 
-const artwork = "/assets/definitiva/reference-art.jpg";
+const artwork = "/assets/definitiva/reference-art-4k.webp";
 const navigation = [["inicio", "Inicio"], ["como-funciona", "Cómo funciona"], ["usuarios", "Usuarios"], ["negocios", "Negocios"], ["planes", "Planes"], ["preguntas", "Preguntas"]] as const;
 const userBenefits = ["Descubre negocios cercanos", "Busca por categoría y ubicación", "Consulta información y horarios", "Guarda tus favoritos y valora"];
 const businessBenefits = ["Crea y gestiona tu perfil comercial", "Consulta estadísticas de tu negocio", "Gestiona contenido y opiniones", "Accede a planes gratuitos y PRO"];
