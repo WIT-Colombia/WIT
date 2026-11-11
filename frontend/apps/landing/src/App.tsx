@@ -3,6 +3,7 @@ import { destinations } from "./config/destinations";
 import { Icon, type IconName } from "./Icons";
 
 const artwork = "/assets/definitiva/reference-art.jpg";
+const devicesArtwork = "/assets/definitiva/xamuko-devices-4k.webp";
 const navigation = [["inicio", "Inicio"], ["como-funciona", "Cómo funciona"], ["usuarios", "Usuarios"], ["negocios", "Negocios"], ["planes", "Planes"], ["preguntas", "Preguntas"]] as const;
 const userBenefits = ["Descubre negocios cercanos", "Busca por categoría y ubicación", "Consulta información y horarios", "Guarda tus favoritos y valora"];
 const businessBenefits = ["Crea y gestiona tu perfil comercial", "Consulta estadísticas de tu negocio", "Gestiona contenido y opiniones", "Accede a planes gratuitos y PRO"];
@@ -20,8 +21,7 @@ const faqs = [
 function Artwork({ viewBox, className = "" }: { viewBox: string; className?: string }) {
   const isDevices = !className;
   return <svg className={className} viewBox={viewBox} preserveAspectRatio={className === "portrait" ? "xMidYMax slice" : "xMidYMid meet"} aria-hidden="true" focusable="false">
-    {isDevices && <defs><clipPath id="devices-artwork-crop"><path d="M534 55h635v393H598L534 85Z"/></clipPath></defs>}
-    <image href={artwork} width="1169" height="1280" clipPath={isDevices ? "url(#devices-artwork-crop)" : undefined}/>
+    {isDevices ? <image href={devicesArtwork} width="16" height="9"/> : <image href={artwork} width="1169" height="1280"/>}
   </svg>;
 }
 function Brand({ footer = false }: { footer?: boolean }) {
@@ -102,7 +102,7 @@ export function App() {
           <p className="hero-description">Descubre negocios, productos y servicios.<br/>Conecta con tu ciudad y encuentra nuevas oportunidades en XAMUKO.</p>
           <div className="hero-actions"><a className="button primary" href={destinations.explore}><Icon name="search"/>Explorar negocios<Icon name="arrow"/></a><a className="button outline" href={destinations.businessRegister}><Icon name="shop"/>Registrar mi negocio</a></div>
           <ul className="hero-trust"><li><Icon name="pin"/><span>Negocios locales<br/>de tu ciudad</span></li><li><Icon name="shield"/><span>Confiable<br/>y segura</span></li><li><Icon name="devices"/><span>Desde cualquier<br/>dispositivo</span></li></ul>
-        </div><figure className="hero-visual"><Artwork viewBox="534 55 635 393"/><figcaption>Ilustración de las aplicaciones. Las cifras son ejemplos.</figcaption></figure></div>
+        </div><figure className="hero-visual"><Artwork viewBox="0 0 16 9"/><figcaption>Ilustración de las aplicaciones. Las cifras son ejemplos.</figcaption></figure></div>
       </section>
       <div className="page-width">
         <div className="audience-grid">
