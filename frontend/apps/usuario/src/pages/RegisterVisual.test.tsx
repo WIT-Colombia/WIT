@@ -51,7 +51,7 @@ describe('presentación de acceso: conserva el formulario original', () => {
   it('conserva los campos, logo y eslogan, sin la etiqueta Usuarios', () => {
     show();
     for (const label of ['Nombre completo', 'Correo electrónico', 'Contraseña', 'Confirmar contraseña', 'Código de referido (opcional)']) expect(screen.getByLabelText(label, { exact: true })).toBeInTheDocument();
-    expect(screen.getByAltText('XAMUKO')).toHaveAttribute('src', expect.stringContaining('xamuko-wordmark.webp'));
+    expect(screen.getByAltText('XAMUKO')).toHaveAttribute('src', '/brand/xamuko-symbol.jpg');
     expect(screen.getByText('Lo que necesitas, está más cerca.')).toBeInTheDocument();
     expect(screen.getByText('Conoce cada negocio')).toBeInTheDocument();
     expect(screen.queryByText('Usuarios', { exact: true })).not.toBeInTheDocument();
