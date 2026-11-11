@@ -1,4 +1,5 @@
 import { prisma } from '../../config/prisma.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 
 const businessSelect = {
   id: true, publicId: true, name: true, description: true, email: true, phone: true,
@@ -15,7 +16,7 @@ export async function listAdminBusinesses(query: { q?: string; page?: number; pa
   const page = Number.isFinite(query.page) ? Math.max(1, Math.min(100000, Math.floor(query.page!))) : 1;
   const pageSize = Number.isFinite(query.pageSize) ? Math.min(100, Math.max(1, Math.floor(query.pageSize!))) : 20;
   const publicationStatus = query.status === 'active' ? 'PUBLISHED' : query.status === 'review' ? 'REVIEW' : query.status === 'inactive' ? 'UNPUBLISHED' : undefined;
-  const where = { deletionStatus: { not: 'DELETED' as const }, ...(q ? { name: { contains: q } } : {}), ...(publicationStatus ? { publicationStatus } : {}) };
+  const where: Prisma.BusinessWhereInput = { deletionStatus: { not: 'DELETED' }, ...(q ? { name: { contains: q } } : {}), ...(publicationStatus ? { publicationStatus } : {}) };
   const [total, businesses] = await Promise.all([
     prisma.business.count({ where }),
     prisma.business.findMany({ where, select: businessSelect, orderBy: { updatedAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
