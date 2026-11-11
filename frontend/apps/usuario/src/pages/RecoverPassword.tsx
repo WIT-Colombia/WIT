@@ -57,7 +57,7 @@ export default function RecoverPassword() {
           <button className="action-button auth-submit" type="submit" disabled={submitting}>{submitting ? "Enviando…" : "Enviar enlace de recuperación"}</button>
           {error && <p className="password-error form-error" role="alert">{error}</p>}
         </form>}
-        <Link className="recover-back recovery-switch" to="/settings">← Volver a ajustes</Link>
+        
       </section>
       </div>
     </div>
