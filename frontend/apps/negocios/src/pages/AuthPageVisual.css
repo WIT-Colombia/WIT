@@ -76,7 +76,7 @@
 .business-auth-page .auth-password-field .password-visibility { right: 8px; display: grid; width: 30px; min-height: 30px; height: 30px; place-items: center; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #435675; cursor: pointer; }
 .business-auth-page .auth-password-field .password-visibility svg { width: 18px; height: 18px; }
 .business-auth-page .auth-password-field .password-visibility:hover { background: #e8f0ff; color: #1d4ed8; }
-.business-auth-page .auth-referral-placeholder input:disabled { color: #64748b; background: #F8FAFC; cursor: not-allowed; }
+.business-auth-page .auth-referral-placeholder input:disabled { color: #64748b; background: linear-gradient(110deg, white, #fbfdff); opacity: 1; cursor: not-allowed; }
 .business-auth-page .auth-legal-check { align-items: flex-start!important; gap: 8px!important; margin: 2px 0!important; color: #475569!important; font-size: 10px!important; font-weight: 400!important; line-height: 1.6; }
 .business-auth-page .auth-legal-check input[type='checkbox'] { flex: 0 0 16px; width: 16px; min-width: 16px; min-height: 16px; margin: 1px 0 0; padding: 0; accent-color: var(--auth-blue); }
 .business-auth-page .auth-legal-check a { color: #1d4ed8; }
