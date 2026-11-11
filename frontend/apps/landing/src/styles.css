@@ -5,8 +5,9 @@
   font-synthesis:none;
   text-rendering:optimizeLegibility;
   -webkit-font-smoothing:antialiased;
-  --purple:#830bd6;
-  --blue:#0756ed
+  --purple:#7B3FFB;
+  --blue:#2563EB;
+  --cyan:#22D3EE
 }
 * {
   box-sizing:border-box
@@ -44,7 +45,7 @@ ul,ol {
   display:none!important
 }
 a:focus-visible,button:focus-visible,summary:focus-visible {
-  outline:3px solid #0872e8;
+  outline:3px solid var(--blue);
   outline-offset:4px
 }
 .icon {
@@ -182,14 +183,14 @@ section[id] {
   height:13px
 }
 .primary {
-  background:linear-gradient(180deg,#bf32f4,#8808d9 38%,#48009e);
+  background:linear-gradient(135deg,#7B3FFB,#6735dd 68%,#22D3EE);
   color:#fff;
-  border:1px solid #a353ef;
-  box-shadow:0 3px 6px #4b00832a
+  border:1px solid #8f6aff;
+  box-shadow:0 3px 8px #7B3FFB2a
 }
 .outline {
-  color:#5706ad;
-  border:1.5px solid #7915de;
+  color:#7B3FFB;
+  border:1.5px solid #7B3FFB;
   background:#ffffffed;
   box-shadow:0 2px 6px #4b00831f
 }
@@ -244,7 +245,7 @@ section[id] {
   position:relative;
   isolation:isolate;
   overflow:hidden;
-  background:linear-gradient(110deg,#fcfaff,#fff 45%,#e6f4ff);
+  background:linear-gradient(110deg,#fff,#fff 45%,#f3f0ff);
   min-height:389px
 }
 .hero-inner {
@@ -265,8 +266,8 @@ section[id] {
   align-items:center;
   gap:9px;
   border-radius:30px;
-  background:linear-gradient(180deg,#f0e3ff,#e7d7fc);
-  color:#570b93;
+  background:linear-gradient(180deg,#f1ebff,#e3d8ff);
+  color:#7B3FFB;
   box-shadow:0 2px 3px #672ba323;
   font-size:13px;
   font-weight:700;
@@ -287,7 +288,7 @@ section[id] {
 }
 .hero h1 span {
   font-size:1.17em;
-  color:#8b07d1;
+  color:var(--purple);
   letter-spacing:-1.8px
 }
 .hero-description {
@@ -390,7 +391,7 @@ section[id] {
   left:-150px;
   border-radius:50%;
   transform:rotate(27deg);
-  background:linear-gradient(140deg,#9145ee,#d4a8ff 70%,transparent);
+  background:linear-gradient(140deg,#7B3FFB,#22D3EE 70%,transparent);
   box-shadow:0 -18px 0 #ead7ff80
 }
 .wave-front {
@@ -400,7 +401,7 @@ section[id] {
   left:-180px;
   border-radius:50%;
   transform:rotate(26deg);
-  background:linear-gradient(120deg,#aa68f2,#fff)
+  background:linear-gradient(120deg,#7B3FFB,#fff)
 }
 /* Audience cards */
 .audience-grid {
