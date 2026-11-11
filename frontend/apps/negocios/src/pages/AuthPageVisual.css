@@ -36,7 +36,7 @@
 }
 .business-auth-page .auth-story::before { content: none; }
 .business-auth-page .auth-panel-brand {
-  position: relative; z-index: 2; display: flex; flex-direction: column;
+  position: relative; z-index: 2; display: flex; flex-direction: column; gap: 0;
   align-items: center; width: fit-content; max-width: 100%; padding: 5px 15px 11px;
   border: 1px solid #ffffffb3; border-radius: 19px; background: #ffffff;
   box-shadow: 0 8px 26px #09052524;
