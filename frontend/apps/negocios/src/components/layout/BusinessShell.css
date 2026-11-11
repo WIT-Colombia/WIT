@@ -1,6 +1,6 @@
 /* Shared Business frame. Page-specific layouts and existing breakpoints stay local. */
 .business-shell-workspace{display:flex;flex-direction:column;min-height:100vh;min-width:0;width:100%;background:#f2f6ff;color:#0f172a}
-.business-app .business-shell-sidebar{z-index:120;display:flex;flex-direction:column;gap:0;overflow-y:auto;overflow-x:hidden;padding:20px 13px 16px;border:0;background:radial-gradient(ellipse at 105% 45%,#2563eb33,transparent 60%),radial-gradient(ellipse at 0 95%,#7b3ffb24,transparent 45%),#0f172a;color:#fff;scrollbar-width:thin;scrollbar-color:#334155 transparent}
+.business-app .business-shell-sidebar{z-index:120;display:flex;flex-direction:column;gap:0;overflow-y:auto;overflow-x:hidden;padding:20px 13px 16px;border:0;background:#172b50;color:#fff;scrollbar-width:thin;scrollbar-color:#334155 transparent}
 .business-app .sidebar-brand{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:54px;margin:0 7px 22px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .business-app .sidebar-brand-artwork{position:relative;display:block;width:172px;height:58px}
 .business-app .sidebar-brand-artwork img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;object-position:left center;filter:none}
@@ -28,7 +28,7 @@
 .business-app .sidebar-support>a{display:flex;align-items:center;gap:12px;min-height:39px;padding:8px 7px;border-radius:6px;color:#edf4ff;font-size:11px;text-decoration:none}
 .business-app .sidebar-support .sidebar-icon{width:20px;height:20px}
 .business-app .sidebar-support>a:hover{background:#ffffff0c;color:#93c5fd}
-.business-app .sidebar-account-link{display:flex;align-items:center;gap:10px;min-height:65px;margin:0 -13px -16px;padding:16px 19px;border-top:1px solid #ffffff14;border-radius:0;background:#111f3acc;color:#fff;text-decoration:none;box-shadow:none}
+.business-app .sidebar-account-link{display:flex;align-items:center;gap:10px;min-height:65px;margin:0 -13px -16px;padding:16px 19px;border-top:1px solid #ffffff14;border-radius:0;background:#142744;color:#fff;text-decoration:none;box-shadow:none}
 .business-app .sidebar-account-link:hover{background:#1e40af}
 .business-app .sidebar-account-avatar{display:grid;place-items:center;flex:0 0 39px;width:39px;height:39px;overflow:hidden;border:1px solid #9fa8ff44;border-radius:50%;background:#7b3ffb;color:#fff;font-size:15px;font-weight:600}
 .business-app .sidebar-account-avatar img{width:100%;height:100%;object-fit:cover}
@@ -73,7 +73,7 @@
 .business-shell-notice .action-button{width:100%;min-height:40px;border-radius:8px;background:#2563eb;color:#fff;font-size:12px}
 .business-mobile-menu-layer{display:none}
 @media(min-width:821px){
-.business-app .body-layout>.sidebar{display:flex;width:220px;padding:20px 13px 16px;border:0;background:radial-gradient(ellipse at 105% 45%,#2563eb33,transparent 60%),radial-gradient(ellipse at 0 95%,#7b3ffb24,transparent 45%),#0f172a;color:#fff}
+.business-app .body-layout>.sidebar{display:flex;width:220px;padding:20px 13px 16px;border:0;background:#172b50;color:#fff}
 .business-app .app-content{width:calc(100% - 220px);margin-left:220px}
 .business-app .page-content{width:100%;max-width:1600px;min-width:0;margin:0 auto;padding:0 28px 36px}
 .business-app .business-shell-workspace>.page-content>.page-header:first-child{padding-top:14px}
@@ -101,7 +101,7 @@
 .business-app .mobile-link.active{background:transparent!important;color:#2563eb!important}
 .business-mobile-menu-layer{position:fixed;z-index:1350;inset:72px 0 0;display:block}
 .business-mobile-scrim{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0f172a66;backdrop-filter:blur(2px)}
-.business-mobile-drawer{position:relative;display:flex;flex-direction:column;width:min(340px,90vw);height:100%;overflow:auto;overscroll-behavior:contain;background:#0f172a;box-shadow:10px 0 40px #0f172a33;scrollbar-width:thin;scrollbar-color:#334155 transparent}
+.business-mobile-drawer{position:relative;display:flex;flex-direction:column;width:min(340px,90vw);height:100%;overflow:auto;overscroll-behavior:contain;background:#172b50;box-shadow:10px 0 40px #0f172a33;scrollbar-width:thin;scrollbar-color:#334155 transparent}
 .business-mobile-drawer-heading{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:14px 20px 0;color:#fff}
 .business-mobile-drawer-heading strong{color:#fff;font-size:15px}
 .business-mobile-close{display:grid;place-items:center;width:34px;height:34px;padding:0;border:1px solid #ffffff2b;border-radius:50%;background:#ffffff0c;color:#fff}
