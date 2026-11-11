@@ -1,4 +1,4 @@
-.site-footer { display:flex; box-sizing:border-box; align-items:center; gap:14px; width:min(1280px, calc(100vw - 48px)); margin:0 auto; padding:18px 0 0; border-top:1px solid #e5e6f4; }
+.site-footer { display:flex; box-sizing:border-box; align-items:center; gap:14px; width:min(1280px, calc(100vw - 48px)); margin:0 auto; padding:18px 0 0; border-top:1px solid #eae2f7; }
 .site-footer__brand { color:#6325e5; font-size:20px; letter-spacing:-.04em; }
 .site-footer > span,.site-footer small { color:var(--xamuko-muted); font-size:11px; }
 .site-footer small { margin-left:auto; }
