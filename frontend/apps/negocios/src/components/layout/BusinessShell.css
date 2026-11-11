@@ -129,3 +129,9 @@
 .business-header-brand .xamuko-header-artwork{position:relative;display:block;flex-shrink:0}
 .business-header-brand .xamuko-header-artwork .xamuko-header-logo{display:block;max-width:100%;height:auto;filter:none}
 .business-header-brand .xamuko-header-artwork .xamuko-header-wordmark{position:absolute;inset:0;clip-path:inset(0 0 0 23%);filter:brightness(0) invert(1)!important;pointer-events:none}
+
+/* Business visual language: white review surfaces on a soft blue canvas. */
+.business-app .reviews-layout .surface-card{background:#fff;border:1px solid #dce6f5;border-radius:16px;box-shadow:0 5px 15px #1e40af10}
+.business-app .reviews-layout .review-entry{border-color:#e4ebf6}
+.business-app .reviews-layout .business-response{background:#edf4ff;border-left-color:#2563eb}
+@media(max-width:820px){.business-app .reviews-layout .surface-card{box-shadow:0 3px 10px #1e40af0d}}
