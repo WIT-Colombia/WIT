@@ -10,6 +10,7 @@ import { beginPasskeyActivation, finishPasskeyActivation } from './admin-passkey
 import { getAdminContext, adminSession } from './admin-auth.service.js';
 import { login } from '../auth/auth.service.js';
 import { loginSchema } from '../auth/auth.schemas.js';
+import { readOwnAvatar } from '../auth/avatar.service.js';
 import { setRefreshCookie } from '../../shared/auth/refresh-cookie.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import { LOGIN_IP_WINDOW_SECONDS, LOGIN_RATE_LIMIT } from '../auth/auth-rate-limit-policy.js';
@@ -60,6 +61,16 @@ adminAuthRouter.post('/webauthn/verify', async (request, response, next) => {
 });
 
 adminAuthRouter.get('/session', async (request, response, next) => { try { const session = await requireAdminSession(request); response.json({ authenticated: true, userId: session.userId, csrfToken: session.csrf }); } catch (error) { next(error); } });
+adminAuthRouter.get('/me/avatar', async (request, response, next) => {
+  try {
+    // Admin cookies are scoped to /api/v1/admin. A regular Bearer-only
+    // /auth/me/avatar endpoint cannot authenticate this private Admin image.
+    const session = await requireAdminSession(request);
+    const avatar = await readOwnAvatar(session.userId);
+    response.setHeader('Cache-Control', 'private, no-store');
+    response.type(avatar.mimeType).send(avatar.content);
+  } catch (error) { next(error); }
+});
 adminAuthRouter.post('/logout', async (request, response, next) => { try { await requireAdminSession(request); await revokeAdminSession(request, response); response.status(204).send(); } catch (error) { next(error); } });
 
 adminAuthRouter.get('/passkey/activation/options', async (request, response, next) => { try { response.json(await beginPasskeyActivation(request, response)); } catch (error) { next(error); } });
