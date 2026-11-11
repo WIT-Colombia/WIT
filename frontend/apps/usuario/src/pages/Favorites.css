@@ -58,3 +58,7 @@
   .favorites-page .entity-business-card .entity-favorite{top:7px;right:7px;width:29px;height:29px}
   .favorites-page .entity-business-card .entity-open{bottom:7px;left:7px;font-size:9px}
 }
+
+/* Same back-to-profile control used on Notifications. */
+.favorites-page .offer-detail-back{display:inline-flex;align-items:center;min-height:34px;margin-bottom:24px;padding:0 13px;border:1px solid #ddd2ff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font-size:11px;font-weight:700;text-decoration:none;box-shadow:0 5px 16px rgba(123,63,251,.08);transition:background .2s ease,transform .2s ease}
+.favorites-page .offer-detail-back:hover{background:#f4efff;transform:translateY(-1px)}
