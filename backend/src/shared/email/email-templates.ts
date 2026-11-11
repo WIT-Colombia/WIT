@@ -58,7 +58,7 @@ export function renderVerificationEmail(input: TemplateInput, application: Email
           <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;">
             <tr>
               <td align="left" valign="middle" width="58%" style="width:58%;padding:18px 0 12px 30px;background:#ffffff;">
-                <img class="brand-header-logo" src="https://xamuko.com/brand/xamuko-symbol.jpg" alt="XAMUKO" width="64" height="64" style="display:block;width:64px;height:64px;max-width:100%;object-fit:contain;border:0;outline:none;text-decoration:none;background:#fff;border-radius:10px;">
+                <img class="brand-header-logo" src="https://xamuko.com/brand/xamuko-lockup.png" alt="XAMUKO · Descubre · Apoya · Disfruta" width="305" style="display:block;width:305px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;">
               </td>
               <td valign="top" width="42%" height="110" bgcolor="#8b4af5" style="width:42%;height:110px;background-color:#8b4af5;background-image:linear-gradient(135deg,#e2bbfa 0%,#aa70fa 45%,#3885f7 100%);border-bottom-left-radius:110px;font-size:0;line-height:0;">&nbsp;</td>
             </tr>
@@ -106,7 +106,7 @@ export function renderVerificationEmail(input: TemplateInput, application: Email
             </td></tr>
           </table>
         </td></tr>
-        <tr><td align="center" bgcolor="#7B3FFB" style="padding:12px 0;background:#7B3FFB;background-image:linear-gradient(110deg,#7B3FFB 0%,#2563EB 100%);border-radius:0 0 17px 17px;"><img src="https://xamuko.com/brand/xamuko-symbol.jpg" alt="XAMUKO" width="48" height="48" style="display:block;width:48px;height:48px;object-fit:contain;background:#fff;border:0;border-radius:8px;"></td></tr>
+        <tr><td style="padding:14px 0 0;line-height:0;font-size:0;"><img src="https://xamuko.com/brand/xamuko-email-footer.png" alt="XAMUKO. Lo que necesitas, está más cerca." width="758" style="display:block;width:100%;height:auto;border:0;border-radius:0 0 17px 17px;"></td></tr>
       </table>
       <p style="margin:14px 0 0;color:#71718b;font-size:11px;line-height:1.6;">Correo automático de XAMUKO. Por favor, no respondas a este mensaje.</p>
     </td></tr>

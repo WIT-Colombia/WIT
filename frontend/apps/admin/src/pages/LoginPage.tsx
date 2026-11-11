@@ -45,7 +45,7 @@ export function LoginPage() {
     <div className="admin-access-layout">
     <section className="admin-access-story" aria-labelledby="admin-access-title">
       <div className="admin-access-brand">
-        <img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" width="64" height="64" style={{ objectFit: "contain", background: "#fff", borderRadius: 10 }} />
+        <img src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" />
         <p>Lo que necesitas, está más cerca.</p>
       </div>
       <div className="admin-access-copy">

@@ -83,7 +83,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     <PageMetadata {...seo} tags={metadataTags(seo)} />
     <div className={`auth-layout${register ? " is-register" : " is-login"}`}>
       <section className="auth-story" aria-label="Descubre XAMUKO Business">
-        <div className="auth-panel-brand"><img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" width="64" height="64" style={{ objectFit: "contain", background: "#fff", borderRadius: 10 }} /><p>Lo que necesitas, está más cerca.</p></div>
+        <div className="auth-panel-brand"><img src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" /><p>Lo que necesitas, está más cerca.</p></div>
         <div className="business-auth-story-copy">
           <h2>Haz que más personas<br />encuentren <span>tu negocio</span></h2>
           <p>Gestiona tu presencia digital, aumenta tu visibilidad y conéctate con clientes cercanos en tu ciudad.</p>

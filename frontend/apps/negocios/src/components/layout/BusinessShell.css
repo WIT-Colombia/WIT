@@ -2,7 +2,7 @@
 .business-shell-workspace{display:flex;flex-direction:column;min-height:100vh;min-width:0;width:100%;background:#e3edff;color:#0f172a}
 .business-app .business-shell-sidebar{z-index:120;display:flex;flex-direction:column;gap:0;overflow-y:auto;overflow-x:hidden;padding:20px 13px 16px;border:0;background:#172b50;color:#fff;scrollbar-width:thin;scrollbar-color:#334155 transparent}
 .business-app .sidebar-brand{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:54px;margin:0 7px 22px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
-.business-app .sidebar-brand-artwork{position:relative;display:block;width:58px;height:58px}
+.business-app .sidebar-brand-artwork{position:relative;display:block;width:172px;height:58px}
 .business-app .sidebar-brand-artwork img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;object-position:left center;filter:none}
 .business-app .sidebar-brand-artwork .sidebar-brand-wordmark{position:absolute;inset:0;clip-path:inset(0 0 0 23%);filter:brightness(0) invert(1)!important;pointer-events:none}
 .business-app .sidebar-brand>span:not(.sidebar-brand-artwork){margin-left:32px;color:#60a5fa;font-size:10px;font-weight:750;line-height:1.1;letter-spacing:.1em}

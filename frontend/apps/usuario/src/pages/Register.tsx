@@ -131,7 +131,7 @@ export default function Register() {
     <div className={`user-auth-layout${registration ? " is-register" : " is-login"}`}>
       <section className="user-auth-story" aria-label="Descubre XAMUKO">
         <div className="user-auth-brand">
-          <img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" width="64" height="64" style={{ objectFit: "contain", background: "#fff", borderRadius: 10 }} />
+          <img src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" />
           <p>Lo que necesitas, está más cerca.</p>
         </div>
         <div className="user-auth-story-copy">

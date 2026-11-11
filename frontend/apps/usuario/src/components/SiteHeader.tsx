@@ -64,7 +64,7 @@ export function SiteHeader({ active, onProfile, onSearchChange }: { active?: Sit
   }
 
   return <header className="site-header">
-    <Link className="brand" to="/home" aria-label="XAMUKO, inicio"><img className="brand-logo" src="/brand/xamuko-symbol.jpg" alt="XAMUKO" width="42" height="42" style={{ objectFit: "contain", background: "#fff", borderRadius: 8 }} /></Link>
+    <Link className="brand" to="/home" aria-label="XAMUKO, inicio"><img className="brand-logo" src="/brand/xamuko-lockup.png" alt="XAMUKO · Descubre · Apoya · Disfruta" width="2170" height="725" /></Link>
     <div className="site-header-search"><SearchBar inputId={isResultsPage ? "results-header-search" : "site-header-search"} hideSubmit initialValue={isResultsPage ? resultsQuery : ""} onSearch={handleSearchChange} onSubmitSearch={submitSearch} /></div>
     <nav className="desktop-nav" aria-label="Navegación principal">
       <Link className={active === "home" ? "active" : undefined} to="/home">Inicio</Link>

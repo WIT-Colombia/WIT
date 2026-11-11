@@ -12,7 +12,7 @@ export function BusinessHeader() {
   const displayName = user?.displayName || (business.source === "real" ? "" : account.name);
   const initials = displayName.split(" ").map((part) => part[0]).slice(0, 2).join("");
   return <header className="business-header">
-    <Link className="business-header-brand" to="/inicio" aria-label="XAMUKO Business, inicio"><span className="xamuko-header-artwork" style={{ width: 44, height: 44, background: "#fff", borderRadius: 9, padding: 2 }}><img className="xamuko-header-logo" src="/brand/xamuko-symbol.jpg" alt="XAMUKO" style={{ width: "100%", height: "100%", objectFit: "contain" }} /></span><span className="business-header-name">BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
+    <Link className="business-header-brand" to="/inicio" aria-label="XAMUKO Business, inicio"><span className="xamuko-header-artwork"><img className="xamuko-header-logo" src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" /><img className="xamuko-header-logo xamuko-header-wordmark" src="/brand/xamuko-lockup.png" alt="" aria-hidden="true" width="2170" height="725" /></span><span className="business-header-name">BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
     <Link className="business-header-profile" to="/perfil" aria-label="Abrir mi perfil">{initials}</Link>
   </header>;
 }

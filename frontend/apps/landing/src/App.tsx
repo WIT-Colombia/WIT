@@ -39,7 +39,7 @@ function Artwork({ viewBox, className = "" }: { viewBox: string; className?: str
 }
 function Brand({ footer = false }: { footer?: boolean }) {
   return <a className={`brand${footer ? " brand-light" : ""}`} href="#inicio" aria-label="XAMUKO, inicio">
-    <img className="brand-mark" src="/brand/xamuko-symbol.jpg" alt="" aria-hidden="true" style={{ width: 42, height: 42, objectFit: "contain", background: "#fff", borderRadius: 8 }} />
+    <img className="brand-mark" src="/brand/xamuko-symbol.png" alt="" aria-hidden="true" style={{ objectFit: "contain" }} />
     <span><strong>XAMUKO</strong><small>Lo que necesitas, está más cerca.</small></span>
   </a>;
 }
