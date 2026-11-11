@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { SiteHeader } from "../components/SiteHeader";
 import { ApiError } from "../services/httpClient";
 import { getRememberedEmail, requestPasswordReset } from "../services/authService";
@@ -21,7 +21,7 @@ export default function RecoverPassword() {
 
   useEffect(() => {
     if (!sent) return;
-    const timeout = window.setTimeout(() => navigate("/settings"), 3000);
+    const timeout = window.setTimeout(() => navigate("/register?mode=login"), 3000);
     return () => window.clearTimeout(timeout);
   }, [navigate, sent]);
 
@@ -57,7 +57,6 @@ export default function RecoverPassword() {
           <button className="action-button auth-submit" type="submit" disabled={submitting}>{submitting ? "Enviando…" : "Enviar enlace de recuperación"}</button>
           {error && <p className="password-error form-error" role="alert">{error}</p>}
         </form>}
-        
       </section>
       </div>
     </div>
