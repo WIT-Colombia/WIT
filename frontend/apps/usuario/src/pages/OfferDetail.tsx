@@ -1,3 +1,5 @@
+import { PublicOfferSeo } from "../components/PublicPageSeo";
+import type { Business } from "../data/mockData";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { businesses, products, services, type Product, type Service } from "../data/mockData";
@@ -40,6 +42,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const routeContext = (location.state as { analyticsContext?: AnalyticsContext } | null)?.analyticsContext;
   const analyticsContextRef = useRef<AnalyticsContext>(routeContext ?? { source: 'direct' });
   const isProduct = kind === "product";
+  const [verifiedSeo, setVerifiedSeo] = useState<{ offer: Product | Service; business: Business; kind: "product" | "service" } | null>(null);
 
   useEffect(() => {
     if (offerViewIdRef.current) return;
@@ -50,6 +53,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
 
   useEffect(() => {
     let cancelled = false;
+    setVerifiedSeo(null);
 
     void (async () => {
       const loaded = kind === "product"
@@ -84,7 +88,10 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           void recordPublicPromotionView(loaded.promotionId, dedupeKey).catch(() => undefined);
         }
       }
-      if (!cancelled && loadedBusiness) setBusiness(loadedBusiness);
+      if (!cancelled && loadedBusiness) {
+        setBusiness(loadedBusiness);
+        if (isRealOfferId(loaded.id)) setVerifiedSeo({ offer: loaded, business: loadedBusiness, kind });
+      }
     })();
 
     return () => {
@@ -93,7 +100,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   }, [id, kind, routeContext]);
 
   if (!offer || !business) {
-    return <PageLayout><div className="business-not-found"><h1>No encontramos {isProduct ? "este producto" : "este servicio"}</h1><Link to="/home">Volver a explorar</Link></div></PageLayout>;
+    return <PageLayout><PublicOfferSeo verified={null} /><div className="business-not-found"><h1>No encontramos {isProduct ? "este producto" : "este servicio"}</h1><Link to="/home">Volver a explorar</Link></div></PageLayout>;
   }
 
   const item = offer as Product | Service;
@@ -119,6 +126,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
 
   return (
     <PageLayout className="offer-detail-page">
+      <PublicOfferSeo verified={verifiedSeo} />
       <button className="offer-detail-back" type="button" onClick={() => {
         if (window.history.length > 1) navigate(-1);
         else navigate(`/business/${business.id}`);

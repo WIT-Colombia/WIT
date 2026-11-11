@@ -31,12 +31,35 @@ beforeEach(() => { vi.clearAllMocks(); auth.signIn.mockResolvedValue(undefined);
 afterEach(cleanup);
 
 describe('Business: presentación conserva el acceso existente', () => {
+  it('publica metadatos propios, un H1 y no copia parámetros sensibles', () => {
+    show('/registro?email=privado@example.test&ref=invitacion');
+    expect(document.title).toBe('Registra tu cuenta de negocio | XAMUKO Business');
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', 'https://business.xamuko.com/registro');
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex,follow');
+    expect(document.querySelectorAll('h1')).toHaveLength(1);
+    const data = JSON.parse(document.querySelector('script[data-auth-seo]')!.textContent!);
+    expect(data.url).toBe('https://business.xamuko.com/registro');
+    expect(JSON.stringify(data)).not.toContain('privado');
+  });
+  it('actualiza SEO al cambiar de modo y lo retira al salir a recuperación', async () => {
+    show();
+    expect(document.querySelector('meta[name="robots"]')!.getAttribute('content')).toBe('noindex,follow');
+    fireEvent.click(screen.getByRole('button', { name: '¿Ya tienes una cuenta? Iniciar sesión' }));
+    await screen.findByLabelText('Mantener mi sesión iniciada');
+    expect(document.title).toBe('Iniciar sesión | XAMUKO Business');
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex,follow');
+    expect(document.querySelectorAll('meta[name="description"]')).toHaveLength(1);
+    expect(document.querySelectorAll('script[data-auth-seo]')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('link', { name: '¿Olvidaste tu contraseña?' }));
+    await screen.findByText('Recuperación de contraseña');
+    expect(document.querySelector('link[rel="canonical"]')).toBeNull();
+  });
   it('mantiene todos los campos y el referido deshabilitado, logo íntegro y eslogan', () => {
     show();
     for (const label of ['Nombre completo', 'Correo electrónico', 'Confirmar contraseña']) expect(screen.getByLabelText(label)).toBeInTheDocument();
     expect(screen.getByLabelText('Código de referido (opcional)')).toBeDisabled();
     expect(screen.getByLabelText(/^Contraseña/)).toHaveAttribute('minlength', '8');
-    expect(screen.getByAltText('XAMUKO')).toHaveAttribute('src', expect.stringContaining('XAMUKO-V1-transparent.png'));
+    expect(screen.getByAltText('XAMUKO')).toHaveAttribute('src', expect.stringContaining('XAMUKO-V1-transparent.webp'));
     expect(screen.getByText('Lo que necesitas, está más cerca.')).toBeVisible();
     expect(screen.getByText('Conecta con clientes cercanos')).toBeVisible();
     expect(screen.queryByText('Business', { exact: true })).not.toBeInTheDocument();

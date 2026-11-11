@@ -1,12 +1,17 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { PageMetadata } from "@wit/ui";
+import { getAuthPageMetadata, metadataTags } from "@wit/utils";
 import { ApiError } from "../services/httpClient";
 import { validateEmail } from "../services/emailValidation";
 import { getRememberedEmail, startGoogleLogin, isBusinessReferralRegistrationAvailable, validateBusinessReferralCode } from "../services/authService";
 import { isValidBusinessReferralCode } from "../utils/businessReferralCode";
 import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
-import xamukoLogo from "../assets/xamuko-wordmark.png";
+import xamukoLogo from "../assets/xamuko-wordmark.webp";
+import xamukoLogo320 from "../assets/xamuko-wordmark-320.webp";
+import xamukoLogo640 from "../assets/xamuko-wordmark-640.webp";
+import xamukoLogo960 from "../assets/xamuko-wordmark-960.webp";
 import discoveryArt from "../assets/auth-discovery-1112.webp";
 import discoveryArtSmall from "../assets/auth-discovery-600.webp";
 import "./Register.css";
@@ -122,17 +127,19 @@ export default function Register() {
   }
 
   const registration = mode === "register";
+  const seo = getAuthPageMetadata("usuario", mode);
   const submitDisabled = submitting || status === "loading" || (registration && (hasPasswordErrors || Boolean(referralError) || referralChecking));
 
   return <main className="register-page user-auth-page">
+    <PageMetadata {...seo} tags={metadataTags(seo)} />
     <div className={`user-auth-layout${registration ? " is-register" : " is-login"}`}>
       <section className="user-auth-story" aria-label="Descubre XAMUKO">
         <div className="user-auth-brand">
-          <img src={xamukoLogo} alt="XAMUKO" width="2170" height="725" />
+          <img src={xamukoLogo} srcSet={`${xamukoLogo320} 320w, ${xamukoLogo640} 640w, ${xamukoLogo960} 960w, ${xamukoLogo} 2170w`} sizes="(max-width: 760px) 205px, (max-width: 1100px) 200px, 240px" alt="XAMUKO" width="2170" height="725" />
           <p>Lo que necesitas, está más cerca.</p>
         </div>
         <div className="user-auth-story-copy">
-          <h1>Encuentra negocios,<br />productos y servicios<br /><span>cerca de ti</span></h1>
+          <h2>Encuentra negocios,<br />productos y servicios<br /><span>cerca de ti</span></h2>
           <p>Explora tu ciudad, descubre lo que ofrecen los establecimientos y contacta directamente con ellos.</p>
           <ul className="user-auth-benefits">
             <li><span aria-hidden="true"><PinIcon /></span><div><b>Descubre negocios cercanos</b><small>Explora establecimientos en tu ubicación o en tu ciudad.</small></div></li>
@@ -142,8 +149,9 @@ export default function Register() {
           </ul>
         </div>
         <picture className="user-auth-illustration" aria-hidden="true">
-          <source type="image/webp" srcSet={`${discoveryArtSmall} 600w, ${discoveryArt} 1112w`} sizes="(max-width: 760px) 1px, (max-width: 1200px) 32vw, 470px" />
-          <img src={discoveryArt} alt="" width="1112" height="1414" decoding="async" fetchPriority="high" />
+          <source media="(max-width: 760px)" srcSet="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" />
+          <source type="image/webp" srcSet={`${discoveryArtSmall} 600w, ${discoveryArt} 1112w`} sizes="(max-width: 1200px) 32vw, 470px" />
+          <img src={discoveryArt} alt="" width="1112" height="1414" decoding="async" fetchPriority="low" />
         </picture>
         <div className="user-auth-explore-strip" aria-label="Descubre XAMUKO a tu manera">
           <span><PinIcon />Explora tu ciudad</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>Busca lo que necesitas</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m5 3 4 4-2 3a16 16 0 0 0 7 7l3-2 4 4-3 3C9 22 2 15 2 6l3-3Z"/></svg>Contacta directamente</span>
@@ -154,7 +162,7 @@ export default function Register() {
         <div className="user-auth-card">
           <div className="user-auth-mode-tabs" role="group" aria-label="Acceso a tu cuenta"><span className="user-auth-current-mode">{registration ? "Registrarme" : "Iniciar sesión"}</span><button className="register-mode-switch user-auth-mode-switch" type="button" aria-label={registration ? "¿Ya tienes una cuenta? Inicia sesión" : "¿No tienes una cuenta? Crear cuenta"} onClick={() => { setMode(registration ? "login" : "register"); setMessage(""); }}>{registration ? "Iniciar sesión" : "Registrarme"}</button></div>
           <div className="user-auth-heading">
-            <h2>{registration ? "Crea tu cuenta en XAMUKO" : "Inicia sesión en tu cuenta"}</h2>
+            <h1>{registration ? "Crea tu cuenta en XAMUKO" : "Inicia sesión en tu cuenta"}</h1>
             <p>{registration ? "Descubre negocios, productos y servicios en tu ciudad." : "Descubre negocios, productos y servicios en tu ciudad."}</p>
           </div>
           {message && <p className="register-status" role="alert">{message}</p>}

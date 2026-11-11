@@ -11,4 +11,9 @@ declare module "*.svg" {
   export default source;
 }
 
+declare module "*.webp" {
+  const source: string;
+  export default source;
+}
+
 interface ImportMeta { readonly env: Record<string, string | undefined>; }
