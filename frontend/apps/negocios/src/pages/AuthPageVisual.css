@@ -1,7 +1,7 @@
 /* Scoped to Business login/register; shared recovery and dashboard styles stay intact. */
 .auth-page.business-auth-page {
   --auth-blue: #2563EB;
-  --auth-violet: #7B3FFB;
+  --auth-violet: #7B3FFB; /* secondary brand accent only */
   --auth-paper: #F8FAFC;
   --auth-ink: #0F172A;
   position: relative;
@@ -21,7 +21,7 @@
 }
 .business-auth-page::after {
   left: 0; right: 0; bottom: 0; height: 130px;
-  background: radial-gradient(ellipse at 72% 120%, #7b3ffb, transparent 65%);
+  background: radial-gradient(ellipse at 72% 120%, #2563eb, transparent 65%);
   border-bottom: 5px solid #32c5ff;
 }
 .business-auth-page .auth-layout {
@@ -135,3 +135,9 @@
 }
 @media (prefers-reduced-motion: reduce) { .business-auth-page :is(a, button, input) { transition: none; } }
 @media (forced-colors: active) { .business-auth-page .business-auth-current-mode, .business-auth-page .auth-submit { border: 1px solid ButtonText; } }
+
+/* Business brand hierarchy: blue for primary interactions, violet only secondary. */
+.business-auth-page .auth-form-heading h1{color:#0f172a}
+.business-auth-page .business-auth-mode-tabs .auth-mode-switch:hover{color:#1d4ed8;background:#dbeafe}
+.business-auth-page .auth-legal-check a:hover,.business-auth-page .auth-forgot:hover{color:#1e40af}
+.business-auth-page .auth-form input[type="checkbox"],.business-auth-page input[type="radio"]{accent-color:#2563eb}
