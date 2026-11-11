@@ -175,3 +175,22 @@
  .business-legal-registration .legal-document-heading h2{font-size:28px}
  .business-legal-registration .legal-section{scroll-margin-top:84px;padding:22px 0}
 }
+
+/* Business identity: blue is the primary accent on legal documents.
+   Usuarios retains its independent violet palette. */
+.legal-page.business-legal-registration .legal-sidebar{border-left-color:#2563eb}
+.legal-page.business-legal-registration .legal-eyebrow,
+.legal-page.business-legal-registration .legal-document-heading h2,
+.legal-page.business-legal-registration .legal-section h3,
+.legal-page.business-legal-registration .legal-back-top{color:#2563eb}
+.legal-page.business-legal-registration .legal-back-top{border-color:#bfdbfe;box-shadow:0 5px 14px rgba(37,99,235,.08)}
+.legal-page.business-legal-registration .legal-back-top:hover,
+.legal-page.business-legal-registration .legal-back-top:focus-visible{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8}
+.legal-page.business-legal-registration .legal-sidebar nav a.active,
+.legal-page.business-legal-registration .legal-sidebar nav a:hover,
+.legal-page.business-legal-registration .legal-sidebar nav a:focus-visible{background:#eff6ff;color:#2563eb}
+.legal-page.business-legal-registration .legal-document{border-color:rgba(37,99,235,.18);box-shadow:0 20px 58px rgba(15,23,42,.08),0 2px 7px rgba(37,99,235,.05)}
+.legal-page.business-legal-registration .legal-toc{border-color:#bfdbfe;background:linear-gradient(135deg,#fff 0%,#f0f6ff 76%,#f8fafc 100%)}
+.legal-page.business-legal-registration .legal-toc a{color:#2563eb}
+.legal-page.business-legal-registration .legal-toc a:hover,
+.legal-page.business-legal-registration .legal-toc a:focus-visible{color:#1d4ed8}
