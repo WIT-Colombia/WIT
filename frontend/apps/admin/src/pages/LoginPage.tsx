@@ -1,6 +1,9 @@
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useState, type FormEvent } from 'react';
-import xamukoLogo from '../assets/xamuko-logo.png';
+import xamukoLogo from '../assets/xamuko-logo.webp';
+import xamukoLogo320 from '../assets/xamuko-logo-320.webp';
+import xamukoLogo640 from '../assets/xamuko-logo-640.webp';
+import xamukoLogo960 from '../assets/xamuko-logo-960.webp';
 import adminIllustration from '../assets/auth-admin-dashboard.svg';
 import { Icon } from '../components/Icon';
 import { authenticateWithPassword, getSession } from '../services/adminService';
@@ -46,7 +49,7 @@ export function LoginPage() {
     <div className="admin-access-layout">
     <section className="admin-access-story" aria-labelledby="admin-access-title">
       <div className="admin-access-brand">
-        <img src={xamukoLogo} alt="XAMUKO" width="2170" height="725" />
+        <img src={xamukoLogo} srcSet={`${xamukoLogo320} 320w, ${xamukoLogo640} 640w, ${xamukoLogo960} 960w, ${xamukoLogo} 2170w`} sizes="(max-width: 760px) 205px, (max-width: 1100px) 240px, 300px" alt="XAMUKO" width="2170" height="725" />
         <p>Lo que necesitas, está más cerca.</p>
       </div>
       <div className="admin-access-copy">

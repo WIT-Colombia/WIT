@@ -4,7 +4,10 @@ import { navigation, navigationGroups } from '../data/navigation';
 import { getSession, logout } from '../services/adminService';
 import { fetchOwnAvatar } from '../services/adminApiClient';
 import { Icon } from './Icon';
-import xamukoLogo from '../assets/xamuko-logo.png';
+import xamukoLogo from '../assets/xamuko-logo.webp';
+import xamukoLogo320 from '../assets/xamuko-logo-320.webp';
+import xamukoLogo640 from '../assets/xamuko-logo-640.webp';
+import xamukoLogo960 from '../assets/xamuko-logo-960.webp';
 
 export function Layout() {
   const location = useLocation(); const navigate = useNavigate(); const admin = getSession();
@@ -61,7 +64,7 @@ export function Layout() {
     <a className="skip-link" href="#main">Ir al contenido</a>
     {open && <button className="sidebar-backdrop" aria-label="Cerrar navegación" onClick={() => { setOpen(false); toggleRef.current?.focus(); }} />}
     <aside ref={sidebarRef} className={`admin-sidebar ${open ? 'is-open' : ''}`} aria-label="Navegación administrativa">
-      <div className="sidebar-brand"><Link to="/dashboard" className="brand" aria-label="XAMUKO Admin, ir al inicio"><span className="xa-brand-combo"><span className="xa-brand-logo"><img src={xamukoLogo} alt="XAMUKO" /></span><span className="xa-brand-subline"><small>Lo que necesitas, está más cerca</small><span className="xa-admin-tag">ADMIN</span></span></span></Link><button className="sidebar-close icon-button" aria-label="Cerrar menú" onClick={() => { setOpen(false); toggleRef.current?.focus(); }}><Icon name="close" /></button></div>
+      <div className="sidebar-brand"><Link to="/dashboard" className="brand" aria-label="XAMUKO Admin, ir al inicio"><span className="xa-brand-combo"><span className="xa-brand-logo"><img src={xamukoLogo} srcSet={`${xamukoLogo320} 320w, ${xamukoLogo640} 640w, ${xamukoLogo960} 960w, ${xamukoLogo} 2170w`} sizes="(max-width: 760px) 160px, 190px" alt="XAMUKO" /></span><span className="xa-brand-subline"><small>Lo que necesitas, está más cerca</small><span className="xa-admin-tag">ADMIN</span></span></span></Link><button className="sidebar-close icon-button" aria-label="Cerrar menú" onClick={() => { setOpen(false); toggleRef.current?.focus(); }}><Icon name="close" /></button></div>
       <nav aria-label="Menú principal" className="xa-navigation">{navigationGroups.map(group => group.id === 'inicio' ? <div className="xa-nav-section-items xa-nav-home" key={group.id}>{group.items.map(navItem)}</div> : <details className="xa-nav-section" key={group.id} open={expandedGroup === group.id}><summary onClick={event => { event.preventDefault(); setExpandedGroup(previous => previous === group.id ? null : group.id); }}><span>{group.label}</span><Icon name="chevron" size={15} /></summary><div className="xa-nav-section-items">{group.items.map(navItem)}</div></details>)}</nav>
       <div className="sidebar-footer"><div className="avatar">{avatar}</div><div><strong>{admin?.name || 'Administrador'}</strong><small>{admin?.role === 'SUPER_ADMIN' ? 'Administrador principal' : 'Administrador'}</small></div><button className="icon-button" aria-label="Cerrar sesión" onClick={() => setConfirmLogout(true)}><Icon name="logout" size={18} /></button></div>
     </aside>

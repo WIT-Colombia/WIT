@@ -3,7 +3,10 @@ import { useLocationContext } from "../context/LocationContext";
 import { useAuth } from "../context/AuthContext";
 import { useAccountAvatar } from "../hooks/useAccountAvatar";
 import { getNotifications, getProfile } from "../services/userDataService";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
+import xamukoLogo from "../assets/xamuko-wordmark.webp";
+import xamukoLogo320 from "../assets/xamuko-wordmark-320.webp";
+import xamukoLogo640 from "../assets/xamuko-wordmark-640.webp";
+import xamukoLogo960 from "../assets/xamuko-wordmark-960.webp";
 import { SearchBar } from "./SearchBar";
 import "./SiteHeader.css";
 
@@ -65,7 +68,7 @@ export function SiteHeader({ active, onProfile, onSearchChange }: { active?: Sit
   }
 
   return <header className="site-header">
-    <Link className="brand" to="/home" aria-label="XAMUKO, inicio"><img className="brand-logo" src={xamukoLogo} alt="XAMUKO · Descubre · Apoya · Disfruta" /></Link>
+    <Link className="brand" to="/home" aria-label="XAMUKO, inicio"><img className="brand-logo" src={xamukoLogo} srcSet={`${xamukoLogo320} 320w, ${xamukoLogo640} 640w, ${xamukoLogo960} 960w, ${xamukoLogo} 2170w`} sizes="(max-width: 760px) 150px, 190px" alt="XAMUKO · Descubre · Apoya · Disfruta" /></Link>
     <div className="site-header-search"><SearchBar inputId={isResultsPage ? "results-header-search" : "site-header-search"} hideSubmit initialValue={isResultsPage ? resultsQuery : ""} onSearch={handleSearchChange} onSubmitSearch={submitSearch} /></div>
     <nav className="desktop-nav" aria-label="Navegación principal">
       <Link className={active === "home" ? "active" : undefined} to="/home">Inicio</Link>

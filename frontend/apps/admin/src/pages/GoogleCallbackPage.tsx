@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import xamukoLogo from '../assets/xamuko-logo.png';
+import xamukoLogo from '../assets/xamuko-logo.webp';
+import xamukoLogo320 from '../assets/xamuko-logo-320.webp';
+import xamukoLogo640 from '../assets/xamuko-logo-640.webp';
+import xamukoLogo960 from '../assets/xamuko-logo-960.webp';
 import { authenticateWithPasskey, getSession } from '../services/adminService';
 import { AdminApiError } from '../services/adminApiClient';
 
@@ -71,7 +74,7 @@ export function GoogleCallbackPage() {
     <section className="admin-login-form-wrap">
       <div className="admin-login-form">
         <div className="admin-login-form-brand">
-          <img src={xamukoLogo} alt="XAMUKO" /><span>ADMIN</span>
+          <img src={xamukoLogo} srcSet={`${xamukoLogo320} 320w, ${xamukoLogo640} 640w, ${xamukoLogo960} 960w, ${xamukoLogo} 2170w`} sizes="(max-width: 760px) 160px, 190px" alt="XAMUKO" /><span>ADMIN</span>
         </div>
         <header>
           <h2>{providerError ? 'No se pudo acceder con Google' : 'Completa tu acceso seguro'}</h2>
