@@ -131,3 +131,50 @@ test('dashboard statistics only expose real aggregate counts to an authenticated
     assert.equal(Object.hasOwn(result, 'administrators'), false);
   } finally { await fixture.cleanup(); }
 });
+
+
+test('directorios Admin exigen sesion y exponen solo consultas paginadas autorizadas', async () => {
+  const routes = [
+    '/api/v1/admin/businesses?page=1&pageSize=2&status=active',
+    '/api/v1/admin/businesses?page=1&pageSize=2&status=review',
+    '/api/v1/admin/businesses?page=1&pageSize=2&status=inactive',
+    '/api/v1/admin/categories',
+    '/api/v1/admin/users?page=1',
+    '/api/v1/admin/content?page=1',
+  ];
+  for (const path of routes) {
+    const anonymous = await request(path);
+    assert.equal(anonymous.status, 401, `Ruta sin sesión: ${path}`);
+  }
+  const fixture = await createAdminFixture();
+  try {
+    const admin = await createAdminSession(fixture.userId);
+    const headers = { cookie: admin.cookie };
+    for (const path of routes) {
+      const response = await request(path, { headers });
+      assert.equal(response.status, 200, `Ruta con SUPER_ADMIN: ${path}`);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+      const payload = await response.json() as any;
+      if (path.includes('/businesses')) {
+        assert.ok(Array.isArray(payload.businesses));
+        assert.equal(typeof payload.pagination.total, 'number');
+      } else if (path.includes('/categories')) {
+        assert.ok(Array.isArray(payload.categories));
+      } else if (path.includes('/users')) {
+        assert.ok(Array.isArray(payload.users));
+        assert.equal(typeof payload.pagination.total, 'number');
+
+        assert.ok(payload.users.every((u: any) => !('passwordHash' in u) && !('authIdentities' in u)));
+      } else {
+        assert.ok(Array.isArray(payload.offers));
+        assert.equal(typeof payload.pagination.total, 'number');
+      }
+    }
+    const filteredUsers = await request(`/api/v1/admin/users?q=${encodeURIComponent(fixture.email)}&page=1`, { headers });
+    assert.equal(filteredUsers.status, 200);
+    const filteredPayload = await filteredUsers.json() as any;
+    assert.ok(filteredPayload.users.some((u: any) => u.id === fixture.userId));
+    const nonexistentBusiness = await request(`/api/v1/admin/businesses/${fixture.userId}`, { headers });
+    assert.equal(nonexistentBusiness.status, 404);
+  } finally { await fixture.cleanup(); }
+});
