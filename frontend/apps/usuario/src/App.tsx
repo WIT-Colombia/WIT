@@ -1,37 +1,41 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { useEffect, useRef, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import { useLocationContext } from "./context/LocationContext";
-import Home from "./pages/Home";
-import ManualLocation from "./pages/ManualLocation";
-import Location from "./pages/Location";
-import LocationMap from "./pages/LocationMap";
-import Results from "./pages/Results";
-import MapPage from "./pages/Map";
-import Filters from "./pages/Filters";
-import BusinessDetail from "./pages/BusinessDetail";
-import { BusinessProducts, BusinessServices } from "./pages/BusinessOffers";
-import { ProductDetail, ServiceDetail } from "./pages/OfferDetail";
-import SpecialPromotionDetail from "./pages/SpecialPromotionDetail";
-import Directions from "./pages/Directions";
-import NoResults from "./pages/NoResults";
-import RegisterNeed from "./pages/RegisterNeed";
-import Report from "./pages/Report";
-import Favorites from "./pages/Favorites";
-import Likes from "./pages/Likes";
-import Reviews from "./pages/Reviews";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import Notifications from "./pages/Notifications";
 import Register from "./pages/Register";
-import Legal from "./pages/Legal";
-import PasswordRecovery from "./pages/PasswordRecovery";
-import RecoverPassword from "./pages/RecoverPassword";
-import VerifyEmail from "./pages/VerifyEmail";
-import GoogleCallback from "./pages/GoogleCallback";
 import { RequireAccount } from "./components/RequireAccount";
 import { SiteFooter } from "./components/SiteFooter";
+import { PageMetadata } from "@wit/ui";
+import { getAuthPageMetadata, getPrivateAuthPageMetadata, metadataTags } from "@wit/utils";
+const Home = lazy(() => import("./pages/Home"));
+const ManualLocation = lazy(() => import("./pages/ManualLocation"));
+const Location = lazy(() => import("./pages/Location"));
+const LocationMap = lazy(() => import("./pages/LocationMap"));
+const Results = lazy(() => import("./pages/Results"));
+const MapPage = lazy(() => import("./pages/Map"));
+const Filters = lazy(() => import("./pages/Filters"));
+const BusinessDetail = lazy(() => import("./pages/BusinessDetail"));
+const BusinessProducts = lazy(() => import("./pages/BusinessOffers").then(module => ({ default: module.BusinessProducts })));
+const BusinessServices = lazy(() => import("./pages/BusinessOffers").then(module => ({ default: module.BusinessServices })));
+const ProductDetail = lazy(() => import("./pages/OfferDetail").then(module => ({ default: module.ProductDetail })));
+const ServiceDetail = lazy(() => import("./pages/OfferDetail").then(module => ({ default: module.ServiceDetail })));
+const SpecialPromotionDetail = lazy(() => import("./pages/SpecialPromotionDetail"));
+const Directions = lazy(() => import("./pages/Directions"));
+const NoResults = lazy(() => import("./pages/NoResults"));
+const RegisterNeed = lazy(() => import("./pages/RegisterNeed"));
+const Report = lazy(() => import("./pages/Report"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const Likes = lazy(() => import("./pages/Likes"));
+const Reviews = lazy(() => import("./pages/Reviews"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const Legal = lazy(() => import("./pages/Legal"));
+const PasswordRecovery = lazy(() => import("./pages/PasswordRecovery"));
+const RecoverPassword = lazy(() => import("./pages/RecoverPassword"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const GoogleCallback = lazy(() => import("./pages/GoogleCallback"));
 
 function ScrollToTop() {
   const location = useLocation();
@@ -110,8 +114,16 @@ function InitialLocationGate({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function PrivateAuthMetadata() {
+  const { pathname } = useLocation();
+  if (pathname === "/register" || /^\/(business|product|service)\/[^/]+\/?$/.test(pathname)) return null;
+  const fallback = getAuthPageMetadata("usuario", "login");
+  const metadata = getPrivateAuthPageMetadata("usuario", pathname) ?? { ...fallback, title: fallback.fallbackTitle, description: fallback.fallbackDescription, structuredData: {} };
+  return metadata ? <PageMetadata {...metadata} tags={metadataTags(metadata)} /> : null;
+}
+
 export default function App() {
-  return <InitialLocationGate><ScrollToTop /><Routes>
+  return <InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<main role="status" aria-live="polite" style={{ minHeight: "100svh", display: "grid", placeItems: "center" }}>Cargando página…</main>}><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Navigate to="/home" replace />} />
@@ -149,5 +161,5 @@ export default function App() {
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<Navigate to="/home" replace />} />
-  </Routes><StandaloneFooter /></InitialLocationGate>;
+  </Routes></Suspense><StandaloneFooter /></InitialLocationGate>;
 }

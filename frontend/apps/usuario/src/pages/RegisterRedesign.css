@@ -48,16 +48,16 @@
   margin: -3px 0 0; color: #23134c; font-size: 12px; font-weight: 600; line-height: 1.4;
 }
 .user-auth-page .user-auth-story-copy { position: relative; z-index: 2; margin-top: 30px; pointer-events: none; }
-.user-auth-page .user-auth-story h1 {
+.user-auth-page .user-auth-story h2 {
   position: relative; width: max-content; max-width: 100%; margin: 0;
   font-size: clamp(30px, 3.02vw, 48px); line-height: 1.09; letter-spacing: -1.45px;
   color: #fff; font-weight: 800; text-shadow: 0 2px 18px #0c124849;
 }
-.user-auth-page .user-auth-story h1 span {
+.user-auth-page .user-auth-story h2 span {
   display: inline-block; position: relative; font-size: 1.13em;
   color: #7B3FFB; background: linear-gradient(95deg, #7B3FFB, #22D3EE); background-clip: text; -webkit-text-fill-color: transparent;
 }
-.user-auth-page .user-auth-story h1 span::after {
+.user-auth-page .user-auth-story h2 span::after {
   content: ''; display: block; width: 91%; height: 5px; margin: 7px 0 11px;
   border-radius: 100% 40% 100% 40%; background: linear-gradient(90deg, #7B3FFB, #22D3EE); transform: rotate(-2deg);
 }
@@ -109,7 +109,7 @@
 .user-auth-page .user-auth-mode-tabs .user-auth-mode-switch { color: #24193b; background: transparent; cursor: pointer; }
 .user-auth-page .is-register .user-auth-current-mode { order: 1; }
 .user-auth-page .user-auth-heading { text-align: center; }
-.user-auth-page .user-auth-heading h2 { margin: 0 0 9px; font-size: clamp(24px, 2.35vw, 36px); line-height: 1.13; letter-spacing: -1px; font-weight: 800; color: #120a2b; }
+.user-auth-page .user-auth-heading h1 { margin: 0 0 9px; font-size: clamp(24px, 2.35vw, 36px); line-height: 1.13; letter-spacing: -1px; font-weight: 800; color: #120a2b; }
 .user-auth-page .user-auth-heading p { max-width: 360px; margin: 0 auto 24px; color: #49405e; font-size: 13px; line-height: 1.5; }
 .user-auth-page .user-auth-form { display: grid; gap: 13px; }
 .user-auth-page .user-auth-field { display: grid; gap: 6px; min-width: 0; color: #312545; font-size: 11px; font-weight: 650; }
@@ -172,7 +172,7 @@
   .user-auth-page .user-auth-layout { grid-template-columns: minmax(0, 1fr) minmax(350px, 1fr); padding-inline: 24px; gap: 18px; }
   .user-auth-page .user-auth-brand img { width: 200px; }
   .user-auth-page .user-auth-brand p { font-size: 10px; }
-  .user-auth-page .user-auth-story h1 { font-size: 29px; letter-spacing: -.9px; }
+  .user-auth-page .user-auth-story h2 { font-size: 29px; letter-spacing: -.9px; }
   .user-auth-page .user-auth-story-copy > p, .user-auth-page .user-auth-benefits { width: 90%; }
   .user-auth-page .user-auth-illustration { width: 64%; right: -6px; top: auto; bottom: -16px; transform: none; opacity: .9; }
   .user-auth-page .user-auth-story-copy { padding-bottom: 260px; }
@@ -192,7 +192,7 @@
   .user-auth-page .user-auth-story-copy, .user-auth-page .user-auth-illustration, .user-auth-page .user-auth-explore-strip { display: none; }
   .user-auth-page .user-auth-main { width: min(100%, 490px); margin: 0 auto; }
   .user-auth-page .user-auth-card { padding: 25px 22px 28px; border-radius: 25px; }
-  .user-auth-page .user-auth-heading h2 { font-size: 27px; }
+  .user-auth-page .user-auth-heading h1 { font-size: 27px; }
   .user-auth-page .user-auth-heading p { font-size: 12px; margin-bottom: 22px; }
   .user-auth-page .user-auth-mode-tabs { margin-bottom: 24px; }
   .user-auth-page .user-auth-field input { min-height: 48px; }
@@ -200,7 +200,7 @@
 @media (max-width: 380px) {
   .user-auth-page .user-auth-layout { padding-inline: 12px; }
   .user-auth-page .user-auth-card { padding: 23px 17px; }
-  .user-auth-page .user-auth-heading h2 { font-size: 25px; }
+  .user-auth-page .user-auth-heading h1 { font-size: 25px; }
   .user-auth-page .user-auth-current-mode, .user-auth-page .user-auth-mode-tabs .user-auth-mode-switch { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) { .user-auth-page :is(button, a, input) { transition: none; } }

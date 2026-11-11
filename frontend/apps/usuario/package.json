@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build --config vite.seo.config.ts",
     "typecheck": "tsc --noEmit",
     "test:location": "node --test tests/locationPersistence.test.mjs",
     "test": "vitest run",

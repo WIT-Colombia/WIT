@@ -34,8 +34,8 @@ function Brand({ footer = false }: { footer?: boolean }) {
 export function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selector, setSelector] = useState<"login" | "register" | null>(null);
-  const [hash, setHash] = useState(() => window.location.hash || "#inicio");
-  const [extraSection, setExtraSection] = useState(() => ["#planes", "#preguntas"].includes(window.location.hash) ? window.location.hash.slice(1) : "");
+  const [hash, setHash] = useState(() => (typeof window !== "undefined" ? window.location.hash : "") || "#inicio");
+  const [extraSection, setExtraSection] = useState(() => typeof window !== "undefined" && ["#planes", "#preguntas"].includes(window.location.hash) ? window.location.hash.slice(1) : "");
   const loginButton = useRef<HTMLButtonElement>(null);
   const registerButton = useRef<HTMLButtonElement>(null);
   const mobileButton = useRef<HTMLButtonElement>(null);

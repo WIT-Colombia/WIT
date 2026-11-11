@@ -1,11 +1,16 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { PageMetadata } from "@wit/ui";
+import { getAuthPageMetadata, metadataTags } from "@wit/utils";
 import { useBusinessStore } from "../services/businessStore";
 import { useBusinessAuth } from "../services/businessAuthContext";
 import { BusinessApiError } from "../services/businessApiClient";
 import { getRememberedEmail, resolveBusinessNext, startGoogleLogin } from "../services/businessAuthService";
 import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
+import xamukoLogo from "../assets/XAMUKO-V1-transparent.webp";
+import xamukoLogo320 from "../assets/XAMUKO-V1-transparent-320.webp";
+import xamukoLogo640 from "../assets/XAMUKO-V1-transparent-640.webp";
+import xamukoLogo960 from "../assets/XAMUKO-V1-transparent-960.webp";
 import businessIllustration from "../assets/auth-business-discovery.svg";
 import "./AuthPageVisual.css";
 
@@ -35,6 +40,7 @@ function BenefitIcon({ kind }: { kind: "shop" | "chart" | "content" | "pin" }) {
 
 export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const navigate = useNavigate();
+  const seo = getAuthPageMetadata("business", mode);
   const { account } = useBusinessStore();
   const { signIn, signUp } = useBusinessAuth();
   const register = mode === "register";
@@ -78,11 +84,12 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     startGoogleLogin({ returnTo: resolveBusinessNext(new URLSearchParams(window.location.search).get("next")), consent: register ? accepted : true, rememberMe });
   };
   return <main className="auth-page business-auth-page">
+    <PageMetadata {...seo} tags={metadataTags(seo)} />
     <div className={`auth-layout${register ? " is-register" : " is-login"}`}>
       <section className="auth-story" aria-label="Descubre XAMUKO Business">
-        <div className="auth-panel-brand"><img src={xamukoLogo} alt="XAMUKO" width="2170" height="725" /><p>Lo que necesitas, está más cerca.</p></div>
+        <div className="auth-panel-brand"><img src={xamukoLogo} srcSet={`${xamukoLogo320} 320w, ${xamukoLogo640} 640w, ${xamukoLogo960} 960w, ${xamukoLogo} 2170w`} sizes="(max-width: 760px) 205px, (max-width: 1100px) 200px, 240px" alt="XAMUKO" width="2170" height="725" /><p>Lo que necesitas, está más cerca.</p></div>
         <div className="business-auth-story-copy">
-          <h1>Haz que más personas<br />encuentren <span>tu negocio</span></h1>
+          <h2>Haz que más personas<br />encuentren <span>tu negocio</span></h2>
           <p>Gestiona tu presencia digital, aumenta tu visibilidad y conéctate con clientes cercanos en tu ciudad.</p>
           <ul className="auth-story-benefits">
             <li><span><BenefitIcon kind="shop" /></span><div><b>Crea y gestiona tu perfil comercial</b><small>Publica la información de tu negocio, productos y servicios.</small></div></li>
@@ -95,7 +102,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
       </section>
       <section className="auth-form-card" aria-label={register ? "Crear cuenta" : "Iniciar sesión"}>
         <div className="business-auth-mode-tabs" role="group" aria-label="Acceso a tu cuenta"><span className="business-auth-current-mode">{register ? "Registrarme" : "Iniciar sesión"}</span><button className="auth-mode-switch" type="button" aria-label={register ? "¿Ya tienes una cuenta? Iniciar sesión" : "¿No tienes una cuenta? Crear cuenta"} onClick={() => navigate(register ? "/login" : "/registro")}>{register ? "Iniciar sesión" : "Registrarme"}</button></div>
-        <div className="auth-form-heading"><h2>{register ? "Crea tu cuenta en XAMUKO Business" : "Inicia sesión en XAMUKO Business"}</h2><p>{register ? "Crea la cuenta del propietario y añade tus negocios después." : "Ingresa para administrar tu negocio."}</p></div>
+        <div className="auth-form-heading"><h1>{register ? "Crea tu cuenta en XAMUKO Business" : "Inicia sesión en XAMUKO Business"}</h1><p>{register ? "Crea la cuenta del propietario y añade tus negocios después." : "Ingresa para administrar tu negocio."}</p></div>
         <form onSubmit={submit} className="auth-form">
           {register && <label>Nombre completo<span className="business-auth-input-wrap"><FieldIcon kind="person"/><input value={name} onChange={event => setName(event.target.value)} required maxLength={60} autoComplete="name" placeholder="Tu nombre y apellido" /></span></label>}
           <label>Correo electrónico<span className="business-auth-input-wrap"><FieldIcon kind="mail"/><input type="email" value={email} onChange={event => setEmail(event.target.value)} required autoComplete="email" placeholder="tu@correo.com" /></span></label>

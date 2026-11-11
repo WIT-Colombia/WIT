@@ -44,9 +44,9 @@
 .business-auth-page .auth-panel-brand img { display: block; width: 240px; max-width: 100%; height: auto; object-fit: contain; filter: none; }
 .business-auth-page .auth-panel-brand p { margin: -3px 0 0; color: #23134c; font-size: 12px; font-weight: 600; line-height: 1.4; }
 .business-auth-page .business-auth-story-copy { position: relative; z-index: 2; margin-top: 30px; }
-.business-auth-page .auth-story h1 { display: block; max-width: 100%; margin: 0 0 18px; color: white; font-size: clamp(30px, 3.05vw, 49px); line-height: 1.09; letter-spacing: -1.35px; }
-.business-auth-page .auth-story h1 span { display: inline-block; color: #71e6ff; background: linear-gradient(90deg, #58adff, #63f5f3); background-clip: text; -webkit-text-fill-color: transparent; }
-.business-auth-page .auth-story h1 span::after { content: ''; display: block; width: 94%; height: 5px; margin-top: 7px; border-radius: 90% 50%; background: linear-gradient(90deg, #4cb7ff, #74ffed); }
+.business-auth-page .auth-story h2 { display: block; max-width: 100%; margin: 0 0 18px; color: white; font-size: clamp(30px, 3.05vw, 49px); line-height: 1.09; letter-spacing: -1.35px; }
+.business-auth-page .auth-story h2 span { display: inline-block; color: #71e6ff; background: linear-gradient(90deg, #58adff, #63f5f3); background-clip: text; -webkit-text-fill-color: transparent; }
+.business-auth-page .auth-story h2 span::after { content: ''; display: block; width: 94%; height: 5px; margin-top: 7px; border-radius: 90% 50%; background: linear-gradient(90deg, #4cb7ff, #74ffed); }
 .business-auth-page .business-auth-story-copy > p { width: 48%; max-width: 380px; margin: 0; color: #eef4ff; font-size: 14px; line-height: 1.55; }
 .business-auth-page .auth-story-benefits { display: grid; gap: 17px; width: 48%; max-width: 390px; margin: 23px 0 0; padding: 0; }
 .business-auth-page .auth-story-benefits li { display: flex; align-items: flex-start; gap: 12px; font-size: inherit; }
@@ -62,7 +62,7 @@
 .business-auth-page .business-auth-mode-tabs .auth-mode-switch { color: var(--auth-ink); background: transparent; }
 .business-auth-page .is-register .business-auth-current-mode { order: 1; }
 .business-auth-page .auth-form-heading { text-align: center; }
-.business-auth-page .auth-form-heading h2 { margin: 0 0 9px; color: var(--auth-ink); font-size: clamp(24px, 2.35vw, 36px); line-height: 1.13; letter-spacing: -1px; font-weight: 800; }
+.business-auth-page .auth-form-heading h1 { margin: 0 0 9px; color: var(--auth-ink); font-size: clamp(24px, 2.35vw, 36px); line-height: 1.13; letter-spacing: -1px; font-weight: 800; }
 .business-auth-page .auth-form-heading p { max-width: 360px; margin: 0 auto 24px; color: #475569; font-size: 13px; line-height: 1.5; }
 .business-auth-page .auth-form { display: grid; gap: 13px; }
 .business-auth-page .auth-form label { display: grid; min-width: 0; gap: 6px; color: #26334d; font-size: 11px; font-weight: 650; }
@@ -109,7 +109,7 @@
   .business-auth-page .auth-story { height: auto; min-height: 0; }
   .business-auth-page .auth-panel-brand img { width: 200px; }
   .business-auth-page .auth-panel-brand p { font-size: 10px; }
-  .business-auth-page .auth-story h1 { font-size: 30px; }
+  .business-auth-page .auth-story h2 { font-size: 30px; }
   .business-auth-page .business-auth-story-copy > p, .business-auth-page .auth-story-benefits { width: 100%; }
   .business-auth-page .business-auth-illustration { position: relative; width: 78%; right: auto; bottom: auto; margin: 14px -10px 0 auto; }
   .business-auth-page .auth-form-card { padding: 25px 22px; border-radius: 25px; }
@@ -122,7 +122,7 @@
   .business-auth-page .auth-panel-brand p { font-size: 11px; }
   .business-auth-page .business-auth-story-copy, .business-auth-page .business-auth-illustration { display: none; }
   .business-auth-page .auth-form-card { width: min(100%, 490px); padding: 25px 22px 28px; border-radius: 25px; }
-  .business-auth-page .auth-form-heading h2 { font-size: 27px; }
+  .business-auth-page .auth-form-heading h1 { font-size: 27px; }
   .business-auth-page .business-auth-mode-tabs { margin-bottom: 24px; }
   .business-auth-page .auth-form-heading p { font-size: 12px; margin-bottom: 22px; }
   .business-auth-page .auth-form input { min-height: 48px; }
@@ -131,7 +131,7 @@
 @media (max-width: 380px) {
   .business-auth-page .auth-layout { padding-inline: 12px; }
   .business-auth-page .auth-form-card { padding: 23px 17px; }
-  .business-auth-page .auth-form-heading h2 { font-size: 25px; }
+  .business-auth-page .auth-form-heading h1 { font-size: 25px; }
 }
 @media (prefers-reduced-motion: reduce) { .business-auth-page :is(a, button, input) { transition: none; } }
 @media (forced-colors: active) { .business-auth-page .business-auth-current-mode, .business-auth-page .auth-submit { border: 1px solid ButtonText; } }

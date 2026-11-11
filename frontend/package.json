@@ -7,6 +7,7 @@
     "packages/*"
   ],
   "scripts": {
+    "test:auth-seo": "node tests/auth-seo.test.mjs",
     "dev:usuario": "npm run dev --workspace=@wit/usuario",
     "dev:negocios": "npm run dev --workspace=@wit/negocios",
     "dev:admin": "npm run dev --workspace=@wit/admin",
