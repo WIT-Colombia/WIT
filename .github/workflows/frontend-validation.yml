@@ -60,6 +60,21 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+      - name: Install Chromium for Admin sidebar check
+        run: npx playwright install --with-deps chromium
+
+      - name: Check Admin sidebar in desktop and mobile browsers
+        run: node scripts/check-admin-sidebar.mjs
+
+      - name: Save Admin sidebar screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-admin-sidebar-${{ github.run_id }}
+          path: frontend/test-results/admin-sidebar/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Package isolated Pages previews (Usuario and Business only)
         if: github.event_name == 'pull_request'
         working-directory: frontend
