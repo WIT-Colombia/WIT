@@ -42,12 +42,9 @@ export default function RecoverPassword() {
   return <main className="recover-page">
     <SiteHeader active="home" />
     <div className="recover-layout">
+      <div className="recover-content">
+        <div className="recover-intro"><span>SEGURIDAD DE LA CUENTA</span><h1>Recupera tu contraseña</h1><p>Enviaremos un enlace al correo asociado a tu perfil.</p></div>
       <section className="recover-card auth-form-card">
-        <div className="auth-form-heading">
-          <span className="auth-kicker">SEGURIDAD DE LA CUENTA</span>
-          <h1>Recupera tu contraseña</h1>
-          <p>Enviaremos un enlace al correo asociado a tu perfil.</p>
-        </div>
         {sent ? <p className="recover-status auth-status" role="status">Te enviamos un enlace de recuperación a tu correo electrónico.</p> : <form onSubmit={submit} className="recover-form auth-form">
           <label>Correo electrónico<input type="email" value={email} readOnly aria-readonly="true" required autoComplete="email" className="recover-email-input" /></label>
           <button className="action-button auth-submit" type="submit" disabled={submitting}>{submitting ? "Enviando…" : "Enviar enlace de recuperación"}</button>
@@ -55,6 +52,7 @@ export default function RecoverPassword() {
         </form>}
         <Link className="recover-back recovery-switch" to="/settings">← Volver a ajustes</Link>
       </section>
+      </div>
     </div>
   </main>;
 }
