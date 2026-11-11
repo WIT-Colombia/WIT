@@ -12,7 +12,7 @@ test('keeps the approved verification design and the encoded link', () => {
   assert.match(message.html, /max-width:760px/);
   assert.match(message.html, /class="mail-body"/);
   assert.match(message.html, /background-image:linear-gradient\(180deg,#bf53ff 0%,#810bd1 47%,#5202a9 100%\)/);
-  assert.match(message.html, /https:\/\/xamuko\.com\/assets\/xamuko-logo\.png/);
+  assert.match(message.html, /https:\/\/xamuko\.com\/brand\/xamuko-lockup\.png/);
   assert.doesNotMatch(message.html, /WIT/);
 });
 
@@ -23,7 +23,7 @@ test('renders approved password reset art with a real one-use 15 minute link', (
   assert.match(message.html, /15 minutos/);
   assert.match(message.html, /ilustracion-candado\.png/);
   assert.match(message.html, /icono-reloj\.png/);
-  assert.match(message.html, /assets\/xamuko-logo\.png/);
+  assert.match(message.html, /brand\/xamuko-lockup\.png/);
   assert.match(message.html, /width:100%;max-width:760px/);
   assert.match(message.html, /@media only screen and \(max-width:660px\)/);
   assert.match(message.html, /Hola, <strong[^>]*>Mónica Cepeda<\/strong>/);
@@ -68,8 +68,9 @@ test('supports the Admin brand without leaking the old WIT identity', () => {
 
 test('renders the same approved decorative logo and safe HTTPS markup for verification', () => {
   const message = renderVerificationEmail({ to: 'person@example.test', token: 'token', baseUrl: 'https://usuario.example/verify-email', logoUrl: 'https://cdn.example/xamuko.png' });
-  assert.match(message.html, /src="https:\/\/xamuko\.com\/assets\/xamuko-logo\.png"/);
-  for (const asset of ['ilustracion-correo.png', 'icono-reloj.png', 'icono-sobre-blanco.png', 'pie-xamuko.png']) {
+  assert.match(message.html, /src="https:\/\/xamuko\.com\/brand\/xamuko-lockup\.png"/);
+  assert.match(message.html, /https:\/\/xamuko\.com\/brand\/xamuko-email-footer\.png/);
+  for (const asset of ['ilustracion-correo.png', 'icono-reloj.png', 'icono-sobre-blanco.png']) {
     assert.ok(message.html.includes('https://xamuko.com/assets/email/verify/' + asset));
   }
   assert.doesNotMatch(message.html, /\{\{(?:verification_url|nombre|app_name|asset_base_url)\}\}/);
@@ -82,7 +83,7 @@ test('welcome emails confirm verified activation and never ask for verification 
   assert.match(welcome.html, /ilustracion-correo\.png/);
   assert.match(welcome.html, /Tu correo está verificado y tu cuenta está activa/);
   assert.match(welcome.html, /Ya puedes iniciar sesión en XAMUKO/);
-  assert.match(welcome.html, /xamuko-logo\.png/);
+  assert.match(welcome.html, /xamuko-lockup\.png/);
   assert.doesNotMatch(welcome.html, /href="/);
   assert.match(welcome.text, /Tu correo está verificado y tu cuenta está activa/);
   assert.doesNotMatch(`${welcome.html} ${welcome.text}`, /verifica tu correo|verificar tu correo/i);
