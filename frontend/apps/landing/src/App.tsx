@@ -21,7 +21,7 @@ function Artwork({ viewBox, className = "" }: { viewBox: string; className?: str
   const isDevices = !className;
   return <svg className={className} viewBox={viewBox} preserveAspectRatio={className === "portrait" ? "xMidYMax slice" : "xMidYMid meet"} aria-hidden="true" focusable="false">
     {isDevices && <defs><clipPath id="devices-artwork-crop"><path d="M534 55h635v393H598L534 85Z"/></clipPath></defs>}
-    <image href={artwork} width="4096" height="4484" clipPath={isDevices ? "url(#devices-artwork-crop)" : undefined}/>
+    <image href={artwork} width="1169" height="1280" clipPath={isDevices ? "url(#devices-artwork-crop)" : undefined}/>
   </svg>;
 }
 function Brand({ footer = false }: { footer?: boolean }) {
