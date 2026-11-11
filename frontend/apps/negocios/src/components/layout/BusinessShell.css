@@ -1,5 +1,5 @@
 /* Shared Business frame. Page-specific layouts and existing breakpoints stay local. */
-.business-shell-workspace{display:flex;flex-direction:column;min-height:100vh;min-width:0;width:100%}
+.business-shell-workspace{display:flex;flex-direction:column;min-height:100vh;min-width:0;width:100%;background:#f8fafc;color:#0f172a}
 .business-app .business-shell-sidebar{z-index:120;display:flex;flex-direction:column;gap:0;overflow-y:auto;overflow-x:hidden;padding:20px 13px 16px;border:0;background:radial-gradient(ellipse at 105% 45%,#2563eb33,transparent 60%),radial-gradient(ellipse at 0 95%,#7b3ffb24,transparent 45%),#0f172a;color:#fff;scrollbar-width:thin;scrollbar-color:#334155 transparent}
 .business-app .sidebar-brand{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:54px;margin:0 7px 22px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .business-app .sidebar-brand-artwork{position:relative;display:block;width:172px;height:58px}
@@ -36,16 +36,16 @@
 .business-app .sidebar-account-link strong{display:block;overflow:hidden;color:#fff;font-size:11px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
 .business-app .sidebar-account-link small{display:block;margin-top:3px;color:#c8d5e8;font-size:10px}
 .business-app .sidebar-account-arrow{margin-left:auto;color:#fff;font-size:23px;font-weight:300}
-.business-desktop-header{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:56px;padding:0 28px;background:#f8fafc}
-.business-breadcrumb{display:flex;align-items:center;gap:16px;min-width:0;color:#526b98;font-size:12px}
-.business-breadcrumb>span:first-child{flex-shrink:0;color:#1845a5}
+.business-desktop-header{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:56px;padding:0 28px;background:#f8fafc;border-bottom:1px solid #dbeafe}
+.business-breadcrumb{display:flex;align-items:center;gap:16px;min-width:0;color:#64748b;font-size:12px}
+.business-breadcrumb>span:first-child{flex-shrink:0;color:#2563eb}
 .business-breadcrumb>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .business-desktop-header-actions{display:flex;align-items:center;flex-shrink:0;gap:20px}
-.business-desktop-notifications{position:relative;display:grid;place-items:center;width:32px;height:35px;color:#526b98;text-decoration:none}
+.business-desktop-notifications{position:relative;display:grid;place-items:center;width:32px;height:35px;color:#2563eb;text-decoration:none}
 .business-desktop-notifications .sidebar-icon{width:24px;height:24px}
 .business-desktop-notifications>span{position:absolute;top:0;right:-2px;display:grid;place-items:center;min-width:15px;height:15px;padding:0 3px;border:2px solid #f8fafc;border-radius:99px;background:#ef4444;color:#fff;font-size:8px;line-height:1}
 .desktop-business-wrap{position:relative}
-.desktop-business-trigger{display:flex;align-items:center;gap:10px;min-height:52px;max-width:285px;padding:4px 0;border:0;border-radius:8px;background:transparent;color:#526b98;text-align:left}
+.desktop-business-trigger{display:flex;align-items:center;gap:10px;min-height:52px;max-width:285px;padding:4px 0;border:0;border-radius:8px;background:transparent;color:#64748b;text-align:left}
 .desktop-business-avatar{position:relative;display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;overflow:hidden;border:1px solid #e2e8f0;border-radius:50%;background:#eff6ff;color:#2563eb}
 .desktop-business-avatar .business-selector-cover-fallback{position:absolute;inset:0;display:grid;place-items:center;width:100%;height:100%;color:#2563eb;font-size:16px;font-weight:650}
 .desktop-business-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -61,9 +61,9 @@
 .desktop-business-check{margin-left:auto;color:#2563eb;font-size:16px}
 .desktop-business-all{display:flex;align-items:center;gap:11px;min-height:45px;margin-top:3px;padding:10px;border-top:1px solid #e2e8f0;color:#2563eb;font-size:12px;font-weight:600;text-decoration:none}
 .desktop-business-all .sidebar-icon{width:40px;height:20px}
-.business-institutional-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin:auto 28px 0;padding:22px 0;border-top:1px solid #dce4f2;color:#64748b}
+.business-institutional-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin:auto 28px 0;padding:22px 0;border-top:1px solid #dbeafe;color:#64748b}
 .business-institutional-footer>div{display:flex;align-items:center;flex-wrap:wrap;gap:15px}
-.business-institutional-footer strong{color:#7b3ffb;font-size:21px;letter-spacing:-.04em}
+.business-institutional-footer strong{color:#2563eb;font-size:21px;letter-spacing:-.04em}
 .business-institutional-footer span,.business-institutional-footer small{font-size:11px;line-height:1.6}
 .business-shell-notice-overlay{position:fixed;inset:0;z-index:1600;display:grid;place-items:center;padding:20px;background:#0f172a73;backdrop-filter:blur(3px)}
 .business-shell-notice{width:min(100%,420px);padding:28px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;color:#0f172a;box-shadow:0 20px 60px #0f172a33}
@@ -82,7 +82,7 @@
 .business-app .body-layout>.sidebar,.business-desktop-header{display:none}
 .business-app .business-shell-workspace{padding-top:0}
 .business-institutional-footer{margin:0 20px 0;padding:22px 0 95px}
-.business-app .mobile-topbar{z-index:1400;background:#fff;border-bottom:1px solid #e2e8f0;box-shadow:0 3px 16px #0f172a08}
+.business-app .mobile-topbar{z-index:1400;background:#fff;border-bottom:1px solid #dbeafe;box-shadow:0 3px 16px #0f172a08}
 .business-app .mobile-menu-button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;width:40px;height:40px;padding:9px;border:0;border-radius:8px;background:transparent;color:#0f172a;box-shadow:none}
 .business-app .mobile-menu-button span{display:block;width:22px;height:2px;margin:0;border-radius:1px;background:currentColor}
 .business-app .mobile-menu-button:hover{background:#eff6ff;color:#2563eb}
@@ -95,9 +95,9 @@
 .business-app .mobile-business-option:hover,.business-app .mobile-business-option.selected{background:#eff6ff}
 .business-app .mobile-business-all{background:#fff;color:#2563eb}
 .business-app .mobile-business-all:hover{background:#eff6ff}
-.business-app .mobile-notification-button{color:#526b98}
+.business-app .mobile-notification-button{color:#2563eb}
 .business-app .mobile-topbar-dot{background:#ef4444!important;color:#fff!important;border-color:#fff!important;box-shadow:none!important}
-.business-app .mobile-nav{position:fixed;z-index:1300;right:0;bottom:0;left:0;width:100%;margin:0;transform:none;border:0;border-top:1px solid #e2e8f0;border-radius:0;background:#fff;box-shadow:0 -3px 18px #0f172a08}
+.business-app .mobile-nav{position:fixed;z-index:1300;right:0;bottom:0;left:0;width:100%;margin:0;transform:none;border:0;border-top:1px solid #dbeafe;border-radius:0;background:#fff;box-shadow:0 -3px 18px #0f172a08}
 .business-app .mobile-link.active{background:transparent!important;color:#2563eb!important}
 .business-mobile-menu-layer{position:fixed;z-index:1350;inset:72px 0 0;display:block}
 .business-mobile-scrim{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0f172a66;backdrop-filter:blur(2px)}
