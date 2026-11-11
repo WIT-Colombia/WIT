@@ -90,7 +90,6 @@
 .business-auth-page .auth-social-options { margin: 0; }
 .business-auth-page .auth-provider-button { min-height: 45px; border: 1px solid #cbd5e1; border-radius: 11px; color: var(--auth-ink); background: white; font-size: 13px; }
 .business-auth-page .auth-provider-button:hover { border-color: var(--auth-blue); background: #F8FAFC; }
-.business-auth-page .auth-preview-button { display: block; margin: 19px 0 0; color: #1d4ed8; font-size: 11px; }
 .business-auth-page :is(a, button, input):focus-visible { outline: 3px solid #2563eb; outline-offset: 4px; }
 @media (min-width: 1700px) {
   .business-auth-page .auth-layout { gap: 35px; padding-top: 55px; padding-bottom: 70px; }

@@ -110,7 +110,6 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
         {requiresVerification && <Link className="auth-forgot" to="/verify-email?pending=1" onClick={() => rememberPendingVerificationEmail(email)}>Reenviar correo de verificación</Link>}
         <div className="auth-divider"><span>o continúa con</span></div>
         <div className="auth-social-options">{providers.map(({ name: provider, Icon }) => <button key={provider} type="button" className="auth-provider-button" onClick={startGoogle}><Icon /><span>Continuar con {provider}</span></button>)}</div>
-        <Link className="auth-preview-button" to="/preview">Entrar en vista previa demo</Link>
       </section>
     </div>
   </main>;

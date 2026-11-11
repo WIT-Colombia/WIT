@@ -106,11 +106,11 @@ describe('Business: presentación conserva el acceso existente', () => {
     fireEvent.click(screen.getByRole('button', { name: '¿Ya tienes una cuenta? Iniciar sesión' }));
     expect(await screen.findByLabelText('Mantener mi sesión iniciada')).toBeInTheDocument();
   });
-  it('conserva los enlaces legales, recuperación y demo', async () => {
+  it('conserva los enlaces legales y recuperación, sin mostrar la vista previa demo', async () => {
     show();
     expect(screen.getByRole('link', { name: 'Términos y condiciones' })).toHaveAttribute('href', '/legal/terms?from=registro');
     expect(screen.getByRole('link', { name: 'Política de privacidad' })).toHaveAttribute('href', '/legal/privacy?from=registro');
-    expect(screen.getByRole('link', { name: 'Entrar en vista previa demo' })).toHaveAttribute('href', '/preview');
+    expect(screen.queryByRole('link', { name: 'Entrar en vista previa demo' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '¿Ya tienes una cuenta? Iniciar sesión' }));
     fireEvent.click(screen.getByRole('link', { name: '¿Olvidaste tu contraseña?' }));
     expect(await screen.findByText('Recuperación de contraseña')).toBeInTheDocument();
