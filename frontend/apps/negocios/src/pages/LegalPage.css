@@ -137,3 +137,41 @@
     border-radius: 14px;
   }
 }
+
+/* Registration legal pages use the same two-column presentation as Usuarios.
+   Scoped to registration so authenticated Business legal views remain intact. */
+.legal-page.business-legal-registration{background:#fff;color:#0f172a;padding:48px 24px 72px}
+.business-legal-registration .legal-layout{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,780px);align-items:start;column-gap:clamp(32px,6vw,88px);row-gap:18px;width:min(100%,1180px);max-width:1180px;margin:0 auto;padding:0}
+.business-legal-registration .legal-back-top{grid-column:1/-1;align-self:auto;display:inline-flex;align-items:center;gap:7px;width:max-content;min-height:36px;margin:0;padding:0 13px;border:1px solid #ddd4ff;border-radius:999px;background:#fff;color:#7b3ffb;font-size:11px;font-weight:700;line-height:1;text-decoration:none;box-shadow:0 5px 14px rgba(123,63,251,.08);transition:background .18s ease,transform .18s ease}
+.business-legal-registration .legal-back-top:hover,.business-legal-registration .legal-back-top:focus-visible{border-color:#c8b8ff;background:#f7f4ff;color:#6330db;text-decoration:none;transform:translateX(-1px)}
+.business-legal-registration .legal-sidebar{position:sticky;top:96px;min-width:0;padding:18px 0 0 20px;border-left:3px solid #7b3ffb}
+.business-legal-registration .legal-eyebrow{color:#7b3ffb;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.business-legal-registration .legal-sidebar h1{max-width:250px;margin:12px 0;color:#0f172a;font-size:clamp(28px,3.4vw,40px);line-height:1.08;letter-spacing:-1.4px}
+.business-legal-registration .legal-sidebar>p{max-width:240px;margin:0;color:#475569;font-size:13px;line-height:1.65}
+.business-legal-registration .legal-sidebar nav{display:grid;gap:5px;margin-top:30px;padding-top:16px;border-top:1px solid #e2e8f0}
+.business-legal-registration .legal-sidebar nav a{display:block;padding:10px 12px;border-radius:10px;color:#475569;font-size:11px;font-weight:700;text-decoration:none}
+.business-legal-registration .legal-sidebar nav a.active,.business-legal-registration .legal-sidebar nav a:hover,.business-legal-registration .legal-sidebar nav a:focus-visible{background:#f1ebff;color:#7b3ffb}
+.business-legal-registration .legal-document{box-sizing:border-box;width:100%;max-width:none;min-width:0;margin:0;padding:clamp(28px,4vw,48px);border:1px solid rgba(123,63,251,.18);border-radius:24px;background:#fff;box-shadow:0 20px 58px rgba(15,23,42,.08),0 2px 7px rgba(123,63,251,.05)}
+.business-legal-registration .legal-document-heading{padding-bottom:26px;border-bottom:1px solid #e2e8f0}
+.business-legal-registration .legal-document-heading h2{max-width:none;margin:0 0 8px;color:#7b3ffb;font-size:clamp(28px,3.2vw,38px);line-height:1.1;letter-spacing:-1.2px}
+.business-legal-registration .legal-document-heading p{margin:0;color:#64748b;font-size:11px}
+.business-legal-registration .legal-toc{display:grid;gap:4px;max-width:none;margin:26px 0 32px;padding:18px;border:1px solid #ddd2ff;border-radius:14px;background:linear-gradient(135deg,#fff 0%,#f8f5ff 76%,#f1fbff 100%)}
+.business-legal-registration .legal-toc strong{margin-bottom:7px;color:#0f172a;font-size:11px}
+.business-legal-registration .legal-toc a{color:#2563eb;font-size:11px;line-height:1.5;text-decoration:none}
+.business-legal-registration .legal-toc a:hover{text-decoration:underline;color:#7b3ffb}
+.business-legal-registration .legal-section{scroll-margin-top:100px;padding:26px 0;border-top:1px solid #e2e8f0}
+.business-legal-registration .legal-section h3{margin:0 0 11px;color:#7b3ffb;font-size:16px;letter-spacing:-.2px}
+.business-legal-registration .legal-section p{margin:0 0 12px;color:#0f172a;font-size:13px;line-height:1.8;overflow-wrap:anywhere}
+@media(max-width:800px){
+ .legal-page.business-legal-registration{padding:28px 16px 44px}
+ .business-legal-registration .legal-layout{display:block;width:100%;padding:0}
+ .business-legal-registration .legal-back-top{margin-bottom:18px}
+ .business-legal-registration .legal-sidebar{position:static;padding:0 0 0 14px}
+ .business-legal-registration .legal-sidebar h1{max-width:none;font-size:30px}
+ .business-legal-registration .legal-sidebar>p{max-width:none}
+ .business-legal-registration .legal-sidebar nav{display:flex;gap:5px;margin-top:20px;padding:10px 0;overflow-x:auto}
+ .business-legal-registration .legal-sidebar nav a{flex:0 0 auto;white-space:nowrap}
+ .business-legal-registration .legal-document{margin-top:14px;padding:24px 20px 30px;border-radius:20px}
+ .business-legal-registration .legal-document-heading h2{font-size:28px}
+ .business-legal-registration .legal-section{scroll-margin-top:84px;padding:22px 0}
+}
