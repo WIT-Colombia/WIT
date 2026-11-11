@@ -6,8 +6,9 @@ import { validateEmail } from "../services/emailValidation";
 import { getRememberedEmail, startGoogleLogin, isBusinessReferralRegistrationAvailable, validateBusinessReferralCode } from "../services/authService";
 import { isValidBusinessReferralCode } from "../utils/businessReferralCode";
 import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
-import authReference from "../assets/auth-reference-users2.avif";
+import xamukoLogo from "../assets/xamuko-wordmark.png";
+import discoveryArt from "../assets/auth-discovery-1112.webp";
+import discoveryArtSmall from "../assets/auth-discovery-600.webp";
 import "./Register.css";
 import "./RegisterEnhancements.css";
 import "./RegisterAlert.css";
@@ -126,32 +127,37 @@ export default function Register() {
   return <main className="register-page user-auth-page">
     <div className={`user-auth-layout${registration ? " is-register" : " is-login"}`}>
       <section className="user-auth-story" aria-label="Descubre XAMUKO">
-        <div className="user-auth-reference-art" aria-hidden="true" style={{ backgroundImage: `url(${authReference})` }} />
-        <div className="user-auth-brand"><img src={xamukoLogo} alt="XAMUKO" /></div>
+        <div className="user-auth-brand">
+          <img src={xamukoLogo} alt="XAMUKO" width="2170" height="725" />
+          <p>Lo que necesitas, está más cerca.</p>
+        </div>
         <div className="user-auth-story-copy">
-          <h1>{registration ? <>Tu ciudad<br/>tiene <span>más</span><br/><span>de lo que imaginas.</span></> : <>Encuentra<br/>lo que necesitas,<br/><span>más cerca.</span></>}</h1>
-          <p>{registration ? "Crea tu cuenta y empieza a descubrir todo lo que tienes cerca." : "Descubre negocios, productos y servicios en tu ciudad."}</p>
+          <h1>Encuentra negocios,<br />productos y servicios<br /><span>cerca de ti</span></h1>
+          <p>Explora tu ciudad, descubre lo que ofrecen los establecimientos y contacta directamente con ellos.</p>
           <ul className="user-auth-benefits">
-            {(registration ? ["Explora negocios en tu zona.", "Guarda tus favoritos y recibe recomendaciones.", "Comparte tu experiencia y apoya lo local."] : ["Explora negocios cerca de ti.", "Guarda tus favoritos y comparte.", "Apoya los negocios locales de tu ciudad."]).map((item, index) => <li key={item}><span aria-hidden="true">{[<PinIcon key="pin"/>, "♥", "★"][index]}</span><small>{item}</small></li>)}
+            <li><span aria-hidden="true"><PinIcon /></span><div><b>Descubre negocios cercanos</b><small>Explora establecimientos en tu ubicación o en tu ciudad.</small></div></li>
+            <li><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="4" y="7" width="16" height="14" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg></span><div><b>Encuentra productos y servicios</b><small>Utiliza la búsqueda, las categorías y los filtros para encontrar lo que necesitas.</small></div></li>
+            <li><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 10h18L19 3H5l-2 7Zm2 0v11h14V10M9 21v-7h6v7M8 3l-1 7m9-7 1 7"/><path d="M3 10c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0"/></svg></span><div><b>Conoce cada negocio</b><small>Consulta información comercial, horarios, ubicación y medios de contacto disponibles.</small></div></li>
+            <li><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="m12 21-8.5-9a5.5 5.5 0 0 1 8.5-7 5.5 5.5 0 0 1 8.5 7L12 21Z"/></svg></span><div><b>Guarda tus favoritos</b><small>Conserva los negocios de tu interés.</small></div></li>
           </ul>
         </div>
-        <div className="user-auth-tagline">{registration ? <><span className="user-auth-tagline-default">Descubre · Apoya · Disfruta</span><span className="user-auth-tagline-tablet">Lo que necesitas,<br/>está más cerca.</span></> : <>Lo que necesitas,<br/>está más cerca.</>}</div>
+        <picture className="user-auth-illustration" aria-hidden="true">
+          <source type="image/webp" srcSet={`${discoveryArtSmall} 600w, ${discoveryArt} 1112w`} sizes="(max-width: 760px) 1px, (max-width: 1200px) 32vw, 470px" />
+          <img src={discoveryArt} alt="" width="1112" height="1414" decoding="async" fetchPriority="high" />
+        </picture>
+        <div className="user-auth-explore-strip" aria-label="Descubre XAMUKO a tu manera">
+          <span><PinIcon />Explora tu ciudad</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg>Busca lo que necesitas</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m5 3 4 4-2 3a16 16 0 0 0 7 7l3-2 4 4-3 3C9 22 2 15 2 6l3-3Z"/></svg>Contacta directamente</span>
+        </div>
       </section>
 
       <section className="user-auth-main" aria-label={registration ? "Crear cuenta" : "Iniciar sesión"}>
         <div className="user-auth-card">
-          <div className="user-auth-mobile-brand"><img src={xamukoLogo} alt="XAMUKO" /></div>
+          <div className="user-auth-mode-tabs" role="group" aria-label="Acceso a tu cuenta"><span className="user-auth-current-mode">{registration ? "Registrarme" : "Iniciar sesión"}</span><button className="register-mode-switch user-auth-mode-switch" type="button" aria-label={registration ? "¿Ya tienes una cuenta? Inicia sesión" : "¿No tienes una cuenta? Crear cuenta"} onClick={() => { setMode(registration ? "login" : "register"); setMessage(""); }}>{registration ? "Iniciar sesión" : "Registrarme"}</button></div>
           <div className="user-auth-heading">
-            <h2>{registration ? "Crea tu cuenta en XAMUKO" : "Inicia sesión en XAMUKO"}</h2>
+            <h2>{registration ? "Crea tu cuenta en XAMUKO" : "Inicia sesión en tu cuenta"}</h2>
             <p>{registration ? "Descubre negocios, productos y servicios en tu ciudad." : "Descubre negocios, productos y servicios en tu ciudad."}</p>
           </div>
           {message && <p className="register-status" role="alert">{message}</p>}
-          <div className="register-social-options">
-            <button type="button" className="register-provider-button" onClick={async () => { if (registration && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; } if (registration && (referralError || referralChecking)) { setMessage("Espera a que validemos el código de referido."); return; } if (registration && referralCode.trim() && !(await isBusinessReferralRegistrationAvailable())) { setMessage("El registro con referidos aún no está disponible en el servidor. Puedes esperar a que lo activemos o borrar el código para crear tu cuenta sin referido."); return; } startGoogleLogin({ returnTo, consent: registration ? accepted : true, rememberMe, referralCode: registration ? referralCode.trim() || undefined : undefined }); }}>
-              <GoogleIcon/><span>Continuar con Google</span>
-            </button>
-          </div>
-          <div className="register-divider"><span>o con tu correo</span></div>
           <form className="user-auth-form" onSubmit={submit} noValidate>
             {registration && <label className={`user-auth-field${nameError || fieldErrors.name ? " field-invalid" : ""}`}>
               Nombre completo
@@ -185,8 +191,14 @@ export default function Register() {
             <button className="register-submit" type="submit" disabled={submitDisabled}>{submitting ? "Procesando…" : registration ? "Crear mi cuenta" : "Iniciar sesión"}<span aria-hidden="true">→</span></button>
           </form>
           {!registration && <Link className="register-mode-switch register-forgot-link" to="/recover-password">¿Olvidaste tu contraseña?</Link>}
+          <div className="register-divider"><span>o continúa con</span></div>
+          <div className="register-social-options">
+            <button type="button" className="register-provider-button" onClick={async () => { if (registration && !accepted) { setMessage("Acepta los términos y la política de privacidad para continuar."); return; } if (registration && (referralError || referralChecking)) { setMessage("Espera a que validemos el código de referido."); return; } if (registration && referralCode.trim() && !(await isBusinessReferralRegistrationAvailable())) { setMessage("El registro con referidos aún no está disponible en el servidor. Puedes esperar a que lo activemos o borrar el código para crear tu cuenta sin referido."); return; } startGoogleLogin({ returnTo, consent: registration ? accepted : true, rememberMe, referralCode: registration ? referralCode.trim() || undefined : undefined }); }}>
+              <GoogleIcon/><span>Continuar con Google</span>
+            </button>
+          </div>
           {requiresVerification && <Link className="register-mode-switch" to="/verify-email?pending=1" onClick={() => rememberPendingVerificationEmail(email.trim())}>Reenviar correo de verificación</Link>}
-          <button className="register-mode-switch user-auth-mode-switch" type="button" onClick={() => { setMode(registration ? "login" : "register"); setMessage(""); }}>{registration ? "¿Ya tienes una cuenta? Inicia sesión" : "¿No tienes una cuenta? Crear cuenta"}</button>
+
         </div>
       </section>
     </div>
