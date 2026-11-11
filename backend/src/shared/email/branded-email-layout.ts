@@ -24,7 +24,7 @@ const ARTWORK: Record<BrandedEmailKind, string> = {
   security: BASE_URL + '/email/reset/ilustracion-candado.png',
 };
 const CLOCK_URL = BASE_URL + '/email/verify/icono-reloj.png';
-const LOGO_URL = BASE_URL + '/xamuko-logo.png';
+const LOGO_URL = 'https://xamuko.com/brand/xamuko-symbol.jpg';
 
 function escapeMarkup(text: string): string {
   return text.replace(/[&<>"']/g, character => {
@@ -58,7 +58,7 @@ export function renderBrandedEmailLayout(input: BrandedEmailLayout): string {
     '<style>',
     '@media only screen and (max-width:660px){',
     '.mail-shell{padding:12px 8px!important}.mail-card{width:100%!important}',
-    '.mail-header{padding:18px 18px 8px!important}.brand-logo{width:204px!important}',
+    '.mail-header{padding:18px 18px 8px!important}.brand-logo{width:64px!important;height:64px!important}',
     '.mail-content{padding:12px 18px 22px!important}.mail-greeting{font-size:23px!important}',
     '.mail-art,.mail-copy{display:block!important;width:100%!important;box-sizing:border-box!important;text-align:center!important;padding:6px 0!important}',
     '.mail-art img{width:180px!important;margin:0 auto!important}.mail-divider{display:none!important}',
@@ -66,7 +66,7 @@ export function renderBrandedEmailLayout(input: BrandedEmailLayout): string {
     '.mail-button{font-size:17px!important}.mail-notice{padding:12px 10px!important}',
     '.mail-notice-icon{width:56px!important;padding-right:8px!important}.mail-notice-icon img{width:44px!important}',
     '.mail-notice-text{font-size:13px!important}.mail-footer{padding:16px!important}',
-    '.mail-footer-logo{width:145px!important}.mail-footer-tagline{font-size:12px!important}',
+    '.mail-footer-logo{width:64px!important;height:64px!important}.mail-footer-tagline{font-size:12px!important}',
     '}',
     '</style></head>',
     '<body style="margin:0;padding:0;background:#f8f7fc;color:#10112d;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">',
@@ -77,7 +77,7 @@ export function renderBrandedEmailLayout(input: BrandedEmailLayout): string {
     '<tr><td style="padding:0;background:#fff;">',
     '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="width:100%;border-collapse:collapse;"><tr>',
     '<td class="mail-header" valign="middle" style="padding:24px 0 10px 38px;background:#fff;">',
-    '<img class="brand-logo" src="', logo, '" width="270" alt="XAMUKO · Descubre · Apoya · Disfruta" style="display:block;width:270px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;">',
+    '<img class="brand-logo" src="', logo, '" width="64" height="64" alt="XAMUKO" style="display:block;width:64px;height:64px;max-width:100%;object-fit:contain;border:0;outline:none;text-decoration:none;background:#fff;border-radius:10px;">',
     '</td>',
     '<td width="38%" height="105" bgcolor="#8b4af5" valign="top" style="width:38%;height:105px;background:#8b4af5;background-image:linear-gradient(135deg,#e5bdff 0%,#9850f5 55%,#4c85fa 100%);border-bottom-left-radius:100px;font-size:0;line-height:0;">&nbsp;</td>',
     '</tr></table></td></tr>',
@@ -107,7 +107,7 @@ export function renderBrandedEmailLayout(input: BrandedEmailLayout): string {
     '<tr><td class="mail-footer" style="padding:22px 34px 26px;">',
     '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;"><tr>',
     '<td align="center" width="45%" valign="middle" style="width:45%;padding:0 8px 0 0;">',
-    '<img class="mail-footer-logo" src="', logo, '" alt="XAMUKO" width="200" style="display:block;width:200px;max-width:100%;height:auto;border:0;">',
+    '<img class="mail-footer-logo" src="', logo, '" alt="XAMUKO" width="64" height="64" style="display:block;width:64px;height:64px;max-width:100%;object-fit:contain;border:0;background:#fff;border-radius:10px;">',
     '</td><td align="left" valign="middle" style="border-left:1px solid #c8bde9;padding:0 0 0 18px;">',
     '<span class="mail-footer-tagline" style="color:#283255;font-size:16px;line-height:1.35;">Lo que necesitas, está más cerca.</span>',
     '</td></tr></table>',

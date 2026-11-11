@@ -8,10 +8,6 @@ import { validateEmail } from "../services/emailValidation";
 import { getRememberedEmail, startGoogleLogin, isBusinessReferralRegistrationAvailable, validateBusinessReferralCode } from "../services/authService";
 import { isValidBusinessReferralCode } from "../utils/businessReferralCode";
 import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
-import xamukoLogo from "../assets/xamuko-wordmark.webp";
-import xamukoLogo320 from "../assets/xamuko-wordmark-320.webp";
-import xamukoLogo640 from "../assets/xamuko-wordmark-640.webp";
-import xamukoLogo960 from "../assets/xamuko-wordmark-960.webp";
 import discoveryArt from "../assets/auth-discovery-1112.webp";
 import discoveryArtSmall from "../assets/auth-discovery-600.webp";
 import "./Register.css";
@@ -135,7 +131,7 @@ export default function Register() {
     <div className={`user-auth-layout${registration ? " is-register" : " is-login"}`}>
       <section className="user-auth-story" aria-label="Descubre XAMUKO">
         <div className="user-auth-brand">
-          <img src={xamukoLogo} srcSet={`${xamukoLogo320} 320w, ${xamukoLogo640} 640w, ${xamukoLogo960} 960w, ${xamukoLogo} 2170w`} sizes="(max-width: 760px) 205px, (max-width: 1100px) 200px, 240px" alt="XAMUKO" width="2170" height="725" />
+          <img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" width="64" height="64" style={{ objectFit: "contain", background: "#fff", borderRadius: 10 }} />
           <p>Lo que necesitas, está más cerca.</p>
         </div>
         <div className="user-auth-story-copy">

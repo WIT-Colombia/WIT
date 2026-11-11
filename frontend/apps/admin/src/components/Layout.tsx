@@ -4,10 +4,6 @@ import { navigation, navigationGroups } from '../data/navigation';
 import { getSession, logout, restoreSession } from '../services/adminService';
 import { fetchOwnAvatar } from '../services/adminApiClient';
 import { Icon } from './Icon';
-import xamukoLogo from '../assets/xamuko-logo.webp';
-import xamukoLogo320 from '../assets/xamuko-logo-320.webp';
-import xamukoLogo640 from '../assets/xamuko-logo-640.webp';
-import xamukoLogo960 from '../assets/xamuko-logo-960.webp';
 
 const groupIcons: Record<string, string> = { plataforma: 'store', crecimiento: 'crown', finanzas: 'database', tecnologia: 'server', soporte: 'headphones', juridica: 'scales', configuracion: 'shield' };
 const sidebarIcons: Record<string, string> = { '/content': 'image', '/reports': 'chart', '/pioneers': 'award' };
@@ -135,7 +131,7 @@ export function Layout() {
     <a className="skip-link" href="#main">Ir al contenido</a>
     {open && mobile && <button className="sidebar-backdrop" aria-label="Cerrar navegación" tabIndex={-1} onClick={closeSidebar} />}
     <aside id="admin-navigation" ref={sidebarRef} className={`admin-sidebar ${open ? 'is-open' : ''}`} aria-label="Navegación administrativa" inert={(mobile && !open) || confirmLogout}>
-      <div className="sidebar-brand"><Link to="/dashboard" className="brand" aria-label="XAMUKO Admin, ir al inicio"><span className="xa-brand-combo"><span className="xa-brand-logo"><img src={xamukoLogo} srcSet={`${xamukoLogo320} 320w, ${xamukoLogo640} 640w, ${xamukoLogo960} 960w, ${xamukoLogo} 2170w`} sizes="160px" alt="XAMUKO" /></span><span className="xa-admin-tag">ADMIN</span></span></Link><button className="sidebar-close icon-button" aria-label="Cerrar menú" onClick={closeSidebar}><Icon name="close" /></button></div>
+      <div className="sidebar-brand"><Link to="/dashboard" className="brand" aria-label="XAMUKO Admin, ir al inicio"><span className="xa-brand-combo"><span className="xa-brand-logo" style={{ width: 48, height: 48, padding: 2, background: "#fff", borderRadius: 9, display: "grid", placeItems: "center" }}><img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" width="44" height="44" style={{ objectFit: "contain" }} /></span><span className="xa-admin-tag">ADMIN</span></span></Link><button className="sidebar-close icon-button" aria-label="Cerrar menú" onClick={closeSidebar}><Icon name="close" /></button></div>
       <nav aria-label="Menú principal" className="xa-navigation">{navigationGroups.map(group => group.id === 'inicio' ? <div className="xa-nav-section-items xa-nav-home" key={group.id}>{group.items.map(navItem)}</div> : <details className="xa-nav-section" key={group.id} open={expandedGroup === group.id}><summary aria-expanded={expandedGroup === group.id} aria-controls={`nav-${group.id}`} onClick={event => { event.preventDefault(); setExpandedGroup(previous => previous === group.id ? null : group.id); }}><span className="xa-group-icon"><Icon name={groupIcons[group.id]} size={20} /></span><span className="xa-group-label">{group.label}</span>{group.id === 'soporte' && group.items.every(item => item.pending) && <small className="nav-pending">Pendiente</small>}<span className="xa-group-chevron"><Icon name="chevron" size={13} /></span></summary><div id={`nav-${group.id}`} className="xa-nav-section-items">{group.items.map(navItem)}</div></details>)}</nav>
       <div className="sidebar-footer"><div className="avatar">{avatar}</div><div className="sidebar-profile-copy"><strong title={admin?.name}>{admin?.name}</strong><small>{admin?.role === 'SUPER_ADMIN' ? 'Administrador principal' : admin?.role === 'ADMIN' ? 'Administrador' : admin?.role}</small></div><button ref={logoutRef} className="icon-button" aria-label="Cerrar sesión" onClick={() => { setLogoutError(''); setConfirmLogout(true); }}><Icon name="logout" size={21} /></button></div>
     </aside>

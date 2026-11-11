@@ -58,7 +58,7 @@ export function renderVerificationEmail(input: TemplateInput, application: Email
           <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;">
             <tr>
               <td align="left" valign="middle" width="58%" style="width:58%;padding:18px 0 12px 30px;background:#ffffff;">
-                <img class="brand-header-logo" src="https://xamuko.com/assets/xamuko-logo.png" alt="XAMUKO · Descubre · Apoya · Disfruta" width="305" style="display:block;width:305px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;">
+                <img class="brand-header-logo" src="https://xamuko.com/brand/xamuko-symbol.jpg" alt="XAMUKO" width="64" height="64" style="display:block;width:64px;height:64px;max-width:100%;object-fit:contain;border:0;outline:none;text-decoration:none;background:#fff;border-radius:10px;">
               </td>
               <td valign="top" width="42%" height="110" bgcolor="#8b4af5" style="width:42%;height:110px;background-color:#8b4af5;background-image:linear-gradient(135deg,#e2bbfa 0%,#aa70fa 45%,#3885f7 100%);border-bottom-left-radius:110px;font-size:0;line-height:0;">&nbsp;</td>
             </tr>

@@ -7,10 +7,6 @@ import { useBusinessAuth } from "../services/businessAuthContext";
 import { BusinessApiError } from "../services/businessApiClient";
 import { getRememberedEmail, resolveBusinessNext, startGoogleLogin } from "../services/businessAuthService";
 import { clearPendingVerificationEmail, rememberPendingVerificationEmail } from "../services/pendingVerification";
-import xamukoLogo from "../assets/XAMUKO-V1-transparent.webp";
-import xamukoLogo320 from "../assets/XAMUKO-V1-transparent-320.webp";
-import xamukoLogo640 from "../assets/XAMUKO-V1-transparent-640.webp";
-import xamukoLogo960 from "../assets/XAMUKO-V1-transparent-960.webp";
 import businessIllustration from "../assets/auth-business-discovery.svg";
 import "./AuthPageVisual.css";
 
@@ -87,7 +83,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     <PageMetadata {...seo} tags={metadataTags(seo)} />
     <div className={`auth-layout${register ? " is-register" : " is-login"}`}>
       <section className="auth-story" aria-label="Descubre XAMUKO Business">
-        <div className="auth-panel-brand"><img src={xamukoLogo} srcSet={`${xamukoLogo320} 320w, ${xamukoLogo640} 640w, ${xamukoLogo960} 960w, ${xamukoLogo} 2170w`} sizes="(max-width: 760px) 205px, (max-width: 1100px) 200px, 240px" alt="XAMUKO" width="2170" height="725" /><p>Lo que necesitas, está más cerca.</p></div>
+        <div className="auth-panel-brand"><img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" width="64" height="64" style={{ objectFit: "contain", background: "#fff", borderRadius: 10 }} /><p>Lo que necesitas, está más cerca.</p></div>
         <div className="business-auth-story-copy">
           <h2>Haz que más personas<br />encuentren <span>tu negocio</span></h2>
           <p>Gestiona tu presencia digital, aumenta tu visibilidad y conéctate con clientes cercanos en tu ciudad.</p>
