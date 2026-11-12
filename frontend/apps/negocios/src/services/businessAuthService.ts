@@ -139,13 +139,13 @@ export async function isVerifiedFirstRegistrationAvailable(): Promise<boolean> {
   }
 }
 
-export async function register(name: string, email: string, password: string): Promise<PendingBusinessRegistration> {
+export async function register(name: string, email: string, password: string, referralCode?: string): Promise<PendingBusinessRegistration> {
   if (!(await isVerifiedFirstRegistrationAvailable())) {
     throw new BusinessApiError(503, "REGISTRATION_UPGRADE_PENDING", "Estamos actualizando el registro seguro por correo. Intenta nuevamente más tarde.");
   }
   const result = await requestJson<RegisterResponse>("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify({ name, email, password, ...(referralCode?.trim() ? { referralCode: referralCode.trim().toUpperCase() } : {}) }),
   });
   return result.pending;
 }
@@ -293,4 +293,20 @@ export function clearAccessToken(): void {
   sessionRevision += 1;
   accessToken = null;
   sessionState = { status: "unauthenticated" };
+}
+
+export async function validateBusinessReferralCode(code: string, signal?: AbortSignal): Promise<boolean> {
+  const response = await fetch(buildApiUrl(`/api/v1/auth/referrals/validate?code=${encodeURIComponent(code)}`), { signal, cache: "no-store" });
+  if (!response.ok) throw new Error("No pudimos validar el código de referido.");
+  const result = await response.json() as { valid: boolean };
+  return result.valid === true;
+}
+
+export async function isBusinessReferralRegistrationAvailable(): Promise<boolean> {
+  try {
+    const response = await fetch(buildApiUrl("/api/v1/auth/referrals/availability"), { credentials: "include", headers: { Accept: "application/json" }, cache: "no-store" });
+    if (!response.ok) return false;
+    const result = await response.json() as { enabled?: boolean };
+    return result.enabled === true;
+  } catch { return false; }
 }
