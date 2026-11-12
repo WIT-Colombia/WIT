@@ -58,3 +58,14 @@
  .notifications-page .notification-copy b{font-size:12px}
  .notifications-page .notification-copy small{font-size:10px}
 }
+
+/* Database-backed collaboration invitation actions. */
+.notifications-page .notification-item.has-invitation{display:flex;flex-wrap:wrap;padding-bottom:12px}
+.notifications-page .notification-item.has-invitation .notification-main-action{flex:0 0 100%;width:100%}
+.notifications-page .notification-invitation-controls{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:0 50px 0 70px;font-size:11px;color:#475569}
+.notifications-page .notification-invitation-controls button{min-height:34px;padding:7px 13px;border:1px solid #7b3ffb;border-radius:9px;background:#7b3ffb;color:#fff;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.notifications-page .notification-invitation-controls button+button{background:#fff;color:#7b3ffb}
+.notifications-page .notification-invitation-controls button:disabled{opacity:.55;cursor:wait}
+.notifications-page .notification-invitation-status{padding:0 48px 12px 70px;font-size:11px;color:#64748b;font-weight:700}
+.notifications-page .notification-icon img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+@media(max-width:700px){.notifications-page .notification-invitation-controls{padding-left:60px;padding-right:16px}.notifications-page .notification-invitation-status{padding-left:60px}}
