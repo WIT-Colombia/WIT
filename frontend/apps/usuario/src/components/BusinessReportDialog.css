@@ -1,6 +1,9 @@
-.business-report-placement{display:flex;justify-content:flex-end;padding:16px 0 22px}
-.business-report-trigger{border:0;background:transparent;color:#64748b;font:inherit;font-size:12px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-.business-report-trigger:hover,.business-report-trigger:focus-visible{color:#7b3ffb}
+.business-report-placement{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 14px;margin:24px 0 10px;padding:20px 14px;border-top:1px solid #e9e5f3;text-align:center}
+.business-report-caption{color:#788197;font-size:12px;line-height:1.5}
+.business-report-trigger{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:8px 14px;border:1px solid #e2deee;border-radius:999px;background:#fff;color:#566078;font:inherit;font-size:12px;font-weight:650;text-decoration:none;cursor:pointer;transition:background .18s,border-color .18s,color .18s}
+.business-report-trigger span{font-size:16px;line-height:1}
+.business-report-trigger:disabled{opacity:.55;cursor:not-allowed}
+.business-report-trigger:not(:disabled):hover,.business-report-trigger:focus-visible{color:#6735dc;border-color:#cfc1ff;background:#f8f5ff;outline-offset:3px}
 .business-report-backdrop{position:fixed;inset:0;z-index:1500;display:grid;place-items:center;background:rgba(15,23,42,.6);padding:16px}
 .business-report-dialog{position:relative;width:min(100%,460px);max-height:calc(100dvh - 32px);overflow-y:auto;box-sizing:border-box;padding:28px;border-radius:18px;background:#fff;box-shadow:0 24px 80px rgba(15,23,42,.23);color:#0f172a}
 .business-report-dialog h2{margin:0 32px 10px 0;font-size:22px}
