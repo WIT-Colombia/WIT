@@ -12,7 +12,7 @@ const activeGroupFor = (pathname: string) => navigationGroups.find(group => grou
 export function Layout() {
   const location = useLocation(); const navigate = useNavigate();
   const [admin, setAdmin] = useState(getSession);
-  const [open, setOpen] = useState(false); const [query, setQuery] = useState(''); const [confirmLogout, setConfirmLogout] = useState(false);
+  const [open, setOpen] = useState(false); const [confirmLogout, setConfirmLogout] = useState(false);
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [avatarVersion, setAvatarVersion] = useState(0);
   const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 900px)').matches);
@@ -24,7 +24,7 @@ export function Layout() {
   const sessionRefreshRef = useRef<ReturnType<typeof restoreSession> | null>(null);
   const verification = location.pathname.startsWith('/verifications');
   const businessesRoute = location.pathname === '/businesses';
-  useEffect(() => { setOpen(false); setQuery(''); }, [location.pathname, location.search]);
+  useEffect(() => { setOpen(false); }, [location.pathname, location.search]);
   useEffect(() => { setExpandedGroup(activeGroupFor(location.pathname)); }, [location.pathname]);
   useEffect(() => {
     const media = window.matchMedia('(max-width: 900px)');
@@ -121,7 +121,6 @@ export function Layout() {
     }
     catch { setLogoutError('No se pudo cerrar la sesión. Inténtalo de nuevo.'); setLoggingOut(false); }
   };
-  const results = query.trim() ? navigation.filter(item => item.label.toLocaleLowerCase('es').includes(query.trim().toLocaleLowerCase('es'))) : [];
   const avatar = avatarSrc ? <img src={avatarSrc} alt="" onError={() => setAvatarSrc(null)} /> : admin?.name?.split(' ').map(part => part[0]).slice(0, 2).join('') || 'A';
   const navItem = (item: typeof navigation[number]) => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={sidebarIcons[item.path] || item.icon} size={20} /><span>{item.label}</span>{item.pending && <small className="nav-pending">Pendiente</small>}</NavLink>;
   return <div className={`app-shell admin-refresh ${verification ? 'verification-preserved' : ''} ${businessesRoute ? 'businesses-layout' : ''}`}>
@@ -129,8 +128,7 @@ export function Layout() {
     {open && mobile && <button className="sidebar-backdrop" aria-label="Cerrar navegación" tabIndex={-1} onClick={closeSidebar} />}
     <aside id="admin-navigation" ref={sidebarRef} className={`admin-sidebar ${open ? 'is-open' : ''}`} aria-label="Navegación administrativa" inert={(mobile && !open) || confirmLogout}>
       <div className="sidebar-brand"><Link to="/dashboard" className="brand" aria-label="XAMUKO Admin, ir al inicio"><span className="xa-brand-combo"><span className="xa-brand-logo"><img src="/brand/xamuko-lockup.png" alt="XAMUKO · Descubre · Apoya · Disfruta" width="2170" height="725" /><img className="xa-brand-wordmark" src="/brand/xamuko-lockup.png" alt="" aria-hidden="true" width="2170" height="725" /></span><span className="xa-admin-tag">ADMIN</span></span></Link><button className="sidebar-close icon-button" aria-label="Cerrar menú" onClick={closeSidebar}><Icon name="close" /></button></div>
-      <div className="xa-sidebar-search"><Icon name="search" size={17} /><input aria-label="Buscar secciones de Admin" type="search" placeholder="Buscar secciones…" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === "Escape") setQuery(""); }} /></div>
-      <nav aria-label="Menú principal" className="xa-navigation">{query.trim() ? <div className="xa-sidebar-search-results"><small>Resultados de búsqueda</small>{results.length ? results.map(navItem) : <p>No encontramos una sección con ese nombre.</p>}</div> : navigationGroups.map(group => group.id === 'inicio' ? <div className="xa-nav-section-items xa-nav-home" key={group.id}>{group.items.map(navItem)}</div> : <details className="xa-nav-section" key={group.id} open={expandedGroup === group.id}><summary aria-expanded={expandedGroup === group.id} aria-controls={`nav-${group.id}`} onClick={event => { event.preventDefault(); setExpandedGroup(previous => previous === group.id ? null : group.id); }}><span className="xa-group-icon"><Icon name={groupIcons[group.id]} size={20} /></span><span className="xa-group-label">{group.label}</span>{group.id === 'soporte' && group.items.every(item => item.pending) && <small className="nav-pending">Pendiente</small>}<span className="xa-group-chevron"><Icon name="chevron" size={13} /></span></summary><div id={`nav-${group.id}`} className="xa-nav-section-items">{group.items.map(navItem)}</div></details>)}</nav>
+      <nav aria-label="Menú principal" className="xa-navigation">{navigationGroups.map(group => group.id === 'inicio' ? <div className="xa-nav-section-items xa-nav-home" key={group.id}>{group.items.map(navItem)}</div> : <details className="xa-nav-section" key={group.id} open={expandedGroup === group.id}><summary aria-expanded={expandedGroup === group.id} aria-controls={`nav-${group.id}`} onClick={event => { event.preventDefault(); setExpandedGroup(previous => previous === group.id ? null : group.id); }}><span className="xa-group-icon"><Icon name={groupIcons[group.id]} size={20} /></span><span className="xa-group-label">{group.label}</span>{group.id === 'soporte' && group.items.every(item => item.pending) && <small className="nav-pending">Pendiente</small>}<span className="xa-group-chevron"><Icon name="chevron" size={13} /></span></summary><div id={`nav-${group.id}`} className="xa-nav-section-items">{group.items.map(navItem)}</div></details>)}</nav>
       <div className="sidebar-footer"><div className="avatar">{avatar}</div><div className="sidebar-profile-copy"><strong title={admin?.name}>{admin?.name}</strong><small>{admin?.role === 'SUPER_ADMIN' ? 'Administrador principal' : admin?.role === 'ADMIN' ? 'Administrador' : admin?.role}</small></div><button ref={logoutRef} className="icon-button" aria-label="Cerrar sesión" onClick={() => { setLogoutError(''); setConfirmLogout(true); }}><Icon name="logout" size={21} /></button></div>
     </aside>
     <button ref={toggleRef} type="button" className="icon-button admin-mobile-toggle" aria-label="Abrir navegación" aria-controls="admin-navigation" aria-expanded={open} onClick={() => setOpen(true)}><Icon name="menu" size={24} /></button>
