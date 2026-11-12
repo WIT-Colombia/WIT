@@ -429,3 +429,10 @@
 .business-detail-page .business-header-tools .business-share-action:focus-visible{outline:3px solid #bda6ff;outline-offset:3px}
 .business-detail-page .business-header-tools .business-share-action:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:600px){.business-detail-page .business-header-tools .business-share-action{min-height:40px;padding:0 14px;font-size:12px}}
+
+/* Compartir: enlace secundario, sin apariencia de botón destacado */
+.business-detail-page .business-header-tools .business-share-action{min-height:40px;padding:4px 2px;border:0;border-radius:0;background:transparent;box-shadow:none;color:#665a86;font-size:12px;font-weight:650;gap:5px;transition:color .18s;text-decoration:none}
+.business-detail-page .business-header-tools .business-share-action span{font-size:15px}
+.business-detail-page .business-header-tools .business-share-action:not(:disabled):hover{transform:none;box-shadow:none;background:transparent;color:#7036df;text-decoration:underline;text-underline-offset:4px}
+.business-detail-page .business-header-tools .business-share-action:focus-visible{outline:2px solid #bda6ff;outline-offset:4px;border-radius:4px}
+@media(max-width:600px){.business-detail-page .business-header-tools .business-share-action{min-height:40px;padding:4px 2px;font-size:12px}}
