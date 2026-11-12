@@ -238,7 +238,7 @@ export default function BusinessDetail() {
   const cleanPublicUrl = getPublicBusinessUrl(id);
   async function share() { if (!cleanPublicUrl) { setMessage("No se pudo compartir el enlace."); setShareOpen(false); return; } const result = await shareLink(currentBusiness.name, `Descubre ${currentBusiness.name} en XAMUKO.`, cleanPublicUrl); setMessage(result === "copied" ? "Enlace copiado." : result === "unavailable" ? "No se pudo compartir el enlace." : ""); setShareOpen(false); }
   function startPopularDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (event.pointerType !== "mouse" || event.button !== 0) return;
     const list = popularListRef.current;
     if (!list) return;
     popularDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
@@ -246,7 +246,7 @@ export default function BusinessDetail() {
   function movePopularDrag(event: ReactPointerEvent<HTMLDivElement>) {
     const drag = popularDragRef.current;
     const list = popularListRef.current;
-    if (!drag || !list || drag.pointerId !== event.pointerId) return;
+    if (event.pointerType !== "mouse" || !drag || !list || drag.pointerId !== event.pointerId) return;
     const delta = event.clientX - drag.startX;
     const deltaY = event.clientY - drag.startY;
     if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
