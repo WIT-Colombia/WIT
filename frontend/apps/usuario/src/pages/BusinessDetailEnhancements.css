@@ -421,3 +421,11 @@
 /* Photo strips keep horizontal swipes without blocking vertical page scrolling. */
 .business-detail-gallery-strip,
 .business-gallery-thumbs { touch-action: pan-x pan-y; }
+
+/* Ficha pública: acción principal de compartir */
+.business-detail-page .business-header-tools .business-share-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:0 19px;border:1px solid #d8caff;border-radius:999px;background:linear-gradient(135deg,#f9f6ff,#f0eaff);color:#6735dc;font-size:13px;font-weight:750;box-shadow:0 5px 16px rgba(103,53,220,.09);cursor:pointer;transition:transform .18s,box-shadow .18s,background .18s}
+.business-detail-page .business-header-tools .business-share-action span{font-size:19px;line-height:1}
+.business-detail-page .business-header-tools .business-share-action:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(103,53,220,.15);background:#eee6ff}
+.business-detail-page .business-header-tools .business-share-action:focus-visible{outline:3px solid #bda6ff;outline-offset:3px}
+.business-detail-page .business-header-tools .business-share-action:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:600px){.business-detail-page .business-header-tools .business-share-action{min-height:40px;padding:0 14px;font-size:12px}}

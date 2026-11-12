@@ -54,7 +54,7 @@ export function BusinessReportDialog({ businessId, businessName, disabled = fals
   return <>
     <button type="button" ref={triggerRef} className="business-report-trigger" disabled={disabled} title={disabled ? "Disponible en la página pública del negocio" : "Enviar un reporte sobre este negocio"} onClick={() => {
       setReason("IMPERSONATION"); setDescription(""); setSubmitted(false); setError(""); setOpen(true);
-    }}>⚑ Reportar negocio</button>
+    }}><span aria-hidden="true">⚑</span> Reportar negocio</button>
     {open && <div className="business-report-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
       <section className="business-report-dialog" role="dialog" aria-modal="true" aria-labelledby="business-report-title" aria-describedby="business-report-intro">
         <button type="button" className="business-report-close" onClick={close} disabled={submitting} aria-label="Cerrar">×</button>
