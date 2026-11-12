@@ -221,3 +221,42 @@
     padding-top: calc(76px + env(safe-area-inset-top, 0px));
   }
 }
+
+
+/* Keep the existing dashboard activity-period control inside its own content. */
+.admin-refresh .xa-welcome-meta { flex-wrap: wrap; }
+.admin-refresh .xa-dashboard-month-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 3px 10px;
+  border: 1px solid #CBD5E1;
+  border-radius: 10px;
+  background: #FFFFFF;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 650;
+}
+.admin-refresh .xa-dashboard-month-filter input {
+  min-width: 0;
+  max-width: 140px;
+  border: 0;
+  background: transparent;
+  color: #0F172A;
+  font-size: 11px;
+}
+.admin-refresh .xa-dashboard-month-clear {
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: #F1F5F9;
+  color: #5B21B6;
+  font-size: 11px;
+  font-weight: 600;
+}
+.admin-refresh .xa-dashboard-month-clear:hover { background: #EDE9FE; }
+.admin-refresh .xa-dashboard-month-filter:focus-within { outline: 2px solid #7B3FFB; outline-offset: 2px; }
+@media (max-width: 620px) {
+  .admin-refresh .xa-dashboard-month-filter { min-height: 34px; }
+  .admin-refresh .xa-dashboard-month-filter input { max-width: 112px; font-size: 10px; }
+}
