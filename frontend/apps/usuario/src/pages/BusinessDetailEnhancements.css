@@ -436,3 +436,10 @@
 .business-detail-page .business-header-tools .business-share-action:not(:disabled):hover{transform:none;box-shadow:none;background:transparent;color:#7036df;text-decoration:underline;text-underline-offset:4px}
 .business-detail-page .business-header-tools .business-share-action:focus-visible{outline:2px solid #bda6ff;outline-offset:4px;border-radius:4px}
 @media(max-width:600px){.business-detail-page .business-header-tools .business-share-action{min-height:40px;padding:4px 2px;font-size:12px}}
+
+/* Mantener Compartir sin subrayado en hover, foco y pulsación */
+.business-detail-page .business-header-tools .business-share-action,
+.business-detail-page .business-header-tools .business-share-action:hover,
+.business-detail-page .business-header-tools .business-share-action:focus,
+.business-detail-page .business-header-tools .business-share-action:focus-visible,
+.business-detail-page .business-header-tools .business-share-action:active{ text-decoration:none; }
