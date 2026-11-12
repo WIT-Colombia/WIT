@@ -71,7 +71,7 @@ describe('Sidebar aprobado de Admin', () => {
     expect(document.querySelector('.xa-sidebar-search')).toBeNull();
     expect(sidebar().querySelector('a[href="/settings"]')).toBeNull();
     expect(sidebar().querySelector('.sidebar-footer a')).toBeNull();
-    expect(within(sidebar()).getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument();
+    expect(sidebar().querySelector('button[aria-label="Cerrar sesión"]')).not.toBeNull();
     const hamburger = screen.getByRole('button', { name: 'Abrir navegación' });
     expect(hamburger).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(hamburger);
