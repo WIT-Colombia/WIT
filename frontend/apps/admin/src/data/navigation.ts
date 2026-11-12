@@ -49,7 +49,6 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/parameters', label: 'Parámetros', icon: 'settings', group: 'configuracion', description: 'Parámetros pendientes de API.', pending: true },
     { path: '/administrators', label: 'Administradores y accesos', icon: 'users', group: 'configuracion', description: 'Consulta de cuentas y permisos administrativos.' },
     { path: '/audit', label: 'Auditoría', icon: 'shield', group: 'configuracion', description: 'Consulta de auditoría pendiente de API.', pending: true },
-    { path: '/settings', label: 'Mi perfil', icon: 'settings', group: 'configuracion', description: 'Perfil administrativo pendiente de conectar a la API.', pending: true },
   ] },
 ];
 
