@@ -8,7 +8,7 @@
   "theme_color": "#7B3FFB",
   "icons": [
     {
-      "src": "/brand/xamuko-icon.svg",
+      "src": "/brand/xamuko-icon.svg?v=20261112",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
