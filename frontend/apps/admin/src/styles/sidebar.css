@@ -196,52 +196,7 @@
 }
 
 
-/* Headerless Admin shell: navigation and search live in the sidebar. */
-.admin-refresh .xa-sidebar-search {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  flex: none;
-  min-height: 40px;
-  margin: 4px 8px 12px;
-  padding: 0 12px;
-  border: 1px solid #334155;
-  border-radius: 10px;
-  background: #1E293B;
-  color: #94A3B8;
-}
-.admin-refresh .xa-sidebar-search:focus-within {
-  border-color: #A78BFA;
-  box-shadow: 0 0 0 2px #7B3FFB44;
-}
-.admin-refresh .xa-sidebar-search input {
-  width: 100%;
-  min-width: 0;
-  padding: 9px 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #F8FAFC;
-  font-size: 12px;
-}
-.admin-refresh .xa-sidebar-search input::placeholder { color: #94A3B8; }
-.admin-refresh .xa-sidebar-search-results {
-  display: grid;
-  gap: 6px;
-  padding: 4px 8px 16px;
-}
-.admin-refresh .xa-sidebar-search-results small {
-  padding: 2px 8px 6px;
-  color: #CBD5E1;
-  font-size: 10px;
-  font-weight: 700;
-}
-.admin-refresh .xa-sidebar-search-results p {
-  padding: 10px 8px;
-  color: #CBD5E1;
-  font-size: 12px;
-  line-height: 1.5;
-}
+/* Headerless Admin shell: mobile navigation button without search or header. */
 .admin-refresh .admin-mobile-toggle { display: none; }
 @media (max-width: 900px) {
   .admin-refresh .admin-mobile-toggle {
