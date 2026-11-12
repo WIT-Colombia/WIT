@@ -15,7 +15,7 @@ type BusinessAuthContextValue = {
   state: BusinessSessionState;
   user: BusinessAuthUser | null;
   signIn: (email: string, password: string, rememberMe: boolean) => Promise<BusinessAuthUser>;
-  signUp: (name: string, email: string, password: string) => Promise<PendingBusinessRegistration>;
+  signUp: (name: string, email: string, password: string, referralCode?: string) => Promise<PendingBusinessRegistration>;
   signOut: () => Promise<void>;
   rememberedEmail: string;
   refresh: () => Promise<BusinessSessionState>;
@@ -84,7 +84,7 @@ export function BusinessAuthProvider({ children }: { children: ReactNode }) {
       setState({ status: "authenticated", user });
       return user;
     },
-    signUp: (name, email, password) => register(name, email, password),
+    signUp: (name, email, password, referralCode) => register(name, email, password, referralCode),
     signOut: async () => {
       await logout();
       setState({ status: "unauthenticated" });
