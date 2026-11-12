@@ -63,6 +63,22 @@ describe('Sidebar aprobado de Admin', () => {
     expect(document.querySelector('.xa-profile-link > svg')).toBeNull();
   });
 
+  it('no muestra header, búsqueda ni acceso al perfil y conserva la hamburguesa móvil', () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+    show('/users');
+    expect(document.querySelector('.admin-header')).toBeNull();
+    expect(document.querySelector('.global-search')).toBeNull();
+    expect(document.querySelector('.xa-sidebar-search')).toBeNull();
+    expect(sidebar().querySelector('a[href="/settings"]')).toBeNull();
+    expect(sidebar().querySelector('.sidebar-footer a')).toBeNull();
+    expect(within(sidebar()).getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument();
+    const hamburger = screen.getByRole('button', { name: 'Abrir navegación' });
+    expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(hamburger);
+    expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+    expect(sidebar()).toHaveClass('is-open');
+  });
+
   it('expande un solo grupo y permite contraerlo', () => {
     show();
     expect(group('plataforma')).toHaveAttribute('open');
