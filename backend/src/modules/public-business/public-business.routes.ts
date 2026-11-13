@@ -6,6 +6,7 @@ import { listPublicPromotionsController } from '../business/promotion.controller
 import {
   getPublicBusinessController,
   listPublicBusinessesController,
+  listPublicNewArrivalsController,
   listPublicOffersController,
   listPublicPhotosController,
   listPublicProductsController,
@@ -30,6 +31,7 @@ publicBusinessRouter.use(publicReadRateLimit);
 publicBusinessRouter.use(optionalAuth);
 publicBusinessRouter.get('/businesses', listPublicBusinessesController);
 publicBusinessRouter.get('/search', searchPublicUniversalController);
+publicBusinessRouter.get('/new-arrivals', listPublicNewArrivalsController);
 publicBusinessRouter.get('/businesses/:publicId/products', listPublicProductsController);
 publicBusinessRouter.get('/businesses/:publicId/services', listPublicServicesController);
 publicBusinessRouter.get('/businesses/:publicId/photos', listPublicPhotosController);

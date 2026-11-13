@@ -3,11 +3,13 @@ import {
   getPublicBusiness,
   getPublicPhotoContent,
   listPublicBusinesses,
+  listPublicNewArrivals,
   listPublicOffersForBusiness,
   listPublicPhotos,
   listPublicProducts,
   listPublicServices,
   parsePublicBusinessListInput,
+  parsePublicNewArrivalsInput,
   parseUniversalSearchInput,
   searchPublicUniversal,
 } from './public-business.service.js';
@@ -17,6 +19,9 @@ const viewer = (request: Parameters<RequestHandler>[0]) => ({ userId: (request a
 
 export const listPublicBusinessesController: RequestHandler = async (req, res, next) => {
   try { res.json(await listPublicBusinesses(parsePublicBusinessListInput(req.query), undefined, viewer(req))); } catch (error) { next(error); }
+};
+export const listPublicNewArrivalsController: RequestHandler = async (req, res, next) => {
+  try { res.json(await listPublicNewArrivals(parsePublicNewArrivalsInput(req.query), undefined, viewer(req))); } catch (error) { next(error); }
 };
 export const searchPublicUniversalController: RequestHandler = async (req, res, next) => {
   try { res.json(await searchPublicUniversal(parseUniversalSearchInput(req.query), undefined, viewer(req))); } catch (error) { next(error); }
