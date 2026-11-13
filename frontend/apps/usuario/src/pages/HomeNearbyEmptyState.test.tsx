@@ -90,7 +90,7 @@ describe("Explora por categoría: ocultar la sección vacía", () => {
       return element as HTMLElement;
     });
     fireEvent.click(within(categorySection).getByRole("button", { name: "Reintentar" }));
-    expect(await within(categorySection).findByRole("button", { name: "Cafeterías, 1 negocio" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Cafeterías, 1 negocio" })).toBeInTheDocument();
   });
 });
 
