@@ -3,6 +3,7 @@ import { ApiError } from "./httpClient";
 import { requestWithSession } from "./authService";
 import { buildApiUrl } from "@wit/utils";
 import { listPublicReviews } from "./reviewsService";
+import { bogotaDayIndex } from "../utils/discoverBusinesses";
 
 type PublicPhoto = { id: string; url: string; altText: string | null; sortOrder: number; isCover: boolean };
 type PublicCategory = { id: string; code: string; name: string; iconKey: string | null } | null;
@@ -86,7 +87,7 @@ function mapService(value: PublicOffer, businessId: string): Service {
   const original = (value as PublicOffer & { originalPrice?: string | null }).originalPrice;
   const currency = value.price.currency ?? "COP";
   const originalPriceLabel = original ? `${new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(original)).replace(/\u00a0/g, " ")} ${currency}` : undefined;
-  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: mediaUrl(value.photos[0]?.url), priceLabel: formatServicePrice(value), originalPriceLabel, isOffer: Boolean(value.isOffer), offerLabel: value.offerLabel ?? undefined, discount: value.discount ?? undefined, offerDeadline: formatOfferDeadline(value.offerDeadline), promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
+  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: mediaUrl(value.photos[0]?.url), createdAt: value.createdAt, priceLabel: formatServicePrice(value), originalPriceLabel, isOffer: Boolean(value.isOffer), offerLabel: value.offerLabel ?? undefined, discount: value.discount ?? undefined, offerDeadline: formatOfferDeadline(value.offerDeadline), promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
 }
 
 export async function hydrateBusinessRatings(businesses: Business[]): Promise<Business[]> {
@@ -178,18 +179,97 @@ export type PublicNewArrivalsPage = {
   pagination: { page: number; pageSize: number; total: number; totalPages: number; hasMore: boolean };
 };
 
+// Compatibility for frontend releases that precede backend /new-arrivals deployment.
+// Reuse the existing public city search; never confuse request errors with an empty catalog.
+const legacyArrivalsCache = new Map<string, { expiresAt: number; promise: Promise<PublicNewArrival[]> }>();
+
+async function legacyNewArrivals(city: string, region?: string): Promise<PublicNewArrival[]> {
+  const key = city.toLocaleLowerCase("es-CO") + "|" + (region ?? "").toLocaleLowerCase("es-CO");
+  const cached = legacyArrivalsCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
+  const task = (async () => {
+    const filters = {
+      scope: "city", city, ...(region ? { region } : {}),
+      businessPage: 1, businessPageSize: 1,
+      productPageSize: 50, servicePageSize: 50,
+    };
+    const first = await searchPublicUniversal({ ...filters, productPage: 1, servicePage: 1 });
+    const products = [...first.products];
+    const services = [...first.services];
+    const totalPages = Math.max(1,
+      Number(first.pagination?.products?.totalPages ?? 1),
+      Number(first.pagination?.services?.totalPages ?? 1));
+    // Collect both paginated streams before applying the seven-day product date rule.
+    for (let start = 2; start <= totalPages; start += 4) {
+      const pages = await Promise.all(
+        Array.from({ length: Math.min(4, totalPages - start + 1) }, (_, i) =>
+          searchPublicUniversal({ ...filters, productPage: start + i, servicePage: start + i })),
+      );
+      for (const page of pages) { products.push(...page.products); services.push(...page.services); }
+    }
+    const now = Date.now();
+    const isNew = (createdAt?: string) => {
+      if (!createdAt) return false;
+      const date = Date.parse(createdAt);
+      return Number.isFinite(date) && date <= now && date >= now - 7 * 86_400_000;
+    };
+    const arrivals: PublicNewArrival[] = [
+      ...products.filter(item => isNew(item.createdAt)).map(item => ({ kind: "PRODUCT" as const, item })),
+      ...services.filter(item => isNew(item.createdAt)).map(item => ({ kind: "SERVICE" as const, item })),
+    ];
+    // One offer from each business per round, with a stable daily rotation.
+    const groups = new Map<string, PublicNewArrival[]>();
+    for (const arrival of arrivals) {
+      const offers = groups.get(arrival.item.businessId) ?? [];
+      offers.push(arrival);
+      groups.set(arrival.item.businessId, offers);
+    }
+    const ordered = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b))
+      .map(([, items]) => items.sort((a, b) =>
+        Date.parse(b.item.createdAt ?? "") - Date.parse(a.item.createdAt ?? "")
+        || a.item.id.localeCompare(b.item.id)));
+    const offset = ordered.length ? bogotaDayIndex(now) % ordered.length : 0;
+    const rotated = [...ordered.slice(offset), ...ordered.slice(0, offset)];
+    const combined: PublicNewArrival[] = [];
+    const mostOffers = Math.max(0, ...rotated.map(offers => offers.length));
+    for (let i = 0; i < mostOffers; i++) {
+      for (const offers of rotated) if (offers[i]) combined.push(offers[i]);
+    }
+    return [...new Map(combined.map(arrival => [arrival.item.id, arrival])).values()];
+  })();
+  legacyArrivalsCache.set(key, { expiresAt: Date.now() + 30_000, promise: task });
+  void task.catch(() => {
+    if (legacyArrivalsCache.get(key)?.promise === task) legacyArrivalsCache.delete(key);
+  });
+  return task;
+}
+
 export async function listPublicNewArrivals(city: string, region?: string, page = 1): Promise<PublicNewArrivalsPage> {
   const query = new URLSearchParams({ city, page: String(page), pageSize: "20" });
   if (region) query.set("region", region);
-  const response = await requestWithSession<{
-    items: Array<{ kind: "PRODUCT" | "SERVICE"; offer: UniversalOffer & { business: { publicId: string; name: string; location?: { latitude: number | null; longitude: number | null } | null } } }>;
-    pagination: PublicNewArrivalsPage["pagination"];
-  }>(`/api/v1/public/new-arrivals?${query.toString()}`);
-  return {
-    items: response.items.map(({ kind, offer }) =>
-      kind === "SERVICE"
-        ? { kind, item: mapService(offer, offer.business.publicId) }
-        : { kind: "PRODUCT" as const, item: mapProduct(offer, offer.business.publicId) }),
-    pagination: response.pagination,
-  };
+  try {
+    const response = await requestWithSession<{
+      items: Array<{ kind: "PRODUCT" | "SERVICE"; offer: UniversalOffer & { business: { publicId: string; name: string; location?: { latitude: number | null; longitude: number | null } | null } } }>;
+      pagination: PublicNewArrivalsPage["pagination"];
+    }>("/api/v1/public/new-arrivals?" + query.toString());
+    return {
+      items: response.items.map(({ kind, offer }) =>
+        kind === "SERVICE"
+          ? { kind, item: mapService(offer, offer.business.publicId) }
+          : { kind: "PRODUCT" as const, item: mapProduct(offer, offer.business.publicId) }),
+      pagination: response.pagination,
+    };
+  } catch (error) {
+    // An HTTP 404 means the new endpoint is not yet installed. Preserve
+    // visibility using the older public search until the backend is deployed.
+    if (!(error instanceof ApiError) || error.status !== 404) throw error;
+    const items = await legacyNewArrivals(city, region);
+    const start = (page - 1) * 20;
+    return {
+      items: items.slice(start, start + 20),
+      pagination: { page, pageSize: 20, total: items.length,
+        totalPages: Math.ceil(items.length / 20), hasMore: start + 20 < items.length },
+    };
+  }
 }
