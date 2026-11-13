@@ -1,6 +1,6 @@
 import { useLocationContext } from "../context/LocationContext";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@wit/ui";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
@@ -19,13 +19,14 @@ function CompassIcon() {
 }
 
 export default function Location() {
+  const navigate = useNavigate();
   const { selection, requestAutomaticLocation, isRequesting } = useLocationContext();
   const [state, setState] = useState<LocationState>("ready");
   const coordinates = selection?.mode === "automatic" ? selection.coordinates : null;
 
   function requestLocation() {
     setState("loading");
-    void requestAutomaticLocation().then(() => setState("granted")).catch((error: GeolocationPositionError | Error) => {
+    void requestAutomaticLocation().then(() => navigate("/home", { replace: true })).catch((error: GeolocationPositionError | Error) => {
       setState("code" in error && error.code === error.PERMISSION_DENIED ? "denied" : error.message === "GEOLOCATION_UNAVAILABLE" ? "unavailable" : "error");
     });
   }
