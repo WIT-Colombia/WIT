@@ -199,3 +199,7 @@
 .business-detail-page .business-reference-layout > .business-popular-section{order:5}
 .business-detail-page .business-reference-layout .public-digital-card{width:min(100%,340px)}
 }
+
+/* La dirección siempre debe aparecer inmediatamente debajo de los horarios. */
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-address-information:nth-child(3){display:block;grid-column:1;grid-row:3;visibility:visible;opacity:1}
+@media(max-width:700px){.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-address-information:nth-child(3){display:block;order:3;width:100%;grid-row:auto}}
