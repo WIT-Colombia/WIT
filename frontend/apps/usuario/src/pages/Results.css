@@ -591,3 +591,175 @@
   user-select: auto;
   cursor: auto;
 }
+
+/*
+ * Tarjetas compactas de productos y servicios en Resultados (como en Home).
+ * No modificar BusinessCard. Reservar dos líneas para textos largos, sin
+ * espacios vacíos cuando son cortos. El negocio queda sobre el separador;
+ * abajo permanecen precio, descuento y Me gusta.
+ */
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card {
+  box-sizing: border-box;
+  height: 282px;
+  min-height: 282px;
+  max-height: 282px;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-card__image {
+  height: 106px;
+  min-height: 106px;
+  max-height: 106px;
+  flex: 0 0 106px;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-card__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 9px 11px 8px;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-type {
+  display: inline-flex;
+  align-self: flex-start;
+  margin: 0 0 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f0eaff;
+  color: #6420d9;
+  font-size: 9px;
+  line-height: 1.15;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card h3 {
+  display: -webkit-box;
+  height: auto;
+  min-height: 0;
+  max-height: 2.36em;
+  margin: 0 0 3px;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.18;
+  white-space: normal;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-description {
+  display: -webkit-box;
+  height: auto;
+  min-height: 0;
+  max-height: 2.6em;
+  margin: 0 0 3px;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-establishment {
+  display: -webkit-box;
+  min-height: 0;
+  max-height: 2.5em;
+  margin: auto 0 0;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  height: auto;
+  min-height: 40px;
+  margin-top: 3px;
+  padding-top: 5px;
+  border-top: 1px solid #ded2f9;
+  box-sizing: border-box;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-price {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 1px 5px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.12;
+  white-space: normal;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-price del {
+  font-size: 10px;
+}
+.results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-like-count {
+  flex: 0 0 auto;
+  gap: 3px;
+  padding-left: 7px;
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card {
+    height: 248px;
+    min-height: 248px;
+    max-height: 248px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-card__image {
+    height: 84px;
+    min-height: 84px;
+    max-height: 84px;
+    flex: 0 0 84px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-card__content {
+    padding: 8px 9px 7px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-type {
+    margin-bottom: 3px;
+    padding: 2px 6px;
+    font-size: 8px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card h3 {
+    margin-bottom: 2px;
+    font-size: 12.5px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-description {
+    display: -webkit-box;
+    margin-bottom: 2px;
+    max-height: 2.5em;
+    font-size: 10px;
+    line-height: 1.25;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-establishment {
+    font-size: 9.5px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-footer {
+    min-height: 37px;
+    margin-top: 2px;
+    padding-top: 4px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-price {
+    max-width: none;
+    font-size: 11px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-offer-price del {
+    font-size: 9px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-like-count {
+    gap: 2px;
+    padding-left: 5px;
+    font-size: 9px;
+  }
+  .results-page .results-offers.results-offer-group .results-offer-grid .entity-offer-card .entity-product-like {
+    width: 29px;
+    height: 29px;
+  }
+}
