@@ -12,6 +12,8 @@ import {
   parsePublicNewArrivalsInput,
   parseUniversalSearchInput,
   searchPublicUniversal,
+  parsePublicCategoryListInput,
+  listPublicCategories,
 } from './public-business.service.js';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 
@@ -23,6 +25,10 @@ export const listPublicBusinessesController: RequestHandler = async (req, res, n
 export const listPublicNewArrivalsController: RequestHandler = async (req, res, next) => {
   try { res.json(await listPublicNewArrivals(parsePublicNewArrivalsInput(req.query), undefined, viewer(req))); } catch (error) { next(error); }
 };
+export const listPublicCategoriesController: RequestHandler = async (req, res, next) => {
+  try { res.json(await listPublicCategories(parsePublicCategoryListInput(req.query), undefined, viewer(req))); } catch (error) { next(error); }
+};
+
 export const searchPublicUniversalController: RequestHandler = async (req, res, next) => {
   try { res.json(await searchPublicUniversal(parseUniversalSearchInput(req.query), undefined, viewer(req))); } catch (error) { next(error); }
 };

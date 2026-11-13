@@ -13,6 +13,7 @@ import {
   listPublicServicesController,
   publicPhotoContentController,
   searchPublicUniversalController,
+  listPublicCategoriesController,
 } from './public-business.controller.js';
 import { listReviewsController } from '../reviews/review.controller.js';
 
@@ -31,6 +32,7 @@ publicBusinessRouter.use(publicReadRateLimit);
 publicBusinessRouter.use(optionalAuth);
 publicBusinessRouter.get('/businesses', listPublicBusinessesController);
 publicBusinessRouter.get('/search', searchPublicUniversalController);
+publicBusinessRouter.get('/categories', listPublicCategoriesController);
 publicBusinessRouter.get('/new-arrivals', listPublicNewArrivalsController);
 publicBusinessRouter.get('/businesses/:publicId/products', listPublicProductsController);
 publicBusinessRouter.get('/businesses/:publicId/services', listPublicServicesController);

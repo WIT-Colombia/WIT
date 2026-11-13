@@ -13,6 +13,8 @@ export type PublicBusinessListInput = {
   pageSize: number;
 };
 
+export type PublicCategoryListInput = { city: string; region?: string };
+
 export type PublicUniversalSearchInput = {
   query: string;
   category?: string;
@@ -228,6 +230,7 @@ function summary(value: any) {
     adultOnly: value.adultOnly,
     description: value.description ?? null,
     category: category(value.category),
+    secondaryCategories: (value.secondaryCategories ?? []).map((item: any) => category(item.category)),
     // Public card labels need the active commercial modalities.
     modalities: (value.modalities ?? []).map((modality: { type: string }) => ({ type: modality.type })),
     location: location(value.location),
@@ -299,6 +302,15 @@ function optionalNumber(value: unknown, field: string) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) throw new AppError(400, 'INVALID_PUBLIC_QUERY', `${field} debe ser un número válido.`);
   return parsed;
+}
+
+export function parsePublicCategoryListInput(query: Record<string, unknown>): PublicCategoryListInput {
+  const city = typeof query.city === 'string' ? query.city.trim() : '';
+  const region = typeof query.region === 'string' ? query.region.trim() : '';
+  if (!city || city.length > 160 || region.length > 160) {
+    throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'Selecciona una ciudad válida para explorar categorías.');
+  }
+  return { city, ...(region ? { region } : {}) };
 }
 
 export function parseUniversalSearchInput(query: Record<string, unknown>): PublicUniversalSearchInput {
@@ -431,6 +443,40 @@ function searchRank(fields: { name?: unknown; category?: unknown; offer?: unknow
   return 20;
 }
 
+/**
+ * Categorías con negocios realmente publicados en la ciudad.
+ * Cuenta cada negocio una vez por categoría primaria o secundaria.
+ */
+export async function listPublicCategories(
+  input: PublicCategoryListInput, db: PublicDb = prisma, viewer?: PublicAccessContext,
+) {
+  const canViewAdult = await canViewAdultContent(viewer, db);
+  const rows = await db.business.findMany({
+    where: publicBusinessWhere(canViewAdult),
+    select: {
+      category: { select: publicCategorySelect },
+      secondaryCategories: { select: { category: { select: publicCategorySelect } } },
+      location: { select: { cityName: true, regionName: true } },
+    },
+  });
+  const counts = new Map<string, { id: string; code: string; name: string; iconKey: string | null; businessCount: number }>();
+  for (const business of rows) {
+    if (normalizeCityFilterName(business.location?.cityName) !== normalizeCityFilterName(input.city)
+      || (input.region && normalizeRegionFilterName(business.location?.regionName) !== normalizeRegionFilterName(input.region))) continue;
+    const seen = new Set<string>();
+    for (const raw of [business.category, ...business.secondaryCategories.map(item => item.category)]) {
+      if (!raw || seen.has(raw.id)) continue;
+      seen.add(raw.id);
+      const value = category(raw)!;
+      const previous = counts.get(value.id);
+      if (previous) previous.businessCount++;
+      else counts.set(value.id, { ...value, businessCount: 1 });
+    }
+  }
+  return { categories: [...counts.values()].sort((a, b) =>
+    b.businessCount - a.businessCount || a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }) || a.code.localeCompare(b.code)) };
+}
+
 export async function searchPublicUniversal(input: PublicUniversalSearchInput, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
   // A virtual business must have its VIRTUAL modality ACTIVE, not just registered.
@@ -447,18 +493,21 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
     ...(canViewAdult ? {} : { adultOnly: false }),
   };
   const [businesses, products, services] = await Promise.all([
-    db.business.findMany({ where: businessWhere, select: { publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, modalities: { where: { status: 'ACTIVE' }, select: { type: true } }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.business.findMany({ where: businessWhere, select: { publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, modalities: { where: { status: 'ACTIVE' }, select: { type: true } }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
   ]);
-  const categoryMatches = (item: any) => !categoryTerms.length || matchesSearch([item.category?.code, item.category?.translations?.[0]?.name], categoryTerms);
+  const categoryMatches = (item: any) => !categoryTerms.length || [item.category, ...(item.secondaryCategories ?? []).map((entry: any) => entry.category)]
+    .some((value: any) => matchesSearch([value?.code, value?.translations?.[0]?.name], categoryTerms));
+  // Productos y servicios heredan las categorías del negocio, sin perder su categoría específica.
+  const offerCategoryMatches = (item: any) => categoryMatches(item) || categoryMatches(item.business);
   const inSelectedCity = (value: any) => input.scope !== 'city' || (
     normalizeCityFilterName(value?.location?.cityName) === normalizeCityFilterName(input.city)
     && (!input.region || normalizeRegionFilterName(value?.location?.regionName) === normalizeRegionFilterName(input.region))
   );
   const inRadius = (value: any) => input.scope === 'virtual' ? true : input.latitude !== undefined && input.longitude !== undefined && input.radiusKm !== undefined ? distanceKm(input.latitude, input.longitude, value) <= input.radiusKm : true;
   const sortNearby = (a: any, b: any) => input.latitude !== undefined && input.longitude !== undefined ? distanceKm(input.latitude, input.longitude, a) - distanceKm(input.latitude, input.longitude, b) : 0;
-  const matchingOffers = [...products, ...services].filter((item: any) => categoryMatches(item) && (terms.length ? searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, offer: item.name, description: item.description }, terms) > 0 : true));
+  const matchingOffers = [...products, ...services].filter((item: any) => offerCategoryMatches(item) && (terms.length ? searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, offer: item.name, description: item.description }, terms) > 0 : true));
   const matchingBusinessIds = new Set(matchingOffers.map((item: any) => item.business.publicId));
   const businessItems = businesses.map((item: any) => ({ item, rank: searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, description: item.description }, terms) }));
   // Cuando el usuario solicita un radio, los negocios sin coordenadas públicas
@@ -484,11 +533,11 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   const sortVirtualPrice = (a: any, b: any) =>
     virtualPrice(a) - virtualPrice(b) || String(a.name).localeCompare(String(b.name), 'es') || String(a.id).localeCompare(String(b.id));
   const filteredProducts = products
-    .filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
+    .filter((item: any) => offerCategoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
     .sort((a: any, b: any) => input.scope === 'virtual' ? 0 : sortNearby(a.business, b.business))
     .map(mapOffer);
   const filteredServices = services
-    .filter((item: any) => categoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
+    .filter((item: any) => offerCategoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
     .sort((a: any, b: any) => input.scope === 'virtual' ? 0 : sortNearby(a.business, b.business))
     .map(mapOffer);
   if (input.scope === 'virtual') {
