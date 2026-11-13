@@ -3,11 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { CatalogStateView } from './CatalogState';
 
 describe('Home catálogo', () => {
-  it('muestra carga, vacío y error', () => {
+  it('muestra carga y error sin aviso redundante cuando no hay negocios', () => {
     const { rerender } = render(<CatalogStateView state="loading" hasResults={false} onRetry={vi.fn()} />);
     expect(screen.getByRole('status')).toHaveTextContent('Cargando');
     rerender(<CatalogStateView state="ready" hasResults={false} onRetry={vi.fn()} />);
-    expect(screen.getByText('No hay negocios disponibles.')).toBeInTheDocument();
+    expect(screen.queryByText('No hay negocios disponibles.')).not.toBeInTheDocument();
     rerender(<CatalogStateView state="error" hasResults={false} onRetry={vi.fn()} />);
     expect(screen.getByRole('alert')).toHaveTextContent('No pudimos cargar');
   });
