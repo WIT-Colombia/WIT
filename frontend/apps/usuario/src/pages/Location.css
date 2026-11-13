@@ -67,3 +67,25 @@
 
 /* Empty map artwork already contains its own frame: avoid a second white bordered box. */
 .location-visual.location-google-map--empty { min-height:0; border:0; border-radius:0; background:transparent; background-image:none; box-shadow:none; }
+
+/* iPad / tablet: do not compress the location form against the footer waves.
+   Keep both actions in normal flow, fully above the footer. */
+@media (min-width: 701px) and (max-width: 1180px) {
+  .location-page { min-height: 100dvh; }
+  .location-page .location-content {
+    flex: 0 0 auto;
+    align-items: center;
+    min-height: 0;
+    padding-top: clamp(40px, 6vw, 72px);
+    padding-bottom: clamp(72px, 9vw, 120px);
+  }
+  .location-page .location-copy { min-width: 0; }
+  .location-page .location-actions {
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 0;
+  }
+  .location-page .site-footer { flex-shrink: 0; }
+}
