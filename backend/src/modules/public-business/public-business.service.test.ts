@@ -102,6 +102,7 @@ test('las rutas públicas no requieren autenticación', () => {
   assert.deepEqual(routes, [
     'GET /businesses',
     'GET /search',
+    'GET /categories',
     'GET /new-arrivals',
     'GET /businesses/:publicId/products',
     'GET /businesses/:publicId/services',
