@@ -443,7 +443,7 @@ export default function Home() {
     setCategory(categoryName);
     setQuery("");
     if (index >= 6) setShowAllCategories(true);
-    navigate(`/results?category=${encodeURIComponent(categoryName)}`);
+    navigate(`/results?category=${encodeURIComponent(categoryName)}&scope=city`);
   }
   useEffect(() => {
     const list = categoryListRef.current;
