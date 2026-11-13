@@ -1,4 +1,4 @@
-.business-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:22px;padding:6px;border:1px solid var(--wit-border);border-radius:14px;background:#f4f8f5;overflow:visible}.business-tabs button{display:flex;min-width:0;min-height:44px;align-items:center;justify-content:center;gap:6px;padding:0 9px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--wit-text-secondary);font:inherit;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer}.business-tabs button:hover{background:#fff;color:var(--wit-primary-dark)}.business-tabs button.active{border-color:#bfe5cf;background:#fff;color:var(--wit-primary-dark);box-shadow:0 2px 7px rgba(23,33,29,.06)}.business-tabs button span{display:inline-grid;min-width:19px;height:19px;place-items:center;border-radius:999px;background:var(--wit-primary-light);font-size:9px}@media(max-width:600px){.business-tabs{grid-template-columns:repeat(5,minmax(0,1fr));margin-right:-16px;padding:5px;overflow-x:auto}.business-tabs button{min-height:40px;font-size:10px}}
+.business-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:22px;padding:6px;border:1px solid var(--wit-border);border-radius:14px;background:#f4f8f5;overflow:visible}.business-tabs button{display:flex;min-width:0;min-height:44px;align-items:center;justify-content:center;gap:6px;padding:0 9px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--wit-text-secondary);font:inherit;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer}.business-tabs button:hover{background:#fff;color:var(--wit-primary-dark)}.business-tabs button.active{border-color:#bfe5cf;background:#fff;color:var(--wit-primary-dark);box-shadow:0 2px 7px rgba(23,33,29,.06)}.business-tabs button span{display:inline-grid;min-width:19px;height:19px;place-items:center;border-radius:999px;background:var(--wit-primary-light);font-size:9px}@media(max-width:600px){.business-tabs{grid-template-columns:repeat(4,minmax(0,1fr));margin-right:-16px;padding:5px;overflow-x:auto}.business-tabs button{min-height:40px;font-size:10px}}
 
 /* Responsive finishing touches: keep dense business sections usable on touch screens. */
 @media (max-width: 700px) {
@@ -295,7 +295,7 @@
   .business-detail-page .business-popular-grid>.entity-offer-card{flex-basis:calc((100% - 36px)/3)}
 }
 .business-scroll-hint{color:var(--xamuko-muted);font-size:10px}
-.business-detail-page .business-products-grid{grid-template-columns:repeat(5,minmax(0,1fr));}
+.business-detail-page .business-products-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
 .business-products-more{
   display:flex;
   min-height:42px;
@@ -617,4 +617,4 @@
 }
 
 /* Cinco pestañas accesibles en pantallas pequeñas sin reducir excesivamente el texto. */
-@media(max-width:600px){.business-detail-page .business-tabs{grid-template-columns:repeat(5,minmax(105px,1fr));overflow-x:auto;scrollbar-width:thin}.business-detail-page .business-tabs button{white-space:nowrap}}
+@media(max-width:600px){.business-detail-page .business-tabs{grid-template-columns:repeat(4,minmax(105px,1fr));overflow-x:auto;scrollbar-width:thin}.business-detail-page .business-tabs button{white-space:nowrap}}
