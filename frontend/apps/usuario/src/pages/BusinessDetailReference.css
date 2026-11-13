@@ -221,3 +221,11 @@
 .business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-socials-public{order:5;width:100%;box-sizing:border-box}
 .business-detail-page .business-reference-layout > .business-popular-section{order:6}
 }
+
+/* Redes sociales: misma anchura que la tarjeta digital en la columna derecha. */
+@media(min-width:701px){
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-detail-aside > .business-socials-public{width:min(100%,31.3vw,420px);max-width:100%;box-sizing:border-box;justify-self:center;margin-inline:auto}
+}
+@media(min-width:701px) and (max-width:1100px){
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-detail-aside > .business-socials-public{width:100%}
+}
