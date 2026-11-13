@@ -8,6 +8,7 @@ import { useBusinessStore } from "../services/businessStore";
 import { shareLink } from "../../../usuario/src/utils/share";
 import { formatCategoryName, visibleBusinessStatus } from "../services/realBusinessAdapter";
 import type { BusinessDetails } from "../types/business";
+import { BUSINESS_VISIBILITY_DAYS } from "../services/visibilityPolicy";
 import "./DashboardPage.css";
 
 type Period = BusinessStatisticsDashboard["period"];
@@ -82,6 +83,9 @@ export function DashboardPage() {
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
   const [shareStatus, setShareStatus] = useState("");
+  const [visibility, setVisibility] = useState<{ visibilityStatus: string; isWithinPeriod: boolean; period: { expiresAt: string } | null } | null>(null);
+  const [visibilityBusy, setVisibilityBusy] = useState(false);
+  const [visibilityError, setVisibilityError] = useState("");
   const [proUnlocked, setProUnlocked] = useState<boolean | null>(null);
   const [reviewSummary, setReviewSummary] = useState<{ average: number | null; total: number } | null>(null);
   const realBusiness = business.source === "real" && Boolean(business.id);
@@ -123,6 +127,29 @@ export function DashboardPage() {
     return () => { active = false; };
   }, [business.publicId, isPreview, realBusiness]);
 
+  useEffect(() => {
+    let active = true;
+    setVisibility(null);
+    setVisibilityError("");
+    if (isPreview || !realBusiness || !business.id) return () => { active = false; };
+    void businessApi.getVisibility(business.id).then(({ visibility: result }) => { if (active) setVisibility(result); }).catch(() => { if (active) setVisibilityError("No pudimos consultar la vigencia."); });
+    return () => { active = false; };
+  }, [business.id, isPreview, realBusiness]);
+
+  const renewBusinessVisibility = async () => {
+    if (!realBusiness || !business.id || visibilityBusy) return;
+    setVisibilityBusy(true);
+    setVisibilityError("");
+    try {
+      const { visibility: result } = await businessApi.renewVisibility(business.id);
+      setVisibility(result);
+    } catch {
+      setVisibilityError("No se pudo renovar la visibilidad. Inténtalo nuevamente.");
+    } finally {
+      setVisibilityBusy(false);
+    }
+  };
+
   const currentDate = useMemo(() => new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" }).format(new Date()), []);
   const availableActions = {
     edit: business.role === "Propietario" || Boolean(business.permissions?.includes("EDIT_BUSINESS")),
@@ -146,7 +173,7 @@ export function DashboardPage() {
   return <div className="business-home">
     <div className="business-home-heading">
       <div><span className="business-home-eyebrow">CENTRO DE CONTROL</span><h1>Inicio</h1><p>{currentDate.charAt(0).toLocaleUpperCase("es-CO") + currentDate.slice(1)} · Un resumen de tu negocio en XAMUKO.</p></div>
-      {business.name && <div className="business-home-selected"><span>NEGOCIO SELECCIONADO</span><strong>{business.name}</strong><small>{business.role}</small></div>}
+      {business.name && <div className="business-home-selected business-home-visibility"><span>VISIBILIDAD DEL NEGOCIO</span><strong>{business.name}</strong>{realBusiness && !isPreview ? <><button type="button" onClick={() => void renewBusinessVisibility()} disabled={visibilityBusy || visibility === null || business.role !== "Propietario"}>{visibilityBusy ? "Renovando…" : `Mantener visible ${BUSINESS_VISIBILITY_DAYS} días`}</button><small>{visibility?.period?.expiresAt ? `Finaliza el ${new Date(visibility.period.expiresAt).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" })}` : visibilityError || "Consultando fecha de finalización…"}</small>{visibilityError && visibility?.period?.expiresAt && <small role="alert">{visibilityError}</small>}</> : <small>{business.role}</small>}</div>}
     </div>
 
     {showEmptyAccount ? <section className="business-home-no-business"><span aria-hidden="true">⌂</span><h2>Selecciona o crea tu negocio</h2><p>Cuando elijas un establecimiento, aquí encontrarás su actividad y accesos de gestión.</p><Link className="business-home-primary" to="/mis-negocios">Ir a mis negocios <span aria-hidden="true">→</span></Link></section> : <>
