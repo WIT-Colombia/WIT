@@ -1094,15 +1094,15 @@
 }
 @media (max-width: 700px) {
   .home-page.home-v2 .new-products__item .entity-offer-card {
-    height: 248px;
-    min-height: 248px;
-    max-height: 248px;
+    height: 232px;
+    min-height: 232px;
+    max-height: 232px;
   }
   .home-page.home-v2 .new-products__item .entity-offer-card .entity-card__image {
-    height: 84px;
-    min-height: 84px;
-    max-height: 84px;
-    flex: 0 0 84px;
+    height: 68px;
+    min-height: 68px;
+    max-height: 68px;
+    flex: 0 0 68px;
   }
   .home-page.home-v2 .new-products__item .entity-offer-card .entity-card__content {
     padding: 8px 9px 7px;
