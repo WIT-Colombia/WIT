@@ -44,7 +44,7 @@
 
 /* Responsive containment: the shared header must not widen the auth page. */
 .register-page{width:100%;max-width:100%;overflow-x:visible}
-.register-page>.site-footer{flex:0 0 auto;margin-top:auto;padding-bottom:24px}
+.register-page>.site-footer{flex:0 0 auto;margin-top:auto;padding-bottom:0}
 @media(max-width:800px){
   .register-shell{display:grid;place-items:center;width:100%;max-width:100%;padding-inline:16px}
   .register-shell .register-panel{width:100%;max-width:490px;margin-inline:auto}

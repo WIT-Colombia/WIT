@@ -264,7 +264,7 @@
 }
 
 /* El banner y el cierre de Resultados respetan el mismo contenedor que Inicio. */
-.results-page{padding-bottom:24px}
+.results-page{padding-bottom:0}
 .results-page .admob-banner{
   box-sizing:border-box;
   width:min(100%,728px);
@@ -274,7 +274,7 @@
 .results-page .results-main>.admob-banner{box-sizing:border-box;margin-top:24px;margin-bottom:24px}
 .results-page>.site-footer{box-sizing:border-box}
 @media(max-width:700px){
-  .results-page{padding-bottom:75px}
+  .results-page{padding-bottom:0}
   .results-page .results-main{width:calc(100% - 32px)}
   .results-page .admob-banner{width:100%}
 }

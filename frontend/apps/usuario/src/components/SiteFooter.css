@@ -205,7 +205,14 @@
 }
 
 @media (max-width: 700px) {
+  /* Sin navegación fija, no reservar una franja vacía debajo de la ubicación. */
   .site-footer__content {
+    padding-bottom: 12px;
+  }
+
+  /* Inicio, Resultados y PageLayout: reservar solo dentro del pie el área
+     realmente cubierta por la navegación inferior, como en Inicio. */
+  .site-footer:has(+ .user-bottom-nav) .site-footer__content {
     padding-bottom: calc(12px + 67px + env(safe-area-inset-bottom));
   }
 }
