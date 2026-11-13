@@ -23,6 +23,7 @@ beforeEach(() => {
   api.categories.mockReset().mockResolvedValue([]);
   api.banner.mockClear();
   vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 const LocationProbe = () => { const location = useLocation(); return <output data-testid="current-path">{location.pathname + location.search}</output>; };
