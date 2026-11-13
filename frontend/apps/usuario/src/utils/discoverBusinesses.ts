@@ -22,7 +22,6 @@ export function selectDiscoverBusinesses(businesses: Business[], dayIndex: numbe
     && (business.plan === "premium" || business.isFeatured));
   const standard = unique.filter((business) => typeof business.pioneerNumber !== "number"
     && business.plan !== "premium" && !business.isFeatured);
-  const groups = [pioneers, premium, standard];
   const selected: Business[] = [];
   const used = new Set<string>();
   const capacity = Math.max(0, Math.floor(limit));

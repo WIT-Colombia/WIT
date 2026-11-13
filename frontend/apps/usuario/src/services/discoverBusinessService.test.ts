@@ -12,7 +12,7 @@ beforeEach(() => search.mockReset());
 describe("Catálogo del carrusel Descubre negocios", () => {
   it("consulta todas las páginas de la ciudad, sin mezclarlas con otros municipios", async () => {
     search.mockImplementation(async (params) => {
-      const page = params.businessPage ?? 1;
+      const page = params?.businessPage ?? 1;
       return {
         businesses: page === 1 ? [item("a"), item("b")] : page === 2 ? [item("c"), item("a")] : [item("d")],
         products: [], services: [],
