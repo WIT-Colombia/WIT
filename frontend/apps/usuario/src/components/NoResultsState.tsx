@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import cityEmptyIllustration from "../assets/city-empty-storefront.svg";
 import "./NoResultsState.css";
 
 type NoResultsStateProps = {
@@ -11,11 +12,18 @@ type NoResultsStateProps = {
 
 export function CityEmptyState() {
   return <section className="no-results-state no-results-state--city" aria-labelledby="no-city-businesses-title">
-    <span className="no-results-city-symbol" aria-hidden="true">⌖</span>
-    <span className="no-results-city-eyebrow">HAY MUCHO POR DESCUBRIR</span>
-    <h2 id="no-city-businesses-title">Aún no hay negocios registrados en tu ciudad</h2>
-    <p>¡Estamos creciendo! Mientras llegan nuevas opciones a tu comunidad, puedes descubrir negocios virtuales disponibles en toda Colombia.</p>
-    <Link className="no-results-city-action" to="/results?scope=virtual">Explorar negocios virtuales <span aria-hidden="true">→</span></Link>
+    <div className="no-results-city-illustration">
+      <img src={cityEmptyIllustration} alt="" aria-hidden="true" />
+    </div>
+    <div className="no-results-city-content">
+      <h3 id="no-city-businesses-title">Aún no hay negocios registrados en tu ciudad.</h3>
+      <p>Prueba con negocios en modalidad virtual y descubre opciones disponibles para ti.</p>
+      <Link className="no-results-city-action" to="/results?scope=virtual" aria-label="Ver negocios virtuales disponibles en toda Colombia">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4.75h18v12.5H3zM8 21h8M12 17.25V21M2 20h20" /></svg>
+        <span>Ver negocios virtuales</span>
+        <svg className="no-results-city-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>
+      </Link>
+    </div>
   </section>;
 }
 
