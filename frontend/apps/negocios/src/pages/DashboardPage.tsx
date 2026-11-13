@@ -206,9 +206,8 @@ export function DashboardPage() {
       <section className="business-home-panel business-home-actions-section" aria-labelledby="business-home-actions-title">
         <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">GESTIÓN DIARIA</span><h2 id="business-home-actions-title">Acciones rápidas</h2></div></div>
         <div className="business-home-actions-grid">
-          <QuickAction title="Crear publicación" description="Esta opción aún no está disponible." icon="＋" disabled />
           <QuickAction title="Nueva promoción" description="Abre ofertas y promociones" icon="％" to={availableActions.promotions ? "/ofertas" : undefined} disabled={!availableActions.promotions} />
-          <QuickAction title="Actualizar galería" description="La gestión de galería no está disponible en esta versión." icon="▧" disabled />
+          <QuickAction title="Actualizar galería" description="Gestiona las fotos del negocio desde su edición" icon="▧" to={availableActions.edit ? `/mis-negocios/editar/${businessIndex}` : undefined} disabled={!availableActions.edit} />
           <QuickAction title="Productos y servicios" description="Gestiona tu catálogo" icon="◇" to={availableActions.catalog ? "/productos" : undefined} disabled={!availableActions.catalog} />
           <QuickAction title="Editar información" description="Actualiza los datos del negocio" icon="✎" to={availableActions.edit ? `/mis-negocios/editar/${businessIndex}` : undefined} disabled={!availableActions.edit} />
         </div>
