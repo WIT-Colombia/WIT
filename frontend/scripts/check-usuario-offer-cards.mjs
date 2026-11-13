@@ -48,6 +48,8 @@ try {
     const page = await context.newPage();
     try {
       for (const [scope, html] of Object.entries(markup)) {
+        // Home uses a deliberately shorter card; results and business keep their own size.
+        const cardHeight = scope === 'home' ? (device === 'iphone' ? 220 : 270) : expectedHeight;
         await page.setContent('<!doctype html><html lang="es"><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>' + html + '</body></html>');
         await page.addStyleTag({ content: styles });
         await page.evaluate(() => document.fonts.ready);
@@ -73,7 +75,7 @@ try {
         assert.equal(metrics.length, 2, device + ' ' + scope + ': both cards rendered');
         for (const [idx, item] of metrics.entries()) {
           const label = device + ' ' + scope + ' card ' + (idx + 1);
-          assert.ok(Math.abs(item.card.height - expectedHeight) <= 1, label + ': height ' + item.card.height + 'px; expected ' + expectedHeight);
+          assert.ok(Math.abs(item.card.height - cardHeight) <= 1, label + ': height ' + item.card.height + 'px; expected ' + cardHeight);
           assert.ok(Math.abs(item.image.height - expectedImage) <= 1, label + ': image height ' + item.image.height + 'px; expected ' + expectedImage);
           assert.notEqual(item.descriptionDisplay, 'none', label + ': description remains visible');
           assert.equal(item.titleClamp, '2', label + ': title 2-line clamp');
@@ -84,7 +86,7 @@ try {
           assert.ok(item.like.height >= 28, label + ': like button accessible');
         }
         await page.screenshot({ path: join(screenshots, device + '-' + scope + '.png'), fullPage: true });
-        console.log('Usuario offer cards OK: ' + device + ' ' + scope + ', ' + expectedHeight + 'px');
+        console.log('Usuario offer cards OK: ' + device + ' ' + scope + ', ' + cardHeight + 'px');
       }
     } finally {
       await context.close();
