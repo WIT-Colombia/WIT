@@ -205,7 +205,7 @@
 }
 
 @media (max-width: 700px) {
-  .home-page.home-v2 { --home-content-width: calc(100vw - 32px); --home-card-gap: 12px; padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+  .home-page.home-v2 { --home-content-width: calc(100vw - 32px); --home-card-gap: 12px; padding-bottom: 0; }
   .home-page.home-v2 .home-topbar { grid-template-columns: minmax(0, 1fr) 36px 36px; gap: 10px 12px; margin-bottom: 12px; padding: 14px 0 8px; }
   .home-page.home-v2 .home-topbar .brand-logo { width: 149px; }
   .home-page.home-v2 .home-topbar .desktop-nav { display: none; }
