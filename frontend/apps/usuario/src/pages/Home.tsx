@@ -92,8 +92,37 @@ const categoryIconPaths: Record<string, string> = {
   "Belleza y cuidado personal": "M8 3h8m-6 0v5m4-5v5M5 8h14l-2 13H7L5 8Zm3 4h8",
 };
 
+const categoryIconAliases: Record<string, string> = {
+  restaurante: "Restaurantes", comida: "Restaurantes", gastronomia: "Restaurantes",
+  farmacia: "Droguerías", drogueria: "Droguerías", salud: "Salud y bienestar",
+  ferreteria: "Ferreterías", construccion: "Construcción y remodelación",
+  taller: "Talleres", automotriz: "Talleres", mecanica: "Talleres",
+  barberia: "Barberías", tecnologia: "Tecnología", electronica: "Tecnología",
+  cafeteria: "Cafeterías", cafe: "Cafeterías", panaderia: "Panaderías y reposterías",
+  supermercado: "Supermercados y tiendas", tienda: "Supermercados y tiendas",
+  mercado: "Supermercados y tiendas", frutas: "Frutas y verduras", verduras: "Frutas y verduras",
+  carniceria: "Carnicerías y pescaderías", pescaderia: "Carnicerías y pescaderías",
+  clinica: "Clínicas y consultorios", consultorio: "Clínicas y consultorios",
+  optica: "Ópticas", peluqueria: "Peluquerías y belleza", belleza: "Belleza y cuidado personal",
+  moda: "Ropa y calzado", ropa: "Ropa y calzado", calzado: "Ropa y calzado",
+  hogar: "Hogar y decoración", decoracion: "Hogar y decoración",
+  repuestos: "Repuestos y accesorios", lavanderia: "Lavanderías y tintorerías",
+  mascotas: "Mascotas y veterinarias", veterinaria: "Mascotas y veterinarias",
+  papeleria: "Papelerías y librerías", libreria: "Papelerías y librerías",
+  educacion: "Educación y cursos", deportes: "Deportes y recreación",
+  transporte: "Transporte y movilidad", movilidad: "Transporte y movilidad",
+  servicios: "Servicios profesionales", floristeria: "Floristerías y regalos",
+  regalos: "Floristerías y regalos", hotel: "Hoteles y turismo", turismo: "Hoteles y turismo",
+  eventos: "Eventos y entretenimiento", entretenimiento: "Eventos y entretenimiento",
+};
+
+const normalizeCategoryIconName = (value: string) => value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
+
 function CategoryIcon({ name }: { name: string }) {
-  const path = categoryIconPaths[name] ?? "M5 5h14v14H5zM9 9h6v6H9z";
+  const normalized = normalizeCategoryIconName(name);
+  const matchedName = Object.keys(categoryIconPaths).find((key) => normalizeCategoryIconName(key) === normalized)
+    ?? Object.entries(categoryIconAliases).find(([alias]) => normalized === alias || normalized.includes(alias))?.[1];
+  const path = categoryIconPaths[matchedName ?? name] ?? "M4 7h16v13H4zM8 7V4h8v3M4 12h16M10 12v2h4v-2";
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={path}/></svg>;
 }
 
