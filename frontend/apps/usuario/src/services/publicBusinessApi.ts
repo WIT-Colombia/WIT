@@ -30,7 +30,7 @@ function mapBusiness(value: PublicSummary): Business {
   const coverPhoto = value.coverPhoto ? mapPhoto(value.coverPhoto) : null;
   const profilePhoto = value.profilePhoto ? mapPhoto(value.profilePhoto) : null;
   const rawCategory = value.category?.name ?? value.category?.code ?? "Sin categoría";
-  const category = rawCategory.replace(/[-_]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const category = rawCategory.replace(/[-_]+/g, " ").replace(/(^|\s)(\p{L})/gu, (_match, start: string, letter: string) => start + letter.toLocaleUpperCase("es-CO"));
   const location = value.location;
   const cover = coverPhoto?.url ?? profilePhoto?.url ?? "";
   return {
