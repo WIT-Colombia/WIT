@@ -32,6 +32,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Legal = lazy(() => import("./pages/Legal"));
+const FaqPage = lazy(() => import("./pages/FaqPage"));
 const PasswordRecovery = lazy(() => import("./pages/PasswordRecovery"));
 const RecoverPassword = lazy(() => import("./pages/RecoverPassword"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
@@ -154,6 +155,7 @@ export default function App() {
     <Route path="/change-password" element={<ChangePasswordEntry />} />
     <Route path="/account" element={<RequireAccount><Navigate to="/settings" replace /></RequireAccount>} />
     <Route path="/legal/:page" element={<Legal />} />
+    <Route path="/ayuda/preguntas-frecuentes" element={<FaqPage />} />
     <Route path="/favorites" element={<RequireAccount><Favorites /></RequireAccount>} />
     <Route path="/likes" element={<RequireAccount><Likes /></RequireAccount>} />
     <Route path="/reviews" element={<Reviews />} />

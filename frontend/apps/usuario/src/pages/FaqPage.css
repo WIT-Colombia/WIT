@@ -1,0 +1,185 @@
+.faq-page {
+  background: var(--xamuko-background, #FAF9FC);
+  color: var(--xamuko-navy, #0F172A);
+}
+
+.faq-page .user-content-main {
+  width: min(calc(100% - 48px), 1050px);
+  padding: 34px 0 72px;
+}
+
+.faq-page__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  min-height: 36px;
+  margin: 0 0 24px;
+  padding: 0 13px;
+  border: 1px solid #DDD4FF;
+  border-radius: 999px;
+  background: #FFF;
+  color: #7B3FFB;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 5px 14px rgba(123, 63, 251, .08);
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.faq-page__back:hover {
+  border-color: #C8B8FF;
+  background: #F7F4FF;
+  transform: translateX(-1px);
+}
+
+.faq-page__back:focus-visible,
+.faq-page__tabs button:focus-visible,
+.faq-page__list summary:focus-visible {
+  outline: 3px solid #7B3FFB;
+  outline-offset: 3px;
+}
+
+.faq-page__heading {
+  margin-bottom: 25px;
+}
+
+.faq-page__heading > span {
+  color: var(--xamuko-violet, #7B3FFB);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.faq-page__heading h1 {
+  margin: 8px 0 12px;
+  color: var(--xamuko-navy, #0F172A);
+  font-size: clamp(30px, 4vw, 42px);
+  font-weight: 800;
+  letter-spacing: -1.2px;
+  line-height: 1.12;
+}
+
+.faq-page__heading p {
+  max-width: 660px;
+  margin: 0;
+  color: var(--xamuko-muted, #64748B);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.faq-page__card {
+  width: 100%;
+  padding: clamp(20px, 3.4vw, 38px);
+  border: 1px solid var(--xamuko-border, #E2E8F0);
+  border-radius: 20px;
+  background: #FFF;
+  box-shadow: 0 12px 36px rgba(15, 23, 42, .06);
+}
+
+.faq-page__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #E2E8F0;
+  padding-bottom: 20px;
+}
+
+.faq-page__tabs button {
+  min-height: 40px;
+  padding: 8px 22px;
+  border: 1px solid #DDD4FF;
+  border-radius: 999px;
+  background: #FFF;
+  color: #6D28D9;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.faq-page__tabs button.is-active {
+  border-color: transparent;
+  background: var(--xamuko-gradient, linear-gradient(100deg,#7B3FFB,#2563EB));
+  color: #FFF;
+  box-shadow: 0 6px 14px rgba(123, 63, 251, .16);
+}
+
+.faq-page__list {
+  display: grid;
+  gap: 10px;
+}
+
+.faq-page__list details {
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  background: #FFF;
+  overflow: hidden;
+}
+
+.faq-page__list details[open] {
+  border-color: #DDD4FF;
+  background: #FCFAFF;
+}
+
+.faq-page__list summary {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 17px 20px;
+  color: var(--xamuko-navy, #0F172A);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-page__list summary::-webkit-details-marker { display: none; }
+
+.faq-page__chevron {
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border-right: 2px solid #7B3FFB;
+  border-bottom: 2px solid #7B3FFB;
+  transform: rotate(45deg);
+  transition: transform .18s ease;
+}
+
+.faq-page__list details[open] .faq-page__chevron {
+  transform: rotate(225deg);
+}
+
+.faq-page__list details p {
+  margin: 0;
+  padding: 0 20px 22px;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+@media (max-width: 700px) {
+  .faq-page .user-content-main {
+    width: calc(100% - 32px);
+    padding: 22px 0 42px;
+  }
+  .faq-page__heading h1 { font-size: 30px; }
+  .faq-page__heading p { font-size: 13px; }
+  .faq-page__card { padding: 18px 14px; border-radius: 16px; }
+  .faq-page__tabs { gap: 8px; margin-bottom: 18px; }
+  .faq-page__tabs button { flex: 1 1 auto; padding: 8px 14px; }
+  .faq-page__list summary { padding: 14px 13px; font-size: 13px; }
+  .faq-page__list details p { padding: 0 13px 17px; font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-page__back,
+  .faq-page__chevron { transition: none; }
+}

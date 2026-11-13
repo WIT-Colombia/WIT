@@ -1,34 +1,13 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { destinations } from "./config/destinations";
 import { Icon, type IconName } from "./Icons";
+import { faqs, type FaqAudience } from "@wit/utils";
 
 const artwork = "/assets/definitiva/reference-art-4k.webp";
 const navigation = [["inicio", "Inicio"], ["como-funciona", "Cómo funciona"], ["usuarios", "Usuarios"], ["negocios", "Negocios"], ["planes", "Planes"], ["preguntas", "Preguntas"]] as const;
 const userBenefits = ["Descubre negocios cercanos", "Busca por categoría y ubicación", "Consulta información y horarios", "Guarda tus favoritos y valora"];
 const businessBenefits = ["Crea y gestiona tu perfil comercial", "Consulta estadísticas de tu negocio", "Gestiona contenido y opiniones", "Accede a planes gratuitos y PRO"];
 const benefits: [IconName, string][] = [["rocket", "Más visibilidad para tu negocio"], ["users", "Conexión directa con clientes"], ["growth", "Impulso al comercio local"], ["shield", "Plataforma segura y confiable"], ["devices", "Experiencia rápida y sencilla"]];
-type FaqAudience = "usuarios" | "negocios";
-const faqs: Record<FaqAudience, [string, string][]> = {
-  usuarios: [
-    ["¿Qué es XAMUKO y cómo funciona?", "XAMUKO es una plataforma que te ayuda a descubrir negocios, productos y servicios cerca de ti. Puedes explorar establecimientos, consultar su información, conocer sus productos y servicios y comunicarte directamente con ellos. XAMUKO conecta personas con negocios locales."],
-    ["¿Necesito registrarme para explorar XAMUKO?", "No. Puedes explorar negocios, productos y servicios sin crear una cuenta. Sin embargo, para acceder a funciones personalizadas, como guardar favoritos o publicar opiniones, necesitas registrarte e iniciar sesión."],
-    ["¿Cómo encuentro negocios, productos o servicios cerca de mí?", "Ingresa a XAMUKO y utiliza el buscador o las categorías disponibles. Puedes explorar establecimientos según tu ubicación y consultar sus perfiles para conocer direcciones, horarios, productos, servicios y medios de contacto."],
-    ["¿Cómo puedo contactar un negocio?", "Abre el perfil del establecimiento y consulta los medios de contacto que tenga publicados, como teléfono o WhatsApp. También puedes revisar su ubicación para saber cómo llegar. La comunicación se realiza directamente con el negocio."],
-    ["¿Cómo guardo favoritos y comparto mis opiniones?", "Inicia sesión en tu cuenta, abre el perfil de un negocio y utiliza la opción de favoritos para guardarlo. También puedes utilizar las funciones de valoración y opinión disponibles para compartir tu experiencia y ayudar a otros usuarios."],
-    ["¿Cómo recupero mi contraseña o actualizo mis datos?", "Si olvidaste tu contraseña, selecciona «¿Olvidaste tu contraseña?» en el inicio de sesión y sigue las instrucciones enviadas a tu correo. Para actualizar tu información personal, ingresa a tu cuenta y utiliza las opciones de configuración de perfil."],
-    ["¿Cómo protejo mi información o elimino mi cuenta?", "XAMUKO dispone de mecanismos para administrar tu cuenta y proteger tus datos personales. Puedes consultar la Política de Privacidad para conocer cómo se trata tu información y los canales disponibles para ejercer tus derechos, incluida la solicitud de supresión de datos cuando legalmente proceda."],
-  ],
-  negocios: [
-    ["¿Qué es XAMUKO Business y qué beneficios ofrece?", "XAMUKO Business permite que los negocios tengan presencia en la plataforma para que las personas puedan descubrirlos. Puedes presentar información comercial, productos y servicios, gestionar tu perfil y facilitar el contacto directo con posibles clientes."],
-    ["¿Cómo registro y publico mi negocio en XAMUKO?", "Selecciona «Registrar mi negocio», crea tu cuenta Business y completa los datos de tu establecimiento. Agrega la información comercial solicitada y sigue el proceso de publicación disponible en la plataforma. Procura mantener los datos completos y actualizados."],
-    ["¿Cómo actualizo mi negocio y publico productos o servicios?", "Inicia sesión en XAMUKO Business y accede a las herramientas de administración de tu negocio. Desde allí puedes actualizar la información comercial y gestionar los productos y servicios que deseas mostrar a los usuarios."],
-    ["¿Cómo pueden encontrarme y contactarme los clientes?", "Los usuarios pueden descubrir tu establecimiento mediante las herramientas de exploración y búsqueda de XAMUKO. Al consultar tu perfil, podrán acceder a la información y a los medios de contacto que hayas publicado. Mantener una ficha completa facilita que conozcan tu negocio."],
-    ["¿Cómo gestiono las opiniones y los colaboradores?", "Desde las herramientas de Business puedes consultar y gestionar las opiniones relacionadas con tu establecimiento. También puedes administrar colaboradores mediante las opciones y permisos disponibles para tu negocio."],
-    ["¿Qué diferencias existen entre el plan Gratis y Business PRO?", "XAMUKO contempla herramientas y beneficios según el plan habilitado para cada negocio. Las funciones disponibles y sus límites deben consultarse en Business. La contratación de PRO no está habilitada desde la Landing en la versión actual."],
-    ["¿Cómo recupero el acceso o elimino mi negocio?", "Si olvidaste tu contraseña, utiliza la opción de recuperación disponible en el inicio de sesión de Business. Para eliminar un negocio, consulta las opciones de administración correspondientes y revisa las consecuencias de la eliminación antes de confirmarla."],
-  ],
-};
-
 // Crop only illustration regions; page copy, navigation, cards and controls are DOM.
 function Artwork({ viewBox, className = "" }: { viewBox: string; className?: string }) {
   const isDevices = !className;

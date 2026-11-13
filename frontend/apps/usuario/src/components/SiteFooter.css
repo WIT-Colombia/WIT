@@ -113,9 +113,9 @@
 }
 
 .site-footer__group a:hover {
-  color: #a5f3fc;
-  text-decoration: underline;
-  text-decoration-color: currentColor;
+  color: rgb(255 255 255 / 91%);
+  text-decoration: none;
+  text-decoration-color: transparent;
 }
 
 .site-footer__bottom {

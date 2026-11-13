@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import xamukoLogo from "../assets/XAMUKO-V1-transparent.png";
 import "./SiteFooter.css";
 
@@ -16,7 +17,10 @@ const navigationGroups = [
   },
   {
     title: "Ayuda",
-    links: [{ label: "Cuéntanos qué necesitas", to: "/register-need" }],
+    links: [
+      { label: "Preguntas frecuentes", to: "/ayuda/preguntas-frecuentes" },
+      { label: "Cuéntanos qué necesitas", to: "/register-need" },
+    ],
   },
   {
     title: "Legal",
@@ -85,7 +89,7 @@ export function SiteFooter() {
                 <h2 id={`site-footer-${group.title.toLowerCase()}`}>{group.title}</h2>
                 <ul>
                   {group.links.map((link) => (
-                    <li key={link.label}><a href={link.to}>{link.label}</a></li>
+                    <li key={link.label}>{link.to === "/ayuda/preguntas-frecuentes" ? <Link to={link.to}>{link.label}</Link> : <a href={link.to}>{link.label}</a>}</li>
                   ))}
                 </ul>
               </section>
