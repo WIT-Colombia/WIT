@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@wit/ui";
-import { businesses as sampleBusinesses, categories, products as sampleProducts, type Business } from "../data/mockData";
+import { businesses as sampleBusinesses, products as sampleProducts, type Business } from "../data/mockData";
 import { useLocationContext } from "../context/LocationContext";
 import { LocationStarter } from "../components/LocationStarter";
 import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
 import { listDiscoverBusinesses } from "../services/discoverBusinessService";
 import { bogotaDayIndex, selectDiscoverBusinesses } from "../utils/discoverBusinesses";
-import { listPublicProducts, listPublicPromotions, listPublicServices, listPublicNewArrivals, type PublicNewArrival } from "../services/publicBusinessApi";
+import { listPublicProducts, listPublicPromotions, listPublicServices, listPublicNewArrivals, listPublicCategories, type PublicBusinessCategory, type PublicNewArrival } from "../services/publicBusinessApi";
 import { requestBlobWithSession } from "../services/authService";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
@@ -176,6 +176,21 @@ export default function Home() {
   const arrivalLoadingKeyRef = useRef<string | null>(null);
   const selectedCityKey = selectedLocation ? `${selectedLocation.name}|${selectedLocation.context}` : "";
   const arrivalKey = selectedLocation ? `${selectedCityKey}|${discoveryDay}` : "";
+  const [categoryListing, setCategoryListing] = useState<{
+    key: string; status: "loading" | "ready" | "error"; items: PublicBusinessCategory[];
+  }>({ key: "", status: "loading", items: [] });
+  const [categoryRetry, setCategoryRetry] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setShowAllCategories(false);
+    setCategoryListing({ key: selectedCityKey, status: "loading", items: [] });
+    if (selectedLocation) {
+      void listPublicCategories(selectedLocation.name, selectedLocation.context)
+        .then(items => { if (active) setCategoryListing({ key: selectedCityKey, status: "ready", items }); })
+        .catch(() => { if (active) setCategoryListing({ key: selectedCityKey, status: "error", items: [] }); });
+    }
+    return () => { active = false; };
+  }, [selectedCityKey, categoryRetry]);
 
   function distanceBetween(origin: { lat: number; lng: number } | undefined, target: { lat: number; lng: number } | undefined): number {
     if (!origin || !target) return Number.POSITIVE_INFINITY;
@@ -415,10 +430,12 @@ export default function Home() {
   const locationLabel = selectedLocation ? `${selectedLocation.name}, ${selectedLocation.context}` : selection?.mode === "automatic" ? "tu ubicación actual" : "una zona seleccionada";
   const cityName = selectedLocation?.name ?? (selection?.mode === "automatic" ? "tu ubicación" : "esta zona");
   // Keep the More shortcut visible alongside the initial category set.
-  const featuredCategories = categories.slice(0, 7);
-  const selectedCategory = categories.find((item) => item.name === category);
+  const activeCategories = categoryListing.key === selectedCityKey ? categoryListing.items : [];
+  const categoryStatus = categoryListing.key === selectedCityKey ? categoryListing.status : "loading";
+  const featuredCategories = activeCategories.slice(0, 7);
+  const selectedCategory = activeCategories.find((item) => item.name === category);
   const visibleCategories = showAllCategories
-    ? categories
+    ? activeCategories
     : selectedCategory && !featuredCategories.some((item) => item.name === selectedCategory.name)
       ? [...featuredCategories, selectedCategory]
     : featuredCategories;
@@ -661,8 +678,8 @@ export default function Home() {
       <section className="home-city-banner-section" aria-label={`Descubre negocios cerca de ${locationLabel}`}><div className="home-city-banner"><img src={xamukoLocalHero} alt="Comercios locales de la ciudad"/><div className="home-city-banner__shade"/><span className="home-city-banner__location"><Icon name="pin"/>{cityName}</span><p className="home-city-banner__signature" aria-hidden="true">Nuestra gente,<br/>nuestra ciudad.</p><div className="home-city-banner__copy"><span>EXPLORA TU CIUDAD</span><h2>Lo local está<br/><em>más cerca</em> de ti</h2><p>Encuentra negocios, productos y servicios que hacen especial a tu comunidad.</p><Link to="/map" className="home-city-banner__action"><Icon name="map"/>Explorar negocios</Link></div></div></section>
 
       <section className="category-section" id="explorar" aria-labelledby="category-title">
-        <div className="section-heading"><div className="home-section-intro"><h2 id="category-title"><span className="home-section-symbol home-section-symbol--round" aria-hidden="true">+</span>Explora por categoría</h2></div><button className="text-link category-toggle" type="button" aria-expanded={showAllCategories} aria-controls="home-category-list" onClick={() => setShowAllCategories((current) => !current)}>{showAllCategories ? "Ver menos" : `Ver más (${categories.length})`} <Icon name="arrow" /></button></div>
-        <div className={`category-list${showAllCategories ? " is-expanded" : ""}`} id="home-category-list" ref={categoryListRef} onScroll={() => { const list = categoryListRef.current; if (list) setCategoryScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startCategoryDrag} onPointerMove={moveCategoryDrag} onPointerUp={endCategoryDrag} onPointerCancel={endCategoryDrag} onClickCapture={(event) => { if (ignoreCategoryClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{visibleCategories.map((item, index) => <button key={item.name} type="button" className={`category-tile${category === item.name ? " selected" : ""}`} aria-pressed={category === item.name} onClick={() => selectCategory(item.name, index)}><span className="category-icon"><CategoryIcon name={item.name}/></span><span>{item.name}</span></button>)}</div>
+        <div className="section-heading"><div className="home-section-intro"><h2 id="category-title"><span className="home-section-symbol home-section-symbol--round" aria-hidden="true">+</span>Explora por categoría</h2></div>{categoryStatus === "ready" && activeCategories.length > 7 && <button className="text-link category-toggle" type="button" aria-expanded={showAllCategories} aria-controls="home-category-list" onClick={() => setShowAllCategories((current) => !current)}>{showAllCategories ? "Ver menos" : `Ver más (${activeCategories.length})`} <Icon name="arrow" /></button>}</div>
+        <div className={`category-list${showAllCategories ? " is-expanded" : ""}`} id="home-category-list" ref={categoryListRef} onScroll={() => { const list = categoryListRef.current; if (list) setCategoryScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startCategoryDrag} onPointerMove={moveCategoryDrag} onPointerUp={endCategoryDrag} onPointerCancel={endCategoryDrag} onClickCapture={(event) => { if (ignoreCategoryClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{!selectedLocation ? <p className="category-list__message">Selecciona una ciudad para descubrir sus categorías.</p> : categoryStatus === "loading" ? <p className="category-list__message" role="status">Cargando categorías de {cityName}…</p> : categoryStatus === "error" ? <div className="category-list__message" role="alert">No pudimos cargar las categorías. <button type="button" onClick={() => setCategoryRetry(value => value + 1)}>Reintentar</button></div> : visibleCategories.length === 0 ? <p className="category-list__message">Aún no hay negocios publicados por categoría en {cityName}.</p> : visibleCategories.map((item, index) => <button key={item.id} type="button" className={`category-tile${category === item.name ? " selected" : ""}`} aria-pressed={category === item.name} aria-label={`${item.name}, ${item.businessCount} ${item.businessCount === 1 ? "negocio" : "negocios"}`} onClick={() => selectCategory(item.name, index)}><span className="category-icon"><CategoryIcon name={item.name}/></span><span className="category-tile__detail"><span className="category-tile__name">{item.name}</span><small className="category-tile__count">{item.businessCount} {item.businessCount === 1 ? "negocio" : "negocios"}</small></span></button>)}</div>
         {showAllCategories && categoryScroll.max > 0 && <div className="category-scroll-control"><input type="range" min="0" max={categoryScroll.max} step="1" value={Math.min(categoryScroll.left, categoryScroll.max)} aria-label="Desplazar categorías" onChange={(event) => { const left = Number(event.target.value); if (categoryListRef.current) categoryListRef.current.scrollLeft = left; setCategoryScroll((current) => ({ ...current, left })); }} /></div>}
       </section>
 
