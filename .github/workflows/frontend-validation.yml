@@ -63,11 +63,11 @@ jobs:
       - name: Install Chromium for Admin sidebar check
         run: npx playwright install --with-deps chromium
 
-      - name: Check Admin sidebar in desktop and mobile browsers
-        run: node scripts/check-admin-sidebar.mjs
-
       - name: Check Usuario offer card geometry on iPhone and iPad
         run: node scripts/check-usuario-offer-cards.mjs
+
+      - name: Check Admin sidebar in desktop and mobile browsers
+        run: node scripts/check-admin-sidebar.mjs
 
       - name: Save Usuario offer card screenshots
         if: always()
