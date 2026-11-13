@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import cityEmptyArtwork from "../assets/no-businesses-city-4k.jpg";
 import "./NoResultsState.css";
 
 type NoResultsStateProps = {
@@ -12,8 +11,11 @@ type NoResultsStateProps = {
 
 export function CityEmptyState() {
   return <section className="no-results-state no-results-state--city" aria-labelledby="no-city-businesses-title">
-    <img src={cityEmptyArtwork} alt="Aún no hay negocios registrados en tu ciudad. Prueba con negocios en modalidad virtual y descubre opciones disponibles para ti." />
-    <Link className="no-results-city-action" to="/results?scope=virtual" aria-label="Ver negocios virtuales disponibles en toda Colombia">Ver negocios virtuales</Link>
+    <span className="no-results-city-symbol" aria-hidden="true">⌖</span>
+    <span className="no-results-city-eyebrow">HAY MUCHO POR DESCUBRIR</span>
+    <h2 id="no-city-businesses-title">Aún no hay negocios registrados en tu ciudad</h2>
+    <p>¡Estamos creciendo! Mientras llegan nuevas opciones a tu comunidad, puedes descubrir negocios virtuales disponibles en toda Colombia.</p>
+    <Link className="no-results-city-action" to="/results?scope=virtual">Explorar negocios virtuales <span aria-hidden="true">→</span></Link>
   </section>;
 }
 
