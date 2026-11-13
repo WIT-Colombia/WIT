@@ -58,7 +58,7 @@
   .business-detail-page .business-detail-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
   .business-detail-page .business-detail-actions>a,.business-detail-page .business-detail-actions>button{min-width:0;min-height:40px;padding:0 7px;font-size:10px}
   .business-detail-page .business-header-whatsapp{grid-column:1;grid-row:1}
-  .business-detail-page .business-primary-action{grid-column:auto;grid-row:auto}
+  .business-detail-page .business-primary-action{grid-column:2;grid-row:1}
   .business-detail-page .business-header-call{grid-column:1;grid-row:2}
   .business-detail-page .business-favorite-action{grid-column:2;grid-row:2}
   .business-detail-page .business-detail-actions svg{width:15px;height:15px;flex-basis:15px}
@@ -85,64 +85,3 @@
   .business-detail-page .business-detail-intro{padding-inline:12px}
   .business-detail-page .business-detail-actions>a,.business-detail-page .business-detail-actions>button{font-size:9px}
 }
-
-/* Enlaces sociales y tarjeta QR visibles en la ficha pública, independientemente de la pestaña. */
-.business-detail-page .business-social-links-header{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.business-detail-page .business-social-links-header .business-social-link{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid #e6d9ff;border-radius:12px;color:#6530d6;text-decoration:none;font-size:12px;font-weight:600}
-.business-detail-page .business-social-links-header .business-social-link svg{width:17px;height:17px}
-.business-detail-page .business-public-qr-card{display:flex;justify-content:center;margin:18px auto;max-width:100%;overflow:hidden}
-.business-detail-page .business-public-qr-card .public-digital-card{max-width:100%}
-
-/* Cinco pestañas accesibles en pantallas pequeñas sin reducir excesivamente el texto. */
-@media(max-width:600px){.business-detail-page .business-tabs{grid-template-columns:repeat(4,minmax(105px,1fr));overflow-x:auto;scrollbar-width:thin}.business-detail-page .business-tabs button{white-space:nowrap}}
-
-/* Diseño único de acciones: móvil 2×2, tablet 2×2, escritorio 4 en línea.
-   Favoritos se conserva como acción independiente debajo de las cuatro principales. */
-.business-detail-page .business-detail-actions{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px;
-  align-items:stretch;
-  margin-top:18px;
-}
-.business-detail-page .business-detail-actions > a,
-.business-detail-page .business-detail-actions > button{
-  grid-column:auto;
-  grid-row:auto;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-  width:100%;
-  min-width:0;
-  min-height:52px;
-  padding:10px 12px;
-  border-radius:15px;
-  box-sizing:border-box;
-  font-size:14px;
-  line-height:1.2;
-  font-weight:700;
-  white-space:normal;
-  text-align:center;
-  text-decoration:none;
-}
-.business-detail-page .business-detail-actions .business-header-call{background:#7b3ffb;color:#fff;border-color:#7b3ffb}
-.business-detail-page .business-detail-actions .business-header-whatsapp{background:#087d46;color:#fff;border-color:#087d46}
-.business-detail-page .business-detail-actions .business-website-button{background:#2563eb;color:#fff;border:1px solid #2563eb;box-shadow:0 5px 12px rgba(37,99,235,.14);font-size:14px}
-.business-detail-page .business-detail-actions .business-website-button:hover{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
-.business-detail-page .business-detail-actions .business-primary-action{background:#7b3ffb;color:#fff;border:1px solid #7b3ffb;box-shadow:0 5px 12px rgba(123,63,251,.12)}
-.business-detail-page .business-detail-actions .business-favorite-action{grid-column:1 / -1;background:#fff;color:#a21c5b;border:1px solid #d7b8fa}
-.business-detail-page .business-detail-actions .business-favorite-action.is-active{border-color:#e8aac1;background:#fff0f5;color:#a9184b}
-.business-detail-page .business-detail-actions > a:focus-visible,.business-detail-page .business-detail-actions > button:focus-visible{outline:3px solid #22d3ee;outline-offset:2px}
-.business-detail-page .business-detail-actions .business-website-button:disabled{opacity:.6;cursor:not-allowed}
-@media(max-width:1023px){
-  .business-detail-page .business-detail-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-}
-@media(max-width:600px){
-  .business-detail-page .business-detail-actions{gap:9px;margin-top:14px}
-  .business-detail-page .business-detail-actions > a,
-  .business-detail-page .business-detail-actions > button{min-height:48px;padding:9px 7px;font-size:12px;border-radius:14px}
-  .business-detail-page .business-detail-actions svg{width:17px;height:17px;flex:0 0 17px}
-}
-
-.business-detail-page .business-address-information address{display:block;font-style:normal;color:#334155;font-size:14px;line-height:1.6;overflow-wrap:anywhere}.business-detail-page .business-address-information address small{display:block;margin-top:5px;color:#64748b}
