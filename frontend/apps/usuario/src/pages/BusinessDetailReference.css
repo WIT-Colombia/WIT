@@ -229,3 +229,16 @@
 @media(min-width:701px) and (max-width:1100px){
 .business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-detail-aside > .business-socials-public{width:100%}
 }
+
+/* Destacados debajo de Dirección, en columna izquierda, al lado de Redes sociales. */
+@media(min-width:701px){
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-popular-section{grid-column:1;grid-row:4;align-self:start;min-width:0;width:100%;box-sizing:border-box;margin:0}
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-detail-aside > .business-socials-public{grid-column:2;grid-row:4;align-self:start}
+.business-detail-page .business-reference-layout .business-popular-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;gap:8px}
+.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card{width:100%;min-width:0;max-width:100%;flex:none}
+}
+@media(max-width:700px){
+.business-detail-page .business-reference-layout > .business-popular-section{order:4;width:100%;box-sizing:border-box}
+.business-detail-page .business-reference-layout .business-info-columns > .business-about{order:5}
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-socials-public{order:6}
+}
