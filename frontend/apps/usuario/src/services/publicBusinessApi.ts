@@ -168,3 +168,28 @@ export async function searchPublicUniversal(params: Record<string, string | numb
   const services = response.services.map((item) => mapService(item, item.business.publicId));
   return { businesses, products, services, pagination: response.pagination };
 }
+
+export type PublicNewArrival =
+  | { kind: "PRODUCT"; item: Product }
+  | { kind: "SERVICE"; item: Service };
+
+export type PublicNewArrivalsPage = {
+  items: PublicNewArrival[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number; hasMore: boolean };
+};
+
+export async function listPublicNewArrivals(city: string, region?: string, page = 1): Promise<PublicNewArrivalsPage> {
+  const query = new URLSearchParams({ city, page: String(page), pageSize: "20" });
+  if (region) query.set("region", region);
+  const response = await requestWithSession<{
+    items: Array<{ kind: "PRODUCT" | "SERVICE"; offer: UniversalOffer & { business: { publicId: string; name: string; location?: { latitude: number | null; longitude: number | null } | null } } }>;
+    pagination: PublicNewArrivalsPage["pagination"];
+  }>(`/api/v1/public/new-arrivals?${query.toString()}`);
+  return {
+    items: response.items.map(({ kind, offer }) =>
+      kind === "SERVICE"
+        ? { kind, item: mapService(offer, offer.business.publicId) }
+        : { kind: "PRODUCT" as const, item: mapProduct(offer, offer.business.publicId) }),
+    pagination: response.pagination,
+  };
+}
