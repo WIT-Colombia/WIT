@@ -8,10 +8,8 @@ export const navigationGroups: NavigationGroup[] = [
   { id: 'plataforma', label: 'Gestión de la plataforma', items: [
     { path: '/businesses', label: 'Negocios', icon: 'store', group: 'plataforma', description: 'Directorio y gestión administrativa de negocios.' },
     { path: '/users', label: 'Usuarios', icon: 'users', group: 'plataforma', description: 'Consulta de cuentas reales según permisos.' },
-    { path: '/verifications', label: 'Verificaciones', icon: 'shield', group: 'plataforma', description: 'Revisión documental de negocios.' },
     { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Consulta de productos y servicios reales.' },
     { path: '/reviews', label: 'Opiniones', icon: 'star', group: 'plataforma', description: 'Consulta de opiniones reales.' },
-    { path: '/reports', label: 'Reportes', icon: 'flag', group: 'plataforma', description: 'Revisión de reportes de opiniones.' },
     { path: '/pioneers', label: 'Negocios Pioneros', icon: 'star', group: 'plataforma', description: 'Registro y asignaciones de pioneros.' },
   ] },
   { id: 'crecimiento', label: 'Suscripciones y crecimiento', items: [
@@ -33,6 +31,7 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/needs', label: 'Necesidades', icon: 'search', group: 'tecnologia', description: 'Consulta de necesidades pendiente de API.', pending: true },
   ] },
   { id: 'soporte', label: 'Atención y soporte', items: [
+    { path: '/verifications', label: 'Verificaciones', icon: 'shield', group: 'soporte', description: 'Revisión documental de negocios.' },
     { path: '/user-needs', label: 'Necesidades de usuarios', icon: 'search', group: 'soporte', description: 'Solicitudes enviadas desde Cuéntanos qué necesitas. Pendiente de API.' },
     { path: '/business-reports', label: 'Reportes de negocios', icon: 'flag', group: 'soporte', description: 'Bandeja de denuncias sobre negocios; integración con API pendiente.', pending: true },
     { path: '/support', label: 'Mensajes de soporte', icon: 'message', group: 'soporte', description: 'Bandeja de soporte pendiente de API.', pending: true },
