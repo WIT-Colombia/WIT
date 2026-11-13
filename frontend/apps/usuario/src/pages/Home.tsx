@@ -7,7 +7,7 @@ import { LocationStarter } from "../components/LocationStarter";
 import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
 import { listDiscoverBusinesses } from "../services/discoverBusinessService";
 import { bogotaDayIndex, selectDiscoverBusinesses } from "../utils/discoverBusinesses";
-import { listPublicProducts, listPublicPromotions, listPublicServices } from "../services/publicBusinessApi";
+import { listPublicProducts, listPublicPromotions, listPublicServices, listPublicNewArrivals, type PublicNewArrival } from "../services/publicBusinessApi";
 import { requestBlobWithSession } from "../services/authService";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
@@ -98,7 +98,6 @@ function CategoryIcon({ name }: { name: string }) {
 }
 
 const NEW_BUSINESS_WINDOW_DAYS = 7;
-const NEW_PRODUCT_WINDOW_DAYS = 7;
 
 type HomeSpecialOffer = { product: typeof sampleProducts[number]; discount: string; deadline: string; promotionId?: string };
 
@@ -167,6 +166,13 @@ export default function Home() {
   const [message, setMessage] = useState(() => typeof navigationMessage === "string" ? navigationMessage : "");
   const [catalogState, setCatalogState] = useState<"loading" | "ready" | "error">("loading");
   const [catalogRetry, setCatalogRetry] = useState(0);
+  const [arrivalState, setArrivalState] = useState<{
+    key: string; status: "loading" | "ready" | "error";
+    items: PublicNewArrival[]; page: number; hasMore: boolean; loadMoreError: boolean;
+  }>({ key: "", status: "loading", items: [], page: 0, hasMore: false, loadMoreError: false });
+  const [loadingMoreArrivals, setLoadingMoreArrivals] = useState(false);
+  const arrivalLoadingKeyRef = useRef<string | null>(null);
+  const arrivalKey = selectedLocation ? `${selectedLocation.name}|${selectedLocation.context}|${discoveryDay}` : "";
 
   function distanceBetween(origin: { lat: number; lng: number } | undefined, target: { lat: number; lng: number } | undefined): number {
     if (!origin || !target) return Number.POSITIVE_INFINITY;
@@ -245,6 +251,58 @@ export default function Home() {
     return () => window.clearTimeout(timeout);
   }, []);
 
+  // La vitrina de novedades no se limita a los 12 productos de la búsqueda general.
+  // Su paginación independiente incluye productos y servicios de la ciudad seleccionada.
+  useEffect(() => {
+    let active = true;
+    arrivalLoadingKeyRef.current = null;
+    setLoadingMoreArrivals(false);
+    setArrivalState({ key: arrivalKey, status: "loading", items: [], page: 0, hasMore: false, loadMoreError: false });
+    if (!selectedLocation?.name) return () => { active = false; };
+    void listPublicNewArrivals(selectedLocation.name, selectedLocation.context).then(({ items, pagination }) => {
+      if (!active) return;
+      setArrivalState({ key: arrivalKey, status: "ready", items, page: 1,
+        hasMore: pagination.hasMore, loadMoreError: false });
+    }).catch(() => {
+      if (active) setArrivalState({ key: arrivalKey, status: "error", items: [], page: 0,
+        hasMore: false, loadMoreError: false });
+    });
+    return () => { active = false; };
+  }, [arrivalKey, selectedLocation?.name, selectedLocation?.context, catalogRetry]);
+
+  function loadMoreArrivals() {
+    if (!selectedLocation || arrivalState.key !== arrivalKey || arrivalState.status !== "ready"
+      || !arrivalState.hasMore || arrivalLoadingKeyRef.current === arrivalKey) return;
+    const key = arrivalKey;
+    const nextPage = arrivalState.page + 1;
+    arrivalLoadingKeyRef.current = key;
+    setLoadingMoreArrivals(true);
+    setArrivalState((current) => current.key === key ? { ...current, loadMoreError: false } : current);
+    void listPublicNewArrivals(selectedLocation.name, selectedLocation.context, nextPage)
+      .then(({ items, pagination }) => {
+        setArrivalState((current) => {
+          if (current.key !== key) return current;
+          const existing = new Set(current.items.map(({ kind, item }) => `${kind}:${item.id}`));
+          const additions = items.filter(({ kind, item }) => {
+            const id = `${kind}:${item.id}`;
+            if (existing.has(id)) return false;
+            existing.add(id);
+            return true;
+          });
+          return { ...current, items: [...current.items, ...additions], page: nextPage,
+            hasMore: pagination.hasMore, loadMoreError: false };
+        });
+      })
+      .catch(() => setArrivalState((current) => current.key === key
+        ? { ...current, loadMoreError: true } : current))
+      .finally(() => {
+        if (arrivalLoadingKeyRef.current === key) {
+          arrivalLoadingKeyRef.current = null;
+          setLoadingMoreArrivals(false);
+        }
+      });
+  }
+
   useEffect(() => {
     if (!message) return;
     const timeout = window.setTimeout(() => setMessage(""), 3200);
@@ -263,24 +321,10 @@ export default function Home() {
     () => selectDiscoverBusinesses(discoveryCatalog, discoveryDay, 6),
     [discoveryCatalog, discoveryDay],
   );
-  const newProducts = useMemo(() => {
-    if (!hasSampleCatalog) return catalogProducts.filter((product) => {
-      if (!product.createdAt) return false;
-      const ageDays = (Date.now() - Date.parse(product.createdAt)) / (1000 * 60 * 60 * 24);
-      return ageDays >= 0 && ageDays < NEW_PRODUCT_WINDOW_DAYS;
-    });
-    const distances = new Map(sampleBusinesses.map((business) => [business.id, business.distanceKm]));
-    return [...sampleProducts]
-      .filter((product) => {
-        if (!product.createdAt) return false;
-        const ageDays = (Date.now() - Date.parse(product.createdAt)) / (1000 * 60 * 60 * 24);
-        return ageDays >= 0 && ageDays < NEW_PRODUCT_WINDOW_DAYS;
-      })
-      .sort((a, b) => (distances.get(a.businessId) ?? Number.POSITIVE_INFINITY) - (distances.get(b.businessId) ?? Number.POSITIVE_INFINITY)
-        || Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? ""));
-  }, [catalogProducts, hasSampleCatalog]);
-  const newProductIds = useMemo(() => newProducts.map((product) => product.id), [newProducts]);
-  const { get: getOfferLike, toggle: toggleOfferLike } = useOfferLikes(newProductIds);
+  const visibleArrivals = arrivalState.key === arrivalKey && arrivalState.status === "ready"
+    ? arrivalState.items : [];
+  const arrivalIds = useMemo(() => visibleArrivals.map(({ item }) => item.id), [visibleArrivals]);
+  const { get: getOfferLike, toggle: toggleOfferLike } = useOfferLikes(arrivalIds);
   const visibleSpecialOffers = useMemo<HomeSpecialOffer[]>(() => hasSampleCatalog ? specialOffers : realPromotions.length ? realPromotions : catalogProducts.filter((product) => product.isOffer).map((product) => ({ product, discount: product.discount ?? product.offerLabel ?? "Oferta", deadline: product.offerDeadline ?? "" })), [catalogProducts, hasSampleCatalog, realPromotions]);
   useEffect(() => {
     if (hasSampleCatalog) return;
@@ -612,7 +656,14 @@ export default function Home() {
 
       {featuredItems.length > 0 && <section className="business-section home-featured-section" aria-labelledby="featured-title"><div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="featured-title"><span className="home-section-symbol" aria-hidden="true">◇</span>Negocios destacados</h2><p>Descubre y apoya los negocios de tu comunidad.</p></div>{allFeaturedItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllFeatured} aria-controls="featured-business-list" onClick={() => setShowAllFeatured((current) => !current)}>{showAllFeatured ? "Ver menos" : `Ver más (${allFeaturedItems.length})`} <Icon name="arrow" /></button>}</div><div className="business-grid" id="featured-business-list" ref={featuredListRef} onScroll={() => { const list = featuredListRef.current; if (list) setFeaturedScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startFeaturedDrag} onPointerMove={moveFeaturedDrag} onPointerUp={endFeaturedDrag} onPointerCancel={endFeaturedDrag} onClickCapture={(event) => { if (ignoreFeaturedClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{featuredItems.map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllFeatured && featuredScroll.max > 0 && <div className="featured-scroll-control"><input type="range" min="0" max={featuredScroll.max} step="1" value={Math.min(featuredScroll.left, featuredScroll.max)} aria-label="Desplazar negocios destacados" onChange={(event) => { const left = Number(event.target.value); if (featuredListRef.current) featuredListRef.current.scrollLeft = left; setFeaturedScroll((current) => ({ ...current, left })); }} /></div>}</section>}
 
-      <NewProductsBanner locationName={cityName} products={newProducts} cityEmpty={catalogState === "ready" && visibleItems.length === 0 && !query && !category} likedIds={newProducts.filter((product) => isRealOfferId(product.id) ? getOfferLike(product.id).liked : likes.includes(product.id)).map((product) => product.id)} onLike={saveLike} getLikeCount={(id, fallback) => isRealOfferId(id) ? getOfferLike(id).count : fallback ?? 0}/>
+      {(catalogState === "ready" && visibleItems.length === 0 && !query && !category || visibleArrivals.length > 0) &&
+        <NewProductsBanner locationName={cityName} items={visibleArrivals}
+          cityEmpty={catalogState === "ready" && visibleItems.length === 0 && !query && !category}
+          hasMore={arrivalState.key === arrivalKey && arrivalState.hasMore}
+          isLoadingMore={loadingMoreArrivals} loadMoreError={arrivalState.loadMoreError}
+          onLoadMore={loadMoreArrivals}
+          likedIds={visibleArrivals.filter(({ item }) => isRealOfferId(item.id) ? getOfferLike(item.id).liked : likes.includes(item.id)).map(({ item }) => item.id)}
+          onLike={saveLike} getLikeCount={(id, fallback) => isRealOfferId(id) ? getOfferLike(id).count : fallback ?? 0} />}
 
       <section className="business-section home-nearby-section" id="lugares" aria-labelledby="business-title">
         <div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="business-title"><span className="home-section-symbol" aria-hidden="true"><Icon name="pin"/></span>{resultsLabel}</h2><p>Encuentra ese lugar que estás buscando.</p></div>{nearbyItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllNearby} aria-controls="nearby-business-list" onClick={() => setShowAllNearby((current) => !current)}>{showAllNearby ? "Ver menos" : `Ver más (${nearbyItems.length})`} <Icon name="arrow" /></button>}</div>
