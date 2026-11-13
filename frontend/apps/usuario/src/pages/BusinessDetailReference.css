@@ -254,3 +254,11 @@
 @media(max-width:700px){
 .business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-socials-public{height:auto;min-height:0}
 }
+
+/* Destacados restaurados al pie, antes de Reportar negocio. Carrusel 4/3/2. */
+.business-detail-page > .business-popular-section,.business-detail-page .business-popular-section:not(.business-reference-layout > .business-popular-section){width:100%;max-width:100%;box-sizing:border-box;margin:24px 0 18px;padding:18px;border:1px solid #ddd5f3;border-radius:19px;background:#fff;box-shadow:0 7px 21px #30277810}
+.business-detail-page .business-popular-section .business-popular-grid{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:thin;touch-action:pan-x;overscroll-behavior-inline:contain}
+.business-detail-page .business-popular-section .business-popular-grid > *{flex:0 0 calc((100% - 36px)/4);min-width:0;max-width:none;scroll-snap-align:start}
+.business-detail-page .business-popular-back-top{display:block;margin:14px 0 0 auto;padding:8px 13px;border:1px solid #ddd5f3;border-radius:10px;background:#fff;color:#7130ec;font-weight:650;cursor:pointer}
+@media(min-width:701px) and (max-width:1100px){.business-detail-page .business-popular-section .business-popular-grid > *{flex-basis:calc((100% - 24px)/3)}}
+@media(max-width:700px){.business-detail-page .business-popular-section .business-popular-grid > *{flex-basis:calc((100% - 12px)/2)}.business-detail-page .business-popular-section:not(.business-reference-layout > .business-popular-section){padding:12px}}
