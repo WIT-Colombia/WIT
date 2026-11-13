@@ -181,3 +181,21 @@
   .business-detail-page .business-favorite-action { grid-column:1 / -1; }
   .business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card { flex-basis:68%; }
 }
+
+/* Información: columna izquierda en orden fijo; exclusivamente tarjeta digital a la derecha. */
+@media(min-width:701px){
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-information-content{grid-column:1;grid-row:1}
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-hours-information{grid-column:1;grid-row:2}
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-address-information{grid-column:1;grid-row:3}
+.business-detail-page .business-reference-layout .business-info-columns > .business-about{grid-column:2;grid-row:1 / span 3;display:flex;justify-content:center;align-items:flex-start}
+.business-detail-page .business-reference-layout > .business-popular-section{grid-column:1 / -1;grid-row:4}
+}
+.business-detail-page .business-information-content p{margin:9px 0;color:#334155;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+@media(max-width:700px){
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-information-content{order:1;width:100%;box-sizing:border-box}
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-hours-information{order:2;width:100%;box-sizing:border-box}
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-address-information{order:3;width:100%;box-sizing:border-box}
+.business-detail-page .business-reference-layout .business-info-columns > .business-about{order:4;width:100%;box-sizing:border-box;display:flex;justify-content:center}
+.business-detail-page .business-reference-layout > .business-popular-section{order:5}
+.business-detail-page .business-reference-layout .public-digital-card{width:min(100%,340px)}
+}
