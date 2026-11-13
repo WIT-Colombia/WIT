@@ -501,6 +501,124 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   return { businesses: businessResult.items, products: productResult.items, services: serviceResult.items, pagination: { businesses: businessResult.pagination, products: productResult.pagination, services: serviceResult.pagination } };
 }
 
+export type PublicNewArrivalsInput = {
+  city: string;
+  region?: string;
+  page: number;
+  pageSize: number;
+};
+
+export function parsePublicNewArrivalsInput(query: Record<string, unknown>): PublicNewArrivalsInput {
+  const city = typeof query.city === 'string' ? query.city.trim() : '';
+  const region = typeof query.region === 'string' ? query.region.trim() : '';
+  if (!city || city.length > 160 || region.length > 160) {
+    throw new AppError(400, 'INVALID_PUBLIC_QUERY', 'Selecciona una ciudad válida.');
+  }
+  return {
+    city, ...(region ? { region } : {}),
+    page: validatePositiveInteger(query.page, 1, 1_000_000, 'page'),
+    pageSize: validatePositiveInteger(query.pageSize, 20, 20, 'pageSize'),
+  };
+}
+
+/** Whole-day rotation in Colombia, without local browser timezone dependencies. */
+export function colombiaArrivalDay(timestamp: number = Date.now()): number {
+  return Math.floor((timestamp - 5 * 3_600_000) / 86_400_000);
+}
+
+/** One offer per business per round, Premium getting two turns for each standard turn. */
+export function rotatePublicNewArrivals<T extends { id: string; business: { publicId: string; subscriptions?: unknown[] } }>(
+  arrivals: T[], day: number,
+): T[] {
+  const groups = new Map<string, T[]>();
+  for (const arrival of arrivals) {
+    const id = arrival.business.publicId;
+    const rows = groups.get(id) ?? [];
+    rows.push(arrival);
+    groups.set(id, rows);
+  }
+  const businessEntries = [...groups.entries()].map(([id, offers]) => ({
+    id,
+    featured: featuredPriority(offers[0].business),
+    offers: [...offers].sort((a, b) => a.id.localeCompare(b.id)),
+  }));
+  const rotate = <U,>(values: U[]): U[] => {
+    if (!values.length) return values;
+    const shift = ((day % values.length) + values.length) % values.length;
+    return [...values.slice(shift), ...values.slice(0, shift)];
+  };
+  const premium = rotate(businessEntries.filter(group => group.featured).sort((a, b) => a.id.localeCompare(b.id)));
+  const standard = rotate(businessEntries.filter(group => !group.featured).sort((a, b) => a.id.localeCompare(b.id)));
+  const orderedBusinesses: typeof businessEntries = [];
+  while (premium.length || standard.length) {
+    for (let index = 0; index < 2 && premium.length; index++) orderedBusinesses.push(premium.shift()!);
+    if (standard.length) orderedBusinesses.push(standard.shift()!);
+  }
+  const rotatedOffers = orderedBusinesses.map(group => rotate(group.offers));
+  const output: T[] = [];
+  const maxPerBusiness = Math.max(0, ...rotatedOffers.map(items => items.length));
+  for (let round = 0; round < maxPerBusiness; round++) {
+    for (const offers of rotatedOffers) if (offers[round]) output.push(offers[round]);
+  }
+  return output;
+}
+
+/**
+ * New products and services from the past seven days, in 20-item pages.
+ * Distinct businesses appear before any repeat, with fair daily rotation.
+ */
+export async function listPublicNewArrivals(
+  input: PublicNewArrivalsInput, db: PublicDb = prisma, viewer?: PublicAccessContext,
+) {
+  const canViewAdult = await canViewAdultContent(viewer, db);
+  const now = new Date();
+  const since = new Date(now.getTime() - 7 * 86_400_000);
+  const rows = await db.businessOffer.findMany({
+    where: {
+      active: true, deletedAt: null, publicationStatus: 'PUBLISHED',
+      createdAt: { gte: since, lte: now },
+      business: publicBusinessWhere(canViewAdult),
+      ...(canViewAdult ? {} : { adultOnly: false }),
+    },
+    select: {
+      ...publicOfferSelect(),
+      business: {
+        select: {
+          publicId: true,
+          name: true,
+          location: { select: publicLocationSelect },
+          subscriptions: {
+            where: { plan: 'PRO', status: 'ACTIVE' },
+            select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true },
+            orderBy: { startsAt: 'desc' },
+            take: 3,
+          },
+        },
+      },
+    },
+    orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+  });
+  const matching = rows.filter(row =>
+    normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
+    && (!input.region || normalizeRegionFilterName(row.business.location?.regionName) === normalizeRegionFilterName(input.region)),
+  );
+  const ordered = rotatePublicNewArrivals(matching, colombiaArrivalDay(now.getTime()));
+  const total = ordered.length;
+  const items = ordered.slice((input.page - 1) * input.pageSize, input.page * input.pageSize).map(row => ({
+    kind: row.kind,
+    offer: {
+      ...offer(row.business.publicId, row),
+      business: {
+        publicId: row.business.publicId,
+        name: row.business.name,
+        location: location(row.business.location),
+      },
+    },
+  }));
+  return { items, pagination: { page: input.page, pageSize: input.pageSize, total,
+    totalPages: Math.ceil(total / input.pageSize), hasMore: input.page * input.pageSize < total } };
+}
+
 export async function getPublicBusiness(publicId: string, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
   const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: publicBusinessDetailSelect });
