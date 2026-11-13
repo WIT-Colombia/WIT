@@ -34,6 +34,7 @@ export const navigationGroups: NavigationGroup[] = [
   ] },
   { id: 'soporte', label: 'Atención y soporte', items: [
     { path: '/user-needs', label: 'Necesidades de usuarios', icon: 'search', group: 'soporte', description: 'Solicitudes enviadas desde Cuéntanos qué necesitas. Pendiente de API.' },
+    { path: '/business-reports', label: 'Reportes de negocios', icon: 'flag', group: 'soporte', description: 'Bandeja de denuncias sobre negocios; integración con API pendiente.', pending: true },
     { path: '/support', label: 'Mensajes de soporte', icon: 'message', group: 'soporte', description: 'Bandeja de soporte pendiente de API.', pending: true },
     { path: '/suggestions', label: 'Sugerencias', icon: 'message', group: 'soporte', description: 'Gestión de sugerencias pendiente de API.', pending: true },
     { path: '/notifications', label: 'Notificaciones', icon: 'bell', group: 'soporte', description: 'Centro de notificaciones pendiente de API.', pending: true },
