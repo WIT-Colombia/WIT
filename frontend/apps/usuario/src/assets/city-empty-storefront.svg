@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" fill="none">
+  <defs>
+    <linearGradient id="halo" x1="37" y1="67" x2="270" y2="266" gradientUnits="userSpaceOnUse"><stop stop-color="#F1E9FF"/><stop offset="1" stop-color="#E5D5FF"/></linearGradient>
+    <linearGradient id="awning" x1="87" y1="103" x2="218" y2="194" gradientUnits="userSpaceOnUse"><stop stop-color="#8D42FF"/><stop offset="1" stop-color="#5A1BD6"/></linearGradient>
+    <linearGradient id="pin" x1="227" y1="194" x2="281" y2="282" gradientUnits="userSpaceOnUse"><stop stop-color="#8B38F5"/><stop offset="1" stop-color="#4F18C8"/></linearGradient>
+    <linearGradient id="window" x1="105" y1="188" x2="200" y2="241" gradientUnits="userSpaceOnUse"><stop stop-color="#E9DFFF"/><stop offset="1" stop-color="#F7F2FF"/></linearGradient>
+  </defs>
+  <ellipse cx="156" cy="160" rx="118" ry="116" fill="url(#halo)"/>
+  <path d="M77 263c34-13 105-14 152 0 8 2 8 12 0 14-45 10-109 10-152 0-8-2-8-11 0-14Z" fill="#CDBAF5" opacity=".72"/>
+  <path d="m61 77 18 17M104 52l2 24M47 119l22 4" stroke="#7829E9" stroke-linecap="round" stroke-width="9"/>
+  <path d="M81 119h143l-5 35c-2 15-13 26-27 26-12 0-22-7-26-18-4 11-15 18-28 18-13 0-23-7-27-18-4 11-14 18-26 18-14 0-25-11-27-26l-5-35Z" fill="url(#awning)" stroke="#4D16BE" stroke-linejoin="round" stroke-width="8"/>
+  <path d="m104 122-12 47c-2 7 3 13 11 13 11 0 18-8 21-18l11-42" fill="#fff" stroke="#4D16BE" stroke-linejoin="round" stroke-width="7"/>
+  <path d="m141 122-8 50c-1 7 4 12 12 12 12 0 20-8 21-19l2-43" fill="#F7F3FF" stroke="#4D16BE" stroke-linejoin="round" stroke-width="7"/>
+  <path d="m180 122 8 48c1 7 6 12 13 12 8 0 13-6 12-14l-8-46" fill="#fff" stroke="#4D16BE" stroke-linejoin="round" stroke-width="7"/>
+  <path d="M82 179v73c0 8 6 14 14 14h107c8 0 14-6 14-14v-73" stroke="#4D16BE" stroke-linejoin="round" stroke-width="9"/>
+  <path d="M103 204h88v45h-88z" fill="url(#window)"/>
+  <path d="m105 242 45-38h15l-54 46h-6v-8Zm41 7 42-36v18l-21 18h-21Z" fill="#D9C9F8" opacity=".85"/>
+  <path d="M253 184c-26 0-47 20-47 45 0 33 47 77 47 77s47-44 47-77c0-25-21-45-47-45Z" fill="url(#pin)" stroke="#fff" stroke-linejoin="round" stroke-width="10"/>
+  <circle cx="253" cy="230" r="17" fill="#7130DD" stroke="#fff" stroke-width="9"/>
+</svg>
