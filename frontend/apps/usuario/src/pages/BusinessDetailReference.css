@@ -69,10 +69,10 @@
 .business-detail-page .business-reference-layout > .business-info-columns,
 .business-detail-page .business-reference-layout > .business-info-columns > .business-detail-aside { display:contents; }
 .business-detail-page .business-reference-layout .business-info-columns > .business-about { grid-column:2; grid-row:1 / span 4; align-self:start; padding:0; border:0; background:transparent; box-shadow:none; }
-.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-aside-block:first-child { grid-column:1; grid-row:1; }
+
 .business-detail-page .business-reference-layout > .business-popular-section { grid-column:1; grid-row:2; min-width:0; margin:0; }
-.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-aside-block:nth-child(2) { grid-column:1; grid-row:3; }
-.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-aside-block:nth-child(3) { grid-column:1; grid-row:4; }
+
+
 .business-detail-page .business-reference-layout .public-digital-card { width:min(100%, 31.3vw, 420px); aspect-ratio: .755; margin-left:auto; }
 .business-detail-page .business-reference-layout .public-digital-card__brand { display:none; }
 .business-detail-page .business-reference-layout .public-digital-card__avatar { top:5%; }
@@ -203,3 +203,21 @@
 /* La dirección siempre debe aparecer inmediatamente debajo de los horarios. */
 .business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-address-information:nth-child(3){display:block;grid-column:1;grid-row:3;visibility:visible;opacity:1}
 @media(max-width:700px){.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-address-information:nth-child(3){display:block;order:3;width:100%;grid-row:auto}}
+
+/* Información: estructura estable, sin superposiciones entre dirección y horarios. */
+@media(min-width:701px){
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-detail-aside > .business-information-content{grid-column:1;grid-row:1;align-self:stretch}
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-detail-aside > .business-hours-information{grid-column:1;grid-row:2;align-self:stretch}
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-detail-aside > .business-address-information{grid-column:1;grid-row:3;align-self:stretch}
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-about{grid-column:2;grid-row:1 / span 3;align-self:start}
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-detail-aside > .business-socials-public{grid-column:2;grid-row:4;align-self:start}
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-popular-section{grid-column:1 / -1;grid-row:5}
+}
+@media(max-width:700px){
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-information-content{order:1}
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-hours-information{order:2}
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-address-information{order:3}
+.business-detail-page .business-reference-layout .business-info-columns > .business-about{order:4}
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-socials-public{order:5;width:100%;box-sizing:border-box}
+.business-detail-page .business-reference-layout > .business-popular-section{order:6}
+}
