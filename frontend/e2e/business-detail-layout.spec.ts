@@ -20,7 +20,7 @@ test('Usuario: ficha de negocio conserva composición y navegación responsive',
   await page.route('**/api/v1/public/businesses/layout-business/reviews**', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ reviews: [], summary: { average: null, total: 0 } }) }));
   await page.goto('/business/layout-business');
   await expect(page.getByRole('heading', { name: 'Netstudio', exact: true }).first()).toBeVisible();
-  for (const width of [1440, 1024, 820, 768, 390, 320]) {
+  for (const width of [1440, 1169, 1024, 820, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     const metrics = await page.evaluate(() => {
       const rect = (selector: string) => document.querySelector(selector)?.getBoundingClientRect();
@@ -43,9 +43,33 @@ test('Usuario: ficha de negocio conserva composición y navegación responsive',
 
   const photo = (index: number) => ({ id: `photo-${index}`, url: `https://layout.example.invalid/photo-${index}.svg`, altText: null, sortOrder: index, isCover: index === 1 });
   await page.route('**/photo-*.svg', route => route.fulfill({ status: 200, contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#dcd5f9"/></svg>' }));
-  await page.route('**/api/v1/public/businesses/layout-business', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ business: { ...fixture, coverPhoto: photo(1), profilePhoto: photo(4), gallery: [photo(1), photo(2), photo(3)] } }) }));
+  await page.route('**/api/v1/public/businesses/layout-business', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ business: { ...fixture, pioneerNumber: 4, modalities: [...fixture.modalities, { type: 'DELIVERY', hours: [] }], coverPhoto: photo(1), profilePhoto: photo(4), gallery: [photo(1), photo(2), photo(3)] } }) }));
+  await page.route('**/api/v1/public/businesses/layout-business/reviews**', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ reviews: [], summary: { average: 5, total: 27 } }) }));
+  await page.setViewportSize({ width: 1169, height: 900 });
   await page.goto('/business/layout-business');
   await expect(page.getByRole('button', { name: 'Foto siguiente' })).toBeVisible();
+  await page.waitForFunction(() => {
+    const image = document.querySelector('.business-detail-photo-trigger img');
+    return image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0;
+  });
+  await page.screenshot({ path: testInfo.outputPath('business-with-gallery-1169.png'), fullPage: true });
   await page.getByRole('button', { name: 'Foto siguiente' }).click();
   await expect(page.locator('.business-header-counter')).toHaveText('2 / 3');
+
+  const longProducts = products.map(product => ({ ...product, name: 'Instalación y mantenimiento especializado de redes empresariales', description: 'Diseño, instalación, configuración y mantenimiento preventivo de redes para empresas en toda la ciudad.', business: { name: 'Establecimiento comercial con nombre extenso' }, isOffer: true, discount: '25% dto.', originalPrice: '1500000', price: { ...product.price, amount: '1125000' } }));
+  await page.route('**/api/v1/public/businesses/layout-business/products', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ products: longProducts }) }));
+  for (const width of [1169, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/business/layout-business');
+    await expect(page.locator('.business-popular-grid .entity-offer-card').first()).toBeVisible();
+    const fit = await page.locator('.business-popular-grid .entity-offer-card').first().evaluate(card => {
+      const rect = (selector: string) => card.querySelector(selector)?.getBoundingClientRect();
+      const description = rect('.entity-offer-description');
+      const establishment = rect('.entity-establishment');
+      const footer = rect('.entity-offer-footer');
+      const bounds = card.getBoundingClientRect();
+      return { descriptionBeforeEstablishment: Boolean(description && establishment && description.bottom <= establishment.top + 1), establishmentBeforeFooter: Boolean(establishment && footer && establishment.bottom <= footer.top + 1), footerInsideCard: Boolean(footer && footer.bottom <= bounds.bottom + 1), noPageOverflow: document.documentElement.scrollWidth <= innerWidth + 1 };
+    });
+    expect(fit, `${width}px: long promoted product must fit`).toEqual({ descriptionBeforeEstablishment: true, establishmentBeforeFooter: true, footerInsideCard: true, noPageOverflow: true });
+  }
 });

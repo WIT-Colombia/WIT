@@ -1,7 +1,10 @@
 /* Public business profile: composition based on the approved reference. */
-.business-detail-page .user-content-main { width:min(calc(100% - 48px), 1340px); }
-.business-detail-page .business-detail-back { margin-bottom:14px; }
-.business-detail-page .business-header-tools .business-share-action { min-height:38px; border-color:#a76bf2; background:#fff; color:#6426d4; }
+.business-detail-page .user-content-main { position:relative; width:min(calc(100% - clamp(48px, 6vw, 100px)), 1340px); padding-top:22px; }
+.business-detail-page .business-detail-back { position:absolute; z-index:4; top:22px; right:0; left:0; height:0; margin:0; pointer-events:none; }
+.business-detail-page .business-detail-back .business-back-link { position:absolute; top:14px; left:14px; min-height:35px; padding:0 11px; border:1px solid #e1d8f4; border-radius:999px; background:#fffffff0; box-shadow:0 3px 12px #1a154626; pointer-events:auto; }
+.business-detail-page .business-header-tools { position:absolute; top:0; right:0; pointer-events:auto; }
+.business-detail-page .business-header-tools .business-share-action { min-height:38px; padding:0 15px; border:1px solid #a76bf2; border-radius:999px; background:#fff; box-shadow:0 2px 9px #3d1d7f1a; color:#6426d4; }
+.business-detail-page .business-header-tools .business-share-action svg { width:18px; height:18px; flex:none; }
 .business-detail-page .business-detail-hero {
   grid-template-columns:minmax(0, .94fr) minmax(0, 1.06fr);
   align-items:start;
@@ -23,7 +26,9 @@
 }
 .business-detail-page .business-detail-gallery-strip { gap:9px; padding:0; background:transparent; }
 .business-detail-page .business-detail-gallery-strip button { flex:0 0 25%; height:76px; border-radius:13px; }
-.business-detail-page .business-detail-gallery-strip .business-header-more { flex:0 0 58px; }
+.business-detail-page .business-detail-gallery-strip .business-header-more { flex:0 0 50px; width:50px; height:50px; align-self:center; border:1px solid #e9e5f6; border-radius:50%; background:#fff; box-shadow:0 4px 14px #211a5a1a; color:#3c2c70; }
+.business-detail-page .business-detail-gallery-strip .business-header-more span { display:none; }
+.business-detail-page .business-detail-gallery-strip .business-header-more svg { width:22px; height:22px; }
 .business-detail-page .business-detail-intro { justify-content:flex-start; padding:8px 0 0; background:transparent; }
 .business-detail-page .business-detail-intro h1 { margin:6px 0 0; color:#101336; font-size:clamp(32px, 3.4vw, 54px); }
 .business-detail-page .business-detail-category { background:#ede4ff; color:#6226d3; font-weight:800; }
@@ -31,7 +36,8 @@
 .business-detail-page .business-header-description p { color:#39435e; font-size:clamp(13px, 1.1vw, 16px); line-height:1.45; }
 .business-detail-page .business-attention-modalities { margin:12px 0 0; }
 .business-detail-page .business-attention-modalities > strong { color:#151935; }
-.business-detail-page .business-attention-modalities span { border:0; background:#eeeaff; color:#343064; }
+.business-detail-page .business-attention-modalities span { display:inline-flex; align-items:center; gap:7px; border:0; background:#eeeaff; color:#343064; }
+.business-detail-page .business-attention-modalities span svg { width:18px; height:18px; flex:none; color:#7130ec; }
 .business-detail-page .business-detail-actions { grid-template-columns:repeat(3, minmax(0, 1fr)); margin-top:22px; gap:12px; }
 .business-detail-page .business-detail-actions > a,
 .business-detail-page .business-detail-actions > button { min-height:49px; border-radius:17px; font-size:clamp(11px, 1.05vw, 15px); font-weight:750; }
@@ -42,11 +48,15 @@
 .business-detail-page .business-header-hours { background:transparent; padding:9px 0; }
 .business-detail-page .business-hero-meta { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; margin-top:12px; }
 .business-detail-page .business-hero-meta .business-header-hours { margin:0; }
+.business-detail-page .business-hero-meta .business-header-hours > span:first-child { display:none; }
+.business-detail-page .business-hero-meta .business-header-hours-summary b { display:inline-flex; align-items:center; gap:8px; }
+.business-detail-page .business-hero-meta .business-header-hours-summary b::before { content:""; width:9px; height:9px; flex:none; border-radius:50%; background:#84909a; }
+.business-detail-page .business-hero-meta .business-header-hours-summary b.open::before { background:#00a94f; }
 .business-detail-page .business-hero-location { display:inline-flex; align-items:center; gap:6px; min-width:0; color:#333d5b; font-size:clamp(11px,1vw,14px); font-weight:600; }
 .business-detail-page .business-hero-location svg { width:18px; height:18px; flex:none; color:#7839ef; }
 .business-detail-page .business-tabs {
   grid-template-columns:repeat(5,minmax(0,1fr));
-  margin-top:30px;
+  margin-top:25px;
   border-color:#ddd1f4;
   background:#fff;
   box-shadow:0 6px 18px #5531a011;
@@ -55,7 +65,7 @@
 .business-detail-page .business-tabs button svg { width:19px; height:19px; flex:none; color:#6632bb; }
 .business-detail-page .business-tabs button.active { border-color:#7434f1; background:linear-gradient(115deg,#853cfc,#6426ee); color:#fff; box-shadow:0 5px 12px #6a2eeb36; }
 .business-detail-page .business-tabs button.active svg { color:#fff; }
-.business-detail-page .business-reference-layout { display:grid; grid-template-columns:minmax(0, 1.72fr) minmax(280px, .94fr); align-items:start; gap:16px 30px; margin-top:24px; }
+.business-detail-page .business-reference-layout { display:grid; grid-template-columns:minmax(0, 1.72fr) minmax(280px, .94fr); align-items:start; gap:16px 30px; margin-top:17px; }
 .business-detail-page .business-reference-layout > .business-info-columns,
 .business-detail-page .business-reference-layout > .business-info-columns > .business-detail-aside { display:contents; }
 .business-detail-page .business-reference-layout .business-info-columns > .business-about { grid-column:2; grid-row:1 / span 4; align-self:start; padding:0; border:0; background:transparent; box-shadow:none; }
@@ -63,14 +73,29 @@
 .business-detail-page .business-reference-layout > .business-popular-section { grid-column:1; grid-row:2; min-width:0; margin:0; }
 .business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-aside-block:nth-child(2) { grid-column:1; grid-row:3; }
 .business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-aside-block:nth-child(3) { grid-column:1; grid-row:4; }
-.business-detail-page .business-reference-layout .public-digital-card { width:min(100%, 350px); margin-left:auto; }
+.business-detail-page .business-reference-layout .public-digital-card { width:min(100%, 31.3vw, 420px); aspect-ratio: .755; margin-left:auto; }
+.business-detail-page .business-reference-layout .public-digital-card__brand { display:none; }
+.business-detail-page .business-reference-layout .public-digital-card__avatar { top:5%; }
+.business-detail-page .business-reference-layout .public-digital-card__identity { top:24%; }
+.business-detail-page .business-reference-layout .public-digital-card__meta { top:38%; }
+.business-detail-page .business-reference-layout .public-digital-card__qr { top:45%; left:31.5%; width:37%; }
+.business-detail-page .business-reference-layout .public-digital-card__scan { top:76.5%; }
+.business-detail-page .business-reference-layout .public-digital-card--long-name .public-digital-card__identity { top:21.5%; }
+.business-detail-page .business-reference-layout .public-digital-card--long-name .public-digital-card__meta { top:40.5%; }
+.business-detail-page .business-reference-layout .public-digital-card--long-name .public-digital-card__qr { top:47.5%; }
 .business-detail-page .business-reference-layout .business-aside-block,
 .business-detail-page .business-reference-layout > .business-popular-section { border:1px solid #ddd5f3; border-radius:19px; background:#fff; box-shadow:0 7px 21px #30277810; }
 .business-detail-page .business-reference-layout .business-aside-block { padding:18px 24px; }
 .business-detail-page .business-reference-layout .business-aside-block h3 { margin-bottom:11px; color:#151935; font-size:clamp(16px,1.4vw,21px); }
+.business-detail-page .business-reference-layout .business-aside-block h3 svg { width:24px; height:24px; margin-right:9px; vertical-align:-5px; color:#7130ec; }
+.business-detail-page .business-reference-layout .business-hours { margin-bottom:7px; }
+.business-detail-page .business-reference-layout .business-hours > div { display:grid; width:100%; grid-template-columns:auto auto minmax(0,1fr); align-items:center; gap:8px; }
+.business-detail-page .business-reference-layout .business-hours span { justify-self:start; padding:4px 10px; border-radius:999px; background:#dff8e8; color:#16834e; font-weight:750; white-space:nowrap; }
+.business-detail-page .business-reference-layout .business-hours span.closed { background:#f5eef0; color:#a14358; }
+.business-detail-page .business-reference-layout .business-hours small { justify-self:end; color:#303951; font-size:12px; }
 .business-detail-page .business-reference-layout .business-weekly-hours { gap:0; padding:0; border:1px solid #eeebf8; border-radius:12px; overflow:hidden; }
-.business-detail-page .business-reference-layout .business-weekly-hours > div { min-height:26px; padding:3px 12px; }
-.business-detail-page .business-reference-layout .business-weekly-hours > div:nth-child(even) { background:#f3f3ff; }
+.business-detail-page .business-reference-layout .business-weekly-hours > div { min-height:24px; padding:2px 12px; }
+.business-detail-page .business-reference-layout .business-weekly-hours > div:nth-child(odd) { background:#f3f3ff; }
 .business-detail-page .business-reference-layout .business-weekly-hours b,
 .business-detail-page .business-reference-layout .business-weekly-hours span { font-size:12px; }
 .business-detail-page .business-reference-layout > .business-popular-section { padding:17px; }
@@ -84,7 +109,16 @@
 .business-detail-page .business-popular-all:hover span { transform:translateX(3px); }
 .business-detail-page .business-popular-all:focus-visible { outline:3px solid #9c71f8; outline-offset:3px; border-radius:4px; }
 .business-detail-page .business-reference-layout .business-popular-grid { gap:10px; }
-.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card { flex:0 0 calc((100% - 20px)/3); min-width:0; }
+.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card { flex:0 0 calc((100% - 20px)/3); min-width:0; height:210px; min-height:210px; max-height:210px; }
+.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card .entity-card__image { height:80px; min-height:80px; max-height:80px; flex:0 0 80px; }
+.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card .entity-card__content { min-height:0; padding:7px 9px 6px; }
+.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card .entity-offer-type { margin-bottom:2px; padding:2px 6px; font-size:8px; line-height:1.1; }
+.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card h3 { height:auto; max-height:2.3em; margin-bottom:2px; font-size:12px; line-height:1.12; }
+.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card .entity-offer-description { height:auto; max-height:2.4em; min-height:0; margin-bottom:2px; font-size:9.5px; line-height:1.2; }
+.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card .entity-establishment { max-height:2.3em; font-size:9px; line-height:1.15; }
+.business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card .entity-offer-footer { min-height:34px; margin-top:2px; padding-top:4px; }
+.business-detail-page .business-reference-layout .business-popular-grid .entity-offer-price strong { font-size:11px; }
+.business-detail-page .business-reference-layout .business-popular-grid .entity-product-like { width:27px; height:27px; }
 .business-detail-page .business-reference-layout--other { display:block; }
 .business-detail-page .business-reference-layout--other > .business-detail-columns { margin-top:0; }
 .business-detail-page .business-reference-layout--other > .business-popular-section { margin-top:24px; }
@@ -98,8 +132,11 @@
   .business-detail-page .business-detail-photo { aspect-ratio:1.22; }
   .business-detail-page .business-detail-intro h1 { font-size:clamp(28px,4vw,36px); }
   .business-detail-page .business-reference-layout { grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:14px; }
+  .business-detail-page .business-reference-layout .public-digital-card { width:100%; }
   .business-detail-page .business-reference-layout .business-aside-block { padding:15px; }
-  .business-detail-page .public-digital-card__meta { top:45.7%; flex-direction:column; gap:0; font-size:3.7cqw; line-height:1.2; }
+  .business-detail-page .business-reference-layout .business-hours > div { grid-template-columns:auto 1fr; }
+  .business-detail-page .business-reference-layout .business-hours small { grid-column:1 / -1; justify-self:start; }
+  .business-detail-page .public-digital-card__meta { top:38%; flex-direction:column; gap:0; font-size:3.7cqw; line-height:1.2; }
   .business-detail-page .public-digital-card__meta > span { overflow:visible; }
   .business-detail-page .public-digital-card__meta-text { overflow:visible; }
   .business-detail-page .business-reference-layout .business-popular-grid > .entity-offer-card { flex-basis:calc((100% - 10px)/2); }
@@ -107,6 +144,9 @@
 }
 @media(max-width:700px) {
   .business-detail-page .user-content-main { width:calc(100% - 28px); }
+  .business-detail-page .business-detail-back { top:22px; }
+  .business-detail-page .business-detail-back .business-back-link { top:10px; left:10px; }
+  .business-detail-page .business-header-tools { top:10px; right:10px; }
   .business-detail-page .business-detail-hero { grid-template-columns:minmax(0,1fr); gap:0; }
   .business-detail-page .business-detail-photo { aspect-ratio:1.45; border-radius:18px; }
   .business-detail-page .business-detail-intro { padding:17px 2px 0; }
