@@ -6,7 +6,7 @@ import Home from "./Home";
 const api = vi.hoisted(() => ({ search: vi.fn(), banner: vi.fn(), selection: { mode: "manual", locality: { id: "76834", name: "Tuluá", context: "Valle del Cauca", departmentCode: "76", kind: "Municipio" } } }));
 vi.mock("../services/businessService", () => ({ searchUniversal: api.search, prioritizeFeaturedByDistance: (items: unknown[]) => items }));
 vi.mock("../context/LocationContext", () => ({ useLocationContext: () => ({ selection: api.selection }) }));
-vi.mock("../services/publicBusinessApi", () => ({ listPublicBusinesses: async () => [], listPublicProducts: async () => [], listPublicPromotions: async () => [], listPublicServices: async () => [], listPublicNewArrivals: async () => ({ items: [], pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0, hasMore: false } }) }));
+vi.mock("../services/publicBusinessApi", () => ({ listPublicBusinesses: async () => [], listPublicProducts: async () => [], listPublicCategories: async () => [], listPublicPromotions: async () => [], listPublicServices: async () => [], listPublicNewArrivals: async () => ({ items: [], pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0, hasMore: false } }) }));
 vi.mock("../services/reviewsService", () => ({ listPublicReviews: async () => ({ summary: { average: 0, total: 0 } }) }));
 vi.mock("../services/favoritesService", () => ({ useFavorites: () => ({ favorites: [], toggleFavorite: vi.fn() }) }));
 vi.mock("../services/offerLikesService", () => ({ isRealOfferId: () => false, useOfferLikes: () => ({ get: () => ({ liked: false, count: 0 }), toggle: vi.fn() }) }));
