@@ -271,7 +271,7 @@ export function StatisticsDashboardV1() {
           <h3>{card.label}</h3>
           <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
           {!availablePro ? <strong>Bloqueada</strong> : <HorizontalRanking points={ranking} emptyMessage={card.key === 'keywords' ? 'Aún no hay búsquedas registradas.' : card.key === 'categoryPerformance' ? 'Aún no hay actividad por categoría.' : 'Aún no hay aperturas registradas.'} />}
-          {availablePro && card.contextualHistory && <span className="stats-v1-contextual-history">Disponible desde la activación de la analítica contextual</span>}
+          
         </article>;
         if (isCommercialIndex) return <article className={`stats-v1-card stats-v1-pro-card stats-v1-commercial-index ${availablePro ? '' : 'locked'}`} key={card.key}>
           <h3>{card.label}</h3>
@@ -285,7 +285,7 @@ export function StatisticsDashboardV1() {
           {points && content && ('kind' in content && content.kind === 'bar' ? <Bars points={points} /> : <Sparkline points={points} />)}
           {points && <DataTable points={points} />}
           {availablePro && card.key === 'ratingEvolution' && data?.period === 'all' && <span className="stats-v1-history-note">Todo el tiempo muestra los últimos 24 meses.</span>}
-          {availablePro && card.contextualHistory && <span className="stats-v1-contextual-history">Disponible desde la activación de la analítica contextual</span>}
+          
         </article>;
       })}</div>
     </section>
