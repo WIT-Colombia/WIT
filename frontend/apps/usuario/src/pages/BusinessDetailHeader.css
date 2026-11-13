@@ -24,7 +24,7 @@
 .business-detail-page .business-detail-intro>p,.business-detail-page .business-header-description p{margin:0;color:#64748b;font-size:13px;line-height:1.6;max-width:none}
 .business-attention-modalities{display:grid;gap:8px;margin:14px 0 2px}.business-attention-modalities>strong{color:#334155;font-size:12px}.business-attention-modalities>div{display:flex;flex-wrap:wrap;gap:7px}.business-attention-modalities span{padding:7px 11px;border:1px solid #dbe7fa;border-radius:999px;background:#f5f8ff;color:#2563eb;font-size:11px;font-weight:700}
 .business-detail-page .business-detail-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px;align-items:stretch}
-.business-detail-page .business-detail-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+.business-detail-page .business-detail-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 .business-detail-page .business-detail-actions>a,.business-detail-page .business-detail-actions>button{display:inline-flex;justify-content:center;align-items:center;gap:6px;min-height:40px;padding:0 11px;border-radius:11px;font-size:10px;font-weight:600;text-decoration:none;flex:1 1 auto;white-space:nowrap;box-sizing:border-box}
 .business-header-call{background:#7b3ffb;color:#fff;border:1px solid #7b3ffb}.business-header-whatsapp{background:#00b96b;color:#fff;border:1px solid #00b96b}
 .business-detail-page .business-detail-actions svg{width:17px;height:17px;flex:0 0 17px}.business-header-whatsapp .business-whatsapp-disc{fill:currentColor}.business-header-whatsapp .business-whatsapp-phone{fill:#00b96b}
@@ -64,7 +64,7 @@
   .business-detail-page .business-detail-actions svg{width:15px;height:15px;flex-basis:15px}
   .business-detail-page .business-favorite-full-label{display:none}
   .business-detail-page .business-favorite-mobile-label{display:inline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .business-detail-page .business-tabs{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:14px 0 0;padding:5px;overflow:visible}
+  .business-detail-page .business-tabs{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:14px 0 0;padding:5px;overflow:visible}
   .business-detail-page .business-tabs button{min-height:40px;padding-inline:3px;font-size:9px}
   .business-header-links{margin-top:8px;font-size:10px}
   .business-detail-page .business-header-links{width:100%;flex-wrap:wrap;gap:8px}
@@ -94,7 +94,7 @@
 .business-detail-page .business-public-qr-card .public-digital-card{max-width:100%}
 
 /* Cinco pestañas accesibles en pantallas pequeñas sin reducir excesivamente el texto. */
-@media(max-width:600px){.business-detail-page .business-tabs{grid-template-columns:repeat(5,minmax(105px,1fr));overflow-x:auto;scrollbar-width:thin}.business-detail-page .business-tabs button{white-space:nowrap}}
+@media(max-width:600px){.business-detail-page .business-tabs{grid-template-columns:repeat(4,minmax(105px,1fr));overflow-x:auto;scrollbar-width:thin}.business-detail-page .business-tabs button{white-space:nowrap}}
 
 /* Diseño único de acciones: móvil 2×2, tablet 2×2, escritorio 4 en línea.
    Favoritos se conserva como acción independiente debajo de las cuatro principales. */
@@ -147,3 +147,5 @@
   .business-detail-page .business-detail-actions > button{min-height:48px;padding:9px 7px;font-size:12px;border-radius:14px}
   .business-detail-page .business-detail-actions svg{width:17px;height:17px;flex:0 0 17px}
 }
+
+.business-detail-page .business-address-information address{display:block;font-style:normal;color:#334155;font-size:14px;line-height:1.6;overflow-wrap:anywhere}.business-detail-page .business-address-information address small{display:block;margin-top:5px;color:#64748b}
