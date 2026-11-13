@@ -116,6 +116,13 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
       <span className="offer-detail-price-original">Antes {product.originalPriceLabel}</span>
     </>
   ) : price;
+  // La vigencia de la promoción se muestra en el detalle, no en las tarjetas del catálogo.
+  const deadlineDate = isProduct && product.isOffer && product.offerDeadline
+    ? new Date(`${product.offerDeadline}T12:00:00Z`)
+    : null;
+  const deadlineLabel = deadlineDate && Number.isFinite(deadlineDate.getTime())
+    ? new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(deadlineDate)
+    : null;
   const phone = business.phone;
   const whatsappMessage = `¡Hola! Vi el ${isProduct ? "producto" : "servicio"} ${item.name} en tu perfil de XAMUKO y quisiera recibir más información. ¡Gracias!`;
   const whatsappUrl = business.whatsapp ? whatsappLink(business.whatsapp, whatsappMessage) : null;
@@ -148,6 +155,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           <h1>{item.name}</h1>
           {item.description?.trim() && <p>{item.description}</p>}
           <strong className="offer-detail-price">{priceView}</strong>
+          {deadlineLabel && <small className="offer-detail-valid-until">Oferta válida hasta el {deadlineLabel}</small>}
           <Link className="offer-business-card" to={`/business/${business.id}`}>
             <img src={business.logo || business.image} alt="" />
             <span><small>EN ESTE ESTABLECIMIENTO</small><b>{business.name}</b><em>{business.address}</em></span>
