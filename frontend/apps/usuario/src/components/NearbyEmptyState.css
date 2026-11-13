@@ -1,0 +1,59 @@
+/* The home-only empty card. Other search and virtual states keep their layout. */
+.no-results-default-copy { display: contents; }
+.no-results-state--nearby {
+  position: relative;
+  isolation: isolate;
+  grid-template-columns: minmax(180px, .8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: clamp(24px, 4vw, 64px);
+  width: min(100%, 1040px);
+  margin: 18px auto 0;
+  padding: clamp(28px, 4vw, 56px);
+  overflow: hidden;
+  border: 1px solid #E1E5EF;
+  border-radius: 22px;
+  background: linear-gradient(125deg, #FFF 0%, #FDFDFF 56%, #F8F9FF 100%);
+  box-shadow: 0 5px 15px #2536610D;
+  text-align: center;
+}
+.no-results-state--nearby::before,
+.no-results-state--nearby::after {
+  position: absolute;
+  z-index: -1;
+  width: clamp(80px, 14vw, 160px);
+  height: clamp(65px, 11vw, 125px);
+  content: "";
+  pointer-events: none;
+}
+.no-results-state--nearby::before { top: 0; right: 0; border-radius: 0 0 0 100%; background: linear-gradient(145deg, #E2F3FF, #E5E6FF); }
+.no-results-state--nearby::after { bottom: 0; left: 0; border-radius: 0 100% 0 0; background: linear-gradient(30deg, #DCF7FB, #ECF2FF); }
+.nearby-empty-illustration { width: 100%; max-width: 340px; min-width: 0; }
+.nearby-empty-illustration img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; mix-blend-mode: multiply; }
+.nearby-empty-copy { display: grid; justify-items: center; min-width: 0; width: 100%; }
+.no-results-state--nearby .no-results-eyebrow { display: inline-block; max-width: 100%; padding: 5px 12px; border-radius: 999px; background: #F1E9FF; color: #7B3FFB; font-size: 10px; font-weight: 800; line-height: 1.4; letter-spacing: .12em; }
+.no-results-state--nearby h2 { max-width: 420px; margin: 10px 0 0; color: #0F172A; font-size: clamp(23px, 2.4vw, 32px); font-weight: 750; line-height: 1.15; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.no-results-state--nearby p { max-width: 440px; margin: 14px 0 20px; color: #647084; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.no-results-state--nearby .no-results-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; width: min(100%, 350px); margin: 0; }
+.no-results-state--nearby .no-results-actions a { justify-content: center; gap: 10px; min-height: 44px; padding: 9px 14px; border: 1px solid #A9C3ED; border-radius: 999px; background: #FFFFFFC9; color: #2563C9; box-shadow: none; font-size: 14px; font-weight: 700; line-height: 1.3; }
+.no-results-state--nearby .no-results-actions svg { flex: 0 0 21px; width: 21px; height: 21px; }
+.no-results-state--nearby .no-results-actions a:first-child { border-color: transparent; background: linear-gradient(100deg, #7B3FFB, #2563EB); color: #FFF; box-shadow: 0 4px 10px #7B3FFB1F; }
+.no-results-state--nearby .no-results-actions a:hover { background: #F0F5FF; color: #1D4FA6; transform: none; }
+.no-results-state--nearby .no-results-actions a:first-child:hover { background: linear-gradient(100deg, #6C32E8, #1F56D5); color: #FFF; }
+.no-results-state--nearby .no-results-nearby { max-width: 100%; margin-top: 16px; color: #2563C9; font-size: 14px; font-weight: 700; line-height: 1.4; text-decoration: underline; text-decoration-color: #A9C3ED; text-underline-offset: 4px; overflow-wrap: anywhere; }
+.no-results-state--nearby a:focus-visible { outline: 3px solid #7B3FFB; outline-offset: 4px; }
+@media (max-width: 1023px) {
+  .no-results-state--nearby { grid-template-columns: minmax(0, 1fr); gap: 0; max-width: 620px; padding: 24px 24px 28px; }
+  .nearby-empty-illustration { width: clamp(150px, 24vw, 210px); margin-bottom: 6px; }
+  .no-results-state--nearby h2 { max-width: 390px; font-size: clamp(23px, 3.4vw, 30px); }
+}
+@media (max-width: 600px) {
+  .no-results-state--nearby { margin-top: 14px; padding: 16px 18px 22px; border-radius: 18px; }
+  .nearby-empty-illustration { width: clamp(136px, 43vw, 176px); margin-bottom: 2px; }
+  .no-results-state--nearby .no-results-eyebrow { padding: 4px 10px; font-size: 9px; }
+  .no-results-state--nearby h2 { max-width: 300px; margin-top: 8px; font-size: clamp(21px, 5.6vw, 25px); }
+  .no-results-state--nearby p { margin: 12px 0 17px; font-size: 13px; line-height: 1.45; }
+  .no-results-state--nearby .no-results-actions { gap: 8px; }
+  .no-results-state--nearby .no-results-actions a { padding: 8px 10px; font-size: 12px; }
+  .no-results-state--nearby .no-results-actions svg { flex-basis: 20px; width: 20px; height: 20px; }
+  .no-results-state--nearby .no-results-nearby { margin-top: 13px; font-size: 12px; }
+}

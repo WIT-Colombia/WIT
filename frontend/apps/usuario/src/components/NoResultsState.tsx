@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 import cityEmptyIllustration from "../assets/city-empty-storefront.svg";
+import nearbyEmptyIllustration from "../assets/nearby-empty-map-4k.webp";
+import nearbyEmptyIllustration480 from "../assets/nearby-empty-map-480.webp";
+import nearbyEmptyIllustration960 from "../assets/nearby-empty-map-960.webp";
 import "./NoResultsState.css";
+import "./NearbyEmptyState.css";
 
 type NoResultsStateProps = {
   term?: string;
@@ -8,6 +12,7 @@ type NoResultsStateProps = {
   radiusKm?: number;
   virtualOnly?: boolean;
   cityEmpty?: boolean;
+  appearance?: "default" | "nearby";
 };
 
 export function CityEmptyState() {
@@ -27,23 +32,36 @@ export function CityEmptyState() {
   </section>;
 }
 
-export function NoResultsState({ term, locationName, radiusKm, virtualOnly = false }: NoResultsStateProps) {
+function NearbyActionIcon({ name }: { name: "search" | "map" | "message" }) {
+  return <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {name === "search" ? <><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></>
+      : name === "map" ? <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15m6-12v15"/></>
+        : <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 10 10 0 0 1-4-.8L3 21l1.8-5.5a10 10 0 0 1-.8-4 8.5 8.5 0 0 1 17 0Z"/>}
+  </svg>;
+}
+
+export function NoResultsState({ term, locationName, radiusKm, virtualOnly = false, appearance = "default" }: NoResultsStateProps) {
   const cleanTerm = term?.trim();
   const encodedTerm = cleanTerm ? `?q=${encodeURIComponent(cleanTerm)}` : "";
+  const nearby = appearance === "nearby";
 
-  return <section className="no-results-state" aria-labelledby="no-results-title">
-    <div className="no-results-art" aria-hidden="true"><span>⌕</span><i/><b>?</b></div>
-    <span className="no-results-eyebrow">SIGAMOS BUSCANDO</span>
+  return <section className={`no-results-state${nearby ? " no-results-state--nearby" : ""}`} aria-labelledby="no-results-title">
+    {nearby ? <div className="nearby-empty-illustration" aria-hidden="true"><img src={nearbyEmptyIllustration} srcSet={`${nearbyEmptyIllustration480} 480w, ${nearbyEmptyIllustration960} 960w, ${nearbyEmptyIllustration} 3840w`} sizes="(max-width: 600px) 176px, (max-width: 1023px) 210px, 340px" width="3840" height="2880" alt="" loading="lazy" decoding="async" /></div>
+      : <div className="no-results-art" aria-hidden="true"><span>⌕</span><i/><b>?</b></div>}
+    <div className={nearby ? "nearby-empty-copy" : "no-results-default-copy"}>
+    <span className="no-results-eyebrow">{nearby ? "SIGAMOS EXPLORANDO" : "SIGAMOS BUSCANDO"}</span>
     <h2 id="no-results-title">{virtualOnly ? (cleanTerm ? `No encontramos resultados virtuales para “${cleanTerm}”` : "No encontramos negocios virtuales") : cleanTerm ? `Aún no encontramos “${cleanTerm}”` : "Aún no encontramos coincidencias"}</h2>
     <p>{virtualOnly
       ? "No encontramos negocios con modalidad virtual activa ni sus productos o servicios para esta búsqueda. Prueba otro término o selecciona Sin límite."
       : cleanTerm ? `No encontramos negocios, productos ni servicios para “${cleanTerm}” en ${locationName}${radiusKm ? ` dentro de ${radiusKm} km` : ""}. Puedes ampliar la búsqueda o decirnos qué hace falta por tu zona.`
-        : `No encontramos opciones en ${locationName}${radiusKm ? ` dentro de ${radiusKm} km` : ""}. Puedes ampliar la búsqueda o probar otra búsqueda.`}</p>
+        : nearby ? `Por ahora no hay opciones en ${locationName}. Puedes probar otras formas de continuar con tu búsqueda.`
+          : `No encontramos opciones en ${locationName}${radiusKm ? ` dentro de ${radiusKm} km` : ""}. Puedes ampliar la búsqueda o probar otra búsqueda.`}</p>
     <div className="no-results-actions">
-      <Link to={`/search${encodedTerm}`}>Probar otra búsqueda</Link>
-      {!virtualOnly && <Link to={`/map${encodedTerm}`}>Ampliar búsqueda en el mapa</Link>}
-      <Link to={`/register-need${encodedTerm}`}>Contarnos qué necesitas</Link>
+      <Link to={`/search${encodedTerm}`}>{nearby && <NearbyActionIcon name="search"/>}Probar otra búsqueda</Link>
+      {!virtualOnly && <Link to={`/map${encodedTerm}`}>{nearby && <NearbyActionIcon name="map"/>}Ampliar búsqueda en el mapa</Link>}
+      <Link to={`/register-need${encodedTerm}`}>{nearby && <NearbyActionIcon name="message"/>}Contarnos qué necesitas</Link>
     </div>
     <Link className="no-results-nearby" to="/results">Ver todos los negocios en {locationName}</Link>
+    </div>
   </section>;
 }
