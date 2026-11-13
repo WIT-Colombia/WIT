@@ -131,6 +131,7 @@ export default function Home() {
   const [nearbyScroll, setNearbyScroll] = useState({ left: 0, max: 0 });
   const [items, setItems] = useState<Business[]>([]);
   const [discoveryCatalog, setDiscoveryCatalog] = useState<Business[]>([]);
+  const [discoveryReadyCity, setDiscoveryReadyCity] = useState("");
   const [discoveryDay, setDiscoveryDay] = useState(() => bogotaDayIndex());
   const [catalogProducts, setCatalogProducts] = useState<typeof sampleProducts>([]);
   const [realPromotions, setRealPromotions] = useState<HomeSpecialOffer[]>([]);
@@ -172,7 +173,8 @@ export default function Home() {
   }>({ key: "", status: "loading", items: [], page: 0, hasMore: false, loadMoreError: false });
   const [loadingMoreArrivals, setLoadingMoreArrivals] = useState(false);
   const arrivalLoadingKeyRef = useRef<string | null>(null);
-  const arrivalKey = selectedLocation ? `${selectedLocation.name}|${selectedLocation.context}|${discoveryDay}` : "";
+  const selectedCityKey = selectedLocation ? `${selectedLocation.name}|${selectedLocation.context}` : "";
+  const arrivalKey = selectedLocation ? `${selectedCityKey}|${discoveryDay}` : "";
 
   function distanceBetween(origin: { lat: number; lng: number } | undefined, target: { lat: number; lng: number } | undefined): number {
     if (!origin || !target) return Number.POSITIVE_INFINITY;
@@ -230,10 +232,18 @@ export default function Home() {
   useEffect(() => {
     let active = true;
     setDiscoveryCatalog([]);
+    setDiscoveryReadyCity("");
     if (!selectedLocation?.name) return () => { active = false; };
+    const key = `${selectedLocation.name}|${selectedLocation.context}`;
     void listDiscoverBusinesses(selectedLocation.name, selectedLocation.context)
-      .then((businesses) => { if (active) setDiscoveryCatalog(businesses); })
-      .catch(() => { if (active) setDiscoveryCatalog([]); });
+      .then((businesses) => {
+        if (!active) return;
+        setDiscoveryCatalog(businesses);
+        setDiscoveryReadyCity(key);
+      })
+      .catch(() => {
+        if (active) { setDiscoveryCatalog([]); setDiscoveryReadyCity(""); }
+      });
     return () => { active = false; };
   }, [selectedLocation?.name, selectedLocation?.context, catalogRetry]);
 
@@ -323,6 +333,10 @@ export default function Home() {
   );
   const visibleArrivals = arrivalState.key === arrivalKey && arrivalState.status === "ready"
     ? arrivalState.items : [];
+  const cityEmptyForNew = catalogState === "ready" && !query && !category
+    && (selectedLocation
+      ? discoveryReadyCity === selectedCityKey && discoveryCatalog.length === 0
+      : visibleItems.length === 0);
   const arrivalIds = useMemo(() => visibleArrivals.map(({ item }) => item.id), [visibleArrivals]);
   const { get: getOfferLike, toggle: toggleOfferLike } = useOfferLikes(arrivalIds);
   const visibleSpecialOffers = useMemo<HomeSpecialOffer[]>(() => hasSampleCatalog ? specialOffers : realPromotions.length ? realPromotions : catalogProducts.filter((product) => product.isOffer).map((product) => ({ product, discount: product.discount ?? product.offerLabel ?? "Oferta", deadline: product.offerDeadline ?? "" })), [catalogProducts, hasSampleCatalog, realPromotions]);
@@ -656,9 +670,9 @@ export default function Home() {
 
       {featuredItems.length > 0 && <section className="business-section home-featured-section" aria-labelledby="featured-title"><div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="featured-title"><span className="home-section-symbol" aria-hidden="true">◇</span>Negocios destacados</h2><p>Descubre y apoya los negocios de tu comunidad.</p></div>{allFeaturedItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllFeatured} aria-controls="featured-business-list" onClick={() => setShowAllFeatured((current) => !current)}>{showAllFeatured ? "Ver menos" : `Ver más (${allFeaturedItems.length})`} <Icon name="arrow" /></button>}</div><div className="business-grid" id="featured-business-list" ref={featuredListRef} onScroll={() => { const list = featuredListRef.current; if (list) setFeaturedScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startFeaturedDrag} onPointerMove={moveFeaturedDrag} onPointerUp={endFeaturedDrag} onPointerCancel={endFeaturedDrag} onClickCapture={(event) => { if (ignoreFeaturedClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{featuredItems.map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllFeatured && featuredScroll.max > 0 && <div className="featured-scroll-control"><input type="range" min="0" max={featuredScroll.max} step="1" value={Math.min(featuredScroll.left, featuredScroll.max)} aria-label="Desplazar negocios destacados" onChange={(event) => { const left = Number(event.target.value); if (featuredListRef.current) featuredListRef.current.scrollLeft = left; setFeaturedScroll((current) => ({ ...current, left })); }} /></div>}</section>}
 
-      {(catalogState === "ready" && visibleItems.length === 0 && !query && !category || visibleArrivals.length > 0) &&
+      {(cityEmptyForNew || visibleArrivals.length > 0) &&
         <NewProductsBanner locationName={cityName} items={visibleArrivals}
-          cityEmpty={catalogState === "ready" && visibleItems.length === 0 && !query && !category}
+          cityEmpty={cityEmptyForNew}
           hasMore={arrivalState.key === arrivalKey && arrivalState.hasMore}
           isLoadingMore={loadingMoreArrivals} loadMoreError={arrivalState.loadMoreError}
           onLoadMore={loadMoreArrivals}

@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Home from "./Home";
@@ -34,7 +34,7 @@ describe("Lugares cerca de ti: condiciones del aviso", () => {
     expect(container.querySelector("#lugares .no-results-state--nearby")).not.toBeNull();
     expect(api.search).toHaveBeenCalledWith(expect.objectContaining({ scope: "city", city: "Tuluá", region: "Valle del Cauca" }));
     expect(screen.getByText(/Por ahora no hay opciones en Tuluá/)).toBeInTheDocument();
-    expect(api.banner).toHaveBeenLastCalledWith(expect.objectContaining({ locationName: "Tuluá", cityEmpty: true }));
+    await waitFor(() => expect(api.banner).toHaveBeenLastCalledWith(expect.objectContaining({ locationName: "Tuluá", cityEmpty: true })));
   });
 
   it("mantiene la carga sin mostrar una ciudad vacía antes de tener respuesta", () => {
