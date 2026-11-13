@@ -79,7 +79,7 @@ export default function LocationMap() {
     setConfirmationError(false);
     try {
       await setAutomaticLocation(point);
-      navigate(returnTo, { replace: true });
+      navigate("/home", { replace: true });
     } catch {
       setConfirmationError(true);
     } finally {
