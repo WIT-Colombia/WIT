@@ -55,3 +55,12 @@
 .location-back{min-height:34px;padding:0 12px;border:1px solid #ddd2ff;border-radius:999px;background:#fff;color:var(--xamuko-violet);box-shadow:0 5px 14px rgba(123,63,251,.06);transition:.2s ease}.location-back:hover{border-color:#bfaeff;background:#f7f4ff;color:#5f2dd7;transform:translateY(-1px)}
 .location-logo img{display:block;width:168px;height:auto}.location-footer>span img{display:block;width:86px;height:auto}
 @media(max-width:700px){.location-back{padding:0 10px}.location-logo img{width:136px}.location-footer>span img{width:72px}}
+
+/* The empty state fits entirely inside the existing map frame. */
+.location-google-map--empty { display:grid; place-items:center; background:#faf9fc; }
+.location-google-map--empty::before, .location-google-map--empty::after { content:none; }
+.location-map-placeholder { position:relative; width:100%; aspect-ratio:3 / 2; container-type:inline-size; }
+.location-map-placeholder img { display:block; width:100%; height:100%; object-fit:contain; }
+.location-map-placeholder p { position:absolute; top:60%; left:7%; right:7%; margin:0; color:#22223e; text-align:center; font-size:16px; font-size:clamp(13px, 3.7cqw, 21px); line-height:1.23; }
+.location-map-placeholder strong, .location-map-placeholder span { display:block; }
+.location-map-placeholder strong { font-weight:750; }

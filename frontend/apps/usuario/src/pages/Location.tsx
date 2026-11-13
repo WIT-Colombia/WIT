@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@wit/ui";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
+import locationEmpty from "../assets/location-empty-1536.jpg";
+import locationEmpty4k from "../assets/location-empty-3840.jpg";
 import "./Location.css";
 
 type LocationState = "ready" | "loading" | "granted" | "denied" | "unavailable" | "error";
@@ -62,7 +64,7 @@ export default function Location() {
 
       </div>
 
-      <aside className="location-visual location-google-map" aria-label="Mapa de tu ubicación">{coordinates ? <iframe title="Mapa de tu ubicación" src={`https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=16&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div className="location-map-placeholder">Activa tu ubicación o elige una zona para verla en el mapa.</div>}</aside>
+      <aside className={`location-visual location-google-map${coordinates ? "" : " location-google-map--empty"}`} aria-label="Mapa de tu ubicación">{coordinates ? <iframe title="Mapa de tu ubicación" src={`https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}&z=16&output=embed`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div className="location-map-placeholder"><img src={locationEmpty} srcSet={`${locationEmpty} 1536w, ${locationEmpty4k} 3840w`} sizes="(max-width: 700px) calc(100vw - 32px), (max-width: 900px) 45vw, 40vw" width="1536" height="1024" alt="" /><p><strong>Activa tu ubicación o elige una zona</strong><span>para verla en el mapa.</span></p></div>}</aside>
     </section>
 
     <SiteFooter />
