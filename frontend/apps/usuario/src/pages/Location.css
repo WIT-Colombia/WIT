@@ -89,3 +89,6 @@
   }
   .location-page .site-footer { flex-shrink: 0; }
 }
+
+/* La transición entre el contenido y las olas del footer no lleva separador. */
+.location-page .site-footer { border-top: 0; }
