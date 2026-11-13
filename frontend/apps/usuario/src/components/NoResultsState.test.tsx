@@ -47,7 +47,7 @@ describe("Estado vacío de negocios en la ciudad", () => {
     const query = "?q=caf%C3%A9%20%26%20pan";
     expect(screen.getByRole("link", { name: "Elegir otra ubicación" })).toHaveAttribute("href", "/location?returnTo=%2Fhome");
     expect(screen.getByRole("link", { name: "Ampliar búsqueda en el mapa" })).toHaveAttribute("href", `/map${query}`);
-    expect(screen.getByRole("link", { name: "Contarnos qué necesitas" })).toHaveAttribute("href", `/register-need${query}`);
+    expect(screen.getByRole("link", { name: "Registrar una necesidad" })).toHaveAttribute("href", `/register-need${query}`);
     expect(screen.queryByText(/Ver todos los negocios en Palmira/)).toBeNull();
   });
 
