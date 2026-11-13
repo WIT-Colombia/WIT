@@ -124,3 +124,8 @@ export async function adminSessionLogout() {
   adminCsrfToken = '';
   accessToken = null;
 }
+
+export type AdminUserNeed = { id: string; title: string; category: string; description: string; locationName: string; locationContext: string; status: 'PENDING' | 'IN_REVIEW' | 'RESOLVED' | 'DISCARDED'; createdAt: string; user: { displayName: string; emailNormalized: string | null } };
+export type AdminNeedsPage = { needs: AdminUserNeed[]; pagination: { page: number; total: number; totalPages: number } };
+export function listAdminNeeds(q = '', status = '', page = 1) { return request<AdminNeedsPage>(`/admin/user-needs?${new URLSearchParams({ q, status, page: String(page) })}`); }
+export function updateAdminNeed(id: string, status: AdminUserNeed['status']) { return request<{ need: AdminUserNeed }>(`/admin/user-needs/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status }) }); }
