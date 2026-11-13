@@ -117,8 +117,8 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
     </>
   ) : price;
   // La vigencia de la promoción se muestra en el detalle, no en las tarjetas del catálogo.
-  const deadlineDate = isProduct && product.isOffer && product.offerDeadline
-    ? new Date(`${product.offerDeadline}T12:00:00Z`)
+  const deadlineDate = item.isOffer && item.offerDeadline
+    ? new Date(`${item.offerDeadline}T12:00:00Z`)
     : null;
   const deadlineLabel = deadlineDate && Number.isFinite(deadlineDate.getTime())
     ? new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(deadlineDate)
