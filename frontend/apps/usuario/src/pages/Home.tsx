@@ -5,6 +5,8 @@ import { businesses as sampleBusinesses, categories, products as sampleProducts,
 import { useLocationContext } from "../context/LocationContext";
 import { LocationStarter } from "../components/LocationStarter";
 import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
+import { listDiscoverBusinesses } from "../services/discoverBusinessService";
+import { bogotaDayIndex, selectDiscoverBusinesses } from "../utils/discoverBusinesses";
 import { listPublicProducts, listPublicPromotions, listPublicServices } from "../services/publicBusinessApi";
 import { requestBlobWithSession } from "../services/authService";
 import { SiteHeader } from "../components/SiteHeader";
@@ -129,6 +131,8 @@ export default function Home() {
   const [featuredScroll, setFeaturedScroll] = useState({ left: 0, max: 0 });
   const [nearbyScroll, setNearbyScroll] = useState({ left: 0, max: 0 });
   const [items, setItems] = useState<Business[]>([]);
+  const [discoveryCatalog, setDiscoveryCatalog] = useState<Business[]>([]);
+  const [discoveryDay, setDiscoveryDay] = useState(() => bogotaDayIndex());
   const [catalogProducts, setCatalogProducts] = useState<typeof sampleProducts>([]);
   const [realPromotions, setRealPromotions] = useState<HomeSpecialOffer[]>([]);
   const { favorites, toggleFavorite: saveFavorite } = useFavorites();
@@ -215,6 +219,32 @@ export default function Home() {
     }).catch(() => { if (current) { setItems([]); setCatalogProducts([]); setCatalogState("error"); } });
     return () => { current = false; };
   }, [query, category, selection, catalogRetry]);
+  // Descubre negocios consulta todo el catálogo de la ciudad, independientemente
+  // de la paginación (12 resultados) y de los filtros del listado principal.
+  useEffect(() => {
+    let active = true;
+    setDiscoveryCatalog([]);
+    if (!selectedLocation?.name) return () => { active = false; };
+    void listDiscoverBusinesses(selectedLocation.name, selectedLocation.context)
+      .then((businesses) => { if (active) setDiscoveryCatalog(businesses); })
+      .catch(() => { if (active) setDiscoveryCatalog([]); });
+    return () => { active = false; };
+  }, [selectedLocation?.name, selectedLocation?.context, catalogRetry]);
+
+  // Rotación diaria a medianoche de Colombia, incluso si el Home sigue abierto.
+  useEffect(() => {
+    let timeout: number;
+    const scheduleNextRotation = () => {
+      const now = Date.now();
+      const day = bogotaDayIndex(now);
+      setDiscoveryDay(day);
+      const nextMidnight = (day + 1) * 86_400_000 + 5 * 3_600_000;
+      timeout = window.setTimeout(scheduleNextRotation, Math.max(1000, nextMidnight - now + 1000));
+    };
+    scheduleNextRotation();
+    return () => window.clearTimeout(timeout);
+  }, []);
+
   useEffect(() => {
     if (!message) return;
     const timeout = window.setTimeout(() => setMessage(""), 3200);
@@ -229,13 +259,10 @@ export default function Home() {
 
   // Demo sections are opt-in; real API results must remain visible in E2E/production.
   const visibleItems = items;
-  const bannerBusinesses = useMemo(() => {
-    const source = hasSampleCatalog ? sampleBusinesses : items;
-    const nearby = [...source].sort((a, b) => a.distanceKm - b.distanceKm);
-    const recent = nearby.filter((business) => isRecentlyAdded(business.createdAt));
-    const featured = nearby.filter((business) => business.plan === "premium" || business.isFeatured);
-    return [...recent, ...featured.filter((business) => !recent.some((item) => item.id === business.id))].slice(0, 6);
-  }, [hasSampleCatalog, items]);
+  const bannerBusinesses = useMemo(
+    () => selectDiscoverBusinesses(discoveryCatalog, discoveryDay, 6),
+    [discoveryCatalog, discoveryDay],
+  );
   const newProducts = useMemo(() => {
     if (!hasSampleCatalog) return catalogProducts.filter((product) => {
       if (!product.createdAt) return false;
@@ -579,7 +606,7 @@ export default function Home() {
         {showAllCategories && categoryScroll.max > 0 && <div className="category-scroll-control"><input type="range" min="0" max={categoryScroll.max} step="1" value={Math.min(categoryScroll.left, categoryScroll.max)} aria-label="Desplazar categorías" onChange={(event) => { const left = Number(event.target.value); if (categoryListRef.current) categoryListRef.current.scrollLeft = left; setCategoryScroll((current) => ({ ...current, left })); }} /></div>}
       </section>
 
-      {bannerBusinesses.length > 0 && <section className="home-business-banner home-business-banner--below-hero" aria-label="Descubre negocios"><div className="home-business-banner__heading"><div className="home-section-intro"><h2><span className="home-section-symbol" aria-hidden="true"><Icon name="star"/></span>Descubre negocios</h2><p>Negocios de tu ciudad, nuevas historias por descubrir.</p></div><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div><div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}><div className="home-business-banner__track">{(bannerBusinesses.length > 1 ? [0, 1] : [0]).map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__badge"><Icon name="star"/><small>{business.plan === "premium" || business.isFeatured ? "Destacado" : isRecentlyAdded(business.createdAt) ? "Nuevo en tu ciudad" : "Cerca de ti"}</small></span><span className="home-business-banner__copy"><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}</div></div></section>}
+      {bannerBusinesses.length > 0 && <section className="home-business-banner home-business-banner--below-hero" aria-label="Descubre negocios"><div className="home-business-banner__heading"><div className="home-section-intro"><h2><span className="home-section-symbol" aria-hidden="true"><Icon name="star"/></span>Descubre negocios</h2><p>Negocios de tu ciudad, nuevas historias por descubrir.</p></div><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div><div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}><div className="home-business-banner__track">{(bannerBusinesses.length > 1 ? [0, 1] : [0]).map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__badge"><Icon name="star"/><small>{typeof business.pioneerNumber === "number" ? "Pionero" : business.plan === "premium" || business.isFeatured ? "Destacado" : isRecentlyAdded(business.createdAt) ? "Nuevo en tu ciudad" : "Descubre"}</small></span><span className="home-business-banner__copy"><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}</div></div></section>}
 
       <div className="admob-banner-slot admob-banner-slot--home-inline"><AdMobBanner /></div>
 
