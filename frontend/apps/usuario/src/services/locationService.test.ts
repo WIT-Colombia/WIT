@@ -28,7 +28,7 @@ describe("Ubicación inicial y última ubicación de XAMUKO Usuario", () => {
     saveSelectedLocation(cali!, coordinates);
     const selected = getLocationSelection();
     expect(selected?.mode).toBe("manual");
-    expect(selected?.locality?.name).toBe("Cali");
+    expect(selected?.locality?.name).toBe("Santiago de Cali");
     expect(selected?.coordinates).toEqual(coordinates);
     expect(getLocationSelection()?.coordinates).toEqual(coordinates);
   });
@@ -41,7 +41,7 @@ describe("Ubicación inicial y última ubicación de XAMUKO Usuario", () => {
       mode: "MANUAL", resolution: "RESOLVED",
     })).toBe(true);
     expect(getLocationSelection()).toMatchObject({
-      mode: "manual", locality: { name: "Cali", context: "Valle del Cauca" }, coordinates,
+      mode: "manual", locality: { name: "Santiago de Cali", context: "Valle del Cauca" }, coordinates,
     });
   });
   it("al autorizar una posición nueva no hereda la ciudad manual anterior", () => {

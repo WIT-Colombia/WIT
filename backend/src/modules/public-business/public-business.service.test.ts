@@ -441,6 +441,27 @@ test('scope ciudad limita las tres pestañas por municipio y departamento sin re
   assert.equal(result.pagination.services.total, 1);
 });
 
+test('scope ciudad reconoce Santiago de Cali/Cali y Valle/Valle del Cauca', async () => {
+  const makeBusiness = (publicId: string, cityName: string, regionName: string) => ({
+    ...publicBusiness, publicId, subscriptions: [], brand: { pioneer: null },
+    location: { ...publicBusiness.location, cityName, regionName },
+  });
+  const cali = makeBusiness('cali', 'Cali', 'Valle');
+  const palmira = makeBusiness('palmira', 'Palmira', 'Valle del Cauca');
+  const db = {
+    business: { findMany: async () => [palmira, cali] },
+    businessOffer: { findMany: async () => [] },
+  } as any;
+  const officialName = await searchPublicUniversal(
+    parseUniversalSearchInput({ scope: 'city', city: 'Santiago de Cali', region: 'Valle del Cauca' }), db,
+  );
+  assert.deepEqual(officialName.businesses.map(x => x.publicId), ['cali']);
+  const commonName = await searchPublicUniversal(
+    parseUniversalSearchInput({ scope: 'city', city: 'Cali', region: 'Valle' }), db,
+  );
+  assert.deepEqual(commonName.businesses.map(x => x.publicId), ['cali']);
+});
+
 test('el scope valida los parámetros y Sin límite mantiene la búsqueda general', () => {
   assert.equal(parseUniversalSearchInput({ q: 'pan' }).scope, undefined);
   assert.equal(parseUniversalSearchInput({ scope: 'virtual' }).scope, 'virtual');

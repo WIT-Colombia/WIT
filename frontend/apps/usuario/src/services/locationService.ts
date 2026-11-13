@@ -111,6 +111,12 @@ function normalizeName(value: string): string {
   return value.toLocaleLowerCase("es-CO").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 }
 
+// DIVIPOLA's official name is Santiago de Cali; stored profiles may use Cali.
+function normalizeCityName(value: string): string {
+  const normalized = normalizeName(value);
+  return normalized === "santiago de cali" ? "cali" : normalized;
+}
+
 /** Resolves GPS coordinates to a known Colombian municipality once, so city-only listings can use reliable administrative data. */
 export async function resolveLocalityFromCoordinates(coordinates: Coordinates): Promise<Locality | null> {
   try {
@@ -125,7 +131,7 @@ export async function resolveLocalityFromCoordinates(coordinates: Coordinates): 
         const departmentName = components.find((item) => item.types.includes("administrative_area_level_1"))?.long_name;
         const countryName = components.find((item) => item.types.includes("country"))?.long_name;
         if (!municipalityName || (countryName && normalizeName(countryName) !== "colombia")) { resolve(null); return; }
-        const locality = getColombianAdministrativeDivisions().municipalities.find((item) => normalizeName(item.name) === normalizeName(municipalityName)
+        const locality = getColombianAdministrativeDivisions().municipalities.find((item) => normalizeCityName(item.name) === normalizeCityName(municipalityName)
           && (!departmentName || normalizeName(item.context) === normalizeName(departmentName)));
         resolve(locality ?? null);
       });
@@ -160,10 +166,10 @@ export function hasSampleCatalogForLocation(location: Locality | null): boolean 
 /** Restores a server preference into the local LocationContext representation. */
 export function restorePreferredLocation(input: { city: string; region: string | null; latitude: number | null; longitude: number | null; mode: "MANUAL" | "GPS"; resolution: "PENDING" | "RESOLVED" | "UNAVAILABLE" }): boolean {
   const municipalities = getColombianAdministrativeDivisions().municipalities;
-  const normalizedCity = normalizeName(input.city);
+  const normalizedCity = normalizeCityName(input.city);
   const normalizedRegion = normalizeName(input.region ?? "");
-  const locality = municipalities.find((item) => normalizeName(item.name) === normalizedCity && (!normalizedRegion || normalizeName(item.context) === normalizedRegion))
-    ?? municipalities.find((item) => normalizeName(item.name) === normalizedCity);
+  const locality = municipalities.find((item) => normalizeCityName(item.name) === normalizedCity && (!normalizedRegion || normalizeName(item.context) === normalizedRegion))
+    ?? municipalities.find((item) => normalizeCityName(item.name) === normalizedCity);
   const coordinates = input.latitude != null && input.longitude != null && isCoordinates({ lat: input.latitude, lng: input.longitude }) ? { lat: input.latitude, lng: input.longitude } : undefined;
   if (input.mode === "GPS" && coordinates) { saveAutomaticLocation(coordinates, locality ?? undefined, input.resolution.toLowerCase() as "pending" | "resolved" | "unavailable"); return true; }
   if (locality) { saveSelectedLocation(locality, coordinates); return true; }

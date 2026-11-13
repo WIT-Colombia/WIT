@@ -396,6 +396,16 @@ function normalizeSearchText(value: unknown) {
     : '';
 }
 
+function normalizeCityFilterName(value: unknown) {
+  const city = normalizeSearchText(value);
+  return city === 'santiago de cali' ? 'cali' : city;
+}
+
+function normalizeRegionFilterName(value: unknown) {
+  const region = normalizeSearchText(value);
+  return region === 'valle' ? 'valle del cauca' : region;
+}
+
 function searchTerms(value: unknown) {
   return normalizeSearchText(value).split(' ').filter(Boolean);
 }
@@ -443,8 +453,8 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   ]);
   const categoryMatches = (item: any) => !categoryTerms.length || matchesSearch([item.category?.code, item.category?.translations?.[0]?.name], categoryTerms);
   const inSelectedCity = (value: any) => input.scope !== 'city' || (
-    normalizeSearchText(value?.location?.cityName) === normalizeSearchText(input.city)
-    && (!input.region || normalizeSearchText(value?.location?.regionName) === normalizeSearchText(input.region))
+    normalizeCityFilterName(value?.location?.cityName) === normalizeCityFilterName(input.city)
+    && (!input.region || normalizeRegionFilterName(value?.location?.regionName) === normalizeRegionFilterName(input.region))
   );
   const inRadius = (value: any) => input.scope === 'virtual' ? true : input.latitude !== undefined && input.longitude !== undefined && input.radiusKm !== undefined ? distanceKm(input.latitude, input.longitude, value) <= input.radiusKm : true;
   const sortNearby = (a: any, b: any) => input.latitude !== undefined && input.longitude !== undefined ? distanceKm(input.latitude, input.longitude, a) - distanceKm(input.latitude, input.longitude, b) : 0;
