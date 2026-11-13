@@ -54,6 +54,12 @@ try {
       const sidebar = page.locator('#admin-navigation');
       if (device === 'mobile') {
         await page.getByRole('button', { name: 'Abrir navegación', exact: true }).click();
+        await page.waitForFunction(() => {
+          const navigation = document.querySelector('#admin-navigation');
+          if (!navigation) return false;
+          const bounds = navigation.getBoundingClientRect();
+          return Math.abs(bounds.left) < 1 && Math.abs(bounds.right - bounds.width) < 1;
+        });
       }
       await page.waitForFunction(() => {
         const image = document.querySelector('.sidebar-brand .xa-brand-logo img');
