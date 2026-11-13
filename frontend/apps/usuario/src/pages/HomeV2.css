@@ -7,7 +7,7 @@
   min-height: 100dvh;
   flex-direction: column;
   overflow-x: clip;
-  padding-bottom: 24px;
+  padding-bottom: 0;
   background: #faf9fc;
   color: var(--xamuko-navy);
 }
