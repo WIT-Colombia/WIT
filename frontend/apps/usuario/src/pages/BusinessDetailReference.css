@@ -44,7 +44,7 @@
 .business-detail-page .business-header-call { border-color:#6932ed; background:linear-gradient(110deg,#873cff,#5723e6); box-shadow:0 6px 15px #7136e526; }
 .business-detail-page .business-header-whatsapp { border-color:#029c50; background:linear-gradient(110deg,#06ae56,#008c42); box-shadow:0 6px 15px #008c4226; }
 .business-detail-page .business-favorite-action { border-color:#cbb5eb; color:#9a2359; }
-.business-detail-page .business-detail-actions > .business-primary-action { display:none; }
+.business-detail-page .business-detail-actions > .business-primary-action { display:inline-flex; }
 .business-detail-page .business-header-hours { background:transparent; padding:9px 0; }
 .business-detail-page .business-hero-meta { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; margin-top:12px; }
 .business-detail-page .business-hero-meta .business-header-hours { margin:0; }
