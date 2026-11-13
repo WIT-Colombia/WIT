@@ -7,12 +7,14 @@ import "./GoogleDynamicMap.css";
 type GoogleDynamicMapProps = {
   businesses: Business[];
   center: Coordinates | null;
+  searchCenter?: Coordinates | null;
   userLocation: Coordinates | null;
   radiusKm: number | null;
   radiusLabels: string[];
   radiusIndex: number;
   cityAvailable: boolean;
   onRadiusChange: (index: number) => void;
+  onMapMoved?: (center: Coordinates) => void;
   onBusinessOpen?: (business: Business) => void;
 };
 
@@ -20,9 +22,11 @@ function formatDistance(distanceKm: number): string {
   return distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} km`;
 }
 
-export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, radiusLabels, radiusIndex, cityAvailable, onRadiusChange, onBusinessOpen }: GoogleDynamicMapProps) {
+export function GoogleDynamicMap({ businesses, center, searchCenter, userLocation, radiusKm, radiusLabels, radiusIndex, cityAvailable, onRadiusChange, onMapMoved, onBusinessOpen }: GoogleDynamicMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GoogleMapInstance | null>(null);
+  const onMapMovedRef = useRef(onMapMoved);
+  useEffect(() => { onMapMovedRef.current = onMapMoved; }, [onMapMoved]);
   const mapsRef = useRef<Awaited<ReturnType<typeof loadGoogleMaps>> | null>(null);
   const markersRef = useRef<GoogleMarkerInstance[]>([]);
   const userMarkerRef = useRef<GoogleMarkerInstance | null>(null);
@@ -33,6 +37,8 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const centerKey = center ? `${center.lat},${center.lng}` : "";
+  const activeSearchCenter = searchCenter ?? center;
+  const searchCenterKey = activeSearchCenter ? `${activeSearchCenter.lat},${activeSearchCenter.lng}` : "";
   const userLocationKey = userLocation ? `${userLocation.lat},${userLocation.lng}` : "";
   const selectedBusiness = useMemo(() => businesses.find((business) => business.id === selectedBusinessId) ?? null, [businesses, selectedBusinessId]);
   const zoomForRadius = (radius: number | null) => radius === null ? 11 : radius <= 1 ? 15 : radius <= 3 ? 14 : 13;
@@ -47,6 +53,15 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
       mapsRef.current = maps;
       const map = new maps.Map(containerRef.current, { center, zoom: zoomForRadius(radiusKm), mapTypeId: "roadmap", mapTypeControl: false, zoomControl: false, streetViewControl: false, fullscreenControl: false, gestureHandling: "greedy" });
       mapRef.current = map;
+      // Buscar en el nuevo centro al terminar de arrastrar, no al cambiar el zoom.
+      map.addListener("dragend", () => {
+        const point = map.getCenter?.();
+        if (!point) return;
+        const coordinates = { lat: point.lat(), lng: point.lng() };
+        if (Number.isFinite(coordinates.lat) && Number.isFinite(coordinates.lng)) {
+          onMapMovedRef.current?.(coordinates);
+        }
+      });
       const notifyResize = () => {
         if (!active || !mapRef.current) return;
         maps.event?.trigger(mapRef.current, "resize");
@@ -113,9 +128,9 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
     if (!mapRef.current || !mapsRef.current) return;
     searchRadiusRef.current?.setMap(null);
     searchRadiusRef.current = null;
-    if (!center || !radiusKm || !mapsRef.current.Circle) return;
-    searchRadiusRef.current = new mapsRef.current.Circle({ map: mapRef.current, center, radius: radiusKm * 1000, fillColor: "#7B3FFB", fillOpacity: 0.05, strokeColor: "#7B3FFB", strokeOpacity: 0.28, strokeWeight: 1, clickable: false });
-  }, [centerKey, radiusKm, state]);
+    if (!activeSearchCenter || !radiusKm || !mapsRef.current.Circle) return;
+    searchRadiusRef.current = new mapsRef.current.Circle({ map: mapRef.current, center: activeSearchCenter, radius: radiusKm * 1000, fillColor: "#7B3FFB", fillOpacity: 0.05, strokeColor: "#7B3FFB", strokeOpacity: 0.28, strokeWeight: 1, clickable: false });
+  }, [searchCenterKey, radiusKm, state]);
 
   function changeMapType(nextType: "roadmap" | "satellite") {
     mapRef.current?.setMapTypeId?.(nextType);
@@ -125,6 +140,7 @@ export function GoogleDynamicMap({ businesses, center, userLocation, radiusKm, r
   function centerOnSelection() {
     if (!center || !mapRef.current) { setNotice("Ubicación no disponible."); return; }
     mapRef.current.setCenter(center);
+    onMapMovedRef.current?.(center);
     setNotice(null);
   }
 

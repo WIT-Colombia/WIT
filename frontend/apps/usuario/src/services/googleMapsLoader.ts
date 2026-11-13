@@ -13,6 +13,7 @@ export type GoogleMapInstance = {
   setCenter: (center: { lat: number; lng: number }) => void;
   setZoom: (zoom: number) => void;
   getZoom?: () => number | undefined;
+  getCenter?: () => { lat: () => number; lng: () => number } | undefined;
   setMapTypeId?: (mapTypeId: string) => void;
   addListener: (event: string, handler: (payload: { latLng?: { lat: () => number; lng: () => number } }) => void) => void;
   fitBounds?: (bounds: GoogleBounds) => void;
