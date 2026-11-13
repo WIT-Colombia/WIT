@@ -70,7 +70,7 @@ export function NoResultsState({ term, locationName, radiusKm, virtualOnly = fal
         ? <Link to="/results?scope=virtual">Cambiar búsqueda</Link>
         : <Link to={locationSelector}>{nearby && <NearbyActionIcon name="pin"/>}Elegir otra ubicación</Link>}
       {!virtualOnly && <Link to={`/map${encodedTerm}`}>{nearby && <NearbyActionIcon name="map"/>}Ampliar búsqueda en el mapa</Link>}
-      <Link to={`/register-need${encodedTerm}`}>{nearby && <NearbyActionIcon name="message"/>}Contarnos qué necesitas</Link>
+      <Link to={`/register-need${encodedTerm}`}>{nearby && <NearbyActionIcon name="message"/>}Registrar una necesidad</Link>
     </div>
     </div>
   </section>;
