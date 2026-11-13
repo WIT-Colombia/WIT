@@ -106,6 +106,58 @@ export async function hydrateBusinessRatings(businesses: Business[]): Promise<Bu
   }));
 }
 
+export type PublicBusinessCategory = {
+  id: string;
+  code: string;
+  name: string;
+  iconKey: string | null;
+  businessCount: number;
+};
+
+const publicCategoryCache = new Map<string, { expiresAt: number; request: Promise<PublicBusinessCategory[]> }>();
+const categorySorter = (a: PublicBusinessCategory, b: PublicBusinessCategory) =>
+  b.businessCount - a.businessCount || a.name.localeCompare(b.name, "es", { sensitivity: "base" }) || a.code.localeCompare(b.code);
+
+/** Compatible con despliegues donde /public/categories todavía no existe. */
+async function listLegacyCityCategories(city: string, region?: string): Promise<PublicBusinessCategory[]> {
+  const counts = new Map<string, PublicBusinessCategory>();
+  let totalPages = 1;
+  for (let page = 1; page <= totalPages; page++) {
+    const response = await searchPublicUniversal({
+      scope: "city", city, region, businessPage: page, businessPageSize: 50,
+      productPageSize: 1, servicePageSize: 1,
+    });
+    totalPages = response.pagination?.businesses?.totalPages ?? 1;
+    for (const business of response.businesses) {
+      const unique = new Set([business.category, ...(business.secondaryCategories ?? [])].filter(Boolean));
+      for (const name of unique) {
+        const item = counts.get(name);
+        if (item) item.businessCount++;
+        else counts.set(name, { id: name, code: name, name, iconKey: null, businessCount: 1 });
+      }
+    }
+  }
+  return [...counts.values()].sort(categorySorter);
+}
+
+/** Solo categorías con negocios publicados en la ciudad, de mayor a menor presencia. */
+export function listPublicCategories(city: string, region?: string): Promise<PublicBusinessCategory[]> {
+  const key = JSON.stringify([city, region]);
+  const cached = publicCategoryCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.request;
+  const params = new URLSearchParams({ city });
+  if (region) params.set("region", region);
+  const request = requestWithSession<{ categories: PublicBusinessCategory[] }>(`/api/v1/public/categories?${params}`)
+    .then(response => response.categories.filter(item => item.businessCount > 0).sort(categorySorter))
+    .catch(error => {
+      if (error instanceof ApiError && error.status === 404) return listLegacyCityCategories(city, region);
+      throw error;
+    })
+    .catch(error => { publicCategoryCache.delete(key); throw error; });
+  publicCategoryCache.set(key, { expiresAt: Date.now() + 30_000, request });
+  return request;
+}
+
 export async function listPublicBusinesses(): Promise<Business[]> {
   const response = await requestWithSession<{ businesses: PublicSummary[] }>("/api/v1/public/businesses?page=1&pageSize=50");
   return response.businesses.map(mapBusiness);
