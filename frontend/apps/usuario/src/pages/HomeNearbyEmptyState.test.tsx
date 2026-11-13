@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Home from "./Home";
@@ -55,7 +55,9 @@ describe("Lugares cerca de ti: condiciones del aviso", () => {
   it("conserva los negocios recibidos y oculta el aviso cuando hay resultados", async () => {
     api.search.mockResolvedValue({ businesses: [{ id: "isolated-test", name: "Negocio de prueba", distanceKm: 0, city: "Tuluá", plan: "free" }], products: [] });
     const { container } = show();
-    expect(await screen.findByText("Negocio de prueba")).toBeInTheDocument();
+    const nearbySection = container.querySelector<HTMLElement>("#lugares");
+    expect(nearbySection).not.toBeNull();
+    expect(await within(nearbySection!).findByText("Negocio de prueba")).toBeInTheDocument();
     expect(container.querySelector(".no-results-state--nearby")).toBeNull();
   });
 });
