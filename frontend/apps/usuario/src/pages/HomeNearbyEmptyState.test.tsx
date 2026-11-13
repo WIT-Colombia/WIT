@@ -109,7 +109,7 @@ describe("Explora por categoría: orden, conteos y navegación", () => {
       element.textContent?.replace(/\s+/g, " ").trim());
     expect(labels).toEqual(["Restaurantes8 negocios", "Ferreterías3 negocios", "Cafeterías1 negocio"]);
     fireEvent.click(screen.getByRole("button", { name: "Ferreterías, 3 negocios" }));
-    expect(screen.getByTestId("current-path")).toHaveTextContent("/results?category=Ferreter%C3%ADas");
+    expect(screen.getByTestId("current-path")).toHaveTextContent("/results?category=Ferreter%C3%ADas&scope=city");
   });
 
   it("muestra siete categorías inicialmente y habilita Ver más para las restantes", async () => {
