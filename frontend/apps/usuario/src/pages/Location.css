@@ -64,3 +64,6 @@
 .location-map-placeholder p { position:absolute; top:60%; left:7%; right:7%; margin:0; color:#22223e; text-align:center; font-size:16px; font-size:clamp(13px, 3.7cqw, 21px); line-height:1.23; }
 .location-map-placeholder strong, .location-map-placeholder span { display:block; }
 .location-map-placeholder strong { font-weight:750; }
+
+/* Empty map artwork already contains its own frame: avoid a second white bordered box. */
+.location-visual.location-google-map--empty { min-height:0; border:0; border-radius:0; background:transparent; background-image:none; box-shadow:none; }
