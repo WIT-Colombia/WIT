@@ -934,7 +934,15 @@
   .home-page.home-v2 .home-business-banner__card,
   .home-page.home-v2 .entity-card,
   .home-page.home-v2 .entity-card__whole-link,
-  .home-page.home-v2 .special-offer-card__link {
+  .home-page.home-v2 .special-offer-card__link,
+  /* Lugares cerca de ti: incluye el carrusel, tarjetas y sus botones/enlaces. */
+  .home-page.home-v2 .home-nearby-section .business-grid,
+  .home-page.home-v2 .home-nearby-section .business-grid:active,
+  .home-page.home-v2 .home-nearby-section .business-grid *,
+  /* Ofertas especiales: evita también los cursores grab/grabbing del carrusel. */
+  .home-page.home-v2 .special-offers__list,
+  .home-page.home-v2 .special-offers__list:active,
+  .home-page.home-v2 .special-offers__list * {
     cursor: default;
   }
 }

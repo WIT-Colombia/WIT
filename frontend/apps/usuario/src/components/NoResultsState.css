@@ -64,13 +64,14 @@
   grid-template-columns: minmax(190px, 28%) minmax(0, 1fr);
   align-items: center;
   gap: clamp(22px, 3.2vw, 44px);
-  width: min(100%, 1180px);
-  min-height: clamp(230px, 25vw, 360px);
-  margin: 0 auto;
-  padding: clamp(24px, 3.8vw, 52px);
+  /* Misma anchura y proporción de tarjeta que "Lugares cerca de ti". */
+  width: min(100%, 1040px);
+  min-height: clamp(360px, 36vw, 455px);
+  margin: 18px auto 0;
+  padding: clamp(28px, 4vw, 56px);
   overflow: hidden;
   border: 1px solid #FFFFFF;
-  border-radius: clamp(18px, 2.2vw, 30px);
+  border-radius: 22px;
   background: linear-gradient(118deg, #F8F5FF 0%, #F7F6FF 52%, #E8F3FF 100%);
   box-shadow: 0 12px 26px rgba(94, 70, 167, .08);
   text-align: left;
@@ -155,11 +156,17 @@
   outline: 3px solid #2563eb;
   outline-offset: 4px;
 }
+@media(max-width:1023px) {
+  .no-results-state--city {
+    max-width: 620px;
+  }
+}
 @media(max-width:620px) {
   .no-results-state--city {
     grid-template-columns: 1fr;
     gap: 16px;
     min-height: 0;
+    margin-top: 14px;
     padding: 20px 18px 24px;
     border-radius: 18px;
   }
