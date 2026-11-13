@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { AppError } from '../../shared/errors/app-error.js';
 import { publicBusinessRouter } from './public-business.routes.js';
-import { getPublicBusiness, getPublicPhotoContent, listPublicBusinesses, listPublicPhotos, parsePublicBusinessListInput, parsePublicNewArrivalsInput, listPublicNewArrivals, rotatePublicNewArrivals, parseUniversalSearchInput, publicBusinessRules, searchPublicUniversal } from './public-business.service.js';
+import { getPublicBusiness, getPublicPhotoContent, listPublicBusinesses, listPublicPhotos, parsePublicBusinessListInput, parsePublicNewArrivalsInput, listPublicNewArrivals, rotatePublicNewArrivals, parseUniversalSearchInput, parsePublicCategoryListInput, listPublicCategories, publicBusinessRules, searchPublicUniversal } from './public-business.service.js';
 
 const publicBusiness = {
   id: 'business-id', publicId: 'public-business-id', name: 'Café público', sede: null, adultOnly: false, description: 'Descripción visible',
@@ -544,4 +544,46 @@ test('rotación de novedades cambia diariamente y permite destacar Premium sin e
   assert.ok(a.slice(0, 4).filter(x => x.business.subscriptions.length > 0).length >= 2);
   assert.notDeepEqual(a.slice(0, 4).map(x => x.id), b.slice(0, 4).map(x => x.id));
   assert.equal(new Set(a.map(x => x.id)).size, 15);
+});
+
+
+test('categorías públicas se ordenan por número de negocios visibles de la ciudad y sin categorías vacías', async () => {
+  const cafe = publicBusiness.category;
+  const ferreteria = { id: 'cat-ferreteria', code: 'ferreterias', translations: [{ name: 'Ferreterías', iconKey: 'wrench' }] };
+  const restaurantes = { id: 'cat-rest', code: 'restaurantes', translations: [{ name: 'Restaurantes', iconKey: 'utensils' }] };
+  const rows = [
+    { category: cafe, secondaryCategories: [{ category: ferreteria }], location: publicBusiness.location },
+    { category: cafe, secondaryCategories: [], location: publicBusiness.location },
+    { category: ferreteria, secondaryCategories: [{ category: ferreteria }], location: publicBusiness.location },
+    { category: restaurantes, secondaryCategories: [], location: { ...publicBusiness.location, cityName: 'Cali' } },
+  ];
+  let where: any;
+  const db = { business: { findMany: async (query: any) => { where = query.where; return rows; } } } as any;
+  const result = await listPublicCategories(parsePublicCategoryListInput({ city: 'Palmira', region: 'Valle del Cauca' }), db);
+  assert.equal(where.adultOnly, false);
+  assert.equal(where.publicationStatus, 'PUBLISHED');
+  assert.deepEqual(result.categories.map(item => [item.name, item.businessCount]), [
+    ['Cafeterías', 2], ['Ferreterías', 2],
+  ]);
+  assert.equal(result.categories.some(item => item.name === 'Restaurantes'), false);
+});
+
+test('categorías públicas requieren ciudad válida', () => {
+  assert.throws(() => parsePublicCategoryListInput({}), (error: unknown) => error instanceof AppError && error.code === 'INVALID_PUBLIC_QUERY');
+});
+
+test('búsqueda por categoría del negocio incluye productos y servicios sin categoría propia', async () => {
+  const store = { ...publicBusiness, brand: { pioneer: null }, subscriptions: [], secondaryCategories: [] };
+  const product = { ...publicBusiness.offers[0], id: 'offer-product', category: null, promotions: [], photos: [],
+    business: { publicId: store.publicId, name: store.name, description: store.description,
+      category: store.category, secondaryCategories: [], location: store.location } };
+  const db = {
+    business: { findMany: async () => [store] },
+    businessOffer: { findMany: async ({ where }: any) => [{ ...product, kind: where.kind }] },
+  } as any;
+  const result = await searchPublicUniversal(parseUniversalSearchInput({ category: 'Cafeterías', scope: 'city', city: 'Palmira' }), db);
+  assert.equal(result.businesses.length, 1);
+  assert.equal(result.products.length, 1);
+  assert.equal(result.services.length, 1);
+  assert.equal(result.products[0].business.publicId, store.publicId);
 });
