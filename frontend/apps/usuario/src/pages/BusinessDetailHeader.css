@@ -96,15 +96,54 @@
 /* Cinco pestañas accesibles en pantallas pequeñas sin reducir excesivamente el texto. */
 @media(max-width:600px){.business-detail-page .business-tabs{grid-template-columns:repeat(5,minmax(105px,1fr));overflow-x:auto;scrollbar-width:thin}.business-detail-page .business-tabs button{white-space:nowrap}}
 
-/* Cinco acciones principales: en móvil dos columnas, con la última centrada. */
-.business-detail-page .business-detail-actions .business-website-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:40px;padding:0 11px;border-radius:11px;border:1px solid #7b3ffb;background:#7b3ffb;color:#fff;font-size:10px;font-weight:600;text-decoration:none;white-space:nowrap;box-shadow:0 4px 12px rgba(123,63,251,.12)}.business-detail-page .business-detail-actions .business-website-button:hover{background:#6930e5;color:#fff;border-color:#6930e5}.business-detail-page .business-detail-actions .business-website-button:disabled{opacity:.55;cursor:not-allowed}
-@media(max-width:600px){.business-detail-page .business-detail-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.business-detail-page .business-detail-actions .business-website-button:last-child{grid-column:1 / -1;width:100%}}
-
-/* Acciones de la ficha: mismo tamaño y jerarquía visual para Página web. */
-.business-detail-page .business-detail-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
-.business-detail-page .business-detail-actions .business-website-button{width:100%;min-height:46px;padding:0 11px;border:1px solid #2563eb;border-radius:13px;background:#2563eb;color:#fff;font-size:inherit;font-weight:600;box-shadow:0 6px 16px rgba(37,99,235,.18)}
-.business-detail-page .business-detail-actions .business-website-button:hover{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
-@media(max-width:600px){.business-detail-page .business-detail-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.business-detail-page .business-detail-actions .business-header-call,.business-detail-page .business-detail-actions .business-header-whatsapp,.business-detail-page .business-detail-actions .business-favorite-action,.business-detail-page .business-detail-actions .business-primary-action,.business-detail-page .business-detail-actions .business-website-button{grid-column:auto;grid-row:auto}.business-detail-page .business-detail-actions .business-website-button:last-child{grid-column:auto;width:100%;font-size:10px}}
-
-/* Página web y Cómo llegar deben quedar juntos en la misma fila en móvil. */
-@media(max-width:600px){.business-detail-page .business-detail-actions .business-header-call{grid-column:1;grid-row:1}.business-detail-page .business-detail-actions .business-header-whatsapp{grid-column:2;grid-row:1}.business-detail-page .business-detail-actions .business-favorite-action{grid-column:1 / -1;grid-row:2}.business-detail-page .business-detail-actions .business-website-button:last-child{grid-column:1;grid-row:3}.business-detail-page .business-detail-actions .business-primary-action{grid-column:2;grid-row:3}}
+/* Diseño único de acciones: móvil 2×2, tablet 2×2, escritorio 4 en línea.
+   Favoritos se conserva como acción independiente debajo de las cuatro principales. */
+.business-detail-page .business-detail-actions{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+  align-items:stretch;
+  margin-top:18px;
+}
+.business-detail-page .business-detail-actions > a,
+.business-detail-page .business-detail-actions > button{
+  grid-column:auto;
+  grid-row:auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  width:100%;
+  min-width:0;
+  min-height:52px;
+  padding:10px 12px;
+  border-radius:15px;
+  box-sizing:border-box;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:700;
+  white-space:normal;
+  text-align:center;
+  text-decoration:none;
+}
+.business-detail-page .business-detail-actions .business-header-call{grid-column:1;grid-row:1;background:#7b3ffb;color:#fff;border-color:#7b3ffb}
+.business-detail-page .business-detail-actions .business-header-whatsapp{grid-column:2;grid-row:1;background:#009e60;color:#fff;border-color:#009e60}
+.business-detail-page .business-detail-actions .business-website-button{grid-column:3;grid-row:1;background:#2563eb;color:#fff;border:1px solid #2563eb;box-shadow:0 5px 12px rgba(37,99,235,.14);font-size:14px}
+.business-detail-page .business-detail-actions .business-website-button:hover{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.business-detail-page .business-detail-actions .business-primary-action{grid-column:4;grid-row:1;background:#7b3ffb;color:#fff;border:1px solid #7b3ffb;box-shadow:0 5px 12px rgba(123,63,251,.12)}
+.business-detail-page .business-detail-actions .business-favorite-action{grid-column:1 / -1;grid-row:2;background:#fff;color:#a21c5b;border:1px solid #d7b8fa}
+.business-detail-page .business-detail-actions .business-website-button:disabled{opacity:.6;cursor:not-allowed}
+@media(max-width:1023px){
+  .business-detail-page .business-detail-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .business-detail-page .business-detail-actions .business-header-call{grid-column:1;grid-row:1}
+  .business-detail-page .business-detail-actions .business-header-whatsapp{grid-column:2;grid-row:1}
+  .business-detail-page .business-detail-actions .business-website-button{grid-column:1;grid-row:2}
+  .business-detail-page .business-detail-actions .business-primary-action{grid-column:2;grid-row:2}
+  .business-detail-page .business-detail-actions .business-favorite-action{grid-column:1 / -1;grid-row:3}
+}
+@media(max-width:600px){
+  .business-detail-page .business-detail-actions{gap:9px;margin-top:14px}
+  .business-detail-page .business-detail-actions > a,
+  .business-detail-page .business-detail-actions > button{min-height:48px;padding:9px 7px;font-size:12px;border-radius:14px}
+  .business-detail-page .business-detail-actions svg{width:17px;height:17px;flex:0 0 17px}
+}
