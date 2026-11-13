@@ -969,3 +969,101 @@
     transform: none;
   }
 }
+
+/*
+ * Nuevos en tu ciudad: misma altura de referencia que las tarjetas de negocios.
+ * Los títulos y nombres cortos no reservan una segunda línea invisible; precio,
+ * descuento y Me gusta permanecen anclados al pie. Solo afecta al Home.
+ */
+@media (min-width: 701px) {
+  .home-page.home-v2 .new-products__item .entity-offer-card {
+    height: 326px;
+    min-height: 326px;
+    max-height: 326px;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-card__image {
+    height: 140px;
+    min-height: 140px;
+    max-height: 140px;
+    flex: 0 0 140px;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-card__content {
+    min-height: 0;
+    padding: 11px 12px 10px;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-offer-type {
+    margin-bottom: 3px;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card h3 {
+    height: auto;
+    min-height: 0;
+    max-height: 2.4em;
+    margin: 0 0 4px;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-offer-description {
+    height: auto;
+    min-height: 0;
+    max-height: 2.8em;
+    margin: 0 0 5px;
+    line-height: 1.4;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-establishment {
+    display: -webkit-box;
+    min-height: 0;
+    max-height: 2.6em;
+    margin: 0 0 4px;
+    overflow: hidden;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-offer-footer {
+    flex: 0 0 auto;
+    min-height: 42px;
+    margin-top: auto;
+    padding-top: 6px;
+  }
+}
+@media (max-width: 700px) {
+  .home-page.home-v2 .new-products__item .entity-offer-card {
+    height: 264px;
+    min-height: 264px;
+    max-height: 264px;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-card__image {
+    height: 118px;
+    min-height: 118px;
+    max-height: 118px;
+    flex: 0 0 118px;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-card__content {
+    min-height: 0;
+    padding: 10px 9px 9px;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-offer-type {
+    margin-bottom: 3px;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card h3 {
+    height: auto;
+    min-height: 0;
+    max-height: 2.4em;
+    margin: 0 0 4px;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-establishment {
+    display: -webkit-box;
+    min-height: 0;
+    max-height: 2.6em;
+    margin: 0 0 3px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .home-page.home-v2 .new-products__item .entity-offer-card .entity-offer-footer {
+    flex: 0 0 auto;
+    min-height: 44px;
+    margin-top: auto;
+    padding-top: 6px;
+  }
+}
