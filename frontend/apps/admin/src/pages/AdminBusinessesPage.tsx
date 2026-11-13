@@ -8,7 +8,6 @@ import { getSession } from '../services/adminService';
 const PAGE_SIZE = 3;
 const date = (value: string) => new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value));
 const count = (value: number) => value.toLocaleString('es-CO');
-const statusLabel: Record<string, string> = { PUBLISHED: 'Activo', REVIEW: 'En revisión', UNPUBLISHED: 'Inactivo' };
 const visibilityTone: Record<string, string> = { VISIBLE: 'status-visible', HIDDEN: 'status-hidden', EXPIRED: 'status-expired', REVIEW: 'status-review' };
 const verificationTone: Record<string, string> = { NONE: 'status-none', PENDING: 'status-pending', INFORMATION: 'status-information', APPROVED: 'status-approved', REJECTED: 'status-rejected' };
 const visibilityStatusLabels: Record<string, string> = { VISIBLE: 'Visible', HIDDEN: 'Oculto', EXPIRED: 'Visibilidad vencida', REVIEW: 'En revisión' };
