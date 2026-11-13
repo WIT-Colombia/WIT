@@ -924,25 +924,48 @@
   touch-action: auto;
 }
 
-/* En escritorio, las tarjetas y los carruseles no muestran el cursor de mano.
-   El clic y el desplazamiento horizontal siguen gestionados por React. */
+/* Escritorio: flecha sobre áreas vacías; mano únicamente sobre tarjetas clicables.
+   Los carruseles conservan el arrastre gestionado por React. */
 @media (hover: hover) and (pointer: fine) {
   .home-page.home-v2 .home-business-banner__viewport,
   .home-page.home-v2 .home-business-banner__viewport.is-dragging,
-  .home-page.home-v2 .new-products__list,
-  .home-page.home-v2 .new-products__list:active,
-  .home-page.home-v2 .home-business-banner__card,
-  .home-page.home-v2 .entity-card,
-  .home-page.home-v2 .entity-card__whole-link,
-  .home-page.home-v2 .special-offer-card__link,
-  /* Lugares cerca de ti: incluye el carrusel, tarjetas y sus botones/enlaces. */
+  .home-page.home-v2 .home-featured-section .business-grid,
+  .home-page.home-v2 .home-featured-section .business-grid:active,
   .home-page.home-v2 .home-nearby-section .business-grid,
   .home-page.home-v2 .home-nearby-section .business-grid:active,
-  .home-page.home-v2 .home-nearby-section .business-grid *,
-  /* Ofertas especiales: evita también los cursores grab/grabbing del carrusel. */
+  .home-page.home-v2 .new-products__list,
+  .home-page.home-v2 .new-products__list:active,
   .home-page.home-v2 .special-offers__list,
-  .home-page.home-v2 .special-offers__list:active,
-  .home-page.home-v2 .special-offers__list * {
+  .home-page.home-v2 .special-offers__list:active {
     cursor: default;
+  }
+
+  .home-page.home-v2 .home-business-banner__card,
+  .home-page.home-v2 .home-business-banner__card *,
+  .home-page.home-v2 .entity-card,
+  .home-page.home-v2 .entity-card *,
+  .home-page.home-v2 .special-offer-card,
+  .home-page.home-v2 .special-offer-card * {
+    cursor: pointer;
+  }
+
+  /* Resaltado uniforme también para promociones y ofertas especiales. */
+  .home-page.home-v2 .special-offer-card {
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+
+  .home-page.home-v2 .special-offer-card:hover {
+    transform: translateY(-2px);
+    border-color: #b8a5ff;
+    box-shadow: 0 16px 34px rgba(123, 63, 251, .16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page.home-v2 .special-offer-card {
+    transition: none;
+  }
+  .home-page.home-v2 .special-offer-card:hover {
+    transform: none;
   }
 }
