@@ -122,7 +122,7 @@ export function App() {
       <nav aria-label="Planes"><h2>Planes</h2><a href="#planes" onClick={event => navigate(event,"planes")}>Gratis</a><a href="#planes" onClick={event => navigate(event,"planes")}>PRO</a><a href="#beneficios">Beneficios</a></nav>
       <nav aria-label="Soporte"><h2>Soporte</h2><a href="#preguntas" onClick={event => navigate(event,"preguntas")}>Preguntas frecuentes</a></nav>
       <nav aria-label="Legal"><h2>Legal</h2><a href={destinations.terms}>Términos y condiciones</a><a href={destinations.privacy}>Política de privacidad</a></nav>
-      <div className="footer-join"><h2>Sé parte de XAMUKO</h2><p>Descubre lo que tu ciudad tiene para ti.</p><a href={destinations.explore}>Explorar negocios<Icon name="arrow"/></a></div>
+      <div className="footer-join"><h2>Sé parte de XAMUKO</h2><p>Descubre lo que tu ciudad tiene para ti.</p><a href={destinations.guestExplore}>Explorar negocios<Icon name="arrow"/></a></div>
     </div><div className="footer-bottom"><p>© {new Date().getFullYear()} XAMUKO. Todos los derechos reservados.</p><span className="country"><span className="colombia-flag" aria-hidden="true"/>Colombia<Icon name="chevron"/></span></div></div></footer>
   </>;
 }
