@@ -92,3 +92,24 @@
 
 /* La transición entre el contenido y las olas del footer no lleva separador. */
 .location-page .site-footer { border-top: 0; }
+
+/* iPad Safari: eliminate the seam at the top of the decorative SVG waves.
+   The SVG's first path has a hard-coded background that can differ from
+   the page background and show as a one-pixel horizontal line. */
+@media (min-width: 701px) and (max-width: 1180px) {
+  .location-page .site-footer {
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+  }
+  .location-page .site-footer__waves {
+    display: block;
+    margin-top: -1px;
+    border: 0;
+    outline: 0;
+  }
+  .location-page .site-footer__waves > path:first-of-type {
+    fill: var(--xamuko-background, #faf9fc);
+    stroke: none;
+  }
+}
