@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { requestBlobWithSession } from "../services/authService";
+import { CatalogPhoto } from "./CatalogPhoto";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { businesses, type Business, type Product, type Service } from "../data/mockData";
 import { HeartIcon, ThumbsUpIcon } from "./ActionIcons";
@@ -42,24 +41,6 @@ export function businessProximityLabel(business: Business): string {
   // A mixed physical/virtual business without verifiable distance can still be visited online.
   if (hasVirtual) return "Virtual";
   return "Sin distancia";
-}
-
-function CatalogPhoto({ src, alt }: { src: string; alt: string }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    let objectUrl: string | undefined;
-    setUrl(null);
-    if (!src) return;
-    // Product media may require session credentials, unlike public business covers.
-    void requestBlobWithSession(src).then(blob => {
-      if (!active) return;
-      objectUrl = URL.createObjectURL(blob);
-      setUrl(objectUrl);
-    }).catch(() => { if (active) setUrl(""); });
-    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [src]);
-  return url ? <img src={url} alt={alt} loading="lazy" /> : <div className="entity-card__image-fallback" role="img" aria-label={alt} />;
 }
 
 function OfferPrice({ current, original }: { current: string; original?: string }) {
