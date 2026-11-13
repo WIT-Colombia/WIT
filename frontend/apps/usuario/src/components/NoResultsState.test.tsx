@@ -1,18 +1,32 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useSearchParams } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 import { CityEmptyState, NoResultsState } from "./NoResultsState";
 
 afterEach(cleanup);
 
 describe("Estado vacío de negocios en la ciudad", () => {
-  it("conserva el aviso y la acción de negocios virtuales existentes", () => {
-    const { container } = render(<MemoryRouter><CityEmptyState /></MemoryRouter>);
-    expect(screen.getByRole("heading", { name: "Aún no hay negocios registrados en tu ciudad." })).toBeInTheDocument();
+  it.each(["Cali", "Tuluá", "Santa Fe de Antioquia"])("muestra la ciudad elegida (%s) en HTML y conserva la acción virtual", locationName => {
+    const { container } = render(<MemoryRouter><CityEmptyState locationName={locationName}/></MemoryRouter>);
+    expect(screen.getByRole("heading", { name: `Aún no hay negocios registrados en ${locationName}.` })).toBeInTheDocument();
     expect(screen.getByText(/Prueba con negocios en modalidad virtual/)).toBeInTheDocument();
-    expect(container.querySelector(".no-results-state--city img")).not.toBeNull();
+    const image = container.querySelector(".no-results-state--city img");
+    expect(image).toHaveAttribute("alt", "");
+    expect(image).toHaveAttribute("width", "3840");
+    expect(image).toHaveAttribute("height", "3840");
+    expect(image?.getAttribute("srcset")).toMatch(/480w,.*960w,.*3840w/);
     const action = screen.getByRole("link", { name: /Ver negocios virtuales disponibles en toda Colombia/ });
     expect(action).toHaveAttribute("href", "/results?scope=virtual");
+  });
+
+  it("el botón sigue navegando a resultados en modalidad virtual", () => {
+    function Destination() { const [params] = useSearchParams(); return <h1>Resultados: {params.get("scope")}</h1>; }
+    render(<MemoryRouter initialEntries={["/home"]}><Routes>
+      <Route path="/home" element={<CityEmptyState locationName="Cali"/>}/>
+      <Route path="/results" element={<Destination/>}/>
+    </Routes></MemoryRouter>);
+    fireEvent.click(screen.getByRole("link", { name: "Ver negocios virtuales disponibles en toda Colombia" }));
+    expect(screen.getByRole("heading", { name: "Resultados: virtual" })).toBeInTheDocument();
   });
 
   it("presenta la referencia con texto HTML, ciudad dinámica y arte responsive separado", () => {

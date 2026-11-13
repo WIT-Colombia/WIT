@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import cityEmptyIllustration from "../assets/city-empty-storefront.svg";
+import cityEmptyIllustration from "../assets/city-empty-storefront-blue-4k.webp";
+import cityEmptyIllustration480 from "../assets/city-empty-storefront-blue-480.webp";
+import cityEmptyIllustration960 from "../assets/city-empty-storefront-blue-960.webp";
 import nearbyEmptyIllustration from "../assets/nearby-empty-map-4k.webp";
 import nearbyEmptyIllustration480 from "../assets/nearby-empty-map-480.webp";
 import nearbyEmptyIllustration960 from "../assets/nearby-empty-map-960.webp";
@@ -15,13 +17,19 @@ type NoResultsStateProps = {
   appearance?: "default" | "nearby";
 };
 
-export function CityEmptyState() {
+export function CityEmptyState({ locationName }: { locationName: string }) {
   return <section className="no-results-state no-results-state--city" aria-labelledby="no-city-businesses-title">
+    <svg className="no-results-city-waves" viewBox="0 0 600 180" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id="city-wave-blue" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#CEF2FC"/><stop offset="1" stopColor="#ADC9FF"/></linearGradient></defs>
+      <path d="M0 180Q120 95 225 132T420 118T600 80V180Z" fill="#DDD9FD" fillOpacity=".6"/>
+      <path d="M200 180Q350 130 420 65T600 32V180Z" fill="url(#city-wave-blue)" fillOpacity=".7"/>
+      <path d="M230 180Q365 110 435 125T600 65V180Z" fill="#B6D2FF" fillOpacity=".4"/>
+    </svg>
     <div className="no-results-city-illustration">
-      <img src={cityEmptyIllustration} alt="" aria-hidden="true" />
+      <img src={cityEmptyIllustration} srcSet={`${cityEmptyIllustration480} 480w, ${cityEmptyIllustration960} 960w, ${cityEmptyIllustration} 3840w`} sizes="(max-width: 620px) 188px, 300px" width="3840" height="3840" alt="" aria-hidden="true" loading="lazy" decoding="async" />
     </div>
     <div className="no-results-city-content">
-      <h3 id="no-city-businesses-title">Aún no hay negocios registrados en tu ciudad.</h3>
+      <h3 id="no-city-businesses-title">Aún no hay negocios registrados en {locationName}.</h3>
       <p>Prueba con negocios en modalidad virtual y descubre opciones disponibles para ti.</p>
       <Link className="no-results-city-action" to="/results?scope=virtual" aria-label="Ver negocios virtuales disponibles en toda Colombia">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4.75h18v12.5H3zM8 21h8M12 17.25V21M2 20h20" /></svg>

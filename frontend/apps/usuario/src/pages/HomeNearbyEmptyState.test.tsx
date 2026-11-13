@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Home from "./Home";
 
-const api = vi.hoisted(() => ({ search: vi.fn(), selection: { mode: "manual", locality: { id: "76834", name: "Tuluá", context: "Valle del Cauca", departmentCode: "76", kind: "Municipio" } } }));
+const api = vi.hoisted(() => ({ search: vi.fn(), banner: vi.fn(), selection: { mode: "manual", locality: { id: "76834", name: "Tuluá", context: "Valle del Cauca", departmentCode: "76", kind: "Municipio" } } }));
 vi.mock("../services/businessService", () => ({ searchUniversal: api.search, prioritizeFeaturedByDistance: (items: unknown[]) => items }));
 vi.mock("../context/LocationContext", () => ({ useLocationContext: () => ({ selection: api.selection }) }));
 vi.mock("../services/publicBusinessApi", () => ({ listPublicBusinesses: async () => [], listPublicProducts: async () => [], listPublicPromotions: async () => [], listPublicServices: async () => [] }));
@@ -14,12 +14,13 @@ vi.mock("../components/SiteHeader", () => ({ SiteHeader: () => null }));
 vi.mock("../components/SiteFooter", () => ({ SiteFooter: () => null }));
 vi.mock("../components/BottomNavigation", () => ({ BottomNavigation: () => null }));
 vi.mock("../components/LocationStarter", () => ({ LocationStarter: () => null }));
-vi.mock("../components/NewProductsBanner", () => ({ NewProductsBanner: () => null }));
+vi.mock("../components/NewProductsBanner", () => ({ NewProductsBanner: (props: unknown) => { api.banner(props); return null; } }));
 vi.mock("../components/AdMobBanner", () => ({ AdMobBanner: () => null }));
 vi.mock("../components/EntityCards", () => ({ BusinessCard: ({ business }: { business: { name: string } }) => <article>{business.name}</article> }));
 
 beforeEach(() => {
   api.search.mockReset();
+  api.banner.mockClear();
   vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -33,6 +34,7 @@ describe("Lugares cerca de ti: condiciones del aviso", () => {
     expect(container.querySelector("#lugares .no-results-state--nearby")).not.toBeNull();
     expect(api.search).toHaveBeenCalledWith(expect.objectContaining({ scope: "city", city: "Tuluá", region: "Valle del Cauca" }));
     expect(screen.getByText(/Por ahora no hay opciones en Tuluá/)).toBeInTheDocument();
+    expect(api.banner).toHaveBeenLastCalledWith(expect.objectContaining({ locationName: "Tuluá", cityEmpty: true }));
   });
 
   it("mantiene la carga sin mostrar una ciudad vacía antes de tener respuesta", () => {

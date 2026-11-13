@@ -9,12 +9,13 @@ import "./NewProductsBannerEnhancements.css";
 type NewProductsBannerProps = {
   products: Product[];
   cityEmpty?: boolean;
+  locationName: string;
   likedIds: string[];
   onLike: (id: string) => void | Promise<void>;
   getLikeCount?: (id: string, fallback?: number) => number;
 };
 
-export function NewProductsBanner({ products, cityEmpty = false, likedIds, onLike, getLikeCount }: NewProductsBannerProps) {
+export function NewProductsBanner({ products, cityEmpty = false, locationName, likedIds, onLike, getLikeCount }: NewProductsBannerProps) {
   const [showAll, setShowAll] = useState(false);
   const [scrollState, setScrollState] = useState({ left: 0, max: 0 });
   const listRef = useRef<HTMLDivElement>(null);
@@ -68,7 +69,7 @@ export function NewProductsBanner({ products, cityEmpty = false, likedIds, onLik
       <div className="new-products__heading">
       <div><h2 id="new-products-title">Nuevos en tu ciudad</h2></div>{products.length > 4 && <button className="text-link new-products__all" type="button" aria-expanded={showAll} aria-controls="new-products-list" onClick={() => setShowAll((value) => !value)}>{showAll ? "Ver menos" : `Ver más (${products.length})`} →</button>}
     </div>
-    {cityEmpty ? <CityEmptyState /> : products.length ? <div className={`new-products__list${showAll ? " is-expanded" : ""}`} id="new-products-list" aria-label="Productos nuevos" ref={listRef} onScroll={() => { const list = listRef.current; if (list) setScrollState({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onClickCapture={(event) => { if (ignoreClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>
+    {cityEmpty ? <CityEmptyState locationName={locationName} /> : products.length ? <div className={`new-products__list${showAll ? " is-expanded" : ""}`} id="new-products-list" aria-label="Productos nuevos" ref={listRef} onScroll={() => { const list = listRef.current; if (list) setScrollState({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onClickCapture={(event) => { if (ignoreClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>
       {(showAll ? products : products.slice(0, 4)).map((product) => <div className="new-products__item" key={product.id}><ProductCard product={product} liked={likedIds.includes(product.id)} likeCount={getLikeCount?.(product.id, product.likeCount) ?? product.likeCount} onLike={() => onLike(product.id)}/></div>)}
     </div> : <p className="home-empty-offers">Aún no hay productos nuevos publicados cerca de ti.</p>}
     {showAll && scrollState.max > 0 && <div className="new-products__scroll-control"><input type="range" min="0" max={scrollState.max} step="1" value={Math.min(scrollState.left, scrollState.max)} aria-label="Desplazar productos nuevos" onChange={(event) => { const left = Number(event.target.value); if (listRef.current) listRef.current.scrollLeft = left; setScrollState((current) => ({ ...current, left })); }} /></div>}
