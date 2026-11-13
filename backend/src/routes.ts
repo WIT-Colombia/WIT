@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { needsRouter } from './modules/needs/needs.routes.js';
 import { healthRouter } from './modules/health/health.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { businessRouter } from './modules/business/modality.routes.js';
@@ -20,6 +21,7 @@ import { financeRouter } from './modules/finance/finance.routes.js';
 
 export const apiRouter = Router();
 apiRouter.use('/health', healthRouter);
+apiRouter.use('/', needsRouter);
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/admin/auth', adminAuthRouter);
 apiRouter.use('/admin', adminRouter);
