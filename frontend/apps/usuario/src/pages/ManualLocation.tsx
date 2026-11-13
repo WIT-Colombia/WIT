@@ -78,12 +78,12 @@ export default function ManualLocation() {
   function continueWithLocation() {
     if (!selectedMunicipality) return;
     setManualLocation(selectedMunicipality);
-    navigate(returnTo);
+    navigate("/home", { replace: true });
   }
 
   function useCurrentLocation() {
     setAutomaticError(false);
-    void requestAutomaticLocation().then(() => navigate(returnTo)).catch(() => setAutomaticError(true));
+    void requestAutomaticLocation().then(() => navigate("/home", { replace: true })).catch(() => setAutomaticError(true));
   }
 
   return <main className="manual-location-page">
