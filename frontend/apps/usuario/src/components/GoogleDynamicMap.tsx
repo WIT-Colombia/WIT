@@ -64,8 +64,8 @@ export function GoogleDynamicMap({ businesses, center, searchCenter, userLocatio
       });
       const notifyResize = () => {
         if (!active || !mapRef.current) return;
+        // El mapa conserva la zona explorada por el usuario al cambiar de tamaño.
         maps.event?.trigger(mapRef.current, "resize");
-        mapRef.current.setCenter(center);
       };
       requestAnimationFrame(notifyResize);
       if (typeof ResizeObserver !== "undefined") {
