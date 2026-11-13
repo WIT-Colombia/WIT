@@ -12,6 +12,7 @@ import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
 import { ReviewReportsPage } from './pages/ReviewReportsPage';
 import { ReviewsPage } from './pages/ReviewsPage';
+import { UserNeedsPage } from './pages/UserNeedsPage';
 import { PioneersPage } from './pages/PioneersPage';
 import { VerificationsPage } from './pages/VerificationsPage';
 import { getSession, restoreSession } from './services/adminService';
@@ -34,7 +35,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs'];
 
 export default function App() {
   return <Routes>
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="/categories" element={<AdminCategoriesPage />} />
         <Route path="/users" element={<AdminUsersPage />} />
         <Route path="/content" element={<AdminContentPage />} />
+        <Route path="/user-needs" element={<UserNeedsPage />} />
         {navigation.filter(item => !implementedPaths.includes(item.path)).map(item => <Route key={item.path} path={item.path} element={<PendingModulePage />} />)}
         {['users', 'reports', 'content', 'reviews', 'needs', 'zones', 'categories', 'notifications', 'audit', 'settings'].map(path => <Route key={path} path={`/${path}/:id`} element={<PendingModulePage />} />)}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
