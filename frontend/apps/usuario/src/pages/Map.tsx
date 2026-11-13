@@ -138,8 +138,10 @@ export default function Map() {
   }, [setParams, location?.name, maxRadiusIndex]);
   const handleMapMoved = useCallback((nextCenter: Coordinates) => {
     setMapPosition({ original: originalCenterKey, coordinates: nextCenter });
-    if (cityScope) handleRadiusChange(0);
-  }, [originalCenterKey, cityScope, handleRadiusChange]);
+    // Si se explora fuera del municipio, pasar a búsqueda por radio.
+    // Recentrar en la ciudad seleccionada no debe cambiar el filtro "Ciudad".
+    if (cityScope && center && distanceBetweenCoordinates(center, nextCenter) > 0.05) handleRadiusChange(0);
+  }, [originalCenterKey, cityScope, center, handleRadiusChange]);
   const visibleLocation = location?.name ?? (selection?.mode === "automatic" ? "tu ubicación actual" : "una zona seleccionada");
   const userLocation = selection?.mode === "automatic" && getCoordinateDestination(selection.coordinates) ? selection.coordinates : null;
   const mapContext = (business: Business) => ({ source: 'map' as const, category: business.category, isFeatured: business.plan === 'premium' || business.isFeatured });
