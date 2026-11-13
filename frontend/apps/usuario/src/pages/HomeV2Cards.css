@@ -923,3 +923,18 @@
 .home-page.home-v2 .special-offers__list {
   touch-action: auto;
 }
+
+/* En escritorio, las tarjetas y los carruseles no muestran el cursor de mano.
+   El clic y el desplazamiento horizontal siguen gestionados por React. */
+@media (hover: hover) and (pointer: fine) {
+  .home-page.home-v2 .home-business-banner__viewport,
+  .home-page.home-v2 .home-business-banner__viewport.is-dragging,
+  .home-page.home-v2 .new-products__list,
+  .home-page.home-v2 .new-products__list:active,
+  .home-page.home-v2 .home-business-banner__card,
+  .home-page.home-v2 .entity-card,
+  .home-page.home-v2 .entity-card__whole-link,
+  .home-page.home-v2 .special-offer-card__link {
+    cursor: default;
+  }
+}
