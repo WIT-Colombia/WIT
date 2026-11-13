@@ -309,3 +309,55 @@
 /* Usuarios: encabezado lila suave, cuerpo y pie violeta tenue. */
 .home-page.home-v2 .site-footer{background:#faf9fc;border-top-color:#e9e6ee}
 .home-page.home-v2 .user-bottom-nav{background:#faf9fcfa;border-top-color:#e9e6ee}
+
+/* Categorías reales ordenadas por cantidad de negocios de la ciudad. */
+.home-page.home-v2 .category-tile__detail {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.home-page.home-v2 .category-tile__name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.home-page.home-v2 .category-tile__count {
+  color: #65577f;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.home-page.home-v2 .category-list__message {
+  width: 100%;
+  margin: 3px 0;
+  padding: 16px 12px;
+  border: 1px solid #e6ddff;
+  border-radius: 12px;
+  background: #faf8ff;
+  color: #51486e;
+  font-size: 12px;
+}
+.home-page.home-v2 .category-list__message button {
+  margin-left: 5px;
+  padding: 4px 7px;
+  border: 1px solid #d4c4ff;
+  border-radius: 7px;
+  background: white;
+  color: #6932e9;
+  font-weight: 700;
+  cursor: pointer;
+}
+@media (max-width: 700px) {
+  .home-page.home-v2 .category-tile {
+    flex-basis: 92px;
+    min-height: 104px;
+  }
+  .home-page.home-v2 .category-tile__count { font-size: 9px; }
+}
