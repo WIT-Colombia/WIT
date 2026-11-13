@@ -8,7 +8,8 @@ import { RequireAccount } from "./components/RequireAccount";
 import { SiteFooter } from "./components/SiteFooter";
 import { PageMetadata } from "@wit/ui";
 import { getAuthPageMetadata, getPrivateAuthPageMetadata, metadataTags } from "@wit/utils";
-const Home = lazy(() => import("./pages/Home"));
+import Home from "./pages/Home";
+import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 const ManualLocation = lazy(() => import("./pages/ManualLocation"));
 const Location = lazy(() => import("./pages/Location"));
 const LocationMap = lazy(() => import("./pages/LocationMap"));
@@ -123,8 +124,9 @@ function PrivateAuthMetadata() {
   return metadata ? <PageMetadata {...metadata} tags={metadataTags(metadata)} /> : null;
 }
 
-export default function App() {
-  return <InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<main role="status" aria-live="polite" style={{ minHeight: "100svh", display: "grid", placeItems: "center" }}>Cargando página…</main>}><Routes>
+function PageRoutes() {
+  const location = useLocation();
+  return <RouteErrorBoundary key={location.pathname}><Suspense fallback={<main role="status" aria-live="polite" style={{ minHeight: "100svh", display: "grid", placeItems: "center" }}>Cargando página…</main>}><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Navigate to="/home" replace />} />
@@ -163,5 +165,9 @@ export default function App() {
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<Navigate to="/home" replace />} />
-  </Routes></Suspense><StandaloneFooter /></InitialLocationGate>;
+  </Routes></Suspense></RouteErrorBoundary>;
+}
+
+export default function App() {
+  return <InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><PageRoutes /><StandaloneFooter /></InitialLocationGate>;
 }
