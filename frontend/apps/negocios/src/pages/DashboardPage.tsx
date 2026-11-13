@@ -207,9 +207,9 @@ export function DashboardPage() {
         <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">GESTIÓN DIARIA</span><h2 id="business-home-actions-title">Acciones rápidas</h2></div></div>
         <div className="business-home-actions-grid">
           <QuickAction title="Nueva promoción" description="Abre ofertas y promociones" icon="％" to={availableActions.promotions ? "/ofertas" : undefined} disabled={!availableActions.promotions} />
-          <QuickAction title="Actualizar galería" description="Gestiona las fotos del negocio desde su edición" icon="▧" to={availableActions.edit ? `/mis-negocios/editar/${businessIndex}` : undefined} disabled={!availableActions.edit} />
+          <QuickAction title="Actualizar galería" description="Gestiona las fotos del negocio desde su edición" icon="▧" to={availableActions.edit ? `/mi-negocio/detalle/${businessIndex}?tab=photos` : undefined} disabled={!availableActions.edit} />
           <QuickAction title="Productos y servicios" description="Gestiona tu catálogo" icon="◇" to={availableActions.catalog ? "/productos" : undefined} disabled={!availableActions.catalog} />
-          <QuickAction title="Editar información" description="Actualiza los datos del negocio" icon="✎" to={availableActions.edit ? `/mis-negocios/editar/${businessIndex}` : undefined} disabled={!availableActions.edit} />
+          <QuickAction title="Editar información" description="Actualiza los datos del negocio" icon="✎" to={availableActions.edit ? `/mi-negocio/detalle/${businessIndex}?tab=general` : undefined} disabled={!availableActions.edit} />
         </div>
         {(business.role !== "Propietario" && (!availableActions.catalog || !availableActions.edit || !availableActions.promotions)) && <p className="business-home-muted-note">Algunas acciones requieren permisos del propietario del negocio.</p>}
       </section>
