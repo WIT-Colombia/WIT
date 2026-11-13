@@ -31,7 +31,7 @@ describe("Explora por categoría: orden real por negocios", () => {
 
   it("si el endpoint es nuevo, usa todas las páginas de búsqueda para contar negocios", async () => {
     request.mockImplementation(async (url: string) => {
-      if (typeof url !== "string") throw new Error(`Mock received no URL: ${JSON.stringify(request.mock.calls)} | Stack: ${new Error().stack}`);
+      if (typeof url !== "string") throw new Error("Se esperaba una URL de la API");
       if (url.includes("/public/categories?")) throw new ApiError(404, "HTTP_ERROR", "Not found");
       const params = new URLSearchParams(url.split("?")[1]);
       expect(params.get("scope")).toBe("city");
@@ -49,12 +49,16 @@ describe("Explora por categoría: orden real por negocios", () => {
     });
     const result = await listPublicCategories("Pradera", "Valle del Cauca");
     expect(result.map(item => [item.name, item.businessCount])).toEqual([["Panaderías", 3], ["Ferreterías", 1]]);
-    expect(request).toHaveBeenCalledTimes(3);
+    expect(request.mock.calls.length).toBe(3);
   });
 
   it("distingue un error real de conexión de una ciudad sin negocios", async () => {
     request.mockRejectedValue(new ApiError(503, "SERVICE_UNAVAILABLE", "offline"));
-    await expect(listPublicCategories("Florida", "Valle del Cauca")).rejects.toThrow("offline");
-    expect(request).toHaveBeenCalledTimes(1);
+    let error: unknown;
+    try { await listPublicCategories("Florida", "Valle del Cauca"); }
+    catch (caught) { error = caught; }
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as Error).message).toBe("offline");
+    expect(request.mock.calls.length).toBe(1);
   });
 });
