@@ -64,7 +64,7 @@
   .business-detail-page .business-detail-actions svg{width:15px;height:15px;flex-basis:15px}
   .business-detail-page .business-favorite-full-label{display:none}
   .business-detail-page .business-favorite-mobile-label{display:inline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .business-detail-page .business-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:14px 0 0;padding:5px;overflow:visible}
+  .business-detail-page .business-tabs{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:14px 0 0;padding:5px;overflow:visible}
   .business-detail-page .business-tabs button{min-height:40px;padding-inline:3px;font-size:9px}
   .business-header-links{margin-top:8px;font-size:10px}
   .business-detail-page .business-header-links{width:100%;flex-wrap:wrap;gap:8px}
@@ -92,3 +92,6 @@
 .business-detail-page .business-social-links-header .business-social-link svg{width:17px;height:17px}
 .business-detail-page .business-public-qr-card{display:flex;justify-content:center;margin:18px auto;max-width:100%;overflow:hidden}
 .business-detail-page .business-public-qr-card .public-digital-card{max-width:100%}
+
+/* Cinco pestañas accesibles en pantallas pequeñas sin reducir excesivamente el texto. */
+@media(max-width:600px){.business-detail-page .business-tabs{grid-template-columns:repeat(5,minmax(105px,1fr));overflow-x:auto;scrollbar-width:thin}.business-detail-page .business-tabs button{white-space:nowrap}}
