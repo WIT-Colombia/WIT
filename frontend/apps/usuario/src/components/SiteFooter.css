@@ -16,6 +16,8 @@
   margin-right: 0;
   margin-left: calc(50% - 50vw);
   padding: 0;
+  border-top-color: transparent;
+  background: linear-gradient(112deg, #241078 0%, #201078 54%, #3510a7 100%);
 }
 
 .site-footer__waves {
