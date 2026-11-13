@@ -54,7 +54,7 @@ export function getLocationSelection(): LocationSelection | null {
     }
     const locality = findCanonicalLocality(parsed.mode === "manual" ? parsed.locality : parsed);
     if (locality) {
-      const normalized: LocationSelection = { mode: "manual", locality, country: "Colombia", coordinates: coordinatesForLocality(locality) };
+      const normalized: LocationSelection = { mode: "manual", locality, country: "Colombia", coordinates: isCoordinates(parsed.coordinates) ? parsed.coordinates : coordinatesForLocality(locality) };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
       return normalized;
     }
@@ -166,7 +166,7 @@ export function restorePreferredLocation(input: { city: string; region: string |
     ?? municipalities.find((item) => normalizeName(item.name) === normalizedCity);
   const coordinates = input.latitude != null && input.longitude != null && isCoordinates({ lat: input.latitude, lng: input.longitude }) ? { lat: input.latitude, lng: input.longitude } : undefined;
   if (input.mode === "GPS" && coordinates) { saveAutomaticLocation(coordinates, locality ?? undefined, input.resolution.toLowerCase() as "pending" | "resolved" | "unavailable"); return true; }
-  if (locality) { saveSelectedLocation(locality); return true; }
+  if (locality) { saveSelectedLocation(locality, coordinates); return true; }
   if (coordinates) { saveAutomaticLocation(coordinates, undefined, input.resolution.toLowerCase() as "pending" | "resolved" | "unavailable"); return true; }
   return false;
 }

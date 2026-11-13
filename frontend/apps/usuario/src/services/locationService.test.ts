@@ -20,6 +20,30 @@ describe("Ubicación inicial y última ubicación de XAMUKO Usuario", () => {
     expect(getLocationSelection()?.locality?.id).toBe("76520");
   });
 
+
+  it("conserva Cali y sus coordenadas al leer de nuevo la selección manual", () => {
+    const cali = getColombianAdministrativeDivisions().municipalities.find((item) => item.id === "76001");
+    expect(cali).toBeDefined();
+    const coordinates = { lat: 3.4516, lng: -76.5320 };
+    saveSelectedLocation(cali!, coordinates);
+    const selected = getLocationSelection();
+    expect(selected?.mode).toBe("manual");
+    expect(selected?.locality?.name).toBe("Cali");
+    expect(selected?.coordinates).toEqual(coordinates);
+    expect(getLocationSelection()?.coordinates).toEqual(coordinates);
+  });
+
+  it("conserva las coordenadas manuales restauradas del perfil", () => {
+    const coordinates = { lat: 3.4516, lng: -76.5320 };
+    expect(restorePreferredLocation({
+      city: "Cali", region: "Valle del Cauca",
+      latitude: coordinates.lat, longitude: coordinates.lng,
+      mode: "MANUAL", resolution: "RESOLVED",
+    })).toBe(true);
+    expect(getLocationSelection()).toMatchObject({
+      mode: "manual", locality: { name: "Cali", context: "Valle del Cauca" }, coordinates,
+    });
+  });
   it("al autorizar una posición nueva no hereda la ciudad manual anterior", () => {
     saveSelectedLocation(palmira!);
     saveAutomaticLocation({ lat: 4.711, lng: -74.0721 });

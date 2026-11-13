@@ -161,9 +161,17 @@ export function LocationProvider({ children }: { children: ReactNode }) {
   }
 
   async function setManualLocation(locality: Locality): Promise<void> {
-    localRevision.current += 1;
+    // Confirm the city immediately, without depending on Maps/geocoding.
+    // Coordinates only enrich the choice later; a slow old lookup must not
+    // restore an earlier city after another explicit selection.
+    const revision = ++localRevision.current;
+    saveSelectedLocation(locality);
     const coordinates = await resolveCoordinatesForLocality(locality);
-    saveSelectedLocation(locality, coordinates);
+    if (revision !== localRevision.current || !coordinates) return;
+    const current = getLocationSelection();
+    if (current?.mode === "manual" && current.locality.id === locality.id) {
+      saveSelectedLocation(locality, coordinates);
+    }
   }
 
   function setAutomaticLocation(coordinates: Coordinates): Promise<void> {

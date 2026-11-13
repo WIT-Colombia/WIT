@@ -5,7 +5,7 @@ import { businesses as sampleBusinesses, categories, products as sampleProducts,
 import { useLocationContext } from "../context/LocationContext";
 import { LocationStarter } from "../components/LocationStarter";
 import { searchUniversal, prioritizeFeaturedByDistance } from "../services/businessService";
-import { listPublicBusinesses, listPublicProducts, listPublicPromotions, listPublicServices } from "../services/publicBusinessApi";
+import { listPublicProducts, listPublicPromotions, listPublicServices } from "../services/publicBusinessApi";
 import { requestBlobWithSession } from "../services/authService";
 import { SiteHeader } from "../components/SiteHeader";
 import { SiteFooter } from "../components/SiteFooter";
@@ -182,8 +182,16 @@ export default function Home() {
   useEffect(() => {
     let current = true;
     setCatalogState("loading");
+    setItems([]);
+    setCatalogProducts([]);
+    setRealPromotions([]);
     const userCoordinates = selection?.coordinates;
-    void searchUniversal({ query, category, latitude: userCoordinates?.lat, longitude: userCoordinates?.lng }).then(async ({ businesses, products }) => {
+    // A manual municipality is an administrative city filter, even when Maps
+    // fails to provide its centre coordinates. GPS continues to use distance.
+    const searchArea = selection?.mode === "manual"
+      ? { scope: "city" as const, city: selection.locality.name, region: selection.locality.context }
+      : { latitude: userCoordinates?.lat, longitude: userCoordinates?.lng };
+    void searchUniversal({ query, category, ...searchArea }).then(async ({ businesses, products }) => {
       if (!current) return;
       const ratedBusinesses = await Promise.all(businesses.map(async (business) => {
         try {
@@ -250,7 +258,8 @@ export default function Home() {
   useEffect(() => {
     if (hasSampleCatalog) return;
     let active = true;
-    void listPublicBusinesses().then(async businesses => {
+    // Promotions must belong to the same city-filtered businesses as Home.
+    void Promise.resolve(items).then(async businesses => {
       const grouped = await Promise.all(businesses.map(async business => {
         const [promotions, products, services] = await Promise.all([
           listPublicPromotions(business.id).catch(() => []),
@@ -271,7 +280,7 @@ export default function Home() {
       if (active) setRealPromotions(rows);
     });
     return () => { active = false; };
-  }, [hasSampleCatalog]);
+  }, [hasSampleCatalog, items]);
   useEffect(() => {
     const viewport = bannerViewportRef.current;
     if (!viewport || !bannerBusinesses.length || bannerPaused || bannerInteracting || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
