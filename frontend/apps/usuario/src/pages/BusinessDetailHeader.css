@@ -24,7 +24,7 @@
 .business-detail-page .business-detail-intro>p,.business-detail-page .business-header-description p{margin:0;color:#64748b;font-size:13px;line-height:1.6;max-width:none}
 .business-attention-modalities{display:grid;gap:8px;margin:14px 0 2px}.business-attention-modalities>strong{color:#334155;font-size:12px}.business-attention-modalities>div{display:flex;flex-wrap:wrap;gap:7px}.business-attention-modalities span{padding:7px 11px;border:1px solid #dbe7fa;border-radius:999px;background:#f5f8ff;color:#2563eb;font-size:11px;font-weight:700}
 .business-detail-page .business-detail-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px;align-items:stretch}
-.business-detail-page .business-detail-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.business-detail-page .business-detail-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 .business-detail-page .business-detail-actions>a,.business-detail-page .business-detail-actions>button{display:inline-flex;justify-content:center;align-items:center;gap:6px;min-height:40px;padding:0 11px;border-radius:11px;font-size:10px;font-weight:600;text-decoration:none;flex:1 1 auto;white-space:nowrap;box-sizing:border-box}
 .business-header-call{background:#7b3ffb;color:#fff;border:1px solid #7b3ffb}.business-header-whatsapp{background:#00b96b;color:#fff;border:1px solid #00b96b}
 .business-detail-page .business-detail-actions svg{width:17px;height:17px;flex:0 0 17px}.business-header-whatsapp .business-whatsapp-disc{fill:currentColor}.business-header-whatsapp .business-whatsapp-phone{fill:#00b96b}
@@ -85,3 +85,10 @@
   .business-detail-page .business-detail-intro{padding-inline:12px}
   .business-detail-page .business-detail-actions>a,.business-detail-page .business-detail-actions>button{font-size:9px}
 }
+
+/* Enlaces sociales y tarjeta QR visibles en la ficha pública, independientemente de la pestaña. */
+.business-detail-page .business-social-links-header{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.business-detail-page .business-social-links-header .business-social-link{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid #e6d9ff;border-radius:12px;color:#6530d6;text-decoration:none;font-size:12px;font-weight:600}
+.business-detail-page .business-social-links-header .business-social-link svg{width:17px;height:17px}
+.business-detail-page .business-public-qr-card{display:flex;justify-content:center;margin:18px auto;max-width:100%;overflow:hidden}
+.business-detail-page .business-public-qr-card .public-digital-card{max-width:100%}
