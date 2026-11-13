@@ -727,7 +727,7 @@ export default function Home() {
       </section>}
 
       <div className="admob-banner-slot admob-banner-slot--home-footer"><AdMobBanner slot="home-footer" /></div>
-      {hasSampleCatalog && <section className="need-banner"><span className="home-need-symbol" aria-hidden="true"><Icon name="pin"/></span><div><span>¿No lo encontraste?</span><h2>Cuéntanos qué necesitas</h2><p>Ayúdanos a descubrir qué hace falta cerca de ti.</p></div><Button variant="outline" type="button" onClick={() => navigate("/register-need")}>Registrar una necesidad <Icon name="arrow" /></Button></section>}
+      {<section className="need-banner"><span className="home-need-symbol" aria-hidden="true"><Icon name="pin"/></span><div><span>¿No lo encontraste?</span><h2>Cuéntanos qué necesitas</h2><p>Ayúdanos a descubrir qué hace falta cerca de ti.</p></div><Button variant="outline" type="button" onClick={() => navigate("/register-need")}>Cuéntanos qué necesitas <Icon name="arrow" /></Button></section>}
     </main>
 
     <SiteFooter />
