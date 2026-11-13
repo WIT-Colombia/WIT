@@ -31,7 +31,7 @@ describe("Explora por categoría: orden real por negocios", () => {
 
   it("si el endpoint es nuevo, usa todas las páginas de búsqueda para contar negocios", async () => {
     request.mockImplementation(async (url: string) => {
-      if (typeof url !== "string") throw new Error("Se esperaba una URL de la API");
+      if (typeof url !== "string") throw new Error(`Se esperaba una URL de la API: ${new Error().stack}`);
       if (url.includes("/public/categories?")) throw new ApiError(404, "HTTP_ERROR", "Not found");
       const params = new URLSearchParams(url.split("?")[1]);
       expect(params.get("scope")).toBe("city");
