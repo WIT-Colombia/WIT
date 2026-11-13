@@ -4,7 +4,7 @@ const fixture = {
   publicId: 'layout-business', name: 'Netstudio', description: 'Servicio de creación de redes locales con usuario administrador para llevar un mejor control de los protocolos.',
   category: { id: 'tech', code: 'tech', name: 'Servicios Técnicos', iconKey: null },
   location: { cityName: 'Santiago de Cali', regionName: 'Valle del Cauca', address: 'Calle 10 # 12-34', latitude: 3.45, longitude: -76.53, visibility: 'PUBLIC' },
-  contacts: { phone: '+573001234567', whatsapp: '+573001234567', email: null, website: null },
+  contacts: { phone: '+573001234567', whatsapp: '+573001234567', email: null, website: 'https://example.com' },
   gallery: [], coverPhoto: null, profilePhoto: null, products: [], services: [],
   modalities: [{ type: 'PHYSICAL', hours: Array.from({ length: 7 }, (_, day) => ({ dayOfWeek: String(day), isClosed: day === 0, opensAt: day === 0 ? null : '08:00', closesAt: day === 0 ? null : '23:59' })) }],
 };
@@ -18,13 +18,17 @@ test('Usuario: ficha de negocio conserva composición y navegación responsive',
   await page.route('**/api/v1/public/businesses/layout-business/products', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ products }) }));
   await page.route('**/api/v1/public/businesses/layout-business/services', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ services: [] }) }));
   await page.route('**/api/v1/public/businesses/layout-business/reviews**', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ reviews: [], summary: { average: null, total: 0 } }) }));
-  await page.goto('/business/layout-business');
+  await page.goto('/business/layout-business?tab=info');
   await expect(page.getByRole('heading', { name: 'Netstudio', exact: true }).first()).toBeVisible();
   for (const width of [1440, 1169, 1024, 820, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     const metrics = await page.evaluate(() => {
       const rect = (selector: string) => document.querySelector(selector)?.getBoundingClientRect();
-      return { overflow: document.documentElement.scrollWidth > innerWidth + 1, hero: rect('.business-detail-hero'), tabs: rect('.business-tabs'), hours: rect('.business-aside-block'), card: rect('.public-digital-card') };
+      const actionBox = (selector: string) => {
+        const box = rect(`.business-detail-actions ${selector}`);
+        return box && { x: box.x, y: box.y, right: box.right, bottom: box.bottom, height: box.height };
+      };
+      return { overflow: document.documentElement.scrollWidth > innerWidth + 1, hero: rect('.business-detail-hero'), tabs: rect('.business-tabs'), hours: rect('.business-aside-block'), card: rect('.public-digital-card'), actions: [actionBox('.business-header-call'), actionBox('.business-header-whatsapp'), actionBox('.business-website-button'), actionBox('.business-primary-action'), actionBox('.business-favorite-action')] };
     });
     expect(metrics.overflow, `${width}px should not scroll horizontally`).toBe(false);
     expect(metrics.hero?.width).toBeGreaterThan(0);
@@ -33,13 +37,24 @@ test('Usuario: ficha de negocio conserva composición y navegación responsive',
     expect(metrics.card?.width).toBeGreaterThan(0);
     if (width > 700) expect(metrics.hours!.right).toBeLessThan(metrics.card!.left);
     else expect(metrics.hours!.bottom).toBeLessThan(metrics.card!.top);
+    const [call, whatsapp, website, directions, favorite] = metrics.actions;
+    expect(call && whatsapp && website && directions && favorite).toBeTruthy();
+    expect(metrics.actions.every(action => action!.height >= 44), `${width}px: botones táctiles`).toBe(true);
+    expect(call!.x).toBeLessThan(whatsapp!.x);
+    if (width > 1150) {
+      expect(call!.y).toBe(website!.y);
+      expect(call!.y).toBe(directions!.y);
+    } else {
+      expect(call!.y).toBe(whatsapp!.y);
+      expect(website!.y).toBe(directions!.y);
+      expect(website!.y).toBeGreaterThan(call!.bottom);
+    }
+    expect(favorite!.y).toBeGreaterThan(directions!.bottom);
     await page.screenshot({ path: testInfo.outputPath(`business-${width}.png`), fullPage: true });
   }
   await page.getByRole('button', { name: 'Ver todo' }).click();
   await expect(page.getByRole('button', { name: 'Productos', exact: true })).toHaveAttribute('aria-current', 'page');
-  await page.getByRole('button', { name: 'Ubicación' }).click();
-  await expect(page.getByRole('region', { name: 'Ubicación del negocio' })).toContainText('Santiago de Cali');
-  await expect(page.getByRole('link', { name: /Cómo llegar/ }).last()).toHaveAttribute('href', '/directions?businessId=layout-business');
+  await expect(page.getByRole('link', { name: /Cómo llegar/ }).first()).toHaveAttribute('href', '/directions?businessId=layout-business');
 
   const photo = (index: number) => ({ id: `photo-${index}`, url: `https://layout.example.invalid/photo-${index}.svg`, altText: null, sortOrder: index, isCover: index === 1 });
   await page.route('**/photo-*.svg', route => route.fulfill({ status: 200, contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#dcd5f9"/></svg>' }));

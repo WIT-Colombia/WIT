@@ -38,11 +38,11 @@
 .business-detail-page .business-attention-modalities > strong { color:#151935; }
 .business-detail-page .business-attention-modalities span { display:inline-flex; align-items:center; gap:7px; border:0; background:#eeeaff; color:#343064; }
 .business-detail-page .business-attention-modalities span svg { width:18px; height:18px; flex:none; color:#7130ec; }
-.business-detail-page .business-detail-actions { grid-template-columns:repeat(3, minmax(0, 1fr)); margin-top:22px; gap:12px; }
+.business-detail-page .business-detail-actions { grid-template-columns:repeat(4, minmax(0, 1fr)); margin-top:22px; gap:10px; }
 .business-detail-page .business-detail-actions > a,
 .business-detail-page .business-detail-actions > button { min-height:49px; border-radius:17px; font-size:clamp(11px, 1.05vw, 15px); font-weight:750; }
 .business-detail-page .business-header-call { border-color:#6932ed; background:linear-gradient(110deg,#873cff,#5723e6); box-shadow:0 6px 15px #7136e526; }
-.business-detail-page .business-header-whatsapp { border-color:#029c50; background:linear-gradient(110deg,#06ae56,#008c42); box-shadow:0 6px 15px #008c4226; }
+.business-detail-page .business-header-whatsapp { border-color:#087d46; background:#087d46; box-shadow:0 6px 15px #008c4226; }
 .business-detail-page .business-favorite-action { border-color:#cbb5eb; color:#9a2359; }
 .business-detail-page .business-detail-actions > .business-primary-action { display:inline-flex; }
 .business-detail-page .business-header-hours { background:transparent; padding:9px 0; }
@@ -127,6 +127,9 @@
 .business-detail-page .business-location-tab p { color:#555e77; }
 .business-detail-page .business-location-tab address { margin:0 0 18px; color:#252b47; font-style:normal; }
 .business-detail-page .business-location-tab .business-primary-action { width:max-content; }
+@media(max-width:1150px) {
+  .business-detail-page .business-detail-actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 @media(max-width:950px) {
   .business-detail-page .business-detail-hero { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; }
   .business-detail-page .business-detail-photo { aspect-ratio:1.22; }
@@ -154,9 +157,9 @@
   .business-detail-page .business-detail-gallery-strip button { flex-basis:24%; height:58px; }
   .business-detail-page .business-detail-rating { margin:10px 0; }
   .business-detail-page .business-hero-meta { margin-top:9px; }
-  .business-detail-page .business-detail-actions { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin-top:15px; }
+  .business-detail-page .business-detail-actions { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:15px; }
   .business-detail-page .business-detail-actions > a,
-  .business-detail-page .business-detail-actions > button { min-height:43px; padding-inline:5px; font-size:10px; }
+  .business-detail-page .business-detail-actions > button { min-height:48px; padding-inline:6px; font-size:12px; }
   .business-detail-page .business-header-call,
   .business-detail-page .business-header-whatsapp,
   .business-detail-page .business-favorite-action { grid-column:auto; grid-row:auto; }

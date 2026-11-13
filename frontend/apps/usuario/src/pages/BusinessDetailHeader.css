@@ -126,20 +126,17 @@
   text-align:center;
   text-decoration:none;
 }
-.business-detail-page .business-detail-actions .business-header-call{grid-column:1;grid-row:1;background:#7b3ffb;color:#fff;border-color:#7b3ffb}
-.business-detail-page .business-detail-actions .business-header-whatsapp{grid-column:2;grid-row:1;background:#009e60;color:#fff;border-color:#009e60}
-.business-detail-page .business-detail-actions .business-website-button{grid-column:3;grid-row:1;background:#2563eb;color:#fff;border:1px solid #2563eb;box-shadow:0 5px 12px rgba(37,99,235,.14);font-size:14px}
+.business-detail-page .business-detail-actions .business-header-call{background:#7b3ffb;color:#fff;border-color:#7b3ffb}
+.business-detail-page .business-detail-actions .business-header-whatsapp{background:#087d46;color:#fff;border-color:#087d46}
+.business-detail-page .business-detail-actions .business-website-button{background:#2563eb;color:#fff;border:1px solid #2563eb;box-shadow:0 5px 12px rgba(37,99,235,.14);font-size:14px}
 .business-detail-page .business-detail-actions .business-website-button:hover{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
-.business-detail-page .business-detail-actions .business-primary-action{grid-column:4;grid-row:1;background:#7b3ffb;color:#fff;border:1px solid #7b3ffb;box-shadow:0 5px 12px rgba(123,63,251,.12)}
-.business-detail-page .business-detail-actions .business-favorite-action{grid-column:1 / -1;grid-row:2;background:#fff;color:#a21c5b;border:1px solid #d7b8fa}
+.business-detail-page .business-detail-actions .business-primary-action{background:#7b3ffb;color:#fff;border:1px solid #7b3ffb;box-shadow:0 5px 12px rgba(123,63,251,.12)}
+.business-detail-page .business-detail-actions .business-favorite-action{grid-column:1 / -1;background:#fff;color:#a21c5b;border:1px solid #d7b8fa}
+.business-detail-page .business-detail-actions .business-favorite-action.is-active{border-color:#e8aac1;background:#fff0f5;color:#a9184b}
+.business-detail-page .business-detail-actions > a:focus-visible,.business-detail-page .business-detail-actions > button:focus-visible{outline:3px solid #22d3ee;outline-offset:2px}
 .business-detail-page .business-detail-actions .business-website-button:disabled{opacity:.6;cursor:not-allowed}
 @media(max-width:1023px){
   .business-detail-page .business-detail-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .business-detail-page .business-detail-actions .business-header-call{grid-column:1;grid-row:1}
-  .business-detail-page .business-detail-actions .business-header-whatsapp{grid-column:2;grid-row:1}
-  .business-detail-page .business-detail-actions .business-website-button{grid-column:1;grid-row:2}
-  .business-detail-page .business-detail-actions .business-primary-action{grid-column:2;grid-row:2}
-  .business-detail-page .business-detail-actions .business-favorite-action{grid-column:1 / -1;grid-row:3}
 }
 @media(max-width:600px){
   .business-detail-page .business-detail-actions{gap:9px;margin-top:14px}
