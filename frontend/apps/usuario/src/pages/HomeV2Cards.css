@@ -977,9 +977,9 @@
  */
 .home-page.home-v2 .new-products__item .entity-offer-card {
   box-sizing: border-box;
-  height: 282px;
-  min-height: 282px;
-  max-height: 282px;
+  height: 270px;
+  min-height: 270px;
+  max-height: 270px;
   border-radius: 18px;
 }
 .home-page.home-v2 .new-products__item .entity-offer-card .entity-card__image {
@@ -1094,9 +1094,9 @@
 }
 @media (max-width: 700px) {
   .home-page.home-v2 .new-products__item .entity-offer-card {
-    height: 232px;
-    min-height: 232px;
-    max-height: 232px;
+    height: 220px;
+    min-height: 220px;
+    max-height: 220px;
   }
   .home-page.home-v2 .new-products__item .entity-offer-card .entity-card__image {
     height: 68px;
