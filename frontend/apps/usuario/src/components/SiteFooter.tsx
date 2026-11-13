@@ -13,7 +13,7 @@ const navigationGroups = [
   },
   {
     title: "XAMUKO",
-    links: [{ label: "Ir al inicio", to: "/home" }],
+    links: [{ label: "Conoce XAMUKO", to: "https://xamuko.com" }],
   },
   {
     title: "Ayuda",
