@@ -12,6 +12,8 @@ type NewProductsBannerProps = {
   isLoadingMore: boolean;
   loadMoreError: boolean;
   onLoadMore: () => void;
+  loadError?: boolean;
+  onRetry?: () => void;
   cityEmpty?: boolean;
   locationName: string;
   likedIds: string[];
@@ -19,7 +21,7 @@ type NewProductsBannerProps = {
   getLikeCount?: (id: string, fallback?: number) => number;
 };
 
-export function NewProductsBanner({ items, cityEmpty = false, locationName, likedIds, onLike, getLikeCount, hasMore, isLoadingMore, loadMoreError, onLoadMore }: NewProductsBannerProps) {
+export function NewProductsBanner({ items, cityEmpty = false, locationName, likedIds, onLike, getLikeCount, hasMore, isLoadingMore, loadMoreError, onLoadMore, loadError = false, onRetry }: NewProductsBannerProps) {
   const [showAll, setShowAll] = useState(false);
   const [scrollState, setScrollState] = useState({ left: 0, max: 0 });
   const listRef = useRef<HTMLDivElement>(null);
@@ -94,7 +96,7 @@ export function NewProductsBanner({ items, cityEmpty = false, locationName, like
           ? <ServiceCard service={item} liked={likedIds.includes(item.id)} likeCount={getLikeCount?.(item.id, item.likeCount) ?? item.likeCount} onLike={() => onLike(item.id)} />
           : <ProductCard product={item} liked={likedIds.includes(item.id)} likeCount={getLikeCount?.(item.id, item.likeCount) ?? item.likeCount} onLike={() => onLike(item.id)} />}
       </div>)}
-    </div> : null}
+    </div> : loadError ? <div className="new-products__error" role="alert"><p>No pudimos cargar las novedades de tu ciudad.</p><button type="button" onClick={onRetry}>Reintentar</button></div> : null}
     {showAll && hasMore && <div className="new-products__load-more"><button type="button" disabled={isLoadingMore} onClick={onLoadMore}>{isLoadingMore ? "Cargando novedades…" : "Cargar 20 más"}</button>{loadMoreError && <p role="alert">No pudimos cargar más novedades. Intenta nuevamente.</p>}</div>}
     {showAll && scrollState.max > 0 && <div className="new-products__scroll-control"><input type="range" min="0" max={scrollState.max} step="1" value={Math.min(scrollState.left, scrollState.max)} aria-label="Desplazar productos nuevos" onChange={(event) => { const left = Number(event.target.value); if (listRef.current) listRef.current.scrollLeft = left; setScrollState((current) => ({ ...current, left })); }} /></div>}
   </section>;

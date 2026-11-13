@@ -63,6 +63,7 @@ export type Service = {
   id: string;
   businessId: string;
   name: string;
+  createdAt?: string;
   description: string;
   priceLabel?: string;
   originalPriceLabel?: string;

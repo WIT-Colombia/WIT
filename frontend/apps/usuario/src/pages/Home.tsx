@@ -172,6 +172,7 @@ export default function Home() {
     items: PublicNewArrival[]; page: number; hasMore: boolean; loadMoreError: boolean;
   }>({ key: "", status: "loading", items: [], page: 0, hasMore: false, loadMoreError: false });
   const [loadingMoreArrivals, setLoadingMoreArrivals] = useState(false);
+  const [arrivalRetry, setArrivalRetry] = useState(0);
   const arrivalLoadingKeyRef = useRef<string | null>(null);
   const selectedCityKey = selectedLocation ? `${selectedLocation.name}|${selectedLocation.context}` : "";
   const arrivalKey = selectedLocation ? `${selectedCityKey}|${discoveryDay}` : "";
@@ -278,7 +279,7 @@ export default function Home() {
         hasMore: false, loadMoreError: false });
     });
     return () => { active = false; };
-  }, [arrivalKey, selectedLocation?.name, selectedLocation?.context, catalogRetry]);
+  }, [arrivalKey, selectedLocation?.name, selectedLocation?.context, catalogRetry, arrivalRetry]);
 
   function loadMoreArrivals() {
     if (!selectedLocation || arrivalState.key !== arrivalKey || arrivalState.status !== "ready"
@@ -333,6 +334,7 @@ export default function Home() {
   );
   const visibleArrivals = arrivalState.key === arrivalKey && arrivalState.status === "ready"
     ? arrivalState.items : [];
+  const arrivalsFailed = Boolean(selectedLocation) && arrivalState.key === arrivalKey && arrivalState.status === "error";
   const cityEmptyForNew = catalogState === "ready" && !query && !category
     && (selectedLocation
       ? discoveryReadyCity === selectedCityKey && discoveryCatalog.length === 0
@@ -670,9 +672,10 @@ export default function Home() {
 
       {featuredItems.length > 0 && <section className="business-section home-featured-section" aria-labelledby="featured-title"><div className="section-heading businesses-heading"><div className="home-section-intro"><h2 id="featured-title"><span className="home-section-symbol" aria-hidden="true">◇</span>Negocios destacados</h2><p>Descubre y apoya los negocios de tu comunidad.</p></div>{allFeaturedItems.length > 4 && <button className="text-link" type="button" aria-expanded={showAllFeatured} aria-controls="featured-business-list" onClick={() => setShowAllFeatured((current) => !current)}>{showAllFeatured ? "Ver menos" : `Ver más (${allFeaturedItems.length})`} <Icon name="arrow" /></button>}</div><div className="business-grid" id="featured-business-list" ref={featuredListRef} onScroll={() => { const list = featuredListRef.current; if (list) setFeaturedScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startFeaturedDrag} onPointerMove={moveFeaturedDrag} onPointerUp={endFeaturedDrag} onPointerCancel={endFeaturedDrag} onClickCapture={(event) => { if (ignoreFeaturedClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{featuredItems.map((business) => <BusinessCard key={business.id} business={business} favorite={favorites.includes(business.id)} onFavorite={() => { void saveFavorite(business.id); }} />)}</div>{showAllFeatured && featuredScroll.max > 0 && <div className="featured-scroll-control"><input type="range" min="0" max={featuredScroll.max} step="1" value={Math.min(featuredScroll.left, featuredScroll.max)} aria-label="Desplazar negocios destacados" onChange={(event) => { const left = Number(event.target.value); if (featuredListRef.current) featuredListRef.current.scrollLeft = left; setFeaturedScroll((current) => ({ ...current, left })); }} /></div>}</section>}
 
-      {(cityEmptyForNew || visibleArrivals.length > 0) &&
+      {(cityEmptyForNew || visibleArrivals.length > 0 || arrivalsFailed) &&
         <NewProductsBanner locationName={cityName} items={visibleArrivals}
           cityEmpty={cityEmptyForNew}
+          loadError={arrivalsFailed} onRetry={() => setArrivalRetry((value) => value + 1)}
           hasMore={arrivalState.key === arrivalKey && arrivalState.hasMore}
           isLoadingMore={loadingMoreArrivals} loadMoreError={arrivalState.loadMoreError}
           onLoadMore={loadMoreArrivals}
