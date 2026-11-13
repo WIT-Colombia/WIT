@@ -70,9 +70,9 @@
   margin: 18px auto 0;
   padding: clamp(28px, 4vw, 56px);
   overflow: hidden;
-  border: 1px solid #FFFFFF;
+  border: 1px solid #E1E5EF;
   border-radius: 22px;
-  background: linear-gradient(118deg, #F8F5FF 0%, #F7F6FF 52%, #E8F3FF 100%);
+  background: #FFFFFF;
   box-shadow: 0 12px 26px rgba(94, 70, 167, .08);
   text-align: left;
 }
