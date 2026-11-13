@@ -66,6 +66,34 @@ describe("Lugares cerca de ti: condiciones del aviso", () => {
 });
 
 
+describe("Explora por categoría: ocultar la sección vacía", () => {
+  it("oculta toda la sección si la ciudad no tiene negocios por categoría", async () => {
+    api.search.mockResolvedValue({ businesses: [], products: [] });
+    api.categories.mockResolvedValue([]);
+    const { container } = show();
+    await waitFor(() => expect(api.categories).toHaveBeenCalledWith("Tuluá", "Valle del Cauca"));
+    await screen.findByRole("heading", { name: "Aún no encontramos coincidencias" });
+    expect(container.querySelector("#explorar")).toBeNull();
+    expect(screen.queryByText(/Aún no hay negocios publicados por categoría/)).toBeNull();
+  });
+
+  it("distingue un error de consulta de una lista realmente vacía y permite reintentar", async () => {
+    api.search.mockResolvedValue({ businesses: [], products: [] });
+    api.categories.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce([
+      { id: "cat-cafe", code: "cafeterias", name: "Cafeterías", iconKey: "coffee", businessCount: 1 },
+    ]);
+    const { container } = show();
+    const categorySection = await waitFor(() => {
+      const element = container.querySelector("#explorar");
+      expect(element).not.toBeNull();
+      expect(within(element as HTMLElement).getByText("No pudimos cargar las categorías.")).toBeInTheDocument();
+      return element as HTMLElement;
+    });
+    fireEvent.click(within(categorySection).getByRole("button", { name: "Reintentar" }));
+    expect(await within(categorySection).findByRole("button", { name: "Cafeterías, 1 negocio" })).toBeInTheDocument();
+  });
+});
+
 describe("Explora por categoría: orden, conteos y navegación", () => {
   it("muestra de izquierda a derecha primero las categorías con más negocios de la ciudad", async () => {
     api.search.mockResolvedValue({ businesses: [], products: [] });
