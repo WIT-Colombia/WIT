@@ -1,4 +1,5 @@
 import { PublicOfferSeo } from "../components/PublicPageSeo";
+import { CatalogPhoto } from "../components/CatalogPhoto";
 import type { Business } from "../data/mockData";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -142,7 +143,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
       </button>
       <section className="offer-detail">
         <div className="offer-detail-image">
-          <img src={item.image} alt={item.name} />
+          <CatalogPhoto src={item.image} alt={item.name} />
           <span className="offer-detail-kind">{isProduct ? "Producto" : "Servicio"}</span>
           {hasActiveDiscount && (
             <span className="offer-detail-image-discount" aria-label={`Descuento de ${product.discount}`}>
