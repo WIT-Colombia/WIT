@@ -99,7 +99,7 @@ function CategoryIcon({ name }: { name: string }) {
 
 const NEW_BUSINESS_WINDOW_DAYS = 7;
 
-type HomeSpecialOffer = { product: typeof sampleProducts[number]; discount: string; deadline: string; promotionId?: string };
+type HomeSpecialOffer = { product: typeof sampleProducts[number]; discount: string; deadline: string; promotionId?: string; endsAt?: string; originalPrice?: string; promotionalPrice?: string; isPromotion?: boolean };
 
 const specialOffers: HomeSpecialOffer[] = [
   { product: sampleProducts[0], discount: "-20%", deadline: "Hasta 31 oct." },
@@ -356,7 +356,45 @@ export default function Home() {
       : visibleItems.length === 0);
   const arrivalIds = useMemo(() => visibleArrivals.map(({ item }) => item.id), [visibleArrivals]);
   const { get: getOfferLike, toggle: toggleOfferLike } = useOfferLikes(arrivalIds);
-  const visibleSpecialOffers = useMemo<HomeSpecialOffer[]>(() => hasSampleCatalog ? specialOffers : realPromotions.length ? realPromotions : catalogProducts.filter((product) => product.isOffer).map((product) => ({ product, discount: product.discount ?? product.offerLabel ?? "Oferta", deadline: product.offerDeadline ?? "" })), [catalogProducts, hasSampleCatalog, realPromotions]);
+  const visibleSpecialOffers = useMemo<HomeSpecialOffer[]>(() => {
+    const fallback = catalogProducts.filter((product) => product.isOffer).map((product) => ({ product, discount: product.discount ?? product.offerLabel ?? "Oferta", deadline: product.offerDeadline ?? "" }));
+    const all = hasSampleCatalog ? specialOffers : [...realPromotions, ...fallback];
+    const now = Date.now();
+    const businessById = new Map(items.map((business) => [business.id, business]));
+    const seen = new Set<string>();
+    return all.filter((offer) => {
+      const expiry = offer.endsAt ? Date.parse(offer.endsAt) : NaN;
+      if (Number.isFinite(expiry) && expiry <= now) return false;
+      // A linked product is represented by its promotion, never twice.
+      const key = offer.product.id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort((a, b) => {
+      const businessA = businessById.get(a.product.businessId);
+      const businessB = businessById.get(b.product.businessId);
+      const virtualOnly = (business?: Business) => !!business?.modalityTypes?.length && business.modalityTypes.every((mode) => /virtual|online|digital|remot/i.test(mode));
+      const virtualOrder = Number(virtualOnly(businessA)) - Number(virtualOnly(businessB));
+      if (virtualOrder) return virtualOrder;
+      const soon = (offer: HomeSpecialOffer) => {
+        const end = offer.endsAt ? Date.parse(offer.endsAt) : NaN;
+        return Number.isFinite(end) && end > now && end - now <= 48 * 60 * 60 * 1000 ? 0 : 1;
+      };
+      const urgency = soon(a) - soon(b);
+      if (urgency) return urgency;
+      if (selection?.mode === "automatic") {
+        const distanceA = businessA?.distanceKm ?? Infinity;
+        const distanceB = businessB?.distanceKm ?? Infinity;
+        if (distanceA !== distanceB) return distanceA - distanceB;
+      }
+      const discountPercent = (offer: HomeSpecialOffer) => {
+        const original = Number(offer.originalPrice);
+        const promotional = Number(offer.promotionalPrice);
+        return original > 0 && promotional >= 0 && promotional < original ? (original - promotional) / original : 0;
+      };
+      return discountPercent(b) - discountPercent(a) || a.product.name.localeCompare(b.product.name, "es");
+    });
+  }, [catalogProducts, hasSampleCatalog, realPromotions, items, selection?.mode]);
   useEffect(() => {
     if (hasSampleCatalog) return;
     let active = true;
@@ -369,13 +407,13 @@ export default function Home() {
           listPublicServices(business.id).catch(() => []),
         ]);
         const catalogById = new Map([...products, ...services].map(item => [item.id, item]));
-        return promotions.map(promotion => {
+        return promotions.filter(promotion => promotion.state !== "FINISHED" && promotion.state !== "SCHEDULED" && Date.parse(promotion.startsAt) <= Date.now() && Date.parse(promotion.endsAt) > Date.now()).map(promotion => {
           const linkedOffer = promotion.relatedOfferId ? catalogById.get(promotion.relatedOfferId) : undefined;
           const linkedImage = linkedOffer?.image?.replace(
             /\/api\/v1\/public\/businesses\/[^/]+\/photos\//,
             `/api/v1/public/businesses/${business.id}/photos/`,
           );
-          return ({ product: { id: promotion.relatedOfferId ?? `promotion-${promotion.id}`, businessId: business.id, name: promotion.title, description: promotion.description, image: linkedImage ?? promotion.photos[0]?.url ?? "", businessName: business.name } as typeof sampleProducts[number], discount: promotion.type === "OFFER" && promotion.originalPrice && promotion.promotionalPrice ? `${Math.round((1 - Number(promotion.promotionalPrice) / Number(promotion.originalPrice)) * 100)}% dto.` : "PROMOCIÓN", deadline: new Date(promotion.endsAt).toLocaleDateString("es-CO"), ...(promotion.type === "PROMOTION" ? { promotionId: promotion.id } : {}) });
+          return ({ product: { id: promotion.relatedOfferId ?? `promotion-${promotion.id}`, businessId: business.id, name: promotion.title, description: promotion.description, image: linkedImage ?? promotion.photos[0]?.url ?? "", businessName: business.name } as typeof sampleProducts[number], discount: promotion.type === "OFFER" && promotion.originalPrice && promotion.promotionalPrice ? `${Math.round((1 - Number(promotion.promotionalPrice) / Number(promotion.originalPrice)) * 100)}% dto.` : "PROMOCIÓN", deadline: new Date(promotion.endsAt).toLocaleDateString("es-CO"), endsAt: promotion.endsAt, originalPrice: promotion.originalPrice ?? undefined, promotionalPrice: promotion.promotionalPrice ?? undefined, isPromotion: promotion.type === "PROMOTION", promotionId: promotion.id });
         });
       }));
       const rows = grouped.flat();
@@ -722,7 +760,7 @@ export default function Home() {
 
       {visibleSpecialOffers.length > 0 && <section className="special-offers" aria-labelledby="special-offers-title">
         <div className="section-heading"><div className="home-section-intro"><h2 id="special-offers-title"><span className="home-section-symbol home-section-symbol--round" aria-hidden="true">%</span>Ofertas especiales</h2><p>Descubre las ofertas de los negocios locales.</p></div>{visibleSpecialOffers.length > 4 && <button className="text-link" type="button" aria-expanded={showAllOffers} aria-controls="special-offers-list" onClick={() => setShowAllOffers((current) => !current)}>{showAllOffers ? "Ver menos" : `Ver más (${visibleSpecialOffers.length})`} <Icon name="arrow" /></button>}</div>
-        <div className={`special-offers__list${showAllOffers ? " is-expanded" : ""}`} id="special-offers-list" ref={offersListRef} onScroll={() => { const list = offersListRef.current; if (list) setOffersScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startOffersDrag} onPointerMove={moveOffersDrag} onPointerUp={endOffersDrag} onPointerCancel={endOffersDrag} onClickCapture={(event) => { if (ignoreOffersClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllOffers ? visibleSpecialOffers : visibleSpecialOffers.slice(0, 4)).map(({ product, discount, deadline, promotionId }) => { const business = sampleBusinesses.find((item) => item.id === product.businessId); const isSpecialEvent = Boolean(promotionId); return <article className={`special-offer-card${isSpecialEvent ? " special-offer-card--event" : ""}`} key={promotionId ?? product.id}><Link className="special-offer-card__link" to={promotionId ? `/promociones/${promotionId}` : `/product/${product.id}`} state={promotionId ? undefined : { offerViewId: createAnalyticsInteractionId() }} aria-label={promotionId ? `Ver promoción especial ${product.name}` : `Ver ${product.name}`}><div className="special-offer-card__image"><SpecialOfferImage src={product.image} alt=""/><span className="special-offer-card__discount">{isSpecialEvent ? "PROMOCIÓN ESPECIAL" : discount}</span></div><div className="special-offer-card__content"><strong>{product.name}</strong><span>{isSpecialEvent ? product.businessName ?? business?.name ?? "Negocio local" : business?.category ?? product.businessName ?? "Negocio local"}</span><small>✣ <b>{deadline}</b></small></div></Link></article>; })}</div>
+        <div className={`special-offers__list${showAllOffers ? " is-expanded" : ""}`} id="special-offers-list" ref={offersListRef} onScroll={() => { const list = offersListRef.current; if (list) setOffersScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startOffersDrag} onPointerMove={moveOffersDrag} onPointerUp={endOffersDrag} onPointerCancel={endOffersDrag} onClickCapture={(event) => { if (ignoreOffersClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{(showAllOffers ? visibleSpecialOffers : visibleSpecialOffers.slice(0, 4)).map(({ product, discount, deadline, promotionId }) => { const business = sampleBusinesses.find((item) => item.id === product.businessId); const isSpecialEvent = Boolean(promotionId); return <article className={`special-offer-card${isSpecialEvent ? " special-offer-card--event" : ""}`} key={promotionId ?? product.id}><Link className="special-offer-card__link" to={promotionId ? `/promociones/${promotionId}` : `/product/${product.id}`} state={promotionId ? undefined : { offerViewId: createAnalyticsInteractionId() }} aria-label={promotionId ? `Ver promoción especial ${product.name}` : `Ver ${product.name}`}><div className="special-offer-card__image"><SpecialOfferImage src={product.image} alt=""/><span className="special-offer-card__discount">{isSpecialEvent && discount === "PROMOCIÓN" ? "PROMOCIÓN ESPECIAL" : discount}</span></div><div className="special-offer-card__content"><strong>{product.name}</strong><span>{isSpecialEvent ? product.businessName ?? business?.name ?? "Negocio local" : business?.category ?? product.businessName ?? "Negocio local"}</span><small>✣ <b>{deadline}</b></small></div></Link></article>; })}</div>
         {showAllOffers && offersScroll.max > 0 && <div className="offers-scroll-control"><input type="range" min="0" max={offersScroll.max} step="1" value={Math.min(offersScroll.left, offersScroll.max)} aria-label="Desplazar ofertas especiales" onChange={(event) => { const left = Number(event.target.value); if (offersListRef.current) offersListRef.current.scrollLeft = left; setOffersScroll((current) => ({ ...current, left })); }} /></div>}
       </section>}
 
