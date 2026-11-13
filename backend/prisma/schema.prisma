@@ -330,6 +330,7 @@ model User {
   preferredLocationUpdatedAt  DateTime?                  @db.DateTime(3)
   createdAt                   DateTime                   @default(now()) @db.DateTime(3)
   updatedAt                   DateTime                   @updatedAt @db.DateTime(3)
+  userNeeds                   UserNeed[]
   authIdentities              AuthIdentity[]
   authTokens                  AuthToken[]
   sessions                    Session[]
@@ -1380,4 +1381,22 @@ model AdminPasskeyActivation {
   createdAt  DateTime @default(now()) @db.DateTime(3)
   @@index([googleSub, expiresAt])
   @@index([expiresAt])
+}
+
+model UserNeed {
+  id          String   @id @default(uuid()) @db.Char(36)
+  userId      String   @db.Char(36)
+  title       String   @db.VarChar(90)
+  category    String   @db.VarChar(160)
+  description String   @db.VarChar(320)
+  locationId  String   @db.VarChar(160)
+  locationName String  @db.VarChar(240)
+  locationContext String @db.VarChar(240)
+  status      String   @default("PENDING") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @db.DateTime(3)
+  updatedAt   DateTime @updatedAt @db.DateTime(3)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
 }
