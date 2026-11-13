@@ -242,3 +242,12 @@
 .business-detail-page .business-reference-layout .business-info-columns > .business-about{order:5}
 .business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-socials-public{order:6}
 }
+
+/* Igualar altura de Redes sociales con Destacados en la misma fila del grid. */
+@media(min-width:701px){
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-info-columns > .business-detail-aside > .business-socials-public{grid-row:4;align-self:stretch;height:100%;min-height:0;box-sizing:border-box;display:flex;flex-direction:column}
+.business-detail-page .business-reference-layout:has(.business-info-columns) > .business-popular-section{grid-row:4;align-self:stretch;height:100%;box-sizing:border-box}
+}
+@media(max-width:700px){
+.business-detail-page .business-reference-layout .business-info-columns > .business-detail-aside > .business-socials-public{height:auto;min-height:0}
+}
