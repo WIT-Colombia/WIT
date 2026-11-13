@@ -10,15 +10,14 @@ type NoResultsStateProps = {
   cityEmpty?: boolean;
 };
 
-function CityEmptyState() {
+export function CityEmptyState() {
   return <section className="no-results-state no-results-state--city" aria-labelledby="no-city-businesses-title">
     <img src={cityEmptyArtwork} alt="Aún no hay negocios registrados en tu ciudad. Prueba con negocios en modalidad virtual y descubre opciones disponibles para ti." />
     <Link className="no-results-city-action" to="/results?scope=virtual" aria-label="Ver negocios virtuales disponibles en toda Colombia">Ver negocios virtuales</Link>
   </section>;
 }
 
-export function NoResultsState({ term, locationName, radiusKm, virtualOnly = false, cityEmpty = false }: NoResultsStateProps) {
-  if (cityEmpty) return <CityEmptyState />;
+export function NoResultsState({ term, locationName, radiusKm, virtualOnly = false }: NoResultsStateProps) {
   const cleanTerm = term?.trim();
   const encodedTerm = cleanTerm ? `?q=${encodeURIComponent(cleanTerm)}` : "";
 
