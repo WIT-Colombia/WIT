@@ -66,6 +66,18 @@ jobs:
       - name: Check Admin sidebar in desktop and mobile browsers
         run: node scripts/check-admin-sidebar.mjs
 
+      - name: Check Usuario offer card geometry on iPhone and iPad
+        run: node scripts/check-usuario-offer-cards.mjs
+
+      - name: Save Usuario offer card screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-usuario-offer-cards-${{ github.run_id }}
+          path: frontend/test-results/offer-cards/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Save Admin sidebar screenshots
         if: always()
         uses: actions/upload-artifact@v4
