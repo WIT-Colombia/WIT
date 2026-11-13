@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { AppError } from '../../shared/errors/app-error.js';
 import { publicBusinessRouter } from './public-business.routes.js';
-import { getPublicBusiness, getPublicPhotoContent, listPublicBusinesses, listPublicPhotos, parsePublicBusinessListInput, parseUniversalSearchInput, publicBusinessRules, searchPublicUniversal } from './public-business.service.js';
+import { getPublicBusiness, getPublicPhotoContent, listPublicBusinesses, listPublicPhotos, parsePublicBusinessListInput, parsePublicNewArrivalsInput, listPublicNewArrivals, rotatePublicNewArrivals, parseUniversalSearchInput, publicBusinessRules, searchPublicUniversal } from './public-business.service.js';
 
 const publicBusiness = {
   id: 'business-id', publicId: 'public-business-id', name: 'Café público', sede: null, adultOnly: false, description: 'Descripción visible',
@@ -102,6 +102,7 @@ test('las rutas públicas no requieren autenticación', () => {
   assert.deepEqual(routes, [
     'GET /businesses',
     'GET /search',
+    'GET /new-arrivals',
     'GET /businesses/:publicId/products',
     'GET /businesses/:publicId/services',
     'GET /businesses/:publicId/photos',
@@ -475,4 +476,72 @@ test('el radio solo admite distancias válidas, sin cambiar la búsqueda general
   assert.equal(parseUniversalSearchInput({ q: 'motos' }).radiusKm, undefined);
   assert.throws(() => parseUniversalSearchInput({ radiusKm: '-5' }), AppError);
   assert.throws(() => parseUniversalSearchInput({ radiusKm: '501' }), AppError);
+});
+
+test('novedades valida ciudad y bloque máximo de 20', () => {
+  assert.deepEqual(parsePublicNewArrivalsInput({ city: 'Palmira', region: 'Valle', page: '2' }),
+    { city: 'Palmira', region: 'Valle', page: 2, pageSize: 20 });
+  assert.throws(() => parsePublicNewArrivalsInput({}), AppError);
+  assert.throws(() => parsePublicNewArrivalsInput({ city: 'Palmira', pageSize: '21' }), AppError);
+});
+
+test('novedades de ciudad incluyen productos y servicios, filtran por municipio y paginan sin duplicados', async () => {
+  const now = new Date();
+  const recent = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  let requestedWhere: any;
+  const rows = Array.from({ length: 8 }, (_, businessIndex) =>
+    Array.from({ length: 4 }, (_, offerIndex) => ({
+      ...publicBusiness.offers[0],
+      id: `new-${businessIndex}-${offerIndex}`,
+      name: `Novedad ${businessIndex}-${offerIndex}`,
+      kind: offerIndex % 2 ? 'SERVICE' : 'PRODUCT',
+      createdAt: recent, promotions: [], photos: [],
+      business: {
+        publicId: `business-${businessIndex}`, name: `Negocio ${businessIndex}`,
+        location: { ...publicBusiness.location, cityName: 'Palmira', regionName: 'Valle del Cauca' },
+        subscriptions: [],
+      },
+    })),
+  ).flat();
+  rows.push({
+    ...rows[0], id: 'otra-ciudad', business: {
+      ...rows[0].business,
+      publicId: 'otra-ciudad', location: { ...publicBusiness.location, cityName: 'Cali' },
+    },
+  });
+  const db = { businessOffer: { findMany: async ({ where }: any) => {
+    requestedWhere = where;
+    return rows;
+  } } } as any;
+  const first = await listPublicNewArrivals(parsePublicNewArrivalsInput({ city: 'Palmira', region: 'Valle', page: '1' }), db);
+  const second = await listPublicNewArrivals(parsePublicNewArrivalsInput({ city: 'Palmira', region: 'Valle', page: '2' }), db);
+  assert.equal(first.pagination.total, 32);
+  assert.equal(first.items.length, 20);
+  assert.equal(second.items.length, 12);
+  assert.equal(first.pagination.hasMore, true);
+  assert.equal(second.pagination.hasMore, false);
+  assert.equal(new Set(first.items.slice(0, 4).map(x => x.offer.business.publicId)).size, 4);
+  assert.ok(first.items.some(x => x.kind === 'PRODUCT'));
+  assert.ok(first.items.some(x => x.kind === 'SERVICE'));
+  assert.equal(new Set([...first.items, ...second.items].map(x => x.offer.id)).size, 32);
+  assert.ok(requestedWhere.createdAt.gte instanceof Date);
+  assert.equal(requestedWhere.publicationStatus, 'PUBLISHED');
+  assert.equal(requestedWhere.active, true);
+  assert.equal(requestedWhere.business.publicationStatus, 'PUBLISHED');
+});
+
+test('rotación de novedades cambia diariamente y permite destacar Premium sin excluir gratuitos', () => {
+  const subscription = { plan: 'PRO', status: 'ACTIVE', startsAt: new Date(Date.now() - 86_400_000),
+    expiresAt: new Date(Date.now() + 86_400_000), revokedAt: null, specialActivation: false };
+  const offers = Array.from({ length: 15 }, (_, index) => ({
+    id: `item-${index}`,
+    business: { publicId: `biz-${index}`, subscriptions: index < 5 ? [subscription] : [] },
+  }));
+  const a = rotatePublicNewArrivals(offers, 20000);
+  const b = rotatePublicNewArrivals(offers, 20001);
+  assert.equal(new Set(a.slice(0, 4).map(x => x.business.publicId)).size, 4);
+  assert.ok(a.slice(0, 4).some(x => x.business.subscriptions.length === 0));
+  assert.ok(a.slice(0, 4).filter(x => x.business.subscriptions.length > 0).length >= 2);
+  assert.notDeepEqual(a.slice(0, 4).map(x => x.id), b.slice(0, 4).map(x => x.id));
+  assert.equal(new Set(a.map(x => x.id)).size, 15);
 });

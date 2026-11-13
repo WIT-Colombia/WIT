@@ -1,1 +1,8 @@
 .new-products__all:hover{text-decoration:underline}
+
+/* Carga progresiva de novedades sin alterar las tarjetas existentes. */
+.new-products__load-more { display:grid; justify-items:center; gap:8px; margin:14px 0 4px; }
+.new-products__load-more button { min-height:44px; padding:9px 22px; border:1px solid #d8ccff; border-radius:999px; background:#fff; color:var(--xamuko-violet); font-size:14px; font-weight:700; cursor:pointer; }
+.new-products__load-more button:hover:not(:disabled) { border-color:var(--xamuko-violet); background:#f7f4ff; }
+.new-products__load-more button:disabled { cursor:wait; opacity:.65; }
+.new-products__load-more p { margin:0; font-size:13px; color:#9b1c1c; }
