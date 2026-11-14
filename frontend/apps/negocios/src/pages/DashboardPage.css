@@ -1810,3 +1810,28 @@
     font-size: 11px;
   }
 }
+
+
+/* Tamaños definitivos de los cuatro títulos principales del Home Business. */
+/* Escritorio: 20px. Se mantienen iguales los cuatro títulos. */
+.business-home .business-home-section-heading h2,
+.business-home .business-home-main-grid .business-home-panel-heading h2,
+.business-home .business-home-actions-section .business-home-panel-heading h2 {
+  font-size: 20px;
+}
+/* iPad / espacio intermedio de contenido: 19px. */
+@container business-home-panels (max-width: 1120px) {
+  .business-home .business-home-section-heading h2,
+.business-home .business-home-main-grid .business-home-panel-heading h2,
+.business-home .business-home-actions-section .business-home-panel-heading h2 {
+    font-size: 19px;
+  }
+}
+/* Móvil: 18px. */
+@container business-home-panels (max-width: 520px) {
+  .business-home .business-home-section-heading h2,
+.business-home .business-home-main-grid .business-home-panel-heading h2,
+.business-home .business-home-actions-section .business-home-panel-heading h2 {
+    font-size: 18px;
+  }
+}
