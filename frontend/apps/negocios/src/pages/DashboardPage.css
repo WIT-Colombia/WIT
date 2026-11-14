@@ -1835,3 +1835,180 @@
     font-size: 18px;
   }
 }
+
+
+/* Vigencia pública: fecha real y renovación en el encabezado Business. */
+.business-home .business-home-heading {
+  align-items: center;
+  flex-wrap: wrap;
+}
+.business-home .business-home-heading > div:first-child {
+  flex: 1 1 250px;
+  min-width: 0;
+}
+.business-home .business-home-visibility-action {
+  display: grid;
+  grid-template-columns: minmax(205px, 1fr) auto;
+  align-items: center;
+  flex: 0 1 auto;
+  gap: 6px 15px;
+  width: auto;
+  max-width: none;
+  padding: 12px 14px;
+  border: 1px solid #cfe0ff;
+  border-radius: 16px;
+  background: linear-gradient(115deg, #f6f9ff, #fff);
+  box-shadow: 0 5px 15px rgba(37, 99, 235, .065);
+}
+.business-home .business-home-visibility-info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.business-home .business-home-visibility-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: #3d5b90;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .055em;
+  line-height: 1.35;
+}
+.business-home .business-home-visibility-label > svg {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  color: #2563eb;
+}
+.business-home .business-home-visibility-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 21px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #edf2f9;
+  color: #53657b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.business-home .business-home-visibility-badge.active {
+  background: #e3f7ec;
+  color: #14744a;
+}
+.business-home .business-home-visibility-badge.warning {
+  background: #fff0cd;
+  color: #945e0b;
+}
+.business-home .business-home-visibility-badge.expired {
+  background: #fee9e9;
+  color: #ae3333;
+}
+.business-home .business-home-visibility-date {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #172c51;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  line-height: 1.3;
+}
+.business-home .business-home-visibility-date time {
+  color: #205be0;
+}
+.business-home .business-home-visibility-remaining {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #587091;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.business-home .business-home-visibility-remaining > svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: #2563eb;
+}
+.business-home .business-home-visibility-action button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  min-height: 43px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.25;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 5px 14px rgba(37, 99, 235, .18);
+}
+.business-home .business-home-visibility-action button > svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.business-home .business-home-visibility-action button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.business-home .business-home-visibility-action button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 3px;
+}
+.business-home .business-home-visibility-action button:disabled {
+  cursor: not-allowed;
+  opacity: .65;
+}
+.business-home .business-home-visibility-error {
+  grid-column: 1 / -1;
+  max-width: none;
+  color: #a62d38;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* iPad y escritorios con panel lateral: usar toda la fila del encabezado. */
+@container business-home-panels (max-width: 1120px) {
+  .business-home .business-home-visibility-action {
+    flex: 1 1 100%;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .business-home .business-home-heading > div:first-child {
+    flex-basis: 100%;
+  }
+}
+
+/* Móvil: fecha arriba y botón táctil a ancho completo. */
+@container business-home-panels (max-width: 520px) {
+  .business-home .business-home-visibility-action {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+  .business-home .business-home-visibility-info {
+    gap: 5px;
+  }
+  .business-home .business-home-visibility-date {
+    font-size: 14px;
+  }
+  .business-home .business-home-visibility-label {
+    font-size: 10px;
+  }
+  .business-home .business-home-visibility-action button {
+    width: 100%;
+    min-height: 44px;
+    font-size: 12px;
+    white-space: normal;
+  }
+}
