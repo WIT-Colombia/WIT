@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminApiError, listAdminOfferReports, type AdminOfferReport } from '../services/adminApiClient';
 import './OfferReportsPage.css';
@@ -28,15 +28,31 @@ export function OfferReportsPage() {
   const [status, setStatus] = useState<StatusFilter>('ALL');
   const [kind, setKind] = useState<KindFilter>('ALL');
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 25, total: 0, totalPages: 0 });
+  const [pendingTotal, setPendingTotal] = useState(0);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const requestSequence = useRef(0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { setDebouncedQuery(query); setPage(1); }, 300);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   const reload = useCallback(async () => {
-    setState('loading');setError('');
+    const sequence = ++requestSequence.current;
+    setState('loading'); setError('');
     try {
-      const result = await listAdminOfferReports();
+      const result = await listAdminOfferReports({ page, status, kind, q: debouncedQuery });
+      if (sequence !== requestSequence.current) return;
       setRecords(Array.isArray(result.reports) ? result.reports : []);
+      setPagination(result.pagination);
+      setPendingTotal(result.pendingTotal ?? 0);
       setState('ready');
     } catch (caught) {
+      if (sequence !== requestSequence.current) return;
       setRecords([]);
+      setPagination({ page, pageSize: 25, total: 0, totalPages: 0 });
       if (caught instanceof AdminApiError && [404, 405, 501].includes(caught.status)) {
         setState('pending-api');
       } else if (caught instanceof AdminApiError && caught.status === 403) {
@@ -46,19 +62,8 @@ export function OfferReportsPage() {
         setState('error');
       }
     }
-  }, []);
-
+  }, [page, status, kind, debouncedQuery]);
   useEffect(() => { void reload(); }, [reload]);
-
-  const filtered = useMemo(() => records.filter(report => {
-    const kindMatched = kind === 'ALL' || report.offer?.kind === kind;
-    const statusMatched = status === 'ALL' || report.status === status;
-    const text = [report.id, report.offer?.name, report.offer?.business?.name, report.reporter?.displayName, report.reason, report.description]
-      .filter(Boolean).join(' ').toLocaleLowerCase('es-CO');
-    return kindMatched && statusMatched && text.includes(query.trim().toLocaleLowerCase('es-CO'));
-  }), [records, query, status, kind]);
-
-  const pendingCount = records.filter(report => report.status === 'PENDING').length;
 
   return <section className="offer-reports-admin" aria-labelledby="offer-reports-title">
     <header className="page-heading offer-reports-heading">
@@ -70,8 +75,8 @@ export function OfferReportsPage() {
     </header>
 
     <div className="offer-reports-metrics" aria-label="Resumen de reportes">
-      <div><span>Reportes recibidos</span><strong>{state === 'ready' ? records.length : '—'}</strong><small>Datos del servidor</small></div>
-      <div><span>Pendientes</span><strong>{state === 'ready' ? pendingCount : '—'}</strong><small>Por revisar</small></div>
+      <div><span>Reportes recibidos</span><strong>{state === 'ready' ? pagination.total : '—'}</strong><small>Datos del servidor</small></div>
+      <div><span>Pendientes</span><strong>{state === 'ready' ? pendingTotal : '—'}</strong><small>Por revisar</small></div>
       <div><span>Origen</span><strong>Usuarios</strong><small>Productos y servicios</small></div>
     </div>
 
@@ -81,12 +86,12 @@ export function OfferReportsPage() {
           <input type="search" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Producto, negocio, usuario o motivo" />
         </label>
         <label>Tipo
-          <select value={kind} onChange={event=>setKind(event.target.value as KindFilter)}>
+          <select value={kind} onChange={event=>{setKind(event.target.value as KindFilter); setPage(1);}}>
             <option value="ALL">Todos</option><option value="PRODUCT">Productos</option><option value="SERVICE">Servicios</option>
           </select>
         </label>
         <label>Estado
-          <select value={status} onChange={event=>setStatus(event.target.value as StatusFilter)}>
+          <select value={status} onChange={event=>{setStatus(event.target.value as StatusFilter); setPage(1);}}>
             <option value="ALL">Todos</option>
             {Object.entries(states).map(([key,label])=><option key={key} value={key}>{label}</option>)}
           </select>
@@ -101,8 +106,8 @@ export function OfferReportsPage() {
        </div> :
        state === 'permission' ? <div className="offer-reports-state" role="alert"><h2>Acceso no autorizado</h2><p>La revisión de reportes requiere permiso administrativo REPORTS_REVIEW.</p></div> :
        state === 'error' ? <div className="offer-reports-state" role="alert"><h2>No se pudieron cargar los reportes</h2><p>{error}</p><button type="button" className="offer-reports-refresh" onClick={() => void reload()}>Reintentar</button></div> :
-       filtered.length === 0 ? <div className="offer-reports-state" role="status"><h2>Sin reportes para mostrar</h2><p>{records.length ? 'Prueba con otros filtros.' : 'No hay reportes registrados en el servidor.'}</p></div> :
-       <div className="offer-reports-records">{filtered.map(report => {
+       records.length === 0 ? <div className="offer-reports-state" role="status"><h2>Sin reportes para mostrar</h2><p>{query || kind !== 'ALL' || status !== 'ALL' ? 'No hay resultados con estos filtros.' : 'No hay reportes registrados en el servidor.'}</p></div> :
+       <div className="offer-reports-records">{records.map(report => {
          const isExpanded = expanded === report.id;
          return <article className="offer-reports-record" key={report.id}>
            <div className="offer-reports-record-main">
@@ -125,6 +130,11 @@ export function OfferReportsPage() {
          </article>;
        })}</div>}
     </div>
+    {state === 'ready' && pagination.totalPages > 1 && <nav className="offer-reports-pager" aria-label="Páginas de reportes">
+      <button type="button" disabled={page <= 1} onClick={() => setPage(value => Math.max(1, value - 1))}>Anterior</button>
+      <span>Página {page} de {pagination.totalPages} · {pagination.total} reportes</span>
+      <button type="button" disabled={page >= pagination.totalPages} onClick={() => setPage(value => value + 1)}>Siguiente</button>
+    </nav>}
     <p className="offer-reports-footer">La bandeja distingue entre datos reales del servidor e integración pendiente. No modifica reportes ni inventa estados.</p>
     <Link className="offer-reports-help-link" to="/reports">Ir a reportes de comentarios</Link>
   </section>;
