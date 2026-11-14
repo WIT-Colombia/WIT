@@ -206,9 +206,14 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
     return items.sort((a, b) => getOfferLike(b.item.id).count - getOfferLike(a.item.id).count || b.item.id.localeCompare(a.item.id)).slice(0, 4);
   }, [catalogProducts, catalogServices, getOfferLike]);
   const businessReviews = useMemo<Review[]>(() => publicReviews.map(item => ({ id: item.id, businessId: id, author: item.author, rating: item.rating, date: item.createdAt, comment: item.comment, response: item.response })), [id, publicReviews]);
-  if (loadState === "loading") return <PageLayout><div className="business-not-found"><h1>Cargando negocio…</h1><p>Estamos consultando la información pública.</p></div></PageLayout>;
-  if (loadState === "error") return <PageLayout><PublicBusinessSeo business={null} /><div className="business-not-found"><h1>No se pudo cargar este negocio</h1><p>Revisa tu conexión e inténtalo nuevamente.</p><Link to="/home">Volver a explorar</Link></div></PageLayout>;
-  if (loadState === "not-found" || !business) return <PageLayout><PublicBusinessSeo business={null} /><div className="business-not-found"><h1>No encontramos este negocio</h1><p>Puede que el enlace ya no esté disponible o no esté publicado.</p><Link to="/home">Volver a explorar</Link></div></PageLayout>;
+  // Keep the read-only frame active during loading and failures, with a safe return path.
+  const fallbackPageClass = isBusinessPreview ? "business-detail-page business-preview-mode" : "";
+  const fallbackReturnLink = isBusinessPreview && (directBusinessPreviewReturnTo ?? previewContext.returnTo)
+    ? <a className="business-back-link" href={(directBusinessPreviewReturnTo ?? previewContext.returnTo)!}>← Volver a Business</a>
+    : <Link to="/home">Volver a explorar</Link>;
+  if (loadState === "loading") return <PageLayout className={fallbackPageClass}><div className="business-not-found"><h1>Cargando negocio…</h1><p>Estamos consultando la información pública.</p>{isBusinessPreview && fallbackReturnLink}</div></PageLayout>;
+  if (loadState === "error") return <PageLayout className={fallbackPageClass}><PublicBusinessSeo business={null} /><div className="business-not-found"><h1>No se pudo cargar este negocio</h1><p>Revisa tu conexión e inténtalo nuevamente.</p>{fallbackReturnLink}</div></PageLayout>;
+  if (loadState === "not-found" || !business) return <PageLayout className={fallbackPageClass}><PublicBusinessSeo business={null} /><div className="business-not-found"><h1>No encontramos este negocio</h1><p>Puede que el enlace ya no esté disponible o no esté publicado.</p>{fallbackReturnLink}</div></PageLayout>;
   const currentBusiness = business;
   const goBack = () => { if (embeddedPreview) { navigate("/inicio", { replace: true }); return; } const returnToBusiness = directBusinessPreviewReturnTo ?? previewContext.returnTo; if (isBusinessPreview && returnToBusiness) { window.location.assign(returnToBusiness); return; } if (window.history.length > 1) navigate(-1); else navigate("/home"); };
   const whatsappUrl = business.whatsapp
