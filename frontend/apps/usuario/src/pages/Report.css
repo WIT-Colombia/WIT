@@ -21,3 +21,55 @@
 .report-missing { margin-top:30px; }
 @media(max-width:700px) { .report-back { margin-bottom:18px; }.report-form { gap:14px; padding:17px; }.report-confirmation,.report-missing { padding:31px 18px; } }
 .report-count-note,.report-priority-note{margin:12px auto;color:var(--wit-text-secondary);font-size:12px;line-height:1.5}.report-priority-note{padding:11px 13px;border-radius:9px;background:#fff4df;color:#8a5c12;font-weight:700}
+
+/* Reporte individual: paleta XAMUKO Usuarios y estado local explícito. */
+.report-page{background:#f9faff;}
+.report-page .user-content-main{max-width:850px;}
+.report-page .report-back{
+  display:inline-flex;align-items:center;min-height:36px;margin-bottom:18px;
+  padding:0 13px;border:1px solid #ddd4ff;border-radius:999px;
+  background:#fff;color:#7b3ffb;font-size:11px;font-weight:750;
+  box-shadow:0 5px 14px rgba(123,63,251,.08);
+}
+.report-page .report-heading{margin-bottom:21px;}
+.report-page .report-eyebrow{color:#7b3ffb;font-size:11px;font-weight:800;}
+.report-page .report-heading h1,.report-page .report-confirmation h1,.report-page .report-missing h1{
+  color:#141c33;font-size:clamp(27px,4vw,36px);
+}
+.report-page .report-heading p,.report-page .report-confirmation p,.report-page .report-missing p{color:#51627e;font-size:14px;}
+.report-page .report-form,.report-page .report-confirmation,.report-page .report-missing{
+  border:1px solid #e4dff6;border-radius:23px;background:#fff;
+  box-shadow:0 14px 36px rgba(32,22,78,.045);
+}
+.report-page .report-form{gap:18px;padding:clamp(17px,3vw,30px);}
+.report-page .report-form label{gap:10px;color:#232f49;font-size:14px;font-weight:750;}
+.report-page .report-form select,.report-page .report-form textarea{
+  min-height:48px;border:1px solid #d5dceb;border-radius:13px;
+  color:#17243d;font-size:16px;line-height:1.4;background:#fff;
+}
+.report-page .report-form select:focus-visible,.report-page .report-form textarea:focus-visible{
+  outline:3px solid #7b3ffb33;border-color:#7b3ffb;
+}
+.report-page .report-privacy-note{
+  padding:13px 15px;border:1px solid #dce8ff;border-radius:12px;
+  background:#eef5ff;color:#355171;font-size:12px;line-height:1.55;
+}
+.report-page .report-form>button{
+  min-height:48px;border-radius:13px;background:#2563eb;
+  color:#fff;font-size:14px;font-weight:800;
+}
+.report-page .report-form>button:hover:not(:disabled){background:#1d4ed8;}
+.report-page .report-form>button:disabled{background:#a4b6db;color:#fff;}
+.report-page .report-confirmation>span{background:#ede7ff;color:#7b3ffb;}
+.report-page .report-confirmation a,.report-page .report-missing a{color:#7b3ffb;font-weight:750;}
+.report-page .report-count-note,.report-page .report-priority-note{
+  max-width:550px;margin:14px auto;color:#3a5274;
+  border-radius:12px;background:#eef5ff;padding:11px 14px;
+}
+@media(max-width:600px){
+  .report-page .user-content-main{width:calc(100% - 24px);}
+  .report-page .report-form{gap:14px;padding:17px;}
+  .report-page .report-confirmation,.report-page .report-missing{padding:26px 16px;}
+  .report-page .report-back{min-height:34px;padding:0 11px;font-size:10px;}
+}
+
