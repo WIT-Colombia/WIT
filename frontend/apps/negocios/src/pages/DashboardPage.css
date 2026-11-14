@@ -1073,3 +1073,520 @@
     font-size: 12px;
   }
 }
+
+
+/* Home Business — versión visual definitiva: azul prioritario.
+   Componentes existentes, datos reales, responsive por ancho útil de contenido.
+   Este bloque sólo afecta al Inicio de Business. */
+.business-home {
+  --home-blue: #2563eb;
+  --home-blue-strong: #1958ee;
+  --home-ink: #111a31;
+  --home-border: #d9e6ff;
+  gap: 17px;
+  padding-bottom: 26px;
+}
+.business-home .business-home-eyebrow {
+  color: #1958ee;
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+.business-home .business-home-heading h1 {
+  font-size: clamp(26px, 2.4vw, 33px);
+}
+.business-home .business-home-visibility-action button {
+  min-height: 40px;
+  padding: 10px 17px;
+  background: #1958ee;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, .17);
+}
+
+/* Portada: más baja, nítida y con acciones legibles. */
+.business-home .business-home-hero {
+  min-height: 172px;
+  border-radius: 20px;
+  border-color: #cbdcff;
+  box-shadow: 0 9px 21px rgba(35, 71, 136, .12);
+}
+.business-home .business-home-hero-content {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  min-height: 172px;
+  padding: 18px 26px;
+}
+.business-home .business-home-hero-shade {
+  background: linear-gradient(90deg, rgba(11, 24, 59, .88), rgba(13, 43, 105, .71) 45%, rgba(24, 55, 110, .30) 100%);
+}
+.business-home .business-home-profile {
+  width: 86px;
+  height: 86px;
+  border-radius: 20px;
+  border: 3px solid rgba(255, 255, 255, .93);
+}
+.business-home .business-home-business-copy>p {
+  font-size: 12px;
+}
+.business-home .business-home-business-copy>p.business-home-description {
+  font-size: 11px;
+}
+.business-home .business-home-hero-actions {
+  align-self: end;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: auto;
+  max-width: none;
+}
+.business-home .business-home-button {
+  min-height: 37px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  border-color: rgba(240, 247, 255, .78);
+  background: rgba(13, 37, 96, .83);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 750;
+  box-shadow: 0 4px 12px rgba(3, 15, 45, .13);
+}
+.business-home .business-home-button:hover:not(:disabled) {
+  background: rgba(24, 77, 191, .94);
+}
+
+/* Rendimiento: cinco KPI iguales, con iconografía vectorial y azul dominante. */
+.business-home .business-home-section-heading {
+  margin-bottom: 10px;
+}
+.business-home .business-home-section-heading h2,
+.business-home .business-home-actions-section .business-home-panel-heading h2 {
+  font-size: 17px;
+  letter-spacing: -.03em;
+}
+.business-home .business-home-metrics {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 11px;
+}
+.business-home .business-home-metric {
+  min-height: 85px;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid #d7e5ff;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 6px 17px rgba(25, 80, 168, .075);
+}
+.business-home .business-home-metric-icon {
+  width: 41px;
+  height: 41px;
+  border-radius: 12px;
+  background: #e8f0ff;
+}
+.business-home .business-home-metric-icon svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+.business-home .business-home-metric.metric-2 .business-home-metric-icon {
+  background: #eaf2ff;
+  color: #1b62ed;
+}
+.business-home .business-home-metric.metric-3 .business-home-metric-icon {
+  background: #e5f9f2;
+  color: #13a779;
+}
+.business-home .business-home-metric.metric-4 .business-home-metric-icon {
+  background: #fff2e2;
+  color: #ee8a04;
+}
+.business-home .business-home-metric.metric-5 .business-home-metric-icon {
+  background: #e7f7fc;
+  color: #088eb0;
+}
+.business-home .business-home-metric-copy {
+  gap: 2px;
+}
+.business-home .business-home-metric-copy>span {
+  font-size: 11px;
+  font-weight: 750;
+  color: #465b7f;
+}
+.business-home .business-home-metric-copy>strong {
+  font-size: 24px;
+  line-height: 1.05;
+}
+.business-home .business-home-metric-copy>small {
+  font-size: 10px;
+}
+
+/* Las dos tarjetas centrales siguen compartiendo altura y base visual. */
+.business-home .business-home-main-grid {
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.business-home .business-home-main-grid > .business-home-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  padding: 20px 23px 19px;
+  border: 1px solid #cfe0ff;
+  border-radius: 23px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(32, 89, 174, .08);
+}
+.business-home .business-home-main-grid .business-home-panel-heading h2 {
+  font-size: clamp(19px, 1.55vw, 23px);
+}
+.business-home .business-home-main-grid .business-home-eyebrow {
+  font-size: 11px;
+}
+.business-home .business-home-performance .business-home-panel-heading p {
+  font-size: 12px;
+}
+.business-home .business-home-statistics-link {
+  min-height: 39px;
+  padding: 0 12px;
+  background: #e9edff;
+  color: #214ced;
+  font-size: 11px;
+  border-radius: 13px;
+}
+.business-home a.business-home-statistics-link:hover {
+  background: #dce6ff;
+}
+.business-home .business-home-performance-summary {
+  margin: 12px 0 2px;
+}
+.business-home .business-home-views-total {
+  padding: 9px 12px;
+  background: #e9efff;
+}
+.business-home .business-home-performance .business-home-chart {
+  max-height: 215px;
+}
+.business-home .business-home-performance .business-home-chart-tooltip {
+  max-width: min(195px, 80%);
+}
+.business-home .business-home-performance .business-home-chart-labels {
+  font-size: 11px;
+}
+.business-home .business-home-details .business-home-details-avatar {
+  width: 62px;
+  height: 62px;
+  border-radius: 15px;
+}
+.business-home .business-home-details .business-home-rating {
+  margin: 17px 0 14px;
+  min-height: 50px;
+  padding: 9px 13px;
+  background: #fff7e7;
+}
+.business-home .business-home-details .business-home-info-list {
+  flex: 1 1 auto;
+  margin: 1px 0 0;
+  align-content: start;
+  justify-content: space-evenly;
+}
+.business-home .business-home-details .business-home-info-list > div {
+  grid-template-columns: minmax(105px, .79fr) minmax(0, 1.21fr);
+  gap: 12px;
+  padding: 14px 0;
+  border-color: #e0e9f8;
+}
+.business-home .business-home-details .business-home-info-list dt {
+  gap: 9px;
+  color: #536789;
+  font-size: 13px;
+}
+.business-home .business-home-details .business-home-info-list dd {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* Gestión diaria: cuatro accesos, todo el ancho, sin hueco lateral. */
+.business-home .business-home-actions-section {
+  padding: 16px 18px;
+  border: 1px solid #d5e4ff;
+  border-radius: 19px;
+  background: #fff;
+}
+.business-home .business-home-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px;
+  margin-top: 12px;
+}
+.business-home .business-home-action {
+  min-height: 69px;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #d3e2ff;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(24, 83, 170, .03);
+}
+.business-home .business-home-action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #e8f1ff;
+  color: #2563eb;
+}
+.business-home .business-home-action-icon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+.business-home .business-home-action:nth-child(3) .business-home-action-icon {
+  background: #eeefff;
+  color: #4766f5;
+}
+.business-home .business-home-action:nth-child(4) .business-home-action-icon {
+  background: #e5f2ff;
+  color: #2563eb;
+}
+.business-home .business-home-action-copy strong {
+  font-size: 12px;
+}
+.business-home .business-home-action-copy small {
+  font-size: 10px;
+}
+.business-home .business-home-action-arrow {
+  color: #1b5bea;
+  font-size: 19px;
+}
+
+/* PRO: acento azul y jerarquía más limpia, sin modificar el estado real. */
+.business-home .business-home-pro {
+  gap: 14px;
+  padding: 13px 17px;
+  border: 1px solid #c5dbff;
+  border-radius: 18px;
+  background: linear-gradient(100deg, #ecf4ff, #f7faff 65%, #e7f1ff);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, .05);
+}
+.business-home .business-home-pro-mark {
+  background: linear-gradient(135deg, #2563eb, #104ce1);
+  color: #fff;
+}
+.business-home .business-home-pro-link {
+  border-color: #b7d0ff;
+  border-radius: 10px;
+  background: #fff;
+  color: #1856e9;
+}
+.business-home .business-home-pro-link:hover {
+  background: #e9f1ff;
+}
+
+/* Escritorio medio e iPad horizontal: no apretar los cinco indicadores. */
+@container business-home-panels (max-width: 1120px) {
+  .business-home .business-home-hero-content {
+    grid-template-columns: 78px minmax(0, 1fr);
+    min-height: 175px;
+    gap: 14px;
+    padding: 18px 20px;
+  }
+  .business-home .business-home-profile {
+    width: 78px;
+    height: 78px;
+  }
+  .business-home .business-home-hero-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+    align-self: auto;
+  }
+  .business-home .business-home-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .business-home .business-home-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .business-home .business-home-main-grid > .business-home-panel {
+    min-height: 0;
+  }
+  .business-home .business-home-details .business-home-info-list {
+    flex: 0 1 auto;
+  }
+  .business-home .business-home-actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Escritorio completo con un área suficientemente ancha: cinco KPI y cuatro accesos. */
+@container business-home-panels (min-width: 1121px) {
+  .business-home .business-home-metrics {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .business-home .business-home-actions-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* iPad vertical y teléfonos grandes. */
+@container business-home-panels (max-width: 760px) {
+  .business-home .business-home-hero {
+    min-height: 0;
+  }
+  .business-home .business-home-hero-content {
+    min-height: 0;
+  }
+  .business-home .business-home-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .business-home .business-home-metric {
+    padding: 12px;
+  }
+  .business-home .business-home-main-grid > .business-home-panel {
+    padding: 20px;
+  }
+  .business-home .business-home-pro {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+  .business-home .business-home-pro-status {
+    grid-column: 1 / -1;
+  }
+  .business-home .business-home-pro-link {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+@container business-home-panels (max-width: 520px) {
+  .business-home {
+    gap: 14px;
+  }
+  .business-home .business-home-heading {
+    flex-wrap: wrap;
+  }
+  .business-home .business-home-hero-content {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 11px;
+    padding: 15px 13px;
+  }
+  .business-home .business-home-profile {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+  }
+  .business-home .business-home-business-copy>p {
+    font-size: 11px;
+  }
+  .business-home .business-home-hero-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+  }
+  .business-home .business-home-hero-actions > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .business-home .business-home-button {
+    width: 100%;
+    min-height: 40px;
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+  .business-home .business-home-metric {
+    min-height: 76px;
+    gap: 9px;
+    padding: 9px 10px;
+  }
+  .business-home .business-home-metric-icon {
+    width: 35px;
+    height: 35px;
+  }
+  .business-home .business-home-metric-icon svg {
+    width: 21px;
+    height: 21px;
+  }
+  .business-home .business-home-metric-copy>span {
+    font-size: 10px;
+  }
+  .business-home .business-home-metric-copy>strong {
+    font-size: 20px;
+  }
+  .business-home .business-home-metric-copy>small {
+    font-size: 9px;
+  }
+  .business-home .business-home-main-grid > .business-home-panel {
+    padding: 16px 14px;
+    border-radius: 18px;
+  }
+  .business-home .business-home-main-grid .business-home-panel-heading h2 {
+    font-size: 19px;
+  }
+  .business-home .business-home-statistics-link {
+    min-height: 38px;
+    font-size: 10px;
+  }
+  .business-home .business-home-performance-summary {
+    margin-top: 13px;
+  }
+  .business-home .business-home-performance .business-home-chart {
+    max-height: none;
+  }
+  .business-home .business-home-details .business-home-info-list > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+    padding: 12px 0;
+  }
+  .business-home .business-home-details .business-home-info-list dd {
+    padding-left: 25px;
+    font-size: 12px;
+  }
+  .business-home .business-home-actions-section {
+    padding: 15px 13px;
+    border-radius: 18px;
+  }
+  .business-home .business-home-actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .business-home .business-home-action {
+    min-height: 65px;
+    gap: 7px;
+    padding: 9px;
+  }
+  .business-home .business-home-action-icon {
+    width: 35px;
+    height: 35px;
+  }
+  .business-home .business-home-action-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+  .business-home .business-home-action-copy strong {
+    font-size: 10px;
+  }
+  .business-home .business-home-action-copy small {
+    font-size: 9px;
+  }
+}
+@container business-home-panels (max-width: 350px) {
+  .business-home .business-home-hero-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .business-home .business-home-hero-actions > :last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+  .business-home .business-home-actions-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .business-home .business-home-metric {
+    gap: 7px;
+    padding: 8px;
+  }
+  .business-home .business-home-metric-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .business-home .business-home-metric-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+}
