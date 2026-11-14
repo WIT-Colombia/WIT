@@ -71,3 +71,20 @@
   .offer-reports-state{padding:32px 16px}
   .offer-reports-state h2{font-size:17px}
 }
+
+/* Navegación de bandeja con resultados reales del servidor. */
+.offer-reports-pager{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+  gap:12px;padding:15px 20px;border:1px solid #e1e7f2;border-radius:14px;
+  background:#fff;color:#52627d;font-size:12px;font-weight:650;
+}
+.offer-reports-pager button{
+  min-height:40px;padding:0 14px;border:1px solid #cbd9fa;border-radius:11px;
+  background:#fff;color:#2563eb;font:inherit;font-weight:800;cursor:pointer;
+}
+.offer-reports-pager button:hover:not(:disabled){background:#eff6ff;}
+.offer-reports-pager button:disabled{opacity:.5;cursor:not-allowed;}
+@media(max-width:600px){
+  .offer-reports-pager{padding:12px;justify-content:center;text-align:center;}
+  .offer-reports-pager span{flex:1 0 100%;order:-1;}
+}
