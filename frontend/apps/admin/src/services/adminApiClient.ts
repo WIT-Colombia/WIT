@@ -59,8 +59,17 @@ export type AdminOfferReport = {
   offer: { id: string; name: string; kind: 'PRODUCT' | 'SERVICE'; business: { id: string; name: string } };
   reporter: { displayName: string } | null;
 };
-export function listAdminOfferReports() {
-  return request<{ reports: AdminOfferReport[] }>('/admin/offer-reports');
+export type AdminOfferReportsResponse = {
+  reports: AdminOfferReport[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+  pendingTotal: number;
+};
+export function listAdminOfferReports(filters: { page?: number; status?: string; kind?: string; q?: string } = {}) {
+  const params = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '25' });
+  if (filters.status && filters.status !== 'ALL') params.set('status', filters.status);
+  if (filters.kind && filters.kind !== 'ALL') params.set('kind', filters.kind);
+  if (filters.q?.trim()) params.set('q', filters.q.trim());
+  return request<AdminOfferReportsResponse>(`/admin/offer-reports?${params.toString()}`);
 }
 export function listReviewReports(status = '') { return request<{ reports: AdminReviewReport[] }>(`/admin/review-reports${status ? `?status=${encodeURIComponent(status)}` : ''}`); }
 export function moderateReviewReport(reportId: string, status: string, reviewStatus: string, decisionNote: string) { return request(`/admin/review-reports/${encodeURIComponent(reportId)}`, { method: 'PATCH', body: JSON.stringify({ status, reviewStatus, decisionNote }) }); }
