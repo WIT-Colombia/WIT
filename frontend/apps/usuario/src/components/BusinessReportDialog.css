@@ -183,6 +183,51 @@
   .business-report-dialog textarea{transition:none;}
 }
 
+/* El diálogo se abre dentro de .business-detail-back. Sus botones deben
+   prevalecer sobre la regla genérica .business-detail-back button que
+   imponía verde y fondo transparente a Cancelar y Enviar reporte. */
+.business-detail-page .business-detail-back .business-report-dialog .business-report-cancel {
+  border:1.5px solid #2563eb;
+  background:#fff;
+  color:#2563eb;
+  font-size:15px;
+  font-weight:800;
+  box-shadow:0 4px 10px rgba(37,99,235,.08);
+}
+.business-detail-page .business-detail-back .business-report-dialog .business-report-submit {
+  border:1px solid #2563eb;
+  background:#2563eb;
+  color:#fff;
+  font-size:15px;
+  font-weight:800;
+  box-shadow:0 8px 19px rgba(37,99,235,.2);
+}
+.business-detail-page .business-detail-back .business-report-dialog .business-report-cancel:hover:not(:disabled) {
+  border-color:#1d4ed8;
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+.business-detail-page .business-detail-back .business-report-dialog .business-report-submit:hover:not(:disabled) {
+  border-color:#1d4ed8;
+  background:#1d4ed8;
+  color:#fff;
+  box-shadow:0 10px 24px rgba(37,99,235,.25);
+}
+.business-detail-page .business-detail-back .business-report-dialog .business-report-close {
+  border:1px solid rgba(255,255,255,.52);
+  background:rgba(255,255,255,.77);
+  color:#2563eb;
+}
+.business-detail-page .business-detail-back .business-report-dialog .business-report-close:hover:not(:disabled) {
+  background:#fff;color:#7b3ffb;
+}
+@media(max-width:600px){
+  .business-detail-page .business-detail-back .business-report-dialog .business-report-cancel,
+  .business-detail-page .business-detail-back .business-report-dialog .business-report-submit {
+    font-size:13px;
+  }
+}
+
 /* Acción visible junto a Compartir en la cabecera de cada ficha pública. */
 .business-detail-page .business-header-tools{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;min-width:0}
 .business-detail-page .business-detail-back .business-report-trigger{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:6px 12px;border:1px solid #dbe3ef;border-radius:9px;background:#fff;color:#475569;font:inherit;font-size:12px;font-weight:600;line-height:1.3;text-decoration:none;white-space:nowrap;cursor:pointer}
