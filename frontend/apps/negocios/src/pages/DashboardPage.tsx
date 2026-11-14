@@ -50,12 +50,14 @@ function VisitChart({ points }: { points: Array<{ label: string; value: number }
     return <div className="business-home-chart-empty"><span aria-hidden="true">⌁</span><strong>Aún no hay actividad para mostrar</strong><p>La evolución aparecerá cuando existan visualizaciones registradas.</p></div>;
   }
 
+  // Keep the graph proportional to the adjacent information card on desktop,
+  // without compressing the actual time series or changing the visit values.
   const chartWidth = 660;
-  const chartHeight = 290;
+  const chartHeight = 214;
   const left = 56;
   const right = 632;
-  const top = 78;
-  const bottom = 253;
+  const top = 54;
+  const bottom = 191;
   const max = Math.max(...validPoints.map(point => point.value), 1);
   const rawStep = max / 4;
   const magnitude = 10 ** Math.floor(Math.log10(rawStep));
