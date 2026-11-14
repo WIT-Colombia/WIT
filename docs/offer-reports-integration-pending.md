@@ -1,72 +1,70 @@
-# Reportes de productos y servicios — integración pendiente
+# Reportes de productos y servicios — implementación y activación
 
-## Estado (frontend, 2026-11-13)
+## Código implementado (2026-11-13)
 
-- Usuarios: `/product/:id` y `/service/:id` enlazan al formulario `/report?type=product|service&id=...`.
-- El formulario ahora puede resolver productos y servicios reales consultando la API pública por ID, además del catálogo de demostración.
-- Hasta crear el endpoint, `saveUserReport` guarda reportes **solo en localStorage del navegador del usuario**.
-- El mensaje de confirmación aclara que **el reporte no se ha transmitido a Admin**. No puede afirmarse que exista radicado de servidor.
-- Admin: `/offer-reports` bajo «Atención y soporte» tiene filtros de tipo, estado y texto, detalle de registros y estado de integración pendiente, sin ejemplos ficticios.
-- Admin consulta el contrato `GET /api/v1/admin/offer-reports`; hoy responderá 404 hasta la implementación del backend.
-- Las aplicaciones `user.xamuko.com` y Admin son orígenes distintos. **localStorage no sincroniza entre ellas.**
+- En XAMUKO Usuarios, la ficha de cada producto o servicio abre `/report?type=product|service&id=...`.
+- El botón **Enviar reporte** llama `POST /api/v1/public/offers/:offerId/reports`. Únicamente informa «Reporte recibido» cuando la API devuelve HTTP 201 y un ID real.
+- El formulario valida el motivo y permite hasta 500 caracteres de descripción opcional; los errores del servidor se muestran sin descartar el texto.
+- En MySQL los reportes se almacenan en `OfferReport` (Prisma) con motivo, descripción, fecha, estado y referencias a oferta y reportante (cuando existe).
+- `GET /api/v1/admin/offer-reports` requiere una sesión administrativa con permiso `REPORTS_REVIEW`. Devuelve registros persistidos, totales, filtros y paginación.
+- Admin → Atención y soporte → Reportes de productos consulta esa API; permite filtrar y ver el detalle de productos y servicios.
+- El formulario de negocios ya existente se conserva. Los formularios legados de opiniones/negocios en `/report` no se migran por este cambio.
 
-## Contratos propuestos para fase backend
+## Activación en producción — requiere procedimiento autorizado
 
-### Crear reporte desde Usuarios
+**Implementado en el repositorio no equivale a desplegado ni a operativo en producción.**
 
-`POST /api/v1/public/offers/:offerId/reports`
+El despliegue seguro de XAMUKO incluye una validación en `deploy/deploy.sh` que rechaza cambios en `backend/prisma` frente a la versión activa con el mensaje **"Prisma changes require manual review"**. Este control es intencional; NO debe desactivarse por esta funcionalidad.
 
-Body:
+1. Revisar y aprobar la nueva migración `backend/prisma/migrations/20261114000000_offer_reports/migration.sql` (una tabla nueva con claves foráneas e índices).
+2. Crear un respaldo verificable de la base de datos de producción según el procedimiento operacional.
+3. Probar `npx prisma migrate deploy`, `npm run prisma:generate`, `npm run typecheck` y las pruebas automáticas primero en un entorno seguro con MySQL 8.4.
+4. Aplicar la migración en producción mediante el procedimiento de base de datos autorizado y llevar a cabo el despliegue **revisado** del backend. El proceso de publicación deberá conciliar el resguardo de cambios Prisma entre versiones sin suprimir el control de seguridad.
+5. Publicar las versiones actualizadas de Usuarios y Admin.
+6. Probar con un producto publicado y un servicio publicado reales: enviar reportes, recibir HTTP 201 con ID; consultar desde otra sesión de Admin y verificar el ID, el motivo, la fecha y el estado `PENDING`. Validar también error 404 para ofertas inexistentes, 409 para duplicado del usuario y 403 para Admin sin permiso.
+7. Después del despliegue, comprobar que `GET /api/v1/admin/offer-reports` devuelve HTTP 200 con `reports`, `pagination` y `pendingTotal`.
+
+No usar `prisma db push` en producción ni ejecutar instrucciones de alteración de tablas fuera del proceso de migración aprobado.
+
+## Contratos activos en código
+
+**Público:** `POST /api/v1/public/offers/:offerId/reports`
 ```json
-{
-  "reason": "WRONG_INFORMATION",
-  "description": "Texto opcional de hasta 1500 caracteres"
-}
+{ "reason": "WRONG_INFORMATION", "description": "La información del producto no corresponde." }
+```
+Motivos: `UNAVAILABLE`, `WRONG_INFORMATION`, `WRONG_IMAGE` (solo producto), `OTHER`.
+Respuesta exitosa:
+```json
+{ "report": { "id": "uuid", "status": "PENDING", "createdAt": "2026-11-14T00:00:00.000Z" } }
 ```
 
-Motivos sugeridos:
-- `UNAVAILABLE`
-- `WRONG_INFORMATION`
-- `WRONG_IMAGE` (solo productos si aplica)
-- `OTHER`
+**Administrativo:** `GET /api/v1/admin/offer-reports?page=1&pageSize=25&status=PENDING&kind=PRODUCT&q=pan`
 
-El servidor debe derivar `kind` (PRODUCT / SERVICE) y `businessId` desde la oferta persistida, no confiar en valores enviados por cliente. Respuesta sugerida: `201 { report: { id, status: "PENDING", createdAt } }`. No aceptar ID de oferta inexistente ni eliminada. Definir límites de frecuencia y anti-abuso.
-
-### Consultar bandeja desde Admin
-
-`GET /api/v1/admin/offer-reports`
-
-Proteger con sesión administrativa y permiso `REPORTS_REVIEW`. Respuesta propuesta:
+Respuesta:
 ```json
 {
   "reports": [
     {
       "id": "uuid",
       "reason": "WRONG_INFORMATION",
-      "description": null,
+      "description": "Información incorrecta",
       "status": "PENDING",
-      "createdAt": "2026-11-13T20:00:00.000Z",
+      "createdAt": "2026-11-14T00:00:00.000Z",
       "offer": {
         "id": "uuid",
-        "name": "Croissant",
+        "name": "Nombre del producto",
         "kind": "PRODUCT",
-        "business": { "id": "uuid", "name": "Panadería Patico" }
+        "business": { "id": "uuid", "name": "Nombre del negocio" }
       },
-      "reporter": { "displayName": "Usuario" }
+      "reporter": { "displayName": "Nombre del usuario" }
     }
-  ]
+  ],
+  "pagination": { "page": 1, "pageSize": 25, "total": 1, "totalPages": 1 },
+  "pendingTotal": 1
 }
 ```
-El ejemplo de este documento **no es un registro real**. Implementar paginación y filtros de servidor antes de usar volúmenes grandes. Restringir exposición de datos personales según necesidad, permiso y finalidad.
+Los datos anteriores **solo ilustran el contrato**; no son registros reales.
 
-### Moderación
+## Siguiente fase opcional
 
-`PATCH /api/v1/admin/offer-reports/:reportId` (por definir), con cambios de estado `PENDING`, `UNDER_REVIEW`, `RESOLVED`, `REJECTED`, nota de decisión y auditoría (actor, fecha, motivo). No habilitar decisiones en Admin hasta existir API transaccional y auditada.
-
-## Criterios para cerrar la fase backend
-
-1. Reporte de usuario persiste en base de datos y devuelve identificador real.
-2. Admin lo consulta desde otra sesión/dispositivo, con control de acceso.
-3. UI de Usuarios cambia «Guardado localmente» por confirmación de recepción **solo después** de respuesta exitosa del servidor.
-4. Tratamiento adecuado de duplicados, límites de frecuencia, CSRF, estados y datos sensibles.
-5. Pruebas de integración con cuentas y ofertas reales, incluidas ofertas eliminadas y usuarios no autenticados, según política definida.
+Las decisiones administrativas de moderación aún no están implementadas. Si se necesitan, añadir una ruta `PATCH /api/v1/admin/offer-reports/:reportId` protegida por `CONTENT_MODERATE`, con notas obligatorias, control de estados y auditoría. No exponer acciones de moderación sin ese backend.
