@@ -389,6 +389,7 @@
   .business-detail-page .business-registration-invite-content p {font-size:10px;}
   .business-detail-page .business-registration-invite-content a {font-size:10px;}
   .business-detail-page .business-detail-actions>a,.business-detail-page .business-detail-actions>button {font-size:10px;}
+  .business-detail-page .business-header-links .business-website-button {font-size:10px;}
 }
 @media(prefers-reduced-motion:reduce) {
   .business-detail-page .business-header-hours-toggle {transition:none;}
