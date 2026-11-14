@@ -611,3 +611,299 @@
     gap: 5px;
   }
 }
+
+
+/* Responsive específico de las dos tarjetas aprobadas del Home de Business.
+   Usa el ancho útil del dashboard (no solamente la ventana), porque Business
+   puede tener sidebar en escritorio y iPad. No afecta el resto del Home. */
+.business-home {
+  container: business-home-panels / inline-size;
+}
+.business-home .business-home-main-grid > .business-home-panel,
+.business-home .business-home-main-grid .business-home-panel-heading,
+.business-home .business-home-performance-summary,
+.business-home .business-home-details .business-home-info-list > div {
+  min-width: 0;
+}
+.business-home .business-home-main-grid .business-home-panel-heading > div:first-child {
+  min-width: 0;
+}
+.business-home .business-home-main-grid .business-home-panel-heading h2,
+.business-home .business-home-performance .business-home-panel-heading p {
+  overflow-wrap: break-word;
+}
+.business-home .business-home-performance .business-home-chart-tooltip {
+  box-sizing: border-box;
+}
+.business-home .business-home-details .business-home-info-list dd a {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Escritorio con sidebar: la anchura disponible manda sobre el viewport. */
+@container business-home-panels (max-width: 1060px) {
+  .business-home .business-home-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .business-home .business-home-main-grid > .business-home-panel {
+    min-height: 0;
+  }
+}
+
+/* Escritorio intermedio: dos tarjetas sin que se solapen título y CTA. */
+@container business-home-panels (min-width: 1061px) and (max-width: 1270px) {
+  .business-home .business-home-main-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 15px;
+  }
+  .business-home .business-home-main-grid > .business-home-panel {
+    padding: 23px 22px;
+  }
+  .business-home .business-home-main-grid .business-home-panel-heading h2 {
+    font-size: 21px;
+  }
+  .business-home .business-home-details .business-home-info-list > div {
+    grid-template-columns: minmax(112px, .82fr) minmax(0, 1.18fr);
+    gap: 10px;
+  }
+  .business-home .business-home-details .business-home-info-list dt {
+    font-size: 13px;
+    gap: 7px;
+  }
+  .business-home .business-home-details .business-home-info-list dd {
+    font-size: 12px;
+  }
+  .business-home .business-home-details .business-home-rating {
+    gap: 9px;
+    padding: 11px 13px;
+  }
+  .business-home .business-home-details .business-home-rating > small {
+    padding-left: 10px;
+    font-size: 12px;
+  }
+  .business-home .business-home-statistics-link {
+    min-height: 40px;
+    padding-inline: 11px;
+    font-size: 11px;
+  }
+  .business-home .business-home-statistics-link svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* iPad apaisado / tamaño medio: paneles apilados y contenido holgado. */
+@container business-home-panels (min-width: 650px) and (max-width: 1060px) {
+  .business-home .business-home-main-grid > .business-home-panel {
+    padding: 26px 28px;
+    border-radius: 25px;
+  }
+  .business-home .business-home-performance-summary {
+    gap: 24px;
+  }
+  .business-home .business-home-views-total {
+    min-width: 210px;
+  }
+  .business-home .business-home-details .business-home-info-list > div {
+    grid-template-columns: minmax(170px, .85fr) minmax(0, 1.15fr);
+  }
+  .business-home .business-home-details .business-home-info-list dt {
+    font-size: 14px;
+  }
+  .business-home .business-home-details .business-home-info-list dd {
+    font-size: 14px;
+  }
+  .business-home .business-home-performance .business-home-chart-tooltip {
+    max-width: 225px;
+  }
+}
+
+/* iPad vertical y teléfonos anchos. */
+@container business-home-panels (min-width: 431px) and (max-width: 649px) {
+  .business-home .business-home-main-grid > .business-home-panel {
+    padding: 21px 21px;
+    border-radius: 22px;
+  }
+  .business-home .business-home-main-grid .business-home-panel-heading h2 {
+    font-size: clamp(19px, 3.4vw, 23px);
+  }
+  .business-home .business-home-performance .business-home-panel-heading p {
+    font-size: 12px;
+  }
+  .business-home .business-home-statistics-link {
+    gap: 6px;
+    font-size: 11px;
+  }
+  .business-home .business-home-performance-summary {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    gap: 15px;
+  }
+  .business-home .business-home-growth {
+    padding-left: 14px;
+    align-self: stretch;
+    justify-content: center;
+  }
+  .business-home .business-home-details .business-home-info-list > div {
+    grid-template-columns: minmax(118px, .8fr) minmax(0, 1.2fr);
+  }
+}
+
+/* Móvil: cifras compactas, CTA en su propia fila y gráfica legible. */
+@container business-home-panels (max-width: 430px) {
+  .business-home .business-home-main-grid {
+    gap: 13px;
+  }
+  .business-home .business-home-main-grid > .business-home-panel {
+    padding: 19px 16px;
+    border-radius: 20px;
+  }
+  .business-home .business-home-performance .business-home-panel-heading {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .business-home .business-home-main-grid .business-home-panel-heading h2 {
+    font-size: 20px;
+    line-height: 1.18;
+  }
+  .business-home .business-home-performance .business-home-panel-heading p {
+    font-size: 12px;
+  }
+  .business-home .business-home-statistics-link {
+    min-height: 40px;
+    padding: 0 11px;
+    font-size: 11px;
+    margin: 0;
+  }
+  .business-home .business-home-performance-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    margin: 18px 0 6px;
+    align-items: stretch;
+  }
+  .business-home .business-home-views-total {
+    gap: 8px;
+    min-width: 0;
+    width: 100%;
+    padding: 10px;
+    border-radius: 14px;
+  }
+  .business-home .business-home-views-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .business-home .business-home-views-total strong {
+    font-size: clamp(20px, 6vw, 27px);
+  }
+  .business-home .business-home-views-total span {
+    font-size: 10px;
+  }
+  .business-home .business-home-growth {
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 0 0 0 10px;
+    border-left: 1px solid #e3eaf7;
+  }
+  .business-home .business-home-growth-value {
+    min-height: 32px;
+    align-self: flex-start;
+    gap: 4px;
+    padding: 5px 7px;
+    font-size: 16px;
+  }
+  .business-home .business-home-growth-value span {
+    font-size: 17px;
+  }
+  .business-home .business-home-growth > span {
+    font-size: 10px;
+  }
+  .business-home .business-home-performance .business-home-chart-wrap {
+    margin-top: 4px;
+  }
+  .business-home .business-home-performance .business-home-chart-visual {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .business-home .business-home-performance .business-home-chart-tooltip {
+    position: static;
+    order: -1;
+    align-self: center;
+    width: fit-content;
+    max-width: 95%;
+    margin: 4px 0 8px;
+    padding: 8px 11px;
+    transform: none;
+    text-align: center;
+  }
+  .business-home .business-home-performance .business-home-chart-tooltip::after {
+    display: none;
+  }
+  .business-home .business-home-performance .business-home-chart-axis-label {
+    display: none;
+  }
+  .business-home .business-home-performance .business-home-chart-labels {
+    gap: 4px;
+    padding: 1px 0 0;
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .business-home .business-home-details .business-home-details-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+  }
+  .business-home .business-home-details .business-home-rating {
+    max-width: 100%;
+    gap: 9px;
+    margin: 17px 0 14px;
+    padding: 10px 12px;
+  }
+  .business-home .business-home-details .business-home-rating > span {
+    font-size: 24px;
+  }
+  .business-home .business-home-details .business-home-rating > strong {
+    font-size: 23px;
+  }
+  .business-home .business-home-details .business-home-rating > small {
+    min-height: 24px;
+    padding-left: 10px;
+    font-size: 12px;
+  }
+  .business-home .business-home-details .business-home-info-list > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+    padding: 13px 0;
+  }
+  .business-home .business-home-details .business-home-info-list dt {
+    font-size: 12px;
+  }
+  .business-home .business-home-details .business-home-info-list dd {
+    padding-left: 25px;
+    font-size: 13px;
+  }
+}
+
+/* Teléfonos muy estrechos: evita desbordes con variaciones largas. */
+@container business-home-panels (max-width: 335px) {
+  .business-home .business-home-performance-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .business-home .business-home-growth {
+    border-left: 0;
+    border-top: 1px solid #e3eaf7;
+    padding: 10px 0 0;
+  }
+  .business-home .business-home-growth-value {
+    align-self: flex-start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .business-home .business-home-main-grid .business-home-statistics-link {
+    transition: none;
+  }
+}
