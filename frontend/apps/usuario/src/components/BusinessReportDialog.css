@@ -121,13 +121,13 @@
   background:#eff6ff;border-color:#1d4ed8;box-shadow:0 6px 14px rgba(37,99,235,.12);
 }
 .business-report-submit{
-  border:1px solid transparent;background:linear-gradient(110deg,#7b3ffb,#6d24ee);
-  color:#fff;box-shadow:0 8px 19px rgba(123,63,251,.19);
+  border:1px solid #2563eb;background:#2563eb;
+  color:#fff;box-shadow:0 8px 19px rgba(37,99,235,.2);
 }
 .business-report-submit svg{display:block;flex:0 0 21px;width:21px;height:21px;}
 .business-report-submit:hover:not(:disabled){
-  background:linear-gradient(110deg,#6b2deb,#5919d8);
-  box-shadow:0 10px 24px rgba(123,63,251,.28);transform:translateY(-1px);
+  border-color:#1d4ed8;background:#1d4ed8;
+  box-shadow:0 10px 24px rgba(37,99,235,.25);transform:translateY(-1px);
 }
 .business-report-dialog button:focus-visible{
   outline:3px solid #22d3ee;outline-offset:3px;
@@ -165,126 +165,123 @@
   .business-report-info{margin-top:6px;padding:13px 15px;}
   .business-report-actions{margin-top:21px;}
 }
-/* Móvil: diseño vertical, controles legibles y ventana desplazable con el teclado abierto. */
+/* Móvil: hoja inferior, sin estrechamiento del formulario ni recortes con teclado. */
 @media(max-width:600px){
   .business-report-backdrop{
-    padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right))
-            max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+    display:flex;align-items:flex-end;justify-content:center;
+    overflow:hidden;padding:0;
+    min-height:100dvh;
   }
   .business-report-dialog{
-    width:100%;max-height:calc(100dvh - 20px);
-    padding:22px 18px 20px;border-radius:20px;
+    flex:0 0 100%;width:100%;max-width:none;min-width:0;
+    max-height:calc(100dvh - max(8px,env(safe-area-inset-top)));
+    margin:0;padding:22px 20px calc(20px + env(safe-area-inset-bottom));
+    border:0;border-radius:24px 24px 0 0;
+    box-shadow:0 -16px 60px rgba(20,12,57,.22);
+    overflow-x:hidden;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
-  .business-report-decor{width:78%;border-top-right-radius:20px;}
-  .business-report-close{top:10px;right:10px;width:44px;height:44px;}
+  .business-report-decor{
+    width:72%;max-width:310px;opacity:.80;
+    border-top-right-radius:24px;
+  }
+  .business-report-close{
+    top:14px;right:16px;width:44px;height:44px;
+    background:rgba(255,255,255,.86);
+  }
   .business-report-close svg{width:21px;height:21px;}
-  .business-report-heading{min-height:52px;gap:17px;padding-right:43px;}
-  .business-report-shield{flex-basis:48px;width:48px;height:48px;border-radius:14px;}
-  .business-report-shield svg{width:31px;height:31px;}
-  .business-report-shield::after{left:calc(100% + 8px);top:4px;height:41px;}
+  .business-report-heading{
+    min-height:48px;gap:14px;padding-right:45px;
+    align-items:center;
+  }
+  .business-report-shield{
+    flex:0 0 46px;width:46px;height:46px;border-radius:13px;
+  }
+  .business-report-shield svg{width:29px;height:29px;}
+  .business-report-shield::after{
+    left:calc(100% + 7px);top:4px;height:38px;
+  }
   .business-report-dialog h2{
-    max-width:none;font-size:clamp(20px,5.4vw,26px);
-    line-height:1.16;letter-spacing:-.4px;
+    max-width:none;min-width:0;
+    font-size:clamp(20px,5vw,25px);
+    line-height:1.15;letter-spacing:-.4px;
   }
   .business-report-dialog .business-report-intro{
-    margin-top:18px;font-size:14px;line-height:1.55;
-    overflow-wrap:break-word;
+    margin:18px 0 0;font-size:13.5px;line-height:1.48;
+    overflow-wrap:anywhere;
   }
-  .business-report-dialog form{gap:9px;margin-top:18px;}
+  .business-report-dialog form{gap:8px;margin-top:15px;}
   .business-report-dialog .business-report-label{
-    font-size:14px;gap:9px;margin:7px 0 1px;
+    margin:8px 0 0;gap:9px;font-size:13px;
   }
   .business-report-dialog .business-report-label svg{
-    width:20px;height:20px;flex-basis:20px;
+    flex:0 0 20px;width:20px;height:20px;
   }
-  .business-report-dialog select,.business-report-dialog textarea{
-    padding:11px 12px;border-radius:12px;
-    font-size:16px;line-height:1.35;
+  .business-report-dialog select,
+  .business-report-dialog textarea{
+    width:100%;min-width:0;
+    padding:10px 12px;border-radius:12px;
+    font-size:16px;line-height:1.36;
   }
-  .business-report-dialog select{min-height:48px;padding-right:30px;}
-  .business-report-dialog textarea{min-height:112px;}
+  .business-report-dialog select{
+    min-height:48px;padding-right:33px;
+    text-overflow:ellipsis;
+  }
+  .business-report-dialog textarea{
+    min-height:105px;max-height:34dvh;resize:vertical;
+  }
   .business-report-info{
-    align-items:flex-start;gap:10px;margin-top:6px;
-    padding:11px 12px;border-radius:12px;
+    align-items:flex-start;gap:9px;margin-top:5px;
+    padding:10px 11px;border-radius:12px;
   }
-  .business-report-info svg{width:22px;height:22px;flex-basis:22px;}
-  .business-report-info small{font-size:11.5px;line-height:1.45;}
-  .business-report-actions{gap:9px;margin-top:16px;}
-  .business-report-actions>*{flex:1 1 0;min-width:0;}
+  .business-report-info svg{
+    flex:0 0 20px;width:20px;height:20px;
+  }
+  .business-report-info small{
+    font-size:11px;line-height:1.4;
+  }
+  .business-report-actions{
+    position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom));z-index:3;
+    display:flex;flex-direction:column;
+    width:100%;gap:9px;margin-top:15px;
+    padding:12px 0 calc(6px + env(safe-area-inset-bottom));
+    background:linear-gradient(to bottom,rgba(255,255,255,.90),#fff 22%);
+  }
+  .business-report-actions>*{
+    flex:none;min-width:0;width:100%;
+  }
   .business-report-cancel,.business-report-submit{
-    min-height:46px;padding:0 9px;border-radius:12px;font-size:13px;
+    min-height:46px;padding:0 14px;border-radius:12px;
+    font-size:14px;white-space:normal;
   }
-  .business-report-submit svg{width:17px;height:17px;flex-basis:17px;}
+  .business-report-submit svg{width:18px;height:18px;flex-basis:18px;}
 }
-/* En móviles estrechos, evitar textos cortados en los dos botones. */
+/* Teléfonos estrechos: encabezado y campos sin desbordamiento lateral. */
 @media(max-width:380px){
-  .business-report-dialog{padding:20px 14px 18px;}
-  .business-report-heading{gap:15px;padding-right:39px;}
-  .business-report-shield{flex-basis:44px;width:44px;height:44px;}
-  .business-report-shield svg{width:29px;height:29px;}
-  .business-report-shield::after{left:calc(100% + 7px);height:37px;top:4px;}
-  .business-report-dialog h2{font-size:20px;}
-  .business-report-actions{flex-direction:column-reverse;gap:8px;}
-  .business-report-actions>*{flex:none;width:100%;}
+  .business-report-dialog{
+    padding:18px 15px calc(16px + env(safe-area-inset-bottom));
+  }
+  .business-report-heading{gap:12px;padding-right:40px;}
+  .business-report-shield{flex-basis:42px;width:42px;height:42px;}
+  .business-report-shield svg{width:26px;height:26px;}
+  .business-report-shield::after{left:calc(100% + 6px);height:34px;top:4px;}
+  .business-report-dialog h2{font-size:19px;}
+  .business-report-dialog .business-report-intro{font-size:12.5px;}
+  .business-report-actions{bottom:calc(-16px - env(safe-area-inset-bottom));}
 }
-/* Paisaje y pantallas bajas: el formulario se desplaza dentro del modal. */
+/* Paisaje o teclado visible: ventana desplazable dentro del alto disponible. */
 @media(max-height:650px){
-  .business-report-dialog{padding-top:20px;padding-bottom:18px;}
-  .business-report-dialog .business-report-intro{margin-top:12px;}
-  .business-report-dialog form{margin-top:13px;gap:7px;}
-  .business-report-dialog textarea{min-height:90px;}
-  .business-report-info{margin-top:3px;padding-top:9px;padding-bottom:9px;}
-  .business-report-actions{margin-top:12px;}
+  .business-report-dialog{padding-top:18px;padding-bottom:calc(15px + env(safe-area-inset-bottom));}
+  .business-report-dialog .business-report-intro{margin-top:11px;}
+  .business-report-dialog form{margin-top:12px;gap:6px;}
+  .business-report-dialog textarea{min-height:84px;}
+  .business-report-info{margin-top:2px;padding-top:9px;padding-bottom:9px;}
+  .business-report-actions{margin-top:9px;}
 }
 
 @media(prefers-reduced-motion:reduce){
   .business-report-dialog button,.business-report-dialog select,
   .business-report-dialog textarea{transition:none;}
-}
-
-/* El diálogo se abre dentro de .business-detail-back. Sus botones deben
-   prevalecer sobre la regla genérica .business-detail-back button que
-   imponía verde y fondo transparente a Cancelar y Enviar reporte. */
-.business-detail-page .business-detail-back .business-report-dialog .business-report-cancel {
-  border:1.5px solid #2563eb;
-  background:#fff;
-  color:#2563eb;
-  font-size:15px;
-  font-weight:800;
-  box-shadow:0 4px 10px rgba(37,99,235,.08);
-}
-.business-detail-page .business-detail-back .business-report-dialog .business-report-submit {
-  border:1px solid #2563eb;
-  background:#2563eb;
-  color:#fff;
-  font-size:15px;
-  font-weight:800;
-  box-shadow:0 8px 19px rgba(37,99,235,.2);
-}
-.business-detail-page .business-detail-back .business-report-dialog .business-report-cancel:hover:not(:disabled) {
-  border-color:#1d4ed8;
-  background:#eff6ff;
-  color:#1d4ed8;
-}
-.business-detail-page .business-detail-back .business-report-dialog .business-report-submit:hover:not(:disabled) {
-  border-color:#1d4ed8;
-  background:#1d4ed8;
-  color:#fff;
-  box-shadow:0 10px 24px rgba(37,99,235,.25);
-}
-.business-detail-page .business-detail-back .business-report-dialog .business-report-close {
-  border:1px solid rgba(255,255,255,.52);
-  background:rgba(255,255,255,.77);
-  color:#2563eb;
-}
-.business-detail-page .business-detail-back .business-report-dialog .business-report-close:hover:not(:disabled) {
-  background:#fff;color:#7b3ffb;
-}
-@media(max-width:600px){
-  .business-detail-page .business-detail-back .business-report-dialog .business-report-cancel,
-  .business-detail-page .business-detail-back .business-report-dialog .business-report-submit {
-    font-size:13px;
-  }
 }
 
 /* Acción visible junto a Compartir en la cabecera de cada ficha pública. */
