@@ -207,6 +207,12 @@ export function DashboardPage() {
   const reviewCount = reviewSummary?.total ?? business.reviewCount;
   const address = [business.address, business.additionalAddressInfo, business.city, business.regionName].filter(Boolean).join(", ");
   const categoryLabel = formatCategoryName(business.category.replace(/[-_]+/g, " "));
+  const previousVisits = data?.previous?.businessViews;
+  const currentVisits = data?.metrics.businessViews;
+  const visitsChange = currentVisits !== undefined && previousVisits !== undefined && previousVisits !== null && previousVisits > 0
+    ? Math.round((currentVisits - previousVisits) / previousVisits * 100)
+    : null;
+  const comparisonPeriod = period === "day" ? "vs. el día anterior" : period === "week" ? "vs. 7 días anteriores" : period === "month" ? "vs. 30 días anteriores" : period === "year" ? "vs. 12 meses anteriores" : "Sin período comparable";
   const showEmptyAccount = !business.name;
 
   return <div className="business-home">
@@ -250,7 +256,20 @@ export function DashboardPage() {
 
       <div className="business-home-main-grid">
         <section className="business-home-panel business-home-performance" aria-labelledby="business-home-performance-title">
-          <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">VISIBILIDAD</span><h2 id="business-home-performance-title">Evolución de visualizaciones</h2><p>Actividad de {business.name} · {periodLabel}</p></div><span className="business-home-chart-icon" aria-hidden="true">↗</span></div>
+          <div className="business-home-panel-heading">
+            <div><span className="business-home-eyebrow">VISIBILIDAD</span><h2 id="business-home-performance-title">Evolución de visualizaciones</h2><p>Actividad de {business.name} · {periodLabel}</p></div>
+            {canReadAnalytics ? <Link className="business-home-statistics-link" to="/estadisticas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="4" y="12" width="3.2" height="8" rx=".6"/><rect x="10.4" y="7" width="3.2" height="13" rx=".6"/><rect x="16.8" y="3" width="3.2" height="17" rx=".6"/></svg><span>Ver estadísticas</span><span aria-hidden="true">→</span></Link> : <span className="business-home-statistics-link is-disabled" aria-disabled="true">Ver estadísticas <span aria-hidden="true">→</span></span>}
+          </div>
+          <div className="business-home-performance-summary" aria-live="polite">
+            <div className="business-home-views-total">
+              <svg className="business-home-views-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true"><path d="M2.25 12s3.5-6 9.75-6 9.75 6 9.75 6-3.5 6-9.75 6-9.75-6-9.75-6Z"/><circle cx="12" cy="12" r="3.2"/></svg>
+              <div><strong>{loading ? "…" : currentVisits === undefined ? "—" : number(currentVisits)}</strong><span>Visualizaciones</span></div>
+            </div>
+            <div className="business-home-growth">
+              {visitsChange !== null ? <strong className={`business-home-growth-value ${visitsChange > 0 ? "positive" : visitsChange < 0 ? "negative" : "neutral"}`}><span aria-hidden="true">{visitsChange > 0 ? "↗" : visitsChange < 0 ? "↘" : "→"}</span>{visitsChange > 0 ? "+" : ""}{visitsChange}%</strong> : <strong className="business-home-growth-value neutral">{loading ? "…" : previousVisits === 0 && (currentVisits ?? 0) > 0 ? "Nuevo" : "—"}</strong>}
+              <span>{visitsChange !== null ? comparisonPeriod : previousVisits === 0 && (currentVisits ?? 0) > 0 ? "Sin visitas en el período anterior" : "Sin comparación disponible"}</span>
+            </div>
+          </div>
           {loading ? <div className="business-home-chart-loading" aria-live="polite">Cargando actividad…</div> : data ? <VisitChart points={data.trends.businessViews} /> : <div className="business-home-chart-empty"><span aria-hidden="true">⌁</span><strong>{error ? "Gráfica no disponible" : "Sin datos para graficar"}</strong><p>{error ? "Intenta cargar las estadísticas nuevamente." : "La gráfica mostrará únicamente visualizaciones registradas por la API."}</p></div>}
         </section>
 
@@ -258,11 +277,11 @@ export function DashboardPage() {
           <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">TU ESTABLECIMIENTO</span><h2 id="business-home-details-title">Información del negocio</h2></div><SelectedBusinessProfileImage business={business} className="business-home-details-avatar" isPreview={isPreview} /></div>
           {((currentRating != null) || (reviewCount ?? 0) > 0) && <div className="business-home-rating"><span aria-hidden="true">★</span><strong>{currentRating == null ? "—" : currentRating.toFixed(1)}</strong><small>{reviewCount === undefined ? "Calificación disponible" : `${number(reviewCount)} ${reviewCount === 1 ? "opinión" : "opiniones"}`}</small></div>}
           <dl className="business-home-info-list">
-            {address && <div><dt><span aria-hidden="true">⌖</span>Ubicación</dt><dd>{address}</dd></div>}
+            {address && <div><dt><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.7"/></svg></span>Ubicación</dt><dd>{address}</dd></div>}
             {business.isOpen !== undefined && <div><dt><span aria-hidden="true">◷</span>Estado</dt><dd className={business.isOpen ? "open" : "closed"}>{business.isOpen ? "Abierto ahora" : "Cerrado"}</dd></div>}
             {business.hours && <div><dt><span aria-hidden="true">◷</span>Horario</dt><dd>{business.hours}</dd></div>}
-            {business.phone && <div><dt><span aria-hidden="true">⌕</span>Teléfono</dt><dd><a href={`tel:${business.phone.replace(/[^+\d]/g, "")}`}>{business.phone}</a></dd></div>}
-            {business.website && <div><dt><span aria-hidden="true">↗</span>Sitio web</dt><dd><a href={/^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`} target="_blank" rel="noreferrer">{business.website}</a></dd></div>}
+            {business.phone && <div><dt><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3H4.6A1.6 1.6 0 0 0 3 4.6C3 14 10 21 19.4 21a1.6 1.6 0 0 0 1.6-1.6V17l-5.3-2.1-2.2 2.2a17 17 0 0 1-6.6-6.6L9.1 8.3 7 3Z"/></svg></span>Teléfono</dt><dd><a href={`tel:${business.phone.replace(/[^+\d]/g, "")}`}>{business.phone}</a></dd></div>}
+            {business.website && <div><dt><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M5 19 19 5M8 5h11v11"/></svg></span>Sitio web</dt><dd><a href={/^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`} target="_blank" rel="noreferrer">{business.website}</a></dd></div>}
             {!address && !business.hours && !business.phone && !business.website && currentRating == null && !(reviewCount ?? 0) && <li className="business-home-info-empty">Todavía no hay información adicional registrada.</li>}
           </dl>
         </section>
