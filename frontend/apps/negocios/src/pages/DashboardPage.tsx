@@ -190,7 +190,7 @@ export function DashboardPage() {
           <div className="business-home-hero-actions">
             {readOnlyPreviewUrl ? <a className="business-home-button glass" href={readOnlyPreviewUrl}><span aria-hidden="true">↗</span>Ver en XAMUKO</a> : <span className="business-home-button glass disabled" aria-disabled="true" title="Este negocio aún no tiene un perfil público">Perfil público no disponible</span>}
             <button className="business-home-button glass" type="button" onClick={() => void shareBusiness()} disabled={!profileUrl}><span aria-hidden="true">↗</span>Compartir</button>
-            {availableActions.edit && <Link className="business-home-button glass" to={`/mis-negocios/editar/${businessIndex}`}><span aria-hidden="true">✎</span>Editar negocio</Link>}
+            {availableActions.edit && <Link className="business-home-button glass" to={`/mi-negocio/detalle/${businessIndex}?tab=general`}><span aria-hidden="true">✎</span>Editar negocio</Link>}
           </div>
         </div>
       </section>
