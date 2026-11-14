@@ -310,7 +310,7 @@ export default function BusinessDetail() {
           <div className="business-registration-invite-content">
             <strong>¡{currentBusiness.name} te invita a unirte a <span>XAMUKO</span>!</strong>
             <p>Guarda tus negocios favoritos, deja opiniones y recibe recomendaciones personalizadas.</p>
-            <Link to={`/register?next=${encodeURIComponent(`/business/${encodeURIComponent(currentBusiness.id)}`)}${inviteCode ? `&ref=${encodeURIComponent(inviteCode)}` : ""}`}>Crear mi cuenta gratis <span aria-hidden="true">→</span></Link>
+            <Link to={`/register?next=${encodeURIComponent(`/business/${encodeURIComponent(currentBusiness.id)}`)}${inviteCode ? `&ref=${encodeURIComponent(inviteCode)}` : ""}`}>Crear mi cuenta <span aria-hidden="true">→</span></Link>
           </div>
         </aside>}
       </div>
