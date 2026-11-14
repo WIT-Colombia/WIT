@@ -2,7 +2,9 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { businesses, products, reviews, services, type Product, type Service } from "../data/mockData";
 import { getProductById, getServiceById } from "../services/businessService";
-import { getMatchingReportCount, getUserReviews, saveUserReport } from "../services/userDataService";
+import { getUserReviews } from "../services/userDataService";
+import { reportBusiness } from "../services/businessReportService";
+import { requestWithSession } from "../services/authService";
 import { PageLayout } from "../components/PageLayout";
 import { submitOfferReport, type OfferReportReason } from "../services/offerReportService";
 import "../components/BusinessReportDialog.css";
@@ -27,7 +29,6 @@ export default function Report() {
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [serverReceipt, setServerReceipt] = useState<string | null>(null);
-  const [reportCount, setReportCount] = useState(0);
   const [remoteOffer, setRemoteOffer] = useState<Product | Service | undefined>();
   const [loadingOffer, setLoadingOffer] = useState(() => Boolean(targetId && ((targetType === "product" && !products.some(item => item.id === targetId)) || (targetType === "service" && !services.some(item => item.id === targetId)))));
   useEffect(() => {
@@ -80,14 +81,25 @@ export default function Report() {
       }
       return;
     }
-    // Legacy review/business forms retain their current local-only behavior.
+    setSaving(true);
     try {
-      saveUserReport({ id: `report-${Date.now()}`, targetType, targetId, targetName, category, description: description.trim(), createdAt: new Date().toISOString() });
-      setReportCount(getMatchingReportCount(targetType, targetId, category));
+      if (targetType === "business") {
+        const reason = category === "La información es incorrecta" || category === "El negocio está cerrado"
+          ? "FALSE_INFORMATION" : "OTHER";
+        const result = await reportBusiness(targetId, reason, description.trim());
+        setServerReceipt(result.report.id);
+      } else if (targetType === "review") {
+        const reason = category === "Tiene contenido ofensivo" ? "OFFENSIVE"
+          : category === "Parece falsa o engañosa" ? "FALSE_INFORMATION" : "OTHER";
+        const result = await requestWithSession<{ report: { id: string } }>(`/api/v1/reviews/${encodeURIComponent(targetId)}/reports`, {
+          method: "POST", body: JSON.stringify({ reason, description: description.trim() }),
+        });
+        setServerReceipt(result.report.id);
+      }
       setSubmitted(true);
-    } catch {
-      setSubmitError("No se pudo guardar el reporte en este dispositivo.");
-    }
+    } catch (cause) {
+      setSubmitError(cause instanceof Error ? cause.message : "No se pudo enviar el reporte a Administración.");
+    } finally { setSaving(false); }
   }
 
   if (loadingOffer && !target) {
@@ -132,20 +144,17 @@ export default function Report() {
               <path d="M24 15v12"/><circle cx="24" cy="33" r="1.8" fill="currentColor" stroke="none"/>
             </svg>
           </span>
-          <h1 id="report-form-title">{submitted ? (serverReceipt ? "Reporte recibido" : "Reporte guardado") : reportTitle}</h1>
+          <h1 id="report-form-title">{submitted ? "Reporte recibido" : reportTitle}</h1>
         </div>
         {submitted ? <>
           <p id="report-form-intro" className="business-report-intro">
-            {serverReceipt
-              ? <>Gracias por contribuir al cuidado de XAMUKO. Recibimos el reporte sobre <strong>{targetName}</strong> y quedó disponible para revisión en Administración.</>
-              : <>Gracias por contribuir al cuidado de XAMUKO. El reporte sobre <strong>{targetName}</strong> quedó guardado en este dispositivo.</>}
+            <>Gracias por contribuir al cuidado de XAMUKO. Recibimos el reporte sobre <strong>{targetName}</strong> y quedó disponible para revisión en Administración.</>
 
           </p>
           <div className="business-report-info report-local-notice">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
-            <small>{serverReceipt ? `Número de reporte: ${serverReceipt}. Estado: pendiente de revisión.` : "Aún no se ha enviado a Administración. La conexión con el backend está pendiente."}</small>
+            <small>`Número de reporte: ${serverReceipt}. Estado: pendiente de revisión.`</small>
           </div>
-          {!serverReceipt && <p className="report-count-note">En este navegador hay {reportCount} reporte{reportCount === 1 ? "" : "s"} del mismo motivo para este elemento.</p>}
           <div className="business-report-actions">
             <Link className="business-report-submit" to={backTo}>Volver a la publicación</Link>
           </div>
