@@ -153,7 +153,7 @@ export default function Report() {
           </p>
           <div className="business-report-info report-local-notice">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
-            <small>`Número de reporte: ${serverReceipt}. Estado: pendiente de revisión.`</small>
+            <small>{`Número de reporte: ${serverReceipt}. Estado: pendiente de revisión.`}</small>
           </div>
           <div className="business-report-actions">
             <Link className="business-report-submit" to={backTo}>Volver a la publicación</Link>
