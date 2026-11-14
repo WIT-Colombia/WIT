@@ -298,6 +298,22 @@ export function BusinessDetailPage() {
     setConfirmingCollaboratorRemoval(null);
     setConfirmingLeave(false);
   }, [business, setBusiness]);
+  // Dashboard's "Editar negocio" deep link must open the general information
+  // form, not merely select its read-only tab. Consume the one-time instruction
+  // so saving or cancelling cannot reopen the form.
+  useEffect(() => {
+    if (searchParams.get("edit") !== "general" || activeTab !== "general" || !business?.id) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("edit");
+    setSearchParams(next, { replace: true });
+    if (business.role !== "Propietario" || business.status === "Eliminado") return;
+    setDraft(business);
+    setDraftSecondaryCategories(business.secondaryCategories ?? []);
+    setSectionError("");
+    setSectionNotice("");
+    setSectionConfirmation(null);
+    setEditingSection("general");
+  }, [activeTab, business, searchParams, setSearchParams]);
   useEffect(() => () => { if (coverDraft?.previewUrl) URL.revokeObjectURL(coverDraft.previewUrl); }, [coverDraft?.previewUrl]);
   useEffect(() => {
     if (!coverDraft && !coverPickerOpen && !profilePickerOpen) return;
