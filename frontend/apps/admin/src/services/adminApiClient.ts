@@ -83,3 +83,34 @@ export async function finishAdminPasskeyActivation(code: string, credential: Pub
 }
 
 export async function adminSessionLogout() { try { return await request('/admin/auth/logout', { method: 'POST', body: '{}' }); } finally { adminCsrfToken = ''; accessToken = null; } }
+
+export type OperationalKind = 'needs' | 'business-reports' | 'offer-reports' | 'support' | 'suggestions';
+export type OperationalStatus = 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJECTED';
+export type OperationalRecord = {
+  id: string; title: string; category: string; description: string | null; status: OperationalStatus;
+  decisionNote: string | null; createdAt: string; reporter: string; context: string;
+};
+export type OperationalResult = { records: OperationalRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
+
+export async function listOperationalRecords(kind: OperationalKind, filters: { page?: number; status?: string; q?: string } = {}): Promise<OperationalResult> {
+  const p = new URLSearchParams({ page: String(filters.page ?? 1) });
+  if (filters.status && filters.status !== 'ALL') p.set('status', filters.status);
+  if (filters.q?.trim()) p.set('q', filters.q.trim());
+  if (kind === 'business-reports') {
+    const result = await request<{ reports: Array<{ id: string; reason: string; description: string; status: OperationalStatus; decisionNote: string | null; createdAt: string; business: { name: string }; reporter: { displayName: string } | null }>; pagination: OperationalResult['pagination'] }>(`/admin/business-reports?${p}`);
+    return { pagination: result.pagination, records: result.reports.map(r => ({ id: r.id, title: r.business?.name ?? 'Negocio', category: r.reason, description: r.description, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt, reporter: r.reporter?.displayName ?? 'Visitante', context: 'Negocio reportado' })) };
+  }
+  if (kind === 'offer-reports') {
+    const result = await request<{ reports: Array<{ id: string; reason: string; description: string | null; status: OperationalStatus; decisionNote: string | null; createdAt: string; offer: { name: string; kind: string; business: { name: string } }; reporter: { displayName: string } | null }>; pagination: OperationalResult['pagination'] }>(`/admin/offer-reports?${p}`);
+    return { pagination: result.pagination, records: result.reports.map(r => ({ id: r.id, title: r.offer?.name ?? 'Publicación', category: r.reason, description: r.description, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt, reporter: r.reporter?.displayName ?? 'Visitante', context: `${r.offer?.kind === 'SERVICE' ? 'Servicio' : 'Producto'} · ${r.offer?.business?.name ?? 'Negocio'}` })) };
+  }
+  const category = kind === 'needs' ? 'NEED' : kind === 'support' ? 'SUPPORT' : 'SUGGESTION';
+  p.set('kind', category);
+  const result = await request<{ requests: Array<{ id: string; title: string; category: string; description: string | null; status: OperationalStatus; decisionNote: string | null; createdAt: string; locationName: string | null; locationContext: string | null; sender: { displayName: string } | null; business: { name: string } | null }>; pagination: OperationalResult['pagination'] }>(`/admin/support-requests?${p}`);
+  return { pagination: result.pagination, records: result.requests.map(r => ({ id: r.id, title: r.title, category: r.category, description: r.description, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt, reporter: r.sender?.displayName ?? 'Visitante', context: kind === 'needs' ? [r.locationName, r.locationContext].filter(Boolean).join(' · ') : (r.business?.name ?? 'Cuenta Business') })) };
+}
+
+export function decideOperationalRecord(kind: OperationalKind, id: string, status: OperationalStatus, decisionNote: string) {
+  const endpoint = kind === 'business-reports' ? 'business-reports' : kind === 'offer-reports' ? 'offer-reports' : 'support-requests';
+  return request(`/admin/${endpoint}/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status, decisionNote }) });
+}

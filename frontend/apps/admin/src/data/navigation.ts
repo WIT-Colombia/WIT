@@ -8,10 +8,8 @@ export const navigationGroups: NavigationGroup[] = [
   { id: 'plataforma', label: 'Gestión de la plataforma', items: [
     { path: '/businesses', label: 'Negocios', icon: 'store', group: 'plataforma', description: 'Directorio y gestión administrativa de negocios.' },
     { path: '/users', label: 'Usuarios', icon: 'users', group: 'plataforma', description: 'Gestión de usuarios pendiente de API.', pending: true },
-    { path: '/verifications', label: 'Verificaciones', icon: 'shield', group: 'plataforma', description: 'Revisión documental de negocios.' },
     { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Gestión de contenido pendiente de API.', pending: true },
     { path: '/reviews', label: 'Opiniones', icon: 'star', group: 'plataforma', description: 'Consulta de opiniones reales.' },
-    { path: '/reports', label: 'Reportes', icon: 'flag', group: 'plataforma', description: 'Revisión de reportes de opiniones.' },
     { path: '/pioneers', label: 'Negocios Pioneros', icon: 'star', group: 'plataforma', description: 'Registro y asignaciones de pioneros.' },
   ] },
   { id: 'crecimiento', label: 'Suscripciones y crecimiento', items: [
@@ -33,10 +31,13 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/needs', label: 'Necesidades', icon: 'search', group: 'tecnologia', description: 'Consulta de necesidades pendiente de API.', pending: true },
   ] },
   { id: 'soporte', label: 'Atención y soporte', items: [
-    { path: '/support', label: 'Mensajes de soporte', icon: 'message', group: 'soporte', description: 'Bandeja de soporte pendiente de API.', pending: true },
-    { path: '/suggestions', label: 'Sugerencias', icon: 'message', group: 'soporte', description: 'Gestión de sugerencias pendiente de API.', pending: true },
-    { path: '/assigned-verifications', label: 'Verificaciones asignadas', icon: 'shield', group: 'soporte', description: 'Asignación de verificaciones pendiente de API.', pending: true },
-    { path: '/notifications', label: 'Notificaciones', icon: 'bell', group: 'soporte', description: 'Centro de notificaciones pendiente de API.', pending: true },
+    { path: '/verifications', label: 'Verificaciones', icon: 'shield', group: 'soporte', description: 'Revisión documental de negocios.' },
+    { path: '/user-needs', label: 'Necesidades de usuarios', icon: 'search', group: 'soporte', description: 'Solicitudes recibidas desde Usuarios.' },
+    { path: '/business-reports', label: 'Reportes de negocios', icon: 'flag', group: 'soporte', description: 'Reportes de negocios recibidos.' },
+    { path: '/offer-reports', label: 'Reportes de productos y servicios', icon: 'flag', group: 'soporte', description: 'Reportes de ofertas recibidos.' },
+    { path: '/reports', label: 'Reportes de comentarios', icon: 'flag', group: 'soporte', description: 'Moderación de opiniones reportadas.' },
+    { path: '/support', label: 'Mensajes de soporte', icon: 'message', group: 'soporte', description: 'Solicitudes recibidas desde Business.' },
+    { path: '/suggestions', label: 'Sugerencias', icon: 'message', group: 'soporte', description: 'Ideas recibidas desde Business.' },
   ] },
   { id: 'juridica', label: 'Jurídica y corporativa', items: [
     { path: '/legal-documents', label: 'Documentos legales', icon: 'box', group: 'juridica', description: 'Documentos legales pendientes de API.', pending: true },
