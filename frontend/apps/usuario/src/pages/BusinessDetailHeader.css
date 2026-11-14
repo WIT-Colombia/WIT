@@ -423,6 +423,7 @@
 .business-detail-page.business-preview-mode .business-header-icon-button:disabled,
 .business-detail-page.business-preview-mode .business-detail-actions > button:disabled,
 .business-detail-page.business-preview-mode .business-header-links > button:disabled,
+.business-detail-page.business-preview-mode .entity-product-like:disabled,
 .business-detail-page.business-preview-mode .business-social-links .business-social-link,
 .business-detail-page.business-preview-mode .business-preview-disabled {
   opacity: 1 !important;
@@ -430,7 +431,7 @@
   cursor: default;
 }
 .business-detail-page.business-preview-mode .business-social-links > .business-social-link {
-  color: inherit;
+  color: #17213a;
   text-decoration: none;
 }
 .business-detail-page.business-preview-mode .business-detail-actions > button:disabled:hover,
