@@ -68,8 +68,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("wit-selected-location-owner", user.id);
       setServerReady(true);
     }).catch(() => {
-      // An unavailable preference API must not overwrite a stored value.
-      if (active) setServerReady(false);
+      // An unavailable preference API must not overwrite a stored value or block navigation.
+      if (active) setServerReady(true);
     });
     return () => { active = false; };
   }, [status, user?.id]);
