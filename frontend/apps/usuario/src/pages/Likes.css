@@ -54,3 +54,269 @@
 /* Match the approved back button from Notifications. */
 .likes-page .offer-detail-back{display:inline-flex;align-items:center;min-height:34px;margin-bottom:24px;padding:0 13px;border:1px solid #ddd2ff;border-radius:999px;background:#fff;color:var(--xamuko-violet);font-size:11px;font-weight:700;text-decoration:none;box-shadow:0 5px 16px rgba(123,63,251,.08);transition:background .2s ease,transform .2s ease}
 .likes-page .offer-detail-back:hover{background:#f4efff;transform:translateY(-1px)}
+
+/* Diseño aprobado de productos y servicios de Home, aplicado exclusivamente a Me gusta. */
+/* Base visual de las tarjetas compartidas con las novedades del Home.
+   Mantiene intactos ProductCard, ServiceCard, enlaces y Me gusta. */
+.likes-page .user-card-grid {
+  gap: 16px;
+  align-items: stretch;
+}
+.likes-page .user-card-grid .entity-offer-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--xamuko-border);
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, .06);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.likes-page .user-card-grid .entity-offer-card:hover {
+  border-color: #cfc1ff;
+  box-shadow: 0 16px 34px rgba(123, 63, 251, .13);
+  transform: translateY(-2px);
+}
+.likes-page .user-card-grid .entity-offer-card:focus-visible,
+.likes-page .user-card-grid .entity-product-like:focus-visible {
+  outline: 3px solid #7950ff;
+  outline-offset: 3px;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-card__image {
+  overflow: hidden;
+  background: #f0ebff;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-card__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-card__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-product-like {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d8ccff;
+  border-radius: 50%;
+  background: #faf8ff;
+  color: var(--xamuko-violet);
+}
+.likes-page .user-card-grid .entity-offer-card .entity-product-like.is-active {
+  border-color: #b6a0ff;
+  background: #eee5ff;
+  color: #5322cb;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-like-count {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  color: var(--xamuko-muted);
+}
+@media (max-width: 700px) {
+  .likes-page .user-card-grid { gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .likes-page .user-card-grid .entity-offer-card { transition: none; }
+  .likes-page .user-card-grid .entity-offer-card:hover { transform: none; }
+}
+
+/*
+ * Tarjetas compactas de productos y servicios en Home.
+ * Nombre, descripción y negocio: máximo dos líneas. El negocio queda anclado
+ * sobre el separador, y precio/descuento y Me gusta conservan su espacio.
+ */
+.likes-page .user-card-grid .entity-offer-card {
+  box-sizing: border-box;
+  height: 270px;
+  min-height: 270px;
+  max-height: 270px;
+  border-radius: 18px;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-card__image {
+  height: 106px;
+  min-height: 106px;
+  max-height: 106px;
+  flex: 0 0 106px;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-card__content {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 9px 11px 8px;
+  background: #fff;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-offer-badge {
+  top: 9px;
+  left: 9px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, .9);
+  background: #ef1456;
+  color: #fff;
+  font-size: 10px;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-offer-type {
+  display: inline-flex;
+  align-self: flex-start;
+  margin: 0 0 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f0eaff;
+  color: #6420d9;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: .045em;
+}
+.likes-page .user-card-grid .entity-offer-card h3 {
+  display: -webkit-box;
+  height: auto;
+  min-height: 0;
+  max-height: 2.36em;
+  margin: 0 0 3px;
+  overflow: hidden;
+  color: #11162f;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.18;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-offer-description {
+  display: -webkit-box;
+  height: auto;
+  min-height: 0;
+  max-height: 2.6em;
+  margin: 0 0 3px;
+  overflow: hidden;
+  color: #64708b;
+  font-size: 11px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-establishment {
+  display: -webkit-box;
+  min-height: 0;
+  max-height: 2.5em;
+  margin: auto 0 0;
+  overflow: hidden;
+  color: #6222dc;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-offer-footer {
+  flex: 0 0 auto;
+  min-height: 40px;
+  margin-top: 3px;
+  padding-top: 5px;
+  border-color: #ded2f9;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-offer-price {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 1px 5px;
+  max-width: none;
+  overflow: hidden;
+  color: #11162f;
+  font-size: 13px;
+  line-height: 1.12;
+  white-space: normal;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-offer-price del {
+  color: #7b8094;
+  font-size: 10px;
+  font-weight: 500;
+}
+.likes-page .user-card-grid .entity-offer-card .entity-like-count {
+  flex: 0 0 auto;
+  gap: 3px;
+  padding-left: 7px;
+  font-size: 10px;
+}
+@media (max-width: 700px) {
+  .likes-page .user-card-grid .entity-offer-card {
+    height: 220px;
+    min-height: 220px;
+    max-height: 220px;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-card__image {
+    height: 68px;
+    min-height: 68px;
+    max-height: 68px;
+    flex: 0 0 68px;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-card__content {
+    padding: 8px 9px 7px;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-offer-type {
+    margin-bottom: 3px;
+    padding: 2px 6px;
+    font-size: 8px;
+  }
+  .likes-page .user-card-grid .entity-offer-card h3 {
+    min-height: 0;
+    max-height: 2.36em;
+    margin-bottom: 2px;
+    font-size: 12.5px;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-offer-description {
+    display: -webkit-box;
+    min-height: 0;
+    max-height: 2.5em;
+    margin-bottom: 2px;
+    font-size: 10px;
+    line-height: 1.25;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-establishment {
+    min-height: 0;
+    max-height: 2.5em;
+    font-size: 9.5px;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-offer-footer {
+    min-height: 37px;
+    margin-top: 2px;
+    padding-top: 4px;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-offer-price {
+    max-width: none;
+    font-size: 11px;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-offer-price del {
+    font-size: 9px;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-like-count {
+    gap: 2px;
+    padding-left: 5px;
+    font-size: 9px;
+  }
+  .likes-page .user-card-grid .entity-offer-card .entity-product-like {
+    width: 29px;
+    height: 29px;
+  }
+}
+
+/* Precio al mismo tamaño que la modalidad de atención de la tarjeta de negocio. */
+.likes-page .user-card-grid .entity-offer-card .entity-offer-footer .entity-offer-price,
+.likes-page .user-card-grid .entity-offer-card .entity-offer-footer .entity-offer-price strong {
+  font-size: 11px;
+}
+@media (max-width: 700px) {
+  .likes-page .user-card-grid .entity-offer-card .entity-offer-footer .entity-offer-price,
+  .likes-page .user-card-grid .entity-offer-card .entity-offer-footer .entity-offer-price strong {
+    font-size: 10px;
+  }
+}
