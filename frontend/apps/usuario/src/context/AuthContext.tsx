@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let timer: number | undefined;
     // Public browsing must not remain blank if the refresh endpoint stalls.
     // Keep retrying in the background; private routes still require a verified session.
     const guestFallback = window.setTimeout(() => {
