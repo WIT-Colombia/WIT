@@ -415,12 +415,27 @@
 .business-detail-page.business-preview-mode > .site-header,
 .business-detail-page.business-preview-mode > .site-footer,
 .business-detail-page.business-preview-mode > .user-bottom-nav,
-.business-detail-page.business-preview-mode .business-header-tools,
-.business-detail-page.business-preview-mode .business-detail-actions,
-.business-detail-page.business-preview-mode .business-header-links,
-.business-detail-page.business-preview-mode .business-report-placement,
 .business-detail-page.business-preview-mode .business-registration-invite {
   display: none !important;
+}
+/* All the public listing's buttons and social cards stay visible.
+   They cannot initiate actions in the preview, but must look the same. */
+.business-detail-page.business-preview-mode .business-header-icon-button:disabled,
+.business-detail-page.business-preview-mode .business-detail-actions > button:disabled,
+.business-detail-page.business-preview-mode .business-header-links > button:disabled,
+.business-detail-page.business-preview-mode .business-social-links .business-social-link,
+.business-detail-page.business-preview-mode .business-preview-disabled {
+  opacity: 1 !important;
+  filter: none !important;
+  cursor: default;
+}
+.business-detail-page.business-preview-mode .business-social-links > .business-social-link {
+  color: inherit;
+  text-decoration: none;
+}
+.business-detail-page.business-preview-mode .business-detail-actions > button:disabled:hover,
+.business-detail-page.business-preview-mode .business-header-links > button:disabled:hover {
+  transform: none;
 }
 .business-detail-page.business-preview-mode .business-detail-back .business-back-link {
   border-color: #bfdbfe;
