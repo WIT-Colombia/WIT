@@ -24,24 +24,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    let timer: ReturnType<typeof setTimeout>;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // Public browsing must not remain blank if the refresh endpoint stalls.
+    // Keep retrying in the background; private routes still require a verified session.
+    const guestFallback = window.setTimeout(() => {
+      if (active) setStatus((current) => current === "loading" ? "anonymous" : current);
+    }, 4000);
     const restore = () => {
       const epoch = verificationEpoch.current;
       refreshSession().then((currentUser) => {
-        if (active && epoch === verificationEpoch.current) { setUser(currentUser); setStatus("authenticated"); }
+        if (active && epoch === verificationEpoch.current) {
+          window.clearTimeout(guestFallback);
+          if (timer) window.clearTimeout(timer);
+          setUser(currentUser);
+          setStatus("authenticated");
+        }
       }).catch((error: unknown) => {
         if (!active || epoch !== verificationEpoch.current) return;
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
-          setUser(null); setStatus("anonymous");
+          window.clearTimeout(guestFallback);
+          setUser(null);
+          setStatus("anonymous");
         } else {
-          // Preserve loading during network/5xx/429 failures; guards must wait.
-          timer = setTimeout(restore, error instanceof ApiError && error.retryAfterSeconds ? error.retryAfterSeconds * 1000 : 5000);
+          // Do not block guest navigation on an unreachable or overloaded API.
+          // A later successful refresh restores authenticated users automatically.
+          setStatus((current) => current === "loading" ? "anonymous" : current);
+          timer = window.setTimeout(restore, error instanceof ApiError && error.retryAfterSeconds
+            ? Math.max(5000, error.retryAfterSeconds * 1000) : 10000);
         }
       });
     };
     restore();
     window.addEventListener("online", restore);
-    return () => { active = false; clearTimeout(timer); window.removeEventListener("online", restore); };
+    return () => {
+      active = false;
+      window.clearTimeout(guestFallback);
+      if (timer) window.clearTimeout(timer);
+      window.removeEventListener("online", restore);
+    };
   }, []);
 
   useEffect(() => {
