@@ -4,6 +4,7 @@ import { businesses, products, reviews, services, type Product, type Service } f
 import { getProductById, getServiceById } from "../services/businessService";
 import { getMatchingReportCount, getUserReviews, saveUserReport } from "../services/userDataService";
 import { PageLayout } from "../components/PageLayout";
+import { submitOfferReport, type OfferReportReason } from "../services/offerReportService";
 import "../components/BusinessReportDialog.css";
 import "./Report.css";
 
@@ -23,6 +24,9 @@ export default function Report() {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [serverReceipt, setServerReceipt] = useState<string | null>(null);
   const [reportCount, setReportCount] = useState(0);
   const [remoteOffer, setRemoteOffer] = useState<Product | Service | undefined>();
   const [loadingOffer, setLoadingOffer] = useState(() => Boolean(targetId && ((targetType === "product" && !products.some(item => item.id === targetId)) || (targetType === "service" && !services.some(item => item.id === targetId)))));
@@ -48,12 +52,42 @@ export default function Report() {
   const targetName = business?.name ?? product?.name ?? service?.name ?? (review ? `Opinión de ${review.author}` : "");
   const backTo = business ? `/business/${business.id}` : product ? `/product/${product.id}` : service ? `/service/${service.id}` : review ? `/reviews?businessId=${review.businessId}` : "/home";
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  const isOfferReport = targetType === "product" || targetType === "service";
+  const offerReasons: Record<string, OfferReportReason> = {
+    "El producto ya no está disponible": "UNAVAILABLE",
+    "El servicio ya no está disponible": "UNAVAILABLE",
+    "La información o el precio son incorrectos": "WRONG_INFORMATION",
+    "La imagen no corresponde": "WRONG_IMAGE",
+    "Otro motivo": "OTHER",
+  };
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!target || !targetType || !category) return;
-    saveUserReport({ id: `report-${Date.now()}`, targetType, targetId, targetName, category, description: description.trim(), createdAt: new Date().toISOString() });
-    setReportCount(getMatchingReportCount(targetType, targetId, category));
-    setSubmitted(true);
+    if (!target || !targetType || !category || saving) return;
+    setSubmitError("");
+    if (isOfferReport) {
+      const reason = offerReasons[category];
+      if (!reason) { setSubmitError("Selecciona un motivo válido."); return; }
+      setSaving(true);
+      try {
+        const { report } = await submitOfferReport(targetId, reason, description.trim());
+        setServerReceipt(report.id);
+        setSubmitted(true);
+      } catch (cause) {
+        setSubmitError(cause instanceof Error ? cause.message : "No se pudo enviar el reporte a Administración. Inténtalo de nuevo.");
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+    // Legacy review/business forms retain their current local-only behavior.
+    try {
+      saveUserReport({ id: `report-${Date.now()}`, targetType, targetId, targetName, category, description: description.trim(), createdAt: new Date().toISOString() });
+      setReportCount(getMatchingReportCount(targetType, targetId, category));
+      setSubmitted(true);
+    } catch {
+      setSubmitError("No se pudo guardar el reporte en este dispositivo.");
+    }
   }
 
   if (loadingOffer && !target) {
@@ -98,17 +132,20 @@ export default function Report() {
               <path d="M24 15v12"/><circle cx="24" cy="33" r="1.8" fill="currentColor" stroke="none"/>
             </svg>
           </span>
-          <h1 id="report-form-title">{submitted ? "Reporte guardado" : reportTitle}</h1>
+          <h1 id="report-form-title">{submitted ? (serverReceipt ? "Reporte recibido" : "Reporte guardado") : reportTitle}</h1>
         </div>
         {submitted ? <>
           <p id="report-form-intro" className="business-report-intro">
-            Gracias por contribuir al cuidado de XAMUKO. El reporte sobre <strong>{targetName}</strong> quedó guardado en este dispositivo.
+            {serverReceipt
+              ? <>Gracias por contribuir al cuidado de XAMUKO. Recibimos el reporte sobre <strong>{targetName}</strong> y quedó disponible para revisión en Administración.</>
+              : <>Gracias por contribuir al cuidado de XAMUKO. El reporte sobre <strong>{targetName}</strong> quedó guardado en este dispositivo.</>}
+
           </p>
           <div className="business-report-info report-local-notice">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
-            <small>Aún no se ha enviado a Administración. La conexión con el backend está pendiente.</small>
+            <small>{serverReceipt ? `Número de reporte: ${serverReceipt}. Estado: pendiente de revisión.` : "Aún no se ha enviado a Administración. La conexión con el backend está pendiente."}</small>
           </div>
-          <p className="report-count-note">En este navegador hay {reportCount} reporte{reportCount === 1 ? "" : "s"} del mismo motivo para este elemento.</p>
+          {!serverReceipt && <p className="report-count-note">En este navegador hay {reportCount} reporte{reportCount === 1 ? "" : "s"} del mismo motivo para este elemento.</p>}
           <div className="business-report-actions">
             <Link className="business-report-submit" to={backTo}>Volver a la publicación</Link>
           </div>
@@ -140,13 +177,16 @@ export default function Report() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>
               </svg>
-              <small>Máximo 500 caracteres. Evita compartir datos sensibles. Por ahora el reporte se guarda solo en este navegador; todavía no se envía a Admin.</small>
+              <small>{isOfferReport
+                ? "Máximo 500 caracteres. Evita compartir datos sensibles. Tu reporte se enviará a XAMUKO para revisión administrativa."
+                : "Máximo 500 caracteres. Evita compartir datos sensibles. Este reporte se guarda solo en este navegador."}</small>
             </div>
+            {submitError && <p className="business-report-error" role="alert">{submitError}</p>}
             <div className="business-report-actions">
-              <Link to={backTo} className="business-report-cancel">Cancelar</Link>
-              <button type="submit" className="business-report-submit" disabled={!category}>
+              <Link to={backTo} className="business-report-cancel" aria-disabled={saving} onClick={event => { if (saving) event.preventDefault(); }}>Cancelar</Link>
+              <button type="submit" className="business-report-submit" disabled={!category || saving}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4L22 2Z"/><path d="M22 2 11 13"/></svg>
-                Guardar reporte
+                {saving ? "Enviando…" : isOfferReport ? "Enviar reporte" : "Guardar reporte"}
               </button>
             </div>
           </form>
