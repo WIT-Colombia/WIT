@@ -28,6 +28,21 @@ const periods: Array<{ value: Period; label: string }> = [
 ];
 
 const number = (value: number) => value.toLocaleString("es-CO");
+
+// El vencimiento se muestra en fecha de Colombia. Contar fechas de calendario
+// en esa misma zona evita "41 días" justo después de renovar por fracciones
+// de hora, diferencias entre relojes o el huso horario del dispositivo.
+const visibilityDateParts = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "America/Bogota",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+function colombiaCalendarDay(timestamp: number): number {
+  const parts = visibilityDateParts.formatToParts(new Date(timestamp));
+  const value = (part: "year" | "month" | "day") => Number(parts.find(item => item.type === part)?.value);
+  return Math.floor(Date.UTC(value("year"), value("month") - 1, value("day")) / 86_400_000);
+}
 const publicProfileUrl = (business: BusinessDetails) => getPublicBusinessUrl(business.publicId);
 
 function BusinessImage({ src, name, className, alt, isPreview = false, objectPosition }: { src?: string; name: string; className: string; alt: string; isPreview?: boolean; objectPosition?: string }) {
@@ -211,7 +226,7 @@ export function DashboardPage() {
   const validExpiry = expiry !== null && Number.isFinite(expiry.getTime());
   const expiryTime = validExpiry ? expiry.getTime() : null;
   const remainingMs = expiryTime === null ? null : expiryTime - visibilityNow;
-  const remainingDays = remainingMs === null ? null : Math.max(0, Math.ceil(remainingMs / 86_400_000));
+  const remainingDays = expiryTime === null ? null : Math.max(0, colombiaCalendarDay(expiryTime) - colombiaCalendarDay(visibilityNow));
   const withinVisibilityPeriod = visibility?.isWithinPeriod === true && remainingMs !== null && remainingMs > 0;
   const visibilityExpiring = withinVisibilityPeriod && remainingDays !== null && remainingDays <= 10;
   const visibilityExpired = remainingMs !== null && remainingMs <= 0;
