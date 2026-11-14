@@ -373,3 +373,24 @@
   .offer-detail-page .offer-detail-contact{transition:none;}
 }
 
+/* Tarjeta única compartida por la barra superior y el detalle del producto. */
+.offer-detail-page .offer-detail-shell{
+  position:relative;overflow:hidden;isolation:isolate;
+  padding:clamp(14px,2.2vw,25px);
+  border:1px solid #e2def1;border-radius:28px;background:#fff;
+  box-shadow:0 18px 50px rgba(15,23,42,.07);
+}
+.offer-detail-page .offer-detail-shell::before{
+  content:"";position:absolute;top:0;left:0;
+  width:55%;height:5px;
+  background:linear-gradient(90deg,#7b3ffb 0%,#2563eb 77%,#22d3ee 100%);
+}
+.offer-detail-page .offer-detail-shell .offer-detail{
+  padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible;
+}
+.offer-detail-page .offer-detail-shell .offer-detail::before{display:none;}
+@media(max-width:750px){
+  .offer-detail-page .offer-detail-shell{padding:10px;border-radius:20px;}
+  .offer-detail-page .offer-detail-shell::before{width:70%;height:4px;}
+}
+
