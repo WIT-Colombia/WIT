@@ -287,7 +287,7 @@
   scrollbar-color:var(--xamuko-violet) #eee9ff;
   scroll-snap-type:x proximity;
   padding:2px 2px 10px;
-  cursor:grab;
+  cursor:default;
   touch-action:auto;
   -webkit-overflow-scrolling:touch;
 }
@@ -295,7 +295,7 @@
   scroll-snap-align:start;
   touch-action:auto;
 }
-.business-detail-page .business-popular-grid:active{cursor:grabbing}
+.business-detail-page .business-popular-grid:active{cursor:default}
 .business-detail-page .business-popular-grid::-webkit-scrollbar{height:7px}
 .business-detail-page .business-popular-grid::-webkit-scrollbar-track{border-radius:999px;background:#eee9ff}
 .business-detail-page .business-popular-grid::-webkit-scrollbar-thumb{border-radius:999px;background:var(--xamuko-violet)}
