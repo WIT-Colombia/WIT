@@ -1794,3 +1794,19 @@
   .business-home .business-home-metric-copy > span { font-size: 11px; }
   .business-home .business-home-action-copy strong { font-size: 12px; }
 }
+
+/* Tipografía de los cuatro rótulos de sección aprobados. */
+.business-home .business-home-section-heading .business-home-eyebrow,
+.business-home .business-home-performance .business-home-eyebrow,
+.business-home .business-home-details .business-home-eyebrow,
+.business-home .business-home-actions-section .business-home-eyebrow {
+  font-size: 12px;
+}
+@container business-home-panels (max-width: 520px) {
+  .business-home .business-home-section-heading .business-home-eyebrow,
+  .business-home .business-home-performance .business-home-eyebrow,
+  .business-home .business-home-details .business-home-eyebrow,
+  .business-home .business-home-actions-section .business-home-eyebrow {
+    font-size: 11px;
+  }
+}
