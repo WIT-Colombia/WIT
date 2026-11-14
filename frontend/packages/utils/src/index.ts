@@ -7,4 +7,4 @@ export { authSites, getAuthPageMetadata, getPrivateAuthPageMetadata, metadataTag
 export { API_BASE_URL, buildApiUrl } from './api';
 export { faqs, type FaqAudience } from './faqs';
 
-export { normalizeImageForUpload, validateUploadImageSource, isSupportedUploadImage, PHOTO_INPUT_ACCEPT, PhotoUploadError, MAX_UPLOAD_IMAGE_BYTES } from './imageUpload';
+export { normalizeImageForUpload, normalizeBusinessPhotoForUpload, BUSINESS_4K_MAX_SIDE, validateUploadImageSource, isSupportedUploadImage, PHOTO_INPUT_ACCEPT, PhotoUploadError, MAX_UPLOAD_IMAGE_BYTES } from './imageUpload';
