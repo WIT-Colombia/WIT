@@ -199,10 +199,12 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
             {phone && <a className="offer-detail-contact phone" href={`tel:${phone}`} onClick={() => recordBusinessEvent(business.id, "PHONE_CLICK", "click", undefined, analyticsContextRef.current)}><PhoneIcon />Llamar</a>}
           </div>
           <div className="offer-detail-actions">
-            <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`offer-detail-like-button${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}>
-              <ThumbsUpIcon /><span>{like.liked ? "Te gusta" : "Me gusta"}</span>
-              <span className="offer-detail-like-total" aria-label="Cantidad de Me gusta">{isRealOfferId(item.id) ? like.count : like.count || getLikeCount(item.id, item.likeCount ?? 0)}</span>
-            </button>
+            <span className="entity-like-count offer-detail-like-count">
+              <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`entity-action entity-like entity-product-like${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}>
+                <ThumbsUpIcon />
+              </button>
+              <span className="offer-detail-like-number" aria-label="Cantidad de Me gusta">{isRealOfferId(item.id) ? like.count : like.count || getLikeCount(item.id, item.likeCount ?? 0)}</span>
+            </span>
           </div>
           {likeError && <small className="offer-like-error" role="alert">{likeError}</small>}
           <Link className="offer-detail-report" to={`/report?type=${kind}&id=${encodeURIComponent(item.id)}`}>
