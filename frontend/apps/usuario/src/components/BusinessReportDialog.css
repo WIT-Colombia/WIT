@@ -4,23 +4,184 @@
 .business-report-trigger span{font-size:16px;line-height:1}
 .business-report-trigger:disabled{opacity:.55;cursor:not-allowed}
 .business-report-trigger:not(:disabled):hover,.business-report-trigger:focus-visible{color:#6735dc;border-color:#cfc1ff;background:#f8f5ff;outline-offset:3px}
-.business-report-backdrop{position:fixed;inset:0;z-index:1500;display:grid;place-items:center;background:rgba(15,23,42,.6);padding:16px}
-.business-report-dialog{position:relative;width:min(100%,460px);max-height:calc(100dvh - 32px);overflow-y:auto;box-sizing:border-box;padding:28px;border-radius:18px;background:#fff;box-shadow:0 24px 80px rgba(15,23,42,.23);color:#0f172a}
-.business-report-dialog h2{margin:0 32px 10px 0;font-size:22px}
-.business-report-dialog p{font-size:13px;line-height:1.6;color:#475569}
-.business-report-close{position:absolute;right:18px;top:14px;border:0;background:transparent;color:#64748b;font-size:28px;cursor:pointer}
-.business-report-dialog form{display:grid;gap:10px;margin-top:20px}
-.business-report-dialog label{font-size:12px;font-weight:700}
-.business-report-dialog select,.business-report-dialog textarea{box-sizing:border-box;width:100%;border:1px solid #cbd5e1;border-radius:10px;background:#fff;padding:12px;color:#0f172a;font:inherit;font-size:13px}
-.business-report-dialog select:focus,.business-report-dialog textarea:focus{outline:2px solid #7b3ffb;outline-offset:1px}
-.business-report-dialog small{font-size:11px;color:#64748b;line-height:1.5}
-.business-report-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
-.business-report-cancel,.business-report-submit{min-height:42px;padding:0 16px;border-radius:10px;font:inherit;font-size:13px;font-weight:650;cursor:pointer}
-.business-report-cancel{border:1px solid #cbd5e1;background:#fff;color:#475569}
-.business-report-submit{border:0;background:#7139e6;color:#fff}
-.business-report-dialog button:disabled{opacity:.55;cursor:default}
-.business-report-error{color:#b4232f!important}
-@media(max-width:480px){.business-report-dialog{padding:22px}.business-report-actions>*{flex:1}}
+/* Formulario de reporte: diseño XAMUKO Usuarios, violeta prioritario y azul secundario.
+   Ilustración vectorial y tipografía HTML: nítidos a cualquier escala, incluida 4K. */
+.business-report-backdrop{
+  position:fixed;inset:0;z-index:1500;
+  display:grid;place-items:center;overflow-y:auto;
+  padding:20px;box-sizing:border-box;
+  background:rgba(19,18,49,.62);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.business-report-dialog{
+  position:relative;isolation:isolate;overflow-x:hidden;overflow-y:auto;
+  width:min(100%,720px);max-height:calc(100dvh - 40px);box-sizing:border-box;
+  padding:40px 42px 36px;border:1px solid #e6def6;border-radius:28px;
+  background:#fff;color:#10152f;box-shadow:0 26px 80px rgba(15,18,50,.24);
+}
+.business-report-decor{
+  position:absolute;top:0;right:0;z-index:-1;
+  display:block;width:min(79%,560px);height:auto;
+  pointer-events:none;border-top-right-radius:28px;
+}
+.business-report-close{
+  position:absolute;right:23px;top:22px;z-index:2;
+  display:grid;place-items:center;width:42px;height:42px;
+  padding:0;border:1px solid #fff8;border-radius:50%;
+  background:rgba(255,255,255,.77);color:#2563eb;
+  font:inherit;font-size:32px;font-weight:400;line-height:1;cursor:pointer;
+  transition:background-color .18s,color .18s,transform .18s;
+}
+.business-report-close:hover:not(:disabled){background:#fff;color:#7b3ffb;transform:rotate(90deg);}
+.business-report-heading{
+  position:relative;z-index:1;display:flex;align-items:center;gap:31px;
+  min-height:70px;min-width:0;
+}
+.business-report-shield{
+  position:relative;display:grid;place-items:center;
+  flex:0 0 70px;width:70px;height:70px;
+  border-radius:20px;background:linear-gradient(145deg,#eee5ff,#f2edff);
+  color:#6e2ef4;
+}
+.business-report-shield svg{display:block;width:44px;height:44px;}
+.business-report-shield::after{
+  content:"";position:absolute;top:6px;left:calc(100% + 14px);
+  width:2px;height:58px;border-radius:3px;background:#cda9ff;
+}
+.business-report-dialog h2{
+  margin:0;min-width:0;max-width:calc(100% - 130px);
+  color:#211046;font-size:clamp(25px,3vw,34px);font-weight:820;
+  line-height:1.16;letter-spacing:-.75px;overflow-wrap:anywhere;
+}
+.business-report-dialog .business-report-intro{
+  position:relative;z-index:1;margin:25px 0 0;
+  color:#343d5a;font-size:clamp(14px,1.45vw,18px);line-height:1.65;
+}
+.business-report-dialog .business-report-intro strong{color:#14172e;font-weight:800;}
+.business-report-dialog form{display:grid;gap:12px;margin-top:28px;}
+.business-report-dialog .business-report-label{
+  display:flex;align-items:center;gap:12px;
+  margin:8px 0 1px;color:#241542;font-size:16px;font-weight:800;line-height:1.35;
+}
+.business-report-dialog .business-report-label svg{
+  flex:0 0 24px;width:24px;height:24px;color:#7b3ffb;
+}
+.business-report-dialog select,
+.business-report-dialog textarea{
+  display:block;box-sizing:border-box;width:100%;min-width:0;
+  padding:13px 17px;border:1.5px solid #d0d9ee;border-radius:15px;
+  background:#fff;color:#151c36;font:inherit;font-size:15px;line-height:1.5;
+  transition:border-color .18s,box-shadow .18s;
+}
+.business-report-dialog select{
+  min-height:56px;border:2px solid #7b3ffb;
+  padding-right:38px;cursor:pointer;
+}
+.business-report-dialog textarea{min-height:156px;resize:vertical;}
+.business-report-dialog textarea::placeholder{color:#737d93;opacity:1;}
+.business-report-dialog select:focus-visible,
+.business-report-dialog textarea:focus-visible{
+  outline:0;border-color:#7b3ffb;
+  box-shadow:0 0 0 3px rgba(123,63,251,.18);
+}
+.business-report-info{
+  display:flex;align-items:center;gap:15px;
+  margin-top:10px;padding:15px 17px;
+  border:1px solid #dbe7ff;border-radius:15px;
+  background:linear-gradient(110deg,#e8f0ff 0%,#dce9ff 100%);
+}
+.business-report-info svg{
+  flex:0 0 26px;width:26px;height:26px;color:#2563eb;
+}
+.business-report-info small{
+  color:#23375c;font-size:13px;font-weight:500;line-height:1.55;
+}
+.business-report-actions{
+  display:flex;justify-content:flex-end;align-items:center;
+  gap:13px;margin-top:26px;
+}
+.business-report-cancel,.business-report-submit{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  min-height:48px;box-sizing:border-box;padding:0 23px;
+  border-radius:15px;font:inherit;font-size:15px;font-weight:800;
+  line-height:1.2;text-align:center;cursor:pointer;
+  transition:background .18s,border-color .18s,box-shadow .18s,transform .18s;
+}
+.business-report-cancel{
+  border:1.5px solid #2563eb;background:#fff;color:#2563eb;
+  box-shadow:0 4px 10px rgba(37,99,235,.08);
+}
+.business-report-cancel:hover:not(:disabled){
+  background:#eff6ff;border-color:#1d4ed8;box-shadow:0 6px 14px rgba(37,99,235,.12);
+}
+.business-report-submit{
+  border:1px solid transparent;background:linear-gradient(110deg,#7b3ffb,#6d24ee);
+  color:#fff;box-shadow:0 8px 19px rgba(123,63,251,.19);
+}
+.business-report-submit svg{display:block;flex:0 0 21px;width:21px;height:21px;}
+.business-report-submit:hover:not(:disabled){
+  background:linear-gradient(110deg,#6b2deb,#5919d8);
+  box-shadow:0 10px 24px rgba(123,63,251,.28);transform:translateY(-1px);
+}
+.business-report-dialog button:focus-visible{
+  outline:3px solid #22d3ee;outline-offset:3px;
+}
+.business-report-dialog button:disabled{
+  opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;
+}
+.business-report-error{
+  margin:0;padding:10px 12px;border:1px solid #fecdd3;
+  border-radius:10px;background:#fff1f2;color:#be123c!important;
+  font-size:13px;line-height:1.45;
+}
+@media(max-width:600px){
+  .business-report-backdrop{padding:12px;}
+  .business-report-dialog{
+    max-height:calc(100dvh - 24px);padding:25px 22px 23px;border-radius:21px;
+  }
+  .business-report-decor{width:81%;border-top-right-radius:21px;}
+  .business-report-close{top:14px;right:14px;width:38px;height:38px;font-size:29px;}
+  .business-report-heading{min-height:54px;gap:21px;padding-right:30px;}
+  .business-report-shield{flex-basis:52px;width:52px;height:52px;border-radius:15px;}
+  .business-report-shield svg{width:34px;height:34px;}
+  .business-report-shield::after{left:calc(100% + 9px);top:5px;height:43px;}
+  .business-report-dialog h2{
+    max-width:none;font-size:clamp(21px,5.3vw,27px);letter-spacing:-.4px;
+  }
+  .business-report-dialog .business-report-intro{
+    margin-top:20px;font-size:14px;line-height:1.55;
+  }
+  .business-report-dialog form{gap:10px;margin-top:20px;}
+  .business-report-dialog .business-report-label{font-size:14px;gap:9px;}
+  .business-report-dialog .business-report-label svg{width:21px;height:21px;flex-basis:21px;}
+  .business-report-dialog select,.business-report-dialog textarea{
+    padding:11px 12px;border-radius:12px;font-size:14px;
+  }
+  .business-report-dialog select{min-height:48px;padding-right:30px;}
+  .business-report-dialog textarea{min-height:126px;}
+  .business-report-info{gap:10px;margin-top:6px;padding:12px;border-radius:12px;}
+  .business-report-info svg{width:22px;height:22px;flex-basis:22px;}
+  .business-report-info small{font-size:11px;}
+  .business-report-actions{gap:9px;margin-top:17px;}
+  .business-report-actions>*{flex:1;min-width:0;}
+  .business-report-cancel,.business-report-submit{
+    min-height:46px;padding:0 10px;border-radius:12px;font-size:13px;
+  }
+  .business-report-submit svg{width:17px;height:17px;flex-basis:17px;}
+}
+@media(max-width:350px){
+  .business-report-dialog{padding:19px 14px;}
+  .business-report-heading{gap:18px;}
+  .business-report-shield{flex-basis:44px;width:44px;height:44px;}
+  .business-report-shield::after{left:calc(100% + 8px);height:37px;top:4px;}
+  .business-report-dialog h2{font-size:20px;}
+  .business-report-actions{flex-direction:column-reverse;}
+  .business-report-actions>*{width:100%;}
+}
+@media(prefers-reduced-motion:reduce){
+  .business-report-dialog button,.business-report-dialog select,
+  .business-report-dialog textarea{transition:none;}
+}
 
 /* Acción visible junto a Compartir en la cabecera de cada ficha pública. */
 .business-detail-page .business-header-tools{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;min-width:0}
