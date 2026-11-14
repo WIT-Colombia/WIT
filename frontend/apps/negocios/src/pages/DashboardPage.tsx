@@ -92,6 +92,7 @@ export function DashboardPage() {
   const canReadAnalytics = !isPreview && realBusiness && (business.role === "Propietario" || business.permissions?.includes("READ_ANALYTICS"));
   const businessIndex = Math.max(0, businesses.findIndex(item => item.id === business.id || item.name === business.name));
   const profileUrl = publicProfileUrl(business);
+  const readOnlyPreviewPath = profileUrl && business.publicId ? `/mi-negocio/preview/${encodeURIComponent(business.publicId)}` : null;
   const verified = visibleBusinessStatus(business) === "Verificado";
   const businessStatus = business.isOpen === true ? "Abierto ahora" : business.isOpen === false ? "Cerrado" : visibleBusinessStatus(business);
   const periodLabel = periods.find(item => item.value === period)?.label.toLocaleLowerCase("es-CO") ?? "período seleccionado";
@@ -184,7 +185,7 @@ export function DashboardPage() {
           <SelectedBusinessProfileImage business={business} className="business-home-profile" isPreview={isPreview} />
           <div className="business-home-business-copy"><div className="business-home-name-line"><h2>{business.name}</h2>{verified && <span className="business-home-verified" title="Negocio verificado" aria-label="Negocio verificado">✓</span>}</div><p>{[categoryLabel, business.city].filter(Boolean).join(" · ")}</p>{business.description && <p className="business-home-description">{business.description}</p>}{businessStatus && <span className={`business-home-status${business.isOpen === false ? " closed" : ""}`}>{business.isOpen === true && <i />}{businessStatus}</span>}</div>
           <div className="business-home-hero-actions">
-            {profileUrl ? <a className="business-home-button glass" href={profileUrl} target="_blank" rel="noreferrer"><span aria-hidden="true">↗</span>Ver en XAMUKO</a> : <span className="business-home-button glass disabled" aria-disabled="true" title="Este negocio aún no tiene un perfil público">Perfil público no disponible</span>}
+            {readOnlyPreviewPath ? <Link className="business-home-button glass" to={readOnlyPreviewPath}><span aria-hidden="true">↗</span>Ver en XAMUKO</Link> : <span className="business-home-button glass disabled" aria-disabled="true" title="Este negocio aún no tiene un perfil público">Perfil público no disponible</span>}
             <button className="business-home-button glass" type="button" onClick={() => void shareBusiness()} disabled={!profileUrl}><span aria-hidden="true">↗</span>Compartir</button>
             {availableActions.edit && <Link className="business-home-button glass" to={`/mis-negocios/editar/${businessIndex}`}><span aria-hidden="true">✎</span>Editar negocio</Link>}
           </div>
@@ -226,7 +227,7 @@ export function DashboardPage() {
             {business.website && <div><dt><span aria-hidden="true">↗</span>Sitio web</dt><dd><a href={/^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`} target="_blank" rel="noreferrer">{business.website}</a></dd></div>}
             {!address && !business.hours && !business.phone && !business.website && currentRating == null && !(reviewCount ?? 0) && <li className="business-home-info-empty">Todavía no hay información adicional registrada.</li>}
           </dl>
-          {profileUrl && <a className="business-home-profile-link" href={profileUrl} target="_blank" rel="noreferrer">Ver perfil público <span aria-hidden="true">↗</span></a>}
+          {readOnlyPreviewPath && <Link className="business-home-profile-link" to={readOnlyPreviewPath}>Ver perfil público <span aria-hidden="true">↗</span></Link>}
         </section>
       </div>
 
