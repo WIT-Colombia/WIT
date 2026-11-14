@@ -71,7 +71,7 @@ export function BusinessReportDialog({ businessId, businessName, disabled = fals
           <path d="M371 0H640V128C578 124 526 95 493 63 461 32 427 14 371 0Z" fill="#B898FF" opacity=".48"/>
           <path d="M516 0H640V134C597 125 579 106 559 79 540 52 538 20 516 0Z" fill="#5AC5FF" opacity=".38"/>
         </svg>
-        <button type="button" className="business-report-close" onClick={close} disabled={submitting} aria-label="Cerrar reporte" title="Cerrar">×</button>
+        <button type="button" className="business-report-close" onClick={close} disabled={submitting} aria-label="Cerrar reporte" title="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
         <div className="business-report-heading">
           <span className="business-report-shield" aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="3.3" strokeLinecap="round" strokeLinejoin="round">
