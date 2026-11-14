@@ -143,6 +143,9 @@
   color:#6c7892;font-size:14px;
 }
 .business-detail-page .business-detail-rating b {color:#a56800;}
+/* La fracción rellena de las estrellas debe compartir el dorado de Opiniones,
+   incluso con la regla genérica de cifras en el encabezado. */
+.business-detail-page .business-detail-rating .business-rating-stars > b {color:#e9a727;}
 .business-detail-page .business-distance {
   display:inline-flex;align-items:center;gap:5px;color:#566575;font-size:13px;font-weight:650;
 }
