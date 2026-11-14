@@ -71,7 +71,9 @@ jobs:
           mkdir -p release
           cp package.json package-lock.json prisma.config.ts tsconfig.json release/
           cp -R dist prisma release/
-          npm ci --omit=dev --no-audit --no-fund --prefix release
+          npm ci --no-audit --no-fund --prefix release
+          (cd release && ./node_modules/.bin/prisma migrate status)
+          test -x release/node_modules/.bin/prisma
           printf '%s\n' "$GITHUB_SHA" > release/RELEASE_COMMIT
           tar -czf "xamuko-backend-$GITHUB_SHA.tar.gz" -C release .
           sha256sum "xamuko-backend-$GITHUB_SHA.tar.gz" > "xamuko-backend-$GITHUB_SHA.tar.gz.sha256"
