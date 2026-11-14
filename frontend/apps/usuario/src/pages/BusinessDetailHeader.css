@@ -30,6 +30,8 @@
   stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
 }
 .business-detail-page .business-more-wrap {position:relative;}
+.business-detail-page .business-more-wrap .business-header-icon-button svg circle {fill:currentColor;stroke:none;}
+
 .business-detail-page .business-more-wrap>.business-header-icon-button {
   width:44px;padding:0;border-radius:50%;background:#f3edff;
 }
