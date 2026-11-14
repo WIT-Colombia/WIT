@@ -105,8 +105,25 @@ function VisitChart({ points }: { points: Array<{ label: string; value: number }
   </div>;
 }
 
-function QuickAction({ to, title, description, icon, disabled = false }: { to?: string; title: string; description: string; icon: string; disabled?: boolean }) {
-  const content = <><span className="business-home-action-icon" aria-hidden="true">{icon}</span><span className="business-home-action-copy"><strong>{title}</strong><small>{description}</small></span><span className="business-home-action-arrow" aria-hidden="true">↗</span></>;
+/** Icons shared by the existing Business dashboard components. */
+function MetricSymbol({ name }: { name: MetricKey }) {
+  if (name === "businessViews") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3.2"/></svg>;
+  if (name === "searchAppearances") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.4 15.4 5 5"/></svg>;
+  if (name === "whatsappClicks") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.85" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.5L3 20.5l1.5-4.7A8.5 8.5 0 1 1 20.5 11.6Z"/><path d="M8.5 8.2c.4-.5.8-.4 1-.1l.9 1.5c.2.4.1.7-.3 1.1l-.4.5c.8 1.4 1.7 2.3 3.2 3.1l.5-.5c.3-.3.7-.4 1.1-.2l1.6.8c.4.3.4.7.1 1.1-.7.9-1.8 1.1-3.1.7-2.6-.8-5.1-3.3-5.8-5.9-.3-1.1.1-1.8 1.2-2.1Z"/></svg>;
+  if (name === "phoneClicks") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7.4 3H4.9A1.9 1.9 0 0 0 3 4.9C3.1 13.8 10.2 20.9 19.1 21a1.9 1.9 0 0 0 1.9-1.9v-2.5l-5.1-2.1-2.4 2.4a17.5 17.5 0 0 1-6.4-6.4l2.4-2.4L7.4 3Z"/></svg>;
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="6.7"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6"/><circle cx="12" cy="12" r="2.2"/></svg>;
+}
+
+type QuickActionIcon = "promotion" | "gallery" | "catalog" | "edit";
+function QuickActionSymbol({ name }: { name: QuickActionIcon }) {
+  if (name === "promotion") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="6.7" cy="6.5" r="2"/><circle cx="17.3" cy="17.5" r="2"/><path d="M18.8 4 5.2 20"/></svg>;
+  if (name === "gallery") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 4 4 3-3 5 5"/></svg>;
+  if (name === "catalog") return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></svg>;
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20h4l11-11-4-4L4 16v4ZM13.5 6.5l4 4"/><path d="M4 20h16"/></svg>;
+}
+
+function QuickAction({ to, title, description, icon, disabled = false }: { to?: string; title: string; description: string; icon: QuickActionIcon; disabled?: boolean }) {
+  const content = <><span className="business-home-action-icon" aria-hidden="true"><QuickActionSymbol name={icon}/></span><span className="business-home-action-copy"><strong>{title}</strong><small>{description}</small></span><span className="business-home-action-arrow" aria-hidden="true">↗</span></>;
   return to && !disabled ? <Link className="business-home-action" to={to}>{content}</Link> : <div className="business-home-action unavailable" aria-disabled="true" title={description}>{content}</div>;
 }
 
@@ -249,7 +266,7 @@ export function DashboardPage() {
             const previous = data?.previous?.[metric.key];
             const change = current !== undefined && previous !== undefined && previous > 0 ? Math.round((current - previous) / previous * 100) : null;
             return <article className={`business-home-metric metric-${index + 1}`} key={metric.key} aria-busy={loading}>
-              <span className="business-home-metric-icon" aria-hidden="true">{metric.icon}</span><div className="business-home-metric-copy"><span>{metric.label}</span><strong>{loading ? "…" : current === undefined ? "—" : number(current)}</strong><small>{loading ? "Cargando" : metric.detail}</small></div>
+              <span className="business-home-metric-icon" aria-hidden="true"><MetricSymbol name={metric.key}/></span><div className="business-home-metric-copy"><span>{metric.label}</span><strong>{loading ? "…" : current === undefined ? "—" : number(current)}</strong><small>{loading ? "Cargando" : metric.detail}</small></div>
               {change !== null && <span className={`business-home-change${change < 0 ? " negative" : ""}`}>{change > 0 ? "+" : ""}{change}%</span>}
             </article>;
           })}
@@ -292,10 +309,10 @@ export function DashboardPage() {
       <section className="business-home-panel business-home-actions-section" aria-labelledby="business-home-actions-title">
         <div className="business-home-panel-heading"><div><span className="business-home-eyebrow">GESTIÓN DIARIA</span><h2 id="business-home-actions-title">Acciones rápidas</h2></div></div>
         <div className="business-home-actions-grid">
-          <QuickAction title="Nueva promoción" description="Abre ofertas y promociones" icon="％" to={availableActions.promotions ? "/ofertas" : undefined} disabled={!availableActions.promotions} />
-          <QuickAction title="Actualizar galería" description="Gestiona las fotos del negocio desde su edición" icon="▧" to={availableActions.edit ? `/mi-negocio/detalle/${businessIndex}?tab=photos` : undefined} disabled={!availableActions.edit} />
-          <QuickAction title="Productos y servicios" description="Gestiona tu catálogo" icon="◇" to={availableActions.catalog ? "/productos" : undefined} disabled={!availableActions.catalog} />
-          <QuickAction title="Editar información" description="Actualiza los datos del negocio" icon="✎" to={availableActions.edit ? `/mi-negocio/detalle/${businessIndex}?tab=general` : undefined} disabled={!availableActions.edit} />
+          <QuickAction title="Nueva promoción" description="Abre ofertas y promociones" icon="promotion" to={availableActions.promotions ? "/ofertas" : undefined} disabled={!availableActions.promotions} />
+          <QuickAction title="Actualizar galería" description="Gestiona las fotos del negocio desde su edición" icon="gallery" to={availableActions.edit ? `/mi-negocio/detalle/${businessIndex}?tab=photos` : undefined} disabled={!availableActions.edit} />
+          <QuickAction title="Productos y servicios" description="Gestiona tu catálogo" icon="catalog" to={availableActions.catalog ? "/productos" : undefined} disabled={!availableActions.catalog} />
+          <QuickAction title="Editar información" description="Actualiza los datos del negocio" icon="edit" to={availableActions.edit ? `/mi-negocio/detalle/${businessIndex}?tab=general` : undefined} disabled={!availableActions.edit} />
         </div>
         {(business.role !== "Propietario" && (!availableActions.catalog || !availableActions.edit || !availableActions.promotions)) && <p className="business-home-muted-note">Algunas acciones requieren permisos del propietario del negocio.</p>}
       </section>
