@@ -274,17 +274,26 @@
 .business-detail-page .business-offer-section,.business-detail-page .business-review-section{margin-top:42px}
 .business-detail-page .business-section-heading h2{font-size:24px;letter-spacing:-.6px}
 .business-detail-page .business-offer-grid{gap:18px}
+/* Mismo gesto táctil que los carruseles de Home: horizontal en las
+   tarjetas y vertical libre para seguir subiendo o bajando la página. */
 .business-detail-page .business-popular-grid{
   display:flex;
   align-items:stretch;
   flex-wrap:nowrap;
   overflow-x:auto;
   overscroll-behavior-x:contain;
+  overscroll-behavior-y:auto;
   scrollbar-width:thin;
   scrollbar-color:var(--xamuko-violet) #eee9ff;
+  scroll-snap-type:x proximity;
   padding:2px 2px 10px;
   cursor:grab;
-  touch-action:pan-x;
+  touch-action:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.business-detail-page .business-popular-grid>.entity-offer-card{
+  scroll-snap-align:start;
+  touch-action:auto;
 }
 .business-detail-page .business-popular-grid:active{cursor:grabbing}
 .business-detail-page .business-popular-grid::-webkit-scrollbar{height:7px}
