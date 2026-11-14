@@ -1,0 +1,25 @@
+-- Persist guest/user needs and authenticated Business support/suggestions.
+CREATE TABLE `SupportRequest` (
+  `id` CHAR(36) NOT NULL,
+  `kind` ENUM('NEED','SUPPORT','SUGGESTION') NOT NULL,
+  `userId` CHAR(36) NULL,
+  `businessId` CHAR(36) NULL,
+  `title` VARCHAR(120) NOT NULL,
+  `category` VARCHAR(120) NOT NULL,
+  `description` VARCHAR(2000) NULL,
+  `locationName` VARCHAR(240) NULL,
+  `locationContext` VARCHAR(240) NULL,
+  `status` ENUM('PENDING','UNDER_REVIEW','RESOLVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+  `decisionNote` VARCHAR(1500) NULL,
+  `reviewedById` CHAR(36) NULL,
+  `reviewedAt` DATETIME(3) NULL,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  INDEX `SupportRequest_kind_status_createdAt_idx` (`kind`,`status`,`createdAt`),
+  INDEX `SupportRequest_userId_createdAt_idx` (`userId`,`createdAt`),
+  INDEX `SupportRequest_businessId_createdAt_idx` (`businessId`,`createdAt`),
+  PRIMARY KEY (`id`),
+  CONSTRAINT `SupportRequest_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `SupportRequest_businessId_fkey` FOREIGN KEY (`businessId`) REFERENCES `Business`(`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `SupportRequest_reviewedById_fkey` FOREIGN KEY (`reviewedById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

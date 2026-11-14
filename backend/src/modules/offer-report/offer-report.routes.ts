@@ -4,7 +4,7 @@ import { optionalAuth } from '../../shared/middleware/optional-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 import { requireAdmin } from '../admin/admin-auth.service.js';
-import { listOfferReports, submitOfferReport } from './offer-report.service.js';
+import { listOfferReports, submitOfferReport, decideOfferReport } from './offer-report.service.js';
 
 export const offerReportRouter = Router();
 
@@ -44,3 +44,10 @@ const adminList: RequestHandler = async (request, response, next) => {
 offerReportRouter.post('/public/offers/:offerId/reports', limitOfferReports, requireTrustedOrigin, optionalAuth, submit);
 // Do not add requireAuth here: Admin uses its own secure, permission-gated session.
 offerReportRouter.get('/admin/offer-reports', requireAdmin('REPORTS_REVIEW'), adminList);
+offerReportRouter.patch('/admin/offer-reports/:id', requireTrustedOrigin, requireAdmin('CONTENT_MODERATE'), async (req, res, next) => {
+  try {
+    const report = await decideOfferReport((req as AuthenticatedRequest).auth.userId, String(req.params.id), req.body?.status, req.body?.decisionNote);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ report });
+  } catch (error) { next(error); }
+});
