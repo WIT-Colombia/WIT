@@ -74,7 +74,7 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
       assert.equal(login.response.status, 200, JSON.stringify(login.body));
       token = login.body.accessToken;
       assert.ok(token);
-      refreshCookie = cookie(login.response, 'xamuko_refresh');
+      refreshCookie = cookie(login.response, 'wit_refresh_token');
       const refresh = await post('/auth/refresh', {}, { Cookie: refreshCookie });
       assert.equal(refresh.response.status, 200, JSON.stringify(refresh.body));
       assert.ok(refresh.body.accessToken);
