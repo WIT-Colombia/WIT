@@ -1286,8 +1286,8 @@
 .business-home .business-home-details .business-home-info-list {
   flex: 1 1 auto;
   margin: 1px 0 0;
-  align-content: start;
-  justify-content: space-evenly;
+  align-content: space-evenly;
+  justify-content: stretch;
 }
 .business-home .business-home-details .business-home-info-list > div {
   grid-template-columns: minmax(105px, .79fr) minmax(0, 1.21fr);
