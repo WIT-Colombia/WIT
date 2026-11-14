@@ -12,6 +12,7 @@ import { favoriteRouter } from './modules/favorites/favorite.routes.js';
 import { analyticsRouter } from './modules/analytics/analytics.routes.js';
 import { reviewRouter } from './modules/reviews/review.routes.js';
 import { businessReportRouter } from './modules/business-report/business-report.routes.js';
+import { offerReportRouter } from './modules/offer-report/offer-report.routes.js';
 import { promotionRouter } from './modules/business/promotion.routes.js';
 import { collaboratorRouter } from './modules/business/collaborator.routes.js';
 import { verificationRouter } from './modules/business/verification.routes.js';
@@ -28,6 +29,10 @@ apiRouter.use('/public', publicBusinessRouter);
 // Public analytics events must be reachable by anonymous visitors before
 // routers that apply broad authentication middleware.
 apiRouter.use('/', analyticsRouter);
+// These public submissions and the Admin inbox must be reached before routers
+// that apply requireAuth to every request regardless of path.
+apiRouter.use('/', offerReportRouter);
+apiRouter.use('/', businessReportRouter);
 // This router contains both explicitly public read routes and individually
 // protected management routes, so mount it before routers with broad auth middleware.
 apiRouter.use('/', promotionRouter);
@@ -37,7 +42,6 @@ apiRouter.use('/', ownershipTransferRouter);
 apiRouter.use('/', offerRouter);
 apiRouter.use('/', favoriteRouter);
 apiRouter.use('/', reviewRouter);
-apiRouter.use('/', businessReportRouter);
 apiRouter.use('/', businessCrudRouter);
 apiRouter.use('/', photoRouter);
 apiRouter.use('/', businessRouter);
