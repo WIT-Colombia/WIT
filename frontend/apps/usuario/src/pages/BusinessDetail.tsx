@@ -33,13 +33,13 @@ import "./BusinessDetailHeader.css";
 type Tab = "info" | "products" | "services" | "reviews";
 const validTabs: Tab[] = ["info", "products", "services", "reviews"];
 type PreviewStorage = { returnTo?: string; expiresAt?: number };
-const businessAppBaseUrl = (import.meta.env.VITE_BUSINESS_PUBLIC_URL?.trim() || (import.meta.env.DEV ? "http://localhost:5174" : "")).replace(/\/+$/, "");
+const businessAppBaseUrl = (import.meta.env.VITE_BUSINESS_PUBLIC_URL?.trim() || (import.meta.env.DEV ? "http://localhost:5174" : "https://business.xamuko.com")).replace(/\/+$/, "");
 const previewStorageKey = (businessId: string) => `xamuko-business-preview:${businessId}`;
 function trustedBusinessReferrer(value: string): boolean {
   if (!businessAppBaseUrl || !value) return false;
   try {
     const referrer = new URL(value);
-    return referrer.origin === new URL(businessAppBaseUrl).origin && referrer.pathname.startsWith("/mi-negocio/detalle/");
+    return referrer.origin === new URL(businessAppBaseUrl).origin && (referrer.pathname === "/inicio" || referrer.pathname.startsWith("/mi-negocio/detalle/"));
   } catch {
     return false;
   }
@@ -48,7 +48,7 @@ function safeBusinessReturnUrl(value: string | null): string | null {
   if (!value || !businessAppBaseUrl) return null;
   try {
     const target = new URL(value, businessAppBaseUrl);
-    if (target.origin !== new URL(businessAppBaseUrl).origin || !target.pathname.startsWith("/mi-negocio/detalle/")) return null;
+    if (target.origin !== new URL(businessAppBaseUrl).origin || (target.pathname !== "/inicio" && !target.pathname.startsWith("/mi-negocio/detalle/"))) return null;
     return target.toString();
   } catch {
     return null;
@@ -78,6 +78,7 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
   const qrVisit = searchParams.get("source") === "qr";
   const previewRequested = searchParams.get("preview") === "business";
   const returnToParam = searchParams.get("returnTo");
+  const directBusinessPreviewReturnTo = previewRequested ? safeBusinessReturnUrl(returnToParam) : null;
   const navigate = useNavigate();
   const { status: authStatus } = useAuth();
   const { selection } = useLocationContext();
@@ -99,7 +100,8 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
   const [previewContext, setPreviewContext] = useState<{ active: boolean; returnTo: string | null }>({ active: false, returnTo: null });
   const [publicReviews, setPublicReviews] = useState<PublicReview[]>([]);
   const [reviewSummary, setReviewSummary] = useState<{ average: number | null; count: number }>({ average: null, count: 0 });
-  const isBusinessPreview = embeddedPreview || previewContext.active;
+  // Resolve preview before effects run to prevent customer actions or visit events on initial render.
+  const isBusinessPreview = embeddedPreview || Boolean(directBusinessPreviewReturnTo) || previewContext.active;
   const demoCatalog = import.meta.env.VITE_E2E_REAL_ONLY !== "true" && searchParams.get("demoCatalog") === "50";
   const demoProducts = useMemo(() => demoCatalog && businessProducts.length > 0 ? Array.from({ length: 50 }, (_, index) => ({ ...businessProducts[index % businessProducts.length], id: `demo-product-${index + 1}`, name: `Producto demo ${index + 1}` })) : businessProducts, [demoCatalog, businessProducts]);
   const demoServices = useMemo(() => demoCatalog && businessServices.length > 0 ? Array.from({ length: 50 }, (_, index) => ({ ...businessServices[index % businessServices.length], id: `demo-service-${index + 1}`, name: `Servicio demo ${index + 1}` })) : businessServices, [demoCatalog, businessServices]);
@@ -208,7 +210,7 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
   if (loadState === "error") return <PageLayout><PublicBusinessSeo business={null} /><div className="business-not-found"><h1>No se pudo cargar este negocio</h1><p>Revisa tu conexión e inténtalo nuevamente.</p><Link to="/home">Volver a explorar</Link></div></PageLayout>;
   if (loadState === "not-found" || !business) return <PageLayout><PublicBusinessSeo business={null} /><div className="business-not-found"><h1>No encontramos este negocio</h1><p>Puede que el enlace ya no esté disponible o no esté publicado.</p><Link to="/home">Volver a explorar</Link></div></PageLayout>;
   const currentBusiness = business;
-  const goBack = () => { if (embeddedPreview) { navigate("/inicio", { replace: true }); return; } if (isBusinessPreview && previewContext.returnTo) { window.location.assign(previewContext.returnTo); return; } if (window.history.length > 1) navigate(-1); else navigate("/home"); };
+  const goBack = () => { if (embeddedPreview) { navigate("/inicio", { replace: true }); return; } const returnToBusiness = directBusinessPreviewReturnTo ?? previewContext.returnTo; if (isBusinessPreview && returnToBusiness) { window.location.assign(returnToBusiness); return; } if (window.history.length > 1) navigate(-1); else navigate("/home"); };
   const whatsappUrl = business.whatsapp
     ? whatsappLink(business.whatsapp, `¡Hola! ${business.name}, vi tu perfil en XAMUKO y quisiera recibir más información. ¡Gracias!`)
     : null;
@@ -266,7 +268,7 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
     popularDragRef.current = null;
   }
   const tabButton = (key: Tab, label: string) => <button type="button" className={tab === key ? "active" : ""} aria-current={tab === key ? "page" : undefined} onClick={() => { const next = new URLSearchParams(searchParams); if (key === "info") next.delete("tab"); else next.set("tab", key); setSearchParams(next); }}><svg className="business-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{key === "info" ? <><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></> : key === "products" ? <><rect x="4" y="7" width="16" height="14" rx="2"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></> : key === "services" ? <><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></> : <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5Z"/>}</svg>{label}</button>;
-  return <PageLayout className={`business-detail-page${isBusinessPreview ? " business-preview-mode" : ""}`}><PublicBusinessSeo business={currentBusiness} excluded={embeddedPreview || previewRequested || demoCatalog || ["preview", "demoCatalog", "token", "code", "email"].some(key => searchParams.has(key))} /><div className="business-detail-back"><button className="business-back-link" type="button" onClick={goBack}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>{embeddedPreview ? "Volver a Business" : isBusinessPreview ? "Volver a mi negocio" : "Volver"}</span></button><div className="business-header-tools"><button className="business-header-icon-button" type="button" disabled={isBusinessPreview || !cleanPublicUrl} onClick={() => void share()} aria-label="Compartir negocio" title="Compartir"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="19" r="2"/><path d="m8 11 8-5m-8 7 8 5"/></svg><span>Compartir</span></button><div className="business-more-wrap" ref={moreWrapRef}><button className="business-header-icon-button" type="button" disabled={isBusinessPreview} onClick={() => setMoreOpen((open) => !open)} aria-label="Más opciones del negocio" title="Más opciones" aria-expanded={moreOpen}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>{moreOpen && !isBusinessPreview && <div className="business-more-menu"><BusinessReportDialog key={currentBusiness.id} businessId={currentBusiness.id} businessName={currentBusiness.name} disabled={isBusinessPreview} /></div>}</div></div></div>{isBusinessPreview && <div className="business-preview-notice" role="status">Vista previa de tu negocio · Las acciones de cliente están deshabilitadas.</div>}<section className="business-detail-hero">
+  return <PageLayout className={`business-detail-page${isBusinessPreview ? " business-preview-mode" : ""}`}><PublicBusinessSeo business={currentBusiness} excluded={embeddedPreview || previewRequested || demoCatalog || ["preview", "demoCatalog", "token", "code", "email"].some(key => searchParams.has(key))} /><div className="business-detail-back"><button className="business-back-link" type="button" onClick={goBack}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>{isBusinessPreview && directBusinessPreviewReturnTo?.includes("/inicio") ? "Volver a Business" : embeddedPreview ? "Volver a Business" : isBusinessPreview ? "Volver a mi negocio" : "Volver"}</span></button><div className="business-header-tools"><button className="business-header-icon-button" type="button" disabled={isBusinessPreview || !cleanPublicUrl} onClick={() => void share()} aria-label="Compartir negocio" title="Compartir"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="19" r="2"/><path d="m8 11 8-5m-8 7 8 5"/></svg><span>Compartir</span></button><div className="business-more-wrap" ref={moreWrapRef}><button className="business-header-icon-button" type="button" disabled={isBusinessPreview} onClick={() => setMoreOpen((open) => !open)} aria-label="Más opciones del negocio" title="Más opciones" aria-expanded={moreOpen}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>{moreOpen && !isBusinessPreview && <div className="business-more-menu"><BusinessReportDialog key={currentBusiness.id} businessId={currentBusiness.id} businessName={currentBusiness.name} disabled={isBusinessPreview} /></div>}</div></div></div><section className="business-detail-hero">
       <div className="business-detail-gallery">
         <div className="business-detail-photo" onTouchStart={(event) => { headerTouchStartX.current = event.touches[0]?.clientX ?? null; headerSwipeDetected.current = false; }} onTouchMove={(event) => { const startX = headerTouchStartX.current; const currentX = event.touches[0]?.clientX; if (startX !== null && currentX !== undefined && Math.abs(currentX - startX) > 10) headerSwipeDetected.current = true; }} onTouchEnd={(event) => { const startX = headerTouchStartX.current; const endX = event.changedTouches[0]?.clientX; headerTouchStartX.current = null; if (startX === null || endX === undefined || Math.abs(endX - startX) < 45 || galleryImages.length < 2) return; setGalleryIndex((current) => endX < startX ? (current + 1) % galleryImages.length : (current - 1 + galleryImages.length) % galleryImages.length); }}>
           {galleryImages.length ? <>
