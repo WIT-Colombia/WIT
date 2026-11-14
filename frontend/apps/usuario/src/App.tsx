@@ -1,25 +1,24 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { lazy, Suspense, useEffect, useRef, type ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, useRef, type ReactNode, type ErrorInfo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import { useLocationContext } from "./context/LocationContext";
 import Register from "./pages/Register";
+import Home from "./pages/Home";
+import Results from "./pages/Results";
+import MapPage from "./pages/Map";
+import BusinessDetail from "./pages/BusinessDetail";
+import { ProductDetail, ServiceDetail } from "./pages/OfferDetail";
 import { RequireAccount } from "./components/RequireAccount";
 import { SiteFooter } from "./components/SiteFooter";
 import { PageMetadata } from "@wit/ui";
 import { getAuthPageMetadata, getPrivateAuthPageMetadata, metadataTags } from "@wit/utils";
-const Home = lazy(() => import("./pages/Home"));
 const ManualLocation = lazy(() => import("./pages/ManualLocation"));
 const Location = lazy(() => import("./pages/Location"));
 const LocationMap = lazy(() => import("./pages/LocationMap"));
-const Results = lazy(() => import("./pages/Results"));
-const MapPage = lazy(() => import("./pages/Map"));
 const Filters = lazy(() => import("./pages/Filters"));
-const BusinessDetail = lazy(() => import("./pages/BusinessDetail"));
 const BusinessProducts = lazy(() => import("./pages/BusinessOffers").then(module => ({ default: module.BusinessProducts })));
 const BusinessServices = lazy(() => import("./pages/BusinessOffers").then(module => ({ default: module.BusinessServices })));
-const ProductDetail = lazy(() => import("./pages/OfferDetail").then(module => ({ default: module.ProductDetail })));
-const ServiceDetail = lazy(() => import("./pages/OfferDetail").then(module => ({ default: module.ServiceDetail })));
 const SpecialPromotionDetail = lazy(() => import("./pages/SpecialPromotionDetail"));
 const Directions = lazy(() => import("./pages/Directions"));
 const NoResults = lazy(() => import("./pages/NoResults"));
@@ -37,6 +36,46 @@ const PasswordRecovery = lazy(() => import("./pages/PasswordRecovery"));
 const RecoverPassword = lazy(() => import("./pages/RecoverPassword"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const GoogleCallback = lazy(() => import("./pages/GoogleCallback"));
+
+/**
+ * If a user kept the site open during a Cloudflare publish, a lazy route may
+ * reference an asset from the previous build. Recover once automatically,
+ * instead of leaving guests on a blank screen until they press Refresh.
+ */
+class RouteNavigationBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    const chunkFailed = /failed to fetch dynamically imported module|importing a module script failed|failed to load module script|chunkloaderror|unable to preload css|loading chunk .* failed/i.test(error.message);
+    if (!chunkFailed) return;
+    try {
+      const key = `xamuko:route-load-recovered:${window.location.pathname}`;
+      const previous = Number(window.sessionStorage.getItem(key) || 0);
+      if (!previous || Date.now() - previous > 5 * 60_000) {
+        window.sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+      }
+    } catch {
+      // Browser storage restrictions must never prevent the fallback UI.
+    }
+  }
+
+  render() {
+    if (this.state.error) {
+      return <main role="alert" style={{ minHeight: "65svh", display: "grid", placeContent: "center", gap: 14, padding: 24, textAlign: "center" }}>
+        <h1 style={{ fontSize: 24, color: "#19213B", margin: 0 }}>No pudimos abrir esta página</h1>
+        <p style={{ color: "#566481", margin: 0 }}>La conexión o una actualización del sitio interrumpió la carga. Puedes intentarlo nuevamente.</p>
+        <button type="button" onClick={() => window.location.reload()} style={{ border: 0, borderRadius: 12, padding: "13px 20px", background: "#7B3FFB", color: "white", fontWeight: 700, cursor: "pointer" }}>Reintentar</button>
+        <a href="/home" style={{ color: "#7B3FFB" }}>Volver al inicio</a>
+      </main>;
+    }
+    return this.props.children;
+  }
+}
 
 function ScrollToTop() {
   const location = useLocation();
@@ -124,7 +163,8 @@ function PrivateAuthMetadata() {
 }
 
 export default function App() {
-  return <InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<main role="status" aria-live="polite" style={{ minHeight: "100svh", display: "grid", placeItems: "center" }}>Cargando página…</main>}><Routes>
+  const route = useLocation();
+  return <InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><RouteNavigationBoundary key={route.pathname}><Suspense fallback={<main role="status" aria-live="polite" style={{ minHeight: "100svh", display: "grid", placeItems: "center" }}>Cargando página…</main>}><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Navigate to="/home" replace />} />
@@ -163,5 +203,5 @@ export default function App() {
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<Navigate to="/home" replace />} />
-  </Routes></Suspense><StandaloneFooter /></InitialLocationGate>;
+  </Routes></Suspense></RouteNavigationBoundary><StandaloneFooter /></InitialLocationGate>;
 }
