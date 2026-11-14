@@ -34,8 +34,8 @@ const markup = {
     '</div></section></main>',
   results: '<main class="results-page"><section class="results-offers results-offer-group"><div class="results-offer-grid">' +
     card('product', true) + card('service', false) + '</div></section></main>',
-  business: '<main class="business-detail-page"><section class="business-offer-grid business-products-grid">' +
-    card('product', true) + card('service', false) + '</section></main>',
+  business: '<main class="business-detail-page"><div class="business-home-offers-view"><section class="business-offer-grid business-products-grid">' +
+    card('product', true) + card('service', false) + '</section></div></main>',
 };
 const browser = await chromium.launch({ headless: true });
 try {
@@ -49,7 +49,9 @@ try {
     try {
       for (const [scope, html] of Object.entries(markup)) {
         // Home uses a deliberately shorter card; results and business keep their own size.
-        const cardHeight = scope === 'home' ? (device === 'iphone' ? 220 : 270) : expectedHeight;
+        const cardHeight = scope === 'home' || scope === 'business'
+          ? (device === 'iphone' ? 220 : 270)
+          : expectedHeight;
         await page.setContent('<!doctype html><html lang="es"><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>' + html + '</body></html>');
         await page.addStyleTag({ content: styles });
         await page.evaluate(() => document.fonts.ready);
