@@ -25,16 +25,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout>;
+    let failures = 0;
     const restore = () => {
       const epoch = verificationEpoch.current;
       refreshSession().then((currentUser) => {
-        if (active && epoch === verificationEpoch.current) { setUser(currentUser); setStatus("authenticated"); }
+        if (active && epoch === verificationEpoch.current) { failures = 0; setUser(currentUser); setStatus("authenticated"); }
       }).catch((error: unknown) => {
         if (!active || epoch !== verificationEpoch.current) return;
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
           setUser(null); setStatus("anonymous");
         } else {
-          // Preserve loading during network/5xx/429 failures; guards must wait.
+          // Public routes must remain usable when session restoration is unavailable.
+          // Keep retrying in the background so a previously authenticated user can recover.
+          failures += 1;
+          if (failures >= 2) { setUser(null); setStatus("anonymous"); }
+          clearTimeout(timer);
           timer = setTimeout(restore, error instanceof ApiError && error.retryAfterSeconds ? error.retryAfterSeconds * 1000 : 5000);
         }
       });
@@ -49,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
     const update = () => { getMe().then((next) => { if (active) setUser((current) => current?.avatarUrl === next.avatarUrl && current.displayName === next.displayName && current.nickname === next.nickname ? current : next); }).catch(() => {}); };
     const refreshWhenVisible = () => { if (document.visibilityState === "visible") update(); };
-    const interval = window.setInterval(refreshWhenVisible, 3000);
+    const interval = window.setInterval(refreshWhenVisible, 60000);
     window.addEventListener("focus", update);
     document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => { active = false; window.clearInterval(interval); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", refreshWhenVisible); };
