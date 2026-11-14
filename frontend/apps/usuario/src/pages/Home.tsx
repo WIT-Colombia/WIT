@@ -178,8 +178,6 @@ export default function Home() {
   const featuredDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreFeaturedClickRef = useRef(false);
   const categoryListRef = useRef<HTMLDivElement>(null);
-  const categoryDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
-  const ignoreCategoryClickRef = useRef(false);
   const nearbyListRef = useRef<HTMLDivElement>(null);
   const nearbyDragRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; startY: number; moved: boolean } | null>(null);
   const ignoreNearbyClickRef = useRef(false);
@@ -620,37 +618,6 @@ export default function Home() {
     if (ignoreFeaturedClickRef.current) window.setTimeout(() => { ignoreFeaturedClickRef.current = false; }, 0);
   }
 
-  function startCategoryDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!isMouseDragPointer(event.pointerType, event.button)) return;
-    const list = categoryListRef.current;
-    if (!list) return;
-    categoryDragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, startScrollLeft: list.scrollLeft, moved: false };
-  }
-
-  function moveCategoryDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    const drag = categoryDragRef.current;
-    const list = categoryListRef.current;
-    if (!drag || !list || drag.pointerId !== event.pointerId) return;
-    const delta = event.clientX - drag.startX;
-    const deltaY = event.clientY - drag.startY;
-    if (isHorizontalDominantGesture(delta, deltaY)) drag.moved = true;
-    if (drag.moved) {
-      event.preventDefault();
-      if (!list.hasPointerCapture(event.pointerId)) list.setPointerCapture(event.pointerId);
-      list.scrollLeft = drag.startScrollLeft - delta;
-    }
-  }
-
-  function endCategoryDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    const drag = categoryDragRef.current;
-    const list = categoryListRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    ignoreCategoryClickRef.current = drag.moved;
-    categoryDragRef.current = null;
-    if (list?.hasPointerCapture(event.pointerId)) list.releasePointerCapture(event.pointerId);
-    if (ignoreCategoryClickRef.current) window.setTimeout(() => { ignoreCategoryClickRef.current = false; }, 0);
-  }
-
   function startNearbyDrag(event: ReactPointerEvent<HTMLDivElement>) {
     if (!isMouseDragPointer(event.pointerType, event.button)) return;
     const list = nearbyListRef.current;
@@ -723,7 +690,7 @@ export default function Home() {
 
       {selectedLocation && (categoryStatus === "error" || (categoryStatus === "ready" && activeCategories.length > 0)) && <section className="category-section" id="explorar" aria-labelledby="category-title">
         <div className="section-heading"><div className="home-section-intro"><h2 id="category-title"><span className="home-section-symbol home-section-symbol--round" aria-hidden="true">+</span>Explora por categoría</h2></div>{categoryStatus === "ready" && activeCategories.length > 7 && <button className="text-link category-toggle" type="button" aria-expanded={showAllCategories} aria-controls="home-category-list" onClick={() => setShowAllCategories((current) => !current)}>{showAllCategories ? "Ver menos" : `Ver más (${activeCategories.length})`} <Icon name="arrow" /></button>}</div>
-        <div className={`category-list${showAllCategories ? " is-expanded" : ""}`} id="home-category-list" ref={categoryListRef} onScroll={() => { const list = categoryListRef.current; if (list) setCategoryScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }} onPointerDown={startCategoryDrag} onPointerMove={moveCategoryDrag} onPointerUp={endCategoryDrag} onPointerCancel={endCategoryDrag} onClickCapture={(event) => { if (ignoreCategoryClickRef.current) { event.preventDefault(); event.stopPropagation(); } }}>{categoryStatus === "error" ? <div className="category-list__message" role="alert">No pudimos cargar las categorías. <button type="button" onClick={() => setCategoryRetry(value => value + 1)}>Reintentar</button></div> : visibleCategories.map((item, index) => <button key={item.id} type="button" className={`category-tile${category === item.name ? " selected" : ""}`} aria-pressed={category === item.name} aria-label={`${item.name}, ${item.businessCount} ${item.businessCount === 1 ? "negocio" : "negocios"}`} onClick={() => selectCategory(item.name, index)}><span className="category-icon"><CategoryIcon name={item.name}/></span><span className="category-tile__detail"><span className="category-tile__name">{item.name}</span><small className="category-tile__count">{item.businessCount} {item.businessCount === 1 ? "negocio" : "negocios"}</small></span></button>)}</div>
+        <div className={`category-list${showAllCategories ? " is-expanded" : ""}`} id="home-category-list" ref={categoryListRef} onScroll={() => { const list = categoryListRef.current; if (list) setCategoryScroll({ left: list.scrollLeft, max: Math.max(0, list.scrollWidth - list.clientWidth) }); }}>{categoryStatus === "error" ? <div className="category-list__message" role="alert">No pudimos cargar las categorías. <button type="button" onClick={() => setCategoryRetry(value => value + 1)}>Reintentar</button></div> : visibleCategories.map((item, index) => <button key={item.id} type="button" className={`category-tile${category === item.name ? " selected" : ""}`} aria-pressed={category === item.name} aria-label={`${item.name}, ${item.businessCount} ${item.businessCount === 1 ? "negocio" : "negocios"}`} onClick={() => selectCategory(item.name, index)}><span className="category-icon"><CategoryIcon name={item.name}/></span><span className="category-tile__detail"><span className="category-tile__name">{item.name}</span><small className="category-tile__count">{item.businessCount} {item.businessCount === 1 ? "negocio" : "negocios"}</small></span></button>)}</div>
         {showAllCategories && categoryScroll.max > 0 && <div className="category-scroll-control"><input type="range" min="0" max={categoryScroll.max} step="1" value={Math.min(categoryScroll.left, categoryScroll.max)} aria-label="Desplazar categorías" onChange={(event) => { const left = Number(event.target.value); if (categoryListRef.current) categoryListRef.current.scrollLeft = left; setCategoryScroll((current) => ({ ...current, left })); }} /></div>}
       </section>}
 
