@@ -297,6 +297,20 @@ enum BusinessReportStatus {
   REJECTED
 }
 
+enum OfferReportReason {
+  UNAVAILABLE
+  WRONG_INFORMATION
+  WRONG_IMAGE
+  OTHER
+}
+
+enum OfferReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
 enum BusinessReviewReportReason {
   OFFENSIVE
   SPAM
@@ -344,6 +358,7 @@ model User {
   uploadedPromotionPhotos     BusinessPromotionPhoto[]   @relation("PromotionPhotoUploader")
   auditLogs                   AuditLog[]                 @relation("AuditActor")
   submittedBusinessReports      BusinessReport[]
+  submittedOfferReports         OfferReport[]
   businessFavorites           BusinessFavorite[]
   offerLikes                  BusinessOfferLike[]
   analyticsEvents             BusinessAnalyticsEvent[]   @relation("AnalyticsActor")
@@ -848,6 +863,7 @@ model BusinessOffer {
   category          Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   photos            Photo[]
   likes             BusinessOfferLike[]
+  reports           OfferReport[]
   promotions        BusinessPromotion[]
   analyticsEvents   BusinessAnalyticsEvent[] @relation("OfferAnalyticsEvents")
 
@@ -989,6 +1005,24 @@ model BusinessReport {
 
   @@index([status, createdAt])
   @@index([businessId, createdAt])
+  @@index([reporterId, createdAt])
+}
+
+model OfferReport {
+  id           String            @id @default(uuid()) @db.Char(36)
+  offerId      String            @db.Char(36)
+  reporterId   String?           @db.Char(36)
+  reason       OfferReportReason
+  description  String?           @db.VarChar(500)
+  status       OfferReportStatus @default(PENDING)
+  decisionNote String?           @db.VarChar(1500)
+  createdAt    DateTime          @default(now()) @db.DateTime(3)
+  updatedAt    DateTime          @updatedAt @db.DateTime(3)
+  offer        BusinessOffer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  reporter     User?             @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([offerId, createdAt])
   @@index([reporterId, createdAt])
 }
 
