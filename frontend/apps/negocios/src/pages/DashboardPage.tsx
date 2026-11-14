@@ -140,6 +140,7 @@ export function DashboardPage() {
   const [visibility, setVisibility] = useState<{ visibilityStatus: string; isWithinPeriod: boolean; period: { expiresAt: string } | null } | null>(null);
   const [visibilityBusy, setVisibilityBusy] = useState(false);
   const [visibilityError, setVisibilityError] = useState("");
+  const [visibilityNow, setVisibilityNow] = useState(() => Date.now());
   const [proUnlocked, setProUnlocked] = useState<boolean | null>(null);
   const [reviewSummary, setReviewSummary] = useState<{ average: number | null; total: number } | null>(null);
   const realBusiness = business.source === "real" && Boolean(business.id);
@@ -194,13 +195,46 @@ export function DashboardPage() {
     return () => { active = false; };
   }, [business.id, isPreview, realBusiness]);
 
-  const renewBusinessVisibility = async () => {
+  // Mantiene el contador actualizado si el propietario deja Inicio abierto.
+  useEffect(() => {
+    const updateClock = () => setVisibilityNow(Date.now());
+    const interval = window.setInterval(updateClock, 60_000);
+    window.addEventListener("focus", updateClock);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", updateClock);
+    };
+  }, []);
+
+  const expiresAt = visibility?.period?.expiresAt;
+  const expiry = expiresAt ? new Date(expiresAt) : null;
+  const validExpiry = expiry !== null && Number.isFinite(expiry.getTime());
+  const expiryTime = validExpiry ? expiry.getTime() : null;
+  const remainingMs = expiryTime === null ? null : expiryTime - visibilityNow;
+  const remainingDays = remainingMs === null ? null : Math.max(0, Math.ceil(remainingMs / 86_400_000));
+  const withinVisibilityPeriod = visibility?.isWithinPeriod === true && remainingMs !== null && remainingMs > 0;
+  const visibilityExpiring = withinVisibilityPeriod && remainingDays !== null && remainingDays <= 10;
+  const visibilityExpired = remainingMs !== null && remainingMs <= 0;
+  const visibilityBadge = visibility === null ? "Consultando" : !validExpiry ? "Sin fecha" : visibilityExpired ? "Vencido" : !withinVisibilityPeriod ? "No vigente" : visibilityExpiring ? "Por vencer" : "Vigente";
+  const visibilityBadgeVariant = visibilityExpired || (visibility !== null && !withinVisibilityPeriod && validExpiry) ? "expired" : visibilityExpiring ? "warning" : withinVisibilityPeriod ? "active" : "unknown";
+  const expiryLabel = validExpiry && expiry ? new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Bogota" }).format(expiry) : null;
+  const expiryTimestamp = validExpiry && expiry ? new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeStyle: "short", timeZone: "America/Bogota" }).format(expiry) : undefined;
+  const visibilityRemainingLabel = visibilityExpired
+    ? "El período de visibilidad terminó"
+    : !withinVisibilityPeriod
+      ? "No hay una vigencia activa confirmada"
+      : remainingMs !== null && remainingMs < 86_400_000
+        ? "Menos de 24 horas restantes"
+        : `Quedan ${remainingDays} días`;
+
+    const renewBusinessVisibility = async () => {
     if (!realBusiness || !business.id || visibilityBusy) return;
     setVisibilityBusy(true);
     setVisibilityError("");
     try {
       const { visibility: result } = await businessApi.renewVisibility(business.id);
       setVisibility(result);
+      setVisibilityNow(Date.now());
     } catch {
       setVisibilityError("No se pudo renovar la visibilidad. Inténtalo nuevamente.");
     } finally {
@@ -237,7 +271,29 @@ export function DashboardPage() {
   return <div className="business-home">
     <div className="business-home-heading">
       <div><span className="business-home-eyebrow">CENTRO DE CONTROL</span><h1>Inicio</h1><p>{currentDate.charAt(0).toLocaleUpperCase("es-CO") + currentDate.slice(1)} · Un resumen de tu negocio en XAMUKO.</p></div>
-      {business.name && realBusiness && !isPreview && business.role === "Propietario" && <div className="business-home-visibility-action"><button type="button" onClick={() => void renewBusinessVisibility()} disabled={visibilityBusy || visibility === null}>{visibilityBusy ? "Renovando…" : `Mantener visible ${BUSINESS_VISIBILITY_DAYS} días`}</button>{visibilityError && <small role="alert">{visibilityError}</small>}</div>}
+      {business.name && realBusiness && !isPreview && business.role === "Propietario" && (
+        <div className="business-home-visibility-action">
+          <div className="business-home-visibility-info" aria-live="polite">
+            <div className="business-home-visibility-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.2 12s3.5-6.3 9.8-6.3 9.8 6.3 9.8 6.3-3.5 6.3-9.8 6.3S2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>VISIBILIDAD DEL NEGOCIO</span>
+              <span className={`business-home-visibility-badge ${visibilityBadgeVariant}`}>{visibilityBadge}</span>
+            </div>
+            <strong className="business-home-visibility-date">
+              {expiryLabel ? <>Hasta el <time dateTime={expiresAt} title={expiryTimestamp}>{expiryLabel}</time></> : visibility === null ? "Consultando vigencia…" : "Sin fecha de vencimiento"}
+            </strong>
+            <span className="business-home-visibility-remaining">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M3.5 10.5h17"/></svg>
+              {visibility === null ? "Fecha pendiente de consulta" : visibilityRemainingLabel}
+            </span>
+          </div>
+          <button type="button" onClick={() => void renewBusinessVisibility()} disabled={visibilityBusy || visibility === null}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.9 4.4"/><path d="M20 4v7h-7"/></svg>
+            <span>{visibilityBusy ? "Renovando…" : `Mantener visible ${BUSINESS_VISIBILITY_DAYS} días`}</span>
+          </button>
+          {visibilityError && <small className="business-home-visibility-error" role="alert">{visibilityError}</small>}
+        </div>
+      )}
     </div>
 
     {showEmptyAccount ? <section className="business-home-no-business"><span aria-hidden="true">⌂</span><h2>Selecciona o crea tu negocio</h2><p>Cuando elijas un establecimiento, aquí encontrarás su actividad y accesos de gestión.</p><Link className="business-home-primary" to="/mis-negocios">Ir a mis negocios <span aria-hidden="true">→</span></Link></section> : <>
