@@ -48,6 +48,20 @@ export function getAdminDashboardStats() { return request<AdminDashboardStats>('
 export async function adminMe() { return (await request<{ admin: RealAdmin }>('/admin/me')).admin; }
 export async function adminRefresh() { const result = await request<{ user: RealAdmin['user']; accessToken: string }>('/auth/refresh', { method: 'POST', body: JSON.stringify({ rememberMe: false }) }); accessToken = result.accessToken; return adminMe(); }
 export async function adminLogout() { try { await request('/auth/logout', { method: 'POST', body: '{}' }); } finally { accessToken = null; } }
+/* Contrato preparado para la futura API de reportes de ofertas.
+   El frontend nunca inventa registros ni los obtiene de localStorage de Usuarios. */
+export type AdminOfferReport = {
+  id: string;
+  reason: string;
+  description: string | null;
+  status: 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJECTED';
+  createdAt: string;
+  offer: { id: string; name: string; kind: 'PRODUCT' | 'SERVICE'; business: { id: string; name: string } };
+  reporter: { displayName: string } | null;
+};
+export function listAdminOfferReports() {
+  return request<{ reports: AdminOfferReport[] }>('/admin/offer-reports');
+}
 export function listReviewReports(status = '') { return request<{ reports: AdminReviewReport[] }>(`/admin/review-reports${status ? `?status=${encodeURIComponent(status)}` : ''}`); }
 export function moderateReviewReport(reportId: string, status: string, reviewStatus: string, decisionNote: string) { return request(`/admin/review-reports/${encodeURIComponent(reportId)}`, { method: 'PATCH', body: JSON.stringify({ status, reviewStatus, decisionNote }) }); }
 
