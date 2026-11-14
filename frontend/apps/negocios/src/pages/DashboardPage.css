@@ -907,3 +907,169 @@
     transition: none;
   }
 }
+
+/* Altura equilibrada de las dos tarjetas entre Rendimiento y Gestión diaria.
+   Limitar tamaño vertical sin alterar los bloques que las rodean. */
+.business-home .business-home-main-grid {
+  align-items: stretch;
+  gap: 16px;
+}
+.business-home .business-home-main-grid > .business-home-panel {
+  min-height: 0;
+  padding: 21px 24px;
+  border-radius: 23px;
+}
+.business-home .business-home-main-grid .business-home-panel-heading h2 {
+  font-size: clamp(20px, 1.65vw, 23px);
+}
+.business-home .business-home-main-grid .business-home-eyebrow {
+  font-size: 11px;
+}
+.business-home .business-home-performance .business-home-panel-heading p {
+  font-size: 13px;
+  margin-top: 5px;
+}
+.business-home .business-home-performance-summary {
+  gap: 16px;
+  margin: 14px 0 3px;
+}
+.business-home .business-home-views-total {
+  min-width: 0;
+  gap: 12px;
+  padding: 10px 13px;
+  border-radius: 15px;
+}
+.business-home .business-home-views-icon {
+  width: 31px;
+  height: 31px;
+}
+.business-home .business-home-views-total strong {
+  font-size: clamp(23px, 2vw, 29px);
+}
+.business-home .business-home-views-total span {
+  font-size: 11px;
+}
+.business-home .business-home-growth {
+  padding-left: 15px;
+  gap: 6px;
+}
+.business-home .business-home-growth-value {
+  min-height: 31px;
+  padding: 4px 10px;
+  font-size: 18px;
+}
+.business-home .business-home-growth-value span {
+  font-size: 20px;
+}
+.business-home .business-home-growth > span {
+  font-size: 11px;
+}
+.business-home .business-home-performance .business-home-chart-wrap {
+  margin-top: 0;
+}
+.business-home .business-home-performance .business-home-chart-labels {
+  font-size: 11px;
+}
+.business-home .business-home-details .business-home-details-avatar {
+  width: 62px;
+  height: 62px;
+  border-radius: 16px;
+}
+.business-home .business-home-details .business-home-rating {
+  min-height: 54px;
+  gap: 10px;
+  margin: 19px 0 17px;
+  padding: 10px 14px;
+  border-radius: 15px;
+}
+.business-home .business-home-details .business-home-rating > span {
+  font-size: 26px;
+}
+.business-home .business-home-details .business-home-rating > strong {
+  font-size: 26px;
+}
+.business-home .business-home-details .business-home-rating > small {
+  min-height: 23px;
+  padding-left: 12px;
+  font-size: 12px;
+}
+.business-home .business-home-details .business-home-info-list {
+  margin-top: 3px;
+}
+.business-home .business-home-details .business-home-info-list > div {
+  gap: 10px;
+  padding: 13px 2px;
+}
+.business-home .business-home-details .business-home-info-list dt {
+  gap: 9px;
+  font-size: 13px;
+}
+.business-home .business-home-details .business-home-info-list dt span,
+.business-home .business-home-details .business-home-info-list dt svg {
+  width: 19px;
+  height: 19px;
+}
+.business-home .business-home-details .business-home-info-list dd {
+  font-size: 13px;
+}
+
+/* Paneles apilados en iPad: conservar compacidad sin dejar huecos grandes. */
+@container business-home-panels (max-width: 1060px) {
+  .business-home .business-home-main-grid > .business-home-panel {
+    min-height: 0;
+    padding: 21px 23px;
+  }
+  .business-home .business-home-main-grid {
+    gap: 14px;
+  }
+}
+@container business-home-panels (min-width: 431px) and (max-width: 649px) {
+  .business-home .business-home-main-grid > .business-home-panel {
+    padding: 20px;
+  }
+  .business-home .business-home-main-grid .business-home-panel-heading h2 {
+    font-size: 21px;
+  }
+  .business-home .business-home-views-total {
+    padding: 10px 12px;
+  }
+  .business-home .business-home-details .business-home-info-list > div {
+    padding: 12px 1px;
+  }
+}
+@container business-home-panels (max-width: 430px) {
+  .business-home .business-home-main-grid > .business-home-panel {
+    padding: 16px 14px;
+    border-radius: 18px;
+  }
+  .business-home .business-home-main-grid {
+    gap: 12px;
+  }
+  .business-home .business-home-main-grid .business-home-panel-heading h2 {
+    font-size: 19px;
+  }
+  .business-home .business-home-performance-summary {
+    gap: 9px;
+    margin: 14px 0 7px;
+  }
+  .business-home .business-home-views-total {
+    gap: 7px;
+    padding: 10px 9px;
+  }
+  .business-home .business-home-growth {
+    padding-left: 9px;
+  }
+  .business-home .business-home-performance .business-home-chart-tooltip {
+    margin: 2px 0 7px;
+  }
+  .business-home .business-home-details .business-home-rating {
+    margin: 14px 0 12px;
+    padding: 9px 11px;
+  }
+  .business-home .business-home-details .business-home-info-list > div {
+    padding: 11px 0;
+  }
+  .business-home .business-home-details .business-home-info-list dd {
+    font-size: 12px;
+  }
+}
