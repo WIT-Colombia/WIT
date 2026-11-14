@@ -23,3 +23,96 @@
 @media(max-width:600px){
   .business-public-preview .business-detail-page .business-detail-back{font-size:10px}
 }
+
+/* Full-screen read-only preview opened from the Business homepage. */
+.business-public-preview-workspace {
+  min-height: 100svh;
+  background: #f8fafc;
+  color: #0f172a;
+}
+.business-public-preview-navigation {
+  display: flex;
+  width: min(calc(100% - 48px), 1180px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 auto;
+  padding: 22px 0 0;
+}
+.business-public-preview-back {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #fff;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  box-shadow: 0 5px 14px rgba(37, 99, 235, .08);
+  transition: background-color .18s ease, border-color .18s ease;
+}
+.business-public-preview-back:hover,
+.business-public-preview-back:focus-visible {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.business-public-preview-back:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+.business-public-preview-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 650;
+}
+.business-public-preview-status {
+  padding: 32px 24px;
+  color: #475569;
+  text-align: center;
+}
+.business-public-preview .user-content-main {
+  padding-top: 18px;
+}
+/* Browse tabs, photos, descriptions, hours and listings; no customer actions. */
+.business-public-preview .business-detail-back,
+.business-public-preview .business-header-tools,
+.business-public-preview .business-detail-actions,
+.business-public-preview .business-header-links,
+.business-public-preview .business-social-links,
+.business-public-preview .business-report-placement,
+.business-public-preview .business-registration-invite {
+  display: none !important;
+}
+.business-public-preview .business-preview-notice {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1e40af;
+}
+@media (max-width: 700px) {
+  .business-public-preview-navigation {
+    width: calc(100% - 32px);
+    flex-wrap: wrap;
+    padding-top: 16px;
+  }
+  .business-public-preview-back {
+    min-height: 38px;
+    padding: 0 13px;
+    font-size: 12px;
+  }
+  .business-public-preview-label {
+    font-size: 11px;
+  }
+  .business-public-preview .user-content-main {
+    padding-top: 14px;
+    padding-bottom: 30px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .business-public-preview-back { transition: none; }
+}
