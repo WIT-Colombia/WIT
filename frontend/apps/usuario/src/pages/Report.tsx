@@ -40,7 +40,7 @@ export default function Report() {
   }, [targetId, targetType]);
 
   const business = targetType === "business" ? businesses.find((item) => item.id === targetId) : undefined;
-  const product = targetType === "product" ? (remoteOffer && "priceLabel" in remoteOffer ? remoteOffer as Product : products.find((item) => item.id === targetId)) : undefined;
+  const product = targetType === "product" ? ((remoteOffer as Product | undefined) ?? products.find((item) => item.id === targetId)) : undefined;
   const service = targetType === "service" ? (remoteOffer as Service | undefined ?? services.find((item) => item.id === targetId)) : undefined;
   const review = targetType === "review" ? [...reviews, ...getUserReviews()].find((item) => item.id === targetId) : undefined;
   const target = business ?? product ?? service ?? review;
