@@ -11,6 +11,7 @@ import { DemoDashboardPage } from './pages/DemoDashboardPage';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
 import { ReviewReportsPage } from './pages/ReviewReportsPage';
+import { OperationalInboxPage } from './pages/OperationalInboxPage';
 import { ReviewsPage } from './pages/ReviewsPage';
 import { PioneersPage } from './pages/PioneersPage';
 import { VerificationsPage } from './pages/VerificationsPage';
@@ -34,7 +35,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/user-needs', '/business-reports', '/offer-reports', '/support', '/suggestions'];
 
 export default function App() {
   if (isAdminDemoMode) return <Routes><Route element={<DemoProtectedRoute />}><Route element={<Layout />}>
@@ -57,6 +58,11 @@ export default function App() {
         <Route path="/businesses/:id" element={<BusinessDetailShell />} />
         <Route path="/verifications" element={<VerificationsPage />} />
         <Route path="/reports" element={<ReviewReportsPage />} />
+        <Route path="/user-needs" element={<OperationalInboxPage kind="needs" />} />
+        <Route path="/business-reports" element={<OperationalInboxPage kind="business-reports" />} />
+        <Route path="/offer-reports" element={<OperationalInboxPage kind="offer-reports" />} />
+        <Route path="/support" element={<OperationalInboxPage kind="support" />} />
+        <Route path="/suggestions" element={<OperationalInboxPage kind="suggestions" />} />
         <Route path="/reviews" element={<ReviewsPage />} />
         <Route path="/pioneers" element={<PioneersPage />} />
         <Route path="/financial-reports" element={<FinancialExpensesPage />} />

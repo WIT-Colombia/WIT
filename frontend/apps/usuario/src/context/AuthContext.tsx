@@ -24,24 +24,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    let timer: ReturnType<typeof setTimeout>;
+    let retryTimer: ReturnType<typeof setTimeout>;
+    let guestTimer: ReturnType<typeof setTimeout>;
+    const initialEpoch = verificationEpoch.current;
     const restore = () => {
-      const epoch = verificationEpoch.current;
+      if (!active || initialEpoch !== verificationEpoch.current) return;
       refreshSession().then((currentUser) => {
-        if (active && epoch === verificationEpoch.current) { setUser(currentUser); setStatus("authenticated"); }
+        if (!active || initialEpoch !== verificationEpoch.current) return;
+        clearTimeout(guestTimer);
+        setUser(currentUser); setStatus("authenticated");
       }).catch((error: unknown) => {
-        if (!active || epoch !== verificationEpoch.current) return;
+        if (!active || initialEpoch !== verificationEpoch.current) return;
+        clearTimeout(guestTimer);
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
           setUser(null); setStatus("anonymous");
-        } else {
-          // Preserve loading during network/5xx/429 failures; guards must wait.
-          timer = setTimeout(restore, error instanceof ApiError && error.retryAfterSeconds ? error.retryAfterSeconds * 1000 : 5000);
+          return;
         }
+        // Network, 429 and server failures are not proof of a revoked session.
+        // Keep public navigation available while restoring auth in the background.
+        setStatus("anonymous");
+        const delay = error instanceof ApiError && error.retryAfterSeconds
+          ? Math.max(5000, error.retryAfterSeconds * 1000) : 5000;
+        retryTimer = setTimeout(restore, delay);
       });
     };
+    // A stalled refresh should never indefinitely block public routes.
+    guestTimer = setTimeout(() => {
+      if (active && initialEpoch === verificationEpoch.current)
+        setStatus(current => current === "loading" ? "anonymous" : current);
+    }, 4000);
     restore();
     window.addEventListener("online", restore);
-    return () => { active = false; clearTimeout(timer); window.removeEventListener("online", restore); };
+    return () => {
+      active = false; clearTimeout(retryTimer); clearTimeout(guestTimer);
+      window.removeEventListener("online", restore);
+    };
   }, []);
 
   useEffect(() => {
@@ -49,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
     const update = () => { getMe().then((next) => { if (active) setUser((current) => current?.avatarUrl === next.avatarUrl && current.displayName === next.displayName && current.nickname === next.nickname ? current : next); }).catch(() => {}); };
     const refreshWhenVisible = () => { if (document.visibilityState === "visible") update(); };
-    const interval = window.setInterval(refreshWhenVisible, 3000);
+    const interval = window.setInterval(refreshWhenVisible, 60000);
     window.addEventListener("focus", update);
     document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => { active = false; window.clearInterval(interval); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", refreshWhenVisible); };
@@ -63,12 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(verifiedUser);
       setStatus("authenticated");
     },
-    restoreSession: async () => { const next = await restoreSession(); setUser(next); setStatus("authenticated"); },
+    restoreSession: async () => { const next = await restoreSession(); verificationEpoch.current += 1; setUser(next); setStatus("authenticated"); },
     status,
     isAuthenticated: status === "authenticated",
     register: async (name, email, password, referralCode) => { const created = await register(name, { email, password }, referralCode); setUser(null); setStatus("anonymous"); return created; },
-    login: async (email, password, rememberMe = true) => { setUser(await login({ email, password }, rememberMe)); setStatus("authenticated"); },
-    logout: async () => { await logout(); setUser(null); setStatus("anonymous"); },
+    login: async (email, password, rememberMe = true) => { const next = await login({ email, password }, rememberMe); verificationEpoch.current += 1; setUser(next); setStatus("authenticated"); },
+    logout: async () => { await logout(); verificationEpoch.current += 1; setUser(null); setStatus("anonymous"); },
   }), [status, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
