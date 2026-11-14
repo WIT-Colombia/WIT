@@ -500,3 +500,135 @@
   .business-detail-page .business-tabs button {scroll-behavior:auto;transition:none;}
 }
 
+/* Iconos en las cuatro pestañas, conservando sus etiquetas y la lógica actual. */
+.business-detail-page .business-tabs button .business-tab-icon {
+  display:block;width:20px;height:20px;flex:0 0 20px;color:inherit;
+}
+@media(max-width:700px) {
+  .business-detail-page .business-tabs button .business-tab-icon {
+    width:18px;height:18px;flex-basis:18px;
+  }
+}
+
+/* Información pública: tarjetas compactas y redes sociales sin flecha externa.
+   La tarjeta digital PublicBusinessDigitalCard conserva íntegros su HTML, SVG, CSS y QR. */
+.business-detail-page .business-info-columns {
+  grid-template-columns:minmax(0,1.25fr) minmax(300px,.85fr);
+  align-items:start;
+  gap:22px;
+}
+.business-detail-page .business-info-columns > .business-detail-aside {
+  grid-column:1;grid-row:1;display:grid;align-content:start;gap:14px;
+  min-width:0;max-width:100%;padding:0;border:0;border-radius:0;
+  background:transparent;box-shadow:none;
+}
+.business-detail-page .business-info-columns > .business-about {
+  grid-column:2;grid-row:1;min-width:0;
+}
+.business-detail-page .business-info-columns .business-aside-block {
+  min-width:0;padding:18px 20px;border:1px solid #e5dff5;
+  border-radius:20px;background:#fff;box-shadow:0 5px 16px rgba(40,25,91,.045);
+}
+.business-detail-page .business-info-columns .business-info-heading {
+  display:flex;align-items:center;gap:12px;margin:0 0 14px;
+  color:#101a32;font-size:clamp(16px,1.3vw,21px);line-height:1.25;font-weight:800;
+}
+.business-detail-page .business-info-columns .business-info-heading-icon {
+  display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;
+  border-radius:13px;background:#f1eaff;color:#7134ed;
+}
+.business-detail-page .business-info-columns .business-info-heading-icon svg {
+  width:23px;height:23px;
+}
+.business-detail-page .business-info-columns .business-info-hours .business-weekly-hours {
+  display:grid;gap:0;margin:0;padding:0;border:0;
+}
+.business-detail-page .business-info-columns .business-weekly-hours > div {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:37px;padding:6px 4px;border-bottom:1px solid #eee8fa;
+  box-sizing:border-box;color:#617085;font-size:12px;
+}
+.business-detail-page .business-info-columns .business-weekly-hours > div:last-child {border-bottom:0;}
+.business-detail-page .business-info-columns .business-weekly-hours b {
+  color:#1a2335;font-size:12px;font-weight:700;
+}
+.business-detail-page .business-info-columns .business-weekly-hours span {
+  text-align:right;color:#65748b;font-size:12px;
+}
+.business-detail-page .business-info-columns .business-weekly-hours span.business-day-closed {
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:4px 9px;border-radius:999px;background:#ffe6e7;color:#c72332;
+  font-weight:750;
+}
+.business-detail-page .business-info-columns .business-weekly-hours > p {
+  margin:0;color:#64748b;font-size:12px;
+}
+.business-detail-page .business-info-columns .business-info-location .business-aside-address {
+  display:grid;gap:5px;margin:0;padding-left:54px;
+  color:#1c2940;font-size:13px;line-height:1.45;
+}
+.business-detail-page .business-info-columns .business-info-location .business-aside-address small {
+  color:#677894;font-size:12px;
+}
+.business-detail-page .business-info-columns .business-socials-public .business-social-links {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+.business-detail-page .business-info-columns .business-socials-public .business-social-links > a,
+.business-detail-page .business-info-columns .business-socials-public .business-social-links > .business-social-link {
+  display:flex;align-items:center;justify-content:flex-start;gap:8px;
+  min-width:0;min-height:48px;padding:8px 10px;box-sizing:border-box;
+  border:1px solid #e0d8f3;border-radius:13px;background:#fff;
+  color:#17213a;text-decoration:none;font-size:11px;font-weight:750;
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+.business-detail-page .business-info-columns .business-socials-public .business-social-links > a:hover {
+  border-color:#ba9bff;box-shadow:0 4px 12px rgba(123,63,251,.1);
+}
+.business-detail-page .business-info-columns .business-socials-public .business-social-links > a:focus-visible {
+  outline:3px solid #22d3ee;outline-offset:2px;
+}
+.business-detail-page .business-info-columns .business-socials-public .business-social-links .business-social-icon {
+  flex:0 0 25px;width:25px;height:25px;
+}
+.business-detail-page .business-info-columns .business-socials-public .business-social-links > a > span,
+.business-detail-page .business-info-columns .business-socials-public .business-social-links > .business-social-link > span {
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+/* iPad y pantallas medianas: redes en dos columnas. */
+@media(max-width:1280px) {
+  .business-detail-page .business-info-columns .business-socials-public .business-social-links {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:800px) {
+  .business-detail-page .business-info-columns {grid-template-columns:minmax(0,1fr);gap:14px;}
+  .business-detail-page .business-info-columns > .business-detail-aside {grid-column:1;grid-row:1;}
+  .business-detail-page .business-info-columns > .business-about {grid-column:1;grid-row:2;}
+}
+@media(max-width:600px) {
+  /* Evitar el ocultamiento heredado del horario semanal en móviles. */
+  .business-detail-page .business-info-columns > .business-detail-aside > .business-info-hours:first-child {
+    display:block;
+  }
+  .business-detail-page .business-info-columns .business-aside-block {padding:14px 15px;border-radius:16px;}
+  .business-detail-page .business-info-columns .business-info-heading {
+    font-size:16px;gap:10px;margin-bottom:12px;
+  }
+  .business-detail-page .business-info-columns .business-info-heading-icon {
+    width:37px;height:37px;flex-basis:37px;border-radius:11px;
+  }
+  .business-detail-page .business-info-columns .business-info-heading-icon svg {
+    width:20px;height:20px;
+  }
+  .business-detail-page .business-info-columns .business-weekly-hours > div {min-height:35px;padding:5px 2px;}
+  .business-detail-page .business-info-columns .business-info-location .business-aside-address {padding-left:47px;}
+  .business-detail-page .business-info-columns .business-socials-public .business-social-links {
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  }
+}
+@media(max-width:359px) {
+  .business-detail-page .business-info-columns .business-socials-public .business-social-links {
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+
