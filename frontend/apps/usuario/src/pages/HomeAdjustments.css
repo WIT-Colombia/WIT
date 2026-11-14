@@ -61,7 +61,7 @@
 .home-page .category-more .category-icon{background:transparent;color:#33427e;box-shadow:none}
 .home-page .category-more:hover .category-icon{background:transparent;color:var(--xamuko-violet)}
 .home-page .category-more .category-icon svg{width:28px;height:28px}
-.home-page .category-list{overscroll-behavior-x:contain;touch-action:pan-x;cursor:grab;user-select:none}.home-page .category-list:active{cursor:grabbing}
+.home-page .category-list{overscroll-behavior-x:contain;touch-action:pan-x;cursor:default;user-select:none}.home-page .category-list:active{cursor:default}.home-page .category-list .category-tile,.home-page .category-list .category-tile:hover,.home-page .category-list .category-tile:active{cursor:pointer}
 .home-page .category-scroll-control{display:flex;align-items:center;padding:2px 2px 0}.home-page .category-scroll-control input{width:100%;height:18px;margin:0;accent-color:var(--xamuko-violet);cursor:pointer}
 .home-page .category-toggle{font-size:11px;white-space:nowrap}
 .home-page .home-featured-section{order:6;padding-top:36px}
