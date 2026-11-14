@@ -11,6 +11,7 @@ import { AdminContentPage } from './pages/AdminContentPage';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
 import { ReviewReportsPage } from './pages/ReviewReportsPage';
+import { OfferReportsPage } from './pages/OfferReportsPage';
 import { ReviewsPage } from './pages/ReviewsPage';
 import { UserNeedsPage } from './pages/UserNeedsPage';
 import { PioneersPage } from './pages/PioneersPage';
@@ -35,7 +36,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports'];
 
 export default function App() {
   return <Routes>
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/businesses/:id" element={<AdminBusinessDetailPage />} />
         <Route path="/verifications" element={<VerificationsPage />} />
         <Route path="/reports" element={<ReviewReportsPage />} />
+        <Route path="/offer-reports" element={<OfferReportsPage />} />
         <Route path="/reviews" element={<ReviewsPage />} />
         <Route path="/pioneers" element={<PioneersPage />} />
         <Route path="/financial-reports" element={<FinancialExpensesPage />} />
