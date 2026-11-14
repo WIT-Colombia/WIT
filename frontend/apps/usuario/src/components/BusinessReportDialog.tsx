@@ -39,6 +39,10 @@ export function BusinessReportDialog({ businessId, businessName, disabled = fals
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
+    if (description.trim().length < 15) {
+      setError("Describe lo sucedido con al menos 15 caracteres antes de enviar el reporte.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -104,7 +108,7 @@ export function BusinessReportDialog({ businessId, businessName, disabled = fals
             {error && <p className="business-report-error" role="alert">{error}</p>}
             <div className="business-report-actions">
               <button type="button" className="business-report-cancel" disabled={submitting} onClick={close}>Cancelar</button>
-              <button type="submit" className="business-report-submit" disabled={submitting || description.trim().length < 15}>
+              <button type="submit" className="business-report-submit" disabled={submitting}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4L22 2Z"/><path d="M22 2 11 13"/></svg>
                 {submitting ? "Enviando…" : "Enviar reporte"}
               </button>
