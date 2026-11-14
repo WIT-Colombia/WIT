@@ -1,4 +1,4 @@
-import { normalizeImageForUpload, PHOTO_INPUT_ACCEPT } from "@wit/utils";
+import { normalizeBusinessPhotoForUpload, PHOTO_INPUT_ACCEPT } from "@wit/utils";
 import { useEffect, useState, type ChangeEvent, type FormEvent, type DragEvent } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useParams } from "react-router-dom";
@@ -198,7 +198,7 @@ export function BusinessCreatePage() {
     try {
       const files: File[] = [];
       // Sequential decoding avoids exhausting memory when a phone sends 10 large HEIC photos.
-      for (const photo of selected) files.push(await normalizeImageForUpload(photo));
+      for (const photo of selected) files.push(await normalizeBusinessPhotoForUpload(photo));
       const previews = await Promise.all(files.map(file => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
