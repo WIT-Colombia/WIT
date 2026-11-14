@@ -1,6 +1,6 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import type { OfferReportReason, OfferReportStatus } from '../../generated/prisma/client.js';
+import type { OfferReportReason, OfferReportStatus, Prisma, OfferKind } from '../../generated/prisma/client.js';
 
 const reasons: OfferReportReason[] = ['UNAVAILABLE', 'WRONG_INFORMATION', 'WRONG_IMAGE', 'OTHER'];
 const statuses: OfferReportStatus[] = ['PENDING', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED'];
@@ -57,13 +57,26 @@ export async function submitOfferReport(identifier: string, reporterId: string |
   });
 }
 
-export async function listOfferReports(status: unknown, page: number, pageSize: number) {
+export async function listOfferReports(status: unknown, page: number, pageSize: number, kind: unknown = null, query: unknown = '') {
   if (status && (typeof status !== 'string' || !statuses.includes(status as OfferReportStatus))) {
     throw new AppError(400, 'INVALID_OFFER_REPORT_STATUS', 'Estado de reporte inválido.');
   }
-  const safePage = Number.isFinite(page) ? Math.max(1, Math.trunc(page)) : 1;
+  if (kind && kind !== 'PRODUCT' && kind !== 'SERVICE') {
+    throw new AppError(400, 'INVALID_OFFER_REPORT_KIND', 'Tipo de publicación inválido.');
+  }
+  const safePage = Number.isFinite(page) ? Math.max(1, Math.min(100000, Math.trunc(page))) : 1;
   const safeSize = Number.isFinite(pageSize) ? Math.min(100, Math.max(1, Math.trunc(pageSize))) : 25;
-  const where = status ? { status: status as OfferReportStatus } : {};
+  const q = typeof query === 'string' ? query.trim().slice(0, 100) : '';
+  const where: Prisma.OfferReportWhereInput = {};
+  if (status) where.status = status as OfferReportStatus;
+  if (kind) where.offer = { kind: kind as OfferKind };
+  if (q) where.OR = [
+    { id: { contains: q } },
+    { description: { contains: q } },
+    { offer: { name: { contains: q } } },
+    { offer: { business: { name: { contains: q } } } },
+    { reporter: { displayName: { contains: q } } },
+  ];
   const [reports, total, pendingTotal] = await prisma.$transaction([
     prisma.offerReport.findMany({
       where,
