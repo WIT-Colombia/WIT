@@ -30,7 +30,6 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const location = useLocation();
   const { get: getOfferLike, toggle: toggleOfferLike } = useOfferLikes([id]);
   const [likeError, setLikeError] = useState<string | null>(null);
-  const [imageOpen, setImageOpen] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const requireAccount = useAccountGate();
   const [offer, setOffer] = useState<Product | Service | undefined>(() =>
@@ -45,14 +44,6 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const routeContext = (location.state as { analyticsContext?: AnalyticsContext } | null)?.analyticsContext;
   const analyticsContextRef = useRef<AnalyticsContext>(routeContext ?? { source: 'direct' });
   const isProduct = kind === "product";
-  useEffect(() => {
-    if (!imageOpen) return;
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setImageOpen(false);
-    };
-    window.addEventListener("keydown", onEscape);
-    return () => window.removeEventListener("keydown", onEscape);
-  }, [imageOpen]);
   async function shareOffer() {
     const url = window.location.href;
     const title = offer?.name ?? (kind === "product" ? "Producto" : "Servicio");
@@ -186,9 +177,6 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg>
             {isProduct ? "Producto" : "Servicio"}
           </span>
-          <button type="button" className="offer-detail-zoom" onClick={() => setImageOpen(true)} aria-label="Ampliar fotografía" title="Ampliar fotografía">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 3H4v5M15 3h5v5M20 16v5h-5M4 16v5h5"/><path d="m4 8 6-6m4 0 6 6M20 16l-6 6m-4 0-6-6"/></svg>
-          </button>
           {hasActiveDiscount && (
             <span className="offer-detail-image-discount" aria-label={`Descuento de ${product.discount}`}>
               {product.discount}
@@ -224,12 +212,6 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
         </div>
       </section>
       </div>
-      {imageOpen && <div className="offer-image-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setImageOpen(false); }}>
-        <div className="offer-image-dialog" role="dialog" aria-modal="true" aria-label={`Fotografía ampliada de ${item.name}`}>
-          <button type="button" className="offer-image-close" onClick={() => setImageOpen(false)} aria-label="Cerrar fotografía">×</button>
-          <CatalogPhoto src={item.image} alt={item.name} />
-        </div>
-      </div>}
     </PageLayout>
   );
 }
