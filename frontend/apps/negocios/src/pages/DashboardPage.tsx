@@ -215,7 +215,7 @@ export function DashboardPage() {
   const withinVisibilityPeriod = visibility?.isWithinPeriod === true && remainingMs !== null && remainingMs > 0;
   const visibilityExpiring = withinVisibilityPeriod && remainingDays !== null && remainingDays <= 10;
   const visibilityExpired = remainingMs !== null && remainingMs <= 0;
-  const visibilityBadge = visibility === null ? "Consultando" : !validExpiry ? "Sin fecha" : visibilityExpired ? "Vencido" : !withinVisibilityPeriod ? "No vigente" : visibilityExpiring ? "Por vencer" : "Vigente";
+  const visibilityBadge = visibility === null ? (visibilityError ? "No disponible" : "Consultando") : !validExpiry ? "Sin fecha" : visibilityExpired ? "Vencido" : !withinVisibilityPeriod ? "No vigente" : visibilityExpiring ? "Por vencer" : "Vigente";
   const visibilityBadgeVariant = visibilityExpired || (visibility !== null && !withinVisibilityPeriod && validExpiry) ? "expired" : visibilityExpiring ? "warning" : withinVisibilityPeriod ? "active" : "unknown";
   const expiryLabel = validExpiry && expiry ? new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Bogota" }).format(expiry) : null;
   const expiryTimestamp = validExpiry && expiry ? new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeStyle: "short", timeZone: "America/Bogota" }).format(expiry) : undefined;
@@ -280,11 +280,11 @@ export function DashboardPage() {
               <span className={`business-home-visibility-badge ${visibilityBadgeVariant}`}>{visibilityBadge}</span>
             </div>
             <strong className="business-home-visibility-date">
-              {expiryLabel ? <>Hasta el <time dateTime={expiresAt} title={expiryTimestamp}>{expiryLabel}</time></> : visibility === null ? "Consultando vigencia…" : "Sin fecha de vencimiento"}
+              {expiryLabel ? <>Hasta el <time dateTime={expiresAt} title={expiryTimestamp}>{expiryLabel}</time></> : visibility === null ? (visibilityError ? "Vigencia no disponible" : "Consultando vigencia…") : "Sin fecha de vencimiento"}
             </strong>
             <span className="business-home-visibility-remaining">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M3.5 10.5h17"/></svg>
-              {visibility === null ? "Fecha pendiente de consulta" : visibilityRemainingLabel}
+              {visibility === null ? (visibilityError ? "No se pudo consultar la fecha" : "Fecha pendiente de consulta") : visibilityRemainingLabel}
             </span>
           </div>
           <button type="button" onClick={() => void renewBusinessVisibility()} disabled={visibilityBusy || visibility === null}>
