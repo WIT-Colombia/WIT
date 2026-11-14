@@ -44,26 +44,61 @@ function SelectedBusinessProfileImage({ business, className, isPreview = false }
 }
 
 function VisitChart({ points }: { points: Array<{ label: string; value: number }> }) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const validPoints = points.filter(point => Number.isFinite(point.value) && point.value >= 0);
   if (!validPoints.length || validPoints.every(point => point.value === 0)) {
     return <div className="business-home-chart-empty"><span aria-hidden="true">⌁</span><strong>Aún no hay actividad para mostrar</strong><p>La evolución aparecerá cuando existan visualizaciones registradas.</p></div>;
   }
-  const max = Math.max(1, ...validPoints.map(point => point.value));
+
+  const chartWidth = 660;
+  const chartHeight = 290;
+  const left = 56;
+  const right = 632;
+  const top = 78;
+  const bottom = 253;
+  const max = Math.max(...validPoints.map(point => point.value), 1);
+  const rawStep = max / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+  const fraction = rawStep / magnitude;
+  const niceStep = (fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 2.5 ? 2.5 : fraction <= 5 ? 5 : 10) * magnitude;
+  const axisMax = Math.ceil(max / niceStep) * niceStep;
+  const tickCount = Math.round(axisMax / niceStep);
   const coords = validPoints.map((point, index) => ({
-    x: validPoints.length === 1 ? 50 : 20 + index * 560 / (validPoints.length - 1),
-    y: 180 - point.value / max * 145,
+    x: validPoints.length === 1 ? (left + right) / 2 : left + index * (right - left) / (validPoints.length - 1),
+    y: bottom - (point.value / axisMax) * (bottom - top),
   }));
   const line = coords.map(point => `${point.x},${point.y}`).join(" ");
-  const area = `20,180 ${line} ${coords.at(-1)?.x ?? 20},180`;
+  const area = `${coords[0].x},${bottom} ${line} ${coords[coords.length - 1].x},${bottom}`;
+  const peakIndex = validPoints.reduce((peak, point, index) => point.value > validPoints[peak].value ? index : peak, 0);
+  const activeIndex = hoveredIndex !== null && hoveredIndex < validPoints.length ? hoveredIndex : peakIndex;
+  const active = coords[activeIndex];
+  const activeDatum = validPoints[activeIndex];
   const labelIndexes = [...new Set([0, Math.floor((validPoints.length - 1) / 2), validPoints.length - 1])];
+
   return <div className="business-home-chart-wrap">
-    <svg className="business-home-chart" viewBox="0 0 600 220" role="img" aria-label={`Visualizaciones: ${validPoints.map(point => `${point.label}, ${number(point.value)}`).join("; ")}`}>
-      <defs><linearGradient id="business-home-chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7b3ffb" stopOpacity=".2"/><stop offset="100%" stopColor="#7b3ffb" stopOpacity="0"/></linearGradient></defs>
-      {[35, 83, 131, 180].map(y => <line key={y} x1="20" y1={y} x2="580" y2={y} className="business-home-chart-gridline" />)}
-      <polygon points={area} fill="url(#business-home-chart-fill)" />
-      <polyline points={line} className="business-home-chart-line" />
-      {coords.map((point, index) => <circle key={`${validPoints[index].label}-${index}`} cx={point.x} cy={point.y} r="3.5" className="business-home-chart-dot"><title>{validPoints[index].label}: {number(validPoints[index].value)}</title></circle>)}
-    </svg>
+    <div className="business-home-chart-visual">
+      <svg className="business-home-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="group" aria-label="Evolución de visualizaciones por fecha">
+        <defs><linearGradient id="business-home-chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7b3ffb" stopOpacity=".2"/><stop offset="100%" stopColor="#7b3ffb" stopOpacity="0"/></linearGradient></defs>
+        {Array.from({ length: tickCount + 1 }, (_, index) => {
+          const value = index * niceStep;
+          const y = bottom - value / axisMax * (bottom - top);
+          return <g key={index}>
+            <line x1={left} x2={right} y1={y} y2={y} className="business-home-chart-gridline" />
+            <text x={left - 16} y={y + 5} textAnchor="end" className="business-home-chart-axis-label">{number(Number(value.toFixed(5)))}</text>
+          </g>;
+        })}
+        <polygon points={area} fill="url(#business-home-chart-fill)" />
+        <polyline points={line} className="business-home-chart-line" />
+        {coords.map((point, index) => <g key={`${validPoints[index].label}-${index}`}>
+          <circle cx={point.x} cy={point.y} r={index === activeIndex ? 6.5 : 4} className={`business-home-chart-dot${index === activeIndex ? " is-active" : ""}`} />
+          <circle cx={point.x} cy={point.y} r="14" fill="transparent" className="business-home-chart-hit" tabIndex={0} role="button" aria-label={`${validPoints[index].label}: ${number(validPoints[index].value)} visualizaciones`} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)} onClick={() => setHoveredIndex(index)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setHoveredIndex(index); } }} />
+        </g>)}
+      </svg>
+      <div className="business-home-chart-tooltip" style={{ left: `${Math.max(17, Math.min(83, (active.x / chartWidth) * 100))}%`, top: `${(active.y / chartHeight) * 100}%` }} aria-hidden="true">
+        <span>{activeDatum.label}</span>
+        <strong>{number(activeDatum.value)} visualizaciones</strong>
+      </div>
+    </div>
     <div className="business-home-chart-labels">{labelIndexes.map(index => <span key={`${validPoints[index].label}-${index}`}>{validPoints[index].label}</span>)}</div>
   </div>;
 }
