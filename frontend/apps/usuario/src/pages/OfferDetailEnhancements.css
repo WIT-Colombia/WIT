@@ -202,7 +202,7 @@
 .offer-detail-page .offer-detail-share svg{width:17px;height:17px;flex:none;}
 .offer-detail-page .offer-detail-share:hover{background:#f7f4ff;color:#6330db;border-color:#c8b8ff;}
 .offer-detail-page .offer-detail-share:focus-visible,
-.offer-detail-page .offer-detail-like-button:focus-visible,
+.offer-detail-page .offer-detail-actions .entity-product-like:focus-visible,
 .offer-detail-page .offer-detail-report:focus-visible{
   outline:3px solid #22d3ee;outline-offset:3px;
 }
@@ -288,20 +288,30 @@
 .offer-detail-page .offer-detail-contact.whatsapp:hover{background:#009a59;}
 .offer-detail-page .offer-detail-contact.phone:hover{background:#6930e9;}
 .offer-detail-page .offer-detail-actions{margin-top:17px;}
-.offer-detail-page .offer-detail-like-button{
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  min-height:46px;padding:0 12px;border:1.5px solid #7b3ffb;border-radius:13px;
-  background:#fff;color:#7032ee;font:inherit;font-size:13px;font-weight:800;
-  cursor:pointer;
+/* Misma geometría y estados del Me gusta de las tarjetas de Home. */
+.offer-detail-page .offer-detail-actions .offer-detail-like-count{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:0;border:0;background:transparent;
+  color:#697594;font-size:11px;font-weight:700;
 }
-.offer-detail-page .offer-detail-like-button svg{width:22px;height:22px;flex:none;}
-.offer-detail-page .offer-detail-like-button:hover,
-.offer-detail-page .offer-detail-like-button.is-active{background:#f4eeff;}
-.offer-detail-page .offer-detail-like-total{
-  display:inline-grid;place-items:center;min-width:31px;min-height:25px;
-  padding-left:10px;border-left:1px solid #cdbaff;
-  font-variant-numeric:tabular-nums;
+.offer-detail-page .offer-detail-actions .entity-action.entity-product-like{
+  display:grid;place-items:center;flex:0 0 32px;
+  width:32px;height:32px;min-height:0;min-width:0;max-width:32px;
+  box-sizing:border-box;padding:0;border:1px solid #e0d4ff;
+  border-radius:50%;background:#faf7ff;color:#6e31ef;
+  line-height:0;cursor:pointer;
 }
+.offer-detail-page .offer-detail-actions .entity-product-like svg{
+  display:block;width:17px;height:17px;
+}
+.offer-detail-page .offer-detail-actions .entity-product-like:hover,
+.offer-detail-page .offer-detail-actions .entity-product-like.is-active{
+  border-color:#b6a0ff;background:#eee5ff;color:#5322cb;
+}
+.offer-detail-page .offer-detail-actions .entity-product-like.is-active svg{
+  fill:currentColor;stroke:currentColor;
+}
+.offer-detail-page .offer-detail-like-number{font-variant-numeric:tabular-nums;}
 .offer-detail-page .offer-detail-report{
   display:inline-flex;align-items:center;align-self:flex-start;gap:9px;
   max-width:100%;margin-top:20px;padding-top:13px;
@@ -339,12 +349,14 @@
   .offer-detail-page .offer-detail-contact-actions{gap:8px;margin-top:12px;}
   .offer-detail-page .offer-detail-contact{min-height:44px;padding:0 6px;font-size:12px;}
   .offer-detail-page .offer-detail-actions{margin-top:13px;}
-  .offer-detail-page .offer-detail-like-button{min-height:44px;font-size:12px;}
+  .offer-detail-page .offer-detail-actions .entity-action.entity-product-like{
+    width:29px;height:29px;max-width:29px;flex-basis:29px;
+  }
+  .offer-detail-page .offer-detail-actions .offer-detail-like-count{font-size:10px;gap:3px;}
   .offer-detail-page .offer-detail-report{margin-top:15px;font-size:11px;}
 }
 @media(prefers-reduced-motion:reduce){
   .offer-detail-page .offer-detail-share,
-  .offer-detail-page .offer-detail-like-button,
   .offer-detail-page .offer-detail-contact{transition:none;}
 }
 
@@ -634,12 +646,10 @@
     grid-column:1/-1;
   }
   .offer-detail-page .offer-detail-actions { margin-top:14px; }
-  .offer-detail-page .offer-detail-like-button {
-    min-height:44px;max-width:100%;
-    padding:0 12px;
-    gap:9px;
-    font-size:12px;
+  .offer-detail-page .offer-detail-actions .entity-action.entity-product-like{
+    width:29px;height:29px;max-width:29px;flex-basis:29px;
   }
+  .offer-detail-page .offer-detail-actions .offer-detail-like-count{gap:3px;font-size:10px;}
   .offer-detail-page .offer-detail-report {
     gap:7px;
     margin-top:15px;
