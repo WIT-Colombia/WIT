@@ -165,6 +165,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   return (
     <PageLayout className="offer-detail-page">
       <PublicOfferSeo verified={verifiedSeo} />
+      <div className="offer-detail-shell">
       <div className="offer-detail-topbar">
         <button className="offer-detail-back" type="button" onClick={() => {
           if (window.history.length > 1) navigate(-1);
@@ -222,6 +223,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           </Link>
         </div>
       </section>
+      </div>
       {imageOpen && <div className="offer-image-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setImageOpen(false); }}>
         <div className="offer-image-dialog" role="dialog" aria-modal="true" aria-label={`Fotografía ampliada de ${item.name}`}>
           <button type="button" className="offer-image-close" onClick={() => setImageOpen(false)} aria-label="Cerrar fotografía">×</button>
