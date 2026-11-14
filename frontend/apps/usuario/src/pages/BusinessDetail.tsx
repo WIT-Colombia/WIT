@@ -180,14 +180,14 @@ export default function BusinessDetail() {
   useEffect(() => {
     if (!galleryOpen && !shareOpen && !moreOpen) return;
     const closeOverlays = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || document.querySelector(".business-report-backdrop")) return;
       setGalleryOpen(false);
       setShareOpen(false);
       setMoreOpen(false);
     };
     const closeShareOnOutsideTap = (event: PointerEvent) => {
       if (shareOpen && shareWrapRef.current && !shareWrapRef.current.contains(event.target as Node)) setShareOpen(false);
-      if (moreOpen && moreWrapRef.current && !moreWrapRef.current.contains(event.target as Node)) setMoreOpen(false);
+      if (moreOpen && !document.querySelector(".business-report-backdrop") && moreWrapRef.current && !moreWrapRef.current.contains(event.target as Node)) setMoreOpen(false);
     };
     window.addEventListener("keydown", closeOverlays);
     document.addEventListener("pointerdown", closeShareOnOutsideTap);
