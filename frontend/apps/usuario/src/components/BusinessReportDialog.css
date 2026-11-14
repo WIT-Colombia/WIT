@@ -32,6 +32,7 @@
   font:inherit;font-size:32px;font-weight:400;line-height:1;cursor:pointer;
   transition:background-color .18s,color .18s,transform .18s;
 }
+.business-report-close svg{display:block;width:23px;height:23px;flex:none;stroke:currentColor;pointer-events:none;}
 .business-report-close:hover:not(:disabled){background:#fff;color:#7b3ffb;transform:rotate(90deg);}
 .business-report-heading{
   position:relative;z-index:1;display:flex;align-items:center;gap:31px;
@@ -140,7 +141,8 @@
     max-height:calc(100dvh - 24px);padding:25px 22px 23px;border-radius:21px;
   }
   .business-report-decor{width:81%;border-top-right-radius:21px;}
-  .business-report-close{top:14px;right:14px;width:38px;height:38px;font-size:29px;}
+  .business-report-close{top:14px;right:14px;width:38px;height:38px;}
+  .business-report-close svg{width:21px;height:21px;}
   .business-report-heading{min-height:54px;gap:21px;padding-right:30px;}
   .business-report-shield{flex-basis:52px;width:52px;height:52px;border-radius:15px;}
   .business-report-shield svg{width:34px;height:34px;}
