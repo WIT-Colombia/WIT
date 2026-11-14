@@ -311,6 +311,19 @@ enum OfferReportStatus {
   REJECTED
 }
 
+enum SupportRequestKind {
+  NEED
+  SUPPORT
+  SUGGESTION
+}
+
+enum SupportRequestStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
 enum BusinessReviewReportReason {
   OFFENSIVE
   SPAM
@@ -359,6 +372,8 @@ model User {
   auditLogs                   AuditLog[]                 @relation("AuditActor")
   submittedBusinessReports      BusinessReport[]
   submittedOfferReports         OfferReport[]
+  submittedSupportRequests      SupportRequest[]         @relation("SupportRequestSender")
+  reviewedSupportRequests       SupportRequest[]         @relation("SupportRequestReviewer")
   businessFavorites           BusinessFavorite[]
   offerLikes                  BusinessOfferLike[]
   analyticsEvents             BusinessAnalyticsEvent[]   @relation("AnalyticsActor")
@@ -601,6 +616,7 @@ model Business {
   analyticsEvents       BusinessAnalyticsEvent[]
   reviews               BusinessReview[]
   reports               BusinessReport[]
+  supportRequests       SupportRequest[]
   brand                 BusinessBrand?              @relation(fields: [brandId], references: [id])
   brandId               String?                     @db.Char(36)
   reviewCooldowns       BusinessReviewCooldown[]
@@ -1414,4 +1430,29 @@ model AdminPasskeyActivation {
   createdAt  DateTime @default(now()) @db.DateTime(3)
   @@index([googleSub, expiresAt])
   @@index([expiresAt])
+}
+
+model SupportRequest {
+  id             String               @id @default(uuid()) @db.Char(36)
+  kind           SupportRequestKind
+  userId         String?              @db.Char(36)
+  businessId     String?              @db.Char(36)
+  title          String               @db.VarChar(120)
+  category       String               @db.VarChar(120)
+  description    String?              @db.VarChar(2000)
+  locationName   String?              @db.VarChar(240)
+  locationContext String?             @db.VarChar(240)
+  status         SupportRequestStatus @default(PENDING)
+  decisionNote   String?              @db.VarChar(1500)
+  reviewedById   String?              @db.Char(36)
+  reviewedAt     DateTime?            @db.DateTime(3)
+  createdAt      DateTime             @default(now()) @db.DateTime(3)
+  updatedAt      DateTime             @updatedAt @db.DateTime(3)
+  sender         User?                @relation("SupportRequestSender", fields: [userId], references: [id], onDelete: SetNull)
+  business       Business?            @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  reviewer       User?                @relation("SupportRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([kind, status, createdAt])
+  @@index([userId, createdAt])
+  @@index([businessId, createdAt])
 }

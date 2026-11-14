@@ -97,3 +97,24 @@ export async function listOfferReports(status: unknown, page: number, pageSize: 
     pendingTotal,
   };
 }
+
+export async function decideOfferReport(adminId: string, id: string, rawStatus: unknown, rawNote: unknown) {
+  if (typeof rawStatus !== 'string' || !statuses.includes(rawStatus as OfferReportStatus))
+    throw new AppError(400, 'INVALID_OFFER_REPORT_STATUS', 'Estado inválido.');
+  if (rawNote != null && typeof rawNote !== 'string')
+    throw new AppError(400, 'INVALID_DECISION_NOTE', 'La observación debe ser un texto.');
+  const note = typeof rawNote === 'string' ? rawNote.trim() : '';
+  if (note.length > 1500 || (['RESOLVED', 'REJECTED'].includes(rawStatus) && note.length < 10))
+    throw new AppError(400, 'INVALID_DECISION_NOTE', 'Para resolver o rechazar, explica la decisión entre 10 y 1500 caracteres.');
+  return prisma.$transaction(async tx => {
+    const before = await tx.offerReport.findUnique({ where: { id } });
+    if (!before) throw new AppError(404, 'OFFER_REPORT_NOT_FOUND', 'Reporte no encontrado.');
+    const report = await tx.offerReport.update({ where: { id }, data: { status: rawStatus as OfferReportStatus, decisionNote: note || null } });
+    await tx.auditLog.create({ data: {
+      actorUserId: adminId, entityType: 'OFFER', entityId: before.offerId,
+      action: 'OFFER_REPORT_MODERATED', previousState: { reportId: id, status: before.status },
+      newState: { reportId: id, status: rawStatus }, reason: note || null,
+    } });
+    return report;
+  });
+}
