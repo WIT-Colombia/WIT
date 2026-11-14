@@ -409,3 +409,40 @@
 @media(prefers-reduced-motion:reduce) {
   .business-detail-page .business-header-hours-toggle {transition:none;}
 }
+/* Business read-only view runs on the real Usuarios site, not inside the
+   Business CSS bundle. Keep the public card's exact layout; remove only
+   navigation and customer actions. */
+.business-detail-page.business-preview-mode > .site-header,
+.business-detail-page.business-preview-mode > .site-footer,
+.business-detail-page.business-preview-mode > .user-bottom-nav,
+.business-detail-page.business-preview-mode .business-header-tools,
+.business-detail-page.business-preview-mode .business-detail-actions,
+.business-detail-page.business-preview-mode .business-header-links,
+.business-detail-page.business-preview-mode .business-report-placement,
+.business-detail-page.business-preview-mode .business-registration-invite {
+  display: none !important;
+}
+.business-detail-page.business-preview-mode .business-detail-back .business-back-link {
+  border-color: #bfdbfe;
+  color: #2563eb;
+  background: #fff;
+  box-shadow: 0 5px 14px rgba(37, 99, 235, .08);
+}
+.business-detail-page.business-preview-mode .business-detail-back .business-back-link:hover,
+.business-detail-page.business-preview-mode .business-detail-back .business-back-link:focus-visible {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.business-detail-page.business-preview-mode .business-detail-back .business-back-link:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+.business-detail-page.business-preview-mode .user-content-main {
+  padding-bottom: 44px !important;
+}
+@media (max-width: 700px) {
+  .business-detail-page.business-preview-mode .user-content-main {
+    padding-bottom: 28px !important;
+  }
+}
