@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { reportBusiness, type BusinessReportReason } from "../services/businessReportService";
 import "./BusinessReportDialog.css";
 
@@ -19,10 +20,12 @@ export function BusinessReportDialog({ businessId, businessName, disabled = fals
   const [error, setError] = useState("");
   const triggerRef = useRef<HTMLButtonElement>(null);
   const selectRef = useRef<HTMLSelectElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    selectRef.current?.focus();
+    if (window.matchMedia("(max-width: 600px)").matches) closeRef.current?.focus({ preventScroll: true });
+    else selectRef.current?.focus({ preventScroll: true });
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !submitting) { setOpen(false); triggerRef.current?.focus(); }
     };
@@ -59,7 +62,7 @@ export function BusinessReportDialog({ businessId, businessName, disabled = fals
     <button type="button" ref={triggerRef} className="business-report-trigger" disabled={disabled} title={disabled ? "Disponible en la página pública del negocio" : "Enviar un reporte sobre este negocio"} onClick={() => {
       setReason("IMPERSONATION"); setDescription(""); setSubmitted(false); setError(""); setOpen(true);
     }}><span aria-hidden="true">⚑</span> Reportar negocio</button>
-    {open && <div className="business-report-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
+    {open && createPortal(<div className="business-report-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
       <section className="business-report-dialog" role="dialog" aria-modal="true" aria-labelledby="business-report-title" aria-describedby="business-report-intro">
         <svg className="business-report-decor" viewBox="0 0 640 210" fill="none" aria-hidden="true" focusable="false">
           <defs>
@@ -71,7 +74,7 @@ export function BusinessReportDialog({ businessId, businessName, disabled = fals
           <path d="M371 0H640V128C578 124 526 95 493 63 461 32 427 14 371 0Z" fill="#B898FF" opacity=".48"/>
           <path d="M516 0H640V134C597 125 579 106 559 79 540 52 538 20 516 0Z" fill="#5AC5FF" opacity=".38"/>
         </svg>
-        <button type="button" className="business-report-close" onClick={close} disabled={submitting} aria-label="Cerrar reporte" title="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
+        <button type="button" className="business-report-close" ref={closeRef} onClick={close} disabled={submitting} aria-label="Cerrar reporte" title="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
         <div className="business-report-heading">
           <span className="business-report-shield" aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="3.3" strokeLinecap="round" strokeLinejoin="round">
@@ -116,6 +119,6 @@ export function BusinessReportDialog({ businessId, businessName, disabled = fals
           </form>
         </>}
       </section>
-    </div>}
+    </div>, document.body)}
   </>;
 }
