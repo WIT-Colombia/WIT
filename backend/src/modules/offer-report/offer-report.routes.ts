@@ -31,6 +31,8 @@ const adminList: RequestHandler = async (request, response, next) => {
       request.query.status,
       Number(request.query.page) || 1,
       Number(request.query.pageSize) || 25,
+      request.query.kind,
+      request.query.q,
     );
     response.setHeader('Cache-Control', 'no-store');
     response.json(reports);
