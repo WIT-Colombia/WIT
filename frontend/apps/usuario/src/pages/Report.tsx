@@ -24,7 +24,7 @@ export default function Report() {
   const [submitted, setSubmitted] = useState(false);
   const [reportCount, setReportCount] = useState(0);
   const [remoteOffer, setRemoteOffer] = useState<Product | Service | undefined>();
-  const [loadingOffer, setLoadingOffer] = useState(false);
+  const [loadingOffer, setLoadingOffer] = useState(() => Boolean(targetId && ((targetType === "product" && !products.some(item => item.id === targetId)) || (targetType === "service" && !services.some(item => item.id === targetId)))));
   useEffect(() => {
     let active = true;
     setRemoteOffer(undefined);
@@ -41,7 +41,7 @@ export default function Report() {
 
   const business = targetType === "business" ? businesses.find((item) => item.id === targetId) : undefined;
   const product = targetType === "product" ? ((remoteOffer as Product | undefined) ?? products.find((item) => item.id === targetId)) : undefined;
-  const service = targetType === "service" ? (remoteOffer as Service | undefined ?? services.find((item) => item.id === targetId)) : undefined;
+  const service = targetType === "service" ? ((remoteOffer as Service | undefined) ?? services.find((item) => item.id === targetId)) : undefined;
   const review = targetType === "review" ? [...reviews, ...getUserReviews()].find((item) => item.id === targetId) : undefined;
   const target = business ?? product ?? service ?? review;
   const targetName = business?.name ?? product?.name ?? service?.name ?? (review ? `Opinión de ${review.author}` : "");
