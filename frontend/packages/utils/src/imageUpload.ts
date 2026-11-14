@@ -6,6 +6,8 @@
 export const MAX_UPLOAD_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_CAMERA_IMAGE_BYTES = 40 * 1024 * 1024;
 const DEFAULT_MAX_SIDE = 2048;
+/** Native UHD long edge; used only by Business images that need 4K detail. */
+export const BUSINESS_4K_MAX_SIDE = 3840;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
 const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp|heic|heif)$/i;
 const normalizedFiles = new WeakSet<File>();
@@ -92,7 +94,7 @@ function safeJpegName(name: string): string {
  * Converts large photos and camera HEIC/HEIF to a correctly oriented,
  * compressed JPEG. Small PNG/WebP assets are retained to preserve transparency.
  */
-export async function normalizeImageForUpload(file: File, maxBytes = MAX_UPLOAD_IMAGE_BYTES): Promise<File> {
+export async function normalizeImageForUpload(file: File, maxBytes = MAX_UPLOAD_IMAGE_BYTES, maxSide = DEFAULT_MAX_SIDE): Promise<File> {
   validateUploadImageSource(file);
   if (normalizedFiles.has(file)) return file;
   if ((file.type === "image/png" || file.type === "image/webp") && file.size <= maxBytes) return file;
@@ -111,7 +113,7 @@ export async function normalizeImageForUpload(file: File, maxBytes = MAX_UPLOAD_
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
     if (!context) throw new PhotoUploadError("Este navegador no permite procesar fotografías.");
-    let scale = Math.min(1, DEFAULT_MAX_SIDE / Math.max(loaded.width, loaded.height));
+    let scale = Math.min(1, maxSide / Math.max(loaded.width, loaded.height));
     for (let attempt = 0; attempt < 7; attempt++) {
       canvas.width = Math.max(1, Math.round(loaded.width * scale));
       canvas.height = Math.max(1, Math.round(loaded.height * scale));
@@ -132,4 +134,12 @@ export async function normalizeImageForUpload(file: File, maxBytes = MAX_UPLOAD_
   } finally {
     loaded.release();
   }
+}
+
+/** Preserve up to 3840 pixels from the original when preparing Business photos.
+ * The server's 5 MB upload limit still applies: large files may need additional
+ * compression or dimension reduction. Smaller originals are never upscaled.
+ */
+export function normalizeBusinessPhotoForUpload(file: File): Promise<File> {
+  return normalizeImageForUpload(file, MAX_UPLOAD_IMAGE_BYTES, BUSINESS_4K_MAX_SIDE);
 }
