@@ -230,7 +230,6 @@ export function DashboardPage() {
             {business.website && <div><dt><span aria-hidden="true">↗</span>Sitio web</dt><dd><a href={/^https?:\/\//i.test(business.website) ? business.website : `https://${business.website}`} target="_blank" rel="noreferrer">{business.website}</a></dd></div>}
             {!address && !business.hours && !business.phone && !business.website && currentRating == null && !(reviewCount ?? 0) && <li className="business-home-info-empty">Todavía no hay información adicional registrada.</li>}
           </dl>
-          {readOnlyPreviewUrl && <a className="business-home-profile-link" href={readOnlyPreviewUrl}>Ver perfil público <span aria-hidden="true">↗</span></a>}
         </section>
       </div>
 
