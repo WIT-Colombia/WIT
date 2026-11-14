@@ -35,6 +35,8 @@ apiRouter.use('/', analyticsRouter);
 apiRouter.use('/', offerReportRouter);
 apiRouter.use('/', businessReportRouter);
 apiRouter.use('/', supportRequestRouter);
+// Review management includes Admin routes authenticated by AdminSession rather than a user Bearer token.
+apiRouter.use('/', reviewRouter);
 // This router contains both explicitly public read routes and individually
 // protected management routes, so mount it before routers with broad auth middleware.
 apiRouter.use('/', promotionRouter);
@@ -43,7 +45,6 @@ apiRouter.use('/', verificationRouter);
 apiRouter.use('/', ownershipTransferRouter);
 apiRouter.use('/', offerRouter);
 apiRouter.use('/', favoriteRouter);
-apiRouter.use('/', reviewRouter);
 apiRouter.use('/', businessCrudRouter);
 apiRouter.use('/', photoRouter);
 apiRouter.use('/', businessRouter);
