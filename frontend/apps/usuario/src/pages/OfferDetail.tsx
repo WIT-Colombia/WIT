@@ -30,6 +30,8 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const location = useLocation();
   const { get: getOfferLike, toggle: toggleOfferLike } = useOfferLikes([id]);
   const [likeError, setLikeError] = useState<string | null>(null);
+  const [imageOpen, setImageOpen] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
   const requireAccount = useAccountGate();
   const [offer, setOffer] = useState<Product | Service | undefined>(() =>
     kind === "product" ? products.find((item) => item.id === id) : services.find((item) => item.id === id),
@@ -43,6 +45,34 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const routeContext = (location.state as { analyticsContext?: AnalyticsContext } | null)?.analyticsContext;
   const analyticsContextRef = useRef<AnalyticsContext>(routeContext ?? { source: 'direct' });
   const isProduct = kind === "product";
+  useEffect(() => {
+    if (!imageOpen) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setImageOpen(false);
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [imageOpen]);
+  async function shareOffer() {
+    const url = window.location.href;
+    const title = offer?.name ?? (kind === "product" ? "Producto" : "Servicio");
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        setShareStatus("");
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareStatus("Enlace copiado");
+    } catch {
+      window.prompt("Copia el enlace de este elemento", url);
+      setShareStatus("");
+    }
+  }
   const [verifiedSeo, setVerifiedSeo] = useState<{ offer: Product | Service; business: Business; kind: "product" | "service" } | null>(null);
 
   useEffect(() => {
@@ -135,16 +165,29 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   return (
     <PageLayout className="offer-detail-page">
       <PublicOfferSeo verified={verifiedSeo} />
-      <button className="offer-detail-back" type="button" onClick={() => {
-        if (window.history.length > 1) navigate(-1);
-        else navigate(`/business/${business.id}`);
-      }}>
-        ← Volver
-      </button>
+      <div className="offer-detail-topbar">
+        <button className="offer-detail-back" type="button" onClick={() => {
+          if (window.history.length > 1) navigate(-1);
+          else navigate(`/business/${business.id}`);
+        }}>← Volver</button>
+        <div className="offer-detail-share-wrap">
+          {shareStatus && <span className="offer-detail-share-status" role="status">{shareStatus}</span>}
+          <button className="offer-detail-share" type="button" onClick={() => void shareOffer()} aria-label={`Compartir ${isProduct ? "producto" : "servicio"}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="19" r="2"/><path d="m8 11 8-5m-8 7 8 5"/></svg>
+            Compartir
+          </button>
+        </div>
+      </div>
       <section className="offer-detail">
         <div className="offer-detail-image">
           <CatalogPhoto src={item.image} alt={item.name} />
-          <span className="offer-detail-kind">{isProduct ? "Producto" : "Servicio"}</span>
+          <span className="offer-detail-kind">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg>
+            {isProduct ? "Producto" : "Servicio"}
+          </span>
+          <button type="button" className="offer-detail-zoom" onClick={() => setImageOpen(true)} aria-label="Ampliar fotografía" title="Ampliar fotografía">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 3H4v5M15 3h5v5M20 16v5h-5M4 16v5h5"/><path d="m4 8 6-6m4 0 6 6M20 16l-6 6m-4 0-6-6"/></svg>
+          </button>
           {hasActiveDiscount && (
             <span className="offer-detail-image-discount" aria-label={`Descuento de ${product.discount}`}>
               {product.discount}
@@ -160,21 +203,31 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           <Link className="offer-business-card" to={`/business/${business.id}`}>
             <img src={business.logo || business.image} alt="" />
             <span><small>EN ESTE ESTABLECIMIENTO</small><b>{business.name}</b><em>{business.address}</em></span>
-            <i>→</i>
+            <i aria-hidden="true">→</i>
           </Link>
           <div className="offer-detail-contact-actions">
             {whatsappUrl && <a className="offer-detail-contact whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => recordBusinessEvent(business.id, "WHATSAPP_CLICK", "click", undefined, analyticsContextRef.current)}>WhatsApp</a>}
             {phone && <a className="offer-detail-contact phone" href={`tel:${phone}`} onClick={() => recordBusinessEvent(business.id, "PHONE_CLICK", "click", undefined, analyticsContextRef.current)}><PhoneIcon />Llamar</a>}
           </div>
           <div className="offer-detail-actions">
-            <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`entity-action entity-like entity-product-like${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}><ThumbsUpIcon /></button>
-            <span className={`offer-like-count${like.liked ? " is-active" : ""}`}>{like.liked ? "Ya no me gusta" : "Me gusta"}</span>
+            <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`offer-detail-like-button${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}>
+              <ThumbsUpIcon /><span>{like.liked ? "Te gusta" : "Me gusta"}</span>
+              <span className="offer-detail-like-total" aria-label="Cantidad de Me gusta">{isRealOfferId(item.id) ? like.count : like.count || getLikeCount(item.id, item.likeCount ?? 0)}</span>
+            </button>
           </div>
-          <small className="offer-like-count-note">A {isRealOfferId(item.id) ? like.count : like.count || getLikeCount(item.id, item.likeCount ?? 0)} personas les gusta este {isProduct ? "producto" : "servicio"}.</small>
           {likeError && <small className="offer-like-error" role="alert">{likeError}</small>}
-          <Link className="offer-detail-report" to={`/report?type=${kind}&id=${item.id}`}>Reportar información de {isProduct ? "este producto" : "este servicio"}</Link>
+          <Link className="offer-detail-report" to={`/report?type=${kind}&id=${encodeURIComponent(item.id)}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 21V4m0 1c5-3 9 3 14 0v11c-5 3-9-3-14 0"/></svg>
+            Reportar información de {isProduct ? "este producto" : "este servicio"}
+          </Link>
         </div>
       </section>
+      {imageOpen && <div className="offer-image-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setImageOpen(false); }}>
+        <div className="offer-image-dialog" role="dialog" aria-modal="true" aria-label={`Fotografía ampliada de ${item.name}`}>
+          <button type="button" className="offer-image-close" onClick={() => setImageOpen(false)} aria-label="Cerrar fotografía">×</button>
+          <CatalogPhoto src={item.image} alt={item.name} />
+        </div>
+      </div>}
     </PageLayout>
   );
 }
