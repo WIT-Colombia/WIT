@@ -73,3 +73,207 @@
   .report-page .report-back{min-height:34px;padding:0 11px;font-size:10px;}
 }
 
+/* Formulario de producto/servicio: mismos elementos visuales de Reportar negocio. */
+
+/* Formulario de producto/servicio: mismos elementos visuales de Reportar negocio.
+   Reutiliza sus estilos y SVG; página independiente sin modal ni backdrop. */
+.report-page .user-content-main{
+  width:min(calc(100% - 48px),850px);
+  padding-top:clamp(20px,3vw,40px);
+  padding-bottom:60px;
+}
+.report-panel-wrap{
+  display:grid;
+  justify-items:center;
+  align-items:start;
+  width:100%;
+  min-width:0;
+}
+.report-page .report-form-panel{
+  width:min(100%,720px);
+  max-height:none;
+  min-width:0;
+  box-sizing:border-box;
+  overflow:hidden;
+  padding:40px 42px 36px;
+  border:1px solid #e6def6;
+  border-radius:28px;
+  background:#fff;
+  box-shadow:0 26px 65px rgba(26,22,68,.11);
+}
+.report-page .report-form-panel .business-report-heading h1{
+  position:relative;
+  min-width:0;
+  max-width:calc(100% - 130px);
+  margin:0;
+  color:#211046;
+  font-size:clamp(25px,3vw,34px);
+  font-weight:820;
+  line-height:1.16;
+  letter-spacing:-.75px;
+  overflow-wrap:anywhere;
+}
+.report-page .report-form-panel .business-report-heading h1,
+.report-page .report-form-panel .business-report-intro,
+.report-page .report-form-panel form,
+.report-page .report-form-panel .business-report-actions{
+  z-index:1;
+}
+.report-page .report-form-panel .business-report-intro{
+  position:relative;
+}
+.report-page .report-form-panel .business-report-label .report-optional{
+  font-size:12px;
+  font-weight:500;
+  color:#7b8499;
+}
+.report-page .report-form-panel .business-report-label{
+  flex-wrap:wrap;
+}
+.report-page .report-form-panel .business-report-cancel,
+.report-page .report-form-panel .business-report-submit{
+  text-decoration:none;
+  text-align:center;
+}
+.report-page .report-form-panel .business-report-close{
+  text-decoration:none;
+}
+.report-page .report-form-panel .business-report-close:focus-visible,
+.report-page .report-form-panel .business-report-cancel:focus-visible,
+.report-page .report-form-panel .business-report-submit:focus-visible{
+  outline:3px solid #22d3ee;
+  outline-offset:3px;
+}
+.report-page .report-form-panel .business-report-submit:disabled{
+  opacity:.55;
+  background:#2563eb;
+  color:#fff;
+  cursor:not-allowed;
+}
+.report-page .report-form-panel .report-count-note{
+  width:100%;
+  box-sizing:border-box;
+  margin:18px 0 0;
+  max-width:none;
+  text-align:left;
+}
+.report-page .report-form-panel .report-local-notice{
+  margin-top:10px;
+}
+@media (min-width:601px) and (max-width:1100px){
+  .report-page .user-content-main{
+    width:calc(100% - 36px);
+    padding-top:24px;
+  }
+  .report-page .report-form-panel{
+    width:min(100%,660px);
+    max-height:none;
+    padding:32px 32px 28px;
+    border-radius:25px;
+  }
+  .report-page .report-form-panel .business-report-heading h1{
+    max-width:none;
+    font-size:clamp(26px,3.3vw,32px);
+  }
+}
+@media (max-width:600px){
+  .report-page .user-content-main{
+    width:calc(100% - 24px);
+    padding-top:14px;
+    padding-bottom:40px;
+  }
+  .report-page .report-form-panel{
+    width:100%;
+    max-height:none;
+    min-width:0;
+    margin:0;
+    padding:22px 18px 22px;
+    border:1px solid #e6def6;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 12px 34px rgba(26,22,68,.09);
+  }
+  .report-page .report-form-panel .business-report-decor{
+    width:72%;
+    max-width:310px;
+    border-top-right-radius:22px;
+  }
+  .report-page .report-form-panel .business-report-close{
+    top:12px;
+    right:12px;
+  }
+  .report-page .report-form-panel .business-report-heading{
+    padding-right:43px;
+    gap:14px;
+    min-height:48px;
+  }
+  .report-page .report-form-panel .business-report-heading h1{
+    max-width:none;
+    font-size:clamp(20px,5.1vw,25px);
+    letter-spacing:-.4px;
+  }
+  .report-page .report-form-panel .business-report-intro{
+    margin-top:18px;
+    font-size:13.5px;
+    line-height:1.5;
+  }
+  .report-page .report-form-panel form{
+    margin-top:16px;
+    gap:9px;
+  }
+  .report-page .report-form-panel .business-report-label{
+    font-size:13px;
+    gap:9px;
+  }
+  .report-page .report-form-panel select,
+  .report-page .report-form-panel textarea{
+    font-size:16px;
+  }
+  .report-page .report-form-panel textarea{
+    min-height:110px;
+    max-height:none;
+    resize:vertical;
+  }
+  .report-page .report-form-panel .business-report-info{
+    align-items:flex-start;
+  }
+  .report-page .report-form-panel .business-report-actions{
+    position:static;
+    width:100%;
+    margin-top:16px;
+    padding:0;
+    flex-direction:column;
+    gap:9px;
+    background:transparent;
+  }
+  .report-page .report-form-panel .business-report-cancel,
+  .report-page .report-form-panel .business-report-submit{
+    display:inline-flex;
+    flex:none;
+    width:100%;
+    min-height:46px;
+    box-sizing:border-box;
+    font-size:13px;
+    padding:10px 12px;
+    white-space:normal;
+    line-height:1.3;
+  }
+}
+@media (max-width:380px){
+  .report-page .report-form-panel{
+    padding:20px 15px;
+  }
+  .report-page .report-form-panel .business-report-heading h1{
+    font-size:19px;
+  }
+}
+@media (max-height:650px){
+  .report-page .report-form-panel{
+    max-height:none;
+    overflow:visible;
+  }
+  .report-page .report-form-panel .business-report-decor{
+    border-top-right-radius:22px;
+  }
+}
+
