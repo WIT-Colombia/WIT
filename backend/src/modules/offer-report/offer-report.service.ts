@@ -1,6 +1,6 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import type { OfferKind, OfferReportReason, OfferReportStatus } from '../../generated/prisma/client.js';
+import type { OfferReportReason, OfferReportStatus } from '../../generated/prisma/client.js';
 
 const reasons: OfferReportReason[] = ['UNAVAILABLE', 'WRONG_INFORMATION', 'WRONG_IMAGE', 'OTHER'];
 const statuses: OfferReportStatus[] = ['PENDING', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED'];
@@ -19,23 +19,22 @@ export function validateOfferReport(reason: unknown, description: unknown): { re
   return { reason: reason as OfferReportReason, description: text || null };
 }
 
-export async function submitOfferReport(identifier: string, reporterId: string | null, reason: unknown, description: unknown, kind: unknown) {
+export async function submitOfferReport(identifier: string, reporterId: string | null, reason: unknown, description: unknown) {
   const validated = validateOfferReport(reason, description);
-  if (kind !== 'PRODUCT' && kind !== 'SERVICE') {
-    throw new AppError(400, 'INVALID_OFFER_REPORT_KIND', 'El tipo de publicación no es válido.');
-  }
   const offer = await prisma.businessOffer.findFirst({
     where: {
       id: identifier,
-      kind: kind as OfferKind,
       active: true,
       deletedAt: null,
       publicationStatus: 'PUBLISHED',
       business: { lifecycleStatus: 'ACTIVE', publicationStatus: 'PUBLISHED', deletionStatus: 'NONE' },
     },
-    select: { id: true },
+    select: { id: true, kind: true },
   });
   if (!offer) throw new AppError(404, 'OFFER_NOT_FOUND', 'No encontramos una publicación disponible con ese identificador.');
+  if (validated.reason === 'WRONG_IMAGE' && offer.kind !== 'PRODUCT') {
+    throw new AppError(400, 'INVALID_OFFER_REPORT_REASON', 'Selecciona un motivo válido para este servicio.');
+  }
 
   if (reporterId) {
     const existing = await prisma.offerReport.findFirst({
