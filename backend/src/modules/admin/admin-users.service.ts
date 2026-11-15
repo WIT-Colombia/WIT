@@ -156,7 +156,7 @@ export async function getAdminUserProfile(id: string) {
     adminRoles: user.adminRoleAssignments.length,
     pendingTransfers,
   });
-  const { memberships: _m, createdBusinesses: _c, adminRoleAssignments: _a, createdBusinessAccounts: _accounts, ...profile } = user;
+  const { memberships: _m, createdBusinesses: _c, adminRoleAssignments: _a, createdBusinessAccounts: _accounts, authIdentities: _identities, ...profile } = user;
   return {
     user: { ...profile,
       avatarUrl: profile.avatarUrl?.startsWith('private-avatar:') ? '/api/v1/admin/users/' + encodeURIComponent(profile.id) + '/avatar' : null,
