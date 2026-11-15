@@ -55,7 +55,7 @@ export type AdminUserProfile = {
   businesses: AdminUserBusinessLink[];
   businessAccounts: Array<{ id: string; name: string; status: string }>;
   administrativeRoles: string[];
-  activity: { reviews: number; favorites: number; offerLikes: number; sessions: number; reports: number };
+  activity: { reviews: number; favorites: number; offerLikes: number; sessions: number; reports: number; pendingTransfers: number };
   deletion: { allowed: boolean; blockers: string[] };
 };
 export type AdminUserFilters = { q?: string; page?: number; status?: string; relation?: string };
