@@ -205,6 +205,18 @@ export async function listNotifications(userId: string, businessId?: string) {
       : {}),
   }));
 }
+export async function unreadNotificationCount(userId: string, businessId: string) {
+  return prisma.businessNotification.count({ where: { userId, businessId, readAt: null } });
+}
+
+/** Mark all events in the selected business as read, including older pages. */
+export async function markAllNotificationsRead(userId: string, businessId: string) {
+  await prisma.businessNotification.updateMany({
+    where: { userId, businessId, readAt: null }, data: { readAt: new Date() },
+  });
+  return { ok: true };
+}
+
 /**
  * Remove only the authenticated recipient's inbox entry. The related
  * membership, invitation and ownership-transfer workflows are untouched.
