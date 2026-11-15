@@ -9,6 +9,7 @@
   box-sizing:border-box;
   margin-top:24px;
   padding:clamp(18px,2.2vw,32px);
+  padding-top:20px; /* Alinear el primer renglón con Productos y Servicios. */
   border:1px solid #e0e5f0;
   border-radius:26px;
   background:#fff;
@@ -34,6 +35,7 @@
 @media(max-width:700px) {
   .business-detail-page .business-review-section {
     padding:16px;
+    padding-top:15px; /* Coincide con el espacio superior del catálogo en móvil. */
     border-radius:18px;
   }
   .business-detail-page .business-review-section .business-review-response {
