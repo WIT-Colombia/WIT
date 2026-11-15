@@ -93,7 +93,7 @@ export function AdminUserDetailPage() {
   const [notice,setNotice]=useState('');
   useEffect(()=>{
     if(!allowed||!id)return;
-    let active=true;setLoading(true);setError('');
+    let active=true;setLoading(true);setError('');setProfile(null);setAvatarSrc(null);
     getAdminUserProfile(id).then(result=>{if(active)setProfile(result);})
       .catch(cause=>{if(active)setError(cause instanceof Error?cause.message:'No se pudo consultar el perfil.');})
       .finally(()=>{if(active)setLoading(false);});
@@ -121,11 +121,12 @@ export function AdminUserDetailPage() {
   const collab=profile.businesses.filter(item=>item.role==='COLLABORATOR'&&item.membershipStatus==='ACTIVE');
   const other=profile.businesses.filter(item=>!(item.membershipStatus==='ACTIVE'&&(item.role==='OWNER'||item.role==='COLLABORATOR')));
   const activity=[
-    {icon:'star',label:'Opiniones publicadas o registradas',value:profile.activity.reviews},
+    {icon:'star',label:'Opiniones registradas',value:profile.activity.reviews},
     {icon:'heart',label:'Negocios favoritos',value:profile.activity.favorites},
     {icon:'check',label:'Me gusta en el catálogo',value:profile.activity.offerLikes},
     {icon:'flag',label:'Reportes de negocios',value:profile.activity.reports},
     {icon:'shield',label:'Sesiones de usuario vigentes',value:profile.activity.sessions},
+    {icon:'refresh',label:'Transferencias de propiedad pendientes',value:profile.activity.pendingTransfers},
   ];
   const renderLink=(item:AdminUserBusinessLink)=><article key={item.id} className="au-business-link">
     <span className="au-business-icon"><Icon name="store" size={20}/></span>
