@@ -7,6 +7,7 @@ import { GoogleCallbackPage } from './pages/GoogleCallbackPage';
 import { AdminBusinessesPage, AdminBusinessDetailPage } from './pages/AdminBusinessesPage';
 import { AdminCategoriesPage } from './pages/AdminCategoriesPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
+import { AdminUserDetailPage } from './pages/AdminUserDetailPage';
 import { AdminContentPage } from './pages/AdminContentPage';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
@@ -64,13 +65,14 @@ export default function App() {
         <Route path="/administrators" element={<AdministratorsPage />} />
         <Route path="/categories" element={<AdminCategoriesPage />} />
         <Route path="/users" element={<AdminUsersPage />} />
+        <Route path="/users/:id" element={<AdminUserDetailPage />} />
         <Route path="/content" element={<AdminContentPage />} />
         <Route path="/corporate" element={<DocumentsPage key="CORPORATE" section="CORPORATE" />} />
         <Route path="/legal-documents" element={<DocumentsPage key="LEGAL" section="LEGAL" />} />
         <Route path="/legal-cases" element={<DocumentsPage key="CASES" section="CASES" />} />
         <Route path="/user-needs" element={<OperationalInboxPage kind="needs" />} />
         {navigation.filter(item => !implementedPaths.includes(item.path)).map(item => <Route key={item.path} path={item.path} element={<PendingModulePage />} />)}
-        {['users', 'reports', 'content', 'reviews', 'needs', 'zones', 'categories', 'notifications', 'audit', 'settings'].map(path => <Route key={path} path={`/${path}/:id`} element={<PendingModulePage />} />)}
+        {['reports', 'content', 'reviews', 'needs', 'zones', 'categories', 'notifications', 'audit', 'settings'].map(path => <Route key={path} path={`/${path}/:id`} element={<PendingModulePage />} />)}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Route>
