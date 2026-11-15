@@ -8,6 +8,7 @@ import { getAdminBusiness, listAdminBusinesses } from './admin-businesses.servic
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { listAdminUsersExtended, getAdminUserOverview, getAdminUserProfile, deactivateAdminUser } from './admin-users.service.js';
 import { prisma } from '../../config/prisma.js';
+import { readOwnAvatar } from '../auth/avatar.service.js';
 import { adminDocumentsRouter } from './admin-documents.routes.js';
 
 export const adminRouter = Router();
@@ -59,6 +60,13 @@ adminRouter.get('/users/overview', requireAdmin('ADMINS_MANAGE'), async (_req, r
   try {
     res.setHeader('Cache-Control', 'no-store');
     res.json(await getAdminUserOverview());
+  } catch (error) { next(error); }
+});
+adminRouter.get('/users/:id/avatar', requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
+  try {
+    const avatar = await readOwnAvatar(String(req.params.id));
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.type(avatar.mimeType).send(avatar.content);
   } catch (error) { next(error); }
 });
 adminRouter.get('/users/:id', requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
