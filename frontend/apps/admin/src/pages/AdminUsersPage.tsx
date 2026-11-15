@@ -5,8 +5,6 @@ import { StatePanel } from '../components/common';
 import { getSession } from '../services/adminService';
 import { getAdminUserOverview, listAdminUsers, type AdminUserPage, type AdminUserOverview, type AdminUserRecord } from '../services/adminApiClient';
 import { AdminUserAnalyticsPanel } from './AdminUserAnalyticsPanel';
-import adminWorkspacePreview from '../assets/admin-workspace-960.webp';
-import adminWorkspace4k from '../assets/admin-workspace-4k.webp';
 import './AdminUsersRefresh.css';
 
 const date = (value: string | null) => value
@@ -75,14 +73,8 @@ export function AdminUsersPage() {
   ]:[];
   if(!allowed)return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permisos de gestión administrativa para consultar usuarios."/>;
   return <div className="admin-users-page au-page">
-    <header className="au-hero" aria-labelledby="au-title">
-      <div className="au-hero-copy"><span className="au-eyebrow">DIRECTORIO · PERSONAS Y COMUNIDAD</span><div className="au-hero-title">
-        <span className="au-heading-icon"><Icon name="users" size={30}/></span>
-        <div><h1 id="au-title">Usuarios</h1><p>Información de cuentas, participación en negocios y evolución de la comunidad en un solo lugar.</p></div>
-      </div></div>
-      <picture className="au-hero-image"><source srcSet={adminWorkspacePreview+' 960w, '+adminWorkspace4k+' 3840w'} sizes="(max-width: 700px) 100vw, 300px" type="image/webp"/><img src={adminWorkspacePreview} width="3840" height="2160" alt="Imagen del centro de administración XAMUKO" decoding="async" loading="eager"/></picture>
-    </header>
-    {overview && <div className="au-overview" aria-label="Indicadores de usuarios">{metrics.map(m=><div key={m.label} className={'au-kpi '+m.tone}><span className="au-kpi-icon"><Icon name={m.icon} size={22}/></span><div><span>{m.label}</span><strong>{number(m.value)}</strong><small>{m.hint}</small></div></div>)}</div>}
+    <header className="admin-section-heading"><h1 id="au-title">Usuarios</h1></header>
+        {overview && <div className="au-overview" aria-label="Indicadores de usuarios">{metrics.map(m=><div key={m.label} className={'au-kpi '+m.tone}><span className="au-kpi-icon"><Icon name={m.icon} size={22}/></span><div><span>{m.label}</span><strong>{number(m.value)}</strong><small>{m.hint}</small></div></div>)}</div>}
     {overviewError && <p className="au-data-note" role="status">Las estadísticas generales no están disponibles: {overviewError}</p>}
     <section className="au-directory" aria-labelledby="au-directory-title">
       <div className="au-panel-heading"><div><span className="au-eyebrow">GESTIÓN DE CUENTAS</span><h2 id="au-directory-title">Directorio de usuarios</h2>
