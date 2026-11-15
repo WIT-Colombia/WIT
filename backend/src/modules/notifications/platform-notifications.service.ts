@@ -20,13 +20,13 @@ export async function notifyPlatformUser(tx: Transaction, notice: Notice) {
 }
 
 export async function notifyBusinessOwners(
-  tx: Transaction, businessId: string, title: string, message: string,
+  tx: Transaction, businessId: string, title: string, message: string, excludeUserId?: string,
 ) {
   const owners = await tx.businessMembership.findMany({
     where: { businessId, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } },
     select: { userId: true },
   });
-  const ids = [...new Set(owners.map(owner => owner.userId))];
+  const ids = [...new Set(owners.map(owner => owner.userId))].filter(id => id !== excludeUserId);
   if (!ids.length) return;
   await tx.businessNotification.createMany({
     data: ids.map(userId => ({
