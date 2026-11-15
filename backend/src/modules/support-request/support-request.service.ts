@@ -1,6 +1,7 @@
 import { Prisma, type SupportRequestKind, type SupportRequestStatus } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
+import { notifyBusinessOwners, notifyPlatformUser, statusTitle } from '../notifications/platform-notifications.service.js';
 
 const kinds: SupportRequestKind[] = ['NEED', 'SUPPORT', 'SUGGESTION'];
 const statuses: SupportRequestStatus[] = ['PENDING', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED'];
@@ -91,8 +92,11 @@ export async function decideSupportRequest(adminId: string, id: string, rawStatu
   if ((status === 'RESOLVED' || status === 'REJECTED') && (!decisionNote || decisionNote.length < 10))
     throw new AppError(400, 'SUPPORT_DECISION_NOTE_REQUIRED', 'Explica la decisión con al menos 10 caracteres.');
   return prisma.$transaction(async tx => {
-    const before = await tx.supportRequest.findUnique({ where: { id }, select: { id: true, kind: true, status: true } });
+    const before = await tx.supportRequest.findUnique({ where: { id }, select: { id: true, kind: true, status: true, userId: true, businessId: true, title: true } });
     if (!before) throw new AppError(404, 'SUPPORT_REQUEST_NOT_FOUND', 'Solicitud no encontrada.');
+    if (before.status === status) throw new AppError(409, 'SUPPORT_REQUEST_UNCHANGED', 'La solicitud ya tiene ese estado.');
+    if (['RESOLVED', 'REJECTED'].includes(before.status)) throw new AppError(409, 'SUPPORT_REQUEST_ALREADY_CLOSED', 'Esta solicitud ya fue cerrada.');
+    if (status === 'PENDING') throw new AppError(400, 'SUPPORT_REQUEST_INVALID_TRANSITION', 'No se puede regresar una solicitud a pendiente.');
     const result = await tx.supportRequest.update({
       where: { id }, data: { status, decisionNote, reviewedById: adminId, reviewedAt: new Date() },
     });
@@ -104,6 +108,12 @@ export async function decideSupportRequest(adminId: string, id: string, rawStatu
         newState: { status }, reason: decisionNote,
       },
     });
+    const type = before.kind === 'NEED' ? 'Necesidad registrada' : before.kind === 'SUPPORT' ? 'Solicitud de soporte' : 'Sugerencia';
+    const publicMessage = 'Tu solicitud «' + before.title.slice(0, 100) + '» está ' + statusTitle(status).toLocaleLowerCase('es-CO') + '. Consulta el estado con el equipo de XAMUKO.';
+    await notifyPlatformUser(tx, { userId: before.userId, sourceType: 'SUPPORT_REQUEST', sourceId: id,
+      title: type + ': ' + statusTitle(status), message: publicMessage });
+    if (before.businessId) await notifyBusinessOwners(tx, before.businessId, type + ': ' + statusTitle(status),
+      'La solicitud de tu negocio «' + before.title.slice(0, 100) + '» cambió de estado en XAMUKO Admin.');
     return result;
   });
 }
