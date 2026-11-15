@@ -121,6 +121,15 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
         const list = await send('/admin/support-requests?kind=' + kind, { headers: admin() });
         assert.equal(list.response.status, 200, JSON.stringify(list.body));
         assert.ok(list.body.requests.some((r: any) => r.id === result.body.request.id));
+        const decision = await patch('/admin/support-requests/' + result.body.request.id,
+          { status: 'RESOLVED', decisionNote: 'Solicitud revisada con respuesta y cierre administrativo.' }, admin());
+        assert.equal(decision.response.status, 200, JSON.stringify(decision.body));
+        assert.ok(await prisma.platformNotification.findFirst({
+          where: { userId, sourceType: 'SUPPORT_REQUEST', sourceId: result.body.request.id },
+        }));
+        assert.ok(await prisma.businessNotification.findFirst({
+          where: { userId, businessId, title: { contains: 'Resuelto' } },
+        }));
       }
       const forged = await post('/business/support-requests', { kind: 'SUPPORT', businessId: randomUUID(), category: 'Cuenta', title: 'Acceso', description: 'Solicito acceder a otro negocio.' }, user());
       assert.equal(forged.response.status, 403);
@@ -175,6 +184,28 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
       const decision = await post('/admin/verifications/' + id + '/decision', { action: 'APPROVE', nameConfirmed: true, reason: 'Documento contrastado con nombre del negocio.' }, admin());
       assert.equal(decision.response.status, 200, JSON.stringify(decision.body));
       assert.equal((await prisma.business.findUniqueOrThrow({ where: { id: businessId } })).verificationStatus, 'APPROVED');
+    });
+
+    await t.test('Usuarios: notificaciones de decisiones, lectura y protección por sesión', async () => {
+      const anonymous = await send('/notifications');
+      assert.equal(anonymous.response.status, 401);
+      const list = await send('/notifications', { headers: user() });
+      assert.equal(list.response.status, 200, JSON.stringify(list.body));
+      assert.ok(list.body.notifications.length >= 4, 'Se esperan avisos de soporte y reportes');
+      assert.ok(list.body.notifications.some((item: any) => item.sourceType === 'VERIFICATION'));
+      assert.ok(list.body.notifications.some((item: any) => item.sourceType === 'BUSINESS_REPORT'));
+      const target = list.body.notifications[0];
+      const read = await post('/notifications/' + target.id + '/read', {}, user());
+      assert.equal(read.response.status, 200);
+      assert.ok((await prisma.platformNotification.findUniqueOrThrow({ where: { id: target.id } })).readAt);
+      const markAll = await post('/notifications/read-all', {}, user());
+      assert.equal(markAll.response.status, 200);
+      const removed = await send('/notifications/' + target.id, { method: 'DELETE', headers: user() });
+      assert.equal(removed.response.status, 200);
+      assert.ok((await prisma.platformNotification.findUniqueOrThrow({ where: { id: target.id } })).deletedAt);
+      const after = await send('/notifications', { headers: user() });
+      assert.equal(after.response.status, 200);
+      assert.ok(!after.body.notifications.some((item: any) => item.id === target.id));
     });
 
     await t.test('Cierre de sesión real de Admin y Usuarios/Business', async () => {
