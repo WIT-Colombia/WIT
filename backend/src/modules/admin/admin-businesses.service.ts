@@ -8,7 +8,7 @@ const businessSelect = {
   createdAt: true, updatedAt: true,
   createdBy: { select: { displayName: true, emailNormalized: true } },
   location: { select: { cityName: true, countryCode: true, address: true } },
-  category: { select: { translations: { where: { locale: 'es' }, select: { name: true }, take: 1 } } },
+  category: { select: { code: true, translations: { select: { locale: true, name: true } } } },
 } as const;
 
 export async function listAdminBusinesses(query: { q?: string; page?: number; pageSize?: number; status?: string }) {
