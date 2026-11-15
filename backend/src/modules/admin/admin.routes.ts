@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type RequestHandler } from 'express';
 import { getAdminDashboardStats } from './admin-dashboard.service.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
@@ -16,7 +16,9 @@ adminRouter.get('/businesses', requireAdmin('BUSINESSES_READ'), async (req, res,
   try { res.setHeader('Cache-Control', 'no-store'); res.json(await listAdminBusinesses({ q: String(req.query.q ?? ''), page: Number(req.query.page) || 1, pageSize: Number(req.query.pageSize) || 20, status: String(req.query.status ?? '') })); }
   catch (error) { next(error); }
 });
-adminRouter.get('/businesses/analytics', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+// Prefer an unambiguous endpoint that cannot match /businesses/:id.
+// Keep /businesses/analytics as a compatibility alias for existing clients.
+const businessAnalyticsHandler: RequestHandler = async (req, res, next) => {
   try {
     res.setHeader('Cache-Control', 'no-store');
     res.json(await getAdminBusinessAnalytics({
@@ -26,7 +28,9 @@ adminRouter.get('/businesses/analytics', requireAdmin('BUSINESSES_READ'), async 
       status: String(req.query.status ?? ''),
     }));
   } catch (error) { next(error); }
-});
+};
+adminRouter.get('/business-analytics', requireAdmin('BUSINESSES_READ'), businessAnalyticsHandler);
+adminRouter.get('/businesses/analytics', requireAdmin('BUSINESSES_READ'), businessAnalyticsHandler);
 adminRouter.get('/businesses/:id', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
   try { res.setHeader('Cache-Control', 'no-store'); const business = await getAdminBusiness(String(req.params.id)); if (!business) return res.status(404).json({ error: { code: 'BUSINESS_NOT_FOUND', message: 'No encontramos el negocio.' } }); res.json({ business }); }
   catch (error) { next(error); }
