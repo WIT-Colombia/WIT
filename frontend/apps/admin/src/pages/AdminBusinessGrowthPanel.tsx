@@ -7,10 +7,11 @@ type Range = '6m' | '12m' | '24m' | '60m' | 'all';
 type Interval = 'month' | 'quarter' | 'year';
 type Measure = 'registrations' | 'cumulative';
 type Shape = 'area' | 'bars';
+type Indicator = 'businesses' | 'reviews' | 'users';
 type Datum = { label: string; registrations: number; cumulative: number };
 const number = (value: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(value);
 
-function groupSeries(series: AdminBusinessAnalytics['series'], interval: Interval): Datum[] {
+function groupSeries(series: Array<{ month: string; registrations: number; cumulative: number }>, interval: Interval): Datum[] {
   const records = new Map<string, Datum>();
   for (const item of series) {
     const [year, month] = item.month.split('-').map(Number);
@@ -25,8 +26,9 @@ function groupSeries(series: AdminBusinessAnalytics['series'], interval: Interva
   return [...records.values()];
 }
 
-function downloadSeries(series: Datum[], measure: Measure) {
-  const heading = ['Período', 'Registros nuevos', 'Total acumulado'];
+function downloadSeries(series: Datum[], measure: Measure, indicator: Indicator) {
+  const event = indicator === 'users' ? 'Usuarios registrados' : indicator === 'reviews' ? 'Opiniones publicadas' : 'Negocios registrados';
+  const heading = ['Período', event + ' (nuevos)', event + ' (acumulado)'];
   const csv = [heading.join(';'), ...series.map(item => [item.label, item.registrations, item.cumulative].join(';'))].join('\r\n');
   const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
   const anchor = document.createElement('a');
@@ -129,6 +131,7 @@ function GrowthCanvas({ points, measure, shape }: { points: Datum[]; measure: Me
 
 export function AdminBusinessGrowthPanel() {
   const [period, setPeriod] = useState<Range>('12m');
+  const [indicator, setIndicator] = useState<Indicator>('businesses');
   const [city, setCity] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [status, setStatus] = useState('all');
@@ -141,6 +144,10 @@ export function AdminBusinessGrowthPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
+  // User registrations are global: city/category/status filters cannot be applied.
+  useEffect(() => {
+    if (indicator === 'users' && (city || categoryId || status !== 'all')) setIndicator('businesses');
+  }, [city, categoryId, status, indicator]);
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -157,18 +164,26 @@ export function AdminBusinessGrowthPanel() {
     return () => { active = false; };
   }, [period, city, categoryId, status, attempt]);
 
-  const grouped = useMemo(() => groupSeries(data?.series ?? [], interval), [data, interval]);
+  const globalUsersAvailable = !city && !categoryId && status === 'all';
+  const label = indicator === 'users' ? 'Usuarios' : indicator === 'reviews' ? 'Opiniones' : 'Negocios';
+  const raw = useMemo(() => (data?.series ?? []).map(item => ({
+    month: item.month,
+    registrations: indicator === 'users' ? item.users : indicator === 'reviews' ? item.reviews : item.registrations,
+    cumulative: indicator === 'users' ? item.userCumulative : indicator === 'reviews' ? item.reviewCumulative : item.cumulative,
+  })), [data, indicator]);
+  const grouped = useMemo(() => groupSeries(raw, interval), [raw, interval]);
   const newRegistrations = grouped.reduce((total, item) => total + item.registrations, 0);
   const average = grouped.length ? newRegistrations / grouped.length : 0;
   const peak = grouped.reduce<Datum | null>((best, item) => !best || item.registrations > best.registrations ? item : best, null);
-  const reset = () => { setPeriod('12m'); setCity(''); setCategoryId(''); setStatus('all'); setInterval('month'); setMeasure('registrations'); setShape('area'); };
+  const totalCurrent = indicator === 'users' ? data?.totalUsers ?? 0 : indicator === 'reviews' ? data?.totalReviews ?? 0 : data?.total ?? 0;
+  const reset = () => { setPeriod('12m'); setCity(''); setCategoryId(''); setStatus('all'); setIndicator('businesses'); setInterval('month'); setMeasure('registrations'); setShape('area'); };
   return <section className="ad-business-growth-panel" aria-labelledby="ad-business-growth-title">
     <header className="ad-business-growth-heading">
       <div className="ad-business-growth-title"><span className="ad-business-growth-heading-icon"><Icon name="chart" size={27} /></span>
         <div><span className="ad-business-growth-eyebrow">INTELIGENCIA DE NEGOCIOS</span><h2 id="ad-business-growth-title">Evolución de XAMUKO</h2>
-          <p>Analiza cómo crece el directorio por ubicación, categoría, estado y período.</p></div></div>
+          <p>Analiza el crecimiento de los negocios, las opiniones y los usuarios con datos históricos reales.</p></div></div>
       <button type="button" className="ad-business-growth-export" disabled={loading || !!error || !grouped.length}
-        onClick={() => downloadSeries(grouped, measure)}><Icon name="download" size={17} /> Exportar CSV</button>
+        onClick={() => downloadSeries(grouped, measure, indicator)}><Icon name="download" size={17} /> Exportar CSV</button>
     </header>
     <div className="ad-business-growth-filters">
       <label><span>Ciudad</span><select value={city} onChange={e => setCity(e.target.value)}><option value="">Todas las ciudades</option>
@@ -188,15 +203,19 @@ export function AdminBusinessGrowthPanel() {
     : loading ? <div className="ad-business-growth-state" role="status">Consultando la evolución del directorio…</div>
     : data && <>
       <div className="ad-business-growth-metrics" aria-label="Resumen de evolución">
-        <div><span><Icon name="store" size={17} /> Negocios del segmento</span><strong>{number(data.total)}</strong><small>Total actual según los filtros</small></div>
-        <div><span><Icon name="up" size={17} /> Nuevos registros</span><strong>{number(newRegistrations)}</strong><small>Dentro del período seleccionado</small></div>
-        <div><span><Icon name="chart" size={17} /> Promedio por {interval === 'month' ? 'mes' : interval === 'quarter' ? 'trimestre' : 'año'}</span><strong>{number(Math.round(average))}</strong><small>Registros nuevos por intervalo</small></div>
-        <div><span><Icon name="award" size={17} /> Período destacado</span><strong>{peak && peak.registrations > 0 ? peak.label : '—'}</strong><small>{peak && peak.registrations > 0 ? number(peak.registrations) + ' registros' : 'Sin registros nuevos'}</small></div>
+        <div><span><Icon name={indicator === 'users' ? 'users' : indicator === 'reviews' ? 'star' : 'store'} size={17} /> {label} totales</span><strong>{number(totalCurrent)}</strong><small>{indicator === 'users' ? 'Total global actual' : 'Total actual según los filtros'}</small></div>
+        <div><span><Icon name="up" size={17} /> {indicator === 'reviews' ? 'Opiniones publicadas' : 'Nuevos registros'}</span><strong>{number(newRegistrations)}</strong><small>Dentro del período seleccionado</small></div>
+        <div><span><Icon name="chart" size={17} /> Promedio por {interval === 'month' ? 'mes' : interval === 'quarter' ? 'trimestre' : 'año'}</span><strong>{number(Math.round(average))}</strong><small>Eventos por intervalo</small></div>
+        <div><span><Icon name="award" size={17} /> Período destacado</span><strong>{peak && peak.registrations > 0 ? peak.label : '—'}</strong><small>{peak && peak.registrations > 0 ? number(peak.registrations) + ' eventos' : 'Sin registros nuevos'}</small></div>
       </div>
       <div className="ad-business-growth-chart-wrap">
         <div className="ad-business-growth-chart-toolbar">
-          <div><h3>Comportamiento histórico</h3><p>{measure === 'registrations' ? 'Nuevos negocios registrados' : 'Negocios acumulados según fecha de registro'}</p></div>
+          <div><h3>Comportamiento histórico</h3><p>{measure === 'registrations' ? 'Actividad por período: ' + label.toLowerCase() : 'Evolución acumulada: ' + label.toLowerCase()}</p></div>
           <div className="ad-business-growth-view-controls">
+            <label className="ad-business-growth-resolution">Indicador <select aria-label="Indicador de evolución" value={indicator} onChange={e => setIndicator(e.target.value as Indicator)}>
+              <option value="businesses">Negocios</option><option value="reviews">Opiniones publicadas</option>
+              <option value="users" disabled={!globalUsersAvailable}>Usuarios (global)</option>
+            </select></label>
             <div className="ad-business-growth-toggle" role="group" aria-label="Tipo de dato"><button type="button" className={measure === 'registrations' ? 'selected' : ''} aria-pressed={measure === 'registrations'} onClick={() => setMeasure('registrations')}>Nuevos</button><button type="button" className={measure === 'cumulative' ? 'selected' : ''} aria-pressed={measure === 'cumulative'} onClick={() => setMeasure('cumulative')}>Acumulado</button></div>
             <label className="ad-business-growth-resolution">Agrupar <select value={interval} onChange={e => setInterval(e.target.value as Interval)}><option value="month">Mes</option><option value="quarter">Trimestre</option><option value="year">Año</option></select></label>
             <div className="ad-business-growth-toggle" role="group" aria-label="Estilo de gráfica"><button type="button" aria-label="Gráfica de línea" title="Línea" aria-pressed={shape === 'area'} className={shape === 'area' ? 'selected' : ''} onClick={() => setShape('area')}><Icon name="up" size={16} /></button><button type="button" aria-label="Gráfica de barras" title="Barras" aria-pressed={shape === 'bars'} className={shape === 'bars' ? 'selected' : ''} onClick={() => setShape('bars')}><Icon name="chart" size={16} /></button></div>
@@ -207,7 +226,7 @@ export function AdminBusinessGrowthPanel() {
           <div className="ad-business-growth-table-wrap"><table><thead><tr><th scope="col">Período</th><th scope="col">Nuevos</th><th scope="col">Acumulado</th></tr></thead>
             <tbody>{grouped.map(item => <tr key={item.label}><th scope="row">{item.label}</th><td>{number(item.registrations)}</td><td>{number(item.cumulative)}</td></tr>)}</tbody></table></div>}
       </div>
-      <p className="ad-business-growth-definition"><Icon name="shield" size={17} />{data.definition} La serie utiliza meses UTC y solo muestra registros que todavía pertenecen al directorio.</p>
+      <p className="ad-business-growth-definition"><Icon name="shield" size={17} />{data.definition} La serie utiliza meses UTC. {indicator === 'users' ? 'Los usuarios se muestran únicamente a nivel global.' : 'Los filtros de ciudad, categoría y estado corresponden a los negocios del directorio.'}</p>
     </>}
   </section>;
 }
