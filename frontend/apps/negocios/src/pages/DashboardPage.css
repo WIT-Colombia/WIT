@@ -2012,3 +2012,56 @@
     white-space: normal;
   }
 }
+
+
+/* Inicio: la misma exploración precisa que Estadísticas.
+   La línea vertical muestra también puntos con cero eventos. */
+.business-home .business-home-performance .business-home-chart-visual{
+  display:block;min-width:0;position:relative;
+}
+.business-home .business-home-performance .business-home-chart{
+  display:block;width:100%;height:auto;max-height:none;
+  overflow:visible;cursor:crosshair;touch-action:pan-y;
+}
+.business-home .business-home-performance .business-home-chart-dot{
+  fill:#fff;stroke:#265bf1;stroke-width:2.5;pointer-events:auto;
+}
+.business-home .business-home-performance .business-home-chart-dot.is-active{
+  fill:#fff;stroke:#245cf2;stroke-width:3;
+  filter:drop-shadow(0 2px 3px #245cf230);
+}
+.business-home .business-home-performance .business-home-chart-crosshair{
+  stroke:#95acd9;stroke-width:1.35;stroke-dasharray:4 5;
+}
+.business-home .business-home-performance .business-home-chart-crosshair-dot{
+  fill:#fff;stroke:#225cf1;stroke-width:2.6;
+}
+.business-home .business-home-performance .business-home-chart-value rect{
+  fill:#182d53;filter:drop-shadow(0 5px 8px #13264b29);
+}
+.business-home .business-home-performance .business-home-chart-value text{
+  fill:#fff;font-size:14px;font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+.business-home .business-home-performance .business-home-chart-date{
+  fill:#667c9c;font-size:11px;font-weight:650;
+  font-variant-numeric:tabular-nums;pointer-events:none;
+}
+.business-home .business-home-performance .business-home-chart-axis-label{
+  display:block;fill:#7387a5;font-size:11px;font-weight:600;
+}
+.business-home .business-home-performance .business-home-chart-hint{
+  min-height:18px;margin:6px 0 0;color:#6c809e;
+  font-size:11px;line-height:1.5;text-align:center;
+}
+.business-home .business-home-performance .business-home-chart-hint strong{
+  color:#225cf1;font-weight:800;
+}
+@media(max-width:760px){
+  .business-home .business-home-performance .business-home-chart-date{
+    font-size:10px;
+  }
+  .business-home .business-home-performance .business-home-chart-hint{
+    font-size:10px;
+  }
+}
