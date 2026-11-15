@@ -25,6 +25,7 @@ export function Layout() {
   const verification = location.pathname.startsWith('/verifications');
   const businessesRoute = location.pathname === '/businesses';
   const usersRoute = location.pathname === '/users' || location.pathname.startsWith('/users/');
+  const contentRoute = location.pathname === '/content' || location.pathname.startsWith('/content/');
   useEffect(() => { setOpen(false); }, [location.pathname, location.search]);
   useEffect(() => { setExpandedGroup(activeGroupFor(location.pathname)); }, [location.pathname]);
   useEffect(() => {
@@ -127,7 +128,7 @@ export function Layout() {
   };
   const avatar = avatarSrc ? <img src={avatarSrc} alt="" onError={() => setAvatarSrc(null)} /> : admin?.name?.split(' ').map(part => part[0]).slice(0, 2).join('') || 'A';
   const navItem = (item: typeof navigation[number]) => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={sidebarIcons[item.path] || item.icon} size={20} /><span>{item.label}</span>{item.pending && <small className="nav-pending">Pendiente</small>}</NavLink>;
-  return <div className={`app-shell admin-refresh admin-workbench ${verification ? 'verification-preserved' : ''} ${businessesRoute ? 'businesses-layout' : ''} ${usersRoute ? 'users-layout' : ''}`}>
+  return <div className={`app-shell admin-refresh admin-workbench ${verification ? 'verification-preserved' : ''} ${businessesRoute ? 'businesses-layout' : ''} ${usersRoute ? 'users-layout' : ''} ${contentRoute ? 'content-layout' : ''}`}>
     <a className="skip-link" href="#main">Ir al contenido</a>
     {open && mobile && <button className="sidebar-backdrop" aria-label="Cerrar navegación" tabIndex={-1} onClick={closeSidebar} />}
     <aside id="admin-navigation" ref={sidebarRef} className={`admin-sidebar ${open ? 'is-open' : ''}`} aria-label="Navegación administrativa" inert={(mobile && !open) || confirmLogout}>
