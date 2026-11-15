@@ -16,7 +16,7 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
   const seed = randomUUID().slice(0, 8);
   const email = 'support-int-' + seed + '@example.invalid';
   const password = 'Xamuko-' + seed + '-password';
-  let userId = '', accountId = '', categoryId = '', businessId = '', offerId = '', reviewId = '';
+  let userId = '', accountId = '', categoryId = '', businessId = '', otherBusinessId = '', offerId = '', reviewId = '';
   let token = '', refreshCookie = '', adminCookie = '', adminCsrf = '';
   const needIds: string[] = [];
   const send = async (path: string, init: RequestInit = {}) => {
@@ -135,6 +135,40 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
       assert.equal(forged.response.status, 403);
     });
 
+    await t.test('Business: cada negocio solo muestra sus avisos y no permite modificar los de otro', async () => {
+      const other = await prisma.business.create({ data: {
+        businessAccountId: accountId, createdById: userId, categoryId,
+        slug: 'support-second-' + seed, name: 'Segundo negocio ' + seed,
+        lifecycleStatus: 'ACTIVE', publicationStatus: 'PUBLISHED', visibilityStatus: 'VISIBLE',
+      } });
+      otherBusinessId = other.id;
+      await prisma.businessMembership.create({ data: { businessId: otherBusinessId, userId, role: 'OWNER', status: 'ACTIVE' } });
+      const first = await prisma.businessNotification.create({ data: {
+        businessId, userId, type: 'COLLABORATION_UPDATE', title: 'Aviso del negocio principal', message: 'Solo visible en negocio uno',
+      } });
+      const second = await prisma.businessNotification.create({ data: {
+        businessId: otherBusinessId, userId, type: 'COLLABORATION_UPDATE', title: 'Aviso del segundo negocio', message: 'Solo visible en negocio dos',
+      } });
+      const firstInbox = await send('/businesses/' + businessId + '/notifications', { headers: user() });
+      assert.equal(firstInbox.response.status, 200, JSON.stringify(firstInbox.body));
+      assert.ok(firstInbox.body.notifications.some((item: any) => item.id === first.id));
+      assert.ok(!firstInbox.body.notifications.some((item: any) => item.id === second.id));
+      const secondInbox = await send('/businesses/' + otherBusinessId + '/notifications', { headers: user() });
+      assert.equal(secondInbox.response.status, 200, JSON.stringify(secondInbox.body));
+      assert.ok(secondInbox.body.notifications.some((item: any) => item.id === second.id));
+      assert.ok(!secondInbox.body.notifications.some((item: any) => item.id === first.id));
+      const wrongRead = await post('/businesses/' + otherBusinessId + '/notifications/' + first.id + '/read', {}, user());
+      assert.equal(wrongRead.response.status, 404);
+      const goodRead = await post('/businesses/' + businessId + '/notifications/' + first.id + '/read', {}, user());
+      assert.equal(goodRead.response.status, 200);
+      const wrongDelete = await send('/businesses/' + otherBusinessId + '/notifications/' + first.id, { method: 'DELETE', headers: user() });
+      assert.equal(wrongDelete.response.status, 404);
+      assert.ok(await prisma.businessNotification.findUnique({ where: { id: first.id } }));
+      const goodDelete = await send('/businesses/' + businessId + '/notifications/' + first.id, { method: 'DELETE', headers: user() });
+      assert.equal(goodDelete.response.status, 200);
+      assert.equal(await prisma.businessNotification.findUnique({ where: { id: first.id } }), null);
+    });
+
     await t.test('Reportes de negocios: formulario, bandeja y decisión', async () => {
       const sent = await post('/public/businesses/' + businessId + '/reports', { reason: 'FALSE_INFORMATION', description: 'Los datos del negocio son incorrectos.' }, user());
       assert.equal(sent.response.status, 201, JSON.stringify(sent.body));
@@ -239,6 +273,7 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
     // CI uses a disposable MySQL database, never any production records.
     if (needIds.length) await prisma.supportRequest.deleteMany({ where: { id: { in: needIds } } }).catch(() => undefined);
     if (userId) await prisma.auditLog.deleteMany({ where: { actorUserId: userId } }).catch(() => undefined);
+    if (otherBusinessId) await prisma.business.delete({ where: { id: otherBusinessId } }).catch(() => undefined);
     if (businessId) await prisma.business.delete({ where: { id: businessId } }).catch(() => undefined);
     if (accountId) await prisma.businessAccount.delete({ where: { id: accountId } }).catch(() => undefined);
     if (categoryId) await prisma.category.delete({ where: { id: categoryId } }).catch(() => undefined);
