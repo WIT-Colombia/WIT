@@ -303,6 +303,17 @@ function explainSelection(selection: StatisticsSelection, detail: Detail): Expla
   return metricExplanations[selection.key] ?? { origin: detail.source, meaning: detail.description };
 }
 
+function shortAxisDate(label: string) {
+  const hourly = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):00$/.exec(label);
+  if (hourly) return hourly[4] + ':00';
+  const daily = /^(\d{4})-(\d{2})-(\d{2})$/.exec(label);
+  if (daily) return new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+    .format(new Date(Date.UTC(Number(daily[1]), Number(daily[2])-1, Number(daily[3]), 12)));
+  const monthly = /^(\d{4})-(\d{2})$/.exec(label);
+  if (monthly) return new Intl.DateTimeFormat('es-CO', { month: 'short', year: '2-digit', timeZone: 'UTC' })
+    .format(new Date(Date.UTC(Number(monthly[1]), Number(monthly[2])-1, 12)));
+  return label.length > 13 ? label.slice(0, 12) + '…' : label;
+}
 function DataChart({ points, chart, unit }: { points: Point[]; chart: ChartKind; unit?: 'count' | 'rating' }) {
   const [active, setActive] = useState<number | null>(null);
   if (!points.length) return <div className="stats-detail-empty">No hay registros desglosados para mostrar.</div>;
@@ -318,7 +329,7 @@ function DataChart({ points, chart, unit }: { points: Point[]; chart: ChartKind;
   const ceiling = unit === 'rating' ? 5 : max === 0 ? 4 : Math.max(1, Math.ceil(max * 1.12));
   const y = (v: number) => top + ph * (1 - Math.min(v, ceiling) / ceiling);
   const x = (i: number) => left + (points.length === 1 ? pw / 2 : (i / (points.length - 1)) * pw);
-  const labelsStep = Math.max(1, Math.ceil(points.length / 7));
+  const labelsStep = Math.max(1, Math.ceil(points.length / 6));
   const base = y(0);
   const lineCoords = points.map((p, i) => x(i) + ',' + y(p.value)).join(' ');
   const area = points.length > 1 ? 'M' + x(0) + ' ' + base + ' L' + points.map((p, i) => x(i) + ' ' + y(p.value)).join(' L') + ' L' + x(points.length - 1) + ' ' + base + ' Z' : '';
@@ -351,9 +362,9 @@ function DataChart({ points, chart, unit }: { points: Point[]; chart: ChartKind;
         <polyline points={lineCoords} fill="none" stroke="#275cf1" strokeWidth="3.3" strokeLinejoin="round" strokeLinecap="round" />
         {points.map((p, i) => <circle key={p.label + i} cx={x(i)} cy={y(p.value)} r={active === i ? 6 : 4} fill="#fff" stroke="#275cf1" strokeWidth="2.5" tabIndex={0} aria-label={p.label + ': ' + count(p.value)} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onClick={() => setActive(i)} />)}
       </> : points.map((p, i) => <rect key={p.label + i} x={left + (i + .5) * pw / points.length - barWidth / 2} y={y(p.value)} width={barWidth} height={Math.max(1, base - y(p.value))} rx="5" fill="url(#stats-detail-bar)" tabIndex={0} aria-label={p.label + ': ' + count(p.value)} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onClick={() => setActive(i)} />)}
-      {points.map((p, i) => (i % labelsStep === 0 || i === points.length - 1) && <text key={p.label + i} x={chart === 'columns' ? left + (i + .5) * pw / points.length : x(i)} y={h - 21} textAnchor="middle" fill="#6e819e" fontSize="11">{p.label.length > 12 ? p.label.slice(0, 11) + '…' : p.label}</text>)}
+      {points.map((p, i) => (i % labelsStep === 0 || i === points.length - 1) && <text key={p.label + i} x={chart === 'columns' ? left + (i + .5) * pw / points.length : x(i)} y={h - 21} textAnchor="middle" fill="#6e819e" fontSize="11">{shortAxisDate(p.label)}</text>)}
       {activePoint && <>
-        <line className="stats-detail-crosshair" x1={activeX} y1={y(activePoint.value)} x2={activeX} y2={base} stroke="#82a1dc" strokeWidth="1.4" strokeDasharray="4 5" pointerEvents="none" />
+        <line className="stats-detail-crosshair" x1={activeX} y1={top} x2={activeX} y2={base} stroke="#82a1dc" strokeWidth="1.4" strokeDasharray="4 5" pointerEvents="none" />
         <circle className="stats-detail-crosshair-dot" cx={activeX} cy={y(activePoint.value)} r="5.5" fill="#fff" stroke="#245cf2" strokeWidth="2.4" pointerEvents="none" />
       </>}
       {activePoint && (() => {
