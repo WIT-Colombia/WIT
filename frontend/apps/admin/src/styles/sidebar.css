@@ -260,3 +260,16 @@
   .admin-refresh .xa-dashboard-month-filter { min-height: 34px; }
   .admin-refresh .xa-dashboard-month-filter input { max-width: 112px; font-size: 10px; }
 }
+
+/* Real pending-case badges for Atención y soporte */
+.admin-refresh .xa-navigation .nav-item .nav-attention{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:25px;min-height:24px;padding:2px 7px;margin-left:auto;
+  border:1px solid #7550fb;border-radius:999px;
+  background:#7344ed;color:#fff;
+  font-size:11px;font-weight:850;line-height:1.15;
+  font-variant-numeric:tabular-nums;text-decoration:none!important;
+}
+.admin-refresh .xa-navigation .nav-item.active .nav-attention{
+  border-color:#ffffff55;background:#ffffff24;color:#fff;
+}
