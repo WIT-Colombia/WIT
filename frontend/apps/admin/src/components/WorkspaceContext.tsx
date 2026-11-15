@@ -9,6 +9,7 @@ const captions: Record<string, string> = {
 };
 export function WorkspaceContext() {
   const { pathname } = useLocation();
+  if (pathname === '/businesses' || pathname.startsWith('/businesses/')) return null;
   const item = navigation.find(entry => pathname === entry.path || pathname.startsWith(`${entry.path}/`));
   const group = navigationGroups.find(entry => entry.id === item?.group);
   return <div className="ad-workspace-context" data-area={group?.id || 'inicio'}>
