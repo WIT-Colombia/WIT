@@ -143,22 +143,33 @@ export async function finishAdminPasskeyActivation(code: string, credential: Pub
 }
 
 export async function adminSessionLogout() {
+  // Read the current Admin CSRF token when possible, but still call logout
+  // when the server session is already expired: the backend must clear cookies.
   try {
-    // Refresh the token tied to the currently authenticated Admin cookie.
     await getAdminSession();
-    try {
-      await request('/admin/auth/logout', { method: 'POST', body: '{}' });
-    } catch (error) {
-      if (!(error instanceof AdminApiError && error.code === 'ADMIN_CSRF_INVALID')) throw error;
-      // A concurrent session refresh may have changed the token; retry once.
-      await getAdminSession();
-      await request('/admin/auth/logout', { method: 'POST', body: '{}' });
-    }
   } catch (error) {
-    // The server has already invalidated or expired this session.
-    if (!(error instanceof AdminApiError && error.status === 401)) throw error;
+    const alreadyUnavailable = error instanceof AdminApiError &&
+      (error.status === 401 || (error.status === 403 && error.code === 'ADMIN_ACCESS_DENIED'));
+    if (!alreadyUnavailable) throw error;
   }
-  // Never drop the local CSRF token while an active Admin session might remain.
+
+  const revoke = () => request('/admin/auth/logout', { method: 'POST', body: '{}' });
+  try {
+    await revoke();
+  } catch (error) {
+    if (error instanceof AdminApiError && error.code === 'ADMIN_CSRF_INVALID') {
+      // A concurrently refreshed page may have used an older CSRF value.
+      await getAdminSession();
+      try {
+        await revoke();
+      } catch (retryError) {
+        if (!(retryError instanceof AdminApiError && retryError.status === 401)) throw retryError;
+      }
+    } else if (!(error instanceof AdminApiError && error.status === 401)) {
+      throw error;
+    }
+  }
+  // Clear local security state only when the backend reported logout/expiration.
   adminCsrfToken = '';
   accessToken = null;
 }
