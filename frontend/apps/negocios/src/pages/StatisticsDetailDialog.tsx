@@ -222,12 +222,12 @@ function DataChart({ points, chart, unit }: { points: Point[]; chart: ChartKind;
         <circle className="stats-detail-crosshair-dot" cx={activeX} cy={y(activePoint.value)} r="5.5" fill="#fff" stroke="#245cf2" strokeWidth="2.4" pointerEvents="none" />
       </>}
       {activePoint && (() => {
-        const tx = Math.max(left, Math.min(w - right - 154, activeX - 75));
+        const tx = Math.max(left, Math.min(w - right - 90, activeX - 45));
         const ty = Math.max(3, y(activePoint.value) - 42);
-        return <g pointerEvents="none"><rect x={tx} y={ty} width="154" height="32" rx="8" fill="#172b51" /><text x={tx + 77} y={ty + 21} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="700">{activePoint.label.slice(0, 13) + ": " + count(activePoint.value)}</text></g>;
+        return <g pointerEvents="none"><rect x={tx} y={ty} width="90" height="32" rx="8" fill="#172b51" /><text x={tx + 45} y={ty + 21} textAnchor="middle" fill="#fff" fontSize="14" fontWeight="700">{count(activePoint.value)}</text></g>;
       })()}
     </svg>
-    <p className="stats-detail-chart-hint">{active === null ? 'Mueve el cursor por la gráfica o desliza el dedo para explorar los valores.' : points[active].label + ': ' + count(points[active].value)}</p>
+    <p className="stats-detail-chart-hint">{active === null ? 'Mueve el cursor por la gráfica o desliza el dedo para explorar los valores.' : 'Valor: ' + count(points[active].value)}</p>
   </div>;
 }
 
