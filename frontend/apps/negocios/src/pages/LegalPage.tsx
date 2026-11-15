@@ -10,12 +10,12 @@ export function LegalPage() {
   const { page = "terms" } = useParams();
   const [searchParams] = useSearchParams();
   const source = searchParams.get("from");
-  const origin = source === "settings" ? "ajustes" : source === "profile" ? "perfil" : source === "perfil" || source === "ajustes" ? source : "registro";
+  const { state } = useBusinessAuth();
+  const fromRegistration = source === "registro" || source === "register" || (!source && state.status !== "authenticated");
+  const origin = source === "perfil" || source === "profile" ? "perfil" : fromRegistration ? "registro" : "ajustes";
   const backLabel = origin === "perfil" ? "← Volver al perfil" : origin === "ajustes" ? "← Volver a Configuración" : "← Volver";
   const backPath = origin === "perfil" ? "/perfil" : origin === "ajustes" ? "/configuracion" : "/registro";
-  const { state } = useBusinessAuth();
-  const embedded = origin === "perfil" && state.status === "authenticated";
-  const fromRegistration = origin === "registro";
+  const embedded = !fromRegistration && state.status === "authenticated";
   const PageRoot = embedded ? "div" : "main";
   const legalPath = (document: string) => `/legal/${document}?from=${origin}`;
   const isTerms = page === "terms";
