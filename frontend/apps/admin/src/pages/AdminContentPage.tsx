@@ -7,8 +7,6 @@ import { getAdminContentInsights, listAdminOffers, type AdminContentInsights, ty
 import { AdminContentPhoto } from './AdminContentPhoto';
 import { AdminContentAnalyticsPanel } from './AdminContentAnalyticsPanel';
 import { contentStatusLabel, displayDate, offerKindLabel, offerPrice } from './AdminContentLabels';
-import adminWorkspacePreview from '../assets/admin-workspace-960.webp';
-import adminWorkspace4k from '../assets/admin-workspace-4k.webp';
 import './AdminContentRefresh.css';
 
 const num=(value:number)=>new Intl.NumberFormat('es-CO').format(value);
@@ -75,14 +73,8 @@ export function AdminContentPage(){
   ]:[];
   if(!allowed)return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso de catálogo para consultar el contenido."/>;
   return <div className="ac-page">
-    <header className="ac-hero" aria-labelledby="ac-title"><div className="ac-hero-copy"><span className="ac-eyebrow">CATÁLOGO · PRODUCTOS Y SERVICIOS</span>
-      <div className="ac-hero-title"><span className="ac-hero-icon"><Icon name="box" size={30}/></span>
-        <div><h1 id="ac-title">Contenido</h1><p>Explora las publicaciones de los negocios, consulta su información y supervisa el crecimiento del catálogo.</p></div>
-      </div></div>
-      <picture className="ac-hero-media"><source srcSet={adminWorkspacePreview+' 960w, '+adminWorkspace4k+' 3840w'} sizes="(max-width:700px) 100vw, 330px" type="image/webp"/>
-        <img src={adminWorkspacePreview} width="3840" height="2160" alt="Centro de administración de XAMUKO" loading="eager" decoding="async"/></picture>
-    </header>
-    {totals&&<div className="ac-kpis" aria-label="Resumen del catálogo">{kpis.map(k=><div key={k.label} className={'ac-kpi '+k.tone}><span className="ac-kpi-icon"><Icon name={k.icon} size={22}/></span>
+    <header className="admin-section-heading"><h1 id="ac-title">Contenido</h1></header>
+        {totals&&<div className="ac-kpis" aria-label="Resumen del catálogo">{kpis.map(k=><div key={k.label} className={'ac-kpi '+k.tone}><span className="ac-kpi-icon"><Icon name={k.icon} size={22}/></span>
       <div><span>{k.label}</span><strong>{num(k.value)}</strong><small>{k.hint}</small></div></div>)}</div>}
     {analyticsError&&<p className="ac-warning" role="status">Los indicadores generales no están disponibles: {analyticsError}</p>}
     <section className="ac-directory" aria-labelledby="ac-directory-title">
