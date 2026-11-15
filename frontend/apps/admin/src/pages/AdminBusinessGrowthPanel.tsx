@@ -108,7 +108,7 @@ function GrowthCanvas({ points, measure, shape }: { points: Datum[]; measure: Me
         rx="5" fill="url(#ad-business-growth-bar-gradient)" tabIndex={0}
         aria-label={item.label + ': ' + number(values[index])} onFocus={() => setActive(index)} onClick={() => setActive(index)} />)}
       {selected && active !== null && <>
-        <line x1={selectedX} x2={selectedX} y1={yy(selected[measure])} y2={baseline} className="ad-business-growth-guide" pointerEvents="none" />
+        <line x1={selectedX} x2={selectedX} y1={top} y2={baseline} className="ad-business-growth-guide" pointerEvents="none" />
         <circle cx={selectedX} cy={yy(selected[measure])} r="6" fill="#fff" stroke="#245cf2" strokeWidth="2.5" pointerEvents="none" />
         {(() => {
           const x = Math.max(left, Math.min(width - right - 84, selectedX - 42));
