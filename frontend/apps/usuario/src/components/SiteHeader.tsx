@@ -36,9 +36,10 @@ export function SiteHeader({ active, onProfile, onSearchChange }: { active?: Sit
   const profilePhoto = (accountAvatar ?? profile.photo) || "";
   const profileTarget = isAuthenticated ? "/profile" : "/register?mode=login";
   const [serverUnread, setServerUnread] = useState(0);
-  const [unreadNotifications, setUnreadNotifications] = useState(() => getNotifications().filter(item => !item.read).length);
+  const [unreadNotifications, setUnreadNotifications] = useState(() => getNotifications(user?.id).filter(item => !item.read).length);
   useEffect(() => {
-    if (!isAuthenticated) { setServerUnread(0); return; }
+    setServerUnread(0);
+    if (!isAuthenticated || !user?.id) return;
     let active = true;
     const refresh = () => {
       void listPlatformNotices().then(data => {
@@ -54,15 +55,16 @@ export function SiteHeader({ active, onProfile, onSearchChange }: { active?: Sit
   }, [isAuthenticated, user?.id]);
   useEffect(() => {
     const changed = (event: Event) => {
-      const count = (event as CustomEvent<number>).detail;
-      if (typeof count === 'number' && Number.isFinite(count)) setUnreadNotifications(count);
+      const detail = (event as CustomEvent<{ userId: string; count: number }>).detail;
+      if (detail?.userId === user?.id && Number.isFinite(detail.count))
+        setUnreadNotifications(detail.count);
     };
     window.addEventListener('xamuko-user-notifications-updated', changed);
     return () => window.removeEventListener('xamuko-user-notifications-updated', changed);
-  }, []);
+  }, [user?.id]);
   useEffect(() => {
-    setUnreadNotifications(getNotifications().filter(item => !item.read).length + serverUnread);
-  }, [serverUnread]);
+    setUnreadNotifications(getNotifications(user?.id).filter(item => !item.read).length + serverUnread);
+  }, [serverUnread, user?.id, isAuthenticated]);
   const profileContent = isAuthenticated
     ? profilePhoto ? <img src={profilePhoto} alt={`Foto de ${profileName}`} /> : profileInitial
     : <UserIcon />;
