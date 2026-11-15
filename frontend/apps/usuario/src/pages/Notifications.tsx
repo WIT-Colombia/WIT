@@ -26,6 +26,7 @@ export default function Notifications() {
   currentAccount.current = accountId;
   const [local, setLocal] = useState<UserNotification[]>([]);
   const [remote, setRemote] = useState<PlatformNotice[]>([]);
+  const [loadedAccountId, setLoadedAccountId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -47,6 +48,7 @@ export default function Notifications() {
     } finally { if (currentAccount.current === accountId) setLoading(false); }
   }, [accountId]);
   useEffect(() => {
+    setLoadedAccountId(accountId);
     setLocal(getNotifications(accountId));
     setRemote([]);
     setSelectedId(null);
@@ -62,13 +64,16 @@ export default function Notifications() {
     return () => { document.removeEventListener('visibilitychange', refresh); window.removeEventListener('focus', refresh); };
   }, [load]);
   useEffect(() => { if (!deleted) return; const t = window.setTimeout(() => setDeleted(false), 3000); return () => window.clearTimeout(t); }, [deleted]);
+  // Do not render the previous user's notices while React changes sessions.
+  const visibleRemote = loadedAccountId === accountId ? remote : [];
+  const visibleLocal = loadedAccountId === accountId ? local : [];
   const notices = useMemo<DisplayNotice[]>(() => [
-    ...remote.map(item => ({
+    ...visibleRemote.map(item => ({
       id: item.id, title: item.title, body: item.message,
       date: readableDate(item.createdAt), read: Boolean(item.readAt), source: 'server' as const,
     })),
-    ...local.map(item => ({ id: item.id, title: item.title, body: item.body, date: item.date, read: item.read, source: 'local' as const })),
-  ], [local, remote]);
+    ...visibleLocal.map(item => ({ id: item.id, title: item.title, body: item.body, date: item.date, read: item.read, source: 'local' as const })),
+  ], [visibleLocal, visibleRemote]);
   const unread = notices.filter(item => !item.read).length;
   const announce = (next: PlatformNotice[], nextLocal: UserNotification[]) => {
     if (accountId) notifyCount(accountId,
