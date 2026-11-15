@@ -1298,3 +1298,332 @@
   }
 }
 
+/* Edición de ubicación: lenguaje visual de las tarjetas de Información general. */
+
+/* Edición de ubicación: lenguaje visual de las tarjetas de Información general.
+   Solo el formulario dentro de Ubicación; mantener sus eventos y validaciones. */
+.business-detail-page #business-panel-location .business-location-edit-form{
+  display:grid;
+  gap:16px;
+  min-width:0;
+  margin:0;
+}
+.business-detail-page #business-panel-location .business-location-edit-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px 18px;
+  min-width:0;
+}
+.business-detail-page #business-panel-location .business-location-edit-details{
+  display:grid;
+  gap:14px;
+  min-width:0;
+}
+.business-detail-page #business-panel-location .business-location-edit-field{
+  display:flex;
+  align-items:flex-start;
+  gap:13px;
+  min-width:0;
+  min-height:108px;
+  padding:15px 16px;
+  box-sizing:border-box;
+  border:1px solid var(--location-border);
+  border-radius:13px;
+  background:var(--location-surface);
+}
+.business-detail-page #business-panel-location .business-location-edit-full{
+  min-height:0;
+}
+.business-detail-page #business-panel-location .business-location-edit-field > .business-location-fact-icon{
+  margin-top:23px;
+}
+.business-detail-page #business-panel-location .business-location-edit-field-copy{
+  display:grid;
+  align-content:start;
+  gap:8px;
+  flex:1 1 auto;
+  min-width:0;
+}
+.business-detail-page #business-panel-location .business-location-edit-label{
+  display:block;
+  margin:0;
+  color:#1e3154;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:15px;
+  font-weight:750;
+  line-height:1.35;
+  letter-spacing:normal;
+}
+.business-detail-page #business-panel-location .business-location-edit-optional{
+  font-size:12px;
+  font-weight:500;
+  color:#657792;
+}
+.business-detail-page #business-panel-location .business-location-edit-field select,
+.business-detail-page #business-panel-location .business-location-edit-field input{
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  height:44px;
+  min-height:44px;
+  margin:0;
+  padding:9px 12px;
+  box-sizing:border-box;
+  border:1px solid #d6e3fb;
+  border-radius:10px;
+  background:#fff;
+  color:#162443;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:13px;
+  font-weight:600;
+  line-height:1.5;
+  outline:none;
+  box-shadow:none;
+}
+.business-detail-page #business-panel-location .business-location-edit-field select{
+  padding-right:26px;
+  text-overflow:ellipsis;
+}
+.business-detail-page #business-panel-location .business-location-edit-field input::placeholder{
+  color:#71809a;
+  opacity:1;
+  font-weight:400;
+}
+.business-detail-page #business-panel-location .business-location-edit-field select:focus-visible,
+.business-detail-page #business-panel-location .business-location-edit-field input:focus-visible{
+  border-color:#7b3ffb;
+  box-shadow:0 0 0 3px rgba(123,63,251,.14);
+}
+.business-detail-page #business-panel-location .business-location-edit-mode{
+  display:grid;
+  gap:8px;
+  min-width:0;
+  margin:0;
+  padding:0;
+  border:0;
+}
+.business-detail-page #business-panel-location .business-location-edit-mode > legend{
+  display:block;
+  width:100%;
+  margin:0 0 8px;
+  padding:0;
+  color:#1e3154;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:15px;
+  font-weight:750;
+  line-height:1.35;
+}
+.business-detail-page #business-panel-location .business-location-edit-mode .location-mode-toggle{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:5px;
+  box-sizing:border-box;
+  border:1px solid #dce6f8;
+  border-radius:13px;
+  background:#f0f5ff;
+}
+.business-detail-page #business-panel-location .business-location-edit-mode .location-mode-toggle button{
+  min-width:0;
+  min-height:44px;
+  padding:8px 12px;
+  border:1px solid transparent;
+  border-radius:9px;
+  background:transparent;
+  color:#596d8b;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.35;
+  white-space:normal;
+}
+.business-detail-page #business-panel-location .business-location-edit-mode .location-mode-toggle button.active{
+  border-color:#d8cbff;
+  background:#fff;
+  color:#6930dd;
+  box-shadow:0 3px 12px rgba(82,57,147,.09);
+}
+.business-detail-page #business-panel-location .business-location-edit-mode .location-mode-toggle button:focus-visible{
+  outline:3px solid #7b3ffb;
+  outline-offset:2px;
+}
+.business-detail-page #business-panel-location .business-location-edit-form .location-confirm-button{
+  display:inline-flex;
+  width:100%;
+  min-width:0;
+  min-height:43px;
+  margin:2px 0 0;
+  padding:9px 14px;
+  box-sizing:border-box;
+  border:1.5px solid #a987ff;
+  border-radius:10px;
+  background:#fff;
+  color:#7b3ffb;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.35;
+  white-space:normal;
+}
+.business-detail-page #business-panel-location .business-location-edit-form .location-confirm-button:hover:not(:disabled){
+  border-color:#7b3ffb;
+  background:#f6f1ff;
+}
+.business-detail-page #business-panel-location .business-location-edit-form .location-confirm-button:disabled{
+  opacity:.6;
+  cursor:wait;
+}
+.business-detail-page #business-panel-location .business-location-edit-field .location-geocode-status{
+  margin:0;
+  font-size:11px;
+}
+.business-detail-page #business-panel-location .business-location-edit-map{
+  display:grid;
+  gap:13px;
+  min-width:0;
+  padding:16px;
+  border:1px solid var(--location-border);
+  border-radius:13px;
+  background:var(--location-surface);
+}
+.business-detail-page #business-panel-location .business-location-edit-map-title{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color:#1e3154;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:15px;
+  font-weight:750;
+}
+.business-detail-page #business-panel-location .business-location-edit-map .business-location-fact-icon{
+  flex:0 0 30px;
+}
+.business-detail-page #business-panel-location .business-location-edit-map .business-location-picker{
+  min-width:0;
+}
+.business-detail-page #business-panel-location .business-location-edit-map .business-location-picker__map{
+  height:clamp(250px,29vw,370px);
+  border-color:#d6e3fb;
+  border-radius:12px;
+}
+.business-detail-page #business-panel-location .business-location-edit-map .form-help{
+  margin:0;
+  color:#5b708e;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  line-height:1.55;
+}
+.business-detail-page #business-panel-location .business-location-edit-actions{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  margin-top:4px;
+  padding:17px 0 0;
+  border-top:1px solid #e3eaf7;
+}
+.business-detail-page #business-panel-location .business-location-edit-actions > button{
+  min-width:132px;
+  min-height:44px;
+  padding:10px 18px;
+  border-radius:11px;
+  box-sizing:border-box;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.35;
+  white-space:normal;
+}
+.business-detail-page #business-panel-location .business-location-edit-actions > .outline-button{
+  border-color:#d5e1f4;
+  background:#fff;
+  color:#192744;
+}
+.business-detail-page #business-panel-location .business-location-edit-actions > .action-button{
+  border-color:#2563eb;
+  background:#2563eb;
+  color:#fff;
+}
+.business-detail-page #business-panel-location .business-location-edit-actions > .action-button:hover:not(:disabled){
+  border-color:#1d4ed8;
+  background:#1d4ed8;
+}
+.business-detail-page #business-panel-location .business-location-edit-actions > button:focus-visible,
+.business-detail-page #business-panel-location .business-location-edit-form .location-confirm-button:focus-visible{
+  outline:3px solid #7b3ffb;
+  outline-offset:3px;
+}
+/* El panel lateral de la ficha reduce el área útil del formulario en iPad. */
+@container business-detail-shell (max-width:950px){
+  .business-detail-page #business-panel-location .business-location-edit-grid{
+    gap:12px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-field{
+    gap:10px;
+    padding:13px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-field > .business-location-fact-icon{
+    margin-top:22px;
+  }
+}
+@container business-detail-shell (max-width:700px){
+  .business-detail-page #business-panel-location .business-location-edit-grid{
+    grid-template-columns:minmax(0,1fr);
+    gap:10px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-field{
+    min-height:0;
+  }
+}
+@container business-detail-shell (max-width:560px){
+  .business-detail-page #business-panel-location .business-location-edit-form{
+    gap:13px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-field{
+    gap:11px;
+    padding:12px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-field > .business-location-fact-icon{
+    margin-top:23px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-label,
+  .business-detail-page #business-panel-location .business-location-edit-mode > legend,
+  .business-detail-page #business-panel-location .business-location-edit-map-title{
+    font-size:14px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-field input,
+  .business-detail-page #business-panel-location .business-location-edit-field select{
+    font-size:16px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-mode .location-mode-toggle{
+    gap:4px;
+    padding:4px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-mode .location-mode-toggle button{
+    min-height:44px;
+    padding:8px 5px;
+    font-size:12px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-map{
+    padding:12px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-map .business-location-picker__map{
+    height:240px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-actions{
+    flex-direction:column-reverse;
+    gap:9px;
+    margin-top:2px;
+    padding-top:15px;
+  }
+  .business-detail-page #business-panel-location .business-location-edit-actions > button{
+    width:100%;
+    min-height:46px;
+    font-size:13px;
+  }
+}
+
