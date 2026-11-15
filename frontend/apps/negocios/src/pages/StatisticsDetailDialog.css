@@ -1,0 +1,221 @@
+/* Modal de estadísticas: datos históricos reales, visualización HTML + SVG. */
+.stats-detail-backdrop, .stats-detail-backdrop * {box-sizing:border-box}
+.stats-detail-backdrop {
+  position:fixed;z-index:20000;inset:0;
+  display:flex;align-items:flex-start;justify-content:center;
+  overflow-x:hidden;overflow-y:auto;
+  padding:clamp(12px,4vh,36px) 18px;
+  background:rgba(13,28,56,.62);
+  -webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  overscroll-behavior:contain;
+}
+.stats-detail-dialog {
+  width:min(100%,1070px);max-height:calc(100dvh - 45px);
+  min-width:0;overflow-y:auto;overscroll-behavior:contain;
+  margin:auto 0;border:1px solid #d9e4f5;border-radius:22px;
+  background:#f8faff;color:#152748;
+  box-shadow:0 28px 90px #071c3c4d;
+}
+.stats-detail-header {
+  display:flex;align-items:flex-start;justify-content:space-between;gap:20px;
+  padding:29px 32px 23px;
+  border-bottom:1px solid #e1e8f5;background:linear-gradient(115deg,#fff,#edf3ff);
+}
+.stats-detail-header>div {min-width:0}
+.stats-detail-header span {
+  display:block;margin-bottom:9px;color:#245cf1;
+  font-size:11px;line-height:1.4;letter-spacing:.11em;font-weight:800;
+}
+.stats-detail-header h2 {
+  margin:0 0 7px;color:#101e3e;
+  font-size:clamp(23px,2.7vw,31px);font-weight:850;
+  letter-spacing:-.035em;line-height:1.2;
+}
+.stats-detail-header p {
+  max-width:780px;margin:0;color:#617590;
+  font-size:12px;line-height:1.6;
+}
+.stats-detail-header>button {
+  display:grid;place-items:center;flex:0 0 38px;
+  width:38px;height:38px;margin:0;padding:0;
+  border:1px solid #cbdafa;border-radius:11px;
+  background:#fff;color:#254a8e;font-size:26px;
+  line-height:1;cursor:pointer;
+}
+.stats-detail-header>button:hover {background:#e8f0ff;color:#1c4ad7}
+.stats-detail-body {display:grid;gap:18px;padding:25px 31px 29px;min-width:0}
+.stats-detail-summary {
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:13px;min-width:0;
+}
+.stats-detail-summary>div {
+  display:grid;align-content:center;gap:8px;
+  min-width:0;min-height:91px;padding:17px 19px;
+  border:1px solid #dfe8f6;border-radius:15px;
+  background:#fff;box-shadow:0 5px 16px #1b315910;
+}
+.stats-detail-summary span {font-size:11px;color:#657895;line-height:1.4}
+.stats-detail-summary strong {
+  color:#14264a;font-size:clamp(18px,2.2vw,27px);
+  font-weight:800;letter-spacing:-.03em;line-height:1.2;
+  overflow-wrap:anywhere;
+}
+.stats-detail-summary strong.positive {color:#078353}
+.stats-detail-summary strong.negative {color:#be4252}
+.stats-detail-chart-card {
+  display:grid;gap:16px;min-width:0;
+  padding:21px 23px;border:1px solid #dfe8f6;
+  border-radius:18px;background:#fff;
+  box-shadow:0 8px 24px #17305c0b;
+}
+.stats-detail-chart-head {
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:14px;min-width:0;
+}
+.stats-detail-chart-head h3 {
+  margin:0 0 4px;color:#152747;
+  font-size:17px;font-weight:800;letter-spacing:-.025em;
+}
+.stats-detail-chart-head p {
+  margin:0;color:#7385a0;font-size:11px;line-height:1.45;
+}
+.stats-detail-switch {
+  display:flex;gap:4px;flex-shrink:0;
+  padding:4px;border:1px solid #dbe6f6;
+  border-radius:11px;background:#f0f5ff;
+}
+.stats-detail-switch button {
+  min-height:33px;min-width:67px;padding:6px 12px;
+  border:0;border-radius:8px;background:transparent;
+  color:#637895;font-size:11px;font-weight:750;
+  cursor:pointer;
+}
+.stats-detail-switch button.active {
+  background:#fff;color:#1d54dc;
+  box-shadow:0 2px 9px #1b469c21;
+}
+.stats-detail-plot {width:100%;min-width:0}
+.stats-detail-plot svg {
+  display:block;width:100%;height:auto;max-height:390px;
+  overflow:visible;
+}
+.stats-detail-plot :is(circle,rect)[tabindex] {cursor:crosshair}
+.stats-detail-plot :is(circle,rect)[tabindex]:focus-visible {
+  outline:2px solid #98b6ff;outline-offset:2px;
+}
+.stats-detail-chart-hint {
+  margin:3px 0 0;text-align:center;
+  color:#607493;font-size:11px;line-height:1.5;
+}
+.stats-detail-ranking {
+  display:grid;gap:15px;max-height:420px;
+  padding:10px 2px;overflow-y:auto;
+}
+.stats-detail-ranking-row {
+  display:grid;grid-template-columns:minmax(80px,1fr) minmax(90px,1.8fr) 65px;
+  align-items:center;gap:14px;min-width:0;
+}
+.stats-detail-ranking-row>span {
+  overflow:hidden;color:#263b60;font-size:12px;
+  font-weight:750;line-height:1.4;
+  text-overflow:ellipsis;white-space:nowrap;
+}
+.stats-detail-ranking-row>i {
+  display:block;width:100%;height:12px;
+  border-radius:999px;background:#e8effb;overflow:hidden;
+}
+.stats-detail-ranking-row b {
+  display:block;min-width:0;height:100%;
+  border-radius:inherit;background:linear-gradient(90deg,#245cf2,#7956ed);
+}
+.stats-detail-ranking-row>strong {
+  color:#1f4fc6;font-size:13px;
+  font-weight:800;text-align:right;
+}
+.stats-detail-table-wrap {
+  max-height:400px;min-width:0;
+  overflow:auto;border:1px solid #dfe7f5;border-radius:12px;
+}
+.stats-detail-table-wrap table {
+  width:100%;border-collapse:collapse;
+  background:#fff;font-size:12px;
+}
+.stats-detail-table-wrap th,
+.stats-detail-table-wrap td {
+  padding:13px 16px;border-bottom:1px solid #edf1f7;
+  color:#334b6d;text-align:left;line-height:1.45;
+}
+.stats-detail-table-wrap thead th {
+  position:sticky;top:0;background:#eef4ff;
+  color:#1c4ab1;font-weight:800;
+}
+.stats-detail-table-wrap tbody th {font-weight:600}
+.stats-detail-table-wrap td {text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
+.stats-detail-table-wrap tbody tr:last-child :is(th,td){border-bottom:0}
+.stats-detail-callout {
+  padding:21px 23px;border:1px solid #dae5f5;
+  border-radius:15px;background:#f1f6ff;
+}
+.stats-detail-callout strong {display:block;margin-bottom:7px;color:#194dba;font-size:13px}
+.stats-detail-callout p {margin:0;color:#607695;font-size:12px;line-height:1.7}
+.stats-detail-empty {padding:25px;text-align:center;color:#7b8daa;font-size:12px}
+.stats-detail-previous {
+  display:flex;justify-content:space-between;gap:12px;
+  padding:14px 18px;border-radius:12px;background:#ecf3ff;
+  color:#526783;font-size:12px;
+}
+.stats-detail-previous strong {font-size:14px;color:#1c4fb6}
+.stats-detail-note, .stats-detail-source {
+  margin:0;color:#62758f;font-size:11px;line-height:1.65;
+}
+.stats-detail-note {
+  padding:14px 17px;border:1px solid #d6e3f7;
+  border-radius:12px;background:#f1f6ff;
+}
+.stats-detail-note strong, .stats-detail-source strong {color:#284e8d}
+.stats-detail-source>span {margin-left:4px}
+.stats-detail-footer {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:18px;flex-wrap:wrap;padding:17px 31px;
+  border-top:1px solid #e1e8f5;background:#fff;
+}
+.stats-detail-footer>span {
+  color:#7a8ba5;font-size:11px;line-height:1.5;
+}
+.stats-detail-footer>button {
+  min-height:42px;padding:9px 16px;border:0;border-radius:10px;
+  background:linear-gradient(105deg,#743fff,#245cf2 65%,#16a6f7);
+  color:#fff;font-size:12px;font-weight:800;cursor:pointer;
+}
+.stats-detail-footer>button:hover {filter:brightness(1.06)}
+.stats-detail-backdrop button:focus-visible {
+  outline:3px solid #a8c5ff;outline-offset:3px;
+}
+@media(max-width:700px) {
+  .stats-detail-backdrop {padding:0;background:#f8faff}
+  .stats-detail-dialog {
+    width:100%;max-height:100dvh;min-height:100dvh;
+    margin:0;border:0;border-radius:0;
+  }
+  .stats-detail-header {padding:22px 18px 18px;gap:13px}
+  .stats-detail-header>button {flex-basis:35px;width:35px;height:35px}
+  .stats-detail-body {gap:14px;padding:18px 14px 22px}
+  .stats-detail-summary {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .stats-detail-summary>div {padding:13px 14px;min-height:75px}
+  .stats-detail-summary strong {font-size:21px}
+  .stats-detail-chart-card {padding:17px 12px;border-radius:14px}
+  .stats-detail-chart-head {align-items:flex-start}
+  .stats-detail-switch {width:100%}
+  .stats-detail-switch button {flex:1}
+  .stats-detail-plot svg {min-height:220px}
+  .stats-detail-ranking-row {grid-template-columns:minmax(65px,1fr) minmax(65px,1.25fr) 50px;gap:8px}
+  .stats-detail-ranking-row>span {font-size:11px}
+  .stats-detail-ranking-row>strong {font-size:11px}
+  .stats-detail-footer {padding:15px 17px}
+  .stats-detail-footer>button {width:100%}
+}
+@media(prefers-reduced-motion:reduce) {
+  .stats-detail-backdrop *, .stats-detail-backdrop *::before, .stats-detail-backdrop *::after {
+    transition-duration:.01ms!important;animation-duration:.01ms!important;
+  }
+}
