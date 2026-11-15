@@ -6,6 +6,7 @@ import { requireAdmin } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
+import { listAdminUsersExtended, getAdminUserOverview, getAdminUserProfile, deactivateAdminUser } from './admin-users.service.js';
 import { prisma } from '../../config/prisma.js';
 import { adminDocumentsRouter } from './admin-documents.routes.js';
 
@@ -48,15 +49,37 @@ adminRouter.get('/categories', requireAdmin('CATALOG_READ'), async (_req, res, n
 adminRouter.get('/users', requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
   try {
     res.setHeader('Cache-Control', 'no-store');
-    const pageValue = Number(req.query.page);
-    const page = Number.isFinite(pageValue) ? Math.max(1, Math.min(100000, Math.floor(pageValue))) : 1;
-    const q = String(req.query.q ?? '').trim().slice(0, 100);
-    const where = q ? { OR: [{ displayName: { contains: q } }, { emailNormalized: { contains: q } }] } : {};
-    const [total, users] = await Promise.all([
-      prisma.user.count({ where }),
-      prisma.user.findMany({ where, select: { id: true, publicId: true, displayName: true, emailNormalized: true, status: true, createdAt: true, lastLoginAt: true }, orderBy: { createdAt: 'desc' }, skip: (page - 1) * 20, take: 20 }),
-    ]);
-    res.json({ users, pagination: { page, pageSize: 20, total, totalPages: Math.ceil(total / 20) } });
+    res.json(await listAdminUsersExtended({
+      q: String(req.query.q ?? ''), status: String(req.query.status ?? ''),
+      relation: String(req.query.relation ?? ''), page: Number(req.query.page) || 1,
+    }));
+  } catch (error) { next(error); }
+});
+adminRouter.get('/users/overview', requireAdmin('ADMINS_MANAGE'), async (_req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await getAdminUserOverview());
+  } catch (error) { next(error); }
+});
+adminRouter.get('/users/:id', requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await getAdminUserProfile(String(req.params.id)));
+  } catch (error) { next(error); }
+});
+adminRouter.post('/users/:id/deactivate', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
+  try {
+    if (req.admin?.role !== 'SUPER_ADMIN') {
+      res.status(403).json({ error: { code: 'ADMIN_SUPER_ADMIN_REQUIRED', message: 'Solo el administrador principal puede dar de baja cuentas.' } });
+      return;
+    }
+    const confirmed = req.body?.confirmation === 'ELIMINAR';
+    if (!confirmed) {
+      res.status(400).json({ error: { code: 'ADMIN_USER_CONFIRMATION_REQUIRED', message: 'Escribe ELIMINAR para confirmar la baja administrativa.' } });
+      return;
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await deactivateAdminUser(String(req.params.id), req.admin.userId, String(req.body?.reason ?? '')));
   } catch (error) { next(error); }
 });
 adminRouter.get('/content', requireAdmin('CATALOG_READ'), async (req, res, next) => {
