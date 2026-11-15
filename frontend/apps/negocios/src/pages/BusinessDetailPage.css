@@ -824,8 +824,8 @@
 .business-detail-page #business-panel-general .business-general-view .business-reference-field h3 {
   margin: 0 0 4px;
   color: #1e3154;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 750;
   line-height: 1.35;
 }
 .business-detail-page #business-panel-general .business-general-view .business-reference-field h3 > span {
@@ -854,8 +854,8 @@
   border-radius: 9px;
   background: #e3edff;
   color: #1856d9;
-  font-size: 11px;
-  font-weight: 750;
+  font-size: 13px;
+  font-weight: 650;
   line-height: 1.4;
 }
 /* iPad vertical y horizontal: mismas tarjetas, medidas fluidas. */
@@ -916,7 +916,7 @@
     height: 23px;
   }
   .business-detail-page #business-panel-general .business-general-view .business-reference-field h3 {
-    font-size: 12px;
+    font-size: 14px;
   }
   .business-detail-page #business-panel-general .business-general-view .business-detail-category-chips > span {
     font-size: 12px;
