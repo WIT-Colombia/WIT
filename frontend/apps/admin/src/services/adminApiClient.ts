@@ -25,9 +25,57 @@ export function listAdminBusinesses(q = '', page = 1, pageSize = 3, status = '')
 export async function getAdminBusiness(id: string) { return (await request<{ business: AdminBusinessRecord }>(`/admin/businesses/${encodeURIComponent(id)}`)).business; }
 export type AdminCategoryRecord = { id: string; code: string; active: boolean; sortOrder: number; translations: { locale: string; name: string }[]; _count: { businesses: number; offers: number } };
 export async function listAdminCategories() { return (await request<{ categories: AdminCategoryRecord[] }>('/admin/categories')).categories; }
-export type AdminUserRecord = { id: string; publicId: string; displayName: string; emailNormalized: string | null; status: string; createdAt: string; lastLoginAt: string | null };
-export type AdminUserPage = { users: AdminUserRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
-export function listAdminUsers(q = '', page = 1) { return request<AdminUserPage>(`/admin/users?q=${encodeURIComponent(q)}&page=${page}`); }
+export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+export type AdminUserRecord = {
+  id: string; publicId: string; displayName: string; nickname: string | null;
+  emailNormalized: string | null; status: AdminUserStatus; avatarUrl: string | null;
+  locale: string; createdAt: string; lastLoginAt: string | null;
+  ownedBusinesses: number; collaboratingBusinesses: number; createdBusinesses: number; isAdmin: boolean;
+};
+export type AdminUserPage = {
+  users: AdminUserRecord[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+};
+export type AdminUserOverview = {
+  generatedAt: string; total: number; active: number; suspended: number; deleted: number;
+  owners: number; collaborators: number; adminCount: number;
+  series: Array<{ month: string; registrations: number }>; definition: string;
+};
+export type AdminUserBusinessLink = {
+  id: string; publicId: string; name: string; category: string; city: string | null;
+  publicationStatus: string; visibilityStatus: string; role: 'OWNER' | 'COLLABORATOR' | 'CREATOR';
+  membershipStatus: string; acceptedAt: string | null; createdAt: string;
+};
+export type AdminUserProfile = {
+  id: string; publicId: string; displayName: string; nickname: string | null;
+  emailNormalized: string | null; status: AdminUserStatus; avatarUrl: string | null;
+  locale: string; createdAt: string; updatedAt: string; lastLoginAt: string | null;
+  preferredLocationCity: string | null; preferredLocationRegion: string | null; preferredLocationCountry: string | null;
+  authProviders: Array<{ provider: string; verifiedAt: string | null; createdAt: string }>;
+  businesses: AdminUserBusinessLink[];
+  businessAccounts: Array<{ id: string; name: string; status: string }>;
+  administrativeRoles: string[];
+  activity: { reviews: number; favorites: number; offerLikes: number; sessions: number; reports: number };
+  deletion: { allowed: boolean; blockers: string[] };
+};
+export type AdminUserFilters = { q?: string; page?: number; status?: string; relation?: string };
+export function listAdminUsers(filters: AdminUserFilters = {}) {
+  const params = new URLSearchParams({ page: String(filters.page ?? 1) });
+  if (filters.q) params.set('q', filters.q);
+  if (filters.status) params.set('status', filters.status);
+  if (filters.relation) params.set('relation', filters.relation);
+  return request<AdminUserPage>('/admin/users?' + params.toString());
+}
+export function getAdminUserOverview() { return request<AdminUserOverview>('/admin/users/overview'); }
+export async function getAdminUserProfile(id: string) {
+  return (await request<{ user: AdminUserProfile }>('/admin/users/' + encodeURIComponent(id))).user;
+}
+export function deactivateAdminUser(id: string, reason: string, confirmation: string) {
+  return request<{ id: string; status: 'DELETED'; message: string }>(
+    '/admin/users/' + encodeURIComponent(id) + '/deactivate',
+    { method: 'POST', body: JSON.stringify({ reason, confirmation }) },
+  );
+}
 export type AdminOfferRecord = { id: string; name: string; kind: string; active: boolean; publicationStatus: string; deletedAt: string | null; updatedAt: string; business: { id: string; name: string } };
 export type AdminOfferPage = { offers: AdminOfferRecord[]; pagination: { page: number; total: number; totalPages: number } };
 export function listAdminOffers(page = 1) { return request<AdminOfferPage>(`/admin/content?page=${page}`); }
