@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ChartPointerEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { PersistedPhoto } from "../components/common/PersistedPhoto";
 import { BusinessProfileThumbnail } from "../components/layout/Sidebar";
@@ -58,21 +58,48 @@ function SelectedBusinessProfileImage({ business, className, isPreview = false }
   return <span className={className}><BusinessProfileThumbnail business={previewBusiness} /></span>;
 }
 
-function VisitChart({ points }: { points: Array<{ label: string; value: number }> }) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const validPoints = points.filter(point => Number.isFinite(point.value) && point.value >= 0);
-  if (!validPoints.length || validPoints.every(point => point.value === 0)) {
-    return <div className="business-home-chart-empty"><span aria-hidden="true">⌁</span><strong>Aún no hay actividad para mostrar</strong><p>La evolución aparecerá cuando existan visualizaciones registradas.</p></div>;
+/**
+ * Fecha exacta según el intervalo seleccionado. La zona horaria del dato
+ * ya es Bogotá: no reinterpretar etiquetas de fecha como hora del dispositivo.
+ */
+function businessChartDate(label: string, period: Period): string {
+  if (period === "day") return label.match(/\d{2}:\d{2}$/)?.[0] ?? label;
+  if (period === "week" || period === "month") {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(label);
+    if (!match) return label;
+    return new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short", timeZone: "UTC" })
+      .format(new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12)));
   }
+  const match = /^(\d{4})-(\d{2})$/.exec(label);
+  if (!match) return label;
+  return new Intl.DateTimeFormat("es-CO", { month: "short", year: "2-digit", timeZone: "UTC" })
+    .format(new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 12)));
+}
 
-  // Keep the graph proportional to the adjacent information card on desktop,
-  // without compressing the actual time series or changing the visit values.
-  const chartWidth = 660;
-  const chartHeight = 214;
-  const left = 56;
-  const right = 632;
-  const top = 54;
-  const bottom = 191;
+function VisitChart({ points, period }: { points: Array<{ label: string; value: number }>; period: Period }) {
+  const visual = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(660);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  useEffect(() => {
+    const node = visual.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(entries => {
+      const next = Math.max(300, Math.round(entries[0]?.contentRect.width ?? 660));
+      setWidth(previous => previous === next ? previous : next);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => setHoveredIndex(null), [period, points]);
+  // A zero is a valid measurement; only absent/invalid data is unavailable.
+  const validPoints = points.filter(point => Number.isFinite(point.value) && point.value >= 0);
+  if (!validPoints.length) {
+    return <div className="business-home-chart-empty"><span aria-hidden="true">⌁</span>
+      <strong>Sin serie temporal disponible</strong>
+      <p>No se recibió un desglose horario, diario o mensual para el período consultado.</p></div>;
+  }
+  const chartWidth = width, chartHeight = 254;
+  const left = 47, right = chartWidth - 16, top = 22, bottom = 208;
   const max = Math.max(...validPoints.map(point => point.value), 1);
   const rawStep = max / 4;
   const magnitude = 10 ** Math.floor(Math.log10(rawStep));
@@ -80,43 +107,76 @@ function VisitChart({ points }: { points: Array<{ label: string; value: number }
   const niceStep = (fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 2.5 ? 2.5 : fraction <= 5 ? 5 : 10) * magnitude;
   const axisMax = Math.ceil(max / niceStep) * niceStep;
   const tickCount = Math.round(axisMax / niceStep);
-  const coords = validPoints.map((point, index) => ({
-    x: validPoints.length === 1 ? (left + right) / 2 : left + index * (right - left) / (validPoints.length - 1),
-    y: bottom - (point.value / axisMax) * (bottom - top),
-  }));
-  const line = coords.map(point => `${point.x},${point.y}`).join(" ");
-  const area = `${coords[0].x},${bottom} ${line} ${coords[coords.length - 1].x},${bottom}`;
-  const peakIndex = validPoints.reduce((peak, point, index) => point.value > validPoints[peak].value ? index : peak, 0);
-  const activeIndex = hoveredIndex !== null && hoveredIndex < validPoints.length ? hoveredIndex : peakIndex;
-  const active = coords[activeIndex];
-  const activeDatum = validPoints[activeIndex];
-  const labelIndexes = [...new Set([0, Math.floor((validPoints.length - 1) / 2), validPoints.length - 1])];
+  const xx = (index: number) => left + (validPoints.length === 1 ? (right - left) / 2 : index * (right - left) / (validPoints.length - 1));
+  const yy = (value: number) => bottom - (value / axisMax) * (bottom - top);
+  const coords = validPoints.map((point, index) => ({ x: xx(index), y: yy(point.value) }));
+  const line = coords.map(point => point.x + "," + point.y).join(" ");
+  const area = coords.length > 1 ? left + "," + bottom + " " + line + " " + right + "," + bottom : "";
+  const selectedIndex = hoveredIndex !== null && hoveredIndex < validPoints.length ? hoveredIndex : null;
+  const selected = selectedIndex === null ? null : validPoints[selectedIndex];
+  const selectedPoint = selectedIndex === null ? null : coords[selectedIndex];
+  const labelEvery = Math.max(1, Math.ceil(validPoints.length / Math.max(2, Math.floor((right - left) / 86))));
+  const selectNearest = (event: ChartPointerEvent<SVGSVGElement>) => {
+    const svg = event.currentTarget;
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return;
+    const pointer = svg.createSVGPoint();
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    const horizontal = pointer.matrixTransform(matrix.inverse()).x;
+    const ratio = Math.max(0, Math.min(1, (horizontal - left) / (right - left)));
+    setHoveredIndex(Math.round(ratio * (validPoints.length - 1)));
+  };
 
   return <div className="business-home-chart-wrap">
-    <div className="business-home-chart-visual">
-      <svg className="business-home-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="group" aria-label="Evolución de visualizaciones por fecha">
-        <defs><linearGradient id="business-home-chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7b3ffb" stopOpacity=".2"/><stop offset="100%" stopColor="#7b3ffb" stopOpacity="0"/></linearGradient></defs>
+    <div className="business-home-chart-visual" ref={visual}>
+      <svg className="business-home-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        role="group" aria-label={"Evolución de visualizaciones. " + validPoints.map(point => point.label + ": " + number(point.value)).join("; ")}
+        onPointerMove={selectNearest} onPointerDown={selectNearest} onPointerLeave={() => setHoveredIndex(null)}>
+        <defs><linearGradient id="business-home-chart-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7b3ffb" stopOpacity=".19"/><stop offset="100%" stopColor="#7b3ffb" stopOpacity="0"/>
+        </linearGradient></defs>
         {Array.from({ length: tickCount + 1 }, (_, index) => {
           const value = index * niceStep;
           const y = bottom - value / axisMax * (bottom - top);
           return <g key={index}>
-            <line x1={left} x2={right} y1={y} y2={y} className="business-home-chart-gridline" />
-            <text x={left - 16} y={y + 5} textAnchor="end" className="business-home-chart-axis-label">{number(Number(value.toFixed(5)))}</text>
+            <line x1={left} x2={right} y1={y} y2={y} className="business-home-chart-gridline"/>
+            <text x={left - 12} y={y + 4} textAnchor="end" className="business-home-chart-axis-label">{number(Number(value.toFixed(5)))}</text>
           </g>;
         })}
-        <polygon points={area} fill="url(#business-home-chart-fill)" />
-        <polyline points={line} className="business-home-chart-line" />
-        {coords.map((point, index) => <g key={`${validPoints[index].label}-${index}`}>
-          <circle cx={point.x} cy={point.y} r={index === activeIndex ? 6.5 : 4} className={`business-home-chart-dot${index === activeIndex ? " is-active" : ""}`} />
-          <circle cx={point.x} cy={point.y} r="14" fill="transparent" className="business-home-chart-hit" tabIndex={0} role="button" aria-label={`${validPoints[index].label}: ${number(validPoints[index].value)} visualizaciones`} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)} onClick={() => setHoveredIndex(index)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setHoveredIndex(index); } }} />
-        </g>)}
+        <rect x={left} y={top} width={right - left} height={bottom - top} fill="transparent" pointerEvents="all"/>
+        {area && <polygon points={area} fill="url(#business-home-chart-fill)" pointerEvents="none"/>}
+        <polyline points={line} className="business-home-chart-line" pointerEvents="none"/>
+        {coords.map((point, index) => <circle key={validPoints[index].label + index}
+          cx={point.x} cy={point.y} r={selectedIndex === index ? 5.5 : 3.7}
+          className={`business-home-chart-dot${selectedIndex === index ? " is-active" : ""}`}
+          tabIndex={0} aria-label={validPoints[index].label + ": " + number(validPoints[index].value) + " visualizaciones"}
+          onFocus={() => setHoveredIndex(index)} onBlur={() => setHoveredIndex(null)}/>)}
+        {selected && selectedPoint && <>
+          <line className="business-home-chart-crosshair" x1={selectedPoint.x} y1={top}
+            x2={selectedPoint.x} y2={bottom} pointerEvents="none"/>
+          <circle className="business-home-chart-crosshair-dot" cx={selectedPoint.x} cy={selectedPoint.y}
+            r="6" pointerEvents="none"/>
+          {(() => {
+            const tx = Math.max(left, Math.min(right - 79, selectedPoint.x - 39.5));
+            const ty = Math.max(2, selectedPoint.y - 46);
+            return <g className="business-home-chart-value" pointerEvents="none">
+              <rect x={tx} y={ty} width="79" height="34" rx="9"/>
+              <text x={tx + 39.5} y={ty + 23} textAnchor="middle">{number(selected.value)}</text>
+            </g>;
+          })()}
+        </>}
+        {validPoints.map((point, index) =>
+          (index % labelEvery === 0 || index === validPoints.length - 1) &&
+          <text key={point.label + index} className="business-home-chart-date"
+            x={xx(index)} y={chartHeight - 16} textAnchor="middle">
+            {businessChartDate(point.label, period)}
+          </text>)}
       </svg>
-      <div className="business-home-chart-tooltip" style={{ left: `${Math.max(17, Math.min(83, (active.x / chartWidth) * 100))}%`, top: `${(active.y / chartHeight) * 100}%` }} aria-hidden="true">
-        <span>{activeDatum.label}</span>
-        <strong>{number(activeDatum.value)} visualizaciones</strong>
-      </div>
     </div>
-    <div className="business-home-chart-labels">{labelIndexes.map(index => <span key={`${validPoints[index].label}-${index}`}>{validPoints[index].label}</span>)}</div>
+    <p className="business-home-chart-hint">{selected
+      ? <><strong>{number(selected.value)}</strong> visualizaciones · {businessChartDate(selected.label, period)}</>
+      : "Mueve el cursor o desliza el dedo para consultar cada período, incluidos los valores de 0."}</p>
   </div>;
 }
 
@@ -360,7 +420,7 @@ export function DashboardPage() {
               <span>{visitsChange !== null ? comparisonPeriod : previousVisits === 0 && (currentVisits ?? 0) > 0 ? "Sin visitas en el período anterior" : "Sin comparación disponible"}</span>
             </div>
           </div>
-          {loading ? <div className="business-home-chart-loading" aria-live="polite">Cargando actividad…</div> : data ? <VisitChart points={data.trends.businessViews} /> : <div className="business-home-chart-empty"><span aria-hidden="true">⌁</span><strong>{error ? "Gráfica no disponible" : "Sin datos para graficar"}</strong><p>{error ? "Intenta cargar las estadísticas nuevamente." : "La gráfica mostrará únicamente visualizaciones registradas por la API."}</p></div>}
+          {loading ? <div className="business-home-chart-loading" aria-live="polite">Cargando actividad…</div> : data ? <VisitChart points={data.trends.businessViews} period={period} /> : <div className="business-home-chart-empty"><span aria-hidden="true">⌁</span><strong>{error ? "Gráfica no disponible" : "Sin datos para graficar"}</strong><p>{error ? "Intenta cargar las estadísticas nuevamente." : "La gráfica mostrará únicamente visualizaciones registradas por la API."}</p></div>}
         </section>
 
         <section className="business-home-panel business-home-details" aria-labelledby="business-home-details-title">
