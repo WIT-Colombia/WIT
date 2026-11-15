@@ -174,7 +174,7 @@ describe('Sidebar aprobado de Admin', () => {
     expect(new Headers(retries[1][1]?.headers).get('X-Admin-CSRF')).toBe('test-csrf');
   });
 
-  it('espera el refresco en curso antes de invalidar la sesión para evitar respuestas tardías', async () => {
+  it('cierra sesión aunque haya un refresco en curso y descarta su respuesta tardía', async () => {
     show();
     await waitFor(() => expect(sidebar().querySelector('.avatar img')).not.toBeNull());
     let finishRefresh!: (response: Response) => void;
@@ -182,10 +182,11 @@ describe('Sidebar aprobado de Admin', () => {
     fireEvent.focus(window);
     fireEvent.click(within(sidebar()).getByRole('button', { name: 'Cerrar sesión' }));
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cerrar sesión' }));
-    expect(fetcher.mock.calls.some(([url]) => String(url).endsWith('/admin/auth/logout'))).toBe(false);
-    finishRefresh(json({ authenticated: true, csrfToken: 'test-csrf' }));
     expect(await screen.findByText('Acceso')).toBeInTheDocument();
     expect(getSession()).toBeNull();
+    // A late /admin/auth/session response must not revive an Admin session.
+    finishRefresh(json({ authenticated: true, csrfToken: 'test-csrf' }));
+    await waitFor(() => expect(getSession()).toBeNull());
   });
 
   it('recupera el CSRF y reintenta el logout una vez si el servidor lo rechaza', async () => {
@@ -205,7 +206,7 @@ describe('Sidebar aprobado de Admin', () => {
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cerrar sesión' }));
     expect(await screen.findByText('Acceso')).toBeInTheDocument();
     expect(getSession()).toBeNull();
-    expect(fetcher.mock.calls.some(([url]) => String(url).endsWith('/admin/auth/logout'))).toBe(false);
+    expect(fetcher.mock.calls.some(([url]) => String(url).endsWith('/admin/auth/logout'))).toBe(true);
   });
 
   it('rechaza volver a una ruta protegida después del logout', async () => {
