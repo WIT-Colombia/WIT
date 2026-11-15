@@ -58,6 +58,30 @@ function fixture(title) {
     '</body></html>';
 }
 
+
+/* Confirmación de Eliminar en los dos catálogos, con el mismo AppShell real
+   y sus cabeceras para comprobar que ninguna queda encima del modal. */
+function deleteFixture(kind) {
+  const markup = fixture('Agregar ' + kind);
+  const editorStart = markup.indexOf('<div class="modal-backdrop catalog-product-editor-backdrop" role="presentation">');
+  assert.ok(editorStart > 0, 'Catalog fixture must include the editor portal');
+  const deleteButton = '<button class="danger-link">Eliminar</button>';
+  const withIcon = '<button type="button" class="danger-link"><svg class="catalog-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 4h4"/></svg>Eliminar</button>';
+  const shell = markup.slice(0, editorStart).replace(deleteButton, withIcon);
+  const trashIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 4h4m-7 3 .7 13h8.6L17 7M10 11v6m4-6v6"/></svg>';
+  const itemName = 'Servicio de mantenimiento especializado e instalación a domicilio muy extenso para probar el ancho';
+  return shell + '<div class="modal-backdrop catalog-delete-backdrop" role="presentation">' +
+    '<section class="modal-card confirm-card catalog-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" aria-describedby="delete-copy">' +
+    '<div class="catalog-delete-heading"><span class="catalog-delete-heading-icon" aria-hidden="true">' + trashIcon + '</span>' +
+    '<span class="catalog-delete-eyebrow">CATÁLOGO XAMUKO BUSINESS</span></div>' +
+    '<h2 id="delete-title">¿Eliminar ' + kind + '?</h2>' +
+    '<p id="delete-copy" class="catalog-delete-copy">El ' + kind + ' <strong>“' + itemName + '”</strong> se quitará de tu catálogo.</p>' +
+    '<div class="modal-actions catalog-delete-actions">' +
+    '<button type="button" class="outline-button catalog-delete-cancel">Cancelar</button>' +
+    '<button type="button" class="danger-button catalog-delete-confirm">' + trashIcon + 'Eliminar ' + kind + '</button>' +
+    '</div></section></div></body></html>';
+}
+
 function rect(element) {
   const r = element.getBoundingClientRect();
   return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
@@ -172,6 +196,96 @@ try {
           fullPage: false,
         });
         console.log('Business editor visible: ' + label);
+      }
+    } finally {
+      await context.close();
+    }
+  }
+
+  // Eliminar debe funcionar sin recortes del header tanto en Servicios como
+  // en Productos: escritorio, seis variantes de iPhone/iPad y altura reducida.
+  for (const [name, width, height, mobile] of [
+    ['desktop', 1440, 900, false],
+    ['iphone-small', 320, 568, true],
+    ['iphone', 390, 844, true],
+    ['iphone-landscape', 667, 375, true],
+    ['ipad-portrait', 768, 1024, true],
+    ['ipad-portrait-wide', 820, 1180, true],
+    ['ipad-landscape', 1024, 768, true],
+    ['ipad-landscape-wide', 1100, 820, true],
+  ]) {
+    const context = await browser.newContext({ viewport: { width, height }, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: mobile ? 2 : 1 });
+    const page = await context.newPage();
+    try {
+      for (const kind of ['producto', 'servicio']) {
+        await page.setContent(deleteFixture(kind));
+        await page.addStyleTag({ content: css });
+        await page.evaluate(() => {
+          const overlay = document.querySelector('.catalog-delete-backdrop');
+          const viewport = window.visualViewport;
+          overlay.style.setProperty('--catalog-editor-viewport-top', (viewport?.offsetTop ?? 0) + 'px');
+          overlay.style.setProperty('--catalog-editor-viewport-left', (viewport?.offsetLeft ?? 0) + 'px');
+          overlay.style.setProperty('--catalog-editor-viewport-width', (viewport?.width ?? innerWidth) + 'px');
+          overlay.style.setProperty('--catalog-editor-viewport-height', (viewport?.height ?? innerHeight) + 'px');
+        });
+        const measurement = await page.evaluate(() => {
+          const box = element => {
+            const b = element.getBoundingClientRect();
+            return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, width: b.width, height: b.height };
+          };
+          const overlay = document.querySelector('.catalog-delete-backdrop');
+          const dialog = document.querySelector('.catalog-delete-dialog');
+          const title = dialog.querySelector('#delete-title');
+          const cancel = dialog.querySelector('.catalog-delete-cancel');
+          const confirm = dialog.querySelector('.catalog-delete-confirm');
+          const item = document.querySelector('.catalog-row');
+          const rowButton = item.querySelector('.row-actions button.danger-link');
+          const visible = (button) => {
+            const r = button.getBoundingClientRect();
+            const target = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            return target === button || button.contains(target);
+          };
+          const visual = window.visualViewport;
+          return {
+            viewportWidth: visual?.width ?? innerWidth,
+            viewportHeight: visual?.height ?? innerHeight,
+            overlay: box(overlay), dialog: box(dialog), title: box(title), cancel: box(cancel), confirm: box(confirm),
+            rowButton: box(rowButton), row: box(item),
+            cancelClickable: visible(cancel), confirmClickable: visible(confirm),
+            rowButtonFont: getComputedStyle(rowButton).fontSize,
+            headerVisibility: getComputedStyle(document.querySelector('.mobile-topbar')).visibility,
+            ipadHeaderVisibility: getComputedStyle(document.querySelector('.business-desktop-header')).visibility,
+            navVisibility: getComputedStyle(document.querySelector('.mobile-nav')).visibility,
+            dialogCanScroll: dialog.scrollHeight > dialog.clientHeight,
+          };
+        });
+        const label = name + ' Eliminar ' + kind;
+        assert.ok(measurement.overlay.top >= -2, label + ': overlay starts inside viewport');
+        assert.ok(measurement.dialog.top >= -2, label + ': dialog is not under the header');
+        assert.ok(measurement.dialog.bottom <= measurement.viewportHeight + 2, label + ': dialog bottom not clipped');
+        assert.ok(measurement.dialog.left >= -1 && measurement.dialog.right <= measurement.viewportWidth + 2, label + ': dialog fits horizontally');
+        assert.ok(measurement.title.top >= -1 && measurement.title.bottom <= measurement.viewportHeight + 2, label + ': title completely visible');
+        for (const key of ['cancel', 'confirm']) {
+          const r = measurement[key];
+          assert.ok(r.left >= -1 && r.right <= measurement.viewportWidth + 2, label + ': ' + key + ' fits horizontally');
+          assert.ok(r.top >= -1 && r.bottom <= measurement.viewportHeight + 2, label + ': ' + key + ' fits vertically');
+          assert.ok(r.height >= 44, label + ': ' + key + ' has a touch-size button');
+        }
+        assert.ok(measurement.cancelClickable, label + ': Cancelar is not covered by Business header');
+        assert.ok(measurement.confirmClickable, label + ': Eliminar is not covered by Business header');
+        assert.ok(measurement.rowButton.height >= 42, label + ': Eliminar in the list has touch-sized height');
+        assert.ok(measurement.rowButton.left >= measurement.row.left - 1 && measurement.rowButton.right <= measurement.row.right + 1, label + ': row delete button does not overflow');
+        assert.equal(measurement.rowButtonFont, '11px', label + ': delete row typography is consistent');
+        if (width <= 1100) {
+          assert.equal(measurement.headerVisibility, 'hidden', label + ': mobile Business header hidden while confirming');
+          assert.equal(measurement.ipadHeaderVisibility, 'hidden', label + ': tablet Business header hidden while confirming');
+          assert.equal(measurement.navVisibility, 'hidden', label + ': mobile navigation hidden while confirming');
+        }
+        await page.screenshot({
+          path: join(screenshotDirectory, name + '-' + kind + '-delete.png'),
+          fullPage: false,
+        });
+        console.log('Business delete dialog visible: ' + label);
       }
     } finally {
       await context.close();

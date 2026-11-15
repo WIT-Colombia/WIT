@@ -1697,3 +1697,321 @@ body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-acti
     grid-template-columns:minmax(0,1fr);
   }
 }
+
+
+/* XAMUKO Business | Eliminar en Productos y Servicios.
+   Solo estilos destructivos. Azul/violeta para la identidad de marca y
+   rojo contenido para advertir que se va a eliminar un registro. */
+.catalog-products-design .catalog-row .row-actions button.danger-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  gap:7px;
+  min-width:0;
+  min-height:42px;
+  margin:0;
+  padding:8px 12px;
+  border:1px solid #efb0bd;
+  border-radius:10px;
+  background:linear-gradient(120deg,#ffffff,#fff3f6);
+  box-shadow:0 2px 8px #9f32531a;
+  color:#bd2949;
+  font-family:inherit;
+  font-size:11px;
+  font-weight:750;
+  line-height:1.35;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+  transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,color .18s ease;
+}
+.catalog-products-design .catalog-row .row-actions button.danger-link:hover{
+  border-color:#dc4968;
+  background:#fff0f4;
+  box-shadow:0 3px 11px #9f325329;
+  color:#9e2440;
+}
+.catalog-products-design .catalog-row .row-actions button.danger-link:focus-visible{
+  outline:3px solid #92b6ff;
+  outline-offset:3px;
+}
+.catalog-products-design .catalog-row .row-actions button.danger-link .catalog-action-icon{
+  flex:0 0 16px;
+  width:16px;
+  height:16px;
+}
+@container products-list (max-width:720px){
+  .catalog-products-design .catalog-row .row-actions button.danger-link{
+    min-height:44px;
+  }
+}
+@container products-list (max-width:480px){
+  .catalog-products-design .catalog-row .row-actions button.danger-link{
+    grid-column:1/-1;
+    width:100%;
+    min-width:0;
+    min-height:44px;
+    padding:10px 12px;
+  }
+}
+
+/* Confirmación de eliminación: modal en portal al body, fuera del header
+   sticky de Business. Variables del viewport visual sincronizadas desde React
+   para evitar recortes en Safari iPhone/iPad y con barras del navegador. */
+body>.catalog-delete-backdrop{
+  position:fixed;
+  top:var(--catalog-editor-viewport-top,0px);
+  left:var(--catalog-editor-viewport-left,0px);
+  right:auto;
+  bottom:auto;
+  z-index:2147483000;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  box-sizing:border-box;
+  width:var(--catalog-editor-viewport-width,100vw);
+  height:var(--catalog-editor-viewport-height,100dvh);
+  max-width:none;
+  max-height:none;
+  min-width:0;
+  min-height:0;
+  margin:0;
+  padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  background:rgba(12,25,52,.68);
+  isolation:isolate;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog{
+  display:block;
+  flex:0 1 480px;
+  box-sizing:border-box;
+  width:min(100%,480px);
+  min-width:0;
+  max-width:480px;
+  max-height:100%;
+  margin:auto;
+  padding:26px 27px 23px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid #d8e5fb;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 25px 80px #0b1c3f55;
+  color:#172747;
+}
+body>.catalog-delete-backdrop .catalog-delete-heading{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:12px;
+  min-width:0;
+  margin:0 0 17px;
+}
+body>.catalog-delete-backdrop .catalog-delete-heading-icon{
+  display:grid;
+  place-items:center;
+  flex:0 0 48px;
+  width:48px;
+  height:48px;
+  border:1px solid #f6cbd4;
+  border-radius:14px;
+  background:linear-gradient(135deg,#f4efff,#fff0f4);
+  color:#bb3150;
+}
+body>.catalog-delete-backdrop .catalog-delete-heading-icon svg{
+  width:24px;
+  height:24px;
+}
+body>.catalog-delete-backdrop .catalog-delete-eyebrow{
+  display:block;
+  min-width:0;
+  color:#245ce8;
+  font-size:10px;
+  font-weight:800;
+  line-height:1.4;
+  letter-spacing:.095em;
+  overflow-wrap:anywhere;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog h2{
+  margin:0 0 10px;
+  color:#111d3b;
+  font-size:22px;
+  font-weight:800;
+  line-height:1.22;
+  letter-spacing:-.035em;
+  overflow-wrap:anywhere;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-copy{
+  margin:0;
+  color:#596d8d;
+  font-size:13px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-copy strong{
+  color:#192d52;
+  font-weight:750;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-error{
+  margin:14px 0 0;
+  padding:10px 12px;
+  border:1px solid #f1bdc6;
+  border-radius:10px;
+  background:#fff2f4;
+  color:#a7223d;
+  font-size:12px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;
+  min-width:0;
+  margin:22px 0 0;
+  padding:17px 0 0;
+  border-top:1px solid #e2e9f6;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions>button{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:45px;
+  margin:0;
+  padding:10px 12px;
+  border-radius:11px;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.4;
+  text-align:center;
+  white-space:normal;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-cancel{
+  border:1px solid #b9ccf9;
+  background:#fff;
+  color:#2159de;
+  box-shadow:none;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-cancel:hover:not(:disabled){
+  border-color:#477ff0;
+  background:#eef4ff;
+  color:#174bc2;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-confirm{
+  border:1px solid #bf2e51;
+  background:linear-gradient(120deg,#d94a69,#bc3154);
+  color:#fff;
+  box-shadow:0 5px 15px #ba31502a;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-confirm:hover:not(:disabled){
+  border-color:#a82042;
+  background:linear-gradient(120deg,#c83a5a,#a92349);
+  color:#fff;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-confirm>svg{
+  flex:0 0 17px;
+  width:17px;
+  height:17px;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions>button:disabled{
+  opacity:.62;
+  cursor:wait;
+}
+body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions>button:focus-visible{
+  outline:3px solid #92b6ff;
+  outline-offset:3px;
+}
+@media(min-width:701px) and (max-width:1100px){
+  body>.catalog-delete-backdrop{
+    padding:max(14px,env(safe-area-inset-top,0px)) 14px max(14px,env(safe-area-inset-bottom,0px));
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog{
+    flex-basis:470px;
+    max-width:470px;
+    margin:auto;
+  }
+}
+@media(max-width:700px){
+  body>.catalog-delete-backdrop{
+    padding:max(10px,env(safe-area-inset-top,0px)) 10px max(10px,env(safe-area-inset-bottom,0px));
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog{
+    flex:1 1 auto;
+    width:100%;
+    max-width:none;
+    margin:auto;
+    padding:19px 17px 17px;
+    border-radius:16px;
+  }
+  body>.catalog-delete-backdrop .catalog-delete-heading{
+    gap:10px;
+    margin-bottom:14px;
+  }
+  body>.catalog-delete-backdrop .catalog-delete-heading-icon{
+    flex-basis:42px;
+    width:42px;
+    height:42px;
+    border-radius:12px;
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog h2{
+    font-size:20px;
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-copy{
+    font-size:12px;
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions{
+    gap:9px;
+    margin-top:19px;
+    padding-top:15px;
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions>button{
+    min-height:46px;
+    padding:10px 8px;
+  }
+}
+@media(max-width:400px){
+  body>.catalog-delete-backdrop>.catalog-delete-dialog{
+    padding:17px 14px 15px;
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions{
+    grid-template-columns:minmax(0,1fr);
+    gap:9px;
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions>button{
+    min-height:44px;
+  }
+}
+@media(max-height:430px){
+  body>.catalog-delete-backdrop{
+    padding:max(6px,env(safe-area-inset-top,0px)) 6px max(6px,env(safe-area-inset-bottom,0px));
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog{
+    margin:auto;
+    padding:14px;
+  }
+  body>.catalog-delete-backdrop .catalog-delete-heading{
+    margin-bottom:9px;
+  }
+  body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions{
+    margin-top:12px;
+    padding-top:10px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .catalog-products-design .catalog-row .row-actions button.danger-link,
+  body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions>button{
+    transition:none;
+  }
+}
