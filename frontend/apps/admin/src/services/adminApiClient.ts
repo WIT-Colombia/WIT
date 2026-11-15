@@ -11,8 +11,10 @@ export type AdminBusinessAnalytics = {
   status: 'all' | 'active' | 'review' | 'inactive';
   timezone: string;
   total: number;
+  totalUsers: number;
+  totalReviews: number;
   filters: { cities: Array<{ value: string; label: string }>; categories: Array<{ id: string; name: string }> };
-  series: Array<{ month: string; registrations: number; cumulative: number }>;
+  series: Array<{ month: string; registrations: number; cumulative: number; reviews: number; reviewCumulative: number; users: number; userCumulative: number }>;
   definition: string;
 };
 export function getAdminBusinessAnalytics(filters: { period: string; city: string; categoryId: string; status: string }) {
