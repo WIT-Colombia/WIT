@@ -119,7 +119,7 @@ export function Layout() {
       setConfirmLogout(false);
       navigate('/login', { replace: true });
     } catch {
-      setLogoutError('No se pudo confirmar el cierre de sesión. Comprueba tu conexión e inténtalo nuevamente.');
+      setLogoutError('No se pudo cerrar la sesión. Comprueba tu conexión e inténtalo nuevamente.');
     } finally {
       setLoggingOut(false);
     }
