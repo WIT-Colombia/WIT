@@ -925,7 +925,15 @@ export function BusinessDetailPage() {
             {([["Teléfono", business.phone], ["WhatsApp", business.whatsapp], ["Correo", business.email], ["Sitio web", business.website]] as const).map(([label, value]) =>
               <div className="business-reference-field business-contact-info-field" data-contact-field={label} key={label}>
                 <span className="business-contact-field-icon" aria-hidden="true"><DetailSectionIcon title={label} /></span>
-                <div className="business-contact-field-copy"><h3>{label}</h3><div className="business-reference-value">{value || "Sin información"}</div></div>
+                <div className="business-contact-field-copy"><h3>{label}</h3><div className="business-reference-value">{(label === "Teléfono" || label === "WhatsApp") && value
+                  ? <a
+                      className="business-contact-number-link"
+                      href={label === "Teléfono" ? `tel:${value.replace(/[^+\d]/g, "")}` : `https://wa.me/${value.replace(/\D/g, "")}`}
+                      target={label === "WhatsApp" ? "_blank" : undefined}
+                      rel={label === "WhatsApp" ? "noopener noreferrer" : undefined}
+                      style={{ textDecoration: "none" }}
+                    >{value}</a>
+                  : value || "Sin información"}</div></div>
               </div>)}
           </div>
           <section className="business-socials" aria-labelledby="business-socials-title"><div><h4 id="business-socials-title">Redes sociales</h4><p>Conecta tus redes sociales para que tus clientes puedan conocerte y seguirte.</p></div>{socialLinks.some(network => network.value) ? <div className="business-social-links">{socialLinks.filter(network => network.value).map(network => <a data-social-network={network.platform} key={network.key} href={network.value} target="_blank" rel="noopener noreferrer"><SocialNetworkIcon platform={network.platform} /><span>{network.label}</span></a>)}</div> : <p className="business-socials-empty">Aún no has agregado redes sociales.</p>}</section>
