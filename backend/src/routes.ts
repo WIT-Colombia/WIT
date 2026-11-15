@@ -14,6 +14,7 @@ import { reviewRouter } from './modules/reviews/review.routes.js';
 import { businessReportRouter } from './modules/business-report/business-report.routes.js';
 import { offerReportRouter } from './modules/offer-report/offer-report.routes.js';
 import { supportRequestRouter } from './modules/support-request/support-request.routes.js';
+import { platformNotificationsRouter } from './modules/notifications/platform-notifications.routes.js';
 import { promotionRouter } from './modules/business/promotion.routes.js';
 import { collaboratorRouter } from './modules/business/collaborator.routes.js';
 import { verificationRouter } from './modules/business/verification.routes.js';
@@ -35,6 +36,7 @@ apiRouter.use('/', analyticsRouter);
 apiRouter.use('/', offerReportRouter);
 apiRouter.use('/', businessReportRouter);
 apiRouter.use('/', supportRequestRouter);
+apiRouter.use('/', platformNotificationsRouter);
 // Review management includes Admin routes authenticated by AdminSession rather than a user Bearer token.
 apiRouter.use('/', reviewRouter);
 // This router contains both explicitly public read routes and individually
