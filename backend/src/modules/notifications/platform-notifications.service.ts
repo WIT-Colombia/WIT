@@ -41,15 +41,15 @@ export const statusTitle = (status: 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'R
 })[status];
 
 export async function listPlatformNotifications(userId: string) {
-  const notifications = await prisma.platformNotification.findMany({
-    where: { userId, deletedAt: null },
-    select: { id: true, title: true, message: true, sourceType: true, sourceId: true, readAt: true, createdAt: true },
-    orderBy: { createdAt: 'desc' }, take: 100,
-  });
-  return {
-    notifications,
-    unread: notifications.filter(item => !item.readAt).length,
-  };
+  const [notifications, unread] = await Promise.all([
+    prisma.platformNotification.findMany({
+      where: { userId, deletedAt: null },
+      select: { id: true, title: true, message: true, sourceType: true, sourceId: true, readAt: true, createdAt: true },
+      orderBy: { createdAt: 'desc' }, take: 100,
+    }),
+    prisma.platformNotification.count({ where: { userId, deletedAt: null, readAt: null } }),
+  ]);
+  return { notifications, unread };
 }
 export async function markPlatformNotificationRead(userId: string, id: string) {
   const updated = await prisma.platformNotification.updateMany({
