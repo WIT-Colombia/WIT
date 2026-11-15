@@ -1,7 +1,6 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { readFile } from 'node:fs/promises';
-import { photoStoragePath } from './photo-storage.js';
+import { isPhotoMissingError, photoMimeType, readPhoto } from './photo-storage.js';
 
 const allowedPermissions = ['MANAGE_CATALOG', 'MANAGE_PROMOTIONS', 'READ_ANALYTICS', 'EDIT_BUSINESS'] as const;
 type Permission = typeof allowedPermissions[number];
@@ -55,9 +54,13 @@ export async function readCollaboratorAvatar(actorId: string, businessId: string
   const storageKey = membership && ['ACTIVE', 'SUSPENDED'].includes(membership.status) && membership.user.avatarUrl?.startsWith('private-avatar:') ? membership.user.avatarUrl.slice('private-avatar:'.length) : null;
   if (!storageKey || !/^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(storageKey)) throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
   try {
-    return { content: await readFile(photoStoragePath(storageKey)), mimeType: storageKey.endsWith('.png') ? 'image/png' : storageKey.endsWith('.webp') ? 'image/webp' : 'image/jpeg' };
-  } catch {
-    throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
+    // The same storage backend as the account profile avatar: local or S3.
+    return { content: await readPhoto(storageKey), mimeType: photoMimeType(storageKey) };
+  } catch (error) {
+    if (isPhotoMissingError(error) || (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'ENOENT')) {
+      throw new AppError(404, 'AVATAR_NOT_FOUND', 'No encontramos la foto.');
+    }
+    throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la foto.');
   }
 }
 async function findCollaboratorRecipient(actorId: string, businessId: string, identifier: string) {
