@@ -1,5 +1,5 @@
 import { isSupportedUploadImage, normalizeImageForUpload, PHOTO_INPUT_ACCEPT } from "@wit/utils";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { PageHeader } from "../components/common/PageHeader";
@@ -43,6 +43,7 @@ export function CatalogPage({ kind }: { kind: CatalogKind }) {
   const productListRef = useRef<HTMLDivElement>(null);
   useEffect(() => { setProductPage(1); }, [kind, business.id, query, filter]);
   const [draft, setDraft] = useState<CatalogItem | null>(() => searchParams.has("nuevo") ? blank(kind) : null);
+  const productEditorOverlayRef = useRef<HTMLDivElement>(null);
   const [editorImageUrl, setEditorImageUrl] = useState<string | null>(null);
   const [imageProcessing, setImageProcessing] = useState(false);
   const [imageError, setImageError] = useState("");
@@ -88,12 +89,38 @@ export function CatalogPage({ kind }: { kind: CatalogKind }) {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [draft]);
-  useEffect(() => {
+  // The product editor is portalled to document.body. Align it to the *visual*
+  // viewport on Safari/iPadOS (including browser chrome and the onscreen keyboard),
+  // and temporarily hide fixed app chrome so it cannot overlap the editor.
+  useLayoutEffect(() => {
     if (!isProduct || !draft) return;
-    const priorOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = priorOverflow; };
-  }, [draft, isProduct]);
+    const overlay = productEditorOverlayRef.current;
+    if (!overlay) return;
+    const body = document.body;
+    const priorOverflow = body.style.overflow;
+    const viewport = window.visualViewport;
+    const syncViewport = () => {
+      overlay.style.setProperty("--catalog-editor-viewport-top", `${viewport?.offsetTop ?? 0}px`);
+      overlay.style.setProperty("--catalog-editor-viewport-left", `${viewport?.offsetLeft ?? 0}px`);
+      overlay.style.setProperty("--catalog-editor-viewport-width", `${viewport?.width ?? window.innerWidth}px`);
+      overlay.style.setProperty("--catalog-editor-viewport-height", `${viewport?.height ?? window.innerHeight}px`);
+    };
+    body.classList.add("catalog-product-editor-active");
+    body.style.overflow = "hidden";
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    viewport?.addEventListener("resize", syncViewport);
+    viewport?.addEventListener("scroll", syncViewport);
+    const closeButton = overlay.querySelector<HTMLButtonElement>(".modal-heading .close-button");
+    closeButton?.focus({ preventScroll: true });
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+      viewport?.removeEventListener("resize", syncViewport);
+      viewport?.removeEventListener("scroll", syncViewport);
+      body.style.overflow = priorOverflow;
+      body.classList.remove("catalog-product-editor-active");
+    };
+  }, [isProduct, Boolean(draft)]);
   const [removing, setRemoving] = useState<CatalogItem | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -183,7 +210,7 @@ export function CatalogPage({ kind }: { kind: CatalogKind }) {
   const quota = catalogLimits ? (isProduct ? catalogLimits.products : catalogLimits.services) : null;
   const counterLimit = demoPro || quota?.unlimited ? "Ilimitado" : quota?.limit ?? "—";
   const canCreate = businesses.length > 0 && (!isRealBusiness || !quota || quota.unlimited || (quota.available !== null && quota.available > 0));
-  const editorModal = draft && <div className={isProduct ? "modal-backdrop catalog-product-editor-backdrop" : "modal-backdrop"} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) closeEditor(); }}><section className={isProduct ? "modal-card product-editor-modal catalog-product-editor-dialog" : "modal-card product-editor-modal"} role="dialog" aria-modal="true" aria-labelledby="catalog-dialog-title"><div className="modal-heading">{isProduct && <span className="catalog-editor-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{draft.id ? <><path d="m14 5 5 5M4 20l4-.9L19.5 7.6a2.5 2.5 0 0 0-3.5-3.5L4.5 15.6 4 20Z"/></> : <><path d="M5 8h14l1 13H4L5 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/><path d="M12 12v6m-3-3h6"/></>}</svg></span>}<div><span className="page-eyebrow">TU OFERTA</span><h2 id="catalog-dialog-title">{draft.id ? "Editar" : "Agregar"} {singular}</h2><p className="product-editor-intro">Completa la información que verán las personas en XAMUKO.</p></div><button type="button" className="close-button" onClick={closeEditor} aria-label="Cerrar">×</button></div><form onSubmit={save} className="modal-form"><FormField label={`Nombre del ${singular}`} name="name" value={draft.name} onChange={change} placeholder={isProduct ? "Ej. Arepa con queso" : "Ej. Servicio a domicilio"} required /><FormField label="Descripción (opcional)" name="description" value={draft.description} onChange={change} as="textarea" placeholder={isProduct ? "Describe brevemente el producto, sus ingredientes o características." : "Describe brevemente en qué consiste el servicio y qué incluye."} /><FormField label="Precio (COP)" name="price" value={draft.price} onChange={change} placeholder="Ej. 12000" disabled={Boolean(draft.priceNegotiable)} hint="Ingresa el valor en pesos colombianos. También puedes marcar ‘Precio a convenir’." /><label className="price-negotiable-field"><input type="checkbox" checked={Boolean(draft.priceNegotiable)} onChange={event => setDraft(current => current ? { ...current, priceNegotiable: event.target.checked, price: event.target.checked ? "No aplica" : "" } : current)} /> <span>Precio a convenir</span></label><fieldset className="adult-classification-field"><legend>Restricción de edad</legend><label><input type="radio" name="adultOnly" checked={!draft.adultOnly} onChange={() => setDraft(current => current ? { ...current, adultOnly: false } : current)} /> Apto para todo público</label><label><input type="radio" name="adultOnly" checked={Boolean(draft.adultOnly)} onChange={() => setDraft(current => current ? { ...current, adultOnly: true } : current)} /> Exclusivo para mayores de 18 años</label><p>Debes clasificar correctamente los productos y servicios sujetos a restricciones de edad. XAMUKO podrá revisar o modificar esta clasificación conforme a sus políticas.</p>{business.adultOnly && <small>Tu establecimiento está clasificado como +18; todo su catálogo se restringe públicamente, sin cambiar esta clasificación individual.</small>}</fieldset><label className="product-image-field"><span>Foto del {singular} <small>(máximo 1)</small></span><input type="file" accept={PHOTO_INPUT_ACCEPT} onChange={event => { void changeImages(event); }} disabled={imageProcessing} /><small>Se admiten fotografías JPG, PNG, WebP y HEIC; las capturas de cámara se convierten automáticamente.</small>{imageError && <small role="alert" className="form-error">{imageError}</small>}{(draft.images ?? []).length > 0 && <div className="product-image-previews">{draft.images?.map((image, index) => <div className="product-image-preview" key={`${image.slice(0, 24)}-${index}`}><img src={index === 0 && editorImageUrl ? editorImageUrl : image} alt={`Vista previa del ${singular} ${index + 1}`} /><button type="button" onClick={() => removeImage(index)} aria-label={`Eliminar imagen ${index + 1}`}>×</button></div>)}</div>}</label><div className="modal-actions"><button type="button" className="outline-button" onClick={closeEditor}>Cancelar</button><button type="submit" className="action-button" disabled={imageProcessing}>{imageProcessing ? "Procesando foto…" : `Guardar ${singular}`}</button></div></form></section></div>;
+  const editorModal = draft && <div ref={isProduct ? productEditorOverlayRef : undefined} className={isProduct ? "modal-backdrop catalog-product-editor-backdrop" : "modal-backdrop"} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) closeEditor(); }}><section className={isProduct ? "modal-card product-editor-modal catalog-product-editor-dialog" : "modal-card product-editor-modal"} role="dialog" aria-modal="true" aria-labelledby="catalog-dialog-title"><div className="modal-heading">{isProduct && <span className="catalog-editor-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{draft.id ? <><path d="m14 5 5 5M4 20l4-.9L19.5 7.6a2.5 2.5 0 0 0-3.5-3.5L4.5 15.6 4 20Z"/></> : <><path d="M5 8h14l1 13H4L5 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/><path d="M12 12v6m-3-3h6"/></>}</svg></span>}<div><span className="page-eyebrow">TU OFERTA</span><h2 id="catalog-dialog-title">{draft.id ? "Editar" : "Agregar"} {singular}</h2><p className="product-editor-intro">Completa la información que verán las personas en XAMUKO.</p></div><button type="button" className="close-button" onClick={closeEditor} aria-label="Cerrar">×</button></div><form onSubmit={save} className="modal-form"><FormField label={`Nombre del ${singular}`} name="name" value={draft.name} onChange={change} placeholder={isProduct ? "Ej. Arepa con queso" : "Ej. Servicio a domicilio"} required /><FormField label="Descripción (opcional)" name="description" value={draft.description} onChange={change} as="textarea" placeholder={isProduct ? "Describe brevemente el producto, sus ingredientes o características." : "Describe brevemente en qué consiste el servicio y qué incluye."} /><FormField label="Precio (COP)" name="price" value={draft.price} onChange={change} placeholder="Ej. 12000" disabled={Boolean(draft.priceNegotiable)} hint="Ingresa el valor en pesos colombianos. También puedes marcar ‘Precio a convenir’." /><label className="price-negotiable-field"><input type="checkbox" checked={Boolean(draft.priceNegotiable)} onChange={event => setDraft(current => current ? { ...current, priceNegotiable: event.target.checked, price: event.target.checked ? "No aplica" : "" } : current)} /> <span>Precio a convenir</span></label><fieldset className="adult-classification-field"><legend>Restricción de edad</legend><label><input type="radio" name="adultOnly" checked={!draft.adultOnly} onChange={() => setDraft(current => current ? { ...current, adultOnly: false } : current)} /> Apto para todo público</label><label><input type="radio" name="adultOnly" checked={Boolean(draft.adultOnly)} onChange={() => setDraft(current => current ? { ...current, adultOnly: true } : current)} /> Exclusivo para mayores de 18 años</label><p>Debes clasificar correctamente los productos y servicios sujetos a restricciones de edad. XAMUKO podrá revisar o modificar esta clasificación conforme a sus políticas.</p>{business.adultOnly && <small>Tu establecimiento está clasificado como +18; todo su catálogo se restringe públicamente, sin cambiar esta clasificación individual.</small>}</fieldset><label className="product-image-field"><span>Foto del {singular} <small>(máximo 1)</small></span><input type="file" accept={PHOTO_INPUT_ACCEPT} onChange={event => { void changeImages(event); }} disabled={imageProcessing} /><small>Se admiten fotografías JPG, PNG, WebP y HEIC; las capturas de cámara se convierten automáticamente.</small>{imageError && <small role="alert" className="form-error">{imageError}</small>}{(draft.images ?? []).length > 0 && <div className="product-image-previews">{draft.images?.map((image, index) => <div className="product-image-preview" key={`${image.slice(0, 24)}-${index}`}><img src={index === 0 && editorImageUrl ? editorImageUrl : image} alt={`Vista previa del ${singular} ${index + 1}`} /><button type="button" onClick={() => removeImage(index)} aria-label={`Eliminar imagen ${index + 1}`}>×</button></div>)}</div>}</label><div className="modal-actions"><button type="button" className="outline-button" onClick={closeEditor}>Cancelar</button><button type="submit" className="action-button" disabled={imageProcessing}>{imageProcessing ? "Procesando foto…" : `Guardar ${singular}`}</button></div></form></section></div>;
   return <><div className={isProduct ? "catalog-products-design" : undefined}>
     {isProduct ? <header className="page-heading catalog-products-heading">
       <div className="catalog-products-heading-copy">
