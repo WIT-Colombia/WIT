@@ -777,3 +777,109 @@ body>.promotion-confirm-overlay .promotion-confirm-actions>button:disabled{
   body>.promotion-editor-overlay button,
   body>.promotion-confirm-overlay button{transition:none}
 }
+
+
+/* Indicadores de Ofertas y Promociones: iconografía vectorial del diseño
+   aprobado, nítida a cualquier escala (incluidas pantallas 4K/Retina). */
+.promotions-page .promotions-summary-icon{
+  position:relative;
+  isolation:isolate;
+  display:grid;
+  place-items:center;
+  flex:0 0 62px;
+  width:62px;
+  height:62px;
+  min-width:0;
+  min-height:0;
+  padding:0;
+  overflow:hidden;
+  border:1px solid #ffffff35;
+  border-radius:18px;
+  background:linear-gradient(145deg,#8d48ff,#3820e9);
+  box-shadow:0 7px 16px #4631d92c,inset 0 1px 1px #ffffff42;
+  color:#fff;
+  font-size:0;
+}
+.promotions-page .promotions-summary-icon::before{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border-radius:inherit;
+  background:linear-gradient(155deg,#ffffff3a,transparent 43%,#020b2920 100%);
+  content:"";
+  pointer-events:none;
+}
+.promotions-page .promotions-summary-icon svg{
+  position:relative;
+  z-index:1;
+  display:block;
+  width:60%;
+  height:60%;
+  max-width:100%;
+  max-height:100%;
+  overflow:visible;
+  color:#fff;
+}
+.promotions-page .promotions-summary-icon.violet{
+  background:linear-gradient(145deg,#9e4cff 5%,#6039fb 55%,#3520e6);
+  box-shadow:0 7px 16px #5334e731,inset 0 1px 1px #ffffff42;
+}
+.promotions-page .promotions-summary-icon.coral{
+  background:linear-gradient(145deg,#ff6d86 3%,#ff3c5b 58%,#ee123a);
+  box-shadow:0 7px 16px #e6415e2f,inset 0 1px 1px #ffffff42;
+}
+.promotions-page .promotions-summary-icon.blue{
+  background:linear-gradient(145deg,#35d1fa 0%,#1797fa 52%,#1747f0);
+  box-shadow:0 7px 16px #1765e52c,inset 0 1px 1px #ffffff42;
+}
+.promotions-page .promotions-summary-icon.magenta{
+  background:linear-gradient(145deg,#e543fc 0%,#b21df0 50%,#6a05d5);
+  box-shadow:0 7px 16px #a30ee32c,inset 0 1px 1px #ffffff42;
+}
+.promotions-page .promotions-summary article{
+  min-width:0;
+  min-height:96px;
+  border-color:#dce6f7;
+  border-radius:18px;
+  background:#fff;
+}
+.promotions-page .promotions-summary article>div{
+  min-width:0;
+}
+.promotions-page .promotions-summary article small{
+  display:block;
+  overflow-wrap:anywhere;
+}
+@media(max-width:1180px){
+  .promotions-page .promotions-summary-icon{
+    flex-basis:54px;
+    width:54px;
+    height:54px;
+    border-radius:16px;
+  }
+  .promotions-page .promotions-summary article{
+    min-height:86px;
+  }
+}
+@media(max-width:650px){
+  .promotions-page .promotions-summary-icon{
+    flex-basis:40px;
+    width:40px;
+    height:40px;
+    border-radius:12px;
+  }
+  .promotions-page .promotions-summary article{
+    min-height:74px;
+  }
+}
+@media(max-width:420px){
+  .promotions-page .promotions-summary-icon{
+    flex-basis:34px;
+    width:34px;
+    height:34px;
+    border-radius:11px;
+  }
+  .promotions-page .promotions-summary article{
+    min-height:70px;
+  }
+}
