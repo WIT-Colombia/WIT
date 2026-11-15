@@ -201,23 +201,28 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
     });
 
     await t.test('Usuarios: notificaciones de decisiones, lectura y protección por sesión', async () => {
-      const anonymous = await send('/notifications');
+      const anonymous = await send('/user/notifications');
       assert.equal(anonymous.response.status, 401);
-      const list = await send('/notifications', { headers: user() });
+      const businessInbox = await send('/notifications', { headers: user() });
+      assert.equal(businessInbox.response.status, 200, JSON.stringify(businessInbox.body));
+      assert.ok(Array.isArray(businessInbox.body.notifications), 'Business retains its own notification array');
+      assert.ok(businessInbox.body.notifications.every((item: any) => item.businessId && item.business),
+        'Business notifications must not include user-platform records');
+      const list = await send('/user/notifications', { headers: user() });
       assert.equal(list.response.status, 200, JSON.stringify(list.body));
       assert.ok(list.body.notifications.length >= 4, 'Se esperan avisos de soporte y reportes');
       assert.ok(list.body.notifications.some((item: any) => item.sourceType === 'VERIFICATION'));
       assert.ok(list.body.notifications.some((item: any) => item.sourceType === 'BUSINESS_REPORT'));
       const target = list.body.notifications[0];
-      const read = await post('/notifications/' + target.id + '/read', {}, user());
+      const read = await post('/user/notifications/' + target.id + '/read', {}, user());
       assert.equal(read.response.status, 200);
       assert.ok((await prisma.platformNotification.findUniqueOrThrow({ where: { id: target.id } })).readAt);
-      const markAll = await post('/notifications/read-all', {}, user());
+      const markAll = await post('/user/notifications/read-all', {}, user());
       assert.equal(markAll.response.status, 200);
-      const removed = await send('/notifications/' + target.id, { method: 'DELETE', headers: user() });
+      const removed = await send('/user/notifications/' + target.id, { method: 'DELETE', headers: user() });
       assert.equal(removed.response.status, 200);
       assert.ok((await prisma.platformNotification.findUniqueOrThrow({ where: { id: target.id } })).deletedAt);
-      const after = await send('/notifications', { headers: user() });
+      const after = await send('/user/notifications', { headers: user() });
       assert.equal(after.response.status, 200);
       assert.ok(!after.body.notifications.some((item: any) => item.id === target.id));
     });
