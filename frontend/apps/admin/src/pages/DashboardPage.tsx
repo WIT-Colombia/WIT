@@ -35,7 +35,7 @@ function GrowthChart({ points, label }: { points: { month: string; value: number
 
   const formatValue = (value: number) => value.toLocaleString('es-CO', { maximumFractionDigits: 0 });
   const formatMonth = (month: string) => new Date(month + '-01T12:00:00Z').toLocaleDateString('es-CO', { month: 'short', year: '2-digit', timeZone: 'UTC' });
-  const height = 295, left = 51, right = 18, top = 25, bottom = 49;
+  const height = 295, left = 51, right = 35, top = 25, bottom = 49;
   const plotWidth = width - left - right, plotHeight = height - top - bottom;
   const maximum = Math.max(1, ...points.map(point => point.value));
   const magnitude = Math.pow(10, Math.floor(Math.log10(maximum / 4)));
