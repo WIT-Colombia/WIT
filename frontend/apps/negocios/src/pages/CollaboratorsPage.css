@@ -5,3 +5,536 @@
  .collab-table-card td em.owner{background:#eee9ff;color:#5b35c9;border:1px solid #d9ceff}
 .collab-leave-card{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:14px;padding:20px 22px;border:1px solid #f0d6da;border-radius:17px;background:#fffafa;box-shadow:0 4px 14px #13264a08}.collab-leave-card h2{margin:4px 0 6px;font-size:18px}.collab-leave-card p{margin:0;color:#697b99;line-height:1.5}.collab-leave-card>.danger-button{flex:none}.collab-leave-confirm{display:grid;gap:12px;max-width:620px}.collab-leave-confirm p{color:#8f3841}.collab-leave-confirm>div{display:flex;justify-content:flex-end;gap:9px}.danger-button{border:0;border-radius:10px;padding:12px 18px;background:#e54651;color:#fff;font:inherit;font-weight:700;cursor:pointer}.danger-button:disabled{opacity:.55;cursor:not-allowed}@media(max-width:650px){.collab-leave-card{align-items:stretch;flex-direction:column;gap:14px;padding:16px}.collab-leave-card>.danger-button{width:100%}.collab-leave-confirm>div{flex-direction:column-reverse}.collab-leave-confirm button{width:100%}}
 .collab-person-avatar{width:42px;height:42px;flex:none;object-fit:cover;border-radius:50%;background:#eeeaff}
+
+
+/* XAMUKO Business | Colaboradores rediseñado.
+   Los pictogramas SVG conservan nitidez en 4K/Retina; los retratos reales no
+   se reemplazan, estiran ni reescalan artificialmente. El texto sigue en HTML. */
+.collab-page,.collab-page *{box-sizing:border-box}
+.collab-page{max-width:1500px;min-width:0;width:100%;margin:0 auto;padding:22px 22px 40px;color:#172747}
+.collab-page button,
+.collab-page button:is(:hover,:focus,:focus-visible,:active,:disabled),
+body>.collab-modal-backdrop button,
+body>.collab-modal-backdrop button:is(:hover,:focus,:focus-visible,:active,:disabled){
+  text-decoration:none;
+}
+.collab-page button:focus-visible,
+.collab-page select:focus-visible,
+.collab-page input:focus-visible,
+body>.collab-modal-backdrop button:focus-visible,
+body>.collab-modal-backdrop input:focus-visible{
+  outline:3px solid #92b6ff;
+  outline-offset:2px;
+}
+.collab-page button svg,
+.collab-page .collab-stats svg,
+.collab-page .collab-heading svg,
+.collab-page .collab-invite-title svg,
+body>.collab-modal-backdrop svg{display:block;width:20px;height:20px;max-width:100%;max-height:100%}
+.collab-page .collab-heading{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:22px;min-width:0;margin:0 0 23px;
+}
+.collab-heading-copy{flex:1 1 420px;min-width:0}
+.collab-page .collab-eyebrow{
+  display:block;margin:0 0 12px 4px;color:#285eec;
+  font-size:11px;font-weight:800;line-height:1.4;letter-spacing:.105em;
+}
+.collab-heading-main{display:flex;align-items:center;gap:16px;min-width:0}
+.collab-heading-main>div{min-width:0}
+.collab-page .collab-heading-icon{
+  flex:0 0 72px;display:grid;place-items:center;
+  width:72px;height:72px;border:1px solid #cad9fc;border-radius:18px;
+  background:linear-gradient(145deg,#e8eaff,#d0dfff);color:#285beb;
+  box-shadow:0 6px 16px #4655be16;
+}
+.collab-page .collab-heading-icon svg{width:36px;height:36px}
+.collab-page .collab-heading h1{
+  margin:0 0 8px;color:#111d3b;
+  font-size:clamp(28px,2.4vw,33px);font-weight:800;
+  line-height:1.15;letter-spacing:-.04em;overflow-wrap:anywhere;
+}
+.collab-page .collab-heading p{
+  margin:0;color:#657895;font-size:13px;font-weight:450;line-height:1.5;overflow-wrap:anywhere;
+}
+.collab-page .collab-heading small{
+  display:block;margin:5px 0 0;color:#667b99;font-size:11px;font-weight:600;overflow-wrap:anywhere;
+}
+.collab-page .collab-guide{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  gap:9px;min-height:44px;height:auto;margin:0;padding:11px 15px;
+  border:1px solid #b9ccf9;border-radius:11px;background:#fff;
+  color:#245ce8;font-family:inherit;font-size:12px;font-weight:750;line-height:1.4;
+  box-shadow:0 3px 12px #285be314;cursor:pointer;
+}
+.collab-page .collab-guide:hover:not(:disabled){border-color:#6d92ed;background:#eef4ff}
+.collab-page .collab-guide svg{flex:0 0 19px;width:19px;height:19px}
+.collab-page .collab-alert{margin:0 0 16px;padding:12px 15px;border:1px solid #bfead5;border-radius:11px;background:#eafaf2;color:#087d49;font-size:12px;font-weight:650;line-height:1.5;overflow-wrap:anywhere}
+.collab-page .collab-alert.error{border-color:#efbdc7;background:#fff0f3;color:#b62748}
+
+/* Cuatro iconos de resumen con degradado XAMUKO. */
+.collab-page .collab-stats{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:13px;min-width:0;margin:0 0 18px;
+}
+.collab-page .collab-stats article{
+  display:flex;align-items:center;gap:12px;
+  min-width:0;min-height:102px;height:auto;margin:0;padding:15px;
+  border:1px solid #dde6f7;border-radius:17px;background:#fff;
+  box-shadow:0 6px 18px #17305c0c;
+}
+.collab-page .collab-stat-icon{
+  display:grid;place-items:center;position:relative;isolation:isolate;
+  flex:0 0 59px;width:59px;height:59px;
+  overflow:hidden;border:1px solid #ffffff4a;border-radius:17px;
+  color:#fff;box-shadow:0 7px 16px #523edd26;
+}
+.collab-page .collab-stat-icon::before{
+  position:absolute;inset:0;z-index:0;
+  border-radius:inherit;background:linear-gradient(150deg,#ffffff3f,transparent 46%,#0b195322);
+  content:"";pointer-events:none;
+}
+.collab-page .collab-stat-icon svg{position:relative;z-index:1;width:32px;height:32px}
+.collab-page .collab-stat-icon.violet{background:linear-gradient(145deg,#9e4cff,#6039fb 55%,#3520e6)}
+.collab-page .collab-stat-icon.pink{background:linear-gradient(145deg,#ff7999,#f63f68 55%,#db2250)}
+.collab-page .collab-stat-icon.blue{background:linear-gradient(145deg,#35cffa,#1a95f6 55%,#2051ed)}
+.collab-page .collab-stat-icon.orange{background:linear-gradient(145deg,#ffbd55,#f4872d 55%,#dc5a13)}
+.collab-page .collab-stats article>div{
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:3px;min-width:0;
+}
+.collab-page .collab-stats article b{
+  margin:0;color:#172747;font-size:27px;font-weight:800;line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.collab-page .collab-stats article strong{
+  display:block;min-width:0;color:#334a6c;
+  font-size:12px;font-weight:750;line-height:1.35;overflow-wrap:anywhere;
+}
+.collab-page .collab-stats article small{
+  display:block;min-width:0;margin:1px 0 0;color:#7889a3;
+  font-size:10px;line-height:1.35;overflow-wrap:anywhere;
+}
+
+/* Invitaciones: mismo sistema visual de Productos/Ofertas. */
+.collab-page .collab-invite,
+.collab-page .collab-table-card{
+  min-width:0;margin:0 0 17px;border:1px solid #dfe7f5;
+  border-radius:19px;background:#fff;box-shadow:0 9px 26px #14305f0e;
+}
+.collab-page .collab-invite{
+  scroll-margin-top:95px;padding:22px;
+  background:linear-gradient(115deg,#f7f5ff,#f2f6ff 58%,#fff);
+}
+.collab-page .collab-invite-title{
+  display:flex;align-items:center;gap:13px;min-width:0;margin:0 0 17px;
+}
+.collab-page .collab-invite-title>div{min-width:0}
+.collab-page .collab-invite-icon{
+  display:grid;place-items:center;flex:0 0 50px;
+  width:50px;height:50px;border-radius:14px;
+  background:linear-gradient(135deg,#8352ff,#245cf2);color:#fff;
+  box-shadow:0 6px 16px #593fec28;
+}
+.collab-page .collab-invite-icon svg{width:26px;height:26px}
+.collab-page .collab-invite-title h2{
+  margin:0 0 4px;color:#1b2c4f;font-size:17px;font-weight:800;line-height:1.25;
+}
+.collab-page .collab-invite-title p{
+  margin:0;color:#617593;font-size:12px;line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.collab-page .collab-invite-controls{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;gap:12px;min-width:0;
+}
+.collab-page .collab-nickname-field{
+  display:grid;gap:7px;min-width:0;color:#294266;font-size:12px;font-weight:800;
+}
+.collab-page .collab-nickname-field span{margin:0}
+.collab-page .collab-nickname-field input{
+  display:block;width:100%;min-width:0;min-height:46px;height:46px;
+  padding:10px 14px;border:1px solid #cbd9ef;border-radius:11px;
+  background:#fff;color:#172747;font-family:inherit;font-size:14px;font-weight:500;
+}
+.collab-page .collab-nickname-field input:focus{border-color:#668df3;outline:3px solid #dce7ff}
+.collab-page .collab-invite-controls>button{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  min-width:0;min-height:46px;height:auto;margin:0;padding:11px 18px;
+  border:1px solid transparent;border-radius:11px;
+  background:linear-gradient(105deg,#743fff,#245cf2 65%,#16a6f7);
+  color:#fff;font-family:inherit;font-size:12px;font-weight:800;line-height:1.4;
+  white-space:normal;box-shadow:0 7px 16px #4e53e324;cursor:pointer;
+}
+.collab-page .collab-invite-controls>button svg{flex:0 0 17px;width:17px;height:17px}
+.collab-page .collab-invite-controls>button:hover:not(:disabled){filter:brightness(1.06)}
+.collab-page .collab-invite-controls>button:disabled{opacity:.52;cursor:not-allowed;box-shadow:none}
+.collab-page .collab-recipient{margin:11px 0 0;min-width:0;color:#677a96;font-size:12px;overflow-wrap:anywhere}
+.collab-page .collab-recipient.resolved{
+  display:flex;align-items:center;flex-wrap:wrap;gap:10px;
+  width:fit-content;max-width:100%;margin:13px 0 0;padding:10px 12px;
+  border:1px solid #bde6ce;border-radius:12px;background:#f1fcf6;
+}
+.collab-page .collab-recipient.resolved>span:nth-child(2){min-width:0}
+.collab-page .collab-recipient.resolved>strong{margin-left:auto;color:#05814a;font-size:11px}
+.collab-page .collab-recipient-avatar{flex:0 0 40px;width:40px;height:40px;overflow:hidden}
+.collab-page .collab-recipient-avatar img{
+  width:100%;height:100%;object-fit:cover;object-position:center;
+}
+.collab-page .collab-permissions{
+  display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+  min-width:0;margin:17px 0 0;
+}
+.collab-page .collab-permissions>b{
+  margin:0 5px 0 0;color:#334c70;font-size:12px;font-weight:800;
+}
+.collab-page .collab-permissions>button{
+  display:inline-flex;align-items:center;justify-content:flex-start;gap:8px;
+  flex:0 1 auto;min-width:0;min-height:46px;margin:0;padding:7px 12px;
+  border:1px solid #d5dff0;border-radius:12px;background:#fff;
+  color:#506888;font-family:inherit;font-size:11px;font-weight:750;line-height:1.35;
+  white-space:normal;overflow-wrap:anywhere;cursor:pointer;box-shadow:none;
+}
+.collab-page .collab-permissions>button.selected{
+  border-color:#926bff;background:#f1efff;color:#5436da;
+  box-shadow:0 0 0 2px #926bff16;
+}
+.collab-page .collab-permissions>button:hover:not(:disabled){border-color:#a5bafb;background:#f5f7ff}
+.collab-page .collab-permission-icon{
+  display:grid;place-items:center;flex:0 0 31px;width:31px;height:31px;
+  border-radius:10px;background:#e8efff;color:#315feb;
+}
+.collab-page .collab-permissions>button:nth-of-type(2) .collab-permission-icon{background:#ffedf3;color:#d33c62}
+.collab-page .collab-permissions>button:nth-of-type(3) .collab-permission-icon{background:#edeaff;color:#6739eb}
+.collab-page .collab-permissions>button:nth-of-type(4) .collab-permission-icon{background:#e9f8f2;color:#159365}
+.collab-page .collab-permission-icon svg{width:18px;height:18px}
+.collab-page .collab-permission-check{
+  display:grid;place-items:center;flex:0 0 16px;width:16px;height:16px;color:#6942e9;
+}
+.collab-page .collab-permission-check svg{width:16px;height:16px}
+.collab-page .collab-permissions>button:disabled{opacity:.55;cursor:not-allowed}
+
+/* Listados: escritorio como tabla; iPad/móvil en tarjetas HTML que no se
+   desbordan, con datos/controles y las fotos de las cuentas intactos. */
+.collab-page .collab-table-card{padding:18px 20px}
+.collab-page .collab-table-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:13px;min-width:0;margin:0 0 14px;
+}
+.collab-page .collab-table-heading h2{
+  margin:0;color:#1c2f51;font-size:17px;font-weight:800;line-height:1.3;
+}
+.collab-page .collab-search{
+  display:flex;align-items:center;gap:8px;
+  flex:0 1 345px;width:min(100%,345px);min-width:0;min-height:44px;
+  padding:0 12px;border:1px solid #cdd9ea;border-radius:11px;
+  background:#fff;color:#5978ac;
+}
+.collab-page .collab-search svg{flex:0 0 19px;width:19px;height:19px}
+.collab-page .collab-table-heading .collab-search input{
+  flex:1 1 auto;width:100%;min-width:0;min-height:42px;height:42px;
+  padding:8px 0;border:0;outline:0;background:transparent;
+  color:#283b58;font-family:inherit;font-size:12px;
+}
+.collab-page .collab-search:focus-within{border-color:#6f94f2;box-shadow:0 0 0 3px #dce7ff}
+.collab-page .collab-scroll{min-width:0;max-width:100%;overflow-x:auto;overscroll-behavior:contain}
+.collab-page .collab-table-card table{
+  min-width:830px;width:100%;border-collapse:separate;border-spacing:0;
+  color:#435877;font-size:12px;
+}
+.collab-page .collab-table-card thead th{
+  padding:13px 12px;background:#f1f5fd;color:#425979;
+  font-size:11px;font-weight:800;line-height:1.4;white-space:nowrap;
+}
+.collab-page .collab-table-card tbody tr:hover{background:#f8faff}
+.collab-page .collab-table-card tbody td{
+  padding:12px;border-bottom:1px solid #e7edf7;
+  color:#465e80;font-size:12px;line-height:1.45;overflow-wrap:anywhere;
+}
+.collab-page .collab-person{display:flex;align-items:center;gap:10px;min-width:0}
+.collab-page .collab-person span{min-width:0}
+.collab-page .collab-person b{
+  color:#1a2b4b;font-size:12px;font-weight:800;line-height:1.35;overflow-wrap:anywhere;
+}
+.collab-page .collab-person small{
+  color:#7184a0;font-size:10px;line-height:1.4;overflow-wrap:anywhere;
+}
+.collab-page .collab-person img,.collab-page .collab-person>i{
+  flex:0 0 42px;width:42px;height:42px;overflow:hidden;
+  border:1px solid #dedfff;border-radius:13px;object-fit:cover;
+  background:#edeaff;color:#5339dc;
+}
+.collab-page .collab-table-card td em{
+  display:inline-flex;align-items:center;gap:5px;
+  max-width:100%;min-width:0;padding:7px 10px;
+  border-radius:999px;font-size:11px;line-height:1.3;
+}
+.collab-page .collab-table-card td em svg{width:15px;height:15px;flex:0 0 15px}
+.collab-page .collab-table-card td em.owner{
+  border:1px solid #d5c6ff;background:#eee9ff;color:#6334c9;
+}
+.collab-page .collab-table-card td em.state.active{
+  border:1px solid #c6e9d3;background:#e9f8f0;color:#13804a;
+}
+.collab-page .collab-table-card td em.state.invited{
+  border:1px solid #f2dfb5;background:#fffaee;color:#986000;
+}
+.collab-page .collab-table-card td em.state.suspended{
+  border:1px solid #f0d8ac;background:#fff5e6;color:#a36b06;
+}
+.collab-page .collab-table-card td em.state.expired{
+  border:1px solid #dfe3ec;background:#f3f5f8;color:#667085;
+}
+.collab-page .collab-table-card .collab-permtext{
+  max-width:none;min-width:0;color:#57708d;font-size:11px;line-height:1.55;
+}
+.collab-page .collab-actions{display:flex;align-items:center;gap:8px;min-width:0}
+.collab-page .collab-actions button,
+.collab-page .collab-actions select,
+.collab-page .collab-table-card td>button{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-width:0;min-height:42px;height:auto;padding:9px 12px;
+  border:1px solid #bbcff2;border-radius:10px;background:#fff;
+  color:#245ce8;font-family:inherit;font-size:11px;font-weight:750;line-height:1.35;white-space:normal;cursor:pointer;
+}
+.collab-page .collab-actions select{display:block;min-width:94px;padding:9px 6px;background:#fff;color:#304c77}
+.collab-page .collab-actions button:hover:not(:disabled),
+.collab-page .collab-actions select:hover:not(:disabled){border-color:#6f97ee;background:#f0f5ff}
+.collab-page .collab-actions button svg{width:16px;height:16px;flex:0 0 16px}
+.collab-page .collab-table-card button.cancel{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:42px;height:auto;padding:9px 13px;
+  border:1px solid #efacba;border-radius:10px;
+  background:#fff5f7;color:#c12e4d;font-family:inherit;font-size:11px;font-weight:750;white-space:normal;
+}
+.collab-page .collab-table-card button.cancel:hover:not(:disabled){border-color:#db6882;background:#ffeef2}
+.collab-page .collab-table-card button.cancel svg{width:16px;height:16px}
+.collab-page .collab-table-card button:disabled,
+.collab-page .collab-table-card select:disabled{
+  opacity:.55;cursor:not-allowed;
+}
+.collab-page .collab-empty{
+  margin:0;padding:30px 12px;text-align:center;color:#7588a4;
+  font-size:12px;line-height:1.5;
+}
+
+/* Editar permisos en portal al body: sincronizado con window.visualViewport.
+   Las cabeceras fijas de Business no interceptan este formulario. */
+body>.collab-modal-backdrop{
+  position:fixed;
+  top:var(--collab-viewport-top,0px);
+  left:var(--collab-viewport-left,0px);
+  right:auto;bottom:auto;
+  z-index:1500;display:flex;align-items:stretch;justify-content:center;
+  box-sizing:border-box;
+  width:var(--collab-viewport-width,100vw);
+  height:var(--collab-viewport-height,100dvh);
+  min-width:0;min-height:0;max-width:none;max-height:none;
+  margin:0;padding:max(14px,env(safe-area-inset-top,0px)) 14px max(14px,env(safe-area-inset-bottom,0px));
+  overflow:hidden;overscroll-behavior:contain;isolation:isolate;
+  background:rgba(12,25,52,.68);
+}
+body>.collab-modal-backdrop>.collab-modal{
+  position:relative;top:0;left:0;right:auto;bottom:auto;
+  display:flex;flex-direction:column;flex:0 1 550px;
+  width:min(100%,550px);min-width:0;min-height:0;max-width:550px;max-height:100%;
+  margin:0 auto;padding:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid #d8e5fb;border-radius:19px;background:#fff;
+  box-shadow:0 25px 80px #0b1c3f55;color:#172747;
+}
+body>.collab-modal-backdrop .collab-modal-header{
+  position:sticky;top:0;z-index:5;display:flex;align-items:flex-start;
+  gap:12px;flex:0 0 auto;min-width:0;
+  margin:0;padding:18px 20px 17px;border-bottom:1px solid #dfe7f5;background:#fff;
+}
+body>.collab-modal-backdrop .collab-modal-heading-icon{
+  display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;
+  border:1px solid #dedaff;border-radius:13px;
+  background:linear-gradient(145deg,#8753ff,#245cf2);color:#fff;
+  box-shadow:0 4px 12px #5c4be228;
+}
+body>.collab-modal-backdrop .collab-modal-heading-icon svg{width:24px;height:24px}
+body>.collab-modal-backdrop .collab-modal-header>div{flex:1 1 auto;min-width:0}
+body>.collab-modal-backdrop .collab-modal-eyebrow{
+  display:block;color:#245ce8;font-size:10px;font-weight:800;line-height:1.3;letter-spacing:.09em;
+}
+body>.collab-modal-backdrop .collab-modal-header h2{
+  margin:5px 0;color:#111d3b;font-size:23px;font-weight:800;line-height:1.2;letter-spacing:-.035em;overflow-wrap:anywhere;
+}
+body>.collab-modal-backdrop .collab-modal-header p{
+  margin:0;color:#657895;font-size:12px;line-height:1.5;overflow-wrap:anywhere;
+}
+body>.collab-modal-backdrop .collab-modal-close{
+  display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;
+  margin:0;padding:0;border:0;border-radius:11px;
+  background:#edf3ff;color:#1e55db;cursor:pointer;
+}
+body>.collab-modal-backdrop .collab-modal-close svg{width:18px;height:18px}
+body>.collab-modal-backdrop .collab-modal-close:hover:not(:disabled){background:#dfe9ff}
+body>.collab-modal-backdrop .collab-modal-content{
+  display:grid;gap:16px;min-width:0;padding:18px 20px 21px;
+}
+body>.collab-modal-backdrop .collab-modal-intro{
+  margin:0;color:#607490;font-size:12px;line-height:1.55;overflow-wrap:anywhere;
+}
+body>.collab-modal-backdrop .collab-modal-permission-list{
+  display:grid;gap:9px;min-width:0;
+}
+body>.collab-modal-backdrop .collab-modal-permission{
+  display:flex;align-items:center;gap:11px;min-width:0;
+  margin:0;padding:11px 13px;border:1px solid #dfe7f6;border-radius:12px;
+  background:#fafbff;color:#233c60;font-family:inherit;font-size:12px;font-weight:750;
+  line-height:1.4;cursor:pointer;
+}
+body>.collab-modal-backdrop .collab-modal-permission>span:nth-child(2){
+  flex:1 1 auto;min-width:0;overflow-wrap:anywhere;
+}
+body>.collab-modal-backdrop .collab-modal-permission-icon{
+  display:grid;place-items:center;flex:0 0 34px;
+  width:34px;height:34px;border-radius:10px;
+  background:#e8efff;color:#315feb;
+}
+body>.collab-modal-backdrop .collab-modal-permission-icon svg{width:19px;height:19px}
+body>.collab-modal-backdrop .collab-modal-permission input{
+  flex:0 0 20px;width:20px;height:20px;margin:0;
+  accent-color:#6340f3;cursor:pointer;
+}
+body>.collab-modal-backdrop .collab-modal-permission:has(input:checked){
+  border-color:#ab99fb;background:#f5f2ff;color:#5139be;
+}
+body>.collab-modal-backdrop .collab-modal-actions{
+  position:sticky;bottom:0;z-index:5;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;min-width:0;margin:auto 0 0;
+  padding:14px 20px max(14px,env(safe-area-inset-bottom,0px));
+  border-top:1px solid #dfe7f5;background:rgba(255,255,255,.99);
+}
+body>.collab-modal-backdrop .collab-modal-actions>button{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  min-width:0;min-height:46px;margin:0;padding:10px 14px;
+  border:1px solid #bdcef4;border-radius:11px;background:#fff;
+  color:#245ce8;font-family:inherit;font-size:12px;font-weight:750;
+  line-height:1.4;white-space:normal;cursor:pointer;
+}
+body>.collab-modal-backdrop .collab-modal-actions>button.action-button{
+  border-color:transparent;background:linear-gradient(105deg,#743fff,#245cf2 65%,#16a6f7);
+  color:#fff;box-shadow:0 7px 16px #4e53e324;
+}
+body>.collab-modal-backdrop .collab-modal-actions button svg{width:17px;height:17px;flex:0 0 17px}
+body>.collab-modal-backdrop button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:1200px){
+  .collab-page .collab-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .collab-page .collab-stat-icon{flex-basis:52px;width:52px;height:52px;border-radius:15px}
+  .collab-page .collab-stat-icon svg{width:28px;height:28px}
+}
+@media(max-width:1100px){
+  body.collab-dialog-active .mobile-topbar,
+  body.collab-dialog-active .business-desktop-header,
+  body.collab-dialog-active .app-content>.topbar,
+  body.collab-dialog-active .mobile-nav,
+  body.collab-dialog-active .business-mobile-menu-layer{
+    visibility:hidden!important;pointer-events:none!important;
+  }
+  .collab-page .collab-scroll{overflow:visible}
+  .collab-page .collab-table-card table,
+  .collab-page .collab-table-card tbody{
+    display:block;width:100%;min-width:0;max-width:100%;
+  }
+  .collab-page .collab-table-card thead{
+    position:absolute;width:1px;height:1px;margin:-1px;padding:0;
+    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+  }
+  .collab-page .collab-table-card tbody tr{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;min-width:0;margin:0 0 12px;padding:15px;
+    border:1px solid #e0e8f6;border-radius:13px;background:#fbfcff;
+  }
+  .collab-page .collab-table-card tbody tr:last-child{margin-bottom:0}
+  .collab-page .collab-table-card tbody td{
+    display:grid;align-content:start;gap:7px;min-width:0;width:100%;
+    margin:0;padding:0;border:0;
+    background:transparent;font-size:12px;overflow-wrap:anywhere;
+  }
+  .collab-page .collab-table-card tbody td::before{
+    display:block;content:attr(data-label);
+    color:#627693;font-size:10px;font-weight:800;
+    line-height:1.35;text-transform:uppercase;letter-spacing:.05em;
+  }
+  .collab-page .collab-table-card tbody td[data-label="Persona"],
+  .collab-page .collab-table-card tbody td[data-label="Acciones"]{
+    grid-column:1/-1;
+  }
+  .collab-page .collab-person{min-width:0}
+  .collab-page .collab-actions{flex-wrap:wrap}
+}
+@media(max-width:700px){
+  .collab-page{padding:18px 13px 34px}
+  .collab-page .collab-heading{align-items:flex-start;gap:13px;margin-bottom:19px}
+  .collab-heading-copy{flex-basis:100%}
+  .collab-page .collab-eyebrow{margin-bottom:10px;font-size:10px}
+  .collab-heading-main{align-items:flex-start;gap:12px}
+  .collab-page .collab-heading-icon{flex-basis:54px;width:54px;height:54px;border-radius:14px}
+  .collab-page .collab-heading-icon svg{width:28px;height:28px}
+  .collab-page .collab-heading h1{font-size:28px}
+  .collab-page .collab-heading p{font-size:12px}
+  .collab-page .collab-guide{width:100%;min-height:44px}
+  .collab-page .collab-guide span{display:inline}
+  .collab-page .collab-stats{gap:9px}
+  .collab-page .collab-stats article{min-height:84px;gap:9px;padding:11px}
+  .collab-page .collab-stat-icon{flex-basis:42px;width:42px;height:42px;border-radius:12px}
+  .collab-page .collab-stat-icon svg{width:24px;height:24px}
+  .collab-page .collab-stats article b{font-size:23px}
+  .collab-page .collab-stats article strong{font-size:11px}
+  .collab-page .collab-stats article small{font-size:9px}
+  .collab-page .collab-invite{padding:16px}
+  .collab-page .collab-invite-title{align-items:flex-start;gap:11px}
+  .collab-page .collab-invite-icon{flex-basis:42px;width:42px;height:42px}
+  .collab-page .collab-invite-icon svg{width:24px;height:24px}
+  .collab-page .collab-invite-title h2{font-size:16px}
+  .collab-page .collab-invite-title p{font-size:12px}
+  .collab-page .collab-invite-controls{grid-template-columns:minmax(0,1fr);gap:10px}
+  .collab-page .collab-invite-controls>button{width:100%;min-height:46px}
+  .collab-page .collab-recipient.resolved>strong{margin:0}
+  .collab-page .collab-permissions>b{flex-basis:100%}
+  .collab-page .collab-permissions>button{flex:1 1 180px;min-height:44px}
+  .collab-page .collab-table-card{padding:15px}
+  .collab-page .collab-table-heading{align-items:stretch}
+  .collab-page .collab-search{flex-basis:auto;width:100%;max-width:none}
+  body>.collab-modal-backdrop{
+    padding:max(8px,env(safe-area-inset-top,0px)) 8px max(8px,env(safe-area-inset-bottom,0px));
+  }
+  body>.collab-modal-backdrop>.collab-modal{
+    flex:1 1 auto;width:100%;max-width:none;border-radius:15px;
+  }
+  body>.collab-modal-backdrop .collab-modal-header{padding:14px 13px 12px;gap:9px}
+  body>.collab-modal-backdrop .collab-modal-header h2{font-size:20px}
+  body>.collab-modal-backdrop .collab-modal-content{gap:12px;padding:13px 13px 16px}
+  body>.collab-modal-backdrop .collab-modal-actions{padding:12px 13px max(12px,env(safe-area-inset-bottom,0px));gap:9px}
+}
+@media(max-width:440px){
+  .collab-page .collab-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .collab-page .collab-stats article{align-items:flex-start;flex-direction:column;gap:8px}
+  .collab-page .collab-stat-icon{flex-basis:38px;width:38px;height:38px;border-radius:11px}
+  .collab-page .collab-stat-icon svg{width:22px;height:22px}
+  .collab-page .collab-stats article>div{min-width:0}
+  .collab-page .collab-table-card tbody tr{grid-template-columns:minmax(0,1fr);gap:12px;padding:12px}
+  .collab-page .collab-table-card tbody td{grid-column:1/-1}
+  .collab-page .collab-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .collab-page .collab-actions button,.collab-page .collab-actions select{width:100%;min-width:0}
+  .collab-page .collab-table-card button.cancel{width:100%}
+  body>.collab-modal-backdrop .collab-modal-header{flex-wrap:wrap}
+  body>.collab-modal-backdrop .collab-modal-close{margin-left:auto}
+  body>.collab-modal-backdrop .collab-modal-actions{grid-template-columns:minmax(0,1fr);gap:8px}
+}
+@media(max-height:430px){
+  body>.collab-modal-backdrop{padding:max(6px,env(safe-area-inset-top,0px)) 6px max(6px,env(safe-area-inset-bottom,0px))}
+  body>.collab-modal-backdrop .collab-modal-header{padding:8px 10px}
+  body>.collab-modal-backdrop .collab-modal-heading-icon{flex-basis:34px;width:34px;height:34px}
+  body>.collab-modal-backdrop .collab-modal-header h2{font-size:18px}
+  body>.collab-modal-backdrop .collab-modal-content{padding:10px}
+  body>.collab-modal-backdrop .collab-modal-actions{padding:9px 10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .collab-page button,body>.collab-modal-backdrop button{transition:none}
+}
