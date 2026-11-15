@@ -1,0 +1,141 @@
+/* XAMUKO Business - Centro de ayuda. Scoped, aligned with Productos/Servicios. */
+.business-help-page {
+  --help-blue:#225cf1;
+  --help-blue-dark:#114bd9;
+  --help-navy:#111d3b;
+  --help-muted:#657895;
+  --help-line:#dfe7f5;
+  --help-pale:#edf3ff;
+  min-width:0;
+  padding-bottom:28px;
+}
+.business-help-page svg{display:block;width:22px;height:22px;flex:none}
+.business-help-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;margin:0 0 24px}
+.business-help-heading-copy{flex:1 1 420px;min-width:0}
+.business-help-eyebrow{display:block;margin:0 0 15px 4px;color:#285eec;font-size:12px;font-weight:800;letter-spacing:.1em}
+.business-help-heading-main{display:flex;align-items:center;gap:16px;min-width:0}
+.business-help-heading-icon{display:grid;place-items:center;flex:0 0 72px;width:72px;height:72px;border:1px solid #cbd9ff;border-radius:18px;background:linear-gradient(135deg,#e9edff,#cfdafe);color:#2057ed;box-shadow:0 7px 20px #214dea10}
+.business-help-heading-icon svg{width:36px;height:36px}
+.business-help-heading-main>div{min-width:0}
+.business-help-heading h1{margin:0 0 8px;color:var(--help-navy);font-size:clamp(30px,3vw,42px);font-weight:800;letter-spacing:-.04em;line-height:1.12}
+.business-help-heading p{max-width:880px;margin:0;color:var(--help-muted);font-size:14px;line-height:1.55}
+.business-help-heading-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:12px 18px;border:1px solid transparent;border-radius:12px;background:linear-gradient(105deg,#743fff 0%,#245cf2 65%,#16a6f7 100%);box-shadow:0 10px 23px #4e53e324;color:#fff;font-size:13px;font-weight:800;text-decoration:none;white-space:nowrap}
+.business-help-heading-action svg{width:18px;height:18px}
+.business-help-heading-action svg:last-child{width:16px;height:16px}
+.business-help-heading-action:hover{color:#fff;filter:brightness(1.06);box-shadow:0 12px 24px #4e53e336}
+.business-help-search-panel{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;min-width:0;margin:0 0 27px;padding:24px 26px;border:1px solid var(--help-line);border-radius:20px;background:rgba(255,255,255,.98);box-shadow:0 8px 23px #17305c0b}
+.business-help-search-panel>div{flex:1 1 235px;min-width:0}
+.business-help-search-panel strong{display:block;color:var(--help-navy);font-size:18px;font-weight:800;letter-spacing:-.02em}
+.business-help-search-panel p{margin:5px 0 0;color:var(--help-muted);font-size:12px;line-height:1.5}
+.business-help-search-field{display:flex;align-items:center;flex:1 1 420px;gap:12px;min-width:0;min-height:53px;padding:0 16px;border:1px solid #d4dff1;border-radius:14px;background:#fff;color:var(--help-blue)}
+.business-help-search-field:focus-within{border-color:#6c94ff;outline:3px solid #dce8ff;outline-offset:1px}
+.business-help-search-field svg{width:22px;height:22px}
+.business-help-search-field input{flex:1;min-width:0;min-height:50px;padding:12px 0;border:0;outline:0;background:transparent;color:var(--help-navy);font:inherit;font-size:13px;box-shadow:none}
+.business-help-search-field input:focus{outline:0;box-shadow:none}
+.business-help-search-field input::placeholder{color:#8290a7}
+.business-help-topics{margin-bottom:28px}
+.business-help-section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 15px}
+.business-help-section-heading h2,.business-help-faq-heading h2{margin:0 0 5px;color:var(--help-navy);font-size:20px;font-weight:800;letter-spacing:-.025em}
+.business-help-section-heading p,.business-help-faq-heading p{margin:0;color:var(--help-muted);font-size:12px;line-height:1.55}
+.business-help-reset{min-height:34px;padding:6px 12px;border:1px solid #cbdcff;border-radius:9px;background:#fff;color:#1854df;font-size:11px;font-weight:750;white-space:nowrap}
+.business-help-reset:hover{background:#eff6ff}
+.business-help-topic-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.business-help-topic{display:flex;align-items:center;gap:13px;min-width:0;min-height:89px;padding:17px;border:1px solid var(--help-line);border-radius:17px;background:#fff;color:var(--help-navy);text-align:left;box-shadow:0 7px 20px #17305c0a;transition:background-color .18s,border-color .18s,box-shadow .18s,transform .18s;cursor:pointer}
+.business-help-topic:hover{transform:translateY(-2px);border-color:#b7cfff;background:#f8fbff;box-shadow:0 12px 27px #17305c12}
+.business-help-topic.is-active{border-color:#8fb6ff;background:#eff5ff;box-shadow:inset 3px 0 0 #225cf1,0 8px 20px #245cf20c}
+.business-help-topic-icon{display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;border-radius:13px;background:#eef3ff;color:#225cf1}
+.business-help-topic.is-active .business-help-topic-icon{background:#dce9ff}
+.business-help-topic-icon svg{width:23px;height:23px}
+.business-help-topic-copy{display:grid;gap:4px;min-width:0}
+.business-help-topic-copy strong{color:#172748;font-size:13px;font-weight:800;line-height:1.3}
+.business-help-topic-copy small{color:#7c8da7;font-size:11px;line-height:1.3}
+.business-help-topic-arrow{width:17px!important;height:17px!important;margin-left:auto;color:#7497d5}
+.business-help-content{display:grid;grid-template-columns:minmax(0,1fr) 280px;align-items:start;gap:20px}
+.business-help-faq-panel{min-width:0;overflow:hidden;padding:27px 28px 18px;border:1px solid var(--help-line);border-radius:20px;background:#fff;box-shadow:0 10px 30px #14305f10}
+.business-help-faq-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 23px}
+.business-help-faq-kicker{display:block;margin-bottom:8px;color:#285eec;font-size:10px;font-weight:800;letter-spacing:.12em}
+.business-help-count{display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:32px;padding:5px 11px;border-radius:99px;background:#eaf1ff;color:#1d55c5;font-size:11px;font-weight:750;white-space:nowrap}
+.business-help-faq-list{display:grid;gap:9px}
+.business-help-faq-item{overflow:hidden;border:1px solid #e1e9f6;border-radius:13px;background:#fff;transition:border-color .18s,box-shadow .18s}
+.business-help-faq-item:hover{border-color:#c2d6ff}
+.business-help-faq-item[open]{border-color:#b7cfff;background:#f9fbff;box-shadow:0 8px 20px #1b56e00c}
+.business-help-faq-item summary{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:76px;padding:16px 18px;list-style:none;cursor:pointer}
+.business-help-faq-item summary::-webkit-details-marker{display:none}
+.business-help-faq-item summary::marker{content:""}
+.business-help-question{display:grid;gap:5px;min-width:0}
+.business-help-question small{color:#386ad2;font-size:10px;font-weight:750;line-height:1.35}
+.business-help-question strong{color:#152441;font-size:13px;font-weight:750;line-height:1.45}
+.business-help-faq-toggle{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border:1px solid #dde8fa;border-radius:9px;background:#eff5ff;color:#245cf2}
+.business-help-faq-toggle svg{width:17px;height:17px;transition:transform .18s}
+.business-help-faq-item[open] .business-help-faq-toggle svg{transform:rotate(180deg)}
+.business-help-faq-item>p{margin:0;padding:2px 18px 18px;color:#566985;font-size:13px;line-height:1.75}
+.business-help-side{display:grid;gap:15px;min-width:0}
+.business-help-contact-card{padding:23px;border:1px solid #d4e2ff;border-radius:19px;background:linear-gradient(155deg,#f5f8ff,#e9f1ff);box-shadow:0 8px 22px #2555b50d}
+.business-help-contact-icon{display:grid;place-items:center;width:50px;height:50px;margin-bottom:18px;border-radius:14px;background:linear-gradient(135deg,#225cf1,#743fff);color:#fff;box-shadow:0 8px 18px #245cf22a}
+.business-help-contact-icon svg{width:26px;height:26px}
+.business-help-contact-card h2{margin:0 0 10px;color:#142b52;font-size:18px;font-weight:800;letter-spacing:-.02em}
+.business-help-contact-card p{margin:0 0 18px;color:#5b7194;font-size:12px;line-height:1.65}
+.business-help-contact-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:42px;padding:9px 12px;border-radius:10px;background:#225cf1;color:#fff;font-size:12px;font-weight:750;text-decoration:none;text-align:center}
+.business-help-contact-link:hover{background:#114bd9;color:#fff}
+.business-help-contact-link svg{width:16px;height:16px}
+.business-help-suggestion-card{display:flex;align-items:flex-start;gap:13px;padding:19px;border:1px solid #e3e9f5;border-radius:17px;background:#fff;box-shadow:0 8px 22px #17305c0a}
+.business-help-suggestion-card>span{display:grid;place-items:center;flex:0 0 39px;width:39px;height:39px;border-radius:11px;background:#eaf1ff;color:#245cf2}
+.business-help-suggestion-card>span svg{width:21px;height:21px}
+.business-help-suggestion-card h3{margin:0 0 5px;color:#1b3055;font-size:13px;font-weight:800}
+.business-help-suggestion-card p{margin:0 0 10px;color:#71829b;font-size:11px;line-height:1.55}
+.business-help-suggestion-card a{display:inline-flex;align-items:center;gap:6px;color:#225cf1;font-size:11px;font-weight:800;text-decoration:none}
+.business-help-suggestion-card a:hover{text-decoration:underline}
+.business-help-suggestion-card a svg{width:15px;height:15px}
+.business-help-empty{display:grid;justify-items:center;gap:8px;padding:35px 12px;text-align:center}
+.business-help-empty>span{display:grid;place-items:center;width:48px;height:48px;border-radius:13px;background:#eff5ff;color:#225cf1}
+.business-help-empty h3{margin:6px 0 0;color:#142b52;font-size:17px}
+.business-help-empty p{margin:0;color:#64748b;font-size:12px;line-height:1.5}
+.business-help-empty button{min-height:37px;margin-top:10px;padding:8px 14px;border:1px solid #bfd5ff;border-radius:9px;background:#eff5ff;color:#1954dd;font-size:11px;font-weight:750}
+.business-help-empty button:hover{background:#dfebff}
+.business-help-page :is(a,button,summary,input):focus-visible{outline:3px solid #b5cbff;outline-offset:3px}
+@media(max-width:1130px){
+  .business-help-topic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .business-help-content{grid-template-columns:minmax(0,1fr) 260px}
+}
+@media(max-width:900px){
+  .business-help-content{grid-template-columns:minmax(0,1fr)}
+  .business-help-side{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+  .business-help-heading{align-items:flex-start;gap:15px}
+  .business-help-eyebrow{margin-bottom:12px;font-size:10px}
+  .business-help-heading-main{gap:12px;align-items:flex-start}
+  .business-help-heading-icon{flex:0 0 52px;width:52px;height:52px;border-radius:14px}
+  .business-help-heading-icon svg{width:28px;height:28px}
+  .business-help-heading h1{font-size:28px;line-height:1.15}
+  .business-help-heading p{font-size:12px}
+  .business-help-heading-action{width:100%;min-height:44px;font-size:12px}
+  .business-help-search-panel{gap:16px;padding:19px;border-radius:16px}
+  .business-help-search-panel strong{font-size:16px}
+  .business-help-search-field{flex-basis:100%;min-height:48px}
+  .business-help-search-field input{min-height:46px;font-size:12px}
+  .business-help-section-heading{align-items:flex-start;flex-wrap:wrap;gap:9px}
+  .business-help-section-heading h2,.business-help-faq-heading h2{font-size:18px}
+  .business-help-topic-grid{gap:10px}
+  .business-help-topic{min-height:76px;gap:10px;padding:12px;border-radius:13px}
+  .business-help-topic-icon{flex-basis:37px;width:37px;height:37px;border-radius:10px}
+  .business-help-topic-icon svg{width:20px;height:20px}
+  .business-help-topic-copy strong{font-size:11px}
+  .business-help-topic-copy small{font-size:10px}
+  .business-help-topic-arrow{display:none!important}
+  .business-help-faq-panel{padding:19px 15px;border-radius:16px}
+  .business-help-faq-heading{align-items:flex-start;gap:8px}
+  .business-help-faq-heading p{font-size:11px}
+  .business-help-count{font-size:10px}
+  .business-help-faq-item summary{min-height:68px;padding:13px}
+  .business-help-question strong{font-size:12px}
+  .business-help-faq-item>p{padding:0 13px 15px;font-size:12px}
+}
+@media(max-width:500px){
+  .business-help-topic-grid,.business-help-side{grid-template-columns:minmax(0,1fr)}
+  .business-help-faq-heading{flex-wrap:wrap}
+  .business-help-contact-card{padding:19px}
+}
+@media(prefers-reduced-motion:reduce){
+ .business-help-page *, .business-help-page *::before, .business-help-page *::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
