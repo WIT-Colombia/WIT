@@ -35,20 +35,21 @@ export function SiteHeader({ active, onProfile, onSearchChange }: { active?: Sit
   const profileInitial = profileName.charAt(0).toLocaleUpperCase("es-CO") || "D";
   const profilePhoto = (accountAvatar ?? profile.photo) || "";
   const profileTarget = isAuthenticated ? "/profile" : "/register?mode=login";
-  const [serverUnread, setServerUnread] = useState(0);
+  const [serverUnreadState, setServerUnreadState] = useState({ userId: "", count: 0 });
+  const serverUnread = serverUnreadState.userId === user?.id ? serverUnreadState.count : 0;
   const [unreadState, setUnreadState] = useState(() => ({
     userId: user?.id ?? null,
     count: getNotifications(user?.id).filter(item => !item.read).length,
   }));
   const unreadNotifications = unreadState.userId === (user?.id ?? null) ? unreadState.count : 0;
   useEffect(() => {
-    setServerUnread(0);
+    setServerUnreadState({ userId: "", count: 0 });
     if (!isAuthenticated || !user?.id) return;
     let active = true;
     const refresh = () => {
       void listPlatformNotices().then(data => {
         if (!active) return;
-        setServerUnread(data.unread);
+        setServerUnreadState({ userId: user.id, count: data.unread });
       }).catch(() => { /* Keep last known count; opening the inbox shows the error. */ });
     };
     refresh();
