@@ -55,7 +55,7 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
     finally { setBusy(false); }
   }
   return <section className="ops-inbox" aria-labelledby="ops-title">
-    <header className="page-heading"><div><p className="eyebrow">ATENCIÓN Y SOPORTE</p><h1 id="ops-title">{config[kind].title}</h1><p>{config[kind].description}</p></div></header>
+    <header className="admin-section-heading"><h1 id="ops-title">{config[kind].title}</h1></header>
     <div className="ops-toolbar">
       <form onSubmit={event => { event.preventDefault(); setPage(1); setSearch(query); }}>
         <label>Buscar<input type="search" aria-label="Buscar solicitudes" value={query} placeholder="Nombre, motivo o descripción" onChange={event => setQuery(event.target.value)} /></label>
