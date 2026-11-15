@@ -498,3 +498,141 @@
     max-width:240px;
   }
 }
+
+/* Horarios: comparte jerarquía tipográfica y campos de Información general. */
+.business-detail-page .business-hours-section{
+  padding:0;
+  border:0;
+}
+.business-detail-page .business-hours-reference-field h3{
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:var(--business-content-field-title-size);
+  font-weight:var(--business-content-field-title-weight);
+  line-height:var(--business-content-field-title-line-height);
+}
+.business-detail-page .business-hours-reference-field .business-reference-value{
+  display:flex;
+  align-items:center;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:var(--business-content-value-size);
+  font-weight:var(--business-content-value-weight);
+  line-height:var(--business-content-value-line-height);
+}
+.business-detail-page .business-hours-reference-editor{
+  min-width:0;
+  container-type:inline-size;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours{
+  gap:10px;
+  margin:0 0 16px;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div{
+  display:grid;
+  grid-template-columns:minmax(95px,1fr) auto minmax(82px,1fr) 12px minmax(82px,1fr);
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:12px;
+  border:1px solid #dbe7fa;
+  border-radius:8px;
+  background:#f6f9ff;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours label{
+  color:#0f2747;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:var(--business-content-field-title-size);
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div>label:first-child{
+  font-weight:700;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div>input[type="time"]{
+  width:100%;
+  min-width:0;
+  min-height:40px;
+  border-color:#dbe7fa;
+  background:#fff;
+  font-size:12px;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div>input[type="time"]:disabled{
+  background:#eef2f7;
+  color:#94a3b8;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div>span{
+  color:#64748b;
+  text-align:center;
+}
+@container (max-width:570px){
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div{
+    grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr);
+    gap:10px 8px;
+    padding:12px;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>label:first-child{
+    grid-column:1;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>label:nth-child(2){
+    grid-column:3;
+    justify-self:end;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>input[type="time"]:nth-of-type(1){
+    grid-column:1;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>span{
+    grid-column:2;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>input[type="time"]:nth-of-type(2){
+    grid-column:3;
+  }
+}
+/* Aviso temporal de guardado, con el lenguaje visual de Business. */
+.business-detail-page .business-save-toast{
+  position:fixed;
+  right:clamp(16px,3vw,32px);
+  bottom:24px;
+  z-index:150;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:max-content;
+  max-width:min(380px,calc(100vw - 32px));
+  min-height:54px;
+  margin:0;
+  padding:12px 16px;
+  border:1px solid #dbe7fa;
+  border-left:3px solid #16a34a;
+  border-radius:11px;
+  background:#fff;
+  color:#0f2747;
+  box-shadow:0 10px 28px #0f27471e;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:13px;
+  font-weight:600;
+  line-height:1.45;
+  animation:business-save-toast-in .18s ease-out both;
+}
+.business-detail-page .business-save-toast__icon{
+  display:grid;
+  flex:0 0 27px;
+  place-items:center;
+  width:27px;
+  height:27px;
+  border-radius:50%;
+  background:#dcfce7;
+  color:#15803d;
+  font-size:15px;
+  font-weight:750;
+}
+@keyframes business-save-toast-in{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:600px){
+  .business-detail-page .business-save-toast{
+    right:16px;
+    bottom:calc(90px + env(safe-area-inset-bottom,0px));
+    font-size:12px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .business-detail-page .business-save-toast{animation:none}
+}
