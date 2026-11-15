@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { authorizeStatisticsBusiness, statisticsWindow } from './statistics.service.js';
+import { authorizeStatisticsBusiness, completeCountTrend, statisticsWindow } from './statistics.service.js';
 
 test('statistics windows use Bogotá midnight and compare the same elapsed duration', () => {
   const now = new Date('2026-10-24T18:30:00.000Z');
@@ -36,4 +36,46 @@ test('statistics lookup scopes the requested business to the active member', asy
 test('a collaborator without READ_ANALYTICS cannot read business statistics', async () => {
   const db = { business: { findFirst: async () => ({ id: 'business-a', memberships: [{ role: 'COLLABORATOR', permissions: [] }] }) } } as unknown as NonNullable<Parameters<typeof authorizeStatisticsBusiness>[2]>;
   await assert.rejects(() => authorizeStatisticsBusiness('member-a', 'business-a', db), { statusCode: 403, code: 'BUSINESS_PERMISSION_DENIED' });
+});
+
+test('un día completo de eventos conserva las horas sin actividad con valor cero en Bogotá', () => {
+  const until = new Date('2026-10-24T18:30:00.000Z'); // 13:30 de Colombia
+  const first = statisticsWindow('day', until).start!;
+  const result = completeCountTrend([
+    { label: '2026-10-24 08:00', value: 4 },
+    { label: '2026-10-24 10:00', value: 2 },
+  ], 'day', first, until);
+  assert.equal(result.length, 14);
+  assert.deepEqual(result[0], { label: '2026-10-24 00:00', value: 0 });
+  assert.deepEqual(result[8], { label: '2026-10-24 08:00', value: 4 });
+  assert.deepEqual(result[9], { label: '2026-10-24 09:00', value: 0 });
+  assert.deepEqual(result[10], { label: '2026-10-24 10:00', value: 2 });
+  assert.deepEqual(result[13], { label: '2026-10-24 13:00', value: 0 });
+  assert.equal(result.reduce((sum, point) => sum + point.value, 0), 6);
+});
+
+test('semana y mes conservan los días con cero sin añadir días futuros', () => {
+  const until = new Date('2026-10-24T18:30:00.000Z');
+  const week = completeCountTrend([{ label: '2026-10-20', value: 3 }], 'week', statisticsWindow('week', until).start!, until);
+  assert.equal(week.length, 6);
+  assert.deepEqual(week[0], { label: '2026-10-19', value: 0 });
+  assert.deepEqual(week[1], { label: '2026-10-20', value: 3 });
+  assert.deepEqual(week.at(-1), { label: '2026-10-24', value: 0 });
+  const month = completeCountTrend([], 'month', statisticsWindow('month', until).start!, until);
+  assert.equal(month.length, 24);
+  assert.equal(month.every(point => point.value === 0), true);
+  assert.equal(month.at(-1)?.label, '2026-10-24');
+});
+
+test('año e histórico preservan meses de valor cero para estadísticas de conteo', () => {
+  const until = new Date('2026-10-24T18:30:00.000Z');
+  const year = completeCountTrend([{ label: '2026-02', value: 7 }], 'year', statisticsWindow('year', until).start!, until);
+  assert.equal(year.length, 10);
+  assert.deepEqual(year[0], { label: '2026-01', value: 0 });
+  assert.deepEqual(year[1], { label: '2026-02', value: 7 });
+  assert.deepEqual(year.at(-1), { label: '2026-10', value: 0 });
+  const all = completeCountTrend([], 'all', new Date('2024-11-01T05:00:00.000Z'), until);
+  assert.equal(all.length, 24);
+  assert.equal(all[0].label, '2024-11');
+  assert.equal(all.at(-1)?.label, '2026-10');
 });
