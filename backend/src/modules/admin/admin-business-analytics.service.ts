@@ -88,7 +88,7 @@ export async function getAdminBusinessAnalytics(query: Query, now = new Date()) 
     `),
     prisma.$queryRaw<Array<{ month: string; quantity: bigint }>>(Prisma.sql`
       SELECT DATE_FORMAT(u.createdAt, '%Y-%m') AS month, COUNT(*) AS quantity
-      FROM `User` u WHERE u.status <> 'DELETED'
+      FROM \`User\` u WHERE u.status <> 'DELETED'
         AND u.createdAt >= ${start} AND u.createdAt < ${end}
       GROUP BY DATE_FORMAT(u.createdAt, '%Y-%m') ORDER BY month ASC
     `),
