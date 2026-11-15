@@ -6,14 +6,14 @@ export type PlatformNotice = {
 };
 
 export function listPlatformNotices() {
-  return requestWithSession<{ notifications: PlatformNotice[]; unread: number }>('/api/v1/notifications');
+  return requestWithSession<{ notifications: PlatformNotice[]; unread: number }>('/api/v1/user/notifications');
 }
 export function readPlatformNotice(id: string) {
-  return requestWithSession<{ ok: boolean }>('/api/v1/notifications/' + encodeURIComponent(id) + '/read', { method: 'POST', body: '{}' });
+  return requestWithSession<{ ok: boolean }>('/api/v1/user/notifications/' + encodeURIComponent(id) + '/read', { method: 'POST', body: '{}' });
 }
 export function readAllPlatformNotices() {
-  return requestWithSession<{ ok: boolean }>('/api/v1/notifications/read-all', { method: 'POST', body: '{}' });
+  return requestWithSession<{ ok: boolean }>('/api/v1/user/notifications/read-all', { method: 'POST', body: '{}' });
 }
 export function dismissPlatformNotice(id: string) {
-  return requestWithSession<{ ok: boolean }>('/api/v1/notifications/' + encodeURIComponent(id), { method: 'DELETE' });
+  return requestWithSession<{ ok: boolean }>('/api/v1/user/notifications/' + encodeURIComponent(id), { method: 'DELETE' });
 }
