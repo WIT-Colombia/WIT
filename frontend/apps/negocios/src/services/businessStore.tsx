@@ -162,8 +162,8 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
     // Never carry an unread badge from one selected business to another.
     setPersistentNotificationCount(0);
     const refresh = () => {
-      void businessApi.listBusinessNotifications(selectedBusinessId).then(({ notifications: rows }) => {
-        if (active) setPersistentNotificationCount(rows.filter(item => !item.readAt).length);
+      void businessApi.listBusinessNotifications(selectedBusinessId).then(({ unread }) => {
+        if (active) setPersistentNotificationCount(unread);
       }).catch(() => { /* Leave the previously verified selected-business count intact. */ });
     };
     const onUpdated = (event: Event) => {
