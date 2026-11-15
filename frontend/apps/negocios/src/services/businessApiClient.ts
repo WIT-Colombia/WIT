@@ -269,8 +269,9 @@ export const businessApi = {
   respondCollaboratorInvitation: (membershipId:string,accept:boolean) => requestJson(`/memberships/${encodeURIComponent(membershipId)}/${accept?'accept':'reject'}`,{method:'POST'}),
   // Selection-scoped inbox. The legacy global route is reserved for invitations
   // to a business that the recipient has not yet joined.
-  listBusinessNotifications: (businessId:string) => requestJson<{notifications:PersistedBusinessNotification[]}>(`/businesses/${encodeURIComponent(businessId)}/notifications`),
+  listBusinessNotifications: (businessId:string) => requestJson<{notifications:PersistedBusinessNotification[];unread:number}>(`/businesses/${encodeURIComponent(businessId)}/notifications`),
   listAllBusinessInvitations: () => requestJson<{notifications:PersistedBusinessNotification[]}>('/notifications'),
+  markAllBusinessNotificationsRead: (businessId:string) => requestJson(`/businesses/${encodeURIComponent(businessId)}/notifications/read-all`,{method:'POST'}),
   markBusinessNotificationRead: (id:string,businessId:string) => requestJson(`/businesses/${encodeURIComponent(businessId)}/notifications/${encodeURIComponent(id)}/read`,{method:'POST'}),
   deleteBusinessNotification: (id:string,businessId:string) => requestJson(`/businesses/${encodeURIComponent(businessId)}/notifications/${encodeURIComponent(id)}`,{method:'DELETE'}),
   list: () => requestJson<{ businesses: RealBusiness[] }>('/businesses'),
