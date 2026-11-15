@@ -866,3 +866,79 @@
     font-size: 10px;
   }
 }
+
+
+/* Ficha pública (Usuarios): títulos de Productos, Servicios y Opiniones.
+   Misma jerarquía que «Horario de atención», sin duplicar las etiquetas de la pestaña. */
+.business-detail-page .business-catalog-view .business-about>.business-public-section-heading,
+.business-detail-page .business-review-section .business-public-section-heading{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  margin:0 0 14px;
+  color:#101a32;
+  font-family:inherit;
+  font-size:clamp(16px,1.3vw,21px);
+  font-weight:800;
+  line-height:1.25;
+  letter-spacing:normal;
+  overflow-wrap:anywhere;
+}
+.business-detail-page .business-review-section .business-public-section-heading{
+  margin:0;
+}
+.business-detail-page .business-public-section-heading>.business-public-section-heading-icon{
+  display:grid;
+  place-items:center;
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  background:#f1eaff;
+  color:#7134ed;
+}
+.business-detail-page .business-public-section-heading>.business-public-section-heading-icon svg{
+  display:block;
+  width:23px;
+  height:23px;
+}
+.business-detail-page .business-public-section-heading>span:last-child{
+  display:block;
+  flex:1 1 auto;
+  min-width:0;
+}
+.business-detail-page .business-review-section .business-section-heading{
+  align-items:center;
+  gap:14px;
+}
+.business-detail-page .business-review-section .business-section-heading>div{
+  flex:1 1 auto;
+  min-width:0;
+}
+@media(max-width:700px){
+  .business-detail-page .business-review-section .business-section-heading{
+    align-items:flex-start;
+  }
+}
+@media(max-width:600px){
+  .business-detail-page .business-catalog-view .business-about>.business-public-section-heading,
+  .business-detail-page .business-review-section .business-public-section-heading{
+    gap:10px;
+    margin-bottom:12px;
+    font-size:16px;
+  }
+  .business-detail-page .business-review-section .business-public-section-heading{
+    margin-bottom:0;
+  }
+  .business-detail-page .business-public-section-heading>.business-public-section-heading-icon{
+    flex-basis:37px;
+    width:37px;
+    height:37px;
+    border-radius:11px;
+  }
+  .business-detail-page .business-public-section-heading>.business-public-section-heading-icon svg{
+    width:20px;
+    height:20px;
+  }
+}
