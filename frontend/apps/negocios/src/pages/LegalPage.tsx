@@ -10,7 +10,7 @@ export function LegalPage() {
   const { page = "terms" } = useParams();
   const [searchParams] = useSearchParams();
   const source = searchParams.get("from");
-  const origin = source === "perfil" || source === "ajustes" ? source : "registro";
+  const origin = source === "settings" ? "ajustes" : source === "profile" ? "perfil" : source === "perfil" || source === "ajustes" ? source : "registro";
   const backLabel = origin === "perfil" ? "← Volver al perfil" : origin === "ajustes" ? "← Volver a Configuración" : "← Volver";
   const backPath = origin === "perfil" ? "/perfil" : origin === "ajustes" ? "/configuracion" : "/registro";
   const { state } = useBusinessAuth();
