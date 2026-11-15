@@ -120,7 +120,7 @@ export function AdminBusinessesPage() {
 
     <section className="business-stats businesses-summary" aria-label="Resumen de negocios">
       {(statValues.length ? statValues : [
-        { label: 'Total negocios', value: total, icon: 'store', tone: 'purple', percent: null },
+        { label: 'Total negocios', value: null, icon: 'store', tone: 'purple', percent: null },
         { label: 'Activos', value: null, icon: 'check', tone: 'green', percent: null },
         { label: 'En revisión', value: null, icon: 'clock', tone: 'blue', percent: null },
         { label: 'Inactivos', value: null, icon: 'close', tone: 'red', percent: null },
