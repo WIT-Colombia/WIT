@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { navigation, navigationGroups } from '../data/navigation';
 import { getSession, logout, restoreSession } from '../services/adminService';
-import { fetchOwnAvatar } from '../services/adminApiClient';
+import { fetchOwnAvatar, getAdminSupportAttention } from '../services/adminApiClient';
 import { Icon } from './Icon';
 
 const groupIcons: Record<string, string> = { plataforma: 'store', crecimiento: 'crown', finanzas: 'database', tecnologia: 'server', soporte: 'headphones', juridica: 'scales', configuracion: 'shield' };
@@ -18,6 +18,7 @@ export function Layout() {
   const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 900px)').matches);
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState('');
+  const [supportCounts, setSupportCounts] = useState<Record<string,number>>({});
   const [expandedGroup, setExpandedGroup] = useState<string | null>(() => activeGroupFor(location.pathname));
   const toggleRef = useRef<HTMLButtonElement>(null); const sidebarRef = useRef<HTMLElement>(null);
   const logoutRef = useRef<HTMLButtonElement>(null); const dialogRef = useRef<HTMLDivElement>(null);
@@ -33,6 +34,27 @@ export function Layout() {
     media.addEventListener('change', resize);
     return () => media.removeEventListener('change', resize);
   }, []);
+  // Action indicators use real DB counts and only include categories allowed by the Admin role.
+  useEffect(() => {
+    if (!admin) return;
+    let active = true;
+    const refresh = () => {
+      void getAdminSupportAttention().then(result => {
+        if (active) setSupportCounts(result.counts);
+      }).catch(() => { /* Navigation still works when counters are unavailable. */ });
+    };
+    refresh();
+    const handleVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    const timer = window.setInterval(handleVisible, 60_000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', handleVisible);
+    return () => {
+      active = false; window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', handleVisible);
+    };
+  }, [admin?.id, location.pathname]);
+
   // A profile photo may change in another XAMUKO app while Admin stays mounted.
   // Reuse the session and authenticated avatar services when returning to this tab.
   useEffect(() => {
@@ -126,7 +148,7 @@ export function Layout() {
     }
   };
   const avatar = avatarSrc ? <img src={avatarSrc} alt="" onError={() => setAvatarSrc(null)} /> : admin?.name?.split(' ').map(part => part[0]).slice(0, 2).join('') || 'A';
-  const navItem = (item: typeof navigation[number]) => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={sidebarIcons[item.path] || item.icon} size={20} /><span>{item.label}</span>{item.pending && <small className="nav-pending">Pendiente</small>}</NavLink>;
+  const navItem = (item: typeof navigation[number]) => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={sidebarIcons[item.path] || item.icon} size={20} /><span>{item.label}</span>{item.group === 'soporte' && (supportCounts[item.path] ?? 0) > 0 && <small className="nav-attention" aria-label={`${supportCounts[item.path]} casos por atender`}>{supportCounts[item.path] > 99 ? '99+' : supportCounts[item.path]}</small>}{item.pending && <small className="nav-pending">Pendiente</small>}</NavLink>;
   return <div className={`app-shell admin-refresh admin-workbench ${verification ? 'verification-preserved' : ''} ${businessesRoute ? 'businesses-layout' : ''} ${usersRoute ? 'users-layout' : ''} ${contentRoute ? 'content-layout' : ''}`}>
     <a className="skip-link" href="#main">Ir al contenido</a>
     {open && mobile && <button className="sidebar-backdrop" aria-label="Cerrar navegación" tabIndex={-1} onClick={closeSidebar} />}
