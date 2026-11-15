@@ -122,6 +122,7 @@
 .admin-refresh .au-back:hover{background:#edf4ff}
 .admin-refresh .au-detail-hero{display:flex;align-items:center;gap:18px;flex-wrap:wrap;min-width:0;padding:25px 28px;border:1px solid #dce6f8;border-radius:20px;background:linear-gradient(115deg,#fff,#f3f7ff 65%,#efebff);box-shadow:0 10px 25px #19345d0e}
 .admin-refresh .au-profile-avatar{display:grid;place-items:center;flex:0 0 80px;width:80px;height:80px;border:1px solid #ced8ff;border-radius:22px;background:linear-gradient(145deg,#dceaff,#e8ddff);color:#4b54bf;font-size:23px;font-weight:900}
+.admin-refresh .au-profile-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
 .admin-refresh .au-detail-heading{flex:1;min-width:190px}
 .admin-refresh .au-detail-heading .au-eyebrow{margin-bottom:7px}
 .admin-refresh .au-detail-heading h1{margin:0 0 6px;color:#132846;font-size:clamp(22px,2.7vw,34px);line-height:1.2;font-weight:850;letter-spacing:-.03em;overflow-wrap:anywhere}
