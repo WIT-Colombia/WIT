@@ -127,9 +127,15 @@ export async function getAdminContentDetail(id:string){
     reports:{take:8,orderBy:{createdAt:'desc'},select:{id:true,reason:true,status:true,createdAt:true,description:true}},
   }});
   if(!offer)throw new AppError(404,'ADMIN_OFFER_NOT_FOUND','No encontramos este producto o servicio.');
-  const canRestore=offer.deletedAt===null && offer.publicationStatus==='UNPUBLISHED' &&
+  const basicRestore=offer.deletedAt===null && offer.publicationStatus==='UNPUBLISHED' &&
     offer.business.publicationStatus==='PUBLISHED' && offer.business.lifecycleStatus==='ACTIVE' &&
     offer.business.deletionStatus==='NONE' && offer.business.businessAccount.status==='ACTIVE';
+  const lastHide=basicRestore ? await prisma.auditLog.findFirst({
+    where:{entityType:'OFFER',entityId:id,action:'ADMIN_CONTENT_HIDDEN'},
+    orderBy:{createdAt:'desc'},select:{createdAt:true},
+  }) : null;
+  const canRestore=Boolean(basicRestore && lastHide &&
+    offer.updatedAt<=new Date(lastHide.createdAt.getTime()+2000));
   return {offer:{...compactOffer(offer),photos:offer.photos,
     reportsRecent:offer.reports,canHide:offer.deletedAt===null&&offer.publicationStatus==='PUBLISHED',canRestore}};
 }
