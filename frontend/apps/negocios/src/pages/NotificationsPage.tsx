@@ -50,6 +50,8 @@ export function NotificationsPage() {
   const [filter, setFilter] = useState<"Todas" | "No leídas">("Todas");
   const [confirmingInvitation, setConfirmingInvitation] = useState<{ id: string; accepted: boolean } | null>(null);
   const [persisted, setPersisted] = useState<PersistedBusinessNotification[]>([]);
+  const [scopedUnread, setScopedUnread] = useState<{ businessId: string; count: number }>({ businessId: "", count: 0 });
+  const [markingAll, setMarkingAll] = useState(false);
   const [apiError, setApiError] = useState("");
   const [busyInvitation, setBusyInvitation] = useState<string | null>(null);
   const [transfers, setTransfers] = useState<Array<{ id: string; status: string; expiresAt: string | null; requestedAt: string; business: { id: string; name: string }; fromUser: { displayName: string; nickname: string | null } }>>([]);
@@ -62,12 +64,13 @@ export function NotificationsPage() {
     const id = selectedBusinessId;
     if (!id) { setPersisted([]); return; }
     try {
-      const rows = (await businessApi.listBusinessNotifications(id)).notifications;
+      const { notifications: rows, unread } = await businessApi.listBusinessNotifications(id);
       if (selectedBusinessRef.current !== id) return;
       setPersisted(rows);
+      setScopedUnread({ businessId: id, count: unread });
       setApiError("");
       window.dispatchEvent(new CustomEvent("xamuko-notifications-updated", {
-        detail: { businessId: id, count: rows.filter(item => !item.readAt).length },
+        detail: { businessId: id, count: unread },
       }));
     } catch {
       if (selectedBusinessRef.current === id)
@@ -76,6 +79,7 @@ export function NotificationsPage() {
   }, [selectedBusinessId]);
   useEffect(() => {
     setPersisted([]);
+    setScopedUnread({ businessId: "", count: 0 });
     setConfirmingInvitation(null);
     setConfirmingTransfer(null);
     setConfirmingDelete(null);
@@ -126,7 +130,7 @@ export function NotificationsPage() {
     item.businessId === selectedBusinessId && (filter === "Todas" || !item.readAt)),
     [filter, persisted, selectedBusinessId]);
   const totalUnread = currentLocal.filter(item => !item.read).length +
-    persisted.filter(item => item.businessId === selectedBusinessId && !item.readAt).length;
+    (scopedUnread.businessId === selectedBusinessId ? scopedUnread.count : 0);
 
   const respondPersisted = async (item: PersistedBusinessNotification, accept: boolean) => {
     if (!item.membershipId) return;
@@ -143,17 +147,22 @@ export function NotificationsPage() {
     finally { setBusyInvitation(null); }
   };
   const markAllRead = async () => {
+    if (markingAll) return;
+    setMarkingAll(true);
+    const id = selectedBusinessId;
     setNotifications(notifications.map(item =>
       currentLocal.some(current => current.id === item.id) ? { ...item, read: true } : item));
-    const unreadPersisted = persisted.filter(item => item.businessId === selectedBusinessId && !item.readAt);
-    if (!unreadPersisted.length) return;
-    try { await Promise.all(unreadPersisted.map(item => businessApi.markBusinessNotificationRead(item.id, selectedBusinessId))); await reloadPersisted(); }
-    catch { setApiError("No se pudieron actualizar todas las notificaciones."); }
+    try {
+      if (id && scopedUnread.businessId === id && scopedUnread.count > 0)
+        await businessApi.markAllBusinessNotificationsRead(id);
+      await reloadPersisted();
+    } catch { if (selectedBusinessRef.current === id) setApiError("No se pudieron actualizar todas las notificaciones."); }
+    finally { setMarkingAll(false); }
   };
   const respondTransfer = async (id: string, accept: boolean) => { setBusyTransfer(id); setApiError(""); try { await businessApi.respondOwnershipTransfer(id, accept); const fresh = (await businessApi.list()).businesses.map(toBusinessDetails); setBusinesses(fresh); const selected = fresh.find(value => value.id === business.id) ?? fresh[0]; if (selected) setBusiness(selected); await reloadTransfers(); await reloadPersisted(); setConfirmingTransfer(null); } catch (cause) { setApiError(cause instanceof Error ? cause.message : "No se pudo responder la transferencia."); } finally { setBusyTransfer(null); } };
 
   return <>
-    <PageHeader eyebrow="BANDEJA DEL NEGOCIO" title="Notificaciones" description={business.name ? `Avisos y decisiones relacionados exclusivamente con ${business.name}.` : "Selecciona un negocio para consultar sus notificaciones."} action={totalUnread > 0 && <button type="button" className="outline-button" onClick={() => void markAllRead()}>Marcar todas como leídas</button>} />
+    <PageHeader eyebrow="BANDEJA DEL NEGOCIO" title="Notificaciones" description={business.name ? `Avisos y decisiones relacionados exclusivamente con ${business.name}.` : "Selecciona un negocio para consultar sus notificaciones."} action={totalUnread > 0 && <button type="button" className="outline-button" disabled={markingAll} onClick={() => void markAllRead()}>{markingAll ? "Actualizando…" : "Marcar todas como leídas"}</button>} />
     {apiError && <div className="notification-page-alert" role="alert">{apiError}</div>}
     <section className="surface-card notifications-card">
       <div className="notification-tabs" role="group" aria-label="Filtrar notificaciones"><button type="button" onClick={() => setFilter("Todas")} className={filter === "Todas" ? "active" : ""} aria-pressed={filter === "Todas"}>Todas</button><button type="button" onClick={() => setFilter("No leídas")} className={filter === "No leídas" ? "active" : ""} aria-pressed={filter === "No leídas"}>No leídas <span>{totalUnread}</span></button></div>
