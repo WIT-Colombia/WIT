@@ -29,13 +29,13 @@ function PasswordField({ id, label, value, onChange, autoComplete }: {
   onChange: (value: string) => void; autoComplete: "current-password" | "new-password";
 }) {
   const [visible, setVisible] = useState(false);
-  return <label className="business-recovery-field" htmlFor={id}>
-    <span>{label}</span>
+  return <div className="business-recovery-field">
+    <label htmlFor={id}>{label}</label>
     <span className="business-recovery-password-control">
       <input id={id} name={id} type={visible ? "text" : "password"} value={value} onChange={event => onChange(event.target.value)} autoComplete={autoComplete} required minLength={autoComplete === "new-password" ? 8 : undefined} />
       <button type="button" className="business-recovery-visibility" aria-label={visible ? "Ocultar " + label.toLowerCase() : "Mostrar " + label.toLowerCase()} aria-pressed={visible} onClick={() => setVisible(current => !current)}><SecurityIcon name={visible ? "eye-off" : "eye"} /></button>
     </span>
-  </label>;
+  </div>;
 }
 
 function describeError(cause: unknown, mode: RecoveryMode): string {
