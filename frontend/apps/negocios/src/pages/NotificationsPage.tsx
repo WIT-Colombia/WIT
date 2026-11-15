@@ -55,6 +55,8 @@ export function NotificationsPage() {
   const [transfers, setTransfers] = useState<Array<{ id: string; status: string; expiresAt: string | null; requestedAt: string; business: { id: string; name: string }; fromUser: { displayName: string; nickname: string | null } }>>([]);
   const [busyTransfer, setBusyTransfer] = useState<string | null>(null);
   const [confirmingTransfer, setConfirmingTransfer] = useState<{ id: string; accepted: boolean } | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [busyDelete, setBusyDelete] = useState<string | null>(null);
 
   const reloadPersisted = useCallback(async () => {
     const id = selectedBusinessId;
@@ -76,6 +78,7 @@ export function NotificationsPage() {
     setPersisted([]);
     setConfirmingInvitation(null);
     setConfirmingTransfer(null);
+    setConfirmingDelete(null);
     setApiError("");
     void reloadPersisted();
     const refreshIfVisible = () => { if (document.visibilityState === "visible") void reloadPersisted(); };
@@ -88,6 +91,22 @@ export function NotificationsPage() {
       window.removeEventListener("focus", refreshIfVisible);
     };
   }, [reloadPersisted]);
+  const removePersisted = async (id: string) => {
+    const requestedBusinessId = selectedBusinessId;
+    if (!requestedBusinessId || busyDelete) return;
+    setBusyDelete(id); setApiError("");
+    try {
+      await businessApi.deleteBusinessNotification(id, requestedBusinessId);
+      if (selectedBusinessRef.current === requestedBusinessId) {
+        setConfirmingDelete(null);
+        await reloadPersisted();
+      }
+    } catch (cause) {
+      if (selectedBusinessRef.current === requestedBusinessId)
+        setApiError(cause instanceof Error ? cause.message : "No se pudo descartar el aviso.");
+    } finally { setBusyDelete(null); }
+  };
+
   const reloadTransfers = useCallback(async () => { try { const result = await businessApi.listReceivedOwnershipTransfers(); setTransfers(result.transfers); } catch { /* La bandeja principal sigue disponible. */ } }, []);
   useEffect(() => { void reloadTransfers(); }, [reloadTransfers]);
 
@@ -151,7 +170,15 @@ export function NotificationsPage() {
           <div><div className="notification-title"><h2>{item.title}</h2>{transfer && <span className={`transfer-state ${transfer.status.toLowerCase()}`}>{transfer.status === "PENDING" ? "Pendiente" : transfer.status === "ACCEPTED" ? "Aceptada" : transfer.status === "REJECTED" ? "Rechazada" : transfer.status === "CANCELLED" ? "Cancelada" : transfer.status === "EXPIRED" ? "Vencida" : transfer.status}</span>}{!item.readAt && <span aria-label="Sin leer"/>}</div><p>{item.message}</p>{transfer && <><small>Solicitud enviada por {transfer.fromUser.displayName}{transfer.fromUser.nickname ? ` (${transfer.fromUser.nickname})` : ""}.</small><small>Solicitada {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(transfer.requestedAt))}{transfer.expiresAt ? ` · Vence ${new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(transfer.expiresAt))}` : ""}</small></>}{ownerName && item.type === "COLLABORATION_INVITATION" && <small>Propietario: {ownerName}</small>}{permissionText && item.type === "COLLABORATION_INVITATION" && <small>Permisos: {permissionText}</small>}{!transfer && <small>{new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}{item.membership?.expiresAt ? ` · Vence ${new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(item.membership.expiresAt))}` : ""}</small>}
             {transfer?.status === "PENDING" ? <div className="notification-invitation-actions">{confirmingTransfer?.id === transfer.id ? <div className="notification-inline-confirm" role="group" aria-label="Confirmar respuesta a transferencia"><span>{confirmingTransfer.accepted ? `Al aceptar, asumirás la propiedad administrativa de ${transfer.business.name}.` : `¿Rechazar la transferencia de ${transfer.business.name}?`}</span><button className={confirmingTransfer.accepted ? "action-button" : "danger-button"} disabled={busyTransfer === transfer.id} onClick={() => void respondTransfer(transfer.id, confirmingTransfer.accepted)}>{busyTransfer === transfer.id ? "Procesando…" : confirmingTransfer.accepted ? "Confirmar aceptación" : "Confirmar rechazo"}</button><button className="subtle-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer(null)}>Volver</button></div> : <><button className="action-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer({ id: transfer.id, accepted: true })}>Aceptar transferencia</button><button className="outline-button" disabled={busyTransfer === transfer.id} onClick={() => setConfirmingTransfer({ id: transfer.id, accepted: false })}>Rechazar</button></>}</div> : pending ? <div className="notification-invitation-actions">{confirmingInvitation?.id === item.id ? <div className="notification-inline-confirm"><span>{confirmingInvitation.accepted ? "¿Aceptar esta invitación?" : "¿Rechazar esta invitación?"}</span><button className="action-button" disabled={busyInvitation === item.id} onClick={() => void respondPersisted(item, confirmingInvitation.accepted)}>{busyInvitation === item.id ? "Procesando…" : confirmingInvitation.accepted ? "Sí, aceptar" : "Sí, rechazar"}</button><button className="subtle-button" onClick={() => setConfirmingInvitation(null)}>Cancelar</button></div> : <><button className="action-button" onClick={() => setConfirmingInvitation({ id: item.id, accepted: true })}>Aceptar invitación</button><button className="outline-button" onClick={() => setConfirmingInvitation({ id: item.id, accepted: false })}>Rechazar</button></>}</div> : status && <small>{status}</small>}
           </div>
-          <div className="notification-actions">{!item.readAt && !pending && <button className="subtle-button" onClick={() => void businessApi.markBusinessNotificationRead(item.id, selectedBusinessId).then(reloadPersisted).catch(() => setApiError("No se pudo actualizar la notificación."))}>Marcar leída</button>}</div>
+          <div className="notification-actions">
+            {!item.readAt && !pending && <button type="button" className="subtle-button" onClick={() => void businessApi.markBusinessNotificationRead(item.id, selectedBusinessId).then(reloadPersisted).catch(() => setApiError("No se pudo actualizar la notificación."))}>Marcar leída</button>}
+            {confirmingDelete === item.id ? <div className="notification-delete-confirm" role="group" aria-label="Confirmar descarte de aviso">
+              <span>¿Descartar este aviso? La solicitud asociada no se cancela.</span>
+              <button type="button" className="danger-button" disabled={busyDelete === item.id} onClick={() => void removePersisted(item.id)}>
+                {busyDelete === item.id ? "Descartando…" : "Descartar"}</button>
+              <button type="button" className="outline-button" disabled={busyDelete === item.id} onClick={() => setConfirmingDelete(null)}>Cancelar</button>
+            </div> : <button type="button" className="notification-discard" disabled={Boolean(busyDelete)} onClick={() => setConfirmingDelete(item.id)}>Descartar aviso</button>}
+          </div>
         </article>;
       })}
       {visible.map(item => { const to = item.id.startsWith("visibility-reminder-") ? "/configuracion" : item.type === "profile" ? `${destination.profile}/${businessIndex}` : item.type === "collaboration" ? "/notificaciones" : destination[item.type]; return <article className={`notification-row ${item.read ? "" : "unread"}${item.id.startsWith("visibility-reminder-") ? " is-actionable" : ""}`} key={item.id} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); if (item.id.startsWith("visibility-reminder-")) navigate("/configuracion"); }}><span className={`notification-icon ${item.type}`}>{icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2>{!item.read && <span aria-label="Sin leer"/>}</div><p>{item.description}</p><small>{item.date}</small><Link className="notification-link" to={to}>Ver detalle →</Link></div><div className="notification-actions">{!item.read && <button className="subtle-button" onClick={event => { event.stopPropagation(); setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }}>Marcar leída</button>}<button className="notification-delete" aria-label={`Eliminar ${item.title}`} onClick={event => { event.stopPropagation(); setNotifications(notifications.filter(current => current.id !== item.id)); }}>Eliminar</button></div></article>; })}
