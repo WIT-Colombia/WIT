@@ -331,6 +331,10 @@ body>.promotion-confirm-overlay{
 }
 body>.promotion-editor-overlay>.promotion-editor-modal{
   position:relative;
+  top:0;
+  left:0;
+  right:auto;
+  bottom:auto;
   display:flex;
   flex-direction:column;
   flex:0 1 680px;
