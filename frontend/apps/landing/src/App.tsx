@@ -34,7 +34,11 @@ export function App() {
   const mobileButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const onHash = () => { setHash(window.location.hash || "#inicio"); if (["#planes", "#preguntas"].includes(window.location.hash)) setExtraSection(window.location.hash.slice(1)); };
+    const onHash = () => {
+      const nextHash = window.location.hash || "#inicio";
+      setHash(nextHash);
+      setExtraSection(nextHash === "#planes" || nextHash === "#preguntas" ? nextHash.slice(1) : "");
+    };
     const onOutside = (event: PointerEvent) => { if (!(event.target instanceof Element) || !event.target.closest("[data-account-selector]")) setSelector(null); };
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;

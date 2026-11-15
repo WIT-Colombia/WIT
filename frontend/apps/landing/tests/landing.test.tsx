@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+import { faqs } from "@wit/utils";
 import { App } from "../src/App";
 import { destinations } from "../src/config/destinations";
 
@@ -31,13 +32,14 @@ describe("Landing navigation contract", () => {
     expect(links.length).toBeGreaterThan(20);
     for (const href of links) {
       if (href.startsWith("#")) expect(ids).toContain(href.slice(1));
+      else if (href.startsWith("mailto:")) expect(["mailto:soporte@xamuko.com", "mailto:notificacionesjudiciales@xamuko.com"]).toContain(href);
       else expect(Object.values(destinations)).toContain(href);
     }
     expect(new Set(ids).size).toBe(ids.length);
     expect(html.match(/<h1\b/g)).toHaveLength(1);
     expect(html).not.toContain("<form");
     expect(html).toContain("Las cifras son ejemplos");
-    expect(html.match(/<summary>/g)).toHaveLength(6);
+    expect(html.match(/<summary>/g)).toHaveLength(faqs.usuarios.length);
   });
 
   it("supports directly opening FAQs and plans from their fragment URLs", () => {
