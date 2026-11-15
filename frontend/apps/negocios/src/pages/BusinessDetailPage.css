@@ -498,3 +498,89 @@
     max-width:240px;
   }
 }
+
+/* Horarios: comparte jerarquía tipográfica y campos de Información general. */
+.business-detail-page .business-hours-section{
+  padding:0;
+  border:0;
+}
+.business-detail-page .business-hours-reference-field h3{
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:var(--business-content-field-title-size);
+  font-weight:var(--business-content-field-title-weight);
+  line-height:var(--business-content-field-title-line-height);
+}
+.business-detail-page .business-hours-reference-field .business-reference-value{
+  display:flex;
+  align-items:center;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:var(--business-content-value-size);
+  font-weight:var(--business-content-value-weight);
+  line-height:var(--business-content-value-line-height);
+}
+.business-detail-page .business-hours-reference-editor{
+  min-width:0;
+  container-type:inline-size;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours{
+  gap:10px;
+  margin:0 0 16px;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div{
+  display:grid;
+  grid-template-columns:minmax(95px,1fr) auto minmax(82px,1fr) 12px minmax(82px,1fr);
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:12px;
+  border:1px solid #dbe7fa;
+  border-radius:8px;
+  background:#f6f9ff;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours label{
+  color:#0f2747;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:var(--business-content-field-title-size);
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div>label:first-child{
+  font-weight:700;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div>input[type="time"]{
+  width:100%;
+  min-width:0;
+  min-height:40px;
+  border-color:#dbe7fa;
+  background:#fff;
+  font-size:12px;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div>input[type="time"]:disabled{
+  background:#eef2f7;
+  color:#94a3b8;
+}
+.business-detail-page .business-hours-reference-editor .wizard-hours>div>span{
+  color:#64748b;
+  text-align:center;
+}
+@container (max-width:570px){
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div{
+    grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr);
+    gap:10px 8px;
+    padding:12px;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>label:first-child{
+    grid-column:1;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>label:nth-child(2){
+    grid-column:3;
+    justify-self:end;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>input[type="time"]:nth-of-type(1){
+    grid-column:1;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>span{
+    grid-column:2;
+  }
+  .business-detail-page .business-hours-reference-editor .wizard-hours>div>input[type="time"]:nth-of-type(2){
+    grid-column:3;
+  }
+}
