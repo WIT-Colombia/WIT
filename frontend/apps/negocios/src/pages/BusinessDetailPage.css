@@ -2033,3 +2033,218 @@
 @media(prefers-reduced-motion:reduce){
   .business-detail-page .business-save-toast{animation:none}
 }
+
+/* Horarios: fidelidad visual con Información general, sin cambiar su lógica. */
+.business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title{
+  display:flex;
+  align-items:flex-start;
+  flex-wrap:nowrap;
+  gap:12px;
+  margin:0;
+  padding:23px 23px 18px;
+}
+.business-detail-page #business-panel-hours .business-hours-heading-icon{
+  display:grid;
+  place-items:center;
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  color:#2563eb;
+  background:#eaf1ff;
+}
+.business-detail-page #business-panel-hours .business-hours-heading-icon svg{
+  display:block;
+  width:25px;
+  height:25px;
+}
+.business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title>div{
+  flex:1 1 auto;
+  min-width:0;
+}
+.business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title h3{
+  margin:0 0 5px;
+  color:#12203f;
+  font-size:18px;
+  font-weight:750;
+  line-height:1.24;
+  letter-spacing:-.022em;
+}
+.business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title p{
+  margin:0;
+  color:#5b708e;
+  font-size:12px;
+  line-height:1.55;
+}
+.business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title .business-section-edit{
+  flex:0 0 auto;
+  align-self:start;
+  min-height:37px;
+  padding:8px 12px;
+  border:1px solid #bbd0ff;
+  border-radius:10px;
+  background:#fff;
+  color:#1e5adf;
+  font-size:12px;
+  font-weight:750;
+}
+.business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title .business-section-edit:hover{
+  background:#ecf3ff;
+  border-color:#2563eb;
+}
+.business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title .business-section-edit:focus-visible{
+  outline:3px solid #93b4f9;
+  outline-offset:3px;
+}
+.business-detail-page #business-panel-hours .business-hours-view{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px 18px;
+  padding:0 23px 25px;
+}
+.business-detail-page #business-panel-hours .business-hours-view>.business-hours-reference-field{
+  display:flex;
+  align-items:center;
+  grid-column:auto;
+  grid-row:auto;
+  min-width:0;
+  min-height:76px;
+  gap:13px;
+  margin:0;
+  padding:15px 16px;
+  border:1px solid #dfebff;
+  border-radius:13px;
+  background:#f3f7ff;
+  box-shadow:none;
+}
+.business-detail-page #business-panel-hours .business-hours-field-icon{
+  display:grid;
+  flex:0 0 32px;
+  place-items:center;
+  width:32px;
+  height:36px;
+  color:#2563eb;
+}
+.business-detail-page #business-panel-hours .business-hours-field-icon svg{
+  display:block;
+  width:26px;
+  height:26px;
+  stroke-width:1.85;
+}
+.business-detail-page #business-panel-hours .business-hours-field-copy{
+  flex:1 1 auto;
+  min-width:0;
+}
+.business-detail-page #business-panel-hours .business-hours-view .business-hours-reference-field h3{
+  margin:0 0 4px;
+  color:#1e3154;
+  font-size:15px;
+  font-weight:750;
+  line-height:1.35;
+}
+.business-detail-page #business-panel-hours .business-hours-view .business-hours-reference-field .business-reference-value{
+  display:block;
+  min-height:0;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#162443;
+  font-size:13px;
+  font-weight:600;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.business-detail-page #business-panel-hours .business-hours-reference-grid.is-editing-hours{
+  display:block;
+  padding:0 23px 25px;
+}
+.business-detail-page #business-panel-hours .business-hours-reference-editor{
+  width:100%;
+  min-width:0;
+}
+.business-detail-page #business-panel-hours .business-hours-reference-editor .wizard-hours>div{
+  border-color:#dfebff;
+  border-radius:13px;
+  background:#f3f7ff;
+  padding:12px 14px;
+}
+.business-detail-page #business-panel-hours .business-hours-reference-editor .wizard-hours>div>label:first-child{
+  color:#1e3154;
+  font-size:13px;
+  font-weight:750;
+}
+.business-detail-page #business-panel-hours .business-hours-reference-editor .wizard-hours>div>label:nth-child(2){
+  color:#425574;
+  font-size:12px;
+}
+.business-detail-page #business-panel-hours .business-hours-reference-editor .business-detail-inline-actions{
+  margin-top:8px;
+  padding-top:14px;
+  border-top:1px solid #dfebff;
+  gap:10px;
+}
+@container business-detail-shell (max-width:950px){
+  .business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title{
+    padding:18px 17px 15px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-view{
+    gap:12px;
+    padding:0 17px 20px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-view>.business-hours-reference-field{
+    min-height:72px;
+    padding:13px;
+    gap:10px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-reference-grid.is-editing-hours{
+    padding:0 17px 20px;
+  }
+}
+@container business-detail-shell (max-width:560px){
+  .business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title{
+    flex-wrap:wrap;
+    gap:10px;
+    padding:16px 14px 13px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title>div{
+    flex:1 1 calc(100% - 54px);
+  }
+  .business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title h3{
+    font-size:17px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-section .business-general-panel-title .business-section-edit{
+    margin-left:52px;
+    min-height:42px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-view{
+    grid-template-columns:minmax(0,1fr);
+    gap:9px;
+    padding:0 13px 16px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-view>.business-hours-reference-field{
+    grid-column:1;
+    grid-row:auto;
+    min-height:68px;
+    padding:12px 13px;
+    gap:11px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-field-icon{
+    flex-basis:27px;
+    width:27px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-field-icon svg{
+    width:23px;
+    height:23px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-view .business-hours-reference-field h3{
+    font-size:14px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-reference-grid.is-editing-hours{
+    padding:0 13px 16px;
+  }
+  .business-detail-page #business-panel-hours .business-hours-reference-editor .wizard-hours>div{
+    padding:12px;
+  }
+}
