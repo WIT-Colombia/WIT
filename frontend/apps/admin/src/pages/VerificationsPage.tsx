@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { decideVerification, fetchVerificationDocument, listVerificationRequests, type AdminVerificationRequest } from '../services/adminApiClient';
 import { Icon } from '../components/Icon';
 import { SupportDecisionDialog } from '../components/SupportDecisionDialog';
+import { getSession } from '../services/adminService';
 import './VerificationsRefresh.css';
 
 const date = (value: string) => new Intl.DateTimeFormat('es-CO', {
@@ -18,6 +19,7 @@ const actionNames: Record<Action,{ title: string; word: string; description: str
 };
 
 export function VerificationsPage() {
+  const canDecide = getSession()?.permissions?.includes('content:moderate:write') ?? false;
   const [items,setItems]=useState<AdminVerificationRequest[]>([]);
   const [selected,setSelected]=useState<AdminVerificationRequest|null>(null);
   const [filter,setFilter]=useState('ALL');
@@ -96,14 +98,14 @@ export function VerificationsPage() {
             {pdfUrl==='unavailable'?<div className="vr-document-placeholder">El documento ya no está disponible. No apruebes una verificación sin comprobarlo.</div>:
               pdfUrl?<iframe title="Documento de verificación del negocio" src={pdfUrl}/>:
               <div className="vr-document-placeholder">Cargando documento…</div>}</div>
-          <label className="vr-confirm"><input type="checkbox" checked={nameConfirmed} onChange={event=>setNameConfirmed(event.target.checked)}/>
-            Confirmo que revisé el documento y que el nombre comercial coincide plenamente.</label>
-          <div className="vr-actions">
+          {canDecide && <label className="vr-confirm"><input type="checkbox" checked={nameConfirmed} onChange={event=>setNameConfirmed(event.target.checked)}/>
+            Confirmo que revisé el documento y que el nombre comercial coincide plenamente.</label>}
+          {canDecide ? <div className="vr-actions">
             <button type="button" className="vr-approve" disabled={busy||!nameConfirmed||!pdfUrl||pdfUrl==='unavailable'}
               onClick={()=>setAction('APPROVE')}><Icon name="check" size={17}/> Aprobar verificación</button>
             <button type="button" disabled={busy} onClick={()=>setAction('REQUEST_INFORMATION')}>Solicitar información</button>
             <button type="button" className="vr-danger" disabled={busy} onClick={()=>setAction('REJECT')}>Rechazar</button>
-          </div>
+          </div> : <p className="vr-document-placeholder">Tu cuenta puede consultar solicitudes, pero no aprobar ni rechazar verificaciones.</p>}
         </section>}
       </div>}
     {action&&selected&&<SupportDecisionDialog title={actionNames[action].title} description={actionNames[action].description}
