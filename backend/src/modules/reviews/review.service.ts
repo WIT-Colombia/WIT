@@ -1,6 +1,7 @@
 import { Prisma, type BusinessReviewReportReason, type BusinessReviewReportStatus, type BusinessReviewModerationStatus } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
+import { notifyBusinessOwners, notifyPlatformUser, statusTitle } from '../notifications/platform-notifications.service.js';
 
 const REVIEW_EDIT_WINDOW_MS = 12 * 60 * 60 * 1000;
 const REVIEW_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
@@ -79,4 +80,56 @@ export async function listAdminReviews(page = 1, pageSize = 20) {
 }
 
 export async function listReports(status?: BusinessReviewReportStatus) { return prisma.businessReviewReport.findMany({ where: status ? { status } : undefined, orderBy: { createdAt: 'desc' }, include: { review: { include: { business: { select: { id: true, publicId: true, name: true } }, user: { select: { publicId: true, displayName: true } } } }, reporter: { select: { publicId: true, displayName: true } }, moderator: { select: { publicId: true, displayName: true } } } }); }
-export async function moderateReport(adminId: string, id: string, status: BusinessReviewReportStatus, decisionNote?: string, requestedReviewStatus?: BusinessReviewModerationStatus) { const row = await prisma.businessReviewReport.findUnique({ where: { id } }); if (!row) throw new AppError(404, 'REPORT_NOT_FOUND', 'No encontramos ese reporte.'); if (!['PENDING','UNDER_REVIEW','RESOLVED','REJECTED'].includes(status)) throw new AppError(400, 'INVALID_REPORT_STATUS', 'Estado de reporte inválido.'); const note = decisionNote?.trim() || null; if (note && note.length > 1000) throw new AppError(400, 'INVALID_DECISION_NOTE', 'La justificación no puede superar 1000 caracteres.'); return prisma.$transaction(async tx => { const report = await tx.businessReviewReport.update({ where: { id }, data: { status, moderatorId: adminId, decisionNote: note } }); let reviewStatus: string | undefined; const normalized = note?.toLowerCase() ?? ''; if (requestedReviewStatus) reviewStatus = requestedReviewStatus; else if (status === 'RESOLVED' && normalized.includes('retirar')) reviewStatus = 'REMOVED'; else if (status === 'RESOLVED' && normalized.includes('ocultar')) reviewStatus = 'HIDDEN'; else if (status === 'RESOLVED' && normalized.includes('restablecer')) reviewStatus = 'PUBLISHED'; if (reviewStatus) await tx.businessReview.update({ where: { id: row.reviewId }, data: { status: reviewStatus as BusinessReviewModerationStatus } }); await tx.auditLog.create({ data: { actorUserId: adminId, entityType: 'BUSINESS', entityId: row.reviewId, action: `REVIEW_REPORT_${status}`, previousState: { reportStatus: row.status }, newState: { reportStatus: status, reviewStatus: reviewStatus ?? 'UNCHANGED' }, reason: note } }); return report; }); }
+export async function moderateReport(
+  adminId: string, id: string, status: BusinessReviewReportStatus,
+  decisionNote?: string, requestedReviewStatus?: BusinessReviewModerationStatus,
+) {
+  if (!['PENDING','UNDER_REVIEW','RESOLVED','REJECTED'].includes(status))
+    throw new AppError(400,'INVALID_REPORT_STATUS','Estado de reporte inválido.');
+  const note = decisionNote?.trim() ?? '';
+  if (note.length > 1000 || (['RESOLVED','REJECTED'].includes(status) && note.length < 10))
+    throw new AppError(400,'INVALID_DECISION_NOTE','Para resolver o rechazar, escribe un motivo de 10 a 1000 caracteres.');
+  if (requestedReviewStatus && (!['PUBLISHED','HIDDEN','REMOVED'].includes(requestedReviewStatus) || status !== 'RESOLVED'))
+    throw new AppError(400,'INVALID_REVIEW_DECISION','Solo se puede modificar la publicación al resolver el reporte.');
+  return prisma.$transaction(async tx => {
+    const row = await tx.businessReviewReport.findUnique({
+      where: { id },
+      include: { review: { select: { businessId: true, userId: true, status: true } } },
+    });
+    if (!row) throw new AppError(404,'REPORT_NOT_FOUND','No encontramos ese reporte.');
+    if (row.status === status) throw new AppError(409,'REVIEW_REPORT_UNCHANGED','El reporte ya tiene ese estado.');
+    if (['RESOLVED','REJECTED'].includes(row.status))
+      throw new AppError(409,'REVIEW_REPORT_ALREADY_CLOSED','Este reporte ya fue cerrado.');
+    if (status === 'PENDING') throw new AppError(400,'REVIEW_REPORT_INVALID_TRANSITION','No se puede regresar a pendiente.');
+    if (requestedReviewStatus === 'PUBLISHED' && row.review.status === 'REMOVED_BY_AUTHOR')
+      throw new AppError(409,'REVIEW_REMOVED_BY_AUTHOR','No se puede republicar una opinión retirada por su autor.');
+    const report = await tx.businessReviewReport.update({
+      where: { id }, data: { status, moderatorId: adminId, decisionNote: note || null },
+    });
+    if (requestedReviewStatus && row.review.status !== requestedReviewStatus)
+      await tx.businessReview.update({ where: { id: row.reviewId }, data: { status: requestedReviewStatus } });
+    await tx.auditLog.create({
+      data: { actorUserId: adminId, entityType: 'BUSINESS', entityId: row.reviewId,
+        action: 'REVIEW_REPORT_' + status,
+        previousState: { reportStatus: row.status, reviewStatus: row.review.status },
+        newState: { reportStatus: status, reviewStatus: requestedReviewStatus ?? row.review.status },
+        reason: note || null },
+    });
+    await notifyPlatformUser(tx, {
+      userId: row.reporterId, sourceType: 'REVIEW_REPORT', sourceId: id,
+      title: 'Reporte de opinión: ' + statusTitle(status),
+      message: 'El reporte que presentaste sobre una opinión ahora está ' + statusTitle(status).toLocaleLowerCase('es-CO') + '.',
+    });
+    if (requestedReviewStatus && requestedReviewStatus !== row.review.status) {
+      const stateText = requestedReviewStatus === 'PUBLISHED' ? 'publicada' : requestedReviewStatus === 'HIDDEN' ? 'oculta' : 'retirada';
+      await notifyPlatformUser(tx, {
+        userId: row.review.userId, sourceType: 'REVIEW_MODERATION', sourceId: row.reviewId,
+        title: 'Estado de tu opinión actualizado',
+        message: 'Una opinión que publicaste fue ' + stateText + ' tras una revisión administrativa.',
+      });
+      await notifyBusinessOwners(tx, row.review.businessId,
+        'Moderación de opinión en tu negocio', 'Una opinión de tu negocio fue ' + stateText + ' por el equipo de XAMUKO.');
+    }
+    return report;
+  });
+}
