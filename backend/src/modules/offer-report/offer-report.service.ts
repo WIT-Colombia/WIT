@@ -1,5 +1,6 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
+import { notifyBusinessOwners, notifyPlatformUser, statusTitle } from '../notifications/platform-notifications.service.js';
 import type { OfferReportReason, OfferReportStatus, Prisma, OfferKind } from '../../generated/prisma/client.js';
 
 const reasons: OfferReportReason[] = ['UNAVAILABLE', 'WRONG_INFORMATION', 'WRONG_IMAGE', 'OTHER'];
@@ -109,12 +110,22 @@ export async function decideOfferReport(adminId: string, id: string, rawStatus: 
   return prisma.$transaction(async tx => {
     const before = await tx.offerReport.findUnique({ where: { id } });
     if (!before) throw new AppError(404, 'OFFER_REPORT_NOT_FOUND', 'Reporte no encontrado.');
+    if (before.status === rawStatus) throw new AppError(409, 'OFFER_REPORT_UNCHANGED', 'El reporte ya tiene ese estado.');
+    if (['RESOLVED','REJECTED'].includes(before.status)) throw new AppError(409, 'OFFER_REPORT_ALREADY_CLOSED', 'Este reporte ya fue cerrado.');
+    if (rawStatus === 'PENDING') throw new AppError(400, 'OFFER_REPORT_INVALID_TRANSITION', 'No se puede regresar a pendiente.');
     const report = await tx.offerReport.update({ where: { id }, data: { status: rawStatus as OfferReportStatus, decisionNote: note || null } });
     await tx.auditLog.create({ data: {
       actorUserId: adminId, entityType: 'OFFER', entityId: before.offerId,
       action: 'OFFER_REPORT_MODERATED', previousState: { reportId: id, status: before.status },
       newState: { reportId: id, status: rawStatus }, reason: note || null,
     } });
+    await notifyPlatformUser(tx, { userId: before.reporterId, sourceType: 'OFFER_REPORT', sourceId: id,
+      title: 'Reporte de producto o servicio: ' + statusTitle(rawStatus as typeof report.status),
+      message: 'El reporte que presentaste sobre una publicación ahora está ' + statusTitle(rawStatus as typeof report.status).toLocaleLowerCase('es-CO') + '.' });
+    if (rawStatus === 'RESOLVED') {
+      const offer = await tx.businessOffer.findUnique({ where: { id: before.offerId }, select: { businessId: true } });
+      if (offer) await notifyBusinessOwners(tx, offer.businessId, 'Revisión de un reporte concluida', 'Se concluyó la revisión de un reporte sobre una publicación de tu negocio.');
+    }
     return report;
   });
 }
