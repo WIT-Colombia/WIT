@@ -702,3 +702,220 @@
     height: 18px;
   }
 }
+
+
+/* Exclusivo Información general: cinco campos aprobados sin alterar tarjeta XAMUKO. */
+.business-detail-page #business-panel-general .business-general-panel-title {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  gap: 12px;
+  padding: 23px 23px 18px;
+}
+.business-detail-page #business-panel-general .business-general-heading-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  color: #2563eb;
+  background: #eaf1ff;
+}
+.business-detail-page #business-panel-general .business-general-heading-icon svg {
+  width: 25px;
+  height: 25px;
+}
+.business-detail-page #business-panel-general .business-general-panel-title > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.business-detail-page #business-panel-general .business-general-panel-title h3 {
+  margin: 0 0 5px;
+  color: #12203f;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.24;
+  letter-spacing: -.022em;
+}
+.business-detail-page #business-panel-general .business-general-panel-title p {
+  margin: 0;
+  color: #5b708e;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.business-detail-page #business-panel-general .business-general-panel-title .business-section-edit {
+  flex: 0 0 auto;
+  align-self: start;
+  min-height: 37px;
+  padding: 8px 12px;
+  border: 1px solid #bbd0ff;
+  border-radius: 10px;
+  color: #1e5adf;
+  font-size: 12px;
+  font-weight: 750;
+}
+.business-detail-page #business-panel-general .business-general-panel-title .business-section-edit:hover {
+  background: #ecf3ff;
+  border-color: #2563eb;
+}
+/* La edición existente mantiene su formulario y guardado originales. */
+.business-detail-page #business-panel-general .business-general-view {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  padding: 0 23px 25px;
+}
+.business-detail-page #business-panel-general .business-general-view > .business-reference-field {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 76px;
+  gap: 13px;
+  margin: 0;
+  padding: 15px 16px;
+  border: 1px solid #dfebff;
+  border-radius: 13px;
+  background: #f3f7ff;
+  box-shadow: none;
+  grid-column: auto;
+  grid-row: auto;
+  order: 0;
+}
+.business-detail-page #business-panel-general .business-general-view > .business-general-field-name {
+  grid-column: 1;
+  grid-row: 1;
+}
+.business-detail-page #business-panel-general .business-general-view > .business-general-field-sede {
+  grid-column: 2;
+  grid-row: 1;
+}
+.business-detail-page #business-panel-general .business-general-view > .business-general-field-description {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-height: 88px;
+}
+.business-detail-page #business-panel-general .business-general-view > .business-general-field-category {
+  grid-column: 1;
+  grid-row: 3;
+}
+.business-detail-page #business-panel-general .business-general-view > .business-general-field-adult {
+  grid-column: 2;
+  grid-row: 3;
+}
+.business-detail-page #business-panel-general .business-general-field-icon {
+  display: grid;
+  flex: 0 0 32px;
+  place-items: center;
+  width: 32px;
+  height: 36px;
+  color: #2563eb;
+}
+.business-detail-page #business-panel-general .business-general-field-icon svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.85;
+}
+.business-detail-page #business-panel-general .business-general-field-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.business-detail-page #business-panel-general .business-general-view .business-reference-field h3 {
+  margin: 0 0 4px;
+  color: #1e3154;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+.business-detail-page #business-panel-general .business-general-view .business-reference-field h3 > span {
+  font-size: 11px;
+}
+.business-detail-page #business-panel-general .business-general-view .business-reference-value {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #162443;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.business-detail-page #business-panel-general .business-general-view .business-detail-category-chips {
+  margin: 0;
+  gap: 5px;
+}
+.business-detail-page #business-panel-general .business-general-view .business-detail-category-chips > span {
+  max-width: 100%;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: #e3edff;
+  color: #1856d9;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+/* iPad vertical y horizontal: mismas tarjetas, medidas fluidas. */
+@container business-detail-shell (max-width: 950px) {
+  .business-detail-page #business-panel-general .business-general-view {
+    gap: 12px;
+    padding: 0 17px 20px;
+  }
+  .business-detail-page #business-panel-general .business-general-view > .business-reference-field {
+    padding: 13px;
+    gap: 10px;
+    min-height: 72px;
+  }
+  .business-detail-page #business-panel-general .business-general-panel-title {
+    padding: 18px 17px 15px;
+  }
+}
+/* Móvil: una tarjeta por fila, orden claro y controles táctiles. */
+@container business-detail-shell (max-width: 560px) {
+  .business-detail-page #business-panel-general .business-general-panel-title {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 14px 13px;
+  }
+  .business-detail-page #business-panel-general .business-general-panel-title h3 {
+    font-size: 17px;
+  }
+  .business-detail-page #business-panel-general .business-general-panel-title > div {
+    flex: 1 1 calc(100% - 54px);
+  }
+  .business-detail-page #business-panel-general .business-general-panel-title .business-section-edit {
+    margin-left: 52px;
+    min-height: 42px;
+  }
+  .business-detail-page #business-panel-general .business-general-view {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+    padding: 0 13px 16px;
+  }
+  .business-detail-page #business-panel-general .business-general-view > .business-reference-field {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 68px;
+    padding: 12px 13px;
+    gap: 11px;
+  }
+  .business-detail-page #business-panel-general .business-general-view > .business-general-field-name { order: 1; }
+  .business-detail-page #business-panel-general .business-general-view > .business-general-field-sede { order: 2; }
+  .business-detail-page #business-panel-general .business-general-view > .business-general-field-description { order: 3; }
+  .business-detail-page #business-panel-general .business-general-view > .business-general-field-category { order: 4; }
+  .business-detail-page #business-panel-general .business-general-view > .business-general-field-adult { order: 5; }
+  .business-detail-page #business-panel-general .business-general-field-icon {
+    flex-basis: 27px;
+    width: 27px;
+  }
+  .business-detail-page #business-panel-general .business-general-field-icon svg {
+    width: 23px;
+    height: 23px;
+  }
+  .business-detail-page #business-panel-general .business-general-view .business-reference-value {
+    font-size: 13px;
+  }
+}
