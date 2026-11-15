@@ -1,0 +1,96 @@
+/* Executive summary chart — visual language aligned with XAMUKO Business analytics.
+   Only the live Admin dashboard growth chart is affected. */
+.admin-refresh .xa-dashboard .xa-business-growth-chart {
+  display:grid;
+  gap:12px;
+  min-width:0;
+  margin:10px 0 0;
+  padding:17px 18px 12px;
+  border:1px solid #dfe7f5;
+  border-radius:17px;
+  background:linear-gradient(160deg,#fff 0%,#f8fbff 100%);
+  box-shadow:0 8px 24px rgba(20,48,95,.055);
+}
+.admin-refresh .xa-dashboard .xa-business-growth-canvas {
+  width:100%;
+  min-width:0;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-svg {
+  display:block;
+  width:100%;
+  height:295px;
+  overflow:hidden;
+  cursor:crosshair;
+  touch-action:pan-y;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-svg text {
+  font-family:inherit;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-gridline {
+  stroke:#dce7f7;
+  stroke-width:1;
+  stroke-dasharray:4 5;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-line {
+  stroke:#285cf1;
+  stroke-width:3.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  fill:none;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-guide {
+  stroke:#8eace4;
+  stroke-width:1.35;
+  stroke-dasharray:4 5;
+  opacity:.9;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-point {
+  fill:#fff;
+  stroke:#285cf1;
+  stroke-width:2.5;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-point:focus-visible {
+  outline:2px solid #90b1ff;
+  outline-offset:3px;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-tooltip rect {
+  fill:#172b51;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-tooltip text {
+  fill:#fff;
+  font-size:14px;
+  font-weight:800;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-hint {
+  margin:0;
+  color:#657b9d;
+  font-size:11px;
+  line-height:1.5;
+  text-align:center;
+}
+.admin-refresh .xa-dashboard .xa-business-growth-hint strong {
+  color:#255cd8;
+  font-weight:800;
+}
+@media(max-width:700px) {
+  .admin-refresh .xa-dashboard .xa-business-growth-chart {
+    gap:9px;
+    margin-top:6px;
+    padding:11px 8px 12px;
+    border-radius:14px;
+  }
+  .admin-refresh .xa-dashboard .xa-business-growth-svg {
+    height:265px;
+  }
+  .admin-refresh .xa-dashboard .xa-business-growth-hint {
+    font-size:10px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .admin-refresh .xa-dashboard .xa-business-growth-chart * {
+    transition:none!important;
+    animation:none!important;
+  }
+}
