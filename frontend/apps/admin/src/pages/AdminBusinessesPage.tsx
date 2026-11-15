@@ -168,5 +168,31 @@ export function AdminBusinessDetailPage() {
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso para consultar negocios." />;
   if (loading) return <StatePanel kind="loading" title="Cargando negocio" message="Consultando el registro real." />;
   if (error || !item) return <StatePanel kind="error" title="No se pudo abrir el negocio" message={error || 'No encontramos el registro.'} />;
-  return <section className="admin-business-detail"><Link className="back-link" to="/businesses">← Volver al directorio</Link><div className="page-heading"><div><p className="eyebrow">REGISTRO ADMINISTRATIVO</p><h1>{item.name}</h1><p>Actualizado el {date(item.updatedAt)}</p></div></div><div className="admin-business-facts"><div><span>Visibilidad</span><strong className={`business-status-text ${visibilityTone[item.visibilityStatus] ?? 'status-review'}`}>{translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</strong></div><div><span>Verificación</span><strong className={`business-status-text ${verificationTone[item.verificationStatus] ?? 'status-information'}`}>{translatedStatus(verificationLabels, item.verificationStatus)}</strong></div></div><div className="panel admin-business-information"><h2>Información registrada</h2><dl><div><dt>Creado por</dt><dd>{item.createdBy.displayName}</dd></div><div><dt>Categoría</dt><dd>{item.category.translations[0]?.name ?? 'Sin traducción'}</dd></div><div><dt>Ubicación</dt><dd>{item.location ? `${item.location.address}, ${item.location.cityName}, ${item.location.countryCode}` : 'No registrada'}</dd></div><div><dt>Correo</dt><dd>{item.email ?? 'No registrado'}</dd></div><div><dt>Teléfono</dt><dd>{item.phone ?? 'No registrado'}</dd></div><div><dt>Descripción</dt><dd>{item.description ?? 'No registrada'}</dd></div></dl></div></section>;
+  return <div className="admin-business-detail admin-business-detail-refreshed">
+    <Link className="ad-business-detail-back" to="/businesses"><Icon name="arrow" size={17} /> Volver al directorio</Link>
+    <header className="ad-business-detail-hero">
+      <span className="ad-business-detail-icon"><Icon name="store" size={31} /></span>
+      <div><span className="ad-business-detail-eyebrow">FICHA ADMINISTRATIVA</span><h1>{item.name}</h1><p>Registro de negocio · Actualizado el {date(item.updatedAt)}</p></div>
+    </header>
+    <section className="admin-business-facts ad-business-detail-highlights" aria-label="Estado del negocio">
+      <article><span><Icon name="eye" size={18} /> Visibilidad</span><strong className={'business-status-text ' + (visibilityTone[item.visibilityStatus] ?? 'status-review')}>{translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</strong></article>
+      <article><span><Icon name="shield" size={18} /> Verificación</span><strong className={'business-status-text ' + (verificationTone[item.verificationStatus] ?? 'status-information')}>{translatedStatus(verificationLabels, item.verificationStatus)}</strong></article>
+      <article><span><Icon name="check" size={18} /> Completitud</span><strong>{item.completeness}%</strong></article>
+    </section>
+    <section className="panel admin-business-information ad-business-detail-information" aria-labelledby="ad-business-detail-info-title">
+      <div className="ad-business-detail-section-heading"><span className="ad-business-detail-section-icon"><Icon name="grid" size={22} /></span>
+        <div><h2 id="ad-business-detail-info-title">Información general</h2><p>Datos registrados y disponibles para consulta administrativa.</p></div>
+      </div>
+      <dl>
+        <div><dt>Nombre del negocio</dt><dd>{item.name}</dd></div>
+        <div><dt>Categoría</dt><dd>{categoryName(item.category)}</dd></div>
+        <div><dt>Registrado por</dt><dd>{item.createdBy.displayName || 'No registrado'}</dd></div>
+        <div><dt>Fecha de registro</dt><dd>{date(item.createdAt)}</dd></div>
+        <div><dt>Ubicación</dt><dd>{item.location ? [item.location.address, item.location.cityName, item.location.countryCode].filter(Boolean).join(', ') : 'No registrada'}</dd></div>
+        <div><dt>Correo electrónico</dt><dd>{item.email ?? 'No registrado'}</dd></div>
+        <div><dt>Teléfono</dt><dd>{item.phone ?? 'No registrado'}</dd></div>
+        <div className="ad-business-detail-description"><dt>Descripción</dt><dd>{item.description ?? 'No registrada'}</dd></div>
+      </dl>
+    </section>
+  </div>;
 }
