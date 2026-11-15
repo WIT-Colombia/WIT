@@ -43,6 +43,36 @@ test('bloquea segunda activación mediante el endpoint HTTP real', async () => {
 
 test('requiere el código también al finalizar la activación HTTP', async () => { const fixture = await createAdminFixture(); try { const pending = await createPendingOAuth(fixture.googleSub); const options = await request('/api/v1/admin/auth/passkey/activation/options', { headers: { cookie: pending.cookie, 'x-admin-activation-code': 'ci-activation-code' } }); assert.equal(options.status, 200); const activationCookie = options.headers.get('set-cookie') ?? ''; const response = await request('/api/v1/admin/auth/passkey/activation/verify', { method: 'POST', headers: { cookie: activationCookie, 'content-type': 'application/json' }, body: '{}' }); assert.equal(response.status, 403); assert.equal((await response.json() as any).error.code, 'ADMIN_ACTIVATION_AUTH_REQUIRED'); } finally { await fixture.cleanup(); } });
 
+test('evolución de negocios usa una ruta propia, requiere Admin y entrega meses reales', async () => {
+  const anonymous = await request('/api/v1/admin/business-analytics?period=6m');
+  assert.equal(anonymous.status, 401);
+  const fixture = await createAdminFixture();
+  try {
+    const session = await createAdminSession(fixture.userId);
+    const response = await request('/api/v1/admin/business-analytics?period=6m', {
+      headers: { cookie: session.cookie },
+    });
+    assert.equal(response.status, 200, 'La ruta de evolución no debe resolverse como una ficha de negocio');
+    const data = await response.json() as any;
+    assert.equal(data.period, '6m');
+    assert.equal(data.series.length, 6);
+    assert.ok(Array.isArray(data.filters.cities));
+    assert.ok(Array.isArray(data.filters.categories));
+    assert.equal(typeof data.total, 'number');
+    assert.equal(typeof data.totalUsers, 'number');
+    assert.equal(typeof data.totalReviews, 'number');
+    assert.ok(data.series.every((item: any) => /^\\d{4}-\\d{2}$/.test(item.month) &&
+      typeof item.registrations === 'number' && typeof item.cumulative === 'number'));
+    // Older Admin clients must continue using the compatibility endpoint.
+    const legacy = await request('/api/v1/admin/businesses/analytics?period=6m', {
+      headers: { cookie: session.cookie },
+    });
+    assert.equal(legacy.status, 200);
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
 test('logout Admin limpia cookies aun con sesión expirada, revocada o ausente', async () => {
   const fixture = await createAdminFixture();
   try {
