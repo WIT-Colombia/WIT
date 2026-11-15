@@ -127,7 +127,7 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
         <div><strong>Registro vinculado</strong><small>Abre la ficha para consultar los antecedentes o aplicar medidas sobre el contenido.</small></div>
         <Link to={chosen.targetPath}>{chosen.targetLabel ?? 'Consultar ficha'} <Icon name="arrow" size={15}/></Link>
       </div>}
-      {canDecide && <label className="ops-note">Observación administrativa<textarea value={note} onChange={event => setNote(event.target.value)} maxLength={1500} rows={4} placeholder="Registra la justificación de tu decisión" /></label>}
+      {canDecide && <label className="ops-note">{kind === 'business-reports' || kind === 'offer-reports' ? 'Justificación administrativa (reservada)' : 'Respuesta para el solicitante (se notificará)'}<textarea value={note} onChange={event => setNote(event.target.value)} maxLength={1000} rows={4} placeholder={kind === 'business-reports' || kind === 'offer-reports' ? 'Describe los motivos y la decisión' : 'Explica la decisión al solicitante'} /></label>}
       {canDecide ? <><p className="ops-hint">Selecciona una decisión y confírmala en la ventana de revisión. La observación será obligatoria y quedará auditada.</p>
       <div className="ops-actions">{(['UNDER_REVIEW', 'RESOLVED', 'REJECTED'] as const).map(next =>
         <button key={next} type="button" disabled={busy || next === chosen.status || ['RESOLVED','REJECTED'].includes(chosen.status)}
@@ -143,6 +143,7 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
       affected={chosen.title}
       confirmWord={decision === 'RESOLVED' ? 'RESOLVER' : decision === 'REJECTED' ? 'RECHAZAR' : 'REVISAR'}
       initialReason={note}
+      shareReason={kind !== 'business-reports' && kind !== 'offer-reports'}
       onClose={() => setDecision(null)}
       onConfirm={reason => decide(decision, reason)}
     />}
