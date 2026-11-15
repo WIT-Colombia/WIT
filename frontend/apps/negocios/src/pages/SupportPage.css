@@ -1,0 +1,280 @@
+/* Centro de soporte técnico XAMUKO Business.
+   Usa la misma jerarquía visual que Productos/Servicios.
+   Todas las reglas están limitadas a esta página. */
+.business-support-technical{
+  --technical-blue:#225cf1;
+  --technical-blue-dark:#114bd9;
+  --technical-violet:#743fff;
+  --technical-ink:#111d3b;
+  --technical-muted:#657895;
+  --technical-line:#dfe7f5;
+  min-width:0;
+  padding:0 0 40px;
+}
+.business-support-technical svg{display:block;width:22px;height:22px;flex:none}
+.business-support-technical .technical-support-heading{margin:0 0 25px}
+.business-support-technical .technical-support-eyebrow{
+  display:block;margin:0 0 15px 4px;
+  color:#285eec;font-size:12px;font-weight:800;letter-spacing:.1em;
+}
+.business-support-technical .technical-support-heading-main{
+  display:flex;align-items:center;gap:16px;min-width:0;
+}
+.business-support-technical .technical-support-heading-icon{
+  display:grid;place-items:center;flex:0 0 72px;width:72px;height:72px;
+  border:1px solid #cbd9ff;border-radius:18px;
+  background:linear-gradient(135deg,#e9edff,#cfdafe);
+  color:#2057ed;
+  box-shadow:0 7px 20px #214dea10;
+}
+.business-support-technical .technical-support-heading-icon svg{width:36px;height:36px}
+.business-support-technical .technical-support-heading-main>div{min-width:0}
+.business-support-technical .technical-support-heading h1{
+  margin:0 0 8px;color:var(--technical-ink);
+  font-size:clamp(30px,3vw,42px);font-weight:800;
+  letter-spacing:-.04em;line-height:1.12;
+}
+.business-support-technical .technical-support-heading p{
+  max-width:860px;margin:0;color:var(--technical-muted);font-size:14px;line-height:1.55;
+}
+.business-support-technical .technical-support-grid{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(265px,310px);
+  align-items:start;gap:20px;min-width:0;
+}
+.business-support-technical .technical-support-form-card{
+  min-width:0;margin:0;padding:30px;
+  border:1px solid var(--technical-line);border-radius:20px;
+  background:#fff;box-shadow:0 10px 30px #14305f10;
+}
+.business-support-technical .technical-support-card-heading{
+  display:flex;align-items:center;gap:15px;
+  min-width:0;padding:0 0 24px;border-bottom:1px solid #edf1f8;
+}
+.business-support-technical .technical-support-card-icon{
+  display:grid;place-items:center;
+  flex:0 0 52px;width:52px;height:52px;
+  border-radius:15px;background:#eaf1ff;color:var(--technical-blue);
+}
+.business-support-technical .technical-support-card-icon svg{width:27px;height:27px}
+.business-support-technical .technical-support-card-heading>div{min-width:0}
+.business-support-technical .technical-support-card-eyebrow{
+  display:block;margin:0 0 7px;color:#285eec;
+  font-size:10px;font-weight:800;letter-spacing:.12em;
+}
+.business-support-technical .technical-support-card-heading h2{
+  margin:0 0 6px;color:var(--technical-ink);
+  font-size:21px;font-weight:800;letter-spacing:-.025em;line-height:1.2;
+}
+.business-support-technical .technical-support-card-heading p{
+  margin:0;color:var(--technical-muted);font-size:12px;line-height:1.6;
+}
+.business-support-technical .technical-support-form{
+  display:grid;gap:22px;margin:25px 0 0;
+}
+.business-support-technical .technical-support-fields-row{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;
+}
+.business-support-technical .technical-support-form .form-field{
+  display:grid;gap:9px;min-width:0;color:#1e3152;
+  font-size:12px;font-weight:750;
+}
+.business-support-technical .technical-support-form .form-field>span{
+  color:#243454;font-size:13px;font-weight:750;
+}
+.business-support-technical .technical-support-form .form-field b{
+  color:#245cf2;font-weight:800;
+}
+.business-support-technical .technical-support-form :is(input,select,textarea){
+  width:100%;min-width:0;min-height:51px;padding:12px 14px;
+  border:1px solid #d4dff1;border-radius:12px;
+  background:#fff;color:#172748;
+  font-family:inherit;font-size:13px;line-height:1.5;outline:0;
+  transition:border-color .17s,box-shadow .17s;
+}
+.business-support-technical .technical-support-form select{padding-right:30px;cursor:pointer}
+.business-support-technical .technical-support-form textarea{
+  min-height:184px;resize:vertical;
+}
+.business-support-technical .technical-support-form :is(input,select,textarea):focus-visible{
+  border-color:#6c94ff;box-shadow:0 0 0 3px #dce8ff;
+}
+.business-support-technical .technical-support-form :is(input,textarea)::placeholder{
+  color:#8a98af;opacity:1;
+}
+.business-support-technical .technical-support-description small{
+  margin:0;color:#7a899e;font-size:11px;font-weight:450;line-height:1.55;
+}
+.business-support-technical .technical-support-form-bottom{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;
+  padding-top:20px;border-top:1px solid #edf1f8;
+}
+.business-support-technical .technical-support-character-count{
+  color:#8390a6;font-size:11px;line-height:1.4;
+}
+.business-support-technical .technical-support-submit{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  min-height:48px;padding:12px 21px;border:1px solid transparent;border-radius:12px;
+  background:linear-gradient(105deg,#743fff 0%,#245cf2 65%,#16a6f7 100%);
+  box-shadow:0 10px 23px #4e53e324;color:#fff;
+  font:inherit;font-size:13px;font-weight:800;line-height:1.35;
+  cursor:pointer;transition:filter .17s,box-shadow .17s;
+}
+.business-support-technical .technical-support-submit svg{width:18px;height:18px}
+.business-support-technical .technical-support-submit:hover:not(:disabled){
+  filter:brightness(1.06);box-shadow:0 12px 24px #4e53e336;
+}
+.business-support-technical .technical-support-submit:disabled{
+  opacity:.54;cursor:not-allowed;box-shadow:none;
+}
+.business-support-technical .technical-support-notice{
+  display:flex;align-items:flex-start;gap:11px;
+  margin:0;padding:14px 16px;border:1px solid;border-radius:12px;
+  font-size:12px;line-height:1.6;overflow-wrap:anywhere;
+}
+.business-support-technical .technical-support-notice.is-error{
+  border-color:#f0cbd1;background:#fff6f7;color:#a53442;
+}
+.business-support-technical .technical-support-notice.is-success{
+  border-color:#bcebd7;background:#f0fff7;color:#166746;
+}
+.business-support-technical .technical-support-notice svg{
+  flex:0 0 20px;width:20px;height:20px;margin-top:1px;
+}
+.business-support-technical .technical-support-notice strong{
+  display:block;font-size:12px;
+}
+.business-support-technical .technical-support-aside{
+  display:grid;gap:15px;min-width:0;
+}
+.business-support-technical .technical-support-guidance{
+  padding:25px 23px;border:1px solid #dbe6ff;border-radius:19px;
+  background:linear-gradient(160deg,#f9fbff 0%,#ecf3ff 100%);
+  box-shadow:0 8px 24px #193f8b0d;
+}
+.business-support-technical .technical-support-guidance-icon{
+  display:grid;place-items:center;width:48px;height:48px;margin-bottom:16px;
+  border-radius:13px;background:#e0ebff;color:var(--technical-blue);
+}
+.business-support-technical .technical-support-guidance-icon svg{width:25px;height:25px}
+.business-support-technical .technical-support-aside h2{
+  margin:0 0 9px;color:#162b50;font-size:17px;
+  font-weight:800;letter-spacing:-.02em;line-height:1.25;
+}
+.business-support-technical .technical-support-guidance>p,
+.business-support-technical .technical-support-help-card>p{
+  margin:0;color:#60738f;font-size:12px;line-height:1.65;
+}
+.business-support-technical .technical-support-guidance ol{
+  display:grid;gap:16px;margin:21px 0 0;padding:20px 0 0;
+  border-top:1px solid #d8e5fa;counter-reset:support-step;list-style:none;
+}
+.business-support-technical .technical-support-guidance li{
+  display:grid;grid-template-columns:28px minmax(0,1fr);gap:3px 9px;
+  min-width:0;counter-increment:support-step;
+}
+.business-support-technical .technical-support-guidance li::before{
+  content:counter(support-step);
+  display:grid;place-items:center;
+  grid-column:1;grid-row:1/span 2;
+  width:26px;height:26px;border-radius:8px;
+  background:#dce8ff;color:#225cf1;font-size:11px;font-weight:800;
+}
+.business-support-technical .technical-support-guidance li strong{
+  grid-column:2;color:#19345f;font-size:12px;font-weight:800;line-height:1.35;
+}
+.business-support-technical .technical-support-guidance li span{
+  grid-column:2;color:#7284a0;font-size:11px;line-height:1.5;
+}
+.business-support-technical .technical-support-help-card{
+  padding:22px 23px;border:1px solid #e0e7f2;border-radius:18px;
+  background:#fff;box-shadow:0 8px 22px #17305c0a;
+}
+.business-support-technical .technical-support-help-icon{
+  display:grid;place-items:center;width:40px;height:40px;margin-bottom:13px;
+  border-radius:11px;background:#eff4ff;color:#225cf1;
+}
+.business-support-technical .technical-support-help-icon svg{width:22px;height:22px}
+.business-support-technical .technical-support-help-card a{
+  display:inline-flex;align-items:center;gap:7px;
+  margin-top:14px;color:var(--technical-blue);
+  font-size:12px;font-weight:800;text-decoration:none;
+}
+.business-support-technical .technical-support-help-card a svg{width:16px;height:16px}
+.business-support-technical .technical-support-help-card a:hover{
+  text-decoration:underline;text-underline-offset:3px;
+}
+.business-support-technical .technical-support-security-note{
+  display:flex;align-items:flex-start;gap:9px;margin:0;padding:2px 5px;
+  color:#64758c;font-size:11px;line-height:1.55;
+}
+.business-support-technical .technical-support-security-note svg{
+  flex:0 0 19px;width:19px;height:19px;color:#3c72d4;
+}
+.business-support-technical :is(a,button,input,select,textarea):focus-visible{
+  outline:3px solid #b5cbff;outline-offset:3px;
+}
+@media(max-width:1100px){
+  .business-support-technical .technical-support-grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .business-support-technical .technical-support-aside{
+    grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;
+  }
+  .business-support-technical .technical-support-security-note{
+    grid-column:1/-1;
+  }
+}
+@media(max-width:700px){
+  .business-support-technical .technical-support-heading{margin-bottom:20px}
+  .business-support-technical .technical-support-eyebrow{
+    margin-bottom:12px;font-size:10px;
+  }
+  .business-support-technical .technical-support-heading-main{
+    align-items:flex-start;gap:12px;
+  }
+  .business-support-technical .technical-support-heading-icon{
+    flex-basis:52px;width:52px;height:52px;border-radius:14px;
+  }
+  .business-support-technical .technical-support-heading-icon svg{width:28px;height:28px}
+  .business-support-technical .technical-support-heading h1{
+    font-size:28px;line-height:1.15;
+  }
+  .business-support-technical .technical-support-heading p{font-size:12px}
+  .business-support-technical .technical-support-form-card{
+    padding:20px 18px;border-radius:17px;
+  }
+  .business-support-technical .technical-support-card-heading{gap:11px}
+  .business-support-technical .technical-support-card-icon{
+    flex-basis:42px;width:42px;height:42px;border-radius:12px;
+  }
+  .business-support-technical .technical-support-card-icon svg{width:23px;height:23px}
+  .business-support-technical .technical-support-card-heading h2{font-size:18px}
+  .business-support-technical .technical-support-fields-row{
+    grid-template-columns:minmax(0,1fr);gap:17px;
+  }
+  .business-support-technical .technical-support-form{gap:18px;margin-top:21px}
+  .business-support-technical .technical-support-form :is(input,select,textarea){
+    min-height:48px;font-size:13px;
+  }
+  .business-support-technical .technical-support-form textarea{min-height:158px}
+  .business-support-technical .technical-support-aside{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .business-support-technical .technical-support-security-note{grid-column:auto}
+}
+@media(max-width:480px){
+  .business-support-technical .technical-support-form-bottom{
+    align-items:stretch;flex-direction:column;
+  }
+  .business-support-technical .technical-support-submit{width:100%}
+  .business-support-technical .technical-support-form-card{padding:18px 15px}
+  .business-support-technical .technical-support-guidance,
+  .business-support-technical .technical-support-help-card{padding:20px}
+}
+@media(prefers-reduced-motion:reduce){
+  .business-support-technical *,
+  .business-support-technical *::before,
+  .business-support-technical *::after{
+    transition-duration:.01ms!important;animation-duration:.01ms!important;
+  }
+}
