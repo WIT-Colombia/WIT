@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ChartPointerEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { getSession, can } from '../services/adminService';
 import { loadDashboardSnapshot, type DashboardSnapshot } from '../services/dashboardService';
+import './DashboardGrowthChart.css';
 
 const cards = [
   { label: 'Negocios registrados', icon: 'store', tone: 'violet' },
@@ -14,14 +15,92 @@ const empty = 'Sin datos disponibles';
 const indicators = ['Usuarios', 'Negocios', 'Opiniones'] as const;
 type Indicator = typeof indicators[number];
 function GrowthChart({ points, label }: { points: { month: string; value: number }[]; label: string }) {
+  const canvas = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(740);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const element = canvas.current;
+    if (!element) return;
+    const observer = new ResizeObserver(entries => {
+      const next = Math.max(320, Math.round(entries[0]?.contentRect.width ?? 740));
+      setWidth(current => current === next ? current : next);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => { setActiveIndex(null); }, [label, points.length]);
+
   if (!points.length) return <div className="xa-chart-empty"><span className="xa-empty-graphic-icon"><Icon name="chart" size={24} /></span><strong>{empty}</strong><p>Aún no hay registros históricos para este indicador.</p></div>;
-  const max = Math.max(1, ...points.map(point => point.value));
-  const coords = points.map((point, index) => ({ ...point, x: points.length === 1 ? 50 : 4 + index * 92 / (points.length - 1), y: 92 - (point.value / max) * 78 }));
-  const line = coords.map((point, index) => `${index ? 'L' : 'M'} ${point.x} ${point.y}`).join(' ');
-  const area = `${line} L ${coords[coords.length - 1].x} 100 L ${coords[0].x} 100 Z`;
-  return <div className="xa-reference-chart" role="img" aria-label={`${label}: ${points.map(point => `${point.month}: ${point.value}`).join(', ')}`}>
-    <div className="xa-chart-y" aria-hidden="true">{[1, .75, .5, .25, 0].map(ratio => <span key={ratio}>{Math.round(max * ratio).toLocaleString('es-CO')}</span>)}</div>
-    <div className="xa-reference-plot"><div className="xa-reference-grid" aria-hidden="true"><i /><i /><i /><i /><i /></div><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path className="xa-reference-area" d={area} /><path className="xa-reference-line" d={line} />{coords.map(point => <circle key={point.month} cx={point.x} cy={point.y} r="1.5"><title>{`${point.month}: ${point.value.toLocaleString('es-CO')}`}</title></circle>)}</svg><div className="xa-reference-months">{coords.map(point => <span key={point.month}>{new Date(`${point.month}-01T12:00:00Z`).toLocaleDateString('es-CO', { month: 'short', year: '2-digit', timeZone: 'UTC' })}</span>)}</div></div>
+
+  const formatValue = (value: number) => value.toLocaleString('es-CO', { maximumFractionDigits: 0 });
+  const formatMonth = (month: string) => new Date(month + '-01T12:00:00Z').toLocaleDateString('es-CO', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+  const height = 295, left = 51, right = 18, top = 25, bottom = 49;
+  const plotWidth = width - left - right, plotHeight = height - top - bottom;
+  const maximum = Math.max(1, ...points.map(point => point.value));
+  const magnitude = Math.pow(10, Math.floor(Math.log10(maximum / 4)));
+  const tick = Math.max(1, Math.ceil(maximum / 4 / magnitude) * magnitude);
+  const ceiling = tick * 4;
+  const baseY = top + plotHeight;
+  const x = (index: number) => left + (points.length === 1 ? plotWidth / 2 : index * plotWidth / (points.length - 1));
+  const y = (value: number) => top + plotHeight * (1 - Math.max(0, value) / ceiling);
+  const coords = points.map((point, index) => x(index) + ',' + y(point.value)).join(' ');
+  const area = points.length > 1
+    ? 'M ' + x(0) + ' ' + baseY + ' L ' + points.map((point, index) => x(index) + ' ' + y(point.value)).join(' L ') + ' L ' + x(points.length - 1) + ' ' + baseY + ' Z'
+    : '';
+  const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(plotWidth / 85))));
+  const activePoint = activeIndex === null ? null : points[activeIndex];
+
+  // The whole chart tracks the nearest month by horizontal position,
+  // like the detailed analytics chart in XAMUKO Business.
+  const selectNearest = (event: ChartPointerEvent<SVGSVGElement>) => {
+    const svg = event.currentTarget;
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return;
+    const pointer = svg.createSVGPoint();
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    const horizontal = pointer.matrixTransform(matrix.inverse()).x;
+    const ratio = Math.max(0, Math.min(1, (horizontal - left) / plotWidth));
+    setActiveIndex(Math.round(ratio * (points.length - 1)));
+  };
+
+  return <div className="xa-business-growth-chart">
+    <div className="xa-business-growth-canvas" ref={canvas}>
+      <svg className="xa-business-growth-svg" viewBox={'0 0 ' + width + ' ' + height} role="group" aria-label={label + ': ' + points.map(point => formatMonth(point.month) + ', ' + formatValue(point.value)).join('; ')} onPointerMove={selectNearest} onPointerDown={selectNearest} onPointerLeave={() => setActiveIndex(null)}>
+        <defs>
+          <linearGradient id="xa-business-growth-area-fill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#2563eb" stopOpacity=".23" />
+            <stop offset="100%" stopColor="#2563eb" stopOpacity=".01" />
+          </linearGradient>
+        </defs>
+        {[0, 1, 2, 3, 4].map(step => {
+          const yy = top + step * plotHeight / 4;
+          return <g key={step}>
+            <line className="xa-business-growth-gridline" x1={left} y1={yy} x2={width - right} y2={yy} />
+            <text x={left - 12} y={yy + 4} textAnchor="end" fontSize="11" fill="#7184a0">{formatValue(ceiling - step * tick)}</text>
+          </g>;
+        })}
+        <rect x={left} y={top} width={plotWidth} height={plotHeight} fill="transparent" pointerEvents="all" />
+        {area && <path d={area} fill="url(#xa-business-growth-area-fill)" pointerEvents="none" />}
+        <polyline className="xa-business-growth-line" points={coords} pointerEvents="none" />
+        {points.map((point, index) => <circle key={point.month} className="xa-business-growth-point" cx={x(index)} cy={y(point.value)} r={activeIndex === index ? 5.5 : 3.5} tabIndex={0} aria-label={formatMonth(point.month) + ': ' + formatValue(point.value)} onFocus={() => setActiveIndex(index)} onClick={() => setActiveIndex(index)} />)}
+        {activePoint && activeIndex !== null && <>
+          <line className="xa-business-growth-guide" x1={x(activeIndex)} y1={y(activePoint.value)} x2={x(activeIndex)} y2={baseY} pointerEvents="none" />
+          <circle cx={x(activeIndex)} cy={y(activePoint.value)} r="6" fill="#fff" stroke="#285cf1" strokeWidth="2.6" pointerEvents="none" />
+          {(() => {
+            const tooltipX = Math.max(left, Math.min(width - right - 78, x(activeIndex) - 39));
+            const tooltipY = Math.max(3, y(activePoint.value) - 45);
+            return <g className="xa-business-growth-tooltip" pointerEvents="none">
+              <rect x={tooltipX} y={tooltipY} width="78" height="32" rx="9" />
+              <text x={tooltipX + 39} y={tooltipY + 21} textAnchor="middle">{formatValue(activePoint.value)}</text>
+            </g>;
+          })()}
+        </>}
+        {points.map((point, index) => (index % labelEvery === 0 || index === points.length - 1) && <text key={point.month} x={x(index)} y={height - 18} textAnchor="middle" fontSize="11" fill="#6f82a1">{formatMonth(point.month)}</text>)}
+      </svg>
+    </div>
+    <p className="xa-business-growth-hint">{activePoint ? <>Valor seleccionado: <strong>{formatValue(activePoint.value)}</strong></> : 'Mueve el cursor o desliza el dedo para consultar los valores.'}</p>
   </div>;
 }
 
