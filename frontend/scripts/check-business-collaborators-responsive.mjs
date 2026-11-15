@@ -24,9 +24,21 @@ assert.ok(source.includes('document.body.classList.add("collab-dialog-active")')
 assert.ok(source.includes('PersistedPhoto src={membership.user.avatarUrl}') && source.includes('src={recipient.avatarUrl}'), 'Real account photos preserved');
 assert.ok(source.includes('function CollabIcon(') && source.includes('viewBox="0 0 24 24"'), 'Professional scale-independent SVG icons present');
 
+const avatarsSource = await readFile(fileURLToPath(new URL('../apps/negocios/src/components/common/PersistedPhoto.tsx', import.meta.url)), 'utf8');
+const avatarServer = await readFile(fileURLToPath(new URL('../../backend/src/modules/business/collaborator.service.ts', import.meta.url)), 'utf8');
+assert.ok(avatarsSource.includes('fallback?: ReactNode') && avatarsSource.includes('>{fallback}</span>'), 'Authenticated image must show user initial if unavailable');
+assert.ok(avatarsSource.includes('onError={() => setObjectUrl('), 'Broken pictures must fall back to initial');
+assert.ok(source.includes('fallback={membership.user.displayName') && source.includes('alt={`Foto de perfil de ${membership.user.displayName}`}'), 'Actual member avatar must use account profile with accessible fallback');
+assert.ok(avatarServer.includes('content: await readPhoto(storageKey)') && avatarServer.includes('mimeType: photoMimeType(storageKey)'), 'Collaborator avatar must read from local or S3 storage');
+assert.ok(avatarServer.includes('await owner(actorId, businessId)') && avatarServer.includes("['ACTIVE', 'SUSPENDED'].includes(membership.status)"), 'Private profile photos must keep owner and membership restrictions');
+const imageDataUrl='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 42 42"><circle cx="21" cy="21" r="21" fill="#7251ee"/><path d="M10 11h22v20H10z" fill="#fff"/></svg>');
+
 const svg = '<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4zM8 12h8"/></svg>';
 const makePeople = (kind) =>
-  '<tr><td data-label="Persona"><div class="collab-person"><i>L</i><span><b>Laura Nombre Muy Extenso de Ejemplo</b>' +
+  '<tr><td data-label="Persona"><div class="collab-person">' +
+  (kind === 'active' ? '<img class="collab-person-avatar" alt="Foto de perfil de Laura" src="' + imageDataUrl + '">'
+    : kind === 'fallback' ? '<span class="collab-person-avatar" role="img" aria-label="Foto no disponible">L</span>' : '<i>L</i>') +
+  '<span><b>Laura Nombre Muy Extenso de Ejemplo</b>' +
   '<small>@laura.cuenta-larga-de-pruebas</small></span></div></td>' +
   '<td data-label="' + (kind === 'invite' ? 'Enviada el' : 'Rol') + '">' +
   (kind === 'invite' ? '15/11/2026' : '<em>Colaborador</em>') + '</td>' +
@@ -74,7 +86,7 @@ function pageMarkup() {
     '<label class="collab-search">' + svg + '<input placeholder="Buscar por nombre, correo o nickname"></label></div>' +
     '<div class="collab-scroll"><table><thead><tr><th>Persona</th><th>Rol</th><th>Permisos</th>' +
     '<th>Estado</th><th>Última actividad</th><th>Acciones</th></tr></thead><tbody>' +
-    makePeople('active') + '</tbody></table></div></section>' +
+    makePeople('active') + makePeople('fallback') + '</tbody></table></div></section>' +
     '<section class="collab-table-card"><div class="collab-table-heading"><h2>Invitaciones (2)</h2></div>' +
     '<div class="collab-scroll"><table><thead><tr><th>Persona</th><th>Enviada el</th><th>Expira el</th>' +
     '<th>Permisos</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>' + makePeople('invite') +
@@ -138,6 +150,35 @@ try{
           inviteButton:rect(document.querySelector('.collab-invite-controls>button'))};
       });
       assert.ok(list.page.left>=-2&&list.page.right<=list.viewportWidth+2,name+': collaborators page fits screen horizontally '+JSON.stringify(list.page));
+      // Verify that the actual profile image is visible and cropped correctly,
+      // and a missing image leaves a readable initial instead of a blank circle.
+      const avatarChecks = await page.evaluate(() => {
+        const photo = document.querySelector('.collab-person img.collab-person-avatar');
+        const fallback = document.querySelector('.collab-person span.collab-person-avatar');
+        const imgRect = photo?.getBoundingClientRect();
+        const fallbackRect = fallback?.getBoundingClientRect();
+        return {
+          loaded: Boolean(photo?.complete && photo?.naturalWidth && photo?.naturalHeight),
+          photoAlt: photo?.getAttribute('alt'),
+          photoRound: photo ? getComputedStyle(photo).borderRadius : null,
+          photoFit: photo ? getComputedStyle(photo).objectFit : null,
+          photoWidth: imgRect?.width, photoHeight: imgRect?.height,
+          fallbackInitial: fallback?.textContent?.trim(),
+          fallbackWidth: fallbackRect?.width, fallbackHeight: fallbackRect?.height,
+          fallbackRound: fallback ? getComputedStyle(fallback).borderRadius : null,
+        };
+      });
+      assert.ok(avatarChecks.loaded,name+': user profile picture loads');
+      assert.equal(avatarChecks.photoAlt,'Foto de perfil de Laura',name+': photo remains accessible');
+      assert.equal(avatarChecks.photoRound,'50%',name+': profile photo stays circular');
+      assert.equal(avatarChecks.photoFit,'cover',name+': photo keeps its aspect ratio');
+      assert.equal(avatarChecks.photoWidth,42,name+': photo remains 42px wide');
+      assert.equal(avatarChecks.photoHeight,42,name+': photo remains 42px tall');
+      assert.equal(avatarChecks.fallbackInitial,'L',name+': missing photos show initial instead of blank avatar');
+      assert.equal(avatarChecks.fallbackWidth,42,name+': fallback matches photo dimensions');
+      assert.equal(avatarChecks.fallbackHeight,42,name+': fallback matches photo dimensions');
+      assert.equal(avatarChecks.fallbackRound,'50%',name+': fallback is also circular');
+
       assert.equal(list.stats.length,4,name+': four access indicators');
       for(const [i,stat] of list.stats.entries()){
         assert.ok(stat.vector&&stat.gradient,name+': indicator '+i+' uses professional vector icon and XAMUKO gradient');
