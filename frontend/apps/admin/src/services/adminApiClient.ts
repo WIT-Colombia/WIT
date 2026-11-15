@@ -82,9 +82,60 @@ export function deactivateAdminUser(id: string, reason: string, confirmation: st
     { method: 'POST', body: JSON.stringify({ reason, confirmation }) },
   );
 }
-export type AdminOfferRecord = { id: string; name: string; kind: string; active: boolean; publicationStatus: string; deletedAt: string | null; updatedAt: string; business: { id: string; name: string } };
-export type AdminOfferPage = { offers: AdminOfferRecord[]; pagination: { page: number; total: number; totalPages: number } };
-export function listAdminOffers(page = 1) { return request<AdminOfferPage>(`/admin/content?page=${page}`); }
+export type AdminContentFilters = { q?:string; kind?:string; status?:string; city?:string; categoryId?:string; period?:string; page?:number };
+export type AdminOfferRecord = {
+  id:string;internalCode:string;kind:'PRODUCT'|'SERVICE';name:string;description:string|null;
+  priceAmount:string|null;currency:string|null;priceText:string|null;negotiable:boolean;
+  active:boolean;adultOnly:boolean;publicationStatus:'PUBLISHED'|'REVIEW'|'UNPUBLISHED';
+  deletedAt:string|null;createdAt:string;updatedAt:string;
+  category:string;photoId:string|null;photoAlt:string|null;likes:number;reports:number;
+  business:{id:string;publicId:string;name:string;city:string|null;country:string|null;publicationStatus:string};
+};
+export type AdminOfferPage = {
+  offers:AdminOfferRecord[];
+  pagination:{page:number;pageSize:number;total:number;totalPages:number};
+};
+export type AdminContentInsights = {
+  period:string;
+  totals:{total:number;products:number;services:number;published:number;inReview:number;unpublished:number;deleted:number};
+  series:Array<{month:string;products:number;services:number;total:number}>;
+  ranking:Array<{name:string;count:number}>;
+  filters:{cities:Array<{value:string;label:string}>;categories:Array<{id:string;name:string}>};
+  definition:string;
+};
+export type AdminContentReport = {
+  id:string;reason:string;status:string;createdAt:string;description:string|null;
+};
+export type AdminContentDetail = AdminOfferRecord & {
+  photos:Array<{id:string;altText:string|null}>;
+  reportsRecent:AdminContentReport[];canHide:boolean;canRestore:boolean;
+};
+const contentQuery = (filters:AdminContentFilters) => {
+  const params = new URLSearchParams();
+  for (const key of ['q','kind','status','city','categoryId','period'] as const)
+    if (filters[key]) params.set(key,String(filters[key]));
+  if (filters.page) params.set('page',String(filters.page));
+  return params.toString();
+};
+export function listAdminOffers(filters:AdminContentFilters|number={}) {
+  return request<AdminOfferPage>('/admin/content?'+contentQuery(typeof filters==='number'?{page:filters}:filters));
+}
+export function getAdminContentInsights(filters:AdminContentFilters={}) {
+  return request<AdminContentInsights>('/admin/content-insights?'+contentQuery(filters));
+}
+export async function getAdminContentDetail(id:string) {
+  return (await request<{offer:AdminContentDetail}>('/admin/content/'+encodeURIComponent(id))).offer;
+}
+export async function fetchAdminContentPhoto(photoId:string) {
+  const response=await fetch(buildApiUrl('/admin/content-photos/'+encodeURIComponent(photoId)),
+    headers({headers:{Accept:'image/*'}}));
+  if(!response.ok)throw new AdminApiError(response.status,'ADMIN_CONTENT_PHOTO_UNAVAILABLE','La fotografía no está disponible.');
+  return response.blob();
+}
+export function moderateAdminContent(id:string,action:'HIDE'|'RESTORE',reason:string) {
+  return request<{id:string;publicationStatus:string;message:string}>(
+    '/admin/content/'+encodeURIComponent(id)+'/moderate',{method:'POST',body:JSON.stringify({action,reason})});
+}
 export type AdminDashboardStats = {
   generatedAt: string;
   totals: { users: number; businesses: number; businessesVerified: number; reviewsPublished: number; businessProActive: number };
