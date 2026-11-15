@@ -104,6 +104,7 @@ function DetailSectionIcon({ title }: { title: string }) {
     "Modalidades de atención": <><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" /></>,
     "Ubicación y dirección": <><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
     "Información de contacto": <path d="m8 3 3 5-3 3a17 17 0 0 0 5 5l3-3 5 3-1 4c-1 3-9-1-13-5S0 4 3 3l5 0Z" />,
+    "Categoría principal": <><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5" /></>,
     "Clasificación +18": <><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" /><path d="M8 12h8M12 8v8" /></>,
     "Personas con acceso": <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5" /></>,
     "Horarios de atención": <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
@@ -833,9 +834,34 @@ export function BusinessDetailPage() {
           <div className="business-detail-tab-content">
             {showCollaborators ? <section className="business-detail-panel business-collaborators-panel"><div className="business-panel-title"><span className="business-panel-title-icon"><DetailSectionIcon title="Personas con acceso" /></span><div><h2>Colaboradores</h2><p>Administra las personas con acceso a este establecimiento.</p></div></div>{teamSection}</section> : <>
               <section id="business-panel-general" role="tabpanel" aria-labelledby="business-tab-general" hidden={activeTab !== "general"} className="business-detail-panel">
-                <div className="business-panel-title business-section-heading business-general-panel-title"><div><h3>Información general</h3><p>Presenta tu negocio, destaca lo que te hace único y muestra la categoría de tu establecimiento.</p></div>{business.role === "Propietario" && <button className="text-button business-section-edit" type="button" onClick={() => beginSectionEdit("general")}>✎ Editar</button>}</div>
-                <div className={`business-reference-grid${editingSection === "general" ? " is-editing-general" : ""}`}>
-                  {editingSection === "general" ? <div className="business-reference-editor">{generalSection}</div> : <><div className="business-reference-field"><div><h3>Nombre del negocio</h3><div className="business-reference-value">{business.name}</div></div></div><div className="business-reference-field business-reference-categories"><div><h3>Categoría principal</h3><div className="business-detail-category-chips">{primaryCategory ? <span>{primaryCategory}</span> : <span>Sin categoría registrada</span>}</div></div></div><div className="business-reference-field business-reference-adult"><div><h3>Clasificación +18 <span title="Esta clasificación es informativa y no constituye una verificación legal">ⓘ</span></h3><div className="business-reference-value">{business.adultOnly ? "Exclusivo para mayores de 18 años" : "Sin clasificación +18"}</div></div></div><div className="business-reference-field business-reference-sede"><div><h3>Sede</h3><div className="business-reference-value">{sedeLabel || "Sin especificar"}</div></div></div><div className="business-reference-field business-reference-description"><div><h3>Descripción del negocio</h3><div className="business-reference-value">{business.description || "Sin descripción"}</div></div></div></>}
+                <div className="business-panel-title business-section-heading business-general-panel-title">
+                  <span className="business-general-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg></span>
+                  <div><h3>Información general</h3><p>Presenta tu negocio, destaca lo que te hace único y muestra la categoría de tu establecimiento.</p></div>
+                  {business.role === "Propietario" && <button className="text-button business-section-edit" type="button" onClick={() => beginSectionEdit("general")}>✎ Editar</button>}
+                </div>
+                <div className={`business-reference-grid${editingSection === "general" ? " is-editing-general" : " business-general-view"}`}>
+                  {editingSection === "general" ? <div className="business-reference-editor">{generalSection}</div> : <>
+                    <div className="business-reference-field business-general-field-name">
+                      <span className="business-general-field-icon" aria-hidden="true"><DetailSectionIcon title="Nombre y sede" /></span>
+                      <div className="business-general-field-copy"><h3>Nombre del negocio</h3><div className="business-reference-value">{business.name}</div></div>
+                    </div>
+                    <div className="business-reference-field business-general-field-sede">
+                      <span className="business-general-field-icon" aria-hidden="true"><DetailSectionIcon title="Ubicación y dirección" /></span>
+                      <div className="business-general-field-copy"><h3>Sede</h3><div className="business-reference-value">{sedeLabel || "Sin especificar"}</div></div>
+                    </div>
+                    <div className="business-reference-field business-general-field-description">
+                      <span className="business-general-field-icon" aria-hidden="true"><DetailSectionIcon title="Descripción" /></span>
+                      <div className="business-general-field-copy"><h3>Descripción del negocio</h3><div className="business-reference-value">{business.description || "Sin descripción"}</div></div>
+                    </div>
+                    <div className="business-reference-field business-general-field-category">
+                      <span className="business-general-field-icon" aria-hidden="true"><DetailSectionIcon title="Categoría principal" /></span>
+                      <div className="business-general-field-copy"><h3>Categoría principal</h3><div className="business-detail-category-chips">{primaryCategory ? <span>{primaryCategory}</span> : <span>Sin categoría registrada</span>}</div></div>
+                    </div>
+                    <div className="business-reference-field business-general-field-adult">
+                      <span className="business-general-field-icon" aria-hidden="true"><DetailSectionIcon title="Clasificación +18" /></span>
+                      <div className="business-general-field-copy"><h3>Clasificación +18 <span title="Esta clasificación es informativa y no constituye una verificación legal">ⓘ</span></h3><div className="business-reference-value">{business.adultOnly ? "Exclusivo para mayores de 18 años" : "Sin clasificación +18"}</div></div>
+                    </div>
+                  </>}
                 </div>
               </section>
               <section id="business-panel-location" role="tabpanel" aria-labelledby="business-tab-location" hidden={activeTab !== "location"} className="business-detail-panel">{locationSection}{modalitiesSection}</section>
