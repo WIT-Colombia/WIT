@@ -4,7 +4,6 @@ import { navigation, navigationGroups } from '../data/navigation';
 import { getSession, logout, restoreSession } from '../services/adminService';
 import { fetchOwnAvatar } from '../services/adminApiClient';
 import { Icon } from './Icon';
-import { WorkspaceContext } from './WorkspaceContext';
 
 const groupIcons: Record<string, string> = { plataforma: 'store', crecimiento: 'crown', finanzas: 'database', tecnologia: 'server', soporte: 'headphones', juridica: 'scales', configuracion: 'shield' };
 const sidebarIcons: Record<string, string> = { '/content': 'image', '/reports': 'chart', '/pioneers': 'award' };
@@ -137,7 +136,7 @@ export function Layout() {
       <div className="sidebar-footer"><div className="avatar">{avatar}</div><div className="sidebar-profile-copy"><strong title={admin?.name}>{admin?.name}</strong><small>{admin?.role === 'SUPER_ADMIN' ? 'Administrador principal' : admin?.role === 'ADMIN' ? 'Administrador' : admin?.role}</small></div><button ref={logoutRef} className="icon-button" aria-label="Cerrar sesión" onClick={() => { setLogoutError(''); setConfirmLogout(true); }}><Icon name="logout" size={21} /></button></div>
     </aside>
     <button ref={toggleRef} type="button" className="icon-button admin-mobile-toggle" aria-label="Abrir navegación" aria-controls="admin-navigation" aria-expanded={open} onClick={() => setOpen(true)}><Icon name="menu" size={24} /></button>
-    <div className="admin-main" inert={(mobile && open) || confirmLogout}><main id="main" className="workspace" tabIndex={-1}><WorkspaceContext /><Outlet /></main><footer className="workspace-footer"><span>XAMUKO Admin</span><span>Los módulos pendientes se identifican dentro de cada sección.</span></footer></div>
+    <div className="admin-main" inert={(mobile && open) || confirmLogout}><main id="main" className="workspace" tabIndex={-1}><Outlet /></main><footer className="workspace-footer"><span>XAMUKO Admin</span><span>Los módulos pendientes se identifican dentro de cada sección.</span></footer></div>
     {confirmLogout && <div ref={dialogRef} className="logout-popover" role="dialog" aria-modal="true" aria-label="Confirmar cierre de sesión" aria-describedby="logout-description"><div><strong>¿Cerrar sesión?</strong><p id="logout-description">Podrás volver a iniciar sesión cuando quieras.</p>{logoutError && <p role="alert">{logoutError}</p>}</div><div className="logout-popover-actions"><button className="secondary-button" disabled={loggingOut} onClick={() => setConfirmLogout(false)}>Cancelar</button><button className="danger-button" disabled={loggingOut} onClick={() => { void signOut(); }}>{loggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}</button></div></div>}
   </div>;
 }
