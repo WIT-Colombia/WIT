@@ -7,18 +7,19 @@ import {
 } from './platform-notifications.service.js';
 
 export const platformNotificationsRouter = Router();
-platformNotificationsRouter.use(requireAuth);
-platformNotificationsRouter.use((_req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); });
+// This router is mounted at /api/v1. Protect each notification route individually;
+// a global use(requireAuth) would wrongly block unrelated public and Admin routes.
+const privateNotice: RequestHandler = (_req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); };
 const uid = (request: Parameters<RequestHandler>[0]) => (request as AuthenticatedRequest).auth.userId;
-platformNotificationsRouter.get('/notifications', async (req, res, next) => {
+platformNotificationsRouter.get('/notifications', requireAuth, privateNotice, async (req, res, next) => {
   try { res.json(await listPlatformNotifications(uid(req))); } catch (error) { next(error); }
 });
-platformNotificationsRouter.post('/notifications/read-all', requireTrustedOrigin, async (req, res, next) => {
+platformNotificationsRouter.post('/notifications/read-all', requireAuth, requireTrustedOrigin, privateNotice, async (req, res, next) => {
   try { res.json(await markAllPlatformNotificationsRead(uid(req))); } catch (error) { next(error); }
 });
-platformNotificationsRouter.post('/notifications/:id/read', requireTrustedOrigin, async (req, res, next) => {
+platformNotificationsRouter.post('/notifications/:id/read', requireAuth, requireTrustedOrigin, privateNotice, async (req, res, next) => {
   try { res.json(await markPlatformNotificationRead(uid(req), String(req.params.id))); } catch (error) { next(error); }
 });
-platformNotificationsRouter.delete('/notifications/:id', requireTrustedOrigin, async (req, res, next) => {
+platformNotificationsRouter.delete('/notifications/:id', requireAuth, requireTrustedOrigin, privateNotice, async (req, res, next) => {
   try { res.json(await deletePlatformNotification(uid(req), String(req.params.id))); } catch (error) { next(error); }
 });
