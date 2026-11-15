@@ -125,7 +125,7 @@ function GrowthCanvas({ points, measure, shape }: { points: Datum[]; measure: Me
     </svg>
     <div className="ad-business-growth-canvas-caption" aria-live="polite">{selected
       ? <><strong>{number(selected[measure])}</strong><span>{selected.label}</span></>
-      : <span>Mueve el cursor o desliza el dedo para explorar los registros.</span>}</div>
+      : <span>Mueve el cursor o desliza el dedo. Cada período sin nuevos registros se muestra con 0.</span>}</div>
   </div>;
 }
 
