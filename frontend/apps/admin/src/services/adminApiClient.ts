@@ -294,6 +294,7 @@ export type OperationalStatus = 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJEC
 export type OperationalRecord = {
   id: string; title: string; category: string; description: string | null; status: OperationalStatus;
   decisionNote: string | null; createdAt: string; reporter: string; context: string;
+  targetPath?: string; targetLabel?: string;
 };
 export type OperationalResult = { records: OperationalRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
 
@@ -302,17 +303,17 @@ export async function listOperationalRecords(kind: OperationalKind, filters: { p
   if (filters.status && filters.status !== 'ALL') p.set('status', filters.status);
   if (filters.q?.trim()) p.set('q', filters.q.trim());
   if (kind === 'business-reports') {
-    const result = await request<{ reports: Array<{ id: string; reason: string; description: string; status: OperationalStatus; decisionNote: string | null; createdAt: string; business: { name: string }; reporter: { displayName: string } | null }>; pagination: OperationalResult['pagination'] }>(`/admin/business-reports?${p}`);
-    return { pagination: result.pagination, records: result.reports.map(r => ({ id: r.id, title: r.business?.name ?? 'Negocio', category: r.reason, description: r.description, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt, reporter: r.reporter?.displayName ?? 'Visitante', context: 'Negocio reportado' })) };
+    const result = await request<{ reports: Array<{ id: string; reason: string; description: string; status: OperationalStatus; decisionNote: string | null; createdAt: string; business: { id: string; name: string }; reporter: { displayName: string } | null }>; pagination: OperationalResult['pagination'] }>(`/admin/business-reports?${p}`);
+    return { pagination: result.pagination, records: result.reports.map(r => ({ id: r.id, title: r.business?.name ?? 'Negocio', category: r.reason, description: r.description, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt, reporter: r.reporter?.displayName ?? 'Visitante', context: 'Negocio reportado', targetPath: r.business?.id ? '/businesses/' + encodeURIComponent(r.business.id) : undefined, targetLabel: 'Abrir ficha del negocio' })) };
   }
   if (kind === 'offer-reports') {
-    const result = await request<{ reports: Array<{ id: string; reason: string; description: string | null; status: OperationalStatus; decisionNote: string | null; createdAt: string; offer: { name: string; kind: string; business: { name: string } }; reporter: { displayName: string } | null }>; pagination: OperationalResult['pagination'] }>(`/admin/offer-reports?${p}`);
-    return { pagination: result.pagination, records: result.reports.map(r => ({ id: r.id, title: r.offer?.name ?? 'Publicación', category: r.reason, description: r.description, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt, reporter: r.reporter?.displayName ?? 'Visitante', context: `${r.offer?.kind === 'SERVICE' ? 'Servicio' : 'Producto'} · ${r.offer?.business?.name ?? 'Negocio'}` })) };
+    const result = await request<{ reports: Array<{ id: string; reason: string; description: string | null; status: OperationalStatus; decisionNote: string | null; createdAt: string; offer: { id: string; name: string; kind: string; business: { id: string; name: string } }; reporter: { displayName: string } | null }>; pagination: OperationalResult['pagination'] }>(`/admin/offer-reports?${p}`);
+    return { pagination: result.pagination, records: result.reports.map(r => ({ id: r.id, title: r.offer?.name ?? 'Publicación', category: r.reason, description: r.description, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt, reporter: r.reporter?.displayName ?? 'Visitante', context: `${r.offer?.kind === 'SERVICE' ? 'Servicio' : 'Producto'} · ${r.offer?.business?.name ?? 'Negocio'}`, targetPath: r.offer?.id ? '/content/' + encodeURIComponent(r.offer.id) : undefined, targetLabel: 'Abrir publicación y moderar' })) };
   }
   const category = kind === 'needs' ? 'NEED' : kind === 'support' ? 'SUPPORT' : 'SUGGESTION';
   p.set('kind', category);
-  const result = await request<{ requests: Array<{ id: string; title: string; category: string; description: string | null; status: OperationalStatus; decisionNote: string | null; createdAt: string; locationName: string | null; locationContext: string | null; sender: { displayName: string } | null; business: { name: string } | null }>; pagination: OperationalResult['pagination'] }>(`/admin/support-requests?${p}`);
-  return { pagination: result.pagination, records: result.requests.map(r => ({ id: r.id, title: r.title, category: r.category, description: r.description, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt, reporter: r.sender?.displayName ?? 'Visitante', context: kind === 'needs' ? [r.locationName, r.locationContext].filter(Boolean).join(' · ') : (r.business?.name ?? 'Cuenta Business') })) };
+  const result = await request<{ requests: Array<{ id: string; title: string; category: string; description: string | null; status: OperationalStatus; decisionNote: string | null; createdAt: string; locationName: string | null; locationContext: string | null; sender: { displayName: string } | null; business: { id: string; name: string } | null }>; pagination: OperationalResult['pagination'] }>(`/admin/support-requests?${p}`);
+  return { pagination: result.pagination, records: result.requests.map(r => ({ id: r.id, title: r.title, category: r.category, description: r.description, status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt, reporter: r.sender?.displayName ?? 'Visitante', context: kind === 'needs' ? [r.locationName, r.locationContext].filter(Boolean).join(' · ') : (r.business?.name ?? 'Cuenta Business'), targetPath: r.business?.id ? '/businesses/' + encodeURIComponent(r.business.id) : undefined, targetLabel: 'Consultar negocio vinculado' })) };
 }
 
 export function decideOperationalRecord(kind: OperationalKind, id: string, status: OperationalStatus, decisionNote: string) {
