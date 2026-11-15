@@ -1,0 +1,388 @@
+/* XAMUKO Business — Mi perfil: identidad azul, tarjetas y SVG profesionales.
+   Únicamente afecta la vista de perfil; no modifica autenticación ni guardado. */
+.business-profile-page {
+  --profile-blue:#225cf1;
+  --profile-blue-dark:#114bd9;
+  --profile-ink:#111d3b;
+  --profile-muted:#657895;
+  --profile-line:#dfe7f5;
+  --profile-violet:#743fff;
+  width:100%;
+  min-width:0;
+  padding-bottom:36px;
+  color:var(--profile-ink);
+}
+.business-profile-page,
+.business-profile-page * {box-sizing:border-box}
+.business-profile-page svg {display:block;width:21px;height:21px;flex:none}
+.business-profile-page .business-profile-heading {
+  display:grid;gap:13px;
+  margin:0 0 23px;
+}
+.business-profile-page .business-profile-eyebrow {
+  display:block;margin:0 0 0 4px;
+  color:#285eec;font-size:11px;font-weight:800;
+  line-height:1.4;letter-spacing:.105em;
+}
+.business-profile-page .business-profile-heading-main {
+  display:flex;align-items:center;gap:16px;min-width:0;
+}
+.business-profile-page .business-profile-heading-main>div {min-width:0}
+.business-profile-page .business-profile-heading-icon {
+  display:grid;place-items:center;
+  flex:0 0 72px;width:72px;height:72px;
+  border:1px solid #cad9fc;border-radius:18px;
+  background:linear-gradient(145deg,#e8eaff,#d0dfff);
+  color:#285beb;box-shadow:0 6px 16px #4655be16;
+}
+.business-profile-page .business-profile-heading-icon svg {width:36px;height:36px}
+.business-profile-page .business-profile-heading h1 {
+  margin:0 0 8px;color:var(--profile-ink);
+  font-size:clamp(28px,2.4vw,33px);font-weight:800;
+  line-height:1.15;letter-spacing:-.04em;
+}
+.business-profile-page .business-profile-heading p {
+  margin:0;color:var(--profile-muted);
+  font-size:13px;line-height:1.5;overflow-wrap:anywhere;
+}
+/* Identidad de cuenta, sin banners comerciales ni estados inventados. */
+.business-profile-page .profile-identity-card {
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:24px;width:100%;min-width:0;
+  margin:0 0 20px;padding:24px 27px;
+  border:1px solid #d7e4fc;border-radius:20px;
+  background:linear-gradient(110deg,#fff 0%,#f6f9ff 65%,#eef4ff 100%);
+  box-shadow:0 10px 29px #14305f10;
+}
+.business-profile-page .profile-hero {
+  display:flex;align-items:center;flex:1 1 300px;gap:20px;
+  min-width:0;margin:0!important;padding:0!important;border:0!important;
+}
+.business-profile-page .profile-avatar-upload.account-avatar.large {
+  position:relative;display:grid;place-items:center;
+  flex:0 0 98px;width:98px;height:98px;
+  overflow:hidden;border:4px solid #fff;border-radius:50%;
+  background:linear-gradient(140deg,#dce8ff,#d9d3ff);
+  color:#245cf2;
+  font-size:29px;font-weight:800;
+  box-shadow:0 6px 23px #183b8324;cursor:pointer;
+}
+.business-profile-page .profile-avatar-upload img {
+  display:block;width:100%;height:100%;object-fit:cover;
+}
+.business-profile-page .profile-avatar-upload input {
+  position:absolute;width:1px;height:1px;opacity:0;
+}
+.business-profile-page .profile-avatar-upload:focus-within {
+  outline:3px solid #6997ff;outline-offset:4px;
+}
+.business-profile-page .profile-avatar-upload em {
+  position:absolute;right:0;bottom:0;left:0;
+  padding:7px 2px;background:#152e69d9;
+  color:#fff;font-size:9px;font-style:normal;font-weight:750;
+  line-height:1.3;text-align:center;
+}
+.business-profile-page .profile-identity-copy {min-width:0;flex:1}
+.business-profile-page .profile-identity-label {
+  display:block;margin-bottom:6px;color:#245beb;
+  font-size:10px;font-weight:800;line-height:1.4;letter-spacing:.1em;
+}
+.business-profile-page .profile-identity-copy h2 {
+  margin:0 0 5px;color:#152747;
+  font-size:clamp(19px,2vw,25px);font-weight:800;letter-spacing:-.03em;
+  line-height:1.25;overflow-wrap:anywhere;
+}
+.business-profile-page .profile-identity-copy p {
+  margin:0;color:#627693;font-size:12px;line-height:1.5;overflow-wrap:anywhere;
+}
+.business-profile-page .profile-avatar-message {
+  display:block;max-width:620px;margin-top:10px;
+  color:#18734d;font-size:11px;font-weight:750;line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.business-profile-page .profile-avatar-message.is-error {color:#b43c48}
+.business-profile-page .profile-identity-note {
+  display:flex;align-items:center;gap:11px;
+  flex:0 1 250px;min-width:0;
+  padding:13px;border:1px solid #d9e6fd;border-radius:12px;
+  background:#fff;color:#607798;font-size:11px;line-height:1.55;
+}
+.business-profile-page .profile-identity-note svg {width:21px;height:21px;color:#285eec}
+/* Datos principales a la izquierda y seguridad a la derecha. */
+.business-profile-page .profile-layout {
+  display:grid;grid-template-columns:minmax(0,1fr) 305px;
+  align-items:start;gap:20px;
+  width:100%;max-width:none;min-width:0;margin:0;
+}
+.business-profile-page .profile-layout>.surface-card {
+  width:100%;min-width:0;max-width:none;
+}
+.business-profile-page .profile-info-card,
+.business-profile-page .profile-access-card {
+  min-width:0;margin:0;
+  padding:27px;border:1px solid var(--profile-line);
+  border-radius:19px;background:#fff;
+  box-shadow:0 10px 28px #14305f10;
+}
+.business-profile-page .profile-card-heading {
+  display:flex;align-items:center;gap:13px;
+  min-width:0;margin:0 0 23px;padding:0 0 21px;
+  border-bottom:1px solid #edf1f8;
+}
+.business-profile-page .profile-card-heading>div {min-width:0}
+.business-profile-page .profile-card-icon {
+  display:grid;place-items:center;
+  flex:0 0 48px;width:48px;height:48px;
+  border:1px solid #c9d8ff;border-radius:14px;
+  background:linear-gradient(145deg,#e9edff,#d9e5ff);
+  color:#225cf1;
+}
+.business-profile-page .profile-card-icon svg {width:25px;height:25px}
+.business-profile-page .profile-card-eyebrow {
+  display:block;margin-bottom:6px;
+  color:#285eec;font-size:10px;font-weight:800;letter-spacing:.105em;
+}
+.business-profile-page .profile-card-heading h2 {
+  margin:0 0 5px;color:#1a2e50;
+  font-size:19px;font-weight:800;line-height:1.3;letter-spacing:-.02em;
+}
+.business-profile-page .profile-card-heading p {
+  margin:0;color:#637796;font-size:12px;line-height:1.55;
+}
+.business-profile-page .profile-form {
+  display:grid;gap:0;max-width:none;width:100%;margin:0;
+}
+.business-profile-page .profile-form .form-grid {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:20px 18px;min-width:0;
+}
+.business-profile-page .profile-form .form-field {
+  display:grid;gap:8px;min-width:0;align-content:start;
+}
+.business-profile-page .profile-form .form-field>span {
+  color:#263a5b;font-size:12px;font-weight:750;line-height:1.4;
+}
+.business-profile-page .profile-form .form-field input {
+  width:100%;min-width:0;min-height:49px;
+  padding:11px 13px;border:1px solid #d4dff1;border-radius:11px;
+  background:#fff;color:#192e4d;
+  font-size:13px;line-height:1.5;
+  outline:none;box-shadow:none;
+}
+.business-profile-page .profile-form .form-field input:focus-visible {
+  border-color:#6c94ff;box-shadow:0 0 0 3px #dce8ff;
+}
+.business-profile-page .profile-form .form-field input[readonly] {
+  border-color:#e2e9f3;background:#f7f9fd;color:#566b88;
+  cursor:default;
+}
+.business-profile-page .profile-form .form-field small {
+  color:#798ba5;font-size:11px;font-weight:450;
+  line-height:1.55;white-space:normal;overflow-wrap:anywhere;
+}
+.business-profile-page .profile-email-field {grid-column:1/-1}
+.business-profile-page .nickname-copy-field {
+  display:flex;align-items:stretch;gap:8px;min-width:0;
+}
+.business-profile-page .nickname-copy-field input {flex:1 1 0;min-width:0}
+.business-profile-page .nickname-copy-button {
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  flex:0 0 auto;min-width:85px;padding:0 12px;
+  border:1px solid #c4d9ff;border-radius:10px;
+  background:#eff5ff;color:#225cf1;
+  font:inherit;font-size:11px;font-weight:800;
+  cursor:pointer;transition:background .16s,border-color .16s;
+}
+.business-profile-page .nickname-copy-button svg {width:16px;height:16px}
+.business-profile-page .nickname-copy-button:hover:not(:disabled) {
+  border-color:#93b6fb;background:#dfeaff;
+}
+.business-profile-page .nickname-copy-button:disabled {
+  opacity:.5;cursor:not-allowed;
+}
+.business-profile-page .profile-save-actions {
+  display:flex;align-items:center;justify-content:flex-start;
+  flex-wrap:wrap;gap:12px;
+  width:100%;min-width:0;margin:26px 0 0!important;
+  padding-top:20px;border-top:1px solid #edf1f8;
+}
+.business-profile-page .profile-save-actions>.action-button {
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  order:0;align-self:auto;
+  min-width:160px;min-height:46px;width:auto;margin:0;
+  padding:10px 18px;border:1px solid transparent;border-radius:11px;
+  background:linear-gradient(105deg,#743fff 0%,#245cf2 65%,#16a6f7 100%);
+  color:#fff;font-size:12px;font-weight:800;
+  box-shadow:0 10px 22px #4e53e324;
+}
+.business-profile-page .profile-save-actions>.action-button svg {width:18px;height:18px}
+.business-profile-page .profile-save-actions>.action-button:hover:not(:disabled) {
+  filter:brightness(1.06);box-shadow:0 12px 24px #4e53e336;
+}
+.business-profile-page .profile-save-actions>.action-button:disabled {
+  opacity:.58;cursor:not-allowed;box-shadow:none;
+}
+.business-profile-page .profile-save-message {
+  display:inline-flex;align-items:center;order:0;
+  width:auto;min-height:34px;margin:0;padding:8px 11px;
+  border:1px solid #b9eedf;border-radius:9px;
+  background:#ecfffa;color:#087d67;
+  font-size:11px;line-height:1.5;font-weight:700;
+  overflow-wrap:anywhere;
+}
+.business-profile-page .profile-save-message.is-error {
+  border-color:#f0c8ce;background:#fff5f6;color:#b83b47;
+}
+.business-profile-page .profile-side-stack {
+  display:grid;align-content:start;gap:17px;min-width:0;
+}
+.business-profile-page .profile-access-card {padding:22px 20px}
+.business-profile-page .profile-access-card .profile-card-heading {
+  align-items:flex-start;gap:11px;margin-bottom:12px;padding-bottom:17px;
+}
+.business-profile-page .profile-access-card .profile-card-icon {
+  flex-basis:40px;width:40px;height:40px;border-radius:12px;
+}
+.business-profile-page .profile-access-card .profile-card-icon svg {width:22px;height:22px}
+.business-profile-page .profile-access-card .profile-card-heading h2 {font-size:16px}
+.business-profile-page .profile-access-card .profile-card-heading p {font-size:11px}
+.business-profile-page .profile-account-links {
+  display:grid;gap:7px;order:initial;min-width:0;margin:0;
+}
+.business-profile-page .profile-account-links a {
+  display:flex;align-items:center;gap:9px;min-width:0;
+  min-height:49px;padding:9px 10px;
+  border:1px solid #e4ebf7;border-radius:11px;
+  background:#fff;color:#243858;
+  font-size:12px;font-weight:750;line-height:1.4;
+  text-decoration:none;white-space:normal;
+  transition:border-color .17s,background .17s;
+}
+.business-profile-page .profile-account-links a:hover {
+  border-color:#b9d1ff;background:#f6f9ff;color:#1852d6;
+}
+.business-profile-page .profile-account-links a>span:nth-child(2) {
+  flex:1;min-width:0;overflow-wrap:anywhere;
+}
+.business-profile-page .profile-account-link-icon {
+  display:grid;place-items:center;flex:0 0 33px;
+  width:33px;height:33px;border-radius:9px;
+  background:#eff5ff;color:#285dec;
+}
+.business-profile-page .profile-account-link-icon svg {width:17px;height:17px}
+.business-profile-page .profile-account-links a>svg {
+  width:15px;height:15px;margin-left:auto;color:#648acb;
+}
+.business-profile-page .profile-logout-area {
+  display:grid;align-items:stretch;gap:15px;
+  width:100%;margin:0;padding:19px 20px;
+  border:1px solid #f0dddd;border-radius:17px;
+  background:#fffafa;
+}
+.business-profile-page .profile-logout-copy {
+  display:flex;align-items:center;gap:11px;min-width:0;
+}
+.business-profile-page .profile-logout-copy>div {
+  display:grid;gap:4px;min-width:0;
+}
+.business-profile-page .profile-logout-icon {
+  display:grid;place-items:center;
+  flex:0 0 38px;width:38px;height:38px;
+  border:1px solid #f2d4d8;border-radius:11px;
+  background:#fff0f2;color:#ae3c47;
+}
+.business-profile-page .profile-logout-icon svg {width:20px;height:20px}
+.business-profile-page .profile-logout-copy strong {
+  color:#66343e;font-size:13px;font-weight:800;
+}
+.business-profile-page .profile-logout-copy small {
+  color:#996f76;font-size:11px;line-height:1.45;
+}
+.business-profile-page .profile-logout {
+  display:inline-flex;align-items:center;justify-content:center;
+  width:100%;min-height:40px;margin:0;padding:8px 13px;
+  border:1px solid #ebc9cc;border-radius:10px;
+  background:#fff;color:#9e3641;font-size:11px;font-weight:800;
+}
+.business-profile-page .profile-logout:hover {
+  border-color:#dba7ac;background:#fff0f1;color:#8f2f38;
+}
+.business-profile-page .profile-logout-confirm {
+  display:grid;gap:10px;justify-content:stretch;
+  width:100%;margin:0;color:#8f2f38;
+}
+.business-profile-page .profile-logout-confirm>span {
+  display:block;font-size:11px;font-weight:750;line-height:1.45;
+}
+.business-profile-page .profile-logout-confirm>div {
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.business-profile-page .profile-logout-confirm button {
+  flex:1;min-height:36px;padding:7px 10px;
+  border-radius:9px;font-size:11px;font-weight:750;white-space:nowrap;
+}
+.business-profile-page .profile-logout-confirm-yes {
+  border:1px solid #dba7ac;background:#a23d45;color:#fff;
+}
+.business-profile-page .profile-logout-confirm-cancel {
+  border:1px solid #ebc9cc;background:#fff;color:#8f2f38;
+}
+.business-profile-page :is(button,a,input):focus-visible {
+  outline:3px solid #9bbdff;outline-offset:3px;
+}
+@media(max-width:1150px) {
+  .business-profile-page .profile-layout {grid-template-columns:minmax(0,1fr)}
+  .business-profile-page .profile-side-stack {
+    grid-template-columns:minmax(0,1fr) minmax(260px,.65fr);
+  }
+}
+@media(max-width:780px) {
+  .business-profile-page .profile-identity-note {
+    flex:1 1 100%;max-width:none;
+  }
+  .business-profile-page .profile-side-stack {grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:700px) {
+  .business-profile-page .business-profile-heading {margin-bottom:18px;gap:11px}
+  .business-profile-page .business-profile-eyebrow {font-size:10px}
+  .business-profile-page .business-profile-heading-main {align-items:flex-start;gap:12px}
+  .business-profile-page .business-profile-heading-icon {
+    flex-basis:52px;width:52px;height:52px;border-radius:14px;
+  }
+  .business-profile-page .business-profile-heading-icon svg {width:28px;height:28px}
+  .business-profile-page .business-profile-heading h1 {font-size:28px}
+  .business-profile-page .business-profile-heading p {font-size:12px}
+  .business-profile-page .profile-identity-card {padding:20px 17px;gap:17px}
+  .business-profile-page .profile-hero {gap:14px}
+  .business-profile-page .profile-avatar-upload.account-avatar.large {
+    flex-basis:78px;width:78px;height:78px;font-size:23px;
+  }
+  .business-profile-page .profile-avatar-upload em {
+    padding:5px 2px;font-size:8px;
+  }
+  .business-profile-page .profile-info-card {padding:20px 17px}
+  .business-profile-page .profile-card-heading {align-items:flex-start}
+  .business-profile-page .profile-card-heading h2 {font-size:18px}
+  .business-profile-page .profile-form .form-grid {
+    grid-template-columns:minmax(0,1fr);gap:17px;
+  }
+  .business-profile-page .profile-email-field {grid-column:auto}
+  .business-profile-page .profile-form .form-field small {font-size:10px}
+  .business-profile-page .profile-form .form-field input {min-height:46px}
+}
+@media(max-width:430px) {
+  .business-profile-page .profile-identity-card {padding:16px 14px}
+  .business-profile-page .profile-identity-note {font-size:10px}
+  .business-profile-page .profile-identity-copy h2 {font-size:18px}
+  .business-profile-page .profile-save-actions>.action-button {width:100%}
+  .business-profile-page .profile-save-message {width:100%}
+  .business-profile-page .nickname-copy-button {min-width:74px;padding:0 8px}
+  .business-profile-page .profile-account-links a {font-size:11px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .business-profile-page *,
+  .business-profile-page *::before,
+  .business-profile-page *::after {
+    transition-duration:.01ms!important;animation-duration:.01ms!important;
+  }
+}
