@@ -222,6 +222,7 @@
   .admin-refresh .au-activity-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media(max-width:900px){
+  .admin-refresh.users-layout .workspace{padding-top:calc(79px + env(safe-area-inset-top,0px))!important}
   .admin-refresh .au-table-scroll{display:none}
   .admin-refresh .au-mobile-users{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;padding:15px}
   .admin-refresh .au-mobile-user-card{display:grid;gap:11px;align-content:start;min-width:0;padding:15px;border:1px solid #e0e8f5;border-radius:13px;background:#fff;box-shadow:0 6px 17px #17305c0a}
