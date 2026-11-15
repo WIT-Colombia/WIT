@@ -98,13 +98,14 @@ export function NotificationsPage() {
     if (item.date.startsWith("Ayer")) return Date.now() - 24 * 60 * 60 * 1000;
     return 0;
   };
-  const currentLocal = notifications.filter(item => (
-    (selectedBusinessId && item.businessId === selectedBusinessId) ||
-    (item.businessName && item.businessName === business.name)
-  ));
+  const currentLocal = notifications.filter(item =>
+    item.businessId ? item.businessId === selectedBusinessId :
+      business.source !== "real" && Boolean(item.businessName) && item.businessName === business.name);
   const visible = currentLocal.filter(item => filter === "Todas" || !item.read)
     .sort((left, right) => notificationTime(right) - notificationTime(left));
-  const visiblePersisted = useMemo(() => persisted.filter(item => filter === "Todas" || !item.readAt), [filter, persisted]);
+  const visiblePersisted = useMemo(() => persisted.filter(item =>
+    item.businessId === selectedBusinessId && (filter === "Todas" || !item.readAt)),
+    [filter, persisted, selectedBusinessId]);
   const totalUnread = currentLocal.filter(item => !item.read).length +
     persisted.filter(item => item.businessId === selectedBusinessId && !item.readAt).length;
 
