@@ -234,6 +234,42 @@ export function BusinessDetailPage() {
   const [sectionSaving, setSectionSaving] = useState<EditableSection>(null);
   const [sectionError, setSectionError] = useState("");
   const [sectionNotice, setSectionNotice] = useState("");
+  const deleteDialogRef = useRef<HTMLElement>(null);
+  const deleteCancelRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!confirmingDelete || editing) return;
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    deleteCancelRef.current?.focus();
+    const onDeleteDialogKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setConfirmingDelete(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const dialog = deleteDialogRef.current;
+      const buttons = Array.from(dialog?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") ?? []);
+      if (!dialog || buttons.length === 0) return;
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !dialog.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onDeleteDialogKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onDeleteDialogKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previouslyFocused?.isConnected) previouslyFocused.focus();
+    };
+  }, [confirmingDelete, editing]);
   useEffect(() => {
     if (!sectionNotice) return;
     const timeout = window.setTimeout(() => setSectionNotice(""), 5000);
@@ -1066,10 +1102,37 @@ export function BusinessDetailPage() {
           </div>
           <BusinessCardPanel key={business.id ?? index} business={{ ...business, category: categoryLabel(business.category) }} cardData={{ referredUsers: referralSummary?.referredUsers, currentLevel: referralSummary?.currentLevel, referralState }} />
         </div>
-        {business.status !== "Eliminado" && <>{business.role === "Propietario" && <div className="business-detail-edit-row"><button className="danger-button business-detail-delete-button" type="button" onClick={() => setConfirmingDelete(true)}>Eliminar negocio</button></div>}{business.role === "Propietario" && confirmingDelete && !editing && <div className="business-delete-confirm business-detail-delete-confirm"><strong>¿Eliminar este negocio?</strong><p>Tu negocio quedará no visible y podrás recuperarlo durante {BUSINESS_RECOVERY_DAYS} días.</p><div><button className="danger-button" type="button" onClick={remove}>Sí, eliminar</button><button className="outline-button" type="button" onClick={() => setConfirmingDelete(false)}>Cancelar</button></div></div>}</>}
+        {business.status !== "Eliminado" && business.role === "Propietario" && <section className="business-detail-edit-row business-delete-zone" aria-labelledby="business-delete-zone-title">
+          <span className="business-delete-zone-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 2 20h20L12 3Z" /><path d="M12 9v5M12 17h.01" /></svg></span>
+          <div className="business-delete-zone-copy"><h3 id="business-delete-zone-title">Zona de peligro</h3><p>Si ya no deseas mostrar este negocio, puedes solicitar su eliminación.</p></div>
+          <button className="danger-button business-detail-delete-button" type="button" onClick={() => setConfirmingDelete(true)}>Eliminar negocio</button>
+        </section>}
       </section>
 
     </div>
+
+    {business.status !== "Eliminado" && business.role === "Propietario" && confirmingDelete && !editing && createPortal(
+      <div className="business-delete-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setConfirmingDelete(false); }}>
+        <section ref={deleteDialogRef} className="business-delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="business-delete-title" aria-describedby="business-delete-description">
+          <div className="business-delete-dialog-heading">
+            <span className="business-delete-dialog-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3 2 20h20L12 3Z" /><path d="M12 9v5M12 17h.01" /></svg></span>
+            <div><h2 id="business-delete-title">¿Eliminar este negocio?</h2><p>Confirma que deseas iniciar este proceso.</p></div>
+            <button type="button" className="business-delete-dialog-close" aria-label="Cerrar confirmación" onClick={() => setConfirmingDelete(false)}>×</button>
+          </div>
+          <div className="business-delete-dialog-body">
+            <div className="business-delete-dialog-identity"><span>Negocio seleccionado</span><strong>{business.name}</strong></div>
+            <p id="business-delete-description">Tu negocio dejará de ser visible y podrás recuperarlo durante <strong>{BUSINESS_RECOVERY_DAYS} días</strong>.</p>
+            <p className="business-delete-dialog-disclaimer">Revisa esta decisión antes de continuar. Después del período de recuperación, podrías perder el acceso a la recuperación del negocio.</p>
+            {saveError && <p className="business-delete-dialog-error" role="alert">{saveError}</p>}
+          </div>
+          <div className="business-delete-dialog-actions">
+            <button ref={deleteCancelRef} className="action-button business-delete-dialog-cancel" type="button" onClick={() => setConfirmingDelete(false)}>Cancelar</button>
+            <button className="danger-button business-delete-dialog-confirm" type="button" onClick={remove}>Confirmar eliminación</button>
+          </div>
+        </section>
+      </div>,
+      document.body
+    )}
 
     {coverDraft && createPortal(<div className="business-header-image-overlay business-image-editor-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !photoBusy) { setCoverDraft(null); setHeaderImageError(""); } }}><section className="business-header-image-modal business-image-editor-modal" role="dialog" aria-modal="true" aria-labelledby="cover-image-editor-title"><div className="business-header-image-heading business-image-editor-heading"><span className="business-image-editor-heading-icon" aria-hidden="true"><DetailSectionIcon title="Fotografías" /></span><div><h2 id="cover-image-editor-title">Cambiar portada</h2><p>Ajusta el encuadre horizontal antes de guardar.</p></div><button type="button" className="close-button" aria-label="Cerrar cambio de portada" onClick={() => { setCoverDraft(null); setHeaderImageError(""); }} disabled={photoBusy}>×</button></div><div className="business-image-crop-preview business-image-crop-preview--cover"><img src={coverDraft.previewUrl} alt="Vista previa de la nueva portada" style={{ objectPosition: `${coverDraft.position.x}% ${coverDraft.position.y}%` }} /></div><div className="business-image-crop-controls"><label>Encuadre horizontal<input type="range" min="0" max="100" value={coverDraft.position.x} onChange={event => setCoverDraft(current => current ? { ...current, position: { ...current.position, x: Number(event.target.value) } } : current)} /></label><label>Encuadre vertical<input type="range" min="0" max="100" value={coverDraft.position.y} onChange={event => setCoverDraft(current => current ? { ...current, position: { ...current.position, y: Number(event.target.value) } } : current)} /></label></div>{headerImageError && <p className="form-error" role="alert">{headerImageError}</p>}<div className="modal-actions business-image-editor-actions"><button type="button" className="outline-button" onClick={() => { setCoverDraft(null); setHeaderImageError(""); }} disabled={photoBusy}>Cancelar</button><button type="button" className="action-button" onClick={() => void saveCoverImage()} disabled={photoBusy}>{photoBusy ? "Guardando…" : "Guardar portada"}</button></div></section></div>, document.body)}
     {profilePickerOpen && createPortal(<div className="business-header-image-overlay business-image-editor-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !photoBusy) { setProfilePickerOpen(false); setHeaderImageError(""); } }}><section className="business-header-image-modal business-image-editor-modal" role="dialog" aria-modal="true" aria-labelledby="profile-image-editor-title"><div className="business-header-image-heading business-image-editor-heading"><span className="business-image-editor-heading-icon" aria-hidden="true"><DetailSectionIcon title="Cámara" /></span><div><h2 id="profile-image-editor-title">Cambiar foto de perfil</h2><p>Elige una fotografía de tu galería para usarla como imagen de perfil.</p></div><button type="button" className="close-button" aria-label="Cerrar selector de imagen" onClick={() => { setProfilePickerOpen(false); setHeaderImageError(""); }} disabled={photoBusy}>×</button></div>{business.photos?.length ? <><div className="business-profile-photo-options" role="list" aria-label="Fotografías del negocio">{business.photos.map(photo => <button type="button" role="listitem" key={photo.id} className={selectedProfilePhotoId === photo.id ? "selected" : ""} onClick={() => setSelectedProfilePhotoId(photo.id)} aria-pressed={selectedProfilePhotoId === photo.id}><PersistedPhoto src={photo.url} alt="" /></button>)}</div>{selectedProfilePhotoId && business.photos.find(photo => photo.id === selectedProfilePhotoId) && <><div className="business-image-crop-preview business-image-crop-preview--profile"><PersistedPhoto src={business.photos.find(photo => photo.id === selectedProfilePhotoId)!.url} alt="Vista previa de la imagen del negocio" style={{ objectPosition: `${profilePosition.x}% ${profilePosition.y}%` }} /></div></>}</> : <div className="business-profile-photo-empty"><p>Aún no tienes fotografías para elegir.</p><button type="button" className="text-link" onClick={() => { setProfilePickerOpen(false); selectTab("photos"); }}>Ir a Fotografías</button></div>}{headerImageError && <p className="form-error" role="alert">{headerImageError}</p>}<div className="modal-actions business-image-editor-actions"><button type="button" className="outline-button" onClick={() => { setProfilePickerOpen(false); setHeaderImageError(""); }} disabled={photoBusy}>Cancelar</button><button type="button" className="outline-button" onClick={() => setSelectedProfilePhotoId(null)} disabled={photoBusy || !business.profilePhotoId}>Quitar foto de perfil</button><button type="button" className="action-button" onClick={() => void saveProfileImage()} disabled={photoBusy || (!selectedProfilePhotoId && !business.profilePhotoId)}>{photoBusy ? "Guardando…" : selectedProfilePhotoId ? "Guardar imagen" : "Quitar foto de perfil"}</button></div></section></div>, document.body)}
