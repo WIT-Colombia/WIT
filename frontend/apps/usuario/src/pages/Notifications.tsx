@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   deleteNotification, getNotifications, markAllNotificationsRead, markNotificationRead, type UserNotification,
@@ -13,15 +13,18 @@ import './Notifications.css';
 type DisplayNotice = {
   id: string; title: string; body: string; date: string; read: boolean; source: 'local' | 'server';
 };
-const notifyCount = (count: number) =>
-  window.dispatchEvent(new CustomEvent('xamuko-user-notifications-updated', { detail: count }));
+const notifyCount = (userId: string, count: number) =>
+  window.dispatchEvent(new CustomEvent('xamuko-user-notifications-updated', { detail: { userId, count } }));
 const readableDate = (iso: string) => new Intl.DateTimeFormat('es-CO', {
   dateStyle: 'medium', timeStyle: 'short',
 }).format(new Date(iso));
 
 export default function Notifications() {
   const { user, isAuthenticated } = useAuth();
-  const [local, setLocal] = useState<UserNotification[]>(getNotifications);
+  const accountId = isAuthenticated ? user?.id ?? null : null;
+  const currentAccount = useRef(accountId);
+  currentAccount.current = accountId;
+  const [local, setLocal] = useState<UserNotification[]>([]);
   const [remote, setRemote] = useState<PlatformNotice[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,16 +34,26 @@ export default function Notifications() {
   const [busy, setBusy] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
   const load = useCallback(async () => {
-    if (!isAuthenticated) { setRemote([]); return; }
+    if (!accountId) { setRemote([]); setLoading(false); return; }
     setLoading(true); setError('');
     try {
       const result = await listPlatformNotices();
+      if (currentAccount.current !== accountId) return;
       setRemote(result.notifications);
-      notifyCount(result.unread + getNotifications().filter(item => !item.read).length);
+      notifyCount(accountId, result.unread + getNotifications(accountId).filter(item => !item.read).length);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'No se pudieron consultar las notificaciones.');
-    } finally { setLoading(false); }
-  }, [isAuthenticated, user?.id]);
+      if (currentAccount.current === accountId)
+        setError(cause instanceof Error ? cause.message : 'No se pudieron consultar las notificaciones.');
+    } finally { if (currentAccount.current === accountId) setLoading(false); }
+  }, [accountId]);
+  useEffect(() => {
+    setLocal(getNotifications(accountId));
+    setRemote([]);
+    setSelectedId(null);
+    setPendingDeleteId(null);
+    setError('');
+    setVisibleCount(10);
+  }, [accountId]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible') void load(); };
@@ -57,42 +70,47 @@ export default function Notifications() {
     ...local.map(item => ({ id: item.id, title: item.title, body: item.body, date: item.date, read: item.read, source: 'local' as const })),
   ], [local, remote]);
   const unread = notices.filter(item => !item.read).length;
-  const announce = (next: PlatformNotice[], nextLocal: UserNotification[]) =>
-    notifyCount(next.filter(item => !item.readAt).length + nextLocal.filter(item => !item.read).length);
+  const announce = (next: PlatformNotice[], nextLocal: UserNotification[]) => {
+    if (accountId) notifyCount(accountId,
+      next.filter(item => !item.readAt).length + nextLocal.filter(item => !item.read).length);
+  };
   const select = async (item: DisplayNotice) => {
-    if (busy) return;
+    if (busy || !accountId) return;
     setSelectedId(item.id); setError('');
     if (item.read) return;
     if (item.source === 'local') {
-      const next = markNotificationRead(item.id);
+      const next = markNotificationRead(item.id, accountId);
       setLocal(next); announce(remote, next);
       return;
     }
     setBusy(true);
     try {
       await readPlatformNotice(item.id);
+      if (currentAccount.current !== accountId) return;
       const next = remote.map(row => row.id === item.id ? { ...row, readAt: new Date().toISOString() } : row);
       setRemote(next); announce(next, local);
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo marcar como leída.'); }
     finally { setBusy(false); }
   };
   const markAllRead = async () => {
-    if (busy) return;
+    if (busy || !accountId) return;
     setBusy(true); setError('');
     try {
       if (remote.some(item => !item.readAt)) await readAllPlatformNotices();
+      if (currentAccount.current !== accountId) return;
       const nextRemote = remote.map(item => ({ ...item, readAt: item.readAt ?? new Date().toISOString() }));
-      const nextLocal = markAllNotificationsRead();
+      const nextLocal = markAllNotificationsRead(accountId);
       setRemote(nextRemote); setLocal(nextLocal); announce(nextRemote, nextLocal);
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudieron actualizar las notificaciones.'); }
     finally { setBusy(false); }
   };
   const remove = async (item: DisplayNotice) => {
-    if (busy) return;
+    if (busy || !accountId) return;
     setBusy(true); setError('');
     try {
       if (item.source === 'server') await dismissPlatformNotice(item.id);
-      else deleteNotification(item.id);
+      else deleteNotification(item.id, accountId);
+      if (currentAccount.current !== accountId) return;
       const nextRemote = remote.filter(value => !(item.source === 'server' && value.id === item.id));
       const nextLocal = local.filter(value => !(item.source === 'local' && value.id === item.id));
       setRemote(nextRemote); setLocal(nextLocal); setPendingDeleteId(null); setSelectedId(null);
