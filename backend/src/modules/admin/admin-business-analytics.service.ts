@@ -122,6 +122,6 @@ export async function getAdminBusinessAnalytics(query: Query, now = new Date()) 
       })),
     },
     series,
-    definition: 'Negocios y usuarios se agrupan por fecha de registro; opiniones por fecha de publicación. Los estados corresponden a la situación actual, no a un historial de cambios. Se excluyen negocios y usuarios eliminados. La estadística de usuarios es global, sin segmentación por ciudad o categoría.',
+    definition: 'Negocios y usuarios se agrupan por fecha de creación. Las opiniones visibles se agrupan por fecha de creación, no por fecha de aprobación. Los estados son los actuales, no un historial de cambios. Se excluyen negocios y usuarios eliminados. Los usuarios se muestran únicamente de forma global.',
   };
 }
