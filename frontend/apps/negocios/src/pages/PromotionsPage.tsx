@@ -1,6 +1,6 @@
 import { normalizeImageForUpload, PHOTO_INPUT_ACCEPT } from "@wit/utils";
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { PageHeader } from "../components/common/PageHeader";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type BusinessPromotion, type PromotionLimits, type RealOffer } from "../services/businessApiClient";
 import { BusinessProBenefitsDialog } from "../components/business/BusinessProBenefitsDialog";
@@ -53,6 +53,10 @@ export function PromotionsPage() {
   const [processingPhotos, setProcessingPhotos] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [removalTarget, setRemovalTarget] = useState<BusinessPromotion | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const [removalError, setRemovalError] = useState("");
+  const editorOverlayRef = useRef<HTMLDivElement>(null);
+  const removalOverlayRef = useRef<HTMLDivElement>(null);
   const [proDialog, setProDialog] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const isReal = business.source === "real" && Boolean(business.id);
@@ -102,8 +106,48 @@ export function PromotionsPage() {
   useEffect(() => { setPage(current => Math.min(current, totalPages)); }, [totalPages]);
 
   const beginNew = () => { setEditing(null); createKeyRef.current = null; setForm(createBlank()); setFiles([]); setError(""); setPreviewOpen(false); setEditorOpen(true); };
-  const beginEdit = (promotion: BusinessPromotion) => { setEditing(promotion); setEditorOpen(true); setForm({ type: promotion.type, title: promotion.title, description: promotion.description, conditions: promotion.conditions ?? "", category: promotion.category ?? "", relatedOfferId: promotion.relatedOfferId ?? "", originalPrice: promotion.originalPrice ?? "", promotionalPrice: promotion.promotionalPrice ?? "", startsAt: dateValue(promotion.startsAt), endsAt: dateValue(promotion.endsAt), recurrence: promotion.recurrence, recurrenceUntil: promotion.recurrenceUntil ? dateValue(promotion.recurrenceUntil) : "" }); setFiles([]); setError(""); };
+  const beginEdit = (promotion: BusinessPromotion) => { setPreviewOpen(false); setEditing(promotion); setEditorOpen(true); setForm({ type: promotion.type, title: promotion.title, description: promotion.description, conditions: promotion.conditions ?? "", category: promotion.category ?? "", relatedOfferId: promotion.relatedOfferId ?? "", originalPrice: promotion.originalPrice ?? "", promotionalPrice: promotion.promotionalPrice ?? "", startsAt: dateValue(promotion.startsAt), endsAt: dateValue(promotion.endsAt), recurrence: promotion.recurrence, recurrenceUntil: promotion.recurrenceUntil ? dateValue(promotion.recurrenceUntil) : "" }); setFiles([]); setError(""); };
   const closeForm = () => { setEditing(null); setFiles([]); setPreviewOpen(false); setEditorOpen(false); };
+  // Keep Create/Edit and Delete inside the visible viewport, independent of
+  // fixed XAMUKO Business headers and browser chrome on iPhone/iPadOS.
+  useLayoutEffect(() => {
+    const overlay = removalTarget ? removalOverlayRef.current : editorOpen ? editorOverlayRef.current : null;
+    if (!overlay) return;
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    const viewport = window.visualViewport;
+    const syncViewport = () => {
+      overlay.style.setProperty("--promotions-viewport-top", `${viewport?.offsetTop ?? 0}px`);
+      overlay.style.setProperty("--promotions-viewport-left", `${viewport?.offsetLeft ?? 0}px`);
+      overlay.style.setProperty("--promotions-viewport-width", `${viewport?.width ?? window.innerWidth}px`);
+      overlay.style.setProperty("--promotions-viewport-height", `${viewport?.height ?? window.innerHeight}px`);
+    };
+    body.classList.add("promotions-dialog-active");
+    body.style.overflow = "hidden";
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    viewport?.addEventListener("resize", syncViewport);
+    viewport?.addEventListener("scroll", syncViewport);
+    overlay.querySelector<HTMLButtonElement>(removalTarget ? ".promotion-confirm-cancel" : ".promotion-editor-heading>button")?.focus({ preventScroll: true });
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+      viewport?.removeEventListener("resize", syncViewport);
+      viewport?.removeEventListener("scroll", syncViewport);
+      body.style.overflow = previousOverflow;
+      body.classList.remove("promotions-dialog-active");
+    };
+  }, [editorOpen, Boolean(removalTarget)]);
+  useEffect(() => {
+    if ((!editorOpen && !removalTarget) || proDialog) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || previewOpen) return;
+      if (removalTarget && !removing) { setRemovalTarget(null); setRemovalError(""); }
+      else if (editorOpen && !saving && !processingPhotos) closeForm();
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [editorOpen, Boolean(removalTarget), previewOpen, removing, saving, processingPhotos, proDialog]);
+
   const setField = (key: keyof FormValue, value: string) => setForm(current => ({ ...current, [key]: value }));
   const setPromotionalPrice = (value: string) => {
     value = value.replace(/\D/g, "");
@@ -158,12 +202,25 @@ export function PromotionsPage() {
     finally { savingRef.current = false; setSaving(false); }
   };
   const finish = async (item: BusinessPromotion) => { if (!business.id || !window.confirm(`¿Finalizar “${item.title}”?`)) return; try { await businessApi.finishPromotion(business.id, item.id); await reload(); } catch (cause) { setError(cause instanceof Error ? cause.message : "No pudimos finalizar la publicación."); } };
-  const remove = async (item: BusinessPromotion) => { if (!business.id) return; try { await businessApi.deletePromotion(business.id, item.id); setRemovalTarget(null); await reload(); } catch (cause) { setError(cause instanceof Error ? cause.message : "No pudimos eliminar la publicación."); } };
+  const remove = async (item: BusinessPromotion) => {
+    if (!business.id || removing) return;
+    setRemoving(true); setRemovalError("");
+    try { await businessApi.deletePromotion(business.id, item.id); setRemovalTarget(null); await reload(); }
+    catch (cause) { setRemovalError(cause instanceof Error ? cause.message : "No pudimos eliminar la publicación."); }
+    finally { setRemoving(false); }
+  };
   const activeLimitReached = Boolean(limits && limits.activeCount >= limits.maxActive);
   const canCreate = canManage && !activeLimitReached;
 
   return <main className="promotions-page">
-    <PageHeader eyebrow="Ofertas y promociones" title="Ofertas y promociones" description={`Crea y administra las ofertas y promociones de ${business.name}. Atrae más clientes y aumenta tus ventas.`} action={<button className="action-button promotions-new" type="button" onClick={() => { if (activeLimitReached) { setError(`Alcanzaste el límite de publicaciones activas de tu plan ${limits?.plan === "PRO" ? "Business Pro (10)" : "Básico (1)"}.`); return; } beginNew(); }} disabled={!canManage}>＋ Crear publicación</button>} />
+    <header className="page-heading promotions-heading">
+      <div className="promotions-heading-copy"><span className="promotions-eyebrow">TU OFERTA</span>
+        <div className="promotions-heading-main"><span className="promotions-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m4 4 16 0v16H4z"/><path d="M9 9h6M9 13h3M9 17h6"/><path d="m17 14 4-4"/></svg></span>
+          <div><h1>Ofertas y promociones</h1><p>{`Crea y administra las ofertas y promociones de ${business.name}. Atrae más clientes y aumenta tus ventas.`}</p></div>
+        </div>
+      </div>
+      <button className="action-button promotions-new" type="button" onClick={() => { if (activeLimitReached) { setError(`Alcanzaste el límite de publicaciones activas de tu plan ${limits?.plan === "PRO" ? "Business Pro (10)" : "Básico (1)"}.`); return; } beginNew(); }} disabled={!canManage}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>Crear publicación</button>
+    </header>
     {!isReal && <div className="promotions-notice" role="status">Selecciona un negocio real para administrar sus publicaciones.</div>}
     {!canManage && isReal && <div className="promotions-notice" role="alert">Tu perfil no tiene permiso para administrar promociones de este negocio.</div>}
     {activeLimitReached && <div className="promotions-notice">Alcanzaste el límite de publicaciones activas de tu plan {limits?.plan === "PRO" ? "Business Pro" : "Básico"}. {limits?.plan === "BASIC" && <button type="button" onClick={() => setProDialog(true)}>Conocer Business Pro</button>}</div>}
@@ -174,13 +231,14 @@ export function PromotionsPage() {
       <article><span className="promotions-summary-icon violet">▥</span><div><strong>{limits ? limits.summary.totalViews.toLocaleString("es-CO") : "—"}</strong><small>Visualizaciones {limits?.detailedAnalytics ? "totales" : "generales"}</small></div></article>
     </section>
     {error && !editing && <p className="promotions-error" role="alert">{error}</p>}
-    <div className={`promotions-workspace${editorOpen ? " has-editor" : ""}`}>
+    <div className="promotions-workspace">
       <section className="promotions-list-panel">
         <div className="promotions-tabs" role="tablist" aria-label="Filtrar publicaciones"><span className="promotions-active-counter">Publicaciones activas: {limits ? `${limits.summary.active}/${limits.maxActive}` : "—"}</span>{([["ALL", "Todas"], ["ACTIVE", "Activas"], ["SCHEDULED", "Programadas"], ["FINISHED", "Finalizadas"]] as const).map(([key, label]) => <button type="button" key={key} role="tab" aria-selected={tab === key} className={tab === key ? "selected" : ""} onClick={() => setTab(key)}>{label} <span>{counts[key]}</span></button>)}</div>
-        {loading ? <div className="promotions-empty">Cargando promociones…</div> : pageItems.length ? <div className="promotions-items">{pageItems.map(item => <article className="promotion-row" key={item.id}><div className="promotion-row-photos">{item.photos[0] ? <PromotionPhotoImage url={item.photos[0].url} /> : <span aria-hidden="true">{item.type === "OFFER" ? "%" : "✦"}</span>}</div><div className="promotion-row-main"><div className="promotion-row-labels"><span className={`promotion-type ${item.type.toLowerCase()}`}>{item.type === "OFFER" ? "OFERTA" : "PROMOCIÓN"}</span><span className={`promotion-state ${item.state.toLowerCase()}`}>{item.state === "ACTIVE" ? "Activa" : item.state === "SCHEDULED" ? "Programada" : "Finalizada"}</span></div><h2>{item.title}</h2><p>{item.description}</p><div className="promotion-row-meta">{item.category && <span>◇ {item.category}</span>}<span>◷ {new Date(item.startsAt).toLocaleDateString("es-CO")} – {new Date(item.endsAt).toLocaleDateString("es-CO")}</span>{item.state !== "SCHEDULED" && <span>◉ {item.viewCount.toLocaleString("es-CO")} visualizaciones</span>}</div>{item.originalPrice && <strong className="promotion-prices">{money(item.promotionalPrice)} <del>{money(item.originalPrice)}</del><small>{Math.round((1 - Number(item.promotionalPrice) / Number(item.originalPrice)) * 100)}% dto.</small></strong>}</div><div className="promotion-row-actions"><button type="button" onClick={() => beginEdit(item)} aria-label={`Editar ${item.title}`}>Editar</button>{item.state !== "FINISHED" && <button type="button" onClick={() => void finish(item)}>Finalizar</button>}<button type="button" className="danger" onClick={() => setRemovalTarget(item)}>Eliminar</button></div></article>)}</div> : <div className="promotions-empty"><span aria-hidden="true">◇</span><h2>{promotions.length ? "No hay publicaciones con estos filtros" : "Aún no tienes ofertas o promociones"}</h2><p>{promotions.length ? "Prueba otra búsqueda o pestaña." : "Crea una oferta o promoción para compartirla con tus clientes."}</p>{!promotions.length && canCreate && <button className="action-button" type="button" onClick={beginNew}>＋ Crear primera publicación</button>}</div>}
+        {loading ? <div className="promotions-empty">Cargando promociones…</div> : pageItems.length ? <div className="promotions-items">{pageItems.map(item => <article className="promotion-row" key={item.id}><div className="promotion-row-photos">{item.photos[0] ? <PromotionPhotoImage url={item.photos[0].url} /> : <span aria-hidden="true">{item.type === "OFFER" ? "%" : "✦"}</span>}</div><div className="promotion-row-main"><div className="promotion-row-labels"><span className={`promotion-type ${item.type.toLowerCase()}`}>{item.type === "OFFER" ? "OFERTA" : "PROMOCIÓN"}</span><span className={`promotion-state ${item.state.toLowerCase()}`}>{item.state === "ACTIVE" ? "Activa" : item.state === "SCHEDULED" ? "Programada" : "Finalizada"}</span></div><h2>{item.title}</h2><p>{item.description}</p><div className="promotion-row-meta">{item.category && <span>◇ {item.category}</span>}<span>◷ {new Date(item.startsAt).toLocaleDateString("es-CO")} – {new Date(item.endsAt).toLocaleDateString("es-CO")}</span>{item.state !== "SCHEDULED" && <span>◉ {item.viewCount.toLocaleString("es-CO")} visualizaciones</span>}</div>{item.originalPrice && <strong className="promotion-prices">{money(item.promotionalPrice)} <del>{money(item.originalPrice)}</del><small>{Math.round((1 - Number(item.promotionalPrice) / Number(item.originalPrice)) * 100)}% dto.</small></strong>}</div><div className="promotion-row-actions"><button type="button" onClick={() => beginEdit(item)} aria-label={`Editar ${item.title}`}>Editar</button>{item.state !== "FINISHED" && <button type="button" onClick={() => void finish(item)}>Finalizar</button>}<button type="button" className="danger" onClick={() => { setRemovalError(""); setRemovalTarget(item); }}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 4h4m-7 3 .7 13h8.6L17 7M10 11v6m4-6v6"/></svg>Eliminar</button></div></article>)}</div> : <div className="promotions-empty"><span aria-hidden="true">◇</span><h2>{promotions.length ? "No hay publicaciones con estos filtros" : "Aún no tienes ofertas o promociones"}</h2><p>{promotions.length ? "Prueba otra búsqueda o pestaña." : "Crea una oferta o promoción para compartirla con tus clientes."}</p>{!promotions.length && canCreate && <button className="action-button" type="button" onClick={beginNew}>＋ Crear primera publicación</button>}</div>}
         {!loading && filtered.length > pageSize && <nav className="promotions-pagination" aria-label="Paginación de promociones"><span>Mostrando {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} de {filtered.length}</span><button type="button" disabled={page <= 1} onClick={() => setPage(current => current - 1)}>‹</button><span>{page} / {totalPages}</span><button type="button" disabled={page >= totalPages} onClick={() => setPage(current => current + 1)}>›</button></nav>}
       </section>
-      {editorOpen && <aside className="promotion-editor"><div className="promotion-editor-heading"><div><span>{editing ? "ADMINISTRAR PUBLICACIÓN" : "NUEVA PUBLICACIÓN"}</span><h2>{editing ? "Editar publicación" : "Nueva oferta o promoción"}</h2></div><button type="button" aria-label="Cerrar formulario" onClick={closeForm}>×</button></div><form className={`promotion-form promotion-form-${form.type.toLowerCase()}`} onSubmit={save}>
+    </div>
+    {editorOpen && createPortal(<div className="promotion-editor-overlay" ref={editorOverlayRef} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !saving && !processingPhotos) closeForm(); }}><aside className="promotion-editor promotion-editor-modal" role="dialog" aria-modal="true" aria-labelledby="promotion-editor-title" aria-describedby="promotion-editor-description"><div className="promotion-editor-heading"><div><span>{editing ? "ADMINISTRAR PUBLICACIÓN" : "NUEVA PUBLICACIÓN"}</span><h2 id="promotion-editor-title">{editing ? "Editar publicación" : "Nueva oferta o promoción"}</h2><p id="promotion-editor-description">Completa la información que verán las personas en XAMUKO.</p></div><button type="button" aria-label="Cerrar formulario" disabled={saving || processingPhotos} onClick={closeForm}>×</button></div><form className={`promotion-form promotion-form-${form.type.toLowerCase()}`} onSubmit={save}>
         <fieldset><legend>Tipo de publicación</legend><div className="promotion-type-picker"><button type="button" className={form.type === "OFFER" ? "selected" : ""} onClick={() => setForm(current => ({ ...current, type: "OFFER", originalPrice: current.type === "PROMOTION" ? "" : current.originalPrice, promotionalPrice: current.type === "PROMOTION" ? "" : current.promotionalPrice }))}>％ <span><b>Descuento en producto o servicio</b><small>Selecciona un registro existente y define el nuevo precio</small></span></button><button type="button" className={form.type === "PROMOTION" ? "selected" : ""} onClick={() => setForm(current => ({ ...current, type: "PROMOTION", originalPrice: "", promotionalPrice: "", relatedOfferId: "" }))}>✦ <span><b>Evento especial</b><small>Publicación independiente sin precio</small></span></button></div></fieldset>
         <label>Producto o servicio existente <select value={form.relatedOfferId} onChange={event => selectCatalogItem(event.target.value)}><option value="">Seleccione producto o servicio</option>{catalogItems.map(item => <option key={item.id} value={item.id}>{displayInternalCode(item.internalCode)} · {item.kind === "PRODUCT" ? "Producto" : "Servicio"}</option>)}</select></label>
         <label>Título <i>*</i><input required maxLength={120} value={form.title} onChange={event => setField("title", event.target.value)} placeholder="Ej. 2x1 en productos seleccionados" /></label>
@@ -193,11 +251,10 @@ export function PromotionsPage() {
         {limits?.canRecur && <><label>Repetición <span className="promotion-pro-tag">PRO</span><select value={form.recurrence} onChange={event => setField("recurrence", event.target.value)}><option value="NONE">Sin repetición</option><option value="DAILY">Diaria</option><option value="WEEKLY">Semanal</option><option value="MONTHLY">Mensual</option></select></label>{form.recurrence !== "NONE" && <label>Repetir hasta <i>*</i><input type="datetime-local" required min={form.endsAt} value={form.recurrenceUntil} onChange={event => setField("recurrenceUntil", event.target.value)} /></label>}</>}{!limits?.canRecur && <button className="promotion-upgrade-link" type="button" onClick={() => setProDialog(true)}>Repetición de promociones · Conocer Business Pro</button>}
         <label>Categoría <span>(opcional)</span><input maxLength={100} value={form.category} onChange={event => setField("category", event.target.value)} placeholder="Ej. Panadería" /></label>
         {error && <p className="promotions-error" role="alert">{error}</p>}
-        <div className="promotion-editor-actions"><button type="button" className="outline-button" onClick={() => setPreviewOpen(true)}>Vista previa</button><button type="button" className="outline-button" onClick={closeForm}>Cancelar</button><button className="action-button" type="submit" disabled={saving || processingPhotos}>{saving ? "Guardando…" : processingPhotos ? "Procesando fotos…" : editing ? "Guardar cambios" : "Guardar publicación"}</button></div>
-      </form></aside>}
-    </div>
-    {previewOpen && <div className="promotion-preview-overlay" role="presentation" onMouseDown={event => event.target === event.currentTarget && setPreviewOpen(false)}><section className="promotion-preview" role="dialog" aria-modal="true" aria-labelledby="promotion-preview-title"><button type="button" className="promotion-preview-close" onClick={() => setPreviewOpen(false)} aria-label="Cerrar vista previa">×</button><span className="promotion-type">{form.type === "OFFER" ? "OFERTA" : "PROMOCIÓN"}</span><h2 id="promotion-preview-title">{form.title || "Título de la publicación"}</h2><p>{form.description || "La descripción aparecerá aquí."}</p>{form.promotionalPrice && <strong>{money(form.promotionalPrice)} {form.originalPrice && <del>{money(form.originalPrice)}</del>}</strong>}<small>{form.startsAt && new Date(form.startsAt).toLocaleString("es-CO")} – {form.endsAt && new Date(form.endsAt).toLocaleString("es-CO")}</small></section></div>}
-    {removalTarget && <div className="promotion-confirm-overlay" role="presentation" onMouseDown={event => event.target === event.currentTarget && setRemovalTarget(null)}><section className="promotion-confirm" role="dialog" aria-modal="true" aria-labelledby="promotion-confirm-title"><div className="promotion-confirm-icon" aria-hidden="true">!</div><h2 id="promotion-confirm-title">¿Eliminar esta publicación?</h2><p>“{removalTarget.title}” se eliminará de tus ofertas y promociones. Esta acción no se puede deshacer.</p><div className="promotion-confirm-actions"><button type="button" className="subtle-button" onClick={() => setRemovalTarget(null)}>Cancelar</button><button type="button" className="danger-button" onClick={() => void remove(removalTarget)}>Eliminar publicación</button></div></section></div>}
+        <div className="promotion-editor-actions"><button type="button" className="outline-button" onClick={() => setPreviewOpen(true)}>Vista previa</button><button type="button" className="outline-button" disabled={saving || processingPhotos} onClick={closeForm}>Cancelar</button><button className="action-button" type="submit" disabled={saving || processingPhotos}>{saving ? "Guardando…" : processingPhotos ? "Procesando fotos…" : editing ? "Guardar cambios" : "Guardar publicación"}</button></div>
+      </form></aside></div>, document.body)}
+    {previewOpen && createPortal(<div className="promotion-preview-overlay" role="presentation" onMouseDown={event => event.target === event.currentTarget && setPreviewOpen(false)}><section className="promotion-preview" role="dialog" aria-modal="true" aria-labelledby="promotion-preview-title"><button type="button" className="promotion-preview-close" onClick={() => setPreviewOpen(false)} aria-label="Cerrar vista previa">×</button><span className="promotion-type">{form.type === "OFFER" ? "OFERTA" : "PROMOCIÓN"}</span><h2 id="promotion-preview-title">{form.title || "Título de la publicación"}</h2><p>{form.description || "La descripción aparecerá aquí."}</p>{form.promotionalPrice && <strong>{money(form.promotionalPrice)} {form.originalPrice && <del>{money(form.originalPrice)}</del>}</strong>}<small>{form.startsAt && new Date(form.startsAt).toLocaleString("es-CO")} – {form.endsAt && new Date(form.endsAt).toLocaleString("es-CO")}</small></section></div>, document.body)}
+    {removalTarget && createPortal(<div ref={removalOverlayRef} className="promotion-confirm-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !removing) { setRemovalTarget(null); setRemovalError(""); } }}><section className="promotion-confirm" role="alertdialog" aria-modal="true" aria-labelledby="promotion-confirm-title" aria-describedby="promotion-confirm-copy" aria-busy={removing}><div className="promotion-confirm-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 4h4m-7 3 .7 13h8.6L17 7M10 11v6m4-6v6"/></svg></div><h2 id="promotion-confirm-title">¿Eliminar esta publicación?</h2><p id="promotion-confirm-copy">“{removalTarget.title}” se eliminará de tus ofertas y promociones. Esta acción no se puede deshacer.</p>{removalError && <p className="promotions-error" role="alert">{removalError}</p>}<div className="promotion-confirm-actions"><button type="button" className="subtle-button promotion-confirm-cancel" disabled={removing} onClick={() => { setRemovalTarget(null); setRemovalError(""); }}>Cancelar</button><button type="button" className="danger-button" disabled={removing} onClick={() => void remove(removalTarget)}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 4h4m-7 3 .7 13h8.6L17 7M10 11v6m4-6v6"/></svg>{removing ? "Eliminando…" : "Eliminar publicación"}</button></div></section></div>, document.body)}
     {proDialog && <BusinessProBenefitsDialog onClose={() => setProDialog(false)} />}
   </main>;
 }
