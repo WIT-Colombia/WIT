@@ -243,7 +243,6 @@ export function StatisticsDetailDialog(props: Props) {
           hasChart ? <div className="stats-detail-chart-card"><div className="stats-detail-chart-head"><div><h3>Explora los datos</h3><p>{detail.chart === 'line' ? 'Evolución registrada' : 'Desglose del indicador'} · Datos del servidor</p></div><div className="stats-detail-switch" role="group" aria-label="Tipo de visualización"><button type="button" aria-pressed={display === 'chart'} className={display === 'chart' ? 'active' : ''} onClick={() => setDisplay('chart')}>Gráfica</button><button type="button" aria-pressed={display === 'data'} className={display === 'data' ? 'active' : ''} onClick={() => setDisplay('data')}>Tabla</button></div></div>{display === 'chart' ? <DataChart key={selection.section + selection.key} points={points} chart={detail.chart!} unit={detail.unit} /> : <DataTable points={points} />}</div> :
             <div className="stats-detail-callout"><strong>Dato agregado</strong><p>El servidor devuelve el valor total, pero no ofrece un historial detallado para graficar este indicador.</p></div>
         }
-        {measured(previous) && !hasChart && detail.status !== 'locked' && <div className="stats-detail-previous">Período anterior <strong>{count(previous)}</strong></div>}
         {detail.note && detail.status !== 'pending' && <p className="stats-detail-note"><strong>Cómo interpretar este dato:</strong> {detail.note}</p>}
         <p className="stats-detail-source"><strong>Fuente:</strong> {detail.source} {data && <span>Zona horaria: {data.timezone}.</span>}</p>
       </div>
