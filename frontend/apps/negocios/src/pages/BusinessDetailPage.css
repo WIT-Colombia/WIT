@@ -733,8 +733,8 @@
 .business-detail-page #business-panel-general .business-general-panel-title h3 {
   margin: 0 0 5px;
   color: #12203f;
-  font-size: 19px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 750;
   line-height: 1.24;
   letter-spacing: -.022em;
 }
@@ -824,8 +824,8 @@
 .business-detail-page #business-panel-general .business-general-view .business-reference-field h3 {
   margin: 0 0 4px;
   color: #1e3154;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: 11px;
+  font-weight: 700;
   line-height: 1.35;
 }
 .business-detail-page #business-panel-general .business-general-view .business-reference-field h3 > span {
@@ -839,8 +839,8 @@
   border-radius: 0;
   background: transparent;
   color: #162443;
-  font-size: 14px;
-  font-weight: 650;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -854,7 +854,7 @@
   border-radius: 9px;
   background: #e3edff;
   color: #1856d9;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 750;
   line-height: 1.4;
 }
@@ -914,6 +914,12 @@
   .business-detail-page #business-panel-general .business-general-field-icon svg {
     width: 23px;
     height: 23px;
+  }
+  .business-detail-page #business-panel-general .business-general-view .business-reference-field h3 {
+    font-size: 12px;
+  }
+  .business-detail-page #business-panel-general .business-general-view .business-detail-category-chips > span {
+    font-size: 12px;
   }
   .business-detail-page #business-panel-general .business-general-view .business-reference-value {
     font-size: 13px;
