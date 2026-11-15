@@ -1429,3 +1429,148 @@ body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .close-butt
     transition:none;
   }
 }
+
+
+/* Corrección de recorte de cabecera en Crear/Editar producto.
+   El editor vive en un portal del body: debe ocupar la ventana visible y
+   situarse por encima de la cabecera y navegación fijas de Business. */
+body>.catalog-product-editor-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:2147483000;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  box-sizing:border-box;
+  width:100%;
+  height:100vh;
+  height:100dvh;
+  min-height:0;
+  margin:0;
+  padding: max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  isolation:isolate;
+}
+body>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+  position:relative;
+  display:block;
+  flex:0 1 640px;
+  box-sizing:border-box;
+  width:min(100%,640px);
+  min-width:0;
+  max-width:640px;
+  max-height:calc(100vh - 32px);
+  max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  margin:0 auto;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-top:0;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading{
+  position:sticky;
+  top:0;
+  z-index:10;
+  flex-shrink:0;
+  min-height:0;
+  box-sizing:border-box;
+  isolation:isolate;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions{
+  position:sticky;
+  bottom:0;
+  z-index:10;
+  box-sizing:border-box;
+}
+/* Tabletas: el encabezado queda dentro del área visible y el diálogo
+   se desplaza independientemente de la cabecera de navegación. */
+@media(min-width:701px) and (max-width:1100px){
+  body>.catalog-product-editor-backdrop{
+    align-items:flex-start;
+    padding:max(12px,env(safe-area-inset-top,0px)) 12px max(12px,env(safe-area-inset-bottom,0px));
+  }
+  body>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+    flex:0 1 620px;
+    width:min(100%,620px);
+    max-width:620px;
+    max-height:calc(100vh - 24px);
+    max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+    margin:0 auto;
+  }
+}
+/* Móvil y iPad vertical (<=820): neutraliza cualquier centrado vertical
+   de reglas compartidas; el inicio del título permanece accesible. */
+@media(max-width:820px){
+  body>.catalog-product-editor-backdrop{
+    align-items:flex-start;
+    justify-content:center;
+    padding:max(12px,env(safe-area-inset-top,0px)) 12px max(12px,env(safe-area-inset-bottom,0px));
+  }
+  body>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+    flex:0 1 620px;
+    width:100%;
+    min-width:0;
+    max-width:620px;
+    max-height:calc(100vh - 24px);
+    max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+    margin:0 auto;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading{
+    top:0;
+    margin-top:0;
+  }
+}
+/* Teléfonos: márgenes de seguridad, scroll y controles dentro del viewport. */
+@media(max-width:600px){
+  body>.catalog-product-editor-backdrop{
+    padding:max(8px,env(safe-area-inset-top,0px)) 8px max(8px,env(safe-area-inset-bottom,0px));
+  }
+  body>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+    width:100%;
+    max-width:none;
+    max-height:calc(100vh - 16px);
+    max-height:calc(100dvh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+    margin:0 auto;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading{
+    display:flex;
+    align-items:flex-start;
+    flex-wrap:nowrap;
+    gap:10px;
+    min-width:0;
+    padding:14px 13px 12px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading>div{
+    flex:1 1 0%;
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading .close-button{
+    flex:0 0 36px;
+    margin-left:auto;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-form{
+    min-width:0;
+    padding:14px 13px 0;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions{
+    margin:8px -13px 0;
+    padding:12px 13px max(12px,env(safe-area-inset-bottom,0px));
+  }
+}
+@media(max-height:520px){
+  body>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+    max-height:calc(100dvh - 12px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  }
+  body>.catalog-product-editor-backdrop{
+    padding:max(6px,env(safe-area-inset-top,0px)) 6px max(6px,env(safe-area-inset-bottom,0px));
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading{
+    padding-top:9px;
+    padding-bottom:9px;
+  }
+}
