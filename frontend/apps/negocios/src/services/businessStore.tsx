@@ -153,10 +153,26 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<BusinessNotification[]>(() => isPreview ? storedWelcomeNotifications() : []);
   const [persistentNotificationCount, setPersistentNotificationCount] = useState(0);
   useEffect(() => {
-    if (isPreview || auth.state.status !== "authenticated") { setPersistentNotificationCount(0); return; }
+    const selectedBusinessId = business.id;
+    if (isPreview || auth.state.status !== "authenticated" || !userId || !selectedBusinessId) {
+      setPersistentNotificationCount(0);
+      return;
+    }
     let active = true;
-    const refresh = () => { void businessApi.listBusinessNotifications().then(({ notifications: rows }) => { if (active) setPersistentNotificationCount(rows.filter(item => !item.readAt).length); }).catch(() => undefined); };
-    const onUpdated = (event: Event) => { const count = (event as CustomEvent<number>).detail; if (typeof count === "number") setPersistentNotificationCount(count); else refresh(); };
+    // Never carry an unread badge from one selected business to another.
+    setPersistentNotificationCount(0);
+    const refresh = () => {
+      void businessApi.listBusinessNotifications(selectedBusinessId).then(({ notifications: rows }) => {
+        if (active) setPersistentNotificationCount(rows.filter(item => !item.readAt).length);
+      }).catch(() => { /* Leave the previously verified selected-business count intact. */ });
+    };
+    const onUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ businessId: string; count: number }>).detail;
+      if (detail?.businessId !== selectedBusinessId) return;
+      if (typeof detail.count === "number" && Number.isFinite(detail.count))
+        setPersistentNotificationCount(detail.count);
+      else refresh();
+    };
     const refreshIfVisible = () => { if (document.visibilityState === "visible") refresh(); };
     refresh();
     const intervalId = window.setInterval(refreshIfVisible, 30_000);
@@ -170,7 +186,7 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("focus", refreshIfVisible);
       window.removeEventListener("xamuko-notifications-updated", onUpdated);
     };
-  }, [auth.state, isPreview]);
+  }, [auth.state.status, userId, isPreview, business.id]);
   useEffect(() => {
     if (!isPreview) return;
     try { localStorage.setItem("wit-negocios-demo:items", JSON.stringify(items)); } catch { /* La vista previa continúa funcionando sin almacenamiento local. */ }
