@@ -139,6 +139,8 @@ export function AdminBusinessGrowthPanel() {
   const [measure, setMeasure] = useState<Measure>('registrations');
   const [shape, setShape] = useState<Shape>('area');
   const [display, setDisplay] = useState<'chart' | 'table'>('chart');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const chartRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<AdminBusinessAnalytics | null>(null);
   const [availableFilters, setAvailableFilters] = useState<AdminBusinessAnalytics['filters'] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -177,6 +179,19 @@ export function AdminBusinessGrowthPanel() {
   const peak = grouped.reduce<Datum | null>((best, item) => !best || item.registrations > best.registrations ? item : best, null);
   const totalCurrent = indicator === 'users' ? data?.totalUsers ?? 0 : indicator === 'reviews' ? data?.totalReviews ?? 0 : data?.total ?? 0;
   const reset = () => { setPeriod('12m'); setCity(''); setCategoryId(''); setStatus('all'); setIndicator('businesses'); setInterval('month'); setMeasure('registrations'); setShape('area'); };
+  const selectedFilters = [
+    city ? availableFilters?.cities.find(item => item.value === city)?.label ?? 'Ciudad seleccionada' : '',
+    categoryId ? availableFilters?.categories.find(item => item.id === categoryId)?.name ?? 'Categoría seleccionada' : '',
+    period !== '12m' ? (period === 'all' ? 'Todo el histórico' : period === '60m' ? '5 años' : period === '24m' ? '24 meses' : '6 meses') : '',
+    status !== 'all' ? (status === 'active' ? 'Publicados' : status === 'review' ? 'En revisión' : 'No publicados') : '',
+  ].filter(Boolean);
+  const showGraph = () => {
+    setFiltersOpen(false);
+    window.requestAnimationFrame(() => {
+      const target = chartRef.current ?? document.getElementById('ad-business-growth-data-anchor');
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
   return <section className="ad-business-growth-panel" aria-labelledby="ad-business-growth-title">
     <header className="ad-business-growth-heading">
       <div className="ad-business-growth-title"><span className="ad-business-growth-heading-icon"><Icon name="chart" size={27} /></span>
@@ -185,7 +200,21 @@ export function AdminBusinessGrowthPanel() {
       <button type="button" className="ad-business-growth-export" disabled={loading || !!error || !grouped.length}
         onClick={() => downloadSeries(grouped, measure, indicator)}><Icon name="download" size={17} /> Exportar CSV</button>
     </header>
-    <div className="ad-business-growth-filters">
+    <div className="ad-business-growth-filter-access">
+      <div className="ad-business-growth-filter-info">
+        <strong>Filtros de análisis</strong>
+        <span>{selectedFilters.length ? selectedFilters.length + (selectedFilters.length === 1 ? ' filtro aplicado' : ' filtros aplicados') : 'Vista general · últimos 12 meses'}</span>
+        {!!selectedFilters.length && <div className="ad-business-growth-active-filters" aria-label="Filtros activos">
+          {selectedFilters.map(value => <span key={value}>{value}</span>)}
+        </div>}
+      </div>
+      <button type="button" className="ad-business-growth-filter-trigger" aria-expanded={filtersOpen}
+        aria-controls="ad-business-growth-filters" onClick={() => setFiltersOpen(open => !open)}>
+        <Icon name="settings" size={18} /> {filtersOpen ? 'Ocultar filtros' : 'Mostrar filtros'}
+        <span className={filtersOpen ? 'ad-business-growth-chevron expanded' : 'ad-business-growth-chevron'}><Icon name="chevron" size={18} /></span>
+      </button>
+    </div>
+    <div className="ad-business-growth-filters" id="ad-business-growth-filters" hidden={!filtersOpen}>
       <label><span>Ciudad</span><select value={city} onChange={e => setCity(e.target.value)}><option value="">Todas las ciudades</option>
         {(availableFilters?.cities ?? []).map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
       <label><span>Categoría</span><select value={categoryId} onChange={e => setCategoryId(e.target.value)}><option value="">Todas las categorías</option>
@@ -197,18 +226,14 @@ export function AdminBusinessGrowthPanel() {
         <option value="all">Todos los estados</option><option value="active">Publicados</option>
         <option value="review">En revisión</option><option value="inactive">No publicados</option></select></label>
       <button type="button" onClick={reset} className="ad-business-growth-reset" title="Restablecer los filtros"><Icon name="refresh" size={16} /> Limpiar</button>
+      <button type="button" className="ad-business-growth-apply" onClick={showGraph}><Icon name="chart" size={17} /> Ver gráfica <Icon name="arrow" size={16} /></button>
     </div>
+    <span className="ad-business-growth-data-anchor" id="ad-business-growth-data-anchor" aria-hidden="true" />
     {error ? <div className="ad-business-growth-state" role="alert"><strong>No fue posible consultar la evolución</strong><p>{error}</p>
       <button type="button" onClick={() => setAttempt(i => i + 1)}>Reintentar</button></div>
     : loading ? <div className="ad-business-growth-state" role="status">Consultando la evolución del directorio…</div>
     : data && <>
-      <div className="ad-business-growth-metrics" aria-label="Resumen de evolución">
-        <div><span><Icon name={indicator === 'users' ? 'users' : indicator === 'reviews' ? 'star' : 'store'} size={17} /> {label} totales</span><strong>{number(totalCurrent)}</strong><small>{indicator === 'users' ? 'Total global actual' : 'Total actual según los filtros'}</small></div>
-        <div><span><Icon name="up" size={17} /> {indicator === 'reviews' ? 'Opiniones publicadas' : 'Nuevos registros'}</span><strong>{number(newRegistrations)}</strong><small>Dentro del período seleccionado</small></div>
-        <div><span><Icon name="chart" size={17} /> Promedio por {interval === 'month' ? 'mes' : interval === 'quarter' ? 'trimestre' : 'año'}</span><strong>{number(Math.round(average))}</strong><small>Eventos por intervalo</small></div>
-        <div><span><Icon name="award" size={17} /> Período destacado</span><strong>{peak && peak.registrations > 0 ? peak.label : '—'}</strong><small>{peak && peak.registrations > 0 ? number(peak.registrations) + ' eventos' : 'Sin registros nuevos'}</small></div>
-      </div>
-      <div className="ad-business-growth-chart-wrap">
+      <div className="ad-business-growth-chart-wrap" ref={chartRef}>
         <div className="ad-business-growth-chart-toolbar">
           <div><h3>Comportamiento histórico</h3><p>{measure === 'registrations' ? 'Actividad por período: ' + label.toLowerCase() : 'Evolución acumulada: ' + label.toLowerCase()}</p></div>
           <div className="ad-business-growth-view-controls">
@@ -225,6 +250,12 @@ export function AdminBusinessGrowthPanel() {
         {display === 'chart' ? <GrowthCanvas points={grouped} measure={measure} shape={shape} /> :
           <div className="ad-business-growth-table-wrap"><table><thead><tr><th scope="col">Período</th><th scope="col">Nuevos</th><th scope="col">Acumulado</th></tr></thead>
             <tbody>{grouped.map(item => <tr key={item.label}><th scope="row">{item.label}</th><td>{number(item.registrations)}</td><td>{number(item.cumulative)}</td></tr>)}</tbody></table></div>}
+      </div>
+      <div className="ad-business-growth-metrics" aria-label="Resumen de evolución">
+        <div><span><Icon name={indicator === 'users' ? 'users' : indicator === 'reviews' ? 'star' : 'store'} size={17} /> {label} totales</span><strong>{number(totalCurrent)}</strong><small>{indicator === 'users' ? 'Total global actual' : 'Total actual según los filtros'}</small></div>
+        <div><span><Icon name="up" size={17} /> {indicator === 'reviews' ? 'Opiniones publicadas' : 'Nuevos registros'}</span><strong>{number(newRegistrations)}</strong><small>Dentro del período seleccionado</small></div>
+        <div><span><Icon name="chart" size={17} /> Promedio por {interval === 'month' ? 'mes' : interval === 'quarter' ? 'trimestre' : 'año'}</span><strong>{number(Math.round(average))}</strong><small>Eventos por intervalo</small></div>
+        <div><span><Icon name="award" size={17} /> Período destacado</span><strong>{peak && peak.registrations > 0 ? peak.label : '—'}</strong><small>{peak && peak.registrations > 0 ? number(peak.registrations) + ' eventos' : 'Sin registros nuevos'}</small></div>
       </div>
       <p className="ad-business-growth-definition"><Icon name="shield" size={17} />{data.definition} La serie utiliza meses UTC. {indicator === 'users' ? 'Los usuarios se muestran únicamente a nivel global.' : 'Los filtros de ciudad, categoría y estado corresponden a los negocios del directorio.'}</p>
     </>}
