@@ -64,3 +64,280 @@
 
 /* Keep the modal and its close button visible above the sticky header on phones. */
 @media(max-width:600px){.business-card-benefits-overlay{padding:max(12px,env(safe-area-inset-top,0px)) 12px max(12px,env(safe-area-inset-bottom,0px))}.business-card-benefits-dialog{width:100%;max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}}
+
+
+/* Mi tarjeta XAMUKO: unificar el panel con Información general.
+   No altera el componente BusinessCardFace ni su tamaño, proporciones o exportación. */
+.business-card-panel{
+  border-color:#dbe7fa;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 3px 14px #0f274708;
+  color:#12203f;
+}
+.business-card-panel>.business-card-panel-heading{
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:20px;
+}
+.business-card-panel>.business-card-panel-heading>span{
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  background:#eaf1ff;
+  color:#2563eb;
+}
+.business-card-panel>.business-card-panel-heading>span svg{
+  width:25px;
+  height:25px;
+}
+.business-card-panel>.business-card-panel-heading>div{
+  flex:1 1 auto;
+  min-width:0;
+}
+.business-card-panel>.business-card-panel-heading h2{
+  margin:0;
+  color:#12203f;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:18px;
+  font-weight:750;
+  line-height:1.24;
+  letter-spacing:-.022em;
+}
+.business-card-panel>.business-card-panel-heading h2 small{
+  display:inline-block;
+  margin-left:4px;
+  vertical-align:middle;
+  font-size:10px;
+  font-weight:700;
+  line-height:1.3;
+}
+.business-card-panel>.business-card-panel-heading p{
+  margin:6px 0 0;
+  color:#5b708e;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  font-weight:400;
+  line-height:1.55;
+}
+.business-card-panel>.business-card-panel-content{
+  gap:16px;
+  min-width:0;
+}
+.business-card-panel .business-card-panel-stats{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin:0;
+  padding:0;
+  border:0;
+}
+.business-card-panel .business-card-panel-stats>div,
+.business-card-panel .business-card-panel-stats>div+div{
+  display:grid;
+  align-content:center;
+  gap:6px;
+  min-width:0;
+  min-height:84px;
+  margin:0;
+  padding:14px;
+  border:1px solid #dfebff;
+  border-radius:13px;
+  background:#f3f7ff;
+}
+.business-card-panel .business-card-panel-stats dt{
+  color:#5b708e;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  line-height:1.45;
+}
+.business-card-panel .business-card-panel-stats dd{
+  margin:0;
+  color:#1e3154;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:15px;
+  font-weight:750;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+.business-card-panel .business-card-panel-progress{
+  min-width:0;
+  padding:14px;
+  border:1px solid #dfebff;
+  border-radius:13px;
+  background:#f3f7ff;
+}
+.business-card-panel .business-card-panel-progress>div{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 12px;
+  color:#5b708e;
+  font-size:12px;
+  line-height:1.45;
+}
+.business-card-panel .business-card-panel-progress strong{
+  color:#1e5adf;
+  font-size:12px;
+  font-weight:750;
+}
+.business-card-panel .business-card-panel-progress progress{
+  display:block;
+  width:100%;
+  height:8px;
+  border:0;
+  border-radius:999px;
+  background:#dbe7fa;
+  accent-color:#2563eb;
+}
+.business-card-panel .business-card-panel-progress progress::-webkit-progress-bar{
+  border-radius:999px;
+  background:#dbe7fa;
+}
+.business-card-panel .business-card-panel-progress progress::-webkit-progress-value{
+  border-radius:999px;
+  background:#2563eb;
+}
+.business-card-panel .business-card-panel-progress progress::-moz-progress-bar{
+  border-radius:999px;
+  background:#2563eb;
+}
+.business-card-panel .business-card-panel-pending,
+.business-card-panel .business-card-panel-notice,
+.business-card-panel .business-card-panel-message{
+  color:#5b708e;
+  font-size:12px;
+  line-height:1.55;
+}
+.business-card-panel .business-card-panel-pending,
+.business-card-panel .business-card-panel-notice{
+  padding:13px 14px;
+  border:1px solid #dfebff;
+  border-radius:13px;
+  background:#f3f7ff;
+}
+.business-card-panel .business-card-panel-message{
+  padding:12px 14px;
+  border:1px solid #dbe7fa;
+  border-radius:10px;
+  background:#f3f7ff;
+  color:#1e3154;
+}
+.business-card-panel .business-card-panel-actions{
+  display:grid;
+  gap:10px;
+  min-width:0;
+}
+.business-card-panel .business-card-panel-actions>button,
+.business-card-panel .business-card-panel-actions>a{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  margin:0;
+  padding:10px 14px;
+  border-radius:10px;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.4;
+  text-align:center;
+  text-decoration:none;
+  cursor:pointer;
+}
+.business-card-panel .business-card-panel-actions>.outline-button{
+  border:1px solid #bbd0ff;
+  background:#fff;
+  color:#1e5adf;
+  box-shadow:none;
+}
+.business-card-panel .business-card-panel-actions>.outline-button:hover:not(:disabled){
+  border-color:#2563eb;
+  background:#ecf3ff;
+  color:#1d4ed8;
+}
+.business-card-panel .business-card-panel-actions>.action-button{
+  border:1px solid #2563eb;
+  background:#2563eb;
+  color:#fff;
+  box-shadow:none;
+}
+.business-card-panel .business-card-panel-actions>.action-button:hover:not(:disabled){
+  border-color:#1d4ed8;
+  background:#1d4ed8;
+}
+.business-card-panel .business-card-panel-actions>button:disabled{
+  border:1px solid #e2e8f0;
+  background:#f1f5f9;
+  color:#64748b;
+  box-shadow:none;
+  opacity:1;
+  cursor:not-allowed;
+}
+.business-card-panel .business-card-panel-actions>button:focus-visible,
+.business-card-panel .business-card-panel-actions>a:focus-visible{
+  outline:3px solid #93b4f9;
+  outline-offset:3px;
+}
+@media(min-width:601px) and (max-width:1024px){
+  .business-card-panel>.business-card-panel-heading{
+    gap:12px;
+  }
+  .business-card-panel .business-card-panel-stats{
+    gap:10px;
+  }
+  .business-card-panel .business-card-panel-stats>div,
+  .business-card-panel .business-card-panel-stats>div+div{
+    padding:12px;
+  }
+}
+@media(max-width:600px){
+  .business-card-panel{
+    border-radius:14px;
+  }
+  .business-card-panel>.business-card-panel-heading{
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .business-card-panel>.business-card-panel-heading>span{
+    flex-basis:38px;
+    width:38px;
+    height:38px;
+  }
+  .business-card-panel>.business-card-panel-heading>span svg{
+    width:23px;
+    height:23px;
+  }
+  .business-card-panel>.business-card-panel-heading h2{
+    font-size:17px;
+  }
+  .business-card-panel>.business-card-panel-heading p{
+    font-size:12px;
+  }
+  .business-card-panel .business-card-panel-stats{
+    gap:9px;
+  }
+  .business-card-panel .business-card-panel-stats>div,
+  .business-card-panel .business-card-panel-stats>div+div{
+    min-height:74px;
+    padding:12px;
+  }
+  .business-card-panel .business-card-panel-stats dt{
+    font-size:11px;
+  }
+  .business-card-panel .business-card-panel-stats dd{
+    font-size:14px;
+  }
+  .business-card-panel .business-card-panel-progress{
+    padding:12px;
+  }
+  .business-card-panel .business-card-panel-actions>button,
+  .business-card-panel .business-card-panel-actions>a{
+    min-height:44px;
+    padding:10px 12px;
+  }
+}
