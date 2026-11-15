@@ -21,7 +21,7 @@ function ContentBadge({item}:{item:AdminOfferRecord}){
     {item.adultOnly&&<span className="ac-pill-age">Solo adultos</span>}</div>;
 }
 export function AdminContentPage(){
-  const allowed=getSession()?.permissions?.includes('dashboard:read')??false;
+  const allowed=getSession()?.permissions?.includes('catalog:read')??false;
   const [params,setParams]=useSearchParams();
   const q=params.get('q')??'',kind=params.get('kind')??'',status=params.get('status')??'',
     city=params.get('city')??'',categoryId=params.get('categoryId')??'';
