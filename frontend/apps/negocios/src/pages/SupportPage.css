@@ -278,3 +278,31 @@
     transition-duration:.01ms!important;animation-duration:.01ms!important;
   }
 }
+
+
+/* Sugerencias: misma arquitectura de Soporte técnico, con acentos
+   de creatividad; se conserva el azul como color dominante. */
+.business-suggestions-page .technical-support-heading-icon {
+  background:linear-gradient(135deg,#e9edff 0%,#dce8ff 62%,#eee9ff 100%);
+  color:#245cf2;
+}
+.business-suggestions-page .technical-support-card-icon {
+  background:linear-gradient(135deg,#eaf1ff,#f1ecff);
+  color:#553cdb;
+}
+.business-suggestions-page .technical-support-guidance {
+  border-color:#dee5fb;
+  background:linear-gradient(160deg,#fafbff 0%,#eef3ff 75%,#f4f0ff 100%);
+}
+.business-suggestions-page .technical-support-guidance-icon {
+  background:#e8e9ff;
+  color:#553cdb;
+}
+.business-suggestions-page .technical-support-guidance li::before {
+  background:#e3eaff;
+  color:#1e55d7;
+}
+.business-suggestions-page .technical-support-help-icon {
+  background:#eaf1ff;
+  color:#225cf1;
+}
