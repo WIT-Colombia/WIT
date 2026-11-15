@@ -925,3 +925,376 @@
     font-size: 13px;
   }
 }
+
+/* Ubicación y modalidades: armonía tipográfica con Información general, texto HTML y SVG 4K. */
+
+/* Ubicación y modalidades: armonía tipográfica con Información general, texto HTML y SVG 4K.
+   Afecta solo a la pestaña Ubicación; no altera Información general ni la tarjeta del negocio. */
+.business-detail-page #business-panel-location {
+  --location-blue: #2563eb;
+  --location-border: #dfebff;
+  --location-surface: #f3f7ff;
+  --location-title: #12203f;
+  --location-value: #162443;
+}
+.business-detail-page #business-panel-location > .business-location-section,
+.business-detail-page #business-panel-location > .business-detail-modalities-section {
+  min-width:0;
+  padding:23px 23px 25px;
+}
+.business-detail-page #business-panel-location .business-location-heading,
+.business-detail-page #business-panel-location .business-modalities-heading {
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  flex-wrap:nowrap;
+  gap:12px;
+  margin:0 0 22px;
+}
+.business-detail-page #business-panel-location .business-location-heading-icon {
+  display:grid;
+  place-items:center;
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  color:var(--location-blue);
+  background:#eaf1ff;
+}
+.business-detail-page #business-panel-location .business-location-heading-icon svg {
+  display:block;
+  width:25px;height:25px;
+}
+.business-detail-page #business-panel-location .business-location-heading > div,
+.business-detail-page #business-panel-location .business-modalities-heading > div {
+  flex:1 1 auto;
+  min-width:0;
+}
+.business-detail-page #business-panel-location .business-location-heading h3,
+.business-detail-page #business-panel-location .business-modalities-heading h3 {
+  margin:0 0 5px;
+  color:var(--location-title);
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:18px;
+  font-weight:750;
+  line-height:1.24;
+  letter-spacing:-.022em;
+}
+.business-detail-page #business-panel-location .business-location-heading p,
+.business-detail-page #business-panel-location .business-modalities-heading p {
+  margin:0;
+  color:#5b708e;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  font-weight:400;
+  line-height:1.55;
+}
+.business-detail-page #business-panel-location .business-location-heading .business-section-edit {
+  flex:0 0 auto;
+  align-self:flex-start;
+  min-height:37px;
+  margin:0;
+  padding:8px 12px;
+  border:1px solid #bbd0ff;
+  border-radius:10px;
+  background:#fff;
+  color:#1e5adf;
+  font-size:12px;
+  font-weight:750;
+}
+.business-detail-page #business-panel-location .business-location-heading .business-section-edit:hover {
+  border-color:var(--location-blue);
+  background:#ecf3ff;
+}
+.business-detail-page #business-panel-location .business-location-facts {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px 18px;
+  min-width:0;
+}
+.business-detail-page #business-panel-location .business-location-fact,
+.business-detail-page #business-panel-location .business-location-additional {
+  display:flex;
+  align-items:center;
+  min-width:0;
+  min-height:76px;
+  gap:13px;
+  margin:0;
+  padding:15px 16px;
+  box-sizing:border-box;
+  border:1px solid var(--location-border);
+  border-radius:13px;
+  background:var(--location-surface);
+  box-shadow:none;
+}
+.business-detail-page #business-panel-location .business-location-fact-icon {
+  display:grid;
+  place-items:center;
+  flex:0 0 32px;
+  width:32px;
+  height:36px;
+  color:var(--location-blue);
+}
+.business-detail-page #business-panel-location .business-location-fact-icon svg {
+  display:block;
+  width:26px;
+  height:26px;
+  stroke-width:1.85;
+}
+.business-detail-page #business-panel-location .business-location-fact-copy {
+  flex:1 1 auto;
+  min-width:0;
+}
+.business-detail-page #business-panel-location .business-location-fact-copy h4 {
+  margin:0 0 4px;
+  color:#1e3154;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:15px;
+  font-weight:750;
+  line-height:1.35;
+  letter-spacing:normal;
+}
+.business-detail-page #business-panel-location .business-location-fact-copy p {
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--location-value);
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:13px;
+  font-weight:600;
+  line-height:1.5;
+  letter-spacing:normal;
+  overflow-wrap:anywhere;
+}
+.business-detail-page #business-panel-location .business-location-additional {
+  margin-top:14px;
+}
+.business-detail-page #business-panel-location .business-detail-static-map {
+  width:100%;
+  height:clamp(245px,26vw,360px);
+  margin-top:20px;
+  border:1px solid var(--location-border);
+  border-radius:16px;
+  overflow:hidden;
+  background:#f3f7ff;
+  box-shadow:0 8px 22px rgba(19,47,92,.045);
+}
+.business-detail-page #business-panel-location .business-detail-static-map__frame,
+.business-detail-page #business-panel-location .business-detail-static-map__trigger,
+.business-detail-page #business-panel-location .business-detail-static-map img {
+  width:100%;
+  height:100%;
+}
+.business-detail-page #business-panel-location .business-detail-static-map img {
+  display:block;
+  object-fit:cover;
+}
+.business-detail-page #business-panel-location .business-detail-static-map__expand {
+  right:12px;
+  top:12px;
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  background:rgba(15,23,42,.76);
+  color:#fff;
+}
+.business-detail-page #business-panel-location .business-detail-static-map__expand svg {
+  width:21px;
+  height:21px;
+}
+.business-detail-page #business-panel-location .business-detail-static-map__trigger:focus-visible,
+.business-detail-page #business-panel-location .business-location-heading .business-section-edit:focus-visible,
+.business-detail-page #business-panel-location .business-detail-modality-actions button:focus-visible {
+  outline:3px solid #7b3ffb;
+  outline-offset:3px;
+}
+.business-detail-page #business-panel-location > .business-detail-modalities-section {
+  border-top:1px solid #e7edf5;
+}
+.business-detail-page #business-panel-location .business-modalities-heading {
+  margin-bottom:20px;
+}
+.business-detail-page #business-panel-location .business-modalities-heading .business-location-heading-icon {
+  color:#7b3ffb;
+  background:#f0ebff;
+}
+.business-detail-page #business-panel-location .business-detail-modalities-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  margin:0;
+}
+.business-detail-page #business-panel-location .business-detail-modality-card {
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:17px;
+  min-width:0;
+  min-height:144px;
+  padding:17px;
+  box-sizing:border-box;
+  border:1px solid var(--location-border);
+  border-radius:15px;
+  background:#f8faff;
+  box-shadow:0 3px 0 #e7eeff;
+}
+.business-detail-page #business-panel-location .business-detail-modality-card-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.business-detail-page #business-panel-location .business-detail-modality-identity {
+  display:flex;
+  align-items:center;
+  gap:11px;
+  min-width:0;
+}
+.business-detail-page #business-panel-location .business-detail-modality-icon {
+  display:grid;
+  place-items:center;
+  flex:0 0 26px;
+  width:26px;
+  height:29px;
+  color:#7134ed;
+}
+.business-detail-page #business-panel-location .business-detail-modality-icon svg {
+  width:25px;height:25px;stroke-width:1.8;
+}
+.business-detail-page #business-panel-location .business-detail-modality-card-head strong {
+  color:#1e3154;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:15px;
+  font-weight:750;
+  line-height:1.35;
+}
+.business-detail-page #business-panel-location .business-detail-modality-card-head .status-pill {
+  font-size:12px;
+  line-height:1.4;
+}
+.business-detail-page #business-panel-location .business-detail-modality-actions {
+  margin-top:auto;
+  gap:8px;
+}
+.business-detail-page #business-panel-location .business-detail-modality-actions button {
+  min-height:42px;
+  padding:9px 15px;
+  border-radius:11px;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.3;
+  cursor:pointer;
+}
+.business-detail-page #business-panel-location .business-detail-modality-actions .action-button {
+  background:#7b3ffb;
+  color:#fff;
+}
+.business-detail-page #business-panel-location .business-detail-modality-actions .action-button:hover:not(:disabled){
+  background:#6831da;
+}
+.business-detail-page #business-panel-location .business-detail-modality-actions .outline-button {
+  border-color:#bfd0f8;
+  background:#fff;
+  color:#162443;
+}
+.business-detail-page #business-panel-location .business-detail-modality-actions .outline-button:hover:not(:disabled) {
+  background:#f0f5ff;
+}
+.business-detail-page #business-panel-location .business-detail-modality-actions button:disabled {
+  cursor:not-allowed;
+}
+/* Las columnas responden al ancho real de la ficha, también con panel lateral visible. */
+@container business-detail-shell (max-width:950px) {
+  .business-detail-page #business-panel-location > .business-location-section,
+  .business-detail-page #business-panel-location > .business-detail-modalities-section {
+    padding:18px 17px 20px;
+  }
+  .business-detail-page #business-panel-location .business-location-facts {
+    gap:12px;
+  }
+  .business-detail-page #business-panel-location .business-location-fact,
+  .business-detail-page #business-panel-location .business-location-additional {
+    min-height:72px;
+    gap:10px;
+    padding:13px;
+  }
+  .business-detail-page #business-panel-location .business-detail-modalities-grid{
+    gap:10px;
+  }
+  .business-detail-page #business-panel-location .business-detail-modality-card{
+    padding:13px;
+    min-height:135px;
+  }
+  .business-detail-page #business-panel-location .business-detail-modality-card-head strong{
+    font-size:14px;
+  }
+}
+@container business-detail-shell (max-width:700px) {
+  .business-detail-page #business-panel-location .business-detail-modalities-grid{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .business-detail-page #business-panel-location .business-detail-modality-card{
+    min-height:108px;
+    gap:12px;
+  }
+}
+@container business-detail-shell (max-width:560px) {
+  .business-detail-page #business-panel-location > .business-location-section,
+  .business-detail-page #business-panel-location > .business-detail-modalities-section{
+    padding:16px 14px 19px;
+  }
+  .business-detail-page #business-panel-location .business-location-heading,
+  .business-detail-page #business-panel-location .business-modalities-heading{
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:17px;
+  }
+  .business-detail-page #business-panel-location .business-location-heading > div,
+  .business-detail-page #business-panel-location .business-modalities-heading > div{
+    flex:1 1 calc(100% - 54px);
+  }
+  .business-detail-page #business-panel-location .business-location-heading h3,
+  .business-detail-page #business-panel-location .business-modalities-heading h3 {
+    font-size:17px;
+  }
+  .business-detail-page #business-panel-location .business-location-heading .business-section-edit{
+    min-height:42px;
+    margin-left:52px;
+  }
+  .business-detail-page #business-panel-location .business-location-facts {
+    grid-template-columns:minmax(0,1fr);
+    gap:9px;
+  }
+  .business-detail-page #business-panel-location .business-location-fact,
+  .business-detail-page #business-panel-location .business-location-additional {
+    min-height:68px;
+    gap:11px;
+    padding:12px 13px;
+  }
+  .business-detail-page #business-panel-location .business-location-fact-icon{
+    flex-basis:27px;
+    width:27px;
+  }
+  .business-detail-page #business-panel-location .business-location-fact-icon svg{
+    width:23px;
+    height:23px;
+  }
+  .business-detail-page #business-panel-location .business-location-fact-copy h4 {
+    font-size:14px;
+  }
+  .business-detail-page #business-panel-location .business-location-fact-copy p {
+    font-size:13px;
+  }
+  .business-detail-page #business-panel-location .business-detail-static-map {
+    height:230px;
+    margin-top:16px;
+    border-radius:13px;
+  }
+  .business-detail-page #business-panel-location .business-detail-modality-card-head strong {
+    font-size:14px;
+  }
+}
+
