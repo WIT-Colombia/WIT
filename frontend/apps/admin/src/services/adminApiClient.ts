@@ -19,7 +19,7 @@ export type AdminBusinessAnalytics = {
 };
 export function getAdminBusinessAnalytics(filters: { period: string; city: string; categoryId: string; status: string }) {
   const query = new URLSearchParams(filters);
-  return request<AdminBusinessAnalytics>('/admin/businesses/analytics?' + query.toString());
+  return request<AdminBusinessAnalytics>('/admin/business-analytics?' + query.toString());
 }
 export function listAdminBusinesses(q = '', page = 1, pageSize = 3, status = '') { const params = new URLSearchParams({ q, page: String(page), pageSize: String(pageSize) }); if (status) params.set('status', status); return request<AdminBusinessPage>(`/admin/businesses?${params.toString()}`); }
 export async function getAdminBusiness(id: string) { return (await request<{ business: AdminBusinessRecord }>(`/admin/businesses/${encodeURIComponent(id)}`)).business; }
