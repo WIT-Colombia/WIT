@@ -1,0 +1,10 @@
+# Cloudflare Pages applies these rules only to this Landing project's static responses.
+# HSTS deliberately excludes subdomains until Usuarios, Business and Admin are reviewed.
+/*
+  Content-Security-Policy: frame-ancestors 'none'; base-uri 'self'; object-src 'none'
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com 'sha256-5p7QDaf1S+4zr3oOkJgRUb0qjbW2QjtWjk0ZGUgjSz8='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; frame-src 'none'; form-action 'self'
+  Strict-Transport-Security: max-age=86400
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
