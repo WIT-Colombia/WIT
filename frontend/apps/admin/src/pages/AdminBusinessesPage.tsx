@@ -4,10 +4,16 @@ import { getAdminBusiness, getAdminDashboardStats, listAdminBusinesses, type Adm
 import { StatePanel } from '../components/common';
 import { Icon } from '../components/Icon';
 import { getSession } from '../services/adminService';
+import { AdminBusinessGrowthPanel } from './AdminBusinessGrowthPanel';
+import './AdminBusinessesRefresh.css';
 
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 10;
 const date = (value: string) => new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value));
 const count = (value: number) => value.toLocaleString('es-CO');
+const categoryName = (category: AdminBusinessRecord['category']) =>
+  category.translations.find(item => item.locale === 'es-CO')?.name ??
+  category.translations.find(item => item.locale === 'es')?.name ??
+  category.translations[0]?.name ?? category.code ?? 'Sin categoría';
 const visibilityTone: Record<string, string> = { VISIBLE: 'status-visible', HIDDEN: 'status-hidden', EXPIRED: 'status-expired', REVIEW: 'status-review' };
 const verificationTone: Record<string, string> = { NONE: 'status-none', PENDING: 'status-pending', INFORMATION: 'status-information', APPROVED: 'status-approved', REJECTED: 'status-rejected' };
 const visibilityStatusLabels: Record<string, string> = { VISIBLE: 'Visible', HIDDEN: 'Oculto', EXPIRED: 'Visibilidad vencida', REVIEW: 'En revisión' };
@@ -66,7 +72,7 @@ export function AdminBusinessesPage() {
     const fields = ['Negocio', 'Categoría', 'Visibilidad', 'Registro'];
     const rows = data?.businesses ?? [];
     const escape = (value: string) => `"${value.replaceAll('"', '""')}"`;
-    const csv = [fields, ...rows.map(item => [item.name, item.category.translations[0]?.name ?? 'Sin categoría', translatedStatus(visibilityStatusLabels, item.visibilityStatus), date(item.createdAt)])]
+    const csv = [fields, ...rows.map(item => [item.name, categoryName(item.category), translatedStatus(visibilityStatusLabels, item.visibilityStatus), date(item.createdAt)])]
       .map(row => row.map(value => escape(String(value))).join(',')).join('\n');
     const url = URL.createObjectURL(new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a'); link.href = url; link.download = 'negocios-xamuko.csv'; link.click();
@@ -86,8 +92,31 @@ export function AdminBusinessesPage() {
   const pageNumbers = Array.from({ length: Math.min(totalPages, 3) }, (_, index) => Math.max(1, Math.min(totalPages - 2, page - 1)) + index);
 
   return <div className="businesses-page">
-    <div className="business-breadcrumb"><span><Icon name="home" size={15} /> Inicio</span><Icon name="arrow" size={13} /><strong>Negocios</strong></div>
-    <div className="page-heading businesses-title-row"><div><p className="eyebrow">GESTIÓN DE PLATAFORMA</p><div className="businesses-title"><span className="businesses-title-icon"><Icon name="store" size={28} /></span><div><h1>Negocios</h1><p>Directorio administrativo consultado desde la base de datos de XAMUKO.</p></div></div></div></div>
+
+    <header className="businesses-hero" aria-labelledby="businesses-page-title">
+      <div className="businesses-hero-copy">
+        <span className="businesses-hero-eyebrow">XAMUKO ADMIN · GESTIÓN DE PLATAFORMA</span>
+        <div className="businesses-hero-heading">
+          <span className="businesses-hero-icon"><Icon name="store" size={31} /></span>
+          <div><h1 id="businesses-page-title">Negocios</h1><p>Gestiona tu directorio, supervisa sus estados y analiza el crecimiento de la plataforma desde un mismo lugar.</p></div>
+        </div>
+      </div>
+      <svg className="businesses-hero-art" viewBox="0 0 420 148" aria-hidden="true" focusable="false">
+        <defs><linearGradient id="businesses-hero-fill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#dbe7ff" /><stop offset="100%" stopColor="#ede4ff" /></linearGradient></defs>
+        <path d="M65 119C38 112 27 82 46 64c10-9 23-10 33-6C93 21 135 18 158 45c23-24 62-15 71 12 32-10 65 16 57 46-4 15-15 26-32 30H87c-9 0-16-5-22-14Z" fill="url(#businesses-hero-fill)" opacity=".8"/>
+        <rect x="109" y="52" width="105" height="76" rx="10" fill="#fff" stroke="#adc5ff" strokeWidth="3"/>
+        <path d="M98 62l17-25h93l17 25" fill="#7450e7" stroke="#5941cb" strokeWidth="3" strokeLinejoin="round"/>
+        <path d="M100 62q12 17 26 0 12 17 26 0 13 17 26 0 13 17 26 0 12 17 22 0" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round"/>
+        <rect x="131" y="88" width="34" height="40" rx="5" fill="#dbe6ff"/>
+        <rect x="175" y="88" width="27" height="23" rx="4" fill="#e9e4ff"/>
+        <path d="M232 116h133" stroke="#98b4f1" strokeWidth="2" strokeDasharray="5 6"/>
+        <path d="M245 100l28-27 27 9 27-45 35-10" fill="none" stroke="#285ff0" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="273" cy="73" r="6" fill="#fff" stroke="#285ff0" strokeWidth="3"/>
+        <circle cx="300" cy="82" r="6" fill="#fff" stroke="#285ff0" strokeWidth="3"/>
+        <circle cx="327" cy="37" r="6" fill="#fff" stroke="#285ff0" strokeWidth="3"/>
+        <circle cx="362" cy="27" r="7" fill="#fff" stroke="#743fff" strokeWidth="3"/>
+      </svg>
+    </header>
 
     <section className="business-stats businesses-summary" aria-label="Resumen de negocios">
       {(statValues.length ? statValues : [
@@ -102,7 +131,7 @@ export function AdminBusinessesPage() {
     </section>
 
     <section className="panel business-directory businesses-directory">
-      <div className="directory-heading businesses-directory-heading"><div><h2>Listado de negocios</h2><p>Administra, consulta y gestiona los negocios registrados en XAMUKO.</p></div><div className="businesses-actions"><button className="secondary-button" onClick={exportBusinesses} disabled={!rows.length}><Icon name="download" size={17} /> Exportar</button><a className="primary businesses-create" href="https://business.xamuko.com"><span aria-hidden="true">＋</span> Crear negocio</a></div></div>
+      <div className="directory-heading businesses-directory-heading"><div><h2>Listado de negocios</h2><p>Administra, consulta y gestiona los negocios registrados en XAMUKO.</p></div><div className="businesses-actions"><button className="secondary-button" onClick={exportBusinesses} disabled={!rows.length} title="Exporta los negocios visibles en la página actual"><Icon name="download" size={17} /> Exportar página</button><a className="primary businesses-create" href="https://business.xamuko.com"><span aria-hidden="true">＋</span> Crear negocio</a></div></div>
       <form className="businesses-toolbar" onSubmit={event => { event.preventDefault(); setFilter('q', input.trim()); }}>
         <label className="directory-search"><Icon name="search" size={18} /><input aria-label="Buscar por nombre del negocio" placeholder="Buscar por nombre del negocio…" value={input} onChange={event => setInput(event.target.value)} /></label>
         <label className="businesses-status-filter"><span className="sr-only">Estado</span><select value={status} onChange={event => setFilter('status', event.target.value)}><option value="">Todos los estados</option><option value="active">Activos</option><option value="review">En revisión</option><option value="inactive">Inactivos</option></select></label>
@@ -111,16 +140,16 @@ export function AdminBusinessesPage() {
       {loading ? <StatePanel kind="loading" title="Cargando negocios" message="Consultando registros reales." /> : error ? <StatePanel kind="error" title="No pudimos cargar los negocios" message={error} retry={() => setRevision(value => value + 1)} /> : data && <>
         {rows.length === 0 ? <div className="businesses-empty"><StoreIllustration /><h2>No se encontraron negocios</h2><p>Intenta ajustar los filtros de búsqueda o crear un nuevo negocio.</p><a className="primary businesses-create empty-create" href="https://business.xamuko.com"><span aria-hidden="true">＋</span> Crear primer negocio</a></div> : <>
           <div className="business-table-wrap"><table className="business-table businesses-table"><caption className="sr-only">Listado de negocios de XAMUKO</caption><thead><tr><th>#</th><th>Negocio</th><th>Categoría</th><th>Visibilidad</th><th>Registro</th><th>Acciones</th></tr></thead><tbody>{rows.map((item: AdminBusinessRecord, index: number) => {
-            const category = item.category.translations[0]?.name ?? 'Sin categoría';
+            const category = categoryName(item.category);
             const tone = visibilityTone[item.visibilityStatus] ?? 'status-review';
-            return <tr key={item.id}><td className="business-number">#{String((page - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}</td><td><Link to={`/businesses/${item.id}`} className="business-cell"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{item.createdBy.displayName || 'Administrador'}</small></div></Link></td><td><span className={`business-category ${index % 3 === 0 ? 'tools' : index % 3 === 1 ? 'food' : 'bakery'}`}><Icon name={index % 3 === 0 ? 'settings' : index % 3 === 1 ? 'grid' : 'star'} size={14} />{category}</span></td><td><span className={`badge ${tone}`}><span aria-hidden="true">●</span> {translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</span></td><td className="business-date">{date(item.createdAt)}</td><td><div className="business-row-actions"><Link className="icon-button businesses-view" to={`/businesses/${item.id}`} aria-label={`Ver ${item.name}`}><Icon name="eye" size={18} /></Link><button className="icon-button businesses-view" type="button" aria-label={`Más acciones para ${item.name}`} title="Más acciones"><Icon name="more" size={18} /></button></div></td></tr>;
+            return <tr key={item.id}><td className="business-number">#{String((page - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}</td><td><Link to={`/businesses/${item.id}`} className="business-cell"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{item.createdBy.displayName || 'Administrador'}</small></div></Link></td><td><span className="business-category"><Icon name="grid" size={14} />{category}</span></td><td><span className={`badge ${tone}`}><span aria-hidden="true">●</span> {translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</span></td><td className="business-date">{date(item.createdAt)}</td><td><div className="business-row-actions"><Link className="icon-button businesses-view" to={`/businesses/${item.id}`} aria-label={`Ver ${item.name}`}><Icon name="eye" size={18} /></Link></div></td></tr>;
           })}</tbody></table></div>
-          <div className="business-mobile-list businesses-mobile-list">{rows.map(item => <Link to={`/businesses/${item.id}`} className="business-mobile-card" key={item.id}><div className="mobile-business-heading"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{item.category.translations[0]?.name ?? 'Sin categoría'} · {item.location?.cityName ?? 'Sin ubicación'}</small></div><Icon name="arrow" size={17} /></div><div className="mobile-business-badges"><span className={`badge ${visibilityTone[item.visibilityStatus] ?? 'status-review'}`}>{translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</span></div><small className="mobile-expiry">Registro: {date(item.createdAt)}</small></Link>)}</div>
+          <div className="business-mobile-list businesses-mobile-list">{rows.map(item => <Link to={`/businesses/${item.id}`} className="business-mobile-card" key={item.id}><div className="mobile-business-heading"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{categoryName(item.category)} · {item.location?.cityName ?? 'Sin ubicación'}</small></div><Icon name="arrow" size={17} /></div><div className="mobile-business-badges"><span className={`badge ${visibilityTone[item.visibilityStatus] ?? 'status-review'}`}>{translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</span></div><small className="mobile-expiry">Registro: {date(item.createdAt)}</small></Link>)}</div>
           <div className="business-pagination businesses-pagination"><span>Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min((page - 1) * PAGE_SIZE + rows.length, total)} de {count(total)} negocios</span><div><button className="secondary-button page-arrow" aria-label="Página anterior" disabled={page <= 1} onClick={() => goToPage(page - 1)}>‹</button>{pageNumbers.map(number => <button className={`page-number ${page === number ? 'selected' : ''}`} key={number} aria-current={page === number ? 'page' : undefined} onClick={() => goToPage(number)}>{number}</button>)}{totalPages > 3 && <><span className="page-ellipsis">…</span><button className="page-number" onClick={() => goToPage(totalPages)}>{totalPages}</button></>}<button className="secondary-button page-arrow" aria-label="Página siguiente" disabled={page >= totalPages} onClick={() => goToPage(page + 1)}>›</button></div></div>
         </>}
       </>}
     </section>
-    {rows.length > 0 && !loading && !error && data && <section className="businesses-empty-preview" aria-hidden="true"><StoreIllustration /><strong>No se encontraron negocios</strong><span>Intenta ajustar los filtros de búsqueda o crear un nuevo negocio.</span></section>}
+    <AdminBusinessGrowthPanel />
   </div>;
 }
 
