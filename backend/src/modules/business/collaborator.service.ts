@@ -186,9 +186,9 @@ export async function setPermissions(userId: string, id: string, values: string[
   });
   return { ok: true };
 }
-export async function listNotifications(userId: string) {
+export async function listNotifications(userId: string, businessId?: string) {
   const rows = await prisma.businessNotification.findMany({
-    where: { userId },
+    where: { userId, ...(businessId ? { businessId } : {}) },
     include: {
       business: { select: { id: true, name: true, profilePhoto: { select: { id: true } }, memberships: { where: { role: 'OWNER', status: 'ACTIVE' }, select: { user: { select: { displayName: true } } }, take: 1 } } },
       membership: { select: { id: true, status: true, expiresAt: true, permissions: true } },
@@ -209,9 +209,19 @@ export async function listNotifications(userId: string) {
  * Remove only the authenticated recipient's inbox entry. The related
  * membership, invitation and ownership-transfer workflows are untouched.
  */
-export async function deleteNotification(userId: string, id: string) {
-  const deleted = await prisma.businessNotification.deleteMany({ where: { id, userId } });
+export async function deleteNotification(userId: string, id: string, businessId?: string) {
+  const deleted = await prisma.businessNotification.deleteMany({ where: { id, userId, ...(businessId ? { businessId } : {}) } });
   if (!deleted.count) throw new AppError(404, 'NOTIFICATION_NOT_FOUND', 'Notificación no encontrada.');
   return { deleted: true };
 }
-export async function markNotificationRead(userId: string,id:string) { const notification=await prisma.businessNotification.findFirst({where:{id,userId},select:{id:true,readAt:true}});if(!notification)throw new AppError(404,'NOTIFICATION_NOT_FOUND','Notificación no encontrada.');if(!notification.readAt)await prisma.businessNotification.update({where:{id},data:{readAt:new Date()}});return {ok:true}; }
+export async function markNotificationRead(userId: string, id: string, businessId?: string) {
+  const notification = await prisma.businessNotification.findFirst({
+    where: { id, userId, ...(businessId ? { businessId } : {}) },
+    select: { id: true, readAt: true },
+  });
+  if (!notification) throw new AppError(404, 'NOTIFICATION_NOT_FOUND', 'Notificación no encontrada.');
+  if (!notification.readAt) await prisma.businessNotification.update({
+    where: { id }, data: { readAt: new Date() },
+  });
+  return { ok: true };
+}
