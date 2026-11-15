@@ -18,6 +18,32 @@ export function BusinessPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retryAttempt, setRetryAttempt] = useState(0);
+  const [transfers, setTransfers] = useState<Awaited<ReturnType<typeof businessApi.listReceivedOwnershipTransfers>>["transfers"]>([]);
+  const [transferChoice, setTransferChoice] = useState<{ id: string; accept: boolean } | null>(null);
+  const [transferBusy, setTransferBusy] = useState(false);
+  const [transferError, setTransferError] = useState("");
+  useEffect(() => {
+    if (authState.status !== "authenticated") { setTransfers([]); return; }
+    let active = true;
+    void businessApi.listReceivedOwnershipTransfers().then(({ transfers: incoming }) => {
+      if (active) setTransfers(incoming.filter(item => item.status === "PENDING"));
+    }).catch(() => { if (active) setTransferError("No se pudieron consultar las transferencias de propiedad."); });
+    return () => { active = false; };
+  }, [authState.status]);
+  const respondTransfer = async (id: string, accept: boolean) => {
+    if (transferBusy) return;
+    setTransferBusy(true); setTransferError("");
+    try {
+      await businessApi.respondOwnershipTransfer(id, accept);
+      const next = (await businessApi.list()).businesses.map(toBusinessDetails);
+      setBusinesses(next);
+      if (!business.id && next[0]) setBusiness(next[0]);
+      setTransfers(current => current.filter(item => item.id !== id));
+      setTransferChoice(null);
+    } catch (cause) {
+      setTransferError(cause instanceof Error ? cause.message : "No fue posible responder la transferencia.");
+    } finally { setTransferBusy(false); }
+  };
   const [invitations, setInvitations] = useState<PersistedBusinessNotification[]>([]);
   const [invitationChoice, setInvitationChoice] = useState<{ id: string; accept: boolean } | null>(null);
   const [invitationBusy, setInvitationBusy] = useState(false);
@@ -103,5 +129,25 @@ export function BusinessPage() {
         </div></article>)}
     </section>}
     {invitationError && <div className="form-error" role="alert">{invitationError}</div>}
+    {transfers.length > 0 && <section className="business-invitations surface-card" aria-labelledby="business-transfers-title">
+      <div className="card-heading"><div><h2 id="business-transfers-title">Transferencias de propiedad pendientes</h2>
+        <p>Solicitudes dirigidas a tu cuenta. Al aceptar asumirás la propiedad del negocio; estas solicitudes no se mezclan con sus notificaciones.</p></div>
+        <span className="business-invitation-count">{transfers.length} pendiente{transfers.length === 1 ? "" : "s"}</span></div>
+      {transfers.map(item => <article className="business-invitation-row" key={item.id}>
+        <div className="business-invitation-information"><strong>{item.business.name}</strong>
+          <span>Solicitud de transferencia enviada por {item.fromUser.displayName}.</span>
+          <small>Recibida el {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(item.requestedAt))}</small>
+        </div>
+        <div className="business-invitation-buttons">{transferChoice?.id === item.id ? <>
+          <span>{transferChoice.accept ? "¿Confirmas que aceptarás la propiedad de este negocio?" : "¿Rechazar esta transferencia?"}</span>
+          <button type="button" className={transferChoice.accept ? "action-button" : "danger-button"}
+            disabled={transferBusy} onClick={() => void respondTransfer(item.id, transferChoice.accept)}>{transferBusy ? "Procesando…" : "Confirmar"}</button>
+          <button type="button" className="outline-button" disabled={transferBusy} onClick={() => setTransferChoice(null)}>Cancelar</button>
+        </> : <>
+          <button type="button" className="action-button" disabled={transferBusy} onClick={() => setTransferChoice({ id: item.id, accept: true })}>Aceptar</button>
+          <button type="button" className="outline-button" disabled={transferBusy} onClick={() => setTransferChoice({ id: item.id, accept: false })}>Rechazar</button>
+        </>}</div></article>)}
+    </section>}
+    {transferError && <div className="form-error" role="alert">{transferError}</div>}
     <section className="business-list-surface surface-card"><div className="card-heading"><div><h2>Tus negocios</h2><p>Selecciona uno para consultar toda su información o crea uno nuevo.</p></div><button className="action-button" type="button" onClick={() => navigate("/mis-negocios/nuevo")}>＋ Crear negocio</button></div>{loading && <p className="auth-status">Cargando tus negocios…</p>}{error && <div className="form-error" role="alert"><p>{error}</p><button className="outline-button" type="button" onClick={() => setRetryAttempt(value => value + 1)}>Reintentar</button></div>}{!loading && !error && <div className="business-list">{listedBusinesses.map(({ item, index }) => { const cover = item.coverImage || item.images?.[0] || ""; const publicAddress = item.locationVisibility === "PUBLIC" && item.address.trim(); return <article className={`business-list-item${item === business ? " active" : ""}`} key={item.id ?? `${item.name}-${index}`}><button type="button" className="business-list-select" onClick={() => selectBusiness(item, index)}><span className="business-list-icon">{cover ? <PersistedPhoto src={cover} alt="" /> : item.name.charAt(0).toUpperCase()}</span><span className="business-list-copy"><strong>{item.name}</strong><PioneerBadge pioneerNumber={item.pioneerNumber} />{item.sede?.trim() && <small className="business-list-sede">Sede {item.sede.trim()}</small>}<small>{formatCategoryName(item.category)} · {item.city || "Ciudad no registrada"}</small>{publicAddress ? <small className="business-list-address">{item.address}</small> : <small className="business-list-address">{item.locationVisibility === "PUBLIC" ? "Ubicación pendiente" : "Atención sin dirección pública"}</small>}{/* status indicators intentionally remain unchanged */}<BusinessIndicatorRow business={item} /><em className="business-role-badge">{item.role}</em></span></button><div className="business-list-actions"><details className="business-list-menu"><summary>Opciones</summary><button className="business-duplicate-button" type="button" onClick={() => navigate(`/mis-negocios/nuevo?duplicar=${index}`)}>Duplicar negocio</button></details></div></article>; })}{listedBusinesses.length === 0 && <div className="business-empty-state"><h3>¡Comienza con tu primer negocio!</h3><p>Registra tu negocio en XAMUKO y empieza a conectar con personas que buscan tus productos o servicios.</p></div>}</div>}</section></>;
 }
