@@ -71,7 +71,22 @@ adminAuthRouter.get('/me/avatar', async (request, response, next) => {
     response.type(avatar.mimeType).send(avatar.content);
   } catch (error) { next(error); }
 });
-adminAuthRouter.post('/logout', async (request, response, next) => { try { await requireAdminSession(request); await revokeAdminSession(request, response); response.status(204).send(); } catch (error) { next(error); } });
+// Logout is idempotent: even an expired, revoked or no-longer-authorized
+// Admin session must clear its scoped HttpOnly cookie. Valid sessions still
+// require the CSRF check in requireAdminSession (and a trusted Origin).
+adminAuthRouter.post('/logout', async (request, response, next) => {
+  try {
+    try {
+      await requireAdminSession(request);
+    } catch (error) {
+      const noUsableSession = error instanceof AppError &&
+        (error.status === 401 || (error.status === 403 && error.code === 'ADMIN_ACCESS_DENIED'));
+      if (!noUsableSession) throw error;
+    }
+    await revokeAdminSession(request, response);
+    response.status(204).end();
+  } catch (error) { next(error); }
+});
 
 adminAuthRouter.get('/passkey/activation/options', async (request, response, next) => { try { response.json(await beginPasskeyActivation(request, response)); } catch (error) { next(error); } });
 adminAuthRouter.post('/passkey/activation/verify', async (request, response, next) => { try { response.json(await finishPasskeyActivation(request)); } catch (error) { next(error); } });
