@@ -110,6 +110,38 @@ test('directorio de usuarios exige sesión Admin, muestra perfiles y protege la 
   }
 });
 
+test('Contenido de Admin exige permisos y devuelve directorio, filtros y evolución reales', async () => {
+  const anonymous = await request('/api/v1/admin/content-insights?period=6m');
+  assert.equal(anonymous.status, 401);
+  const anonymousPhoto = await request('/api/v1/admin/content-photos/fotografia-privada');
+  assert.equal(anonymousPhoto.status, 401);
+  const fixture = await createAdminFixture();
+  try {
+    const session = await createAdminSession(fixture.userId);
+    const headers = { cookie: session.cookie };
+    const list = await request('/api/v1/admin/content?page=1&kind=PRODUCT', { headers });
+    assert.equal(list.status, 200);
+    const listing = await list.json() as any;
+    assert.ok(Array.isArray(listing.offers));
+    assert.equal(listing.pagination.page, 1);
+    assert.equal(typeof listing.pagination.total, 'number');
+    const response = await request('/api/v1/admin/content-insights?period=6m', { headers });
+    assert.equal(response.status, 200);
+    const stats = await response.json() as any;
+    assert.equal(stats.series.length, 6);
+    assert.equal(typeof stats.totals.products, 'number');
+    assert.equal(typeof stats.totals.services, 'number');
+    assert.ok(Array.isArray(stats.filters.categories));
+    assert.ok(Array.isArray(stats.filters.cities));
+    const missing = await request('/api/v1/admin/content/' + 'no-existe', { headers });
+    assert.equal(missing.status, 404);
+    const missingPhoto = await request('/api/v1/admin/content-photos/' + 'no-existe', { headers });
+    assert.equal(missingPhoto.status, 404);
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
 test('evolución de negocios usa una ruta propia, requiere Admin y entrega meses reales', async () => {
   const anonymous = await request('/api/v1/admin/business-analytics?period=6m');
   assert.equal(anonymous.status, 401);
