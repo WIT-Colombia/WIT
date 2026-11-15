@@ -3273,3 +3273,21 @@ body>.business-image-editor-overlay .business-image-editor-actions>.action-butto
     max-height:150px;
   }
 }
+
+/* Números explícitamente enlazados, sin subrayado en escritorio, iPad o móvil. */
+.business-detail-page #business-panel-contact .business-contact-info-field .business-reference-value>a.business-contact-number-link,
+.business-detail-page #business-panel-contact .business-contact-info-field .business-reference-value>a.business-contact-number-link:any-link,
+.business-detail-page #business-panel-contact .business-contact-info-field .business-reference-value>a.business-contact-number-link:hover,
+.business-detail-page #business-panel-contact .business-contact-info-field .business-reference-value>a.business-contact-number-link:focus,
+.business-detail-page #business-panel-contact .business-contact-info-field .business-reference-value>a.business-contact-number-link:active{
+  display:inline;
+  color:inherit!important;
+  font:inherit;
+  text-decoration:none!important;
+  text-decoration-line:none!important;
+  -webkit-text-decoration:none!important;
+  -webkit-text-decoration-line:none!important;
+  border-bottom:0!important;
+  box-shadow:none!important;
+  -webkit-tap-highlight-color:rgba(37,99,235,.10);
+}
