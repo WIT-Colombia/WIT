@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { decideOperationalRecord, listOperationalRecords, type OperationalKind, type OperationalRecord, type OperationalStatus } from '../services/adminApiClient';
 import './OperationalInboxPage.css';
 import { Icon } from '../components/Icon';
+import { SupportDecisionDialog } from '../components/SupportDecisionDialog';
 
 const config: Record<OperationalKind, { title: string; description: string }> = {
   needs: { title: 'Necesidades de usuarios', description: 'Solicitudes recibidas desde «¿Qué necesitas encontrar?» en XAMUKO Usuarios.' },
@@ -13,6 +14,13 @@ const config: Record<OperationalKind, { title: string; description: string }> = 
 const labels: Record<OperationalStatus, string> = {
   PENDING: 'Pendiente', UNDER_REVIEW: 'En revisión', RESOLVED: 'Resuelto', REJECTED: 'Rechazado',
 };
+const reasonLabels: Record<string,string> = {
+  IMPERSONATION:'Suplantación', FALSE_INFORMATION:'Información falsa',
+  SUSPECTED_FRAUD:'Posible fraude', INAPPROPRIATE_CONTENT:'Contenido inapropiado',
+  WRONG_INFORMATION:'Información incorrecta', WRONG_IMAGE:'Imagen incorrecta',
+  UNAVAILABLE:'No disponible', OTHER:'Otro motivo',
+};
+const readable = (value: string) => reasonLabels[value] ?? value;
 const date = (value: string) => {
   const d = new Date(value);
   return Number.isFinite(d.getTime()) ? d.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
@@ -32,6 +40,7 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirmation, setConfirmation] = useState('');
+  const [decision, setDecision] = useState<OperationalStatus | null>(null);
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
@@ -44,14 +53,15 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
   useEffect(() => { void load(); }, [load]);
   useEffect(() => { setSelected(null); setConfirmation(''); setNote(''); }, [kind, page, status, search]);
   const chosen = records.find(record => record.id === selected);
-  async function decide(next: OperationalStatus) {
-    if (!chosen || busy || (['RESOLVED', 'REJECTED'].includes(next) && note.trim().length < 10)) return;
+  async function decide(next: OperationalStatus, justification: string) {
+    if (!chosen || busy) return;
     setBusy(true); setError(''); setConfirmation('');
     try {
-      await decideOperationalRecord(kind, chosen.id, next, note.trim());
-      setConfirmation('La decisión quedó registrada con trazabilidad.');
+      await decideOperationalRecord(kind, chosen.id, next, justification);
+      setDecision(null); setNote('');
+      setConfirmation('Decisión registrada. Se generó una notificación interna para los destinatarios identificados.');
       await load();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar la decisión.'); }
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar la decisión.'); throw cause; }
     finally { setBusy(false); }
   }
   return <section className="ops-inbox" aria-labelledby="ops-title">
@@ -75,7 +85,7 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
       <thead><tr><th>Radicado</th><th>Fecha</th><th>Asunto</th><th>Origen</th><th>Estado</th><th>Detalle</th></tr></thead>
       <tbody>{records.map(record => <tr key={record.id}>
         <td title={record.id}>{record.id.slice(0, 8)}</td><td>{date(record.createdAt)}</td>
-        <td><strong>{record.title}</strong><small>{record.category}</small></td>
+        <td><strong>{record.title}</strong><small>{readable(record.category)}</small></td>
         <td>{record.reporter}<small>{record.context}</small></td>
         <td>{labels[record.status]}</td>
         <td><button type="button" aria-expanded={selected === record.id} onClick={() => { setSelected(current => current === record.id ? null : record.id); setNote(record.decisionNote ?? ''); }}>Ver y gestionar</button></td>
@@ -84,14 +94,27 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
     {!loading && chosen && <section className="ops-detail" aria-label="Detalle de solicitud">
       <header><div><h2>{chosen.title}</h2><small>Radicado: {chosen.id}</small></div><button type="button" onClick={() => setSelected(null)}>Cerrar</button></header>
       <dl><div><dt>Fecha</dt><dd>{date(chosen.createdAt)}</dd></div><div><dt>Solicitante</dt><dd>{chosen.reporter}</dd></div>
-        <div><dt>Origen</dt><dd>{chosen.context}</dd></div><div><dt>Motivo o tema</dt><dd>{chosen.category}</dd></div>
+        <div><dt>Origen</dt><dd>{chosen.context}</dd></div><div><dt>Motivo o tema</dt><dd>{readable(chosen.category)}</dd></div>
         <div><dt>Descripción</dt><dd>{chosen.description || 'No se proporcionaron detalles adicionales.'}</dd></div><div><dt>Estado actual</dt><dd>{labels[chosen.status]}</dd></div></dl>
       <label className="ops-note">Observación administrativa<textarea value={note} onChange={event => setNote(event.target.value)} maxLength={1500} rows={4} placeholder="Registra la justificación de tu decisión" /></label>
-      <p className="ops-hint">Para resolver o rechazar, escribe una justificación de al menos 10 caracteres. La decisión quedará auditada.</p>
+      <p className="ops-hint">Selecciona una decisión y confírmala en la ventana de revisión. La observación será obligatoria y quedará auditada.</p>
       <div className="ops-actions">{(['UNDER_REVIEW', 'RESOLVED', 'REJECTED'] as const).map(next =>
-        <button key={next} type="button" disabled={busy || next === chosen.status || ((next === 'RESOLVED' || next === 'REJECTED') && note.trim().length < 10)} onClick={() => void decide(next)}>{busy ? 'Guardando…' : labels[next]}</button>
+        <button key={next} type="button" disabled={busy || next === chosen.status || ['RESOLVED','REJECTED'].includes(chosen.status)}
+          onClick={() => setDecision(next)}>{labels[next]}</button>
       )}</div>
     </section>}
+    {decision && chosen && <SupportDecisionDialog
+      title={decision === 'UNDER_REVIEW' ? 'Iniciar revisión' : decision === 'RESOLVED' ? 'Resolver solicitud' : 'Rechazar solicitud'}
+      description={decision === 'RESOLVED'
+        ? 'Esta acción cierra el caso administrativamente. No equivale por sí sola a sancionar o eliminar un negocio o una publicación.'
+        : decision === 'REJECTED' ? 'Esta acción cierra el caso sin acoger el reporte o solicitud.'
+        : 'Se cambiará el estado a «En revisión» para iniciar el seguimiento administrativo.'}
+      affected={chosen.title}
+      confirmWord={decision === 'RESOLVED' ? 'RESOLVER' : decision === 'REJECTED' ? 'RECHAZAR' : 'REVISAR'}
+      initialReason={note}
+      onClose={() => setDecision(null)}
+      onConfirm={reason => decide(decision, reason)}
+    />}
     {!loading && totalPages > 1 && <nav className="ops-pagination" aria-label="Paginación">
       <button type="button" onClick={() => setPage(x => Math.max(1, x - 1))} disabled={page <= 1}>Anterior</button>
       <span>Página {page} de {totalPages}</span>
