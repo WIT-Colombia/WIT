@@ -128,9 +128,9 @@ function CardAvatar({ src }: { src?: string }) {
   </div>;
 }
 
-type Props = { business: BusinessDetails; level?: BusinessCardLevel; publicUrl?: string | null; qrImageUrl?: string | null; qrIsPermanent?: boolean; founderNumber?: number | null };
+type Props = { business: BusinessDetails; level?: BusinessCardLevel; publicUrl?: string | null; qrImageUrl?: string | null; qrIsPermanent?: boolean; founderNumber?: number | null; showSede?: boolean };
 
-export function BusinessCardFace({ business, level = "BASIC", publicUrl = null, qrImageUrl = null, qrIsPermanent = false, founderNumber = null }: Props) {
+export function BusinessCardFace({ business, level = "BASIC", publicUrl = null, qrImageUrl = null, qrIsPermanent = false, founderNumber = null, showSede = true }: Props) {
   const hasPublicDestination = Boolean(publicUrl?.trim() && qrImageUrl?.trim());
   const sede = business.sede?.trim();
   const sedeLabel = sede ? (/^sede\b/i.test(sede) ? sede : `Sede ${sede}`) : null;
@@ -144,7 +144,7 @@ export function BusinessCardFace({ business, level = "BASIC", publicUrl = null, 
     <div className="business-digital-card__identity">
       <h3 title={business.name}>{business.name}</h3>
       <PioneerBadge pioneerNumber={business.pioneerNumber} />
-      {sedeLabel && <p>{sedeLabel}</p>}
+      {showSede && sedeLabel && <p>{sedeLabel}</p>}
     </div>
     <div className="business-digital-card__meta">
       {business.category && <span title={formatCategoryName(business.category)}><CardIcon name={/barber|peluquer/i.test(business.category) ? "scissors" : "store"} /><span className="business-digital-card__meta-text">{formatCategoryName(business.category)}</span></span>}
