@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { decideOperationalRecord, listOperationalRecords, type OperationalKind, type OperationalRecord, type OperationalStatus } from '../services/adminApiClient';
 import './OperationalInboxPage.css';
 import { Icon } from '../components/Icon';
@@ -120,6 +121,10 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
       <dl><div><dt>Fecha</dt><dd>{date(chosen.createdAt)}</dd></div><div><dt>Solicitante</dt><dd>{chosen.reporter}</dd></div>
         <div><dt>Origen</dt><dd>{chosen.context}</dd></div><div><dt>Motivo o tema</dt><dd>{readable(chosen.category)}</dd></div>
         <div><dt>Descripción</dt><dd>{chosen.description || 'No se proporcionaron detalles adicionales.'}</dd></div><div><dt>Estado actual</dt><dd>{labels[chosen.status]}</dd></div></dl>
+      {chosen.targetPath && <div className="ops-record-link"><Icon name={kind === 'offer-reports' ? 'box' : 'store'} size={19}/>
+        <div><strong>Registro vinculado</strong><small>Abre la ficha para consultar los antecedentes o aplicar medidas sobre el contenido.</small></div>
+        <Link to={chosen.targetPath}>{chosen.targetLabel ?? 'Consultar ficha'} <Icon name="arrow" size={15}/></Link>
+      </div>}
       <label className="ops-note">Observación administrativa<textarea value={note} onChange={event => setNote(event.target.value)} maxLength={1500} rows={4} placeholder="Registra la justificación de tu decisión" /></label>
       <p className="ops-hint">Selecciona una decisión y confírmala en la ventana de revisión. La observación será obligatoria y quedará auditada.</p>
       <div className="ops-actions">{(['UNDER_REVIEW', 'RESOLVED', 'REJECTED'] as const).map(next =>
