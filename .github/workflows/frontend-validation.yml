@@ -69,6 +69,9 @@ jobs:
       - name: Check Business product editor on iPhone and iPad
         run: node scripts/check-business-product-editor.mjs
 
+      - name: Check Business promotions dialogs on desktop, iPad and iPhone
+        run: node scripts/check-business-promotions-responsive.mjs
+
       - name: Check Admin sidebar in desktop and mobile browsers
         run: node scripts/check-admin-sidebar.mjs
 
