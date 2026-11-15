@@ -1,13 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import "./SupportPage.css";
-import { PageHeader } from "../components/common/PageHeader";
 import { requestJson } from "../services/businessApiClient";
 import { useBusinessStore } from "../services/businessStore";
 
 type SupportMode = "support" | "suggestion";
 
-type TechnicalIconName = "headset" | "message" | "document" | "send" | "check" | "help" | "arrow" | "shield";
+type TechnicalIconName = "headset" | "message" | "document" | "send" | "check" | "help" | "arrow" | "shield" | "bulb" | "sparkles";
 
 function TechnicalIcon({ name }: { name: TechnicalIconName }) {
   const paths: Record<TechnicalIconName, string> = {
@@ -19,6 +18,8 @@ function TechnicalIcon({ name }: { name: TechnicalIconName }) {
     help: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM9.5 9a2.5 2.5 0 1 1 4 2c-1 .8-1.5 1.4-1.5 2.7M12 17h.01",
     arrow: "M5 12h14m-6-6 6 6-6 6",
     shield: "M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5l-8-3Zm-4 9 3 3 5-5",
+    bulb: "M9 18h6m-5 3h4M9 15c-.1-2-3-3.4-3-7a6 6 0 0 1 12 0c0 3.6-2.9 5-3 7H9Z",
+    sparkles: "m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Zm7 13 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z",
   };
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>;
 }
@@ -107,5 +108,65 @@ export function SupportPage({ mode = "support" }: { mode?: SupportMode }) {
       </aside>
     </div>
   </div>;
-  return <><PageHeader eyebrow={support ? "SOPORTE TÉCNICO" : "COMUNIDAD XAMUKO"} title={support ? "¿En qué podemos ayudarte?" : "Comparte tus ideas"} description={support ? "Cuéntanos qué ocurre y te ayudaremos a resolverlo paso a paso." : "Tus sugerencias ayudan a mejorar XAMUKO para todos los negocios."} /><div className="support-page-layout"><section className="surface-card support-hero-card"><div className={`support-hero-icon ${support ? "is-support" : "is-suggestion"}`} aria-hidden="true">{support ? "✦" : "✎"}</div><div><h2>{support ? "Estamos para ayudarte" : "Construyamos XAMUKO juntos"}</h2><p>{support ? "Describe el problema con el mayor detalle posible. Incluye la pantalla donde ocurre y qué esperabas ver." : "Cuéntanos qué cambiarías, qué te gustaría añadir o qué haría más fácil administrar tu negocio."}</p></div></section><section className="surface-card support-form-card"><div className="card-heading"><div><h2>{support ? "Crear solicitud de soporte" : "Enviar sugerencia"}</h2><p>{support ? "Tu solicitud se registrará directamente en XAMUKO Admin." : "Tu sugerencia llegará directamente a XAMUKO Admin."}</p></div></div><form onSubmit={submit} className="support-form"><label className="form-field"><span>{support ? "Tema del problema" : "Área de la sugerencia"}</span><select value={topic} onChange={event => setTopic(event.target.value)}>{topics.map(item => <option key={item}>{item}</option>)}</select></label><label className="form-field"><span>{support ? "Asunto (opcional)" : "Título de la idea (opcional)"}</span><input value={subject} onChange={event => setSubject(event.target.value)} maxLength={120} placeholder={support ? "Ej. No puedo actualizar mi portada" : "Ej. Vista previa de publicaciones"} /></label><label className="form-field"><span>{support ? "Cuéntanos qué ocurre" : "Describe tu idea"}</span><textarea value={details} onChange={event => setDetails(event.target.value)} required minLength={10} maxLength={2000} rows={7} placeholder={support ? "Indica los pasos que realizaste y el resultado que obtuviste." : "Explica cómo funcionaría y qué beneficio tendría para tu negocio."} /></label><div className="support-form-footer"><small>{details.length}/2000 caracteres</small><button className="action-button" type="submit" disabled={sending || details.trim().length < 10}>{sending ? "Enviando…" : support ? "Enviar solicitud" : "Enviar sugerencia"} <span aria-hidden="true">→</span></button></div>{sendError && <p className="support-form-notice" role="alert">{sendError}</p>}{sent && <p className="support-form-notice" role="status">Solicitud recibida en XAMUKO Admin. Radicado: {receipt}</p>}</form></section><section className="support-contact-card"><span aria-hidden="true">✓</span><div><strong>Antes de escribirnos</strong><p>Revisa el Centro de ayuda: muchas respuestas están disponibles allí de inmediato.</p></div></section></div></>;
+  return <div className="business-support-technical business-suggestions-page">
+    <header className="technical-support-heading">
+      <span className="technical-support-eyebrow">COMUNIDAD XAMUKO</span>
+      <div className="technical-support-heading-main">
+        <span className="technical-support-heading-icon"><TechnicalIcon name="bulb" /></span>
+        <div><h1>Sugerencias</h1><p>Comparte tus ideas para mejorar XAMUKO Business y facilitar la gestión de tu negocio.</p></div>
+      </div>
+    </header>
+
+    <div className="technical-support-grid">
+      <section className="surface-card technical-support-form-card" aria-labelledby="business-suggestions-form-title">
+        <div className="technical-support-card-heading">
+          <span className="technical-support-card-icon"><TechnicalIcon name="sparkles" /></span>
+          <div><span className="technical-support-card-eyebrow">TU OPINIÓN CUENTA</span><h2 id="business-suggestions-form-title">Comparte tu propuesta</h2><p>Cuéntanos qué añadirías o mejorarías. Tu sugerencia se registrará en XAMUKO Admin.</p></div>
+        </div>
+        <form onSubmit={submit} className="technical-support-form">
+          <div className="technical-support-fields-row">
+            <label className="form-field">
+              <span>Área de la sugerencia <b aria-hidden="true">*</b></span>
+              <select value={topic} onChange={event => setTopic(event.target.value)} required>{topics.map(item => <option key={item} value={item}>{item}</option>)}</select>
+            </label>
+            <label className="form-field">
+              <span>Título de la idea (opcional)</span>
+              <input type="text" maxLength={120} value={subject} onChange={event => setSubject(event.target.value)} placeholder="Ej. Mejorar la gestión del catálogo" />
+            </label>
+          </div>
+          <label className="form-field technical-support-description">
+            <span>Describe tu idea <b aria-hidden="true">*</b></span>
+            <textarea value={details} onChange={event => setDetails(event.target.value)} required minLength={10} maxLength={2000} rows={7} placeholder="Explica qué cambiarías, cómo te gustaría que funcionara y qué beneficio tendría para tu negocio." />
+            <small>Incluye ejemplos si ayudan a entender tu propuesta. No compartas contraseñas ni datos sensibles.</small>
+          </label>
+          <div className="technical-support-form-bottom">
+            <span className="technical-support-character-count">{details.length}/2000 caracteres</span>
+            <button className="technical-support-submit" type="submit" disabled={sending || details.trim().length < 10}><TechnicalIcon name="send" />{sending ? "Enviando sugerencia…" : "Enviar sugerencia"}</button>
+          </div>
+          {sendError && <p className="technical-support-notice is-error" role="alert">{sendError}</p>}
+          {sent && <div className="technical-support-notice is-success" role="status"><TechnicalIcon name="check" /><span><strong>Sugerencia recibida en XAMUKO Admin.</strong> Radicado: {receipt}</span></div>}
+        </form>
+      </section>
+
+      <aside className="technical-support-aside" aria-label="Consejos y recursos">
+        <section className="technical-support-guidance">
+          <span className="technical-support-guidance-icon"><TechnicalIcon name="bulb" /></span>
+          <h2>De una idea a una propuesta clara</h2>
+          <p>Estos tres puntos pueden ayudarnos a comprender mejor tu sugerencia.</p>
+          <ol>
+            <li><strong>¿Qué mejorarías?</strong><span>Señala la función, proceso o pantalla.</span></li>
+            <li><strong>¿Cómo lo imaginas?</strong><span>Cuéntanos cómo debería funcionar.</span></li>
+            <li><strong>¿Qué beneficio aportaría?</strong><span>Explica cómo facilitaría tu trabajo.</span></li>
+          </ol>
+        </section>
+        <section className="technical-support-help-card">
+          <span className="technical-support-help-icon"><TechnicalIcon name="headset" /></span>
+          <h2>¿Necesitas asistencia?</h2>
+          <p>Si tienes un problema técnico, puedes comunicarlo mediante el formulario de soporte.</p>
+          <Link to="/soporte">Ir a soporte técnico <TechnicalIcon name="arrow" /></Link>
+        </section>
+        <p className="technical-support-security-note"><TechnicalIcon name="shield" /><span>Tu sugerencia se registra para su revisión; enviarla no implica su implementación.</span></p>
+      </aside>
+    </div>
+  </div>;
 }
