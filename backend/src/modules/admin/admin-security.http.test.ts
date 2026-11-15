@@ -43,6 +43,30 @@ test('bloquea segunda activación mediante el endpoint HTTP real', async () => {
 
 test('requiere el código también al finalizar la activación HTTP', async () => { const fixture = await createAdminFixture(); try { const pending = await createPendingOAuth(fixture.googleSub); const options = await request('/api/v1/admin/auth/passkey/activation/options', { headers: { cookie: pending.cookie, 'x-admin-activation-code': 'ci-activation-code' } }); assert.equal(options.status, 200); const activationCookie = options.headers.get('set-cookie') ?? ''; const response = await request('/api/v1/admin/auth/passkey/activation/verify', { method: 'POST', headers: { cookie: activationCookie, 'content-type': 'application/json' }, body: '{}' }); assert.equal(response.status, 403); assert.equal((await response.json() as any).error.code, 'ADMIN_ACTIVATION_AUTH_REQUIRED'); } finally { await fixture.cleanup(); } });
 
+test('logout Admin limpia cookies aun con sesión expirada, revocada o ausente', async () => {
+  const fixture = await createAdminFixture();
+  try {
+    for (const state of ['expired', 'revoked'] as const) {
+      const session = await createAdminSession(fixture.userId, state);
+      const response = await request('/api/v1/admin/auth/logout', {
+        method: 'POST',
+        headers: { origin: env.trustedOrigins[0]!, cookie: session.cookie },
+      });
+      assert.equal(response.status, 204, 'Debe poder terminar incluso con una sesión ' + state);
+      const cookies = response.headers.getSetCookie();
+      assert.ok(cookies.some(value => value.startsWith('xamuko_admin_session=') && /Max-Age=0/i.test(value)),
+        'La cookie administrativa debe invalidarse en el navegador');
+    }
+    const anonymous = await request('/api/v1/admin/auth/logout', {
+      method: 'POST', headers: { origin: env.trustedOrigins[0]! },
+    });
+    assert.equal(anonymous.status, 204, 'El logout repetido debe ser idempotente');
+    assert.ok(anonymous.headers.getSetCookie().some(value => value.startsWith('xamuko_admin_session=')));
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
 test('password SUPER_ADMIN crea cookies y restaura la sesión sin OAuth ni passkey', async () => {
   const fixture = await createAdminFixture();
   const password = 'ci-only-admin-password-2026';
