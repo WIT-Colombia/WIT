@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
-import { acceptController, cancelController, collaboratorAvatarController, collaboratorsController, deleteNotificationController, inviteController, leaveController, notificationsController, permissionsController, readNotificationController, reactivateController, rejectController, resolveCollaboratorController, revokeController, suspendController } from './collaborator.controller.js';
+import { acceptController, cancelController, collaboratorAvatarController, collaboratorsController, deleteNotificationController, inviteController, leaveController, notificationsController, permissionsController, readNotificationController, scopedNotificationsController, scopedReadNotificationController, scopedDeleteNotificationController, reactivateController, rejectController, resolveCollaboratorController, revokeController, suspendController } from './collaborator.controller.js';
 export const collaboratorRouter=Router(); collaboratorRouter.use(requireAuth);
 collaboratorRouter.get('/businesses/:businessId/collaborators',collaboratorsController);
 collaboratorRouter.get('/businesses/:businessId/collaborators/:userId/avatar',collaboratorAvatarController);
@@ -15,6 +15,9 @@ collaboratorRouter.post('/memberships/:membershipId/suspend',requireTrustedOrigi
 collaboratorRouter.post('/memberships/:membershipId/reactivate',requireTrustedOrigin,reactivateController);
 collaboratorRouter.post('/memberships/:membershipId/revoke',requireTrustedOrigin,revokeController);
 collaboratorRouter.put('/memberships/:membershipId/permissions',requireTrustedOrigin,permissionsController);
+collaboratorRouter.get('/businesses/:businessId/notifications',scopedNotificationsController);
+collaboratorRouter.post('/businesses/:businessId/notifications/:notificationId/read',requireTrustedOrigin,scopedReadNotificationController);
+collaboratorRouter.delete('/businesses/:businessId/notifications/:notificationId',requireTrustedOrigin,scopedDeleteNotificationController);
 collaboratorRouter.get('/notifications',notificationsController);
 collaboratorRouter.post('/notifications/:notificationId/read',requireTrustedOrigin,readNotificationController);
 collaboratorRouter.delete('/notifications/:notificationId',requireTrustedOrigin,deleteNotificationController);
