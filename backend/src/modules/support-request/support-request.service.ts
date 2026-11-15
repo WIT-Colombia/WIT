@@ -116,8 +116,7 @@ export async function decideSupportRequest(adminId: string, id: string, rawStatu
     await notifyPlatformUser(tx, { userId: before.userId, sourceType: 'SUPPORT_REQUEST', sourceId: id,
       title: type + ': ' + statusTitle(status), message: subject + response });
     if (before.businessId) await notifyBusinessOwners(tx, before.businessId, type + ': ' + statusTitle(status),
-      'Solicitud «' + before.title.slice(0, 90) + '»: ' + statusTitle(status) + '.' +
-      (decisionNote ? ' Respuesta administrativa: ' + decisionNote.slice(0, 280) : ''));
+      'La solicitud «' + before.title.slice(0, 90) + '» cambió a ' + statusTitle(status).toLocaleLowerCase('es-CO') + '. El detalle de la respuesta solo se envía a quien la presentó.');
     return result;
   });
 }
