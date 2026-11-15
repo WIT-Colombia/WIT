@@ -364,6 +364,7 @@ model User {
   createdBusinesses           Business[]                 @relation("BusinessCreator")
   memberships                 BusinessMembership[]
   notifications               BusinessNotification[]
+  platformNotifications       PlatformNotification[]
   requestedTransfers          OwnershipTransfer[]        @relation("TransferFromUser")
   receivedTransfers           OwnershipTransfer[]        @relation("TransferToUser")
   requestedVisibilityPeriods  BusinessVisibilityPeriod[] @relation("VisibilityRequester")
@@ -772,6 +773,24 @@ model BusinessMembership {
   @@unique([businessId, userId])
   @@index([userId, status])
   @@index([businessId, role, status])
+}
+
+
+model PlatformNotification {
+  id         String    @id @default(uuid()) @db.Char(36)
+  userId     String    @db.Char(36)
+  sourceType String    @db.VarChar(40)
+  sourceId   String    @db.Char(36)
+  title      String    @db.VarChar(180)
+  message    String    @db.VarChar(500)
+  readAt     DateTime? @db.DateTime(3)
+  deletedAt  DateTime? @db.DateTime(3)
+  createdAt  DateTime  @default(now()) @db.DateTime(3)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, deletedAt, createdAt])
+  @@index([userId, readAt, createdAt])
+  @@index([sourceType, sourceId])
 }
 
 model BusinessNotification {
