@@ -23,8 +23,8 @@ const metricDefinitions: Array<{ key: MetricKey; label: string; detail: string; 
 ];
 
 const periods: Array<{ value: Period; label: string }> = [
-  { value: "day", label: "Hoy" }, { value: "week", label: "7 días" }, { value: "month", label: "30 días" },
-  { value: "year", label: "12 meses" }, { value: "all", label: "Todo el historial" },
+  { value: "day", label: "Hoy" }, { value: "week", label: "Esta semana" }, { value: "month", label: "Este mes" },
+  { value: "year", label: "Este año" }, { value: "all", label: "Todo el historial" },
 ];
 
 const number = (value: number) => value.toLocaleString("es-CO");
@@ -177,6 +177,9 @@ function VisitChart({ points, period }: { points: Array<{ label: string; value: 
     <p className="business-home-chart-hint">{selected
       ? <><strong>{number(selected.value)}</strong> visualizaciones · {businessChartDate(selected.label, period)}</>
       : "Mueve el cursor o desliza el dedo para consultar cada período, incluidos los valores de 0."}</p>
+    {period === "all" && <p className="business-home-chart-clarification">
+      El total histórico incluye todos los registros disponibles; la gráfica representa los últimos 24 meses.
+    </p>}
   </div>;
 }
 
@@ -340,7 +343,7 @@ export function DashboardPage() {
   const visitsChange = currentVisits !== undefined && previousVisits !== undefined && previousVisits !== null && previousVisits > 0
     ? Math.round((currentVisits - previousVisits) / previousVisits * 100)
     : null;
-  const comparisonPeriod = period === "day" ? "vs. el día anterior" : period === "week" ? "vs. 7 días anteriores" : period === "month" ? "vs. 30 días anteriores" : period === "year" ? "vs. 12 meses anteriores" : "Sin período comparable";
+  const comparisonPeriod = period === "day" ? "vs. el día anterior" : period === "week" ? "vs. la misma parte de la semana anterior" : period === "month" ? "vs. la misma parte del mes anterior" : period === "year" ? "vs. la misma parte del año anterior" : "Sin período comparable";
   const showEmptyAccount = !business.name;
 
   return <div className="business-home">
