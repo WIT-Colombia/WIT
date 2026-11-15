@@ -6,6 +6,7 @@ import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
+import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto, moderateAdminContent } from './admin-content.service.js';
 import { listAdminUsersExtended, getAdminUserOverview, getAdminUserProfile, deactivateAdminUser } from './admin-users.service.js';
 import { prisma } from '../../config/prisma.js';
 import { readOwnAvatar } from '../auth/avatar.service.js';
@@ -91,17 +92,40 @@ adminRouter.post('/users/:id/deactivate', requireTrustedOrigin, requireAdmin('AD
     res.json(await deactivateAdminUser(String(req.params.id), context.userId, String(req.body?.reason ?? '')));
   } catch (error) { next(error); }
 });
-adminRouter.get('/content', requireAdmin('CATALOG_READ'), async (req, res, next) => {
-  try {
-    res.setHeader('Cache-Control', 'no-store');
-    const rawPage = Number(req.query.page);
-    const page = Number.isFinite(rawPage) ? Math.max(1, Math.min(100000, Math.floor(rawPage))) : 1;
-    const [total, offers] = await Promise.all([
-      prisma.businessOffer.count(),
-      prisma.businessOffer.findMany({ select: { id: true, name: true, kind: true, active: true, publicationStatus: true, deletedAt: true, updatedAt: true, business: { select: { id: true, name: true } } }, orderBy: { updatedAt: 'desc' }, skip: (page - 1) * 20, take: 20 }),
-    ]);
-    res.json({ offers, pagination: { page, pageSize: 20, total, totalPages: Math.ceil(total / 20) } });
-  } catch (error) { next(error); }
+// Content access is administrative and independent of business membership.
+const contentFilters = (query: Record<string, unknown>) => ({
+  q:String(query.q ?? ''),kind:String(query.kind ?? ''),status:String(query.status ?? ''),
+  city:String(query.city ?? ''),categoryId:String(query.categoryId ?? ''),
+  period:String(query.period ?? ''),page:Number(query.page) || 1,
+});
+adminRouter.get('/content', requireAdmin('CATALOG_READ'), async (req,res,next) => {
+  try{res.setHeader('Cache-Control','no-store');res.json(await listAdminContent(contentFilters(req.query)));}
+  catch(error){next(error);}
+});
+adminRouter.get('/content-insights', requireAdmin('CATALOG_READ'), async (req,res,next) => {
+  try{res.setHeader('Cache-Control','no-store');res.json(await getAdminContentInsights(contentFilters(req.query)));}
+  catch(error){next(error);}
+});
+adminRouter.get('/content-photos/:photoId', requireAdmin('CATALOG_READ'), async (req,res,next) => {
+  try{
+    const photo=await getAdminContentPhoto(String(req.params.photoId));
+    res.setHeader('Cache-Control','private, no-store');
+    res.setHeader('X-Content-Type-Options','nosniff');
+    res.type(photo.mimeType).send(photo.buffer);
+  }catch(error){next(error);}
+});
+adminRouter.get('/content/:id', requireAdmin('CATALOG_READ'), async (req,res,next) => {
+  try{res.setHeader('Cache-Control','no-store');res.json(await getAdminContentDetail(String(req.params.id)));}
+  catch(error){next(error);}
+});
+adminRouter.post('/content/:id/moderate', requireTrustedOrigin, requireAdmin('CONTENT_MODERATE'), async(req,res,next)=>{
+  try{
+    const action=req.body?.action;
+    if(action!=='HIDE'&&action!=='RESTORE')return res.status(400).json({error:{code:'ADMIN_CONTENT_ACTION_INVALID',message:'Selecciona una acción válida.'}});
+    const actor=adminFromRequest(req);
+    res.setHeader('Cache-Control','no-store');
+    res.json(await moderateAdminContent(String(req.params.id),actor.userId,action,String(req.body?.reason??'')));
+  }catch(error){next(error);}
 });
 adminRouter.get('/dashboard/stats', requireAdmin(), async (_req, res, next) => {
   try {
