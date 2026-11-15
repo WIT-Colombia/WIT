@@ -114,3 +114,662 @@
   .promotion-type-picker{grid-template-columns:1fr}
   .promotion-price-fields{grid-template-columns:1fr}
 }
+
+
+/* XAMUKO Business: Ofertas y Promociones homologa la cabecera y controles
+   aprobados en Productos/Servicios. Las reglas de producto permanecen intactas. */
+.promotions-page .page-heading.promotions-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:22px;
+  margin:0 0 24px;
+  min-width:0;
+}
+.promotions-heading-copy{
+  flex:1 1 430px;
+  min-width:0;
+}
+.promotions-page .promotions-eyebrow{
+  display:block;
+  margin:0 0 12px 4px;
+  color:#285eec;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.4;
+  letter-spacing:.105em;
+}
+.promotions-heading-main{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  min-width:0;
+}
+.promotions-heading-main>div{min-width:0}
+.promotions-heading-icon{
+  display:grid;
+  place-items:center;
+  flex:0 0 72px;
+  width:72px;
+  height:72px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#e9edff,#cfdafe);
+  color:#2057ed;
+}
+.promotions-heading-icon svg{width:34px;height:34px}
+.promotions-page .page-heading.promotions-heading h1{
+  margin:0 0 8px;
+  color:#111d3b;
+  font-size:clamp(28px,2.4vw,33px);
+  font-weight:800;
+  line-height:1.15;
+  letter-spacing:-.04em;
+}
+.promotions-page .page-heading.promotions-heading p{
+  max-width:880px;
+  margin:0;
+  color:#657895;
+  font-size:13px;
+  font-weight:450;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.promotions-page .page-heading .promotions-new,
+.promotions-page .promotions-empty>.action-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex:0 0 auto;
+  min-height:44px;
+  padding:10px 17px;
+  border:1px solid transparent;
+  border-radius:11px;
+  background:linear-gradient(105deg,#743fff,#245cf2 65%,#16a6f7);
+  color:#fff;
+  box-shadow:0 8px 20px #4e53e324;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.4;
+  cursor:pointer;
+}
+.promotions-page .page-heading .promotions-new>svg{
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+}
+.promotions-page .page-heading .promotions-new:hover:not(:disabled),
+.promotions-page .promotions-empty>.action-button:hover:not(:disabled){
+  filter:brightness(1.06);
+  box-shadow:0 10px 22px #4e53e336;
+}
+.promotions-page .page-heading .promotions-new:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+.promotions-page .page-heading .promotions-new:focus-visible,
+.promotions-page .promotions-empty>.action-button:focus-visible{
+  outline:3px solid #93b6ff;
+  outline-offset:3px;
+}
+
+/* Tarjetas, acciones y señalización del catálogo XAMUKO. */
+.promotions-page .promotions-summary article{
+  border-color:#dfe7f5;
+  border-radius:16px;
+  box-shadow:0 6px 18px #17305c0b;
+}
+.promotions-page .promotions-list-panel{
+  border-color:#dfe7f5;
+  border-radius:19px;
+  box-shadow:0 10px 28px #14305f10;
+}
+.promotions-page .promotion-row{
+  border-color:#dfe7f5;
+  border-radius:14px;
+  background:linear-gradient(120deg,#fff,#fcfdff);
+}
+.promotions-page .promotion-row:hover,
+.promotions-page .promotion-row:focus-within{
+  border-color:#c0d4ff;
+  background:#f4f7ff;
+}
+.promotions-page .promotion-row-photos{
+  border:1px solid #e2e9f5;
+  background:#f3f7ff;
+}
+.promotions-page .promotion-row-photos img{
+  object-fit:contain;
+  background:#fff;
+}
+.promotions-page .promotion-row-actions{
+  min-width:0;
+  gap:8px;
+}
+.promotions-page .promotion-row-actions button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-width:0;
+  min-height:42px;
+  padding:8px 12px;
+  border:1px solid #a8bee9;
+  border-radius:10px;
+  background:#fff;
+  color:#172747;
+  font-size:11px;
+  font-weight:750;
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+}
+.promotions-page .promotion-row-actions button:first-child{
+  border-color:#245cf2;
+  color:#1452ef;
+}
+.promotions-page .promotion-row-actions button:hover{
+  background:#edf4ff;
+  border-color:#7191da;
+  color:#164fcf;
+}
+.promotions-page .promotion-row-actions button.danger{
+  min-height:44px;
+  border:1px solid #efb0bd;
+  border-radius:10px;
+  background:linear-gradient(120deg,#fff,#fff3f6);
+  box-shadow:0 2px 8px #9f32531a;
+  color:#bd2949;
+}
+.promotions-page .promotion-row-actions button.danger:hover{
+  border-color:#dc4968;
+  background:#fff0f4;
+  color:#9e2440;
+}
+.promotions-page .promotion-row-actions button.danger svg{
+  flex:0 0 16px;
+  width:16px;
+  height:16px;
+}
+.promotions-page .promotion-row-actions button:focus-visible,
+body>.promotion-editor-overlay button:focus-visible,
+body>.promotion-confirm-overlay button:focus-visible{
+  outline:3px solid #92b6ff;
+  outline-offset:3px;
+}
+
+/* Los diálogos se portalizan al body y siguen window.visualViewport
+   para no quedar detrás de la cabecera Business en iPhone/iPad. */
+body>.promotion-editor-overlay,
+body>.promotion-confirm-overlay{
+  position:fixed;
+  top:var(--promotions-viewport-top,0px);
+  left:var(--promotions-viewport-left,0px);
+  right:auto;
+  bottom:auto;
+  z-index:1500;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  box-sizing:border-box;
+  width:var(--promotions-viewport-width,100vw);
+  height:var(--promotions-viewport-height,100dvh);
+  min-width:0;
+  min-height:0;
+  max-width:none;
+  max-height:none;
+  padding:max(14px,env(safe-area-inset-top,0px)) 14px max(14px,env(safe-area-inset-bottom,0px));
+  margin:0;
+  overflow:hidden;
+  overscroll-behavior:contain;
+  isolation:isolate;
+  background:rgba(12,25,52,.68);
+}
+body>.promotion-editor-overlay>.promotion-editor-modal{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  flex:0 1 680px;
+  width:min(100%,680px);
+  height:100%;
+  min-width:0;
+  min-height:0;
+  max-width:680px;
+  max-height:100%;
+  margin:0 auto;
+  padding:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid #d8e5fb;
+  border-radius:19px;
+  background:#fff;
+  box-shadow:0 25px 80px #0b1c3f55;
+  color:#172747;
+}
+body>.promotion-editor-overlay .promotion-editor-heading{
+  position:sticky;
+  top:0;
+  z-index:5;
+  flex:0 0 auto;
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  min-width:0;
+  margin:0;
+  padding:19px 23px 17px;
+  border-bottom:1px solid #dfe7f5;
+  background:#fff;
+}
+body>.promotion-editor-overlay .promotion-editor-heading>div{
+  flex:1 1 auto;
+  min-width:0;
+}
+body>.promotion-editor-overlay .promotion-editor-heading>div>span{
+  color:#245ce8;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.105em;
+}
+body>.promotion-editor-overlay .promotion-editor-heading h2{
+  margin:5px 0;
+  color:#111d3b;
+  font-size:24px;
+  font-weight:800;
+  line-height:1.15;
+  letter-spacing:-.035em;
+  overflow-wrap:anywhere;
+}
+body>.promotion-editor-overlay .promotion-editor-heading p{
+  margin:0;
+  color:#657895;
+  font-size:12px;
+  font-weight:450;
+  line-height:1.5;
+}
+body>.promotion-editor-overlay .promotion-editor-heading>button{
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  margin:0;
+  border-radius:11px;
+  background:#edf3ff;
+  color:#1e55db;
+}
+body>.promotion-editor-overlay .promotion-editor-heading>button:hover:not(:disabled){
+  background:#dfe9ff;
+  color:#123eaf;
+}
+body>.promotion-editor-overlay .promotion-form{
+  display:grid;
+  gap:16px;
+  min-width:0;
+  width:100%;
+  padding:19px 23px 0;
+}
+body>.promotion-editor-overlay .promotion-form label,
+body>.promotion-editor-overlay .promotion-form fieldset{
+  min-width:0;
+  color:#172747;
+  font-size:12px;
+  font-weight:750;
+}
+body>.promotion-editor-overlay .promotion-form legend{
+  color:#172747;
+  font-size:12px;
+  font-weight:800;
+}
+body>.promotion-editor-overlay .promotion-form input,
+body>.promotion-editor-overlay .promotion-form textarea,
+body>.promotion-editor-overlay .promotion-form select{
+  min-height:45px;
+  border-color:#d4dff1;
+  border-radius:11px;
+  color:#172747;
+  background:#fff;
+  font-size:14px;
+  line-height:1.45;
+}
+body>.promotion-editor-overlay .promotion-form textarea{
+  min-height:95px;
+}
+body>.promotion-editor-overlay .promotion-form input:focus-visible,
+body>.promotion-editor-overlay .promotion-form textarea:focus-visible,
+body>.promotion-editor-overlay .promotion-form select:focus-visible{
+  border-color:#6c94ff;
+  outline:3px solid #dce8ff;
+  outline-offset:1px;
+}
+body>.promotion-editor-overlay .promotion-type-picker button{
+  min-height:62px;
+  border-color:#dbe5f9;
+  border-radius:12px;
+  background:#fff;
+}
+body>.promotion-editor-overlay .promotion-type-picker button.selected{
+  border-color:#743fff;
+  background:#f4f1ff;
+  box-shadow:inset 3px 0 0 #743fff;
+}
+body>.promotion-editor-overlay .promotion-photos{
+  min-width:0;
+}
+body>.promotion-editor-overlay .promotion-editor-actions{
+  position:sticky;
+  bottom:0;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+  min-width:0;
+  margin:5px -23px 0;
+  padding:15px 23px max(15px,env(safe-area-inset-bottom,0px));
+  border-top:1px solid #dfe7f5;
+  background:rgba(255,255,255,.99);
+}
+body>.promotion-editor-overlay .promotion-editor-actions>button{
+  flex:1 1 auto;
+  min-height:44px;
+  padding:10px 14px;
+  border-radius:11px;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.3;
+  white-space:normal;
+}
+body>.promotion-editor-overlay .promotion-editor-actions>.action-button{
+  flex:1 1 180px;
+  border:1px solid transparent;
+  background:linear-gradient(105deg,#743fff,#245cf2 65%,#16a6f7);
+  color:#fff;
+  box-shadow:0 7px 16px #4e53e324;
+}
+body>.promotion-editor-overlay .promotion-editor-actions>.outline-button{
+  border-color:#b9ccf9;
+  color:#245ce8;
+  background:#fff;
+}
+body>.promotion-editor-overlay .promotion-editor-actions>button:disabled{
+  opacity:.58;
+  cursor:not-allowed;
+}
+
+/* Vista previa que el negocio puede abrir en el formulario: respetar la
+   funcionalidad actual sin generar ni desplegar previews externos. */
+body>.promotion-preview-overlay{
+  z-index:1600;
+}
+body>.promotion-preview-overlay>.promotion-preview{
+  max-height:calc(100dvh - 24px);
+  overflow-y:auto;
+}
+
+/* Confirmación destructiva: misma jerarquía que Eliminar de Productos. */
+body>.promotion-confirm-overlay{
+  align-items:flex-start;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+body>.promotion-confirm-overlay>.promotion-confirm{
+  display:block;
+  flex:0 1 480px;
+  width:min(100%,480px);
+  min-width:0;
+  max-width:480px;
+  max-height:100%;
+  margin:auto;
+  padding:26px 27px 23px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  border:1px solid #d8e5fb;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 25px 80px #0b1c3f55;
+  text-align:left;
+}
+body>.promotion-confirm-overlay .promotion-confirm-icon{
+  margin:0 0 17px;
+  width:48px;
+  height:48px;
+  border:1px solid #f6cbd4;
+  border-radius:14px;
+  background:linear-gradient(135deg,#f4efff,#fff0f4);
+  color:#bb3150;
+}
+body>.promotion-confirm-overlay .promotion-confirm-icon svg{
+  width:24px;
+  height:24px;
+}
+body>.promotion-confirm-overlay .promotion-confirm h2{
+  margin:0 0 10px;
+  color:#111d3b;
+  font-size:22px;
+  font-weight:800;
+  line-height:1.22;
+  overflow-wrap:anywhere;
+}
+body>.promotion-confirm-overlay .promotion-confirm>p{
+  margin:0;
+  color:#596d8d;
+  font-size:13px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+}
+body>.promotion-confirm-overlay .promotion-confirm>.promotions-error{
+  margin-top:13px;
+  padding:10px 12px;
+  border:1px solid #f1bdc6;
+  border-radius:10px;
+  color:#a7223d;
+  background:#fff2f4;
+}
+body>.promotion-confirm-overlay .promotion-confirm-actions{
+  position:sticky;
+  bottom:0;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;
+  min-width:0;
+  margin:22px 0 0;
+  padding:17px 0 0;
+  border-top:1px solid #e2e9f6;
+  background:#fff;
+}
+body>.promotion-confirm-overlay .promotion-confirm-actions>button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:45px;
+  margin:0;
+  padding:10px 12px;
+  border-radius:11px;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.4;
+  text-align:center;
+  white-space:normal;
+}
+body>.promotion-confirm-overlay .promotion-confirm-actions>.subtle-button{
+  border:1px solid #b9ccf9;
+  background:#fff;
+  color:#2159de;
+}
+body>.promotion-confirm-overlay .promotion-confirm-actions>.danger-button{
+  border:1px solid #bf2e51;
+  background:linear-gradient(120deg,#d94a69,#bc3154);
+  color:#fff;
+  box-shadow:0 5px 15px #ba31502a;
+}
+body>.promotion-confirm-overlay .promotion-confirm-actions>.danger-button:hover:not(:disabled){
+  border-color:#a82042;
+  background:linear-gradient(120deg,#c83a5a,#a92349);
+}
+body>.promotion-confirm-overlay .promotion-confirm-actions>.danger-button>svg{
+  flex:0 0 17px;
+  width:17px;
+  height:17px;
+}
+body>.promotion-confirm-overlay .promotion-confirm-actions>button:disabled{
+  opacity:.62;
+  cursor:wait;
+}
+
+@media(max-width:1100px){
+  body.promotions-dialog-active .mobile-topbar,
+  body.promotions-dialog-active .business-desktop-header,
+  body.promotions-dialog-active .app-content>.topbar,
+  body.promotions-dialog-active .mobile-nav,
+  body.promotions-dialog-active .business-mobile-menu-layer{
+    visibility:hidden!important;
+    pointer-events:none!important;
+  }
+}
+@media(max-width:900px){
+  .promotions-page .promotion-row-actions{
+    justify-content:flex-start;
+    flex-wrap:wrap;
+  }
+  .promotions-page .promotion-row-actions button{
+    min-height:44px;
+    flex:0 1 auto;
+  }
+}
+@media(max-width:700px){
+  .promotions-page .page-heading.promotions-heading{
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:18px;
+  }
+  .promotions-heading-copy{flex-basis:100%}
+  .promotions-page .promotions-eyebrow{
+    font-size:10px;
+    margin-bottom:10px;
+  }
+  .promotions-heading-main{
+    align-items:flex-start;
+    gap:12px;
+  }
+  .promotions-heading-icon{
+    flex-basis:54px;
+    width:54px;
+    height:54px;
+    border-radius:14px;
+  }
+  .promotions-heading-icon svg{width:28px;height:28px}
+  .promotions-page .page-heading.promotions-heading h1{font-size:28px}
+  .promotions-page .page-heading.promotions-heading p{font-size:12px}
+  .promotions-page .page-heading .promotions-new{
+    width:100%;
+    min-height:44px;
+  }
+  body>.promotion-editor-overlay,
+  body>.promotion-confirm-overlay{
+    padding:max(8px,env(safe-area-inset-top,0px)) 8px max(8px,env(safe-area-inset-bottom,0px));
+  }
+  body>.promotion-editor-overlay>.promotion-editor-modal{
+    flex:1 1 auto;
+    width:100%;
+    max-width:none;
+    border-radius:14px;
+  }
+  body>.promotion-editor-overlay .promotion-editor-heading{
+    gap:10px;
+    padding:14px 13px 12px;
+  }
+  body>.promotion-editor-overlay .promotion-editor-heading h2{
+    font-size:20px;
+  }
+  body>.promotion-editor-overlay .promotion-form{
+    gap:14px;
+    padding:14px 13px 0;
+  }
+  body>.promotion-editor-overlay .promotion-form input,
+  body>.promotion-editor-overlay .promotion-form textarea,
+  body>.promotion-editor-overlay .promotion-form select{
+    font-size:16px;
+  }
+  body>.promotion-editor-overlay .promotion-editor-actions{
+    gap:8px;
+    margin:8px -13px 0;
+    padding:12px 13px max(12px,env(safe-area-inset-bottom,0px));
+  }
+  body>.promotion-editor-overlay .promotion-editor-actions>button{
+    min-height:44px;
+    font-size:11px;
+  }
+  body>.promotion-confirm-overlay>.promotion-confirm{
+    flex:1 1 auto;
+    width:100%;
+    max-width:none;
+    padding:19px 17px 17px;
+    border-radius:16px;
+  }
+  body>.promotion-confirm-overlay .promotion-confirm h2{font-size:20px}
+  body>.promotion-confirm-overlay .promotion-confirm>p{font-size:12px}
+}
+@media(max-width:480px){
+  .promotions-page .promotion-row-actions{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+  }
+  .promotions-page .promotion-row-actions button{
+    flex:none;
+    width:100%;
+    min-width:0;
+    min-height:44px;
+    padding:9px 8px;
+    font-size:11px;
+  }
+  .promotions-page .promotion-row-actions button.danger{
+    grid-column:1/-1;
+    width:100%;
+  }
+  body>.promotion-editor-overlay .promotion-editor-actions{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  body>.promotion-editor-overlay .promotion-editor-actions>.action-button{
+    grid-column:1/-1;
+  }
+  body>.promotion-editor-overlay .promotion-type-picker{
+    grid-template-columns:1fr;
+  }
+  body>.promotion-editor-overlay .promotion-price-fields{
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:390px){
+  body>.promotion-confirm-overlay .promotion-confirm-actions{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+}
+@media(max-height:430px){
+  body>.promotion-confirm-overlay{
+    padding:max(6px,env(safe-area-inset-top,0px)) 6px max(6px,env(safe-area-inset-bottom,0px));
+  }
+  body>.promotion-confirm-overlay>.promotion-confirm{
+    padding:14px;
+  }
+  body>.promotion-confirm-overlay .promotion-confirm-actions{
+    margin-top:12px;
+    padding-top:10px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .promotions-page .promotion-row-actions button,
+  .promotions-page .page-heading .promotions-new,
+  body>.promotion-editor-overlay button,
+  body>.promotion-confirm-overlay button{transition:none}
+}
