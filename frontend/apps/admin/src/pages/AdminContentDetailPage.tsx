@@ -73,8 +73,8 @@ function ModerationDialog({offer,action,onClose,onDone}:{offer:AdminContentDetai
 }
 export function AdminContentDetailPage(){
   const id=useParams().id??'';
-  const allowed=getSession()?.permissions?.includes('dashboard:read')??false;
-  const canModerate=getSession()?.permissions?.includes('content:moderate')??false;
+  const allowed=getSession()?.permissions?.includes('catalog:read')??false;
+  const canModerate=getSession()?.permissions?.includes('content:moderate:write')??false;
   const [offer,setOffer]=useState<AdminContentDetail|null>(null);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
