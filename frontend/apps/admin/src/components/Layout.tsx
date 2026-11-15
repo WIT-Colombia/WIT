@@ -22,7 +22,6 @@ export function Layout() {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(() => activeGroupFor(location.pathname));
   const toggleRef = useRef<HTMLButtonElement>(null); const sidebarRef = useRef<HTMLElement>(null);
   const logoutRef = useRef<HTMLButtonElement>(null); const dialogRef = useRef<HTMLDivElement>(null);
-  const sessionRefreshRef = useRef<ReturnType<typeof restoreSession> | null>(null);
   const verification = location.pathname.startsWith('/verifications');
   const businessesRoute = location.pathname === '/businesses';
   useEffect(() => { setOpen(false); }, [location.pathname, location.search]);
@@ -42,14 +41,13 @@ export function Layout() {
       if (document.visibilityState !== 'visible' || refreshing || confirmLogout) return;
       refreshing = true;
       const request = restoreSession();
-      sessionRefreshRef.current = request;
       try {
         const session = await request;
         if (!active) return;
         if (!session) { navigate('/login', { replace: true }); return; }
         setAdmin(session); setAvatarVersion(value => value + 1);
       } catch { /* Keep the current profile on a transient network failure. */ }
-      finally { refreshing = false; if (sessionRefreshRef.current === request) sessionRefreshRef.current = null; }
+      finally { refreshing = false; }
     };
     const interval = window.setInterval(() => { void refresh(); }, 60000);
     window.addEventListener('focus', refresh);
@@ -111,16 +109,20 @@ export function Layout() {
   const closeSidebar = () => { setOpen(false); toggleRef.current?.focus(); };
   const signOut = async () => {
     if (loggingOut) return;
-    const retrying = Boolean(logoutError);
-    setLoggingOut(true); setLogoutError('');
+    setLoggingOut(true);
+    setLogoutError('');
     try {
-      // Finish any profile refresh before invalidation so an older response cannot
-      // repopulate the existing in-memory session after logout has completed.
-      await sessionRefreshRef.current?.catch(() => null);
-      if (retrying) await restoreSession();
-      await logout(); navigate('/login', { replace: true });
+      // Revocation happens on the server; adminService prevents stale refreshes
+      // from restoring the session after logout has started.
+      await logout();
+      setOpen(false);
+      setConfirmLogout(false);
+      navigate('/login', { replace: true });
+    } catch {
+      setLogoutError('No se pudo confirmar el cierre de sesión. Comprueba tu conexión e inténtalo nuevamente.');
+    } finally {
+      setLoggingOut(false);
     }
-    catch { setLogoutError('No se pudo cerrar la sesión. Inténtalo de nuevo.'); setLoggingOut(false); }
   };
   const avatar = avatarSrc ? <img src={avatarSrc} alt="" onError={() => setAvatarSrc(null)} /> : admin?.name?.split(' ').map(part => part[0]).slice(0, 2).join('') || 'A';
   const navItem = (item: typeof navigation[number]) => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={sidebarIcons[item.path] || item.icon} size={20} /><span>{item.label}</span>{item.pending && <small className="nav-pending">Pendiente</small>}</NavLink>;
