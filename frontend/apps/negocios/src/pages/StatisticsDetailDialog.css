@@ -100,7 +100,14 @@
 .stats-detail-plot {width:100%;min-width:0}
 .stats-detail-plot svg {
   display:block;width:100%;height:auto;max-height:390px;
-  overflow:visible;
+  overflow:visible;cursor:crosshair;touch-action:pan-y;
+}
+.stats-detail-crosshair {
+  opacity:.7;
+  transition:opacity .12s ease;
+}
+.stats-detail-crosshair-dot {
+  filter:drop-shadow(0 2px 4px #245cf22d);
 }
 .stats-detail-plot :is(circle,rect)[tabindex] {cursor:crosshair}
 .stats-detail-plot :is(circle,rect)[tabindex]:focus-visible {
