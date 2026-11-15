@@ -151,26 +151,29 @@ export function BusinessStoreProvider({ children }: { children: ReactNode }) {
   }, [account, isPreview]);
   const [items, setItems] = useState<CatalogItem[]>(() => isPreview ? stored("items", initialItems) : []);
   const [notifications, setNotifications] = useState<BusinessNotification[]>(() => isPreview ? storedWelcomeNotifications() : []);
-  const [persistentNotificationCount, setPersistentNotificationCount] = useState(0);
+  const [persistentCount, setPersistentCount] = useState({ userId: "", businessId: "", count: 0 });
+  const persistentNotificationCount =
+    persistentCount.userId === userId && persistentCount.businessId === business.id
+      ? persistentCount.count : 0;
   useEffect(() => {
     const selectedBusinessId = business.id;
     if (isPreview || auth.state.status !== "authenticated" || !userId || !selectedBusinessId) {
-      setPersistentNotificationCount(0);
+      setPersistentCount({ userId: "", businessId: "", count: 0 });
       return;
     }
     let active = true;
     // Never carry an unread badge from one selected business to another.
-    setPersistentNotificationCount(0);
+    setPersistentCount({ userId: "", businessId: "", count: 0 });
     const refresh = () => {
       void businessApi.listBusinessNotifications(selectedBusinessId).then(({ unread }) => {
-        if (active) setPersistentNotificationCount(unread);
+        if (active) setPersistentCount({ userId, businessId: selectedBusinessId, count: unread });
       }).catch(() => { /* Leave the previously verified selected-business count intact. */ });
     };
     const onUpdated = (event: Event) => {
       const detail = (event as CustomEvent<{ businessId: string; count: number }>).detail;
       if (detail?.businessId !== selectedBusinessId) return;
       if (typeof detail.count === "number" && Number.isFinite(detail.count))
-        setPersistentNotificationCount(detail.count);
+        setPersistentCount({ userId, businessId: selectedBusinessId, count: detail.count });
       else refresh();
     };
     const refreshIfVisible = () => { if (document.visibilityState === "visible") refresh(); };
