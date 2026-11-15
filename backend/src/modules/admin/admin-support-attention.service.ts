@@ -13,10 +13,10 @@ export async function getAdminSupportAttention(context: AdminContext) {
   };
   const jobs: Promise<void>[] = [];
   const count = (path: string, task: Promise<number>) => jobs.push(task.then(value => { counts[path] = value; }));
-  if (context.permissions.includes('BUSINESSES_READ')) {
+  if (context.permissions.includes('BUSINESSES_READ') && context.permissions.includes('CONTENT_MODERATE')) {
     count('/verifications', prisma.businessVerificationRequest.count({ where: { status: 'PENDING' } }));
   }
-  if (context.permissions.includes('REPORTS_REVIEW')) {
+  if (context.permissions.includes('REPORTS_REVIEW') && context.permissions.includes('CONTENT_MODERATE')) {
     count('/user-needs', prisma.supportRequest.count({ where: { kind: 'NEED', status: { in: ['PENDING','UNDER_REVIEW'] } } }));
     count('/support', prisma.supportRequest.count({ where: { kind: 'SUPPORT', status: { in: ['PENDING','UNDER_REVIEW'] } } }));
     count('/suggestions', prisma.supportRequest.count({ where: { kind: 'SUGGESTION', status: { in: ['PENDING','UNDER_REVIEW'] } } }));
@@ -29,6 +29,6 @@ export async function getAdminSupportAttention(context: AdminContext) {
     counts,
     total: Object.values(counts).reduce((sum,value)=>sum+value,0),
     generatedAt: new Date().toISOString(),
-    definition: 'Pendientes y casos en revisión. Verificaciones solo cuenta documentos por revisar, no solicitudes esperando respuesta del negocio.',
+    definition: 'Acciones pendientes autorizadas: verificaciones documentales sin atender y casos abiertos de soporte. Los casos solo aparecen para administradores con permiso de moderación.',
   };
 }
