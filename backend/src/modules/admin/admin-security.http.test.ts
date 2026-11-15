@@ -61,7 +61,8 @@ test('evolución de negocios usa una ruta propia, requiere Admin y entrega meses
     assert.equal(typeof data.total, 'number');
     assert.equal(typeof data.totalUsers, 'number');
     assert.equal(typeof data.totalReviews, 'number');
-    assert.ok(data.series.every((item: any) => /^\\d{4}-\\d{2}$/.test(item.month) &&
+    assert.ok(data.series.every((item: any) => typeof item.month === 'string' &&
+      item.month.length === 7 && item.month[4] === '-' &&
       typeof item.registrations === 'number' && typeof item.cumulative === 'number'));
     // Older Admin clients must continue using the compatibility endpoint.
     const legacy = await request('/api/v1/admin/businesses/analytics?period=6m', {
