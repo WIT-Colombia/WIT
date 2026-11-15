@@ -23,7 +23,7 @@ export function LegalPage() {
   return <PageRoot className={`legal-page${embedded ? " business-legal-embedded" : ""}${fromRegistration ? " business-legal-registration" : ""}`}>
     {!embedded && !fromRegistration && <BusinessHeader />}
     <div className="legal-layout">
-      <Link className="text-link legal-back legal-back-top" to={backPath}>{backLabel}</Link>
+      <Link className="text-link legal-back legal-back-top" to={backPath} style={{ gridColumn: "1 / -1" }}>{backLabel}</Link>
       {<aside className="legal-sidebar"><span className="legal-eyebrow">CENTRO LEGAL</span><h1>{isTerms ? "Términos y condiciones" : "Política de privacidad"}</h1><p>Documento jurídico en revisión antes de su entrada en vigor.</p><nav aria-label="Documentos legales"><Link className={isTerms ? "active" : ""} to={legalPath("terms")}>Términos y condiciones</Link><Link className={!isTerms ? "active" : ""} to={legalPath("privacy")}>Política de privacidad</Link></nav></aside>}
       <article className="legal-card legal-document"><div className="legal-document-heading"><h2>{isTerms ? "Términos y condiciones" : "Política de privacidad"}</h2><p>BORRADOR EN REVISIÓN · No constituye la versión contractual vigente. Datos del operador y procedimientos pendientes de validación.</p></div>
         <nav className="legal-toc" aria-label="Contenido del documento"><strong>En este documento</strong>{sections.map(s => <a key={s.id} href={`#${s.id}`}>{s.title}</a>)}</nav>
