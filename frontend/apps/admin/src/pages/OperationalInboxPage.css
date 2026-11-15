@@ -13,3 +13,13 @@
 .admin-refresh .ops-actions button:nth-child(3){border-color:#f0cdd7;background:#fff3f6;color:#b44760}
 .admin-refresh .ops-toolbar select,.admin-refresh .ops-toolbar input,.admin-refresh .ops-note textarea{border-color:#d6e1f3;border-radius:10px;color:#263e62}
 @media(max-width:650px){.admin-refresh .ops-attention-summary{gap:9px}.admin-refresh .ops-attention-summary button{align-items:start;flex-direction:column;gap:8px;padding:12px}.admin-refresh .ops-attention-summary strong{font-size:24px}.admin-refresh .ops-actions button{width:100%}}
+
+.admin-refresh .ops-record-link{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px;border:1px solid #dfe9fa;border-radius:12px;background:linear-gradient(110deg,#f6f9ff,#faf8ff)}
+.admin-refresh .ops-record-link>svg{flex:0 0 auto;color:#405ee0}
+.admin-refresh .ops-record-link>div{display:grid;gap:5px;min-width:140px;flex:1}
+.admin-refresh .ops-record-link strong{font-size:12px;color:#23426c}
+.admin-refresh .ops-record-link small{color:#697e9e;font-size:11px;line-height:1.5}
+.admin-refresh .ops-record-link a{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:10px 12px;border:1px solid #cadbfb;border-radius:10px;background:white;color:#2856b9;font-size:12px;font-weight:800;text-decoration:none!important}
+.admin-refresh .ops-record-link a:hover{background:#edf3ff}
+.admin-refresh .ops-record-link a:focus-visible{outline:3px solid #adc4f9;outline-offset:2px}
+@media(max-width:650px){.admin-refresh .ops-record-link a{width:100%;justify-content:center}}
