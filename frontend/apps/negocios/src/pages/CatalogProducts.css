@@ -1583,8 +1583,10 @@ body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-acti
   /* Se ocultan únicamente mientras el editor está abierto; al cerrarlo
      recuperan su apariencia sin alterar la navegación del resto del sitio. */
   body.catalog-product-editor-active .mobile-topbar,
+  body.catalog-product-editor-active .business-desktop-header,
   body.catalog-product-editor-active .app-content>.topbar,
-  body.catalog-product-editor-active .mobile-nav{
+  body.catalog-product-editor-active .mobile-nav,
+  body.catalog-product-editor-active .business-mobile-menu-layer{
     visibility:hidden!important;
     pointer-events:none!important;
   }
