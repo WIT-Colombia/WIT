@@ -116,18 +116,27 @@ try {
           const list = root.querySelector('.catalog-list');
           const row = root.querySelector('.catalog-row');
           const title = root.querySelector('.catalog-info h2');
+          const eyebrow = root.querySelector('.catalog-products-heading .page-eyebrow');
+          const pageTitle = root.querySelector('.catalog-products-heading h1');
+          const description = root.querySelector('.catalog-products-heading p');
           const add = root.querySelector('.catalog-products-add');
           const actions = row.querySelector('.row-actions');
           return {
             listRadius: getComputedStyle(list).borderRadius,
             rowLayout: getComputedStyle(row).display,
             titleFont: getComputedStyle(title).fontSize,
+            headingEyebrowFont: getComputedStyle(eyebrow).fontSize,
+            headingTitleFont: getComputedStyle(pageTitle).fontSize,
+            headingDescriptionFont: getComputedStyle(description).fontSize,
             addHeight: add.getBoundingClientRect().height,
             actionsLayout: getComputedStyle(actions).display,
           };
         });
         assert.equal(listStyles.rowLayout, 'grid', label + ': catalog uses Products row design');
-        assert.equal(listStyles.titleFont, '13px', label + ': heading uses the shared 13px size');
+        assert.equal(listStyles.titleFont, '13px', label + ': product/service card title remains 13px');
+        assert.equal(listStyles.headingEyebrowFont, width <= 700 ? '10px' : '11px', label + ': section eyebrow matches Inicio');
+        assert.equal(listStyles.headingTitleFont, '28px', label + ': section title matches Inicio at tested viewports');
+        assert.equal(listStyles.headingDescriptionFont, width <= 700 ? '12px' : '13px', label + ': description matches Inicio');
         assert.ok(listStyles.addHeight >= 41, label + ': add button matches the responsive design');
         assert.ok(listStyles.listRadius !== '0px', label + ': catalog uses shared rounded list');
         assert.ok(before.overlay.top >= -2, label + ': overlay starts within visual viewport');
