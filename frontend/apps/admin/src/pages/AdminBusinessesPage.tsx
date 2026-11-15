@@ -95,7 +95,7 @@ export function AdminBusinessesPage() {
 
     <header className="businesses-hero" aria-labelledby="businesses-page-title">
       <div className="businesses-hero-copy">
-        <span className="businesses-hero-eyebrow">XAMUKO ADMIN · GESTIÓN DE PLATAFORMA</span>
+        <span className="businesses-hero-eyebrow">DIRECTORIO · CONTROL Y CRECIMIENTO</span>
         <div className="businesses-hero-heading">
           <span className="businesses-hero-icon"><Icon name="store" size={31} /></span>
           <div><h1 id="businesses-page-title">Negocios</h1><p>Gestiona tu directorio, supervisa sus estados y analiza el crecimiento de la plataforma desde un mismo lugar.</p></div>
@@ -121,11 +121,11 @@ export function AdminBusinessesPage() {
     <section className="business-stats businesses-summary" aria-label="Resumen de negocios">
       {(statValues.length ? statValues : [
         { label: 'Total negocios', value: total, icon: 'store', tone: 'purple', percent: null },
-        { label: 'Activos', value: 0, icon: 'check', tone: 'green', percent: 0 },
-        { label: 'En revisión', value: 0, icon: 'clock', tone: 'blue', percent: 0 },
-        { label: 'Inactivos', value: 0, icon: 'close', tone: 'red', percent: 0 },
+        { label: 'Activos', value: null, icon: 'check', tone: 'green', percent: null },
+        { label: 'En revisión', value: null, icon: 'clock', tone: 'blue', percent: null },
+        { label: 'Inactivos', value: null, icon: 'close', tone: 'red', percent: null },
       ]).map(item => <article className={`business-stat businesses-stat ${item.tone}`} key={item.label}>
-        <span className="businesses-stat-icon"><Icon name={item.icon} size={22} /></span><div><span>{item.label}</span><strong>{count(item.value)}</strong></div>
+        <span className="businesses-stat-icon"><Icon name={item.icon} size={22} /></span><div><span>{item.label}</span><strong>{item.value === null ? '—' : count(item.value)}</strong></div>
         {item.percent !== null && <small>{item.percent.toLocaleString('es-CO', { maximumFractionDigits: 1 })}%</small>}
       </article>)}
     </section>
