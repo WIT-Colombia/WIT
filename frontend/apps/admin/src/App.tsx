@@ -20,6 +20,7 @@ import { navigation } from './data/navigation';
 import { PendingModulePage } from './pages/PendingModulePage';
 import { FinancialExpensesPage } from './pages/FinancialExpensesPage';
 import { AdministratorsPage } from './pages/AdministratorsPage';
+import { DocumentsPage } from './pages/DocumentsPage';
 
 function ProtectedRoute() {
   const [state, setState] = useState<'loading' | 'ready'>(getSession() ? 'ready' : 'loading');
@@ -35,7 +36,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases'];
 
 export default function App() {
   return <Routes>
@@ -64,6 +65,9 @@ export default function App() {
         <Route path="/categories" element={<AdminCategoriesPage />} />
         <Route path="/users" element={<AdminUsersPage />} />
         <Route path="/content" element={<AdminContentPage />} />
+        <Route path="/corporate" element={<DocumentsPage key="CORPORATE" section="CORPORATE" />} />
+        <Route path="/legal-documents" element={<DocumentsPage key="LEGAL" section="LEGAL" />} />
+        <Route path="/legal-cases" element={<DocumentsPage key="CASES" section="CASES" />} />
         <Route path="/user-needs" element={<OperationalInboxPage kind="needs" />} />
         {navigation.filter(item => !implementedPaths.includes(item.path)).map(item => <Route key={item.path} path={item.path} element={<PendingModulePage />} />)}
         {['users', 'reports', 'content', 'reviews', 'needs', 'zones', 'categories', 'notifications', 'audit', 'settings'].map(path => <Route key={path} path={`/${path}/:id`} element={<PendingModulePage />} />)}

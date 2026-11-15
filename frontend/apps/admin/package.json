@@ -13,6 +13,7 @@
     "@wit/types": "0.1.0",
     "@wit/ui": "0.1.0",
     "@wit/utils": "0.1.0",
+    "pdfjs-dist": "^6.5.438",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.18.5"

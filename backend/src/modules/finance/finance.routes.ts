@@ -1,13 +1,15 @@
 import { Router } from 'express';
 import { createAwsCostExplorerReader, syncAwsDailyCosts } from './aws-cost-explorer.js';
-import { requireAuth } from '../../shared/middleware/require-auth.js';
+import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import { requireAdmin, adminFromRequest } from '../admin/admin-auth.service.js';
 import { financeSummary, createManualConsumption, createProvider, createBudget, createInvoice, createPayment, listFinanceRecords, acknowledgeAlert, updateManualConsumption, reconcileFinancials, updateProvider, updateBudget, updateInvoice, updatePayment, listFinancialAudit } from './finance.service.js';
 import { createAwsFreeTierReader, fetchFreeTierUsage, type FreeTierUsage } from './aws-free-tier.js';
 
 export const financeRouter = Router();
 let awsSyncRunning = false;
-financeRouter.use(requireAuth);
+// Finance uses the same AdminSession and per-action permission checks as the
+// rest of Admin. A separate end-user Bearer token must not be required here.
+financeRouter.use((req, res, next) => ['GET', 'HEAD', 'OPTIONS'].includes(req.method) ? next() : requireTrustedOrigin(req, res, next));
 financeRouter.get('/summary', requireAdmin('FINANCE_READ'), async (req, res, next) => {
   try {
     const now = new Date();

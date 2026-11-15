@@ -370,6 +370,7 @@ model User {
   uploadedPhotos              Photo[]                    @relation("PhotoUploader")
   uploadedPromotionPhotos     BusinessPromotionPhoto[]   @relation("PromotionPhotoUploader")
   auditLogs                   AuditLog[]                 @relation("AuditActor")
+  adminDocuments              AdminDocument[]            @relation("AdminDocumentUploader")
   submittedBusinessReports      BusinessReport[]
   submittedOfferReports         OfferReport[]
   submittedSupportRequests      SupportRequest[]         @relation("SupportRequestSender")
@@ -1141,6 +1142,26 @@ model BusinessVisibilityPeriod {
 
   @@index([businessId, startsAt, expiresAt])
   @@index([expiresAt])
+}
+
+model AdminDocument {
+  id             String    @id @default(uuid()) @db.Char(36)
+  section        String    @db.VarChar(24)
+  title          String    @db.VarChar(160)
+  description    String?   @db.VarChar(1000)
+  filename       String    @db.VarChar(180)
+  mimeType       String    @db.VarChar(100)
+  sizeBytes      Int       @db.UnsignedInt
+  sha256         String    @db.Char(64)
+  storageKey     String    @unique @db.VarChar(512)
+  uploadedById   String?   @db.Char(36)
+  createdAt      DateTime  @default(now()) @db.DateTime(3)
+  deletedAt      DateTime? @db.DateTime(3)
+  deletedById    String?   @db.Char(36)
+  deletionReason String?   @db.VarChar(500)
+  uploadedBy     User?     @relation("AdminDocumentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([section, deletedAt, createdAt])
 }
 
 model AuditLog {

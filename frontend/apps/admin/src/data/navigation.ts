@@ -40,9 +40,9 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/suggestions', label: 'Sugerencias', icon: 'message', group: 'soporte', description: 'Gestión de sugerencias recibidas desde Business.' },
   ] },
   { id: 'juridica', label: 'Jurídica y corporativa', items: [
-    { path: '/legal-documents', label: 'Documentos legales', icon: 'box', group: 'juridica', description: 'Documentos legales pendientes de API.', pending: true },
-    { path: '/corporate', label: 'Estatutos', icon: 'box', group: 'juridica', description: 'Información corporativa pendiente de API.', pending: true },
-    { path: '/legal-cases', label: 'Procesos judiciales', icon: 'shield', group: 'juridica', description: 'Gestión jurídica pendiente de API.', pending: true },
+    { path: '/legal-documents', label: 'Documentos legales', icon: 'box', group: 'juridica', description: 'Archivo privado de documentos legales y contratos.' },
+    { path: '/corporate', label: 'Estatutos', icon: 'box', group: 'juridica', description: 'Archivo privado de estatutos, reformas y actas.' },
+    { path: '/legal-cases', label: 'Procesos judiciales', icon: 'shield', group: 'juridica', description: 'Archivo documental de procesos y expedientes judiciales.' },
   ] },
   { id: 'configuracion', label: 'Configuración y seguridad', items: [
     { path: '/zones', label: 'Zonas y categorías', icon: 'globe', group: 'configuracion', description: 'Configuración de zonas pendiente de API.', pending: true },

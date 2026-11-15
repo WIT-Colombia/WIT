@@ -16,6 +16,8 @@ import {
 import { can, getSession } from "../services/adminService";
 import { financeCsv, financeXlsx } from "../utils/financeExport";
 import { AwsFreeTierPanel } from "../components/AwsFreeTierPanel";
+import { AdminDialog } from '../components/AdminDialog';
+import { Icon } from '../components/Icon';
 const cop = new Intl.NumberFormat("es-CO", {
   style: "currency",
   currency: "COP",
@@ -23,6 +25,8 @@ const cop = new Intl.NumberFormat("es-CO", {
 });
 type Entity =
   "providers" | "budgets" | "consumptions" | "invoices" | "payments";
+const entityNames: Record<Entity | 'audit' | 'alerts', string> = { providers: 'Proveedores', budgets: 'Presupuestos', consumptions: 'Consumos', invoices: 'Facturas', payments: 'Pagos', alerts: 'Alertas', audit: 'Historial de cambios' };
+const fieldNames: Record<string, string> = { name: 'Nombre', currency: 'Moneda', amountCop: 'Importe en COP', amountUsd: 'Importe en USD', documentUrl: 'Enlace del documento', status: 'Estado', reference: 'Referencia' };
 export function FinancialManagementPage() {
   const admin = getSession();
   const [tab, setTab] = useState<Entity | "audit" | "alerts">("providers");
@@ -41,8 +45,11 @@ export function FinancialManagementPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loadingRecords, setLoadingRecords] = useState(true);
   const [freeTier, setFreeTier] = useState<{ state: "loading" | "available" | "empty" | "unconfigured" | "error"; usages: FreeTierUsage[]; updatedAt: string | null; error?: string }>({ state: "loading", usages: [], updatedAt: null });
   const load = async () => {
+    setLoadingRecords(true);
+    try {
     const [r, s, a] = await Promise.all([
       getFinanceRecords(),
       getFinanceSummary(),
@@ -51,6 +58,7 @@ export function FinancialManagementPage() {
     setRecords(r);
     setSummary(s);
     setAudit(a.entries);
+    } finally { setLoadingRecords(false); }
   };
   useEffect(() => {
     void load().catch(() => setError("No se pudieron cargar los registros."));
@@ -165,33 +173,36 @@ export function FinancialManagementPage() {
       <header className="page-heading">
         <div>
           <p className="eyebrow">FINANZAS · GASTOS TECNOLÓGICOS</p>
-          <h1>
-            Control financiero<span className="heading-dot">.</span>
-          </h1>
+          <h1>Control financiero</h1>
           <p>Edición controlada y trazabilidad.</p>
         </div>
-        <div>
-          <button className="secondary-button" onClick={() => download("csv")}>
-            CSV
+        <div className="ad-finance-exports">
+          <button className="ad-button" onClick={() => download("csv")}>
+            <Icon name="download" size={16}/>CSV
           </button>
-          <button className="secondary-button" onClick={() => download("xlsx")}>
-            XLSX
+          <button className="ad-button" onClick={() => download("xlsx")}>
+            <Icon name="download" size={16}/>XLSX
           </button>
         </div>
       </header>
+      <div className="ad-summary-grid" aria-label="Resumen de gastos tecnológicos">
+        <article><span className="ad-summary-icon"><Icon name="card"/></span><div><small>Consumo registrado en COP</small><strong>{summary ? cop.format(summary.totals.cop) : '—'}</strong><span>Periodo consultado · moneda local</span></div></article>
+        <article><span className="ad-summary-icon ad-summary-icon--blue"><Icon name="chart"/></span><div><small>Consumo neto en USD</small><strong>{summary ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(summary.totals.usd) : '—'}</strong><span>Periodo consultado · después de créditos</span></div></article>
+        <article><span className="ad-summary-icon ad-summary-icon--neutral"><Icon name="server"/></span><div><small>Proveedores activos</small><strong>{summary?.providers.length ?? '—'}</strong><span>Registrados en el sistema</span></div></article>
+      </div>
       {message && (
         <p className="success-message" role="status">
           {message}
         </p>
       )}
-      {error && (
+      {error && !editing && (
         <p className="error-message" role="alert">
           {error}
         </p>
       )}
-      <AwsFreeTierPanel state={freeTier.state} usages={freeTier.usages} updatedAt={freeTier.updatedAt} error={freeTier.error} />
-      <button className="secondary-button" onClick={() => void loadFreeTier()}>Actualizar Free Tier</button>
-      <nav className="finance-tabs">
+      <div className="ad-finance-free-tier"><AwsFreeTierPanel state={freeTier.state} usages={freeTier.usages} updatedAt={freeTier.updatedAt} error={freeTier.error} />
+      <button className="ad-button" disabled={freeTier.state === 'loading'} onClick={() => void loadFreeTier()}><Icon name="refresh" size={16}/>Actualizar Free Tier</button></div>
+      <nav className="finance-tabs" aria-label="Secciones de gastos">
         {(
           [
             "providers",
@@ -205,6 +216,7 @@ export function FinancialManagementPage() {
         ).map((item) => (
           <button
             className={tab === item ? "active" : ""}
+            aria-pressed={tab === item}
             key={item}
             onClick={() => setTab(item)}
           >
@@ -224,6 +236,7 @@ export function FinancialManagementPage() {
           </button>
         ))}
       </nav>
+      {loadingRecords && <p className="ad-preview-note" role="status">Consultando registros financieros…</p>}
       {tab === "alerts" && (
         <div className="finance-table-wrap">
           <table>
@@ -255,6 +268,7 @@ export function FinancialManagementPage() {
                   </td>
                 </tr>
               ))}
+              {!loadingRecords && !error && records.alerts.length === 0 && <tr><td colSpan={4}><div className="ad-empty"><span className="ad-large-icon"><Icon name="bell" size={28}/></span><h2>Sin alertas registradas</h2><p>Los avisos financieros disponibles aparecerán en esta sección.</p></div></td></tr>}
             </tbody>
           </table>
         </div>
@@ -279,6 +293,7 @@ export function FinancialManagementPage() {
                   <td>{a.reason}</td>
                 </tr>
               ))}
+              {!loadingRecords && !error && audit.length === 0 && <tr><td colSpan={4}><div className="ad-empty"><span className="ad-large-icon"><Icon name="shield" size={28}/></span><h2>Sin cambios registrados</h2><p>Las modificaciones auditadas aparecerán aquí con su fecha y motivo.</p></div></td></tr>}
             </tbody>
           </table>
         </div>
@@ -319,23 +334,23 @@ export function FinancialManagementPage() {
                   </td>
                 </tr>
               ))}
+              {!loadingRecords && !error && rows.length === 0 && <tr><td colSpan={4}><div className="ad-empty"><span className="ad-large-icon"><Icon name="database" size={28}/></span><h2>Sin registros de {entityNames[tab].toLocaleLowerCase('es')}</h2><p>Esta sección mostrará la información financiera registrada en el sistema.</p></div></td></tr>}
             </tbody>
           </table>
         </div>
       )}
       {editing && (
-        <div className="modal-backdrop">
+        <AdminDialog title={`Editar ${entityNames[editing.entity as Entity].toLocaleLowerCase('es')}`} contextLabel="XAMUKO ADMIN · CONTROL FINANCIERO" busy={busy} onClose={() => setEditing(null)}>
           <form
-            className="finance-edit-modal"
+            className="ad-document-form finance-edit-modal"
             onSubmit={(e) => {
               e.preventDefault();
               void save();
             }}
           >
-            <h2>Editar {editing.entity}</h2>
             {fields(editing.entity).map((name) => (
               <label key={name}>
-                {name}
+                {fieldNames[name]}
                 <input
                   value={form[name] ?? ""}
                   type={name.includes("amount") ? "number" : "text"}
@@ -352,16 +367,17 @@ export function FinancialManagementPage() {
                 onChange={(e) => setForm({ ...form, reason: e.target.value })}
               />
             </label>
-            <div>
-              <button type="button" onClick={() => setEditing(null)}>
+            {error && <p className="ad-form-error" role="alert">{error}</p>}
+            <div className="ad-dialog-actions">
+              <button type="button" className="ad-button" disabled={busy} onClick={() => setEditing(null)}>
                 Cancelar
               </button>
-              <button className="primary-button" disabled={busy}>
+              <button className="ad-button ad-button--primary" disabled={busy}>
                 {busy ? "Guardando…" : "Guardar cambios"}
               </button>
             </div>
           </form>
-        </div>
+        </AdminDialog>
       )}
     </section>
   );

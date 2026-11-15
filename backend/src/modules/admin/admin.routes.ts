@@ -6,8 +6,10 @@ import { requireAdmin } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
 import { prisma } from '../../config/prisma.js';
+import { adminDocumentsRouter } from './admin-documents.routes.js';
 
 export const adminRouter = Router();
+adminRouter.use('/documents', adminDocumentsRouter);
 adminRouter.get('/me', requireAdmin(), adminMeController);
 adminRouter.get('/businesses', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
   try { res.setHeader('Cache-Control', 'no-store'); res.json(await listAdminBusinesses({ q: String(req.query.q ?? ''), page: Number(req.query.page) || 1, pageSize: Number(req.query.pageSize) || 20, status: String(req.query.status ?? '') })); }

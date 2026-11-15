@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { decideOperationalRecord, listOperationalRecords, type OperationalKind, type OperationalRecord, type OperationalStatus } from '../services/adminApiClient';
 import './OperationalInboxPage.css';
+import { Icon } from '../components/Icon';
 
 const config: Record<OperationalKind, { title: string; description: string }> = {
   needs: { title: 'Necesidades de usuarios', description: 'Solicitudes recibidas desde «¿Qué necesitas encontrar?» en XAMUKO Usuarios.' },
@@ -69,7 +70,7 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
     </div>
     {error && <p className="ops-error" role="alert">{error}</p>}
     {confirmation && <p className="ops-confirmation" role="status">{confirmation}</p>}
-    {loading ? <p role="status">Consultando solicitudes del servidor…</p> : !error && records.length === 0 ? <p className="ops-empty">No hay solicitudes registradas para estos filtros.</p> : null}
+    {loading ? <p role="status">Consultando solicitudes del servidor…</p> : !error && records.length === 0 ? <div className="ops-empty ad-empty"><span className="ad-large-icon"><Icon name={kind.includes('reports') ? 'flag' : kind === 'needs' ? 'search' : 'message'} size={30}/></span><h2>No hay solicitudes para mostrar</h2><p>No hay solicitudes registradas para estos filtros. Aquí podrás consultar y gestionar los mensajes recibidos en esta sección.</p></div> : null}
     {!loading && records.length > 0 && <div className="ops-table-scroll"><table className="ops-table">
       <thead><tr><th>Radicado</th><th>Fecha</th><th>Asunto</th><th>Origen</th><th>Estado</th><th>Detalle</th></tr></thead>
       <tbody>{records.map(record => <tr key={record.id}>

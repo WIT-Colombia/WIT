@@ -1,0 +1,20 @@
+CREATE TABLE `AdminDocument` (
+  `id` CHAR(36) NOT NULL,
+  `section` VARCHAR(24) NOT NULL,
+  `title` VARCHAR(160) NOT NULL,
+  `description` VARCHAR(1000) NULL,
+  `filename` VARCHAR(180) NOT NULL,
+  `mimeType` VARCHAR(100) NOT NULL,
+  `sizeBytes` INTEGER UNSIGNED NOT NULL,
+  `sha256` CHAR(64) NOT NULL,
+  `storageKey` VARCHAR(512) NOT NULL,
+  `uploadedById` CHAR(36) NULL,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `deletedAt` DATETIME(3) NULL,
+  `deletedById` CHAR(36) NULL,
+  `deletionReason` VARCHAR(500) NULL,
+  UNIQUE INDEX `AdminDocument_storageKey_key` (`storageKey`),
+  INDEX `AdminDocument_section_deletedAt_createdAt_idx` (`section`, `deletedAt`, `createdAt`),
+  PRIMARY KEY (`id`),
+  CONSTRAINT `AdminDocument_uploadedById_fkey` FOREIGN KEY (`uploadedById`) REFERENCES `User` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

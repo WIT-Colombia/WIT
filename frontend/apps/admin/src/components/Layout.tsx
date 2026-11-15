@@ -4,6 +4,7 @@ import { navigation, navigationGroups } from '../data/navigation';
 import { getSession, logout, restoreSession } from '../services/adminService';
 import { fetchOwnAvatar } from '../services/adminApiClient';
 import { Icon } from './Icon';
+import { WorkspaceContext } from './WorkspaceContext';
 
 const groupIcons: Record<string, string> = { plataforma: 'store', crecimiento: 'crown', finanzas: 'database', tecnologia: 'server', soporte: 'headphones', juridica: 'scales', configuracion: 'shield' };
 const sidebarIcons: Record<string, string> = { '/content': 'image', '/reports': 'chart', '/pioneers': 'award' };
@@ -123,7 +124,7 @@ export function Layout() {
   };
   const avatar = avatarSrc ? <img src={avatarSrc} alt="" onError={() => setAvatarSrc(null)} /> : admin?.name?.split(' ').map(part => part[0]).slice(0, 2).join('') || 'A';
   const navItem = (item: typeof navigation[number]) => <NavLink key={item.path} to={item.path} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}><Icon name={sidebarIcons[item.path] || item.icon} size={20} /><span>{item.label}</span>{item.pending && <small className="nav-pending">Pendiente</small>}</NavLink>;
-  return <div className={`app-shell admin-refresh ${verification ? 'verification-preserved' : ''} ${businessesRoute ? 'businesses-layout' : ''}`}>
+  return <div className={`app-shell admin-refresh admin-workbench ${verification ? 'verification-preserved' : ''} ${businessesRoute ? 'businesses-layout' : ''}`}>
     <a className="skip-link" href="#main">Ir al contenido</a>
     {open && mobile && <button className="sidebar-backdrop" aria-label="Cerrar navegación" tabIndex={-1} onClick={closeSidebar} />}
     <aside id="admin-navigation" ref={sidebarRef} className={`admin-sidebar ${open ? 'is-open' : ''}`} aria-label="Navegación administrativa" inert={(mobile && !open) || confirmLogout}>
@@ -132,7 +133,7 @@ export function Layout() {
       <div className="sidebar-footer"><div className="avatar">{avatar}</div><div className="sidebar-profile-copy"><strong title={admin?.name}>{admin?.name}</strong><small>{admin?.role === 'SUPER_ADMIN' ? 'Administrador principal' : admin?.role === 'ADMIN' ? 'Administrador' : admin?.role}</small></div><button ref={logoutRef} className="icon-button" aria-label="Cerrar sesión" onClick={() => { setLogoutError(''); setConfirmLogout(true); }}><Icon name="logout" size={21} /></button></div>
     </aside>
     <button ref={toggleRef} type="button" className="icon-button admin-mobile-toggle" aria-label="Abrir navegación" aria-controls="admin-navigation" aria-expanded={open} onClick={() => setOpen(true)}><Icon name="menu" size={24} /></button>
-    <div className="admin-main" inert={(mobile && open) || confirmLogout}><main id="main" className="workspace" tabIndex={-1}><Outlet /></main><footer className="workspace-footer"><span>XAMUKO Admin</span><span>Los módulos pendientes se identifican dentro de cada sección.</span></footer></div>
+    <div className="admin-main" inert={(mobile && open) || confirmLogout}><main id="main" className="workspace" tabIndex={-1}><WorkspaceContext /><Outlet /></main><footer className="workspace-footer"><span>XAMUKO Admin</span><span>Los módulos pendientes se identifican dentro de cada sección.</span></footer></div>
     {confirmLogout && <div ref={dialogRef} className="logout-popover" role="dialog" aria-modal="true" aria-label="Confirmar cierre de sesión" aria-describedby="logout-description"><div><strong>¿Cerrar sesión?</strong><p id="logout-description">Podrás volver a iniciar sesión cuando quieras.</p>{logoutError && <p role="alert">{logoutError}</p>}</div><div className="logout-popover-actions"><button className="secondary-button" disabled={loggingOut} onClick={() => setConfirmLogout(false)}>Cancelar</button><button className="danger-button" disabled={loggingOut} onClick={() => { void signOut(); }}>{loggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}</button></div></div>}
   </div>;
 }

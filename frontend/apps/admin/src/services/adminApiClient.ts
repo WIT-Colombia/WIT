@@ -41,7 +41,7 @@ export async function fetchOwnAvatar(path = `${API_BASE}/auth/me/avatar`): Promi
   if (!response.ok) throw new Error('No se pudo cargar la foto de perfil.');
   return response.blob();
 }
-function headers(init: RequestInit = {}) { const value = new Headers(init.headers); if (!['GET', 'HEAD', 'OPTIONS'].includes((init.method ?? 'GET').toUpperCase()) && adminCsrfToken) value.set('X-Admin-CSRF', adminCsrfToken); if (!value.has('Accept')) value.set('Accept', 'application/json'); if (init.body && !value.has('Content-Type')) value.set('Content-Type', 'application/json'); if (accessToken) value.set('Authorization', `Bearer ${accessToken}`); return { ...init, headers: value, credentials: 'include' as RequestCredentials }; }
+function headers(init: RequestInit = {}) { const value = new Headers(init.headers); if (!['GET', 'HEAD', 'OPTIONS'].includes((init.method ?? 'GET').toUpperCase()) && adminCsrfToken) value.set('X-Admin-CSRF', adminCsrfToken); if (!value.has('Accept')) value.set('Accept', 'application/json'); if (init.body && !(init.body instanceof FormData) && !value.has('Content-Type')) value.set('Content-Type', 'application/json'); if (accessToken) value.set('Authorization', `Bearer ${accessToken}`); return { ...init, headers: value, credentials: 'include' as RequestCredentials }; }
 async function request<T>(path: string, init: RequestInit = {}) { const response = await fetch(buildApiUrl(path), headers(init)); const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string }; csrfToken?: unknown } & T; if (!response.ok) { const code=payload?.error?.code ?? 'UNKNOWN_ERROR'; const message=payload?.error?.message ?? 'No se pudo completar la solicitud.'; if (code === 'ADMIN_REAUTH_REQUIRED') window.location.assign('/login?reauth=1'); throw new AdminApiError(response.status, code, message); } if (payload && typeof payload.csrfToken === 'string') adminCsrfToken = payload.csrfToken; return payload; }
 export async function adminLogin(email: string, password: string, rememberMe: boolean) { return (await request<{ admin: RealAdmin }>('/admin/auth/password', { method: 'POST', body: JSON.stringify({ email, password, rememberMe }) })).admin; }
 export function getAdminDashboardStats() { return request<AdminDashboardStats>('/admin/dashboard/stats'); }
@@ -177,4 +177,16 @@ export async function listOperationalRecords(kind: OperationalKind, filters: { p
 export function decideOperationalRecord(kind: OperationalKind, id: string, status: OperationalStatus, decisionNote: string) {
   const endpoint = kind === 'business-reports' ? 'business-reports' : kind === 'offer-reports' ? 'offer-reports' : 'support-requests';
   return request(`/admin/${endpoint}/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status, decisionNote }) });
+}
+
+export type AdminDocumentSection = 'CORPORATE' | 'LEGAL' | 'CASES';
+export function adminDocumentRequest<T>(path: string, init: RequestInit = {}) { return request<T>(`/admin${path}`, init); }
+export async function getAdminDocumentBlob(id: string): Promise<Blob> {
+  const response = await fetch(buildApiUrl(`/admin/documents/${encodeURIComponent(id)}/content`), headers({ headers: { Accept: 'application/pdf' } }));
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new AdminApiError(response.status, body?.error?.code ?? 'DOCUMENT_UNAVAILABLE', body?.error?.message ?? 'No se pudo consultar el documento.');
+  }
+  if (!response.headers.get('content-type')?.includes('application/pdf')) throw new Error('El servidor no devolvió un documento PDF.');
+  return response.blob();
 }
