@@ -78,6 +78,9 @@ jobs:
       - name: Check Business Colaboradores, icons and Editar permisos on desktop, iPad and iPhone
         run: node scripts/check-business-collaborators-responsive.mjs
 
+      - name: Check Business Configuración and confirmation dialogs on desktop, iPad and iPhone
+        run: node scripts/check-business-settings-responsive.mjs
+
       - name: Check Admin sidebar in desktop and mobile browsers
         run: node scripts/check-admin-sidebar.mjs
 
