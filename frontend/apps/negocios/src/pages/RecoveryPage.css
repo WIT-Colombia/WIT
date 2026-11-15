@@ -106,7 +106,8 @@
   display:grid;align-content:start;gap:9px;min-width:0;
   font-size:13px;font-weight:750;
 }
-.business-recovery-page .business-recovery-field>span:first-child {
+.business-recovery-page .business-recovery-field>span:first-child,
+.business-recovery-page .business-recovery-field>label {
   color:#243858;font-size:13px;font-weight:750;line-height:1.35;
 }
 .business-recovery-page .business-recovery-field>input,
