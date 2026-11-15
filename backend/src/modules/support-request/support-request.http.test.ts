@@ -186,6 +186,20 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
       assert.equal((await prisma.business.findUniqueOrThrow({ where: { id: businessId } })).verificationStatus, 'APPROVED');
     });
 
+    await t.test('Admin: indicadores reales de tareas pendientes, respetando el acceso', async () => {
+      const blocked = await send('/admin/support-attention');
+      assert.equal(blocked.response.status, 401);
+      const response = await send('/admin/support-attention', { headers: admin() });
+      assert.equal(response.response.status, 200, JSON.stringify(response.body));
+      const attention = response.body;
+      for (const path of ['/verifications', '/user-needs', '/business-reports', '/offer-reports', '/reports', '/support', '/suggestions']) {
+        assert.equal(typeof attention.counts[path], 'number', 'Falta contador ' + path);
+        assert.ok(attention.counts[path] >= 0);
+      }
+      assert.equal(attention.total, Object.values(attention.counts).reduce((sum: number, value: any) => sum + Number(value), 0));
+      assert.equal(attention.counts['/verifications'], 0, 'Una verificación aprobada no debe contarse pendiente');
+    });
+
     await t.test('Usuarios: notificaciones de decisiones, lectura y protección por sesión', async () => {
       const anonymous = await send('/notifications');
       assert.equal(anonymous.response.status, 401);
