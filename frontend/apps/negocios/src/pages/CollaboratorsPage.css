@@ -538,3 +538,35 @@ body>.collab-modal-backdrop button:disabled{opacity:.55;cursor:not-allowed}
 @media(prefers-reduced-motion:reduce){
   .collab-page button,body>.collab-modal-backdrop button{transition:none}
 }
+
+/* Foto de perfil real de la cuenta XAMUKO en Personas con acceso.
+   Se muestra circular, sin alterar tamaño/recorte de las fotos originales.
+   Si la carga autenticada falla, el mismo espacio enseña la inicial. */
+.collab-page .collab-person .collab-person-avatar{
+  display:grid;
+  place-items:center;
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  min-width:42px;
+  min-height:42px;
+  margin:0;
+  overflow:hidden;
+  border:1px solid #dddfff;
+  border-radius:50%;
+  background:#edeaff;
+  color:#5339dc;
+  font-size:17px;
+  font-weight:800;
+  line-height:1;
+  text-align:center;
+}
+.collab-page .collab-person img.collab-person-avatar{
+  display:block;
+  object-fit:cover;
+  object-position:center;
+}
+.collab-page .collab-person span.collab-person-avatar{
+  display:grid;
+  place-items:center;
+}
