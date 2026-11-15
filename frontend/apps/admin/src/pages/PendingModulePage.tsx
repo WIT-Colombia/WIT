@@ -15,14 +15,7 @@ export function PendingModulePage() {
   useEffect(() => setTab('overview'), [pathname]);
   const related = navigation.filter(item => item.group === module?.group && !item.pending && item.path !== module?.path);
   return <section className="ad-module-page" aria-labelledby="xa-module-title">
-    <header className="xa-module-heading">
-      <span className="xa-module-icon"><Icon name={module?.icon || 'grid'} size={25} /></span>
-      <div className="xa-module-heading-copy">
-        <p className="xa-module-eyebrow">{group?.label || 'XAMUKO ADMIN'}</p>
-        <div className="xa-module-title-row"><h1 id="xa-module-title">{title}</h1><span className="xa-module-status"><i aria-hidden="true" />Pendiente</span></div>
-        <p>{workflow.intro}</p>
-      </div>
-    </header>
+    <header className="admin-section-heading"><h1 id="xa-module-title">{title}</h1><span className="xa-module-status"><i aria-hidden="true" />Pendiente</span></header>
     <div className="ad-panel"><div className="ad-document-toolbar"><div className="ad-tabs" role="group" aria-label="Información del módulo">{[['overview', 'Resumen'], ['workflow', 'Flujo de trabajo'], ['connections', 'Conexiones']].map(([key, label]) => <button key={key} aria-pressed={tab === key} onClick={() => setTab(key)}>{label}</button>)}</div><span className="ad-security"><Icon name="lock" size={14}/>Acceso administrativo</span></div>
       {tab === 'overview' ? <div className="ad-module-overview"><span className="ad-large-icon"><Icon name={module?.icon || 'grid'} size={32}/></span><span className="ad-kicker">ESTA ÁREA ESTÁ EN PREPARACIÓN</span><h2>Un espacio preparado para {title.toLocaleLowerCase('es')}</h2><p>La vista está diseñada, pero la operación de este módulo todavía requiere conectar su servicio autorizado. No hay registros operativos disponibles para mostrar.</p><span className="ad-planned-badge"><Icon name="clock" size={15}/>Integración pendiente</span></div>
       : tab === 'workflow' ? <div className="ad-workflow-grid">{workflow.work.map((step, index) => <article key={step}><span className="ad-step">0{index + 1}</span><h2>{step}</h2><p>Alcance previsto del módulo. Disponible cuando se conecte el servicio correspondiente.</p><span className="ad-planned-badge">En preparación</span></article>)}</div>
