@@ -80,7 +80,7 @@ adminAuthRouter.post('/logout', async (request, response, next) => {
       await requireAdminSession(request);
     } catch (error) {
       const noUsableSession = error instanceof AppError &&
-        (error.status === 401 || (error.status === 403 && error.code === 'ADMIN_ACCESS_DENIED'));
+        (error.statusCode === 401 || (error.statusCode === 403 && error.code === 'ADMIN_ACCESS_DENIED'));
       if (!noUsableSession) throw error;
     }
     await revokeAdminSession(request, response);
