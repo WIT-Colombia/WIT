@@ -131,7 +131,6 @@ export function DashboardPage() {
 
   if (!admin || !can(admin, 'dashboard:read')) return <section className="xa-dashboard"><div className="xa-empty-state">Acceso restringido</div></section>;
 
-  const firstName = admin.name.trim().split(/\s+/)[0] || 'administrador';
   const stats = snapshot?.stats;
   const growthPoints = stats?.monthly.map(point => ({ month: point.month, value: indicator === 'Usuarios' ? point.users : indicator === 'Negocios' ? point.businesses : point.reviews })) ?? [];
   const activity = [
@@ -146,11 +145,16 @@ export function DashboardPage() {
     { label: 'Reportes de opiniones pendientes', count: snapshot?.pendingReports ?? null, href: '/reports', icon: 'flag', allowed: can(admin, 'content:moderate') },
   ].filter(item => item.allowed);
 
-  const today = new Date();
   const periodLabel = stats?.monthly.length ? `Últimos ${stats.monthly.length} meses` : empty;
 
   return <div className="xa-dashboard">
-    <header className="xa-welcome"><div><h1>Resumen ejecutivo</h1><p>Bienvenido, {firstName}. Aquí tienes el estado general de XAMUKO.</p></div><div className="xa-welcome-meta"><span className="xa-session-status"><i aria-hidden="true" />Sesión activa</span><span className="xa-welcome-divider" /><time dateTime={today.toISOString()}><Icon name="calendar" size={15} />{new Intl.DateTimeFormat('es-CO', { dateStyle: 'full' }).format(today)}</time><label className="xa-dashboard-month-filter"><span>Mes</span><input type="month" aria-label="Filtrar actividad por mes" value={month ?? ''} onChange={event => { const next = new URLSearchParams(searchParams); if (event.target.value) next.set('month', event.target.value); else next.delete('month'); setSearchParams(next); }} /></label>{month && <button type="button" className="xa-dashboard-month-clear" onClick={() => { const next = new URLSearchParams(searchParams); next.delete('month'); setSearchParams(next); }}>Quitar filtro</button>}</div></header>
+    <header className="admin-section-heading">
+      <h1>Resumen ejecutivo</h1>
+      <div className="admin-section-controls">
+        <label className="xa-dashboard-month-filter"><span>Mes</span><input type="month" aria-label="Filtrar actividad por mes" value={month ?? ''} onChange={event => { const next = new URLSearchParams(searchParams); if (event.target.value) next.set('month', event.target.value); else next.delete('month'); setSearchParams(next); }} /></label>
+        {month && <button type="button" className="xa-dashboard-month-clear" onClick={() => { const next = new URLSearchParams(searchParams); next.delete('month'); setSearchParams(next); }}>Quitar filtro</button>}
+      </div>
+    </header>
     <section className="xa-metrics" aria-label="Indicadores principales">{cards.map((card, index) => {
       const value = metricValues[index];
       const verificationUnavailable = index === 2 && !can(admin, 'verification:write');
