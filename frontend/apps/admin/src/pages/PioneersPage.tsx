@@ -42,7 +42,7 @@ export function PioneersPage() {
     const link = document.createElement('a'); link.href = url; link.download = 'cupones-pioneros.csv'; link.click(); URL.revokeObjectURL(url);
   };
   return <section className="pioneers-workspace">
-    <header className="pioneers-heading"><span className="pioneers-heading-icon"><Icon name="ticket" size={27} /></span><div><h1>Cupones Pioneros</h1><p>Gestión de la numeración exclusiva para negocios pioneros.</p></div></header>
+    <header className="admin-section-heading"><h1>Cupones Pioneros</h1></header>
     <div className="pioneer-summary-grid">
       <article className="pioneer-summary-card"><span className="pioneer-summary-icon violet"><Icon name="ticket" /></span><div><small>Total de cupones</small><strong>{data.max}</strong></div></article>
       <article className="pioneer-summary-card"><span className="pioneer-summary-icon green"><Icon name="check" /></span><div><small>Ocupados</small><strong>{data.assignments.length}</strong></div><Badge tone="success">{usage}%</Badge></article>
