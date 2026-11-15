@@ -1317,3 +1317,15 @@
 .business-app .business-invitation-buttons button{min-height:38px;padding:8px 12px;border-radius:10px;text-decoration:none!important}
 .business-app .business-invitations :is(button,a):focus-visible{outline:3px solid #acc4fb;outline-offset:2px}
 @media(max-width:700px){.business-app .business-invitations{padding:13px;border-radius:13px}.business-app .business-invitation-row{padding:12px}.business-app .business-invitation-buttons{width:100%;justify-content:stretch}.business-app .business-invitation-buttons button{flex:1 1 120px}}
+
+/* Individual business inbox decisions: no underlined buttons, responsive. */
+.business-app .notifications-card .notification-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;min-width:0}
+.business-app .notifications-card .notification-discard{display:inline-flex;align-items:center;justify-content:center;min-height:37px;padding:8px 11px;border:1px solid #dce4f3;border-radius:9px;background:#fff;color:#657b9a;font:inherit;font-size:11px;font-weight:750;cursor:pointer;text-decoration:none!important}
+.business-app .notifications-card .notification-discard:hover{background:#f3f7ff;border-color:#bfd0ed;color:#3158a0}
+.business-app .notifications-card .notification-delete-confirm{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;max-width:100%;padding:10px;border:1px solid #efd5db;border-radius:11px;background:#fff9fa}
+.business-app .notifications-card .notification-delete-confirm span{max-width:265px;color:#8d4c5c;font-size:11px;line-height:1.5}
+.business-app .notifications-card .notification-delete-confirm button{min-height:35px;padding:7px 12px;border-radius:9px;font-size:11px;line-height:1.4;text-decoration:none!important}
+.business-app .notifications-card :is(button,a):focus-visible{outline:3px solid #abc6ff;outline-offset:2px}
+.business-app .notifications-card :is(button,a,a:hover){text-decoration:none!important}
+@media(max-width:900px){.business-app .notifications-card .notification-actions{grid-column:2;justify-content:flex-start}}
+@media(max-width:600px){.business-app .notifications-card .notification-actions{grid-column:1 / -1;width:100%;justify-content:stretch}.business-app .notifications-card .notification-delete-confirm{width:100%;justify-content:flex-start}.business-app .notifications-card .notification-delete-confirm span{width:100%;max-width:none}.business-app .notifications-card .notification-discard{width:100%}}
