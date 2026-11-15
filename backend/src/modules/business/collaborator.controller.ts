@@ -16,5 +16,13 @@ export const revokeController=run(async req=>({membership:await revokeCollaborat
 export const permissionsController=run(async req=>({result:await setPermissions(uid(req),req.params.membershipId,Array.isArray(req.body?.permissions)?req.body.permissions:[])}));
 export const leaveController=run(async req=>({membership:await leaveBusiness(uid(req),req.params.businessId)}));
 export const notificationsController=run(async req=>({notifications:await listNotifications(uid(req))}));
+export const scopedNotificationsController=run(async req=>({
+  notifications:await listNotifications(uid(req),req.params.businessId),
+}));
+export const scopedReadNotificationController=run(async req=>
+  markNotificationRead(uid(req),req.params.notificationId,req.params.businessId));
+export const scopedDeleteNotificationController=run(async req=>
+  deleteNotification(uid(req),req.params.notificationId,req.params.businessId));
+
 export const readNotificationController=run(async req=>markNotificationRead(uid(req),req.params.notificationId));
 export const deleteNotificationController=run(async req=>deleteNotification(uid(req),req.params.notificationId));
