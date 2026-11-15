@@ -140,12 +140,13 @@ export async function getAdminUserProfile(id: string) {
     },
   });
   if (!user) throw new AppError(404, 'ADMIN_USER_NOT_FOUND', 'No encontramos este usuario.');
-  const [reviews, favorites, offerLikes, sessions, reports] = await Promise.all([
+  const [reviews, favorites, offerLikes, sessions, reports, pendingTransfers] = await Promise.all([
     prisma.businessReview.count({ where: { userId: id } }),
     prisma.businessFavorite.count({ where: { userId: id } }),
     prisma.businessOfferLike.count({ where: { userId: id } }),
     prisma.session.count({ where: { userId: id, revokedAt: null, expiresAt: { gt: new Date() } } }),
     prisma.businessReport.count({ where: { reporterId: id } }),
+    prisma.ownershipTransfer.count({ where: { status: 'PENDING', OR: [{ fromUserId: id }, { toUserId: id }] } }),
   ]);
   const links = businessLinks(user.memberships, user.createdBusinesses);
   const blockers = deletionBlockers({
@@ -153,6 +154,7 @@ export async function getAdminUserProfile(id: string) {
     createdBusinesses: user.createdBusinesses.length,
     businessAccounts: user.createdBusinessAccounts.length,
     adminRoles: user.adminRoleAssignments.length,
+    pendingTransfers,
   });
   const { memberships: _m, createdBusinesses: _c, adminRoleAssignments: _a, createdBusinessAccounts: _accounts, ...profile } = user;
   return {
@@ -160,17 +162,18 @@ export async function getAdminUserProfile(id: string) {
       avatarUrl: profile.avatarUrl?.startsWith('private-avatar:') ? '/api/v1/admin/users/' + encodeURIComponent(profile.id) + '/avatar' : null,
       authProviders: user.authIdentities, businesses: links, administrativeRoles: user.adminRoleAssignments.map(item => item.role),
       businessAccounts: user.createdBusinessAccounts,
-      activity: { reviews, favorites, offerLikes, sessions, reports },
+      activity: { reviews, favorites, offerLikes, sessions, reports, pendingTransfers },
       deletion: { allowed: user.status !== 'DELETED' && blockers.length === 0, blockers },
     },
   };
 }
-export function deletionBlockers(input: { ownBusinesses: number; createdBusinesses: number; businessAccounts: number; adminRoles: number }) {
+export function deletionBlockers(input: { ownBusinesses: number; createdBusinesses: number; businessAccounts: number; adminRoles: number; pendingTransfers?: number }) {
   return [
     ...(input.ownBusinesses ? ['Tiene negocios con membresía de propietario vigente.'] : []),
     ...(input.createdBusinesses ? ['Figura como creador de negocios existentes.'] : []),
     ...(input.businessAccounts ? ['Tiene cuentas de negocio asociadas a su identidad.'] : []),
     ...(input.adminRoles ? ['Tiene un rol administrativo activo.'] : []),
+    ...(input.pendingTransfers ? ['Tiene transferencias de propiedad pendientes.'] : []),
   ];
 }
 
@@ -183,13 +186,14 @@ export async function deactivateAdminUser(userId: string, actorId: string, reaso
     const user = await tx.user.findUnique({ where: { id: userId }, select: { id: true, status: true, displayName: true, emailNormalized: true } });
     if (!user) throw new AppError(404, 'ADMIN_USER_NOT_FOUND', 'No encontramos este usuario.');
     if (user.status === 'DELETED') throw new AppError(409, 'ADMIN_USER_ALREADY_DELETED', 'La cuenta ya está eliminada.');
-    const [owners, created, accounts, adminRoles] = await Promise.all([
+    const [owners, created, accounts, adminRoles, pendingTransfers] = await Promise.all([
       tx.businessMembership.count({ where: { userId, role: 'OWNER', status: 'ACTIVE', business: activeBusiness } }),
       tx.business.count({ where: { createdById: userId, ...activeBusiness } }),
       tx.businessAccount.count({ where: { createdById: userId } }),
       tx.adminRoleAssignment.count({ where: { userId, active: true } }),
+      tx.ownershipTransfer.count({ where: { status: 'PENDING', OR: [{ fromUserId: userId }, { toUserId: userId }] } }),
     ]);
-    const blockers = deletionBlockers({ ownBusinesses: owners, createdBusinesses: created, businessAccounts: accounts, adminRoles });
+    const blockers = deletionBlockers({ ownBusinesses: owners, createdBusinesses: created, businessAccounts: accounts, adminRoles, pendingTransfers });
     if (blockers.length) throw new AppError(409, 'ADMIN_USER_DEPENDENCIES', blockers.join(' '));
     const now = new Date();
     await tx.user.update({ where: { id: userId }, data: { status: 'DELETED' } });
