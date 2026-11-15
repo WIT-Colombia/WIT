@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
 import { getSession } from '../services/adminService';
-import { deactivateAdminUser, getAdminUserProfile, type AdminUserProfile, type AdminUserBusinessLink } from '../services/adminApiClient';
+import { deactivateAdminUser, fetchAdminUserAvatar, getAdminUserProfile, type AdminUserProfile, type AdminUserBusinessLink } from '../services/adminApiClient';
 import { accountStatus } from './AdminUsersPage';
 import './AdminUsersRefresh.css';
 
@@ -89,6 +89,7 @@ export function AdminUserDetailPage() {
   const [error,setError]=useState('');
   const [retry,setRetry]=useState(0);
   const [deleteOpen,setDeleteOpen]=useState(false);
+  const [avatarSrc,setAvatarSrc]=useState<string|null>(null);
   const [notice,setNotice]=useState('');
   useEffect(()=>{
     if(!allowed||!id)return;
@@ -98,6 +99,17 @@ export function AdminUserDetailPage() {
       .finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
   },[allowed,id,retry]);
+  useEffect(()=>{
+    if(!profile?.avatarUrl){setAvatarSrc(null);return;}
+    let active=true;
+    let objectUrl:string|null=null;
+    fetchAdminUserAvatar(profile.id).then(blob=>{
+      if(!active)return;
+      objectUrl=URL.createObjectURL(blob);
+      setAvatarSrc(objectUrl);
+    }).catch(()=>{if(active)setAvatarSrc(null);});
+    return()=>{active=false;if(objectUrl)URL.revokeObjectURL(objectUrl);};
+  },[profile?.id,profile?.avatarUrl]);
   const close=useCallback(()=>setDeleteOpen(false),[]);
   const completed=useCallback((message:string)=>{
     setDeleteOpen(false);setNotice(message);setRetry(n=>n+1);
@@ -125,7 +137,7 @@ export function AdminUserDetailPage() {
   </article>;
   return <div className="au-page au-detail-page">
     <Link className="au-back" to="/users"><Icon name="arrow" size={17}/> Volver al directorio</Link>
-    <header className="au-detail-hero"><div className="au-profile-avatar">{initials(profile.displayName)}</div>
+    <header className="au-detail-hero"><div className="au-profile-avatar">{avatarSrc?<img src={avatarSrc} alt="" onError={()=>setAvatarSrc(null)}/>:initials(profile.displayName)}</div>
       <div className="au-detail-heading"><span className="au-eyebrow">FICHA ADMINISTRATIVA · USUARIO</span><h1>{profile.displayName}</h1><p>{profile.emailNormalized??'Sin correo electrónico'}{profile.nickname?' · @'+profile.nickname:''}</p>
         <div className="au-profile-badges"><span className={'au-status '+profile.status.toLowerCase()}>{accountStatus[profile.status]}</span>
           {profile.administrativeRoles.map(role=><span className="au-admin-mini" key={role}>{role==='SUPER_ADMIN'?'Administrador principal':'Administrador'}</span>)}</div></div>
