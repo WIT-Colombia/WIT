@@ -744,11 +744,60 @@ export function BusinessDetailPage() {
     }
   };
   const generalSection = <section className="business-detail-section" data-business-section="general">
-    {editingSection === "general" ? <form className="business-detail-inline-form" onSubmit={event => { event.preventDefault(); void saveSection("general"); }}>
-      <div className="form-grid"><label className="form-field"><span>Nombre comercial</span><input value={draft.name} onChange={event => updateDraft("name", event.target.value)} required /></label><label className="form-field"><span>Categoría principal</span><select value={categoryLabel(draft.category)} onChange={event => { const next = event.target.value; updateDraft("category", next);; }} required>{categories.map(item => <option key={item} value={item}>{formatCategoryName(item)}</option>)}</select></label><label className="form-field full-field"><span>Sede (opcional)</span><input value={draft.sede ?? ""} maxLength={160} onChange={event => updateDraft("sede", event.target.value)} placeholder="Ej. Centro" /></label><label className="form-field full-field"><span>Descripción del negocio</span><textarea value={draft.description} onChange={event => updateDraft("description", event.target.value)} rows={4} maxLength={300} /></label></div>
-      <fieldset className="form-field adult-only-field"><label className="adult-only-row"><span className="adult-only-copy"><strong>Contenido exclusivo para mayores de 18 años</strong><small>Actívalo únicamente si tu establecimiento está dirigido exclusivamente a adultos.</small></span><span className="adult-only-control"><input type="checkbox" checked={Boolean(draft.adultOnly)} onChange={event => updateDraft("adultOnly", event.target.checked)} /><span className="adult-only-info" role="img" aria-label="La clasificación +18 es informativa, no una verificación legal">ⓘ</span></span></label></fieldset>
-      {sectionError && <p className="form-error" role="alert">{sectionError}</p>}<div className="business-detail-inline-actions"><button className="outline-button" type="button" onClick={cancelSectionEdit}>Cancelar</button><button className="action-button" type="submit" disabled={sectionSaving !== null}>{sectionSaving === "general" ? "Guardando…" : "Guardar cambios"}</button></div>
-   </form> : <>{info([["Nombre comercial", business.name], ["Categoría principal", categoryLabel(business.category)]])}</>}
+    {editingSection === "general" ? (
+      <form className="business-detail-inline-form business-general-edit-form" onSubmit={event => { event.preventDefault(); void saveSection("general"); }}>
+        <div className="business-general-edit-fields">
+          <label className="business-general-edit-field">
+            <span className="business-general-edit-icon" aria-hidden="true"><DetailSectionIcon title="Nombre y sede" /></span>
+            <span className="business-general-edit-copy">
+              <span className="business-general-edit-label">Nombre comercial</span>
+              <input value={draft.name} onChange={event => updateDraft("name", event.target.value)} required />
+            </span>
+          </label>
+          <label className="business-general-edit-field">
+            <span className="business-general-edit-icon" aria-hidden="true"><DetailSectionIcon title="Categoría principal" /></span>
+            <span className="business-general-edit-copy">
+              <span className="business-general-edit-label">Categoría principal</span>
+              <select value={categoryLabel(draft.category)} onChange={event => updateDraft("category", event.target.value)} required>
+                {categories.map(item => <option key={item} value={item}>{formatCategoryName(item)}</option>)}
+              </select>
+            </span>
+          </label>
+          <label className="business-general-edit-field business-general-edit-wide">
+            <span className="business-general-edit-icon" aria-hidden="true"><DetailSectionIcon title="Ubicación y dirección" /></span>
+            <span className="business-general-edit-copy">
+              <span className="business-general-edit-label">Sede <span className="business-general-edit-optional">(opcional)</span></span>
+              <input value={draft.sede ?? ""} maxLength={160} onChange={event => updateDraft("sede", event.target.value)} placeholder="Ej. Centro" />
+            </span>
+          </label>
+          <label className="business-general-edit-field business-general-edit-wide">
+            <span className="business-general-edit-icon" aria-hidden="true"><DetailSectionIcon title="Descripción" /></span>
+            <span className="business-general-edit-copy">
+              <span className="business-general-edit-label">Descripción del negocio</span>
+              <textarea value={draft.description} onChange={event => updateDraft("description", event.target.value)} rows={4} maxLength={300} />
+            </span>
+          </label>
+        </div>
+        <fieldset className="adult-only-field business-general-edit-adult">
+          <label className="adult-only-row">
+            <span className="business-general-edit-icon business-general-edit-adult-icon" aria-hidden="true"><DetailSectionIcon title="Clasificación +18" /></span>
+            <span className="adult-only-copy">
+              <strong>Contenido exclusivo para mayores de 18 años</strong>
+              <small>Actívalo únicamente si tu establecimiento está dirigido exclusivamente a adultos.</small>
+            </span>
+            <span className="adult-only-control">
+              <input type="checkbox" checked={Boolean(draft.adultOnly)} onChange={event => updateDraft("adultOnly", event.target.checked)} />
+              <span className="adult-only-info" role="img" aria-label="La clasificación +18 es informativa, no una verificación legal">ⓘ</span>
+            </span>
+          </label>
+        </fieldset>
+        {sectionError && <p className="form-error" role="alert">{sectionError}</p>}
+        <div className="business-detail-inline-actions business-general-edit-actions">
+          <button className="outline-button" type="button" onClick={cancelSectionEdit}>Cancelar</button>
+          <button className="action-button" type="submit" disabled={sectionSaving !== null}>{sectionSaving === "general" ? "Guardando…" : "Guardar cambios"}</button>
+        </div>
+      </form>
+    ) : <>{info([["Nombre comercial", business.name], ["Categoría principal", categoryLabel(business.category)]])}</>}
   </section>;
   const locationFields = [
     { label: "País", value: business.countryCode ? (new Intl.DisplayNames(["es"], { type: "region" }).of(business.countryCode) ?? business.countryCode) : "" },
