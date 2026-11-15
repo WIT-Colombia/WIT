@@ -126,7 +126,7 @@
 }
 .admin-refresh .ad-business-growth-canvas{width:100%;min-width:0}
 .admin-refresh .ad-business-growth-canvas svg{
-  display:block;width:100%;height:340px;
+  display:block;width:100%;height:auto;
   overflow:hidden;touch-action:pan-y;cursor:crosshair;
 }
 .admin-refresh .ad-business-growth-canvas svg text{
@@ -221,7 +221,6 @@
   .admin-refresh .ad-business-growth-chart-wrap{padding:15px 9px;border-radius:13px}
   .admin-refresh .ad-business-growth-view-controls{gap:6px}
   .admin-refresh .ad-business-growth-toggle button{padding:7px 9px;font-size:10px}
-  .admin-refresh .ad-business-growth-canvas svg{height:285px}
   .admin-refresh .ad-business-growth-axis{font-size:10px}
 }
 @media(max-width:420px){
