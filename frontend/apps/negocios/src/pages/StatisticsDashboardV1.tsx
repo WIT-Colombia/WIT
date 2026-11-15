@@ -15,6 +15,9 @@ function change(current: number, previous: number | undefined) {
   return Math.round((current - previous) / previous * 100);
 }
 function FreeCardIcon({ icon, metric }: { icon: string; metric: string }) {
+  if (metric === 'businessViews') return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5 10 6.5 10 6.5-3.5 6.5-10 6.5S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>;
+  if (metric === 'phoneClicks') return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 3H4a1 1 0 0 0-1 1c0 9.4 7.6 17 17 17a1 1 0 0 0 1-1v-3l-5-2.5-2.2 2.2a15.5 15.5 0 0 1-6.5-6.5L9.5 8 7 3Z" /></svg>;
+  if (metric === 'directionsClicks') return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22s8-7 8-13a8 8 0 0 0-16 0c0 6 8 13 8 13Z" /><circle cx="12" cy="9" r="2.5" /></svg>;
   if (metric === 'searchAppearances') return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6" /><path d="m15.8 15.8 5 5" /></svg>;
   if (metric === 'whatsappClicks') return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11.7a8 8 0 0 1-11.8 7l-4.1 1.1 1.1-4A8 8 0 1 1 20 11.7Z" /><path d="M8.7 8.6c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.8 1.8c.1.2.1.4 0 .6l-.5.7c.6 1.2 1.5 2.1 2.7 2.7l.7-.5c.2-.1.4-.1.6 0l1.8.8c.3.1.4.3.4.5v.5c0 .3 0 .6-.5.8-.5.2-1.7.4-3.7-.5-1.2-.5-2.3-1.4-3.2-2.3-.9-.9-1.8-2-2.3-3.2-.9-2-.7-3.2-.5-3.7Z" /></svg>;
   return <>{icon}</>;
