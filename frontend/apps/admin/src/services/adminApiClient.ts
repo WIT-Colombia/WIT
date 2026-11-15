@@ -70,6 +70,12 @@ export function getAdminUserOverview() { return request<AdminUserOverview>('/adm
 export async function getAdminUserProfile(id: string) {
   return (await request<{ user: AdminUserProfile }>('/admin/users/' + encodeURIComponent(id))).user;
 }
+export async function fetchAdminUserAvatar(id: string): Promise<Blob> {
+  const response = await fetch(buildApiUrl('/admin/users/' + encodeURIComponent(id) + '/avatar'),
+    headers({ headers: { Accept: 'image/*' } }));
+  if (!response.ok) throw new AdminApiError(response.status, 'ADMIN_AVATAR_UNAVAILABLE', 'La fotografía no está disponible.');
+  return response.blob();
+}
 export function deactivateAdminUser(id: string, reason: string, confirmation: string) {
   return request<{ id: string; status: 'DELETED'; message: string }>(
     '/admin/users/' + encodeURIComponent(id) + '/deactivate',
