@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { navigation, navigationGroups } from '../data/navigation';
+import { navigation } from '../data/navigation';
 import { Icon } from '../components/Icon';
 import { useEffect, useState } from 'react';
 import { moduleWorkflows } from '../data/moduleWorkflows';
@@ -7,7 +7,6 @@ import { moduleWorkflows } from '../data/moduleWorkflows';
 export function PendingModulePage() {
   const { pathname } = useLocation();
   const module = navigation.find(item => pathname === item.path || pathname.startsWith(`${item.path}/`));
-  const group = navigationGroups.find(item => item.id === module?.group);
   const title = module?.label || 'Módulo';
   const description = module?.description || 'Esta función aún no está disponible.';
   const workflow = moduleWorkflows[module?.path || ''] || { intro: description, work: ['Consulta de información', 'Revisión administrativa', 'Trazabilidad de acciones'], source: 'Una integración administrativa autorizada' };
