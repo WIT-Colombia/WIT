@@ -4,6 +4,7 @@ import { decideOperationalRecord, listOperationalRecords, type OperationalKind, 
 import './OperationalInboxPage.css';
 import { Icon } from '../components/Icon';
 import { SupportDecisionDialog } from '../components/SupportDecisionDialog';
+import { getSession } from '../services/adminService';
 
 const config: Record<OperationalKind, { title: string; description: string }> = {
   needs: { title: 'Necesidades de usuarios', description: 'Solicitudes recibidas desde «¿Qué necesitas encontrar?» en XAMUKO Usuarios.' },
@@ -28,6 +29,7 @@ const date = (value: string) => {
 };
 
 export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
+  const canDecide = getSession()?.permissions?.includes('content:moderate:write') ?? false;
   const [records, setRecords] = useState<OperationalRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [actionCounts, setActionCounts] = useState({ pending: 0, reviewing: 0 });
@@ -125,12 +127,12 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
         <div><strong>Registro vinculado</strong><small>Abre la ficha para consultar los antecedentes o aplicar medidas sobre el contenido.</small></div>
         <Link to={chosen.targetPath}>{chosen.targetLabel ?? 'Consultar ficha'} <Icon name="arrow" size={15}/></Link>
       </div>}
-      <label className="ops-note">Observación administrativa<textarea value={note} onChange={event => setNote(event.target.value)} maxLength={1500} rows={4} placeholder="Registra la justificación de tu decisión" /></label>
-      <p className="ops-hint">Selecciona una decisión y confírmala en la ventana de revisión. La observación será obligatoria y quedará auditada.</p>
+      {canDecide && <label className="ops-note">Observación administrativa<textarea value={note} onChange={event => setNote(event.target.value)} maxLength={1500} rows={4} placeholder="Registra la justificación de tu decisión" /></label>}
+      {canDecide ? <><p className="ops-hint">Selecciona una decisión y confírmala en la ventana de revisión. La observación será obligatoria y quedará auditada.</p>
       <div className="ops-actions">{(['UNDER_REVIEW', 'RESOLVED', 'REJECTED'] as const).map(next =>
         <button key={next} type="button" disabled={busy || next === chosen.status || ['RESOLVED','REJECTED'].includes(chosen.status)}
           onClick={() => setDecision(next)}>{labels[next]}</button>
-      )}</div>
+      )}</div></> : <p className="ops-hint">Puedes consultar los registros. Tu cuenta no tiene permisos para tomar decisiones de moderación.</p>}
     </section>}
     {decision && chosen && <SupportDecisionDialog
       title={decision === 'UNDER_REVIEW' ? 'Iniciar revisión' : decision === 'RESOLVED' ? 'Resolver solicitud' : 'Rechazar solicitud'}
