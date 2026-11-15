@@ -52,13 +52,13 @@ function BusinessRecoveryLayout() {
   return state.status === "authenticated" ? <AppShell /> : <Outlet />;
 }
 
-// Legal documents are standalone during registration, but use the Business
-// sidebar and desktop header when opened from an authenticated profile.
+// Registration documents remain standalone. Authenticated readers see legal
+// pages inside the same Business workspace as Configuración and Mi perfil.
 function BusinessLegalLayout() {
   const { state } = useBusinessAuth();
   const location = useLocation();
-  const fromProfile = new URLSearchParams(location.search).get("from") === "perfil";
-  if (!fromProfile) return <Outlet />;
+  const source = new URLSearchParams(location.search).get("from");
+  if (source === "registro" || source === "register") return <Outlet />;
   if (state.status === "unchecked") return <main className="auth-page"><p className="auth-status">Comprobando tu sesión…</p></main>;
   return state.status === "authenticated" ? <AppShell /> : <Outlet />;
 }
