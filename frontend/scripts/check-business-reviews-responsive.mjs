@@ -81,16 +81,28 @@ try {
     const context = await browser.newContext({ viewport:{width,height}, isMobile:mobile, hasTouch:mobile, deviceScaleFactor: mobile?2:1 });
     const page = await context.newPage();
     try {
-      // Regression: old shared CSS underlined both links on hover.
+      // None of the buttons in Opiniones may inherit the old shared CSS
+      // hover underline: Responder, Reportar and Respuesta bloqueada.
       await page.setContent(pageMarkup() + '</body></html>');
       await page.addStyleTag({ content:css });
       const blocked = page.getByRole('button', { name:'Respuesta bloqueada' });
       assert.equal(await blocked.isDisabled(), true, sizeName+': expired reply remains blocked');
-      assert.equal(await blocked.evaluate(el => getComputedStyle(el).textDecorationLine), 'none', sizeName+': blocked reply has no underline');
+      const noUnderline = async (locator, label) =>
+        assert.equal(await locator.evaluate(el => getComputedStyle(el).textDecorationLine), 'none', sizeName+': '+label+' must have no underline');
+      const reviewButtons = await page.locator('.reviews-page button').all();
+      assert.ok(reviewButtons.length >= 4, sizeName+': all review actions present');
+      for (const [index, button] of reviewButtons.entries()) await noUnderline(button, 'review action '+index);
+      const responder = page.getByRole('button', { name:'Responder', exact:true }).first();
+      await responder.hover();
+      await noUnderline(responder, 'Responder hover');
+      await responder.focus();
+      await noUnderline(responder, 'Responder focus');
       const report = page.getByRole('button', { name:'Reportar comentario' }).first();
-      assert.equal(await report.evaluate(el => getComputedStyle(el).textDecorationLine), 'none', sizeName+': report link has no underline');
       await report.hover();
-      assert.equal(await report.evaluate(el => getComputedStyle(el).textDecorationLine), 'none', sizeName+': report link remains without underline on hover');
+      await noUnderline(report, 'Reportar comentario hover');
+      await report.focus();
+      await noUnderline(report, 'Reportar comentario focus');
+      await noUnderline(blocked, 'Respuesta bloqueada');
       for (const mode of ['reply','report']) {
         await page.setContent(dialogMarkup(mode));
         await page.addStyleTag({ content:css });
@@ -175,6 +187,10 @@ try {
             }),
           };
         });
+        // Modal buttons are included: Cerrar, Cancelar and submit actions.
+        const modalButtons = await page.locator('.reviews-dialog-backdrop button').all();
+        assert.ok(modalButtons.length >= 3, label+': dialog buttons present');
+        for (const [index, button] of modalButtons.entries()) await noUnderline(button, mode+' dialog action '+index);
         assert.ok(after.headerTop>=-2,label+': sticky modal heading remains visible after scroll');
         for(const [i,b] of after.buttons.entries()){
           assert.ok(b.top>=-2 && b.bottom<=after.viewportHeight+2,label+': action '+i+' not clipped by viewport');

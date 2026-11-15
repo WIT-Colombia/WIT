@@ -362,14 +362,13 @@
   border-color:#d66b81;
   background:#fff0f4;
 }
-/* Cancel the old shared pages.css hover underline for these two actions.
-   Keep the focus outline, XAMUKO colors and disabled behavior unchanged. */
-.reviews-page .review-actions button.review-report-button,
-.reviews-page .review-actions button.review-report-button:hover,
-.reviews-page .review-actions button.review-report-button:focus-visible,
-.reviews-page .review-actions button.review-reply-button:disabled,
-.reviews-page .review-actions button.review-reply-button:disabled:hover,
-.reviews-page .review-actions button.review-reply-button:disabled:focus-visible{
+/* Ningún botón de Opiniones debe subrayarse, incluidos Responder,
+   Reportar, Respuesta bloqueada y los formularios. Esta regla específica
+   prevalece sobre los hovers históricos de pages.css sin quitar el foco. */
+.reviews-page button,
+.reviews-page button:is(:hover,:focus,:focus-visible,:active,:disabled),
+body>.reviews-dialog-backdrop button,
+body>.reviews-dialog-backdrop button:is(:hover,:focus,:focus-visible,:active,:disabled){
   text-decoration:none;
 }
 .reviews-page .review-actions button:disabled{
