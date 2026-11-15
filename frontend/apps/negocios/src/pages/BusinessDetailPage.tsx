@@ -761,9 +761,80 @@ export function BusinessDetailPage() {
     <div className="business-section-heading business-location-heading">
       <span className="business-location-heading-icon" aria-hidden="true"><DetailSectionIcon title="Ubicación y dirección" /></span>
       <div><h3>Ubicación</h3><p>La dirección pública solo se muestra cuando el negocio tiene atención física.</p></div>
-      {business.role === "Propietario" && <button className="text-button business-section-edit" type="button" onClick={() => beginSectionEdit("location")}>✎ Editar</button>}
+      {business.role === "Propietario" && editingSection !== "location" && <button className="text-button business-section-edit" type="button" onClick={() => beginSectionEdit("location")}>✎ Editar</button>}
     </div>
-    {editingSection === "location" ? <form className="business-detail-inline-form" onSubmit={event => { event.preventDefault(); void saveSection("location"); }}><div className="form-grid"><label className="form-field"><span>Departamento</span><select value={editDepartment} onChange={event => { setEditDepartment(event.target.value); updateDraft("city", ""); }} required>{locationCatalog.departments.map(item => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label><label className="form-field"><span>Ciudad o municipio</span><select value={draft.city} onChange={event => updateDraft("city", event.target.value)} required><option value="">Selecciona una ciudad o municipio</option>{municipalities.map(item => <option key={item.id}>{item.name}</option>)}</select></label></div><div className="location-mode-toggle" role="group" aria-label="Forma de indicar la ubicación"><button type="button" className={editLocationMode === "address" ? "active" : ""} onClick={() => setEditLocationMode("address")}>Escribir dirección</button><button type="button" className={editLocationMode === "map" ? "active" : ""} onClick={() => setEditLocationMode("map")}>Seleccionar en el mapa</button></div>{editLocationMode === "address" ? <><label className="form-field full-field"><span>Dirección</span><input value={draft.address} onChange={event => { updateDraft("address", event.target.value); updateDraft("latitude", undefined); updateDraft("longitude", undefined); setManualLocationStatus(""); }} placeholder="Calle, carrera y número" /><button type="button" className="outline-button location-confirm-button" onClick={() => void confirmManualLocation()} disabled={manualLocationBusy}>{manualLocationBusy ? "Buscando ubicación…" : "Confirmar ubicación"}</button>{manualLocationStatus && <small className={`location-geocode-status ${manualLocationStatus.includes("Ubicación encontrada") ? "is-success" : manualLocationStatus.includes("No encontramos") || manualLocationStatus.includes("No se pudo") ? "is-error" : "is-warning"}`} role="status">{manualLocationStatus}</small>}</label><label className="form-field full-field"><span>Información adicional de la dirección (opcional)</span><input value={draft.additionalAddressInfo ?? ""} maxLength={200} onChange={event => updateDraft("additionalAddressInfo", event.target.value)} placeholder="Ej. Centro Comercial La Nube, local 204" /></label></> : <><BusinessLocationPicker value={draft.latitude != null && draft.longitude != null ? { lat: draft.latitude, lng: draft.longitude } : null} query={[draft.address, draft.city].filter(Boolean).join(", ")} onChange={value => { updateDraft("latitude", value.lat); updateDraft("longitude", value.lng); }} /><p className="form-help">Selecciona o mueve el marcador. Confirma después con “Guardar cambios”.</p></>}{sectionError && <p className="form-error" role="alert">{sectionError}</p>}<div className="business-detail-inline-actions"><button className="outline-button" type="button" onClick={cancelSectionEdit}>Cancelar</button><button className="action-button" type="submit" disabled={sectionSaving !== null}>{sectionSaving === "location" ? "Guardando…" : "Guardar cambios"}</button></div></form> : <><div className="business-location-facts" role="list">
+    {editingSection === "location" ? (
+      <form className="business-detail-inline-form business-location-edit-form" onSubmit={event => { event.preventDefault(); void saveSection("location"); }}>
+        <div className="business-location-edit-grid">
+          <label className="business-location-edit-field">
+            <span className="business-location-fact-icon" aria-hidden="true"><DetailSectionIcon title="Departamento" /></span>
+            <span className="business-location-edit-field-copy">
+              <span className="business-location-edit-label">Departamento</span>
+              <select value={editDepartment} onChange={event => { setEditDepartment(event.target.value); updateDraft("city", ""); }} required>
+                {locationCatalog.departments.map(item => <option key={item.code} value={item.code}>{item.name}</option>)}
+              </select>
+            </span>
+          </label>
+          <label className="business-location-edit-field">
+            <span className="business-location-fact-icon" aria-hidden="true"><DetailSectionIcon title="Ciudad" /></span>
+            <span className="business-location-edit-field-copy">
+              <span className="business-location-edit-label">Ciudad o municipio</span>
+              <select value={draft.city} onChange={event => updateDraft("city", event.target.value)} required>
+                <option value="">Selecciona una ciudad o municipio</option>
+                {municipalities.map(item => <option key={item.id} value={item.name}>{item.name}</option>)}
+              </select>
+            </span>
+          </label>
+        </div>
+        <fieldset className="business-location-edit-mode">
+          <legend>¿Cómo deseas indicar la ubicación?</legend>
+          <div className="location-mode-toggle" role="group" aria-label="Forma de indicar la ubicación">
+            <button type="button" className={editLocationMode === "address" ? "active" : ""} aria-pressed={editLocationMode === "address"} onClick={() => setEditLocationMode("address")}>
+              Escribir dirección
+            </button>
+            <button type="button" className={editLocationMode === "map" ? "active" : ""} aria-pressed={editLocationMode === "map"} onClick={() => setEditLocationMode("map")}>
+              Seleccionar en el mapa
+            </button>
+          </div>
+        </fieldset>
+        {editLocationMode === "address" ? (
+          <div className="business-location-edit-details">
+            <div className="business-location-edit-field business-location-edit-full">
+              <span className="business-location-fact-icon" aria-hidden="true"><DetailSectionIcon title="Dirección" /></span>
+              <div className="business-location-edit-field-copy">
+                <label htmlFor="business-location-address" className="business-location-edit-label">Dirección</label>
+                <input id="business-location-address" value={draft.address} onChange={event => { updateDraft("address", event.target.value); updateDraft("latitude", undefined); updateDraft("longitude", undefined); setManualLocationStatus(""); }} placeholder="Calle, carrera y número" />
+                <button type="button" className="outline-button location-confirm-button" onClick={() => void confirmManualLocation()} disabled={manualLocationBusy}>
+                  {manualLocationBusy ? "Buscando ubicación…" : "Confirmar ubicación"}
+                </button>
+                {manualLocationStatus && <small className={`location-geocode-status ${manualLocationStatus.includes("Ubicación encontrada") ? "is-success" : manualLocationStatus.includes("No encontramos") || manualLocationStatus.includes("No se pudo") ? "is-error" : "is-warning"}`} role="status">{manualLocationStatus}</small>}
+              </div>
+            </div>
+            <div className="business-location-edit-field business-location-edit-full">
+              <span className="business-location-fact-icon" aria-hidden="true"><DetailSectionIcon title="Descripción" /></span>
+              <div className="business-location-edit-field-copy">
+                <label htmlFor="business-location-extra" className="business-location-edit-label">Información adicional de la dirección <span className="business-location-edit-optional">(opcional)</span></label>
+                <input id="business-location-extra" value={draft.additionalAddressInfo ?? ""} maxLength={200} onChange={event => updateDraft("additionalAddressInfo", event.target.value)} placeholder="Ej. Centro Comercial La Nube, local 204" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="business-location-edit-map">
+            <div className="business-location-edit-map-title">
+              <span className="business-location-fact-icon" aria-hidden="true"><DetailSectionIcon title="Ubicación y dirección" /></span>
+              <span>Selecciona el punto exacto en el mapa</span>
+            </div>
+            <BusinessLocationPicker value={draft.latitude != null && draft.longitude != null ? { lat: draft.latitude, lng: draft.longitude } : null} query={[draft.address, draft.city].filter(Boolean).join(", ")} onChange={value => { updateDraft("latitude", value.lat); updateDraft("longitude", value.lng); }} />
+            <p className="form-help">Selecciona o mueve el marcador. Confirma después con “Guardar cambios”.</p>
+          </div>
+        )}
+        {sectionError && <p className="form-error" role="alert">{sectionError}</p>}
+        <div className="business-detail-inline-actions business-location-edit-actions">
+          <button className="outline-button" type="button" onClick={cancelSectionEdit}>Cancelar</button>
+          <button className="action-button" type="submit" disabled={sectionSaving !== null}>{sectionSaving === "location" ? "Guardando…" : "Guardar cambios"}</button>
+        </div>
+      </form>
+    ) : <><div className="business-location-facts" role="list">
       {locationFields.map(({ label, value }) => <div className="business-location-fact" role="listitem" key={label}>
         <span className="business-location-fact-icon" aria-hidden="true"><DetailSectionIcon title={label} /></span>
         <div className="business-location-fact-copy"><h4>{label}</h4><p>{value || "Sin información"}</p></div>
