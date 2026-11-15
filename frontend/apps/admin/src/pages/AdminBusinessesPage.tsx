@@ -5,8 +5,6 @@ import { StatePanel } from '../components/common';
 import { Icon } from '../components/Icon';
 import { getSession } from '../services/adminService';
 import { AdminBusinessGrowthPanel } from './AdminBusinessGrowthPanel';
-import adminWorkspacePreview from '../assets/admin-workspace-960.webp';
-import adminWorkspace4k from '../assets/admin-workspace-4k.webp';
 import './AdminBusinessesRefresh.css';
 
 const PAGE_SIZE = 10;
@@ -95,19 +93,7 @@ export function AdminBusinessesPage() {
 
   return <div className="businesses-page">
 
-    <header className="businesses-hero" aria-labelledby="businesses-page-title">
-      <div className="businesses-hero-copy">
-        <span className="businesses-hero-eyebrow">DIRECTORIO · CONTROL Y CRECIMIENTO</span>
-        <div className="businesses-hero-heading">
-          <span className="businesses-hero-icon"><Icon name="store" size={31} /></span>
-          <div><h1 id="businesses-page-title">Negocios</h1><p>Gestiona tu directorio, supervisa sus estados y analiza el crecimiento de la plataforma desde un mismo lugar.</p></div>
-        </div>
-      </div>
-      <picture className="businesses-hero-media">
-        <source srcSet={`${adminWorkspacePreview} 960w, ${adminWorkspace4k} 3840w`} sizes="(max-width: 700px) calc(100vw - 64px), (max-width: 1000px) 38vw, 340px" type="image/webp" />
-        <img src={adminWorkspacePreview} alt="Ilustración de XAMUKO Admin para la gestión y el crecimiento de negocios" width="3840" height="2160" loading="eager" decoding="async" />
-      </picture>
-    </header>
+    <header className="admin-section-heading"><h1 id="businesses-page-title">Negocios</h1></header>
 
     <section className="business-stats businesses-summary" aria-label="Resumen de negocios">
       {(statValues.length ? statValues : [
