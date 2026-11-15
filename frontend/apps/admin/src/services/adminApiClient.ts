@@ -279,6 +279,16 @@ export async function adminSessionLogout() {
   accessToken = null;
 }
 
+export type AdminSupportAttention = {
+  counts: Record<string,number>;
+  total: number;
+  generatedAt: string;
+  definition: string;
+};
+export function getAdminSupportAttention() {
+  return request<AdminSupportAttention>('/admin/support-attention');
+}
+
 export type OperationalKind = 'needs' | 'business-reports' | 'offer-reports' | 'support' | 'suggestions';
 export type OperationalStatus = 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJECTED';
 export type OperationalRecord = {
