@@ -1574,3 +1574,119 @@ body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-acti
     padding-bottom:9px;
   }
 }
+
+
+/* Prevención definitiva de recortes por la cabecera de Business (iPhone/iPad).
+   La ventana de Agregar/Editar producto sigue el viewport VISUAL (iOS Safari)
+   en vez de depender del viewport de diseño que puede estar bajo el header. */
+@media(max-width:1100px){
+  /* Se ocultan únicamente mientras el editor está abierto; al cerrarlo
+     recuperan su apariencia sin alterar la navegación del resto del sitio. */
+  body.catalog-product-editor-active .mobile-topbar,
+  body.catalog-product-editor-active .app-content>.topbar,
+  body.catalog-product-editor-active .mobile-nav{
+    visibility:hidden!important;
+    pointer-events:none!important;
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop{
+    position:fixed;
+    top:var(--catalog-editor-viewport-top,0px);
+    left:var(--catalog-editor-viewport-left,0px);
+    right:auto;
+    bottom:auto;
+    z-index:2147483000;
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+    box-sizing:border-box;
+    width:var(--catalog-editor-viewport-width,100vw);
+    height:var(--catalog-editor-viewport-height,100dvh);
+    min-width:0;
+    min-height:0;
+    max-width:none;
+    max-height:none;
+    margin:0;
+    padding:max(12px,env(safe-area-inset-top,0px)) 12px max(12px,env(safe-area-inset-bottom,0px));
+    overflow:hidden;
+    overscroll-behavior:contain;
+    isolation:isolate;
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+    position:relative;
+    display:block;
+    flex:0 1 640px;
+    box-sizing:border-box;
+    width:min(100%,640px);
+    min-width:0;
+    height:100%;
+    min-height:0;
+    max-height:100%;
+    margin:0 auto;
+    padding:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scroll-padding-top:0;
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading{
+    position:sticky;
+    top:0;
+    z-index:12;
+    min-width:0;
+    margin:0;
+    background:#fff;
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions{
+    position:sticky;
+    bottom:0;
+    z-index:12;
+    min-width:0;
+    background:rgba(255,255,255,.99);
+  }
+}
+@media(max-width:700px){
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop{
+    padding:max(8px,env(safe-area-inset-top,0px)) 8px max(8px,env(safe-area-inset-bottom,0px));
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+    flex:1 1 auto;
+    width:100%;
+    max-width:none;
+    height:100%;
+    min-height:0;
+    max-height:100%;
+    margin:0;
+    border-radius:14px;
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading{
+    display:flex;
+    align-items:flex-start;
+    flex-wrap:nowrap;
+    gap:10px;
+    min-height:0;
+    padding:14px 13px 12px;
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading>div{
+    flex:1 1 0%;
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading .close-button{
+    flex:0 0 36px;
+    margin-left:auto;
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-form{
+    min-width:0;
+    padding:14px 13px 0;
+  }
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions{
+    margin:8px -13px 0;
+    padding:12px 13px max(12px,env(safe-area-inset-bottom,0px));
+  }
+}
+@media(max-width:400px){
+  body.catalog-product-editor-active>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions{
+    grid-template-columns:minmax(0,1fr);
+  }
+}
