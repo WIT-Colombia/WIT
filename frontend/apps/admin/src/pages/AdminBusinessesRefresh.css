@@ -1,0 +1,348 @@
+/* Negocios Admin — reference design for administrative modules.
+   Scoped to .businesses-page and unrelated to other Admin tabs. */
+.admin-refresh .businesses-page{
+  --businesses-ink:#111d3b;
+  --businesses-blue:#225cf1;
+  --businesses-violet:#743fff;
+  --businesses-line:#dfe7f5;
+  min-width:0;color:var(--businesses-ink);
+}
+.admin-refresh .businesses-page,.admin-refresh .businesses-page *{box-sizing:border-box}
+.admin-refresh .businesses-page a{
+  text-decoration:none!important;
+}
+.admin-refresh .businesses-page a:hover{
+  text-decoration:none!important;
+}
+.admin-refresh .businesses-page .businesses-hero{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:24px;min-width:0;margin:0 0 24px;padding:24px 29px;
+  overflow:hidden;border:1px solid #d8e4f8;border-radius:20px;
+  background:linear-gradient(110deg,#fff 0%,#f8fbff 61%,#f0edff 100%);
+  box-shadow:0 10px 30px #14305f10;
+}
+.admin-refresh .businesses-page .businesses-hero-copy{
+  position:relative;z-index:1;min-width:0;flex:1 1 510px;
+}
+.admin-refresh .businesses-page .businesses-hero-eyebrow{
+  display:block;margin:0 0 15px 1px;
+  color:#285be1;font-size:10px;font-weight:800;letter-spacing:.12em;line-height:1.4;
+}
+.admin-refresh .businesses-page .businesses-hero-heading{
+  display:flex;align-items:center;gap:17px;min-width:0;
+}
+.admin-refresh .businesses-page .businesses-hero-heading>div{min-width:0}
+.admin-refresh .businesses-page .businesses-hero-icon{
+  display:grid;place-items:center;flex:0 0 65px;
+  width:65px;height:65px;border:1px solid #c5d5ff;border-radius:17px;
+  background:linear-gradient(140deg,#e5eaff,#d4e1ff);
+  color:#245cf2;box-shadow:0 8px 22px #245cf216;
+}
+.admin-refresh .businesses-page .businesses-hero h1{
+  margin:0 0 7px;color:#111d3b;
+  font-size:clamp(29px,3vw,39px);font-weight:850;
+  letter-spacing:-.04em;line-height:1.15;
+}
+.admin-refresh .businesses-page .businesses-hero-heading p{
+  max-width:590px;margin:0;color:#657895;
+  font-size:13px;line-height:1.6;overflow-wrap:anywhere;
+}
+.admin-refresh .businesses-page .businesses-hero-art{
+  flex:0 1 335px;width:335px;height:auto;max-width:36%;
+  overflow:visible;filter:drop-shadow(0 7px 13px #1b4c9f12);
+}
+.admin-refresh .businesses-page .businesses-summary{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px;margin:0 0 22px;min-width:0;
+}
+.admin-refresh .businesses-page .businesses-stat{
+  position:relative;min-width:0;min-height:116px;
+  display:flex;align-items:center;gap:16px;
+  margin:0;padding:20px;border:1px solid #dfe7f5;border-radius:17px;
+  background:#fff;box-shadow:0 8px 24px #14305f0b;
+  transition:border-color .16s,box-shadow .16s;
+}
+.admin-refresh .businesses-page .businesses-stat-icon{
+  display:grid;place-items:center;flex:0 0 50px;
+  width:50px;height:50px;border:1px solid #dedaff;
+  border-radius:14px;background:#f0eaff;color:#743fff;
+}
+.admin-refresh .businesses-page .businesses-stat.green .businesses-stat-icon{border-color:#d0efdf;background:#e7f9ef;color:#169658}
+.admin-refresh .businesses-page .businesses-stat.blue .businesses-stat-icon{border-color:#d7e5ff;background:#eaf2ff;color:#225cf1}
+.admin-refresh .businesses-page .businesses-stat.red .businesses-stat-icon{border-color:#f4dce2;background:#fff0f2;color:#bf485d}
+.admin-refresh .businesses-page .businesses-stat>div{
+  display:grid;gap:8px;min-width:0;
+}
+.admin-refresh .businesses-page .businesses-stat>div>span{
+  display:block;color:#657895;font-size:12px;line-height:1.35;font-weight:700;
+}
+.admin-refresh .businesses-page .businesses-stat strong{
+  display:block;margin:0;color:#162746;font-size:clamp(23px,2.2vw,29px);
+  letter-spacing:-.03em;line-height:1.15;font-weight:850;
+}
+.admin-refresh .businesses-page .businesses-stat>small{
+  position:absolute;bottom:10px;right:12px;
+  display:inline-flex;align-items:center;min-height:22px;
+  padding:3px 8px;border-radius:99px;
+  font-size:10px;font-weight:700;
+}
+.admin-refresh .businesses-page .businesses-directory{
+  min-width:0;border:1px solid var(--businesses-line);
+  border-radius:20px;background:#fff;
+  box-shadow:0 10px 30px #14305f10;
+}
+.admin-refresh .businesses-page .businesses-directory-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:18px;flex-wrap:wrap;padding:25px 25px 20px;
+}
+.admin-refresh .businesses-page .businesses-directory-heading h2{
+  margin:0 0 7px;color:#17294a;font-size:22px;
+  font-weight:800;letter-spacing:-.03em;line-height:1.2;
+}
+.admin-refresh .businesses-page .businesses-directory-heading p{
+  margin:0;color:#667a97;font-size:12px;line-height:1.55;
+}
+.admin-refresh .businesses-page .businesses-actions{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.admin-refresh .businesses-page .businesses-actions>.secondary-button,
+.admin-refresh .businesses-page .businesses-create{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-height:44px;height:auto;padding:11px 16px;
+  border:1px solid #d6e0f0;border-radius:11px;
+  background:#fff;color:#24456f;
+  font-size:12px;font-weight:750;line-height:1.4;
+  box-shadow:0 5px 14px #1235650c;white-space:nowrap;
+}
+.admin-refresh .businesses-page .businesses-actions>.secondary-button:hover{
+  background:#edf4ff;border-color:#a8c2fc;
+}
+.admin-refresh .businesses-page .businesses-create{
+  border-color:transparent;color:#fff;
+  background:linear-gradient(105deg,#743fff 0%,#245cf2 70%,#1ca2f3 100%);
+  box-shadow:0 9px 20px #5356db28;
+}
+.admin-refresh .businesses-page .businesses-create:hover{
+  color:#fff;filter:brightness(1.06);border-color:transparent;
+}
+.admin-refresh .businesses-page .businesses-toolbar{
+  display:grid;grid-template-columns:minmax(240px,1.5fr) minmax(165px,.72fr) auto;
+  align-items:center;gap:12px;padding:0 25px 22px;
+}
+.admin-refresh .businesses-page .businesses-toolbar .directory-search{
+  display:flex;align-items:center;gap:10px;min-width:0;
+  height:45px;margin:0;padding:0 14px;
+  border:1px solid #d7e0ef;border-radius:11px;background:#f9fbff;
+  color:#5f789f;
+}
+.admin-refresh .businesses-page .businesses-toolbar .directory-search input{
+  flex:1;min-width:0;width:100%;height:40px;
+  border:0;background:transparent;color:#213959;
+  font-size:13px;outline:0;
+}
+.admin-refresh .businesses-page .businesses-toolbar .directory-search:focus-within{
+  border-color:#87a8fa;box-shadow:0 0 0 3px #dae6ff;
+}
+.admin-refresh .businesses-page .businesses-status-filter select{
+  display:block;width:100%;height:45px;min-width:0;
+  padding:10px 13px;border:1px solid #d7e0ef;border-radius:11px;
+  color:#2c4361;background:#fff;font-size:12px;cursor:pointer;
+}
+.admin-refresh .businesses-page .businesses-clear{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:8px;min-width:104px;min-height:45px;height:auto;
+  padding:10px 13px;border:1px solid #d6e0f0;border-radius:11px;
+  background:#fff;color:#284c8a;font-size:12px;font-weight:700;
+}
+.admin-refresh .businesses-page .businesses-clear:hover:not(:disabled){
+  background:#eef4ff;border-color:#adc4fa;
+}
+.admin-refresh .businesses-page .business-table-wrap{
+  display:block;max-width:100%;overflow-x:auto;
+  border-top:1px solid #ebf0f8;
+}
+.admin-refresh .businesses-page .businesses-table{
+  width:100%;min-width:700px;border-collapse:collapse;
+}
+.admin-refresh .businesses-page .businesses-table thead th{
+  padding:14px 15px;border-bottom:1px solid #e3e9f5;
+  background:#f6f9ff;color:#5a7091;
+  font-size:11px;font-weight:800;line-height:1.5;
+  letter-spacing:.01em;white-space:nowrap;
+}
+.admin-refresh .businesses-page .businesses-table tbody td{
+  padding:15px 15px;border-bottom:1px solid #edf1f7;
+  color:#334664;font-size:12px;line-height:1.45;
+  vertical-align:middle;
+}
+.admin-refresh .businesses-page .businesses-table tbody tr:last-child td{border-bottom:0}
+.admin-refresh .businesses-page .businesses-table tbody tr:hover{
+  background:#f7faff;
+}
+.admin-refresh .businesses-page .businesses-table :is(th,td):first-child{
+  padding-left:23px;
+}
+.admin-refresh .businesses-page .businesses-table .business-number{
+  color:#7d8ba1;font-variant-numeric:tabular-nums;font-size:11px;
+}
+.admin-refresh .businesses-page .businesses-table .business-cell{
+  display:flex;align-items:center;gap:11px;min-width:160px;
+}
+.admin-refresh .businesses-page .businesses-table .business-cell strong{
+  display:block;color:#193256;font-size:13px;font-weight:800;line-height:1.35;
+}
+.admin-refresh .businesses-page .businesses-table .business-cell:hover strong{
+  color:#245cf2;
+}
+.admin-refresh .businesses-page .businesses-table .business-cell small{
+  display:block;margin-top:5px;color:#8190a5;font-size:10px;
+}
+.admin-refresh .businesses-page .businesses-table .business-avatar,
+.admin-refresh .businesses-page .businesses-mobile-list .business-avatar{
+  display:grid;place-items:center;flex:0 0 38px;
+  width:38px;height:38px;border:1px solid #d3dbff;
+  border-radius:11px;background:#edf0ff;color:#6747d4;
+}
+.admin-refresh .businesses-page .business-category{
+  display:inline-flex;align-items:center;gap:7px;
+  max-width:240px;padding:7px 11px;border:1px solid #dee5fc;
+  border-radius:99px;background:#f0f4ff;color:#3d55a1;
+  font-size:11px;font-weight:750;white-space:normal;line-height:1.45;
+}
+.admin-refresh .businesses-page .business-category svg{flex-shrink:0}
+.admin-refresh .businesses-page .businesses-table .badge{
+  display:inline-flex;align-items:center;gap:5px;
+  border-radius:99px;padding:6px 10px;
+  font-size:11px;font-weight:800;line-height:1.3;
+  white-space:nowrap;
+}
+.admin-refresh .businesses-page .businesses-table .badge.status-visible{background:#e3faed;color:#16764e}
+.admin-refresh .businesses-page .businesses-table .badge.status-hidden{background:#eef1f5;color:#667484}
+.admin-refresh .businesses-page .businesses-table .badge.status-review{background:#fff4dc;color:#a06a15}
+.admin-refresh .businesses-page .businesses-table .badge.status-expired{background:#fff0f0;color:#b04350}
+.admin-refresh .businesses-page .business-date{
+  color:#6b7d96;font-size:11px;white-space:nowrap;
+}
+.admin-refresh .businesses-page .business-row-actions{display:flex;gap:7px}
+.admin-refresh .businesses-page .businesses-view{
+  display:grid;place-items:center;width:38px;height:38px;
+  border:1px solid #d8e2f5;border-radius:10px;
+  background:#f8faff;color:#2459da;
+}
+.admin-refresh .businesses-page .businesses-view:hover{
+  border-color:#9cb9ff;background:#eaf1ff;color:#1c50cb;
+}
+.admin-refresh .businesses-page .businesses-pagination{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;padding:19px 23px;
+  border-top:1px solid #e9eef8;
+  color:#657895;font-size:11px;
+}
+.admin-refresh .businesses-page .businesses-pagination>div{
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+}
+.admin-refresh .businesses-page .page-number,
+.admin-refresh .businesses-page .businesses-pagination .page-arrow{
+  display:grid;place-items:center;min-width:37px;min-height:37px;
+  height:37px;width:auto;margin:0;padding:0 10px;
+  border:1px solid #dfe6f4;border-radius:9px;
+  background:#fff;color:#355582;font-size:12px;font-weight:800;
+}
+.admin-refresh .businesses-page .page-number.selected{
+  border-color:transparent;color:#fff;
+  background:linear-gradient(115deg,#743fff,#245cf2);
+}
+.admin-refresh .businesses-page .page-number:hover:not(.selected),
+.admin-refresh .businesses-page .businesses-pagination .page-arrow:hover:not(:disabled){
+  background:#edf4ff;border-color:#b9cef9;
+}
+.admin-refresh .businesses-page :is(a,button,select):focus-visible{
+  outline:3px solid #b2c7ff;outline-offset:3px;
+}
+.admin-refresh .businesses-page .businesses-mobile-list{display:none}
+.admin-refresh .businesses-page .businesses-empty{
+  margin:0 16px 18px;border-color:#dfe8f7;background:#fbfdff;
+}
+.admin-refresh .businesses-page .businesses-empty h2{color:#17294a}
+.admin-refresh .businesses-page .businesses-empty p{color:#647895}
+@media(max-width:1200px){
+  .admin-refresh .businesses-page .businesses-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  .admin-refresh .businesses-page .businesses-hero{padding:20px;gap:10px}
+  .admin-refresh .businesses-page .businesses-hero-art{max-width:27%}
+  .admin-refresh .businesses-page .business-table-wrap{display:none}
+  .admin-refresh .businesses-page .businesses-mobile-list{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:11px;padding:0 19px 18px;
+  }
+  .admin-refresh .businesses-page .businesses-mobile-list .business-mobile-card{
+    min-width:0;border:1px solid #e0e7f6;border-radius:13px;
+    background:#fff;padding:15px;box-shadow:0 5px 15px #19345d09;
+  }
+  .admin-refresh .businesses-page .businesses-mobile-list .mobile-business-heading{
+    display:flex;align-items:center;gap:10px;
+  }
+  .admin-refresh .businesses-page .businesses-mobile-list .mobile-business-heading>div{
+    min-width:0;flex:1;
+  }
+  .admin-refresh .businesses-page .businesses-mobile-list .mobile-business-heading strong{
+    font-size:12px;font-weight:800;color:#203558;line-height:1.4;
+  }
+  .admin-refresh .businesses-page .businesses-mobile-list .mobile-business-heading small{
+    color:#7486a0;font-size:10px;line-height:1.5;
+  }
+  .admin-refresh .businesses-page .businesses-mobile-list .mobile-business-badges{
+    display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px;
+  }
+  .admin-refresh .businesses-page .businesses-mobile-list .mobile-expiry{
+    display:block;margin-top:10px;color:#8391a7;font-size:10px;
+  }
+}
+@media(max-width:700px){
+  .admin-refresh .businesses-page .businesses-hero{margin-bottom:17px;padding:18px 16px;border-radius:16px}
+  .admin-refresh .businesses-page .businesses-hero-heading{align-items:flex-start;gap:11px}
+  .admin-refresh .businesses-page .businesses-hero-icon{
+    flex-basis:49px;width:49px;height:49px;border-radius:13px;
+  }
+  .admin-refresh .businesses-page .businesses-hero h1{font-size:27px}
+  .admin-refresh .businesses-page .businesses-hero-heading p{font-size:11px}
+  .admin-refresh .businesses-page .businesses-hero-art{display:none}
+  .admin-refresh .businesses-page .businesses-summary{gap:9px;margin-bottom:16px}
+  .admin-refresh .businesses-page .businesses-stat{
+    min-height:101px;padding:14px 12px;gap:10px;
+  }
+  .admin-refresh .businesses-page .businesses-stat-icon{
+    flex-basis:37px;width:37px;height:37px;border-radius:10px;
+  }
+  .admin-refresh .businesses-page .businesses-stat-icon svg{width:20px;height:20px}
+  .admin-refresh .businesses-page .businesses-stat>div>span{font-size:10px}
+  .admin-refresh .businesses-page .businesses-stat strong{font-size:23px}
+  .admin-refresh .businesses-page .businesses-stat>small{font-size:9px}
+  .admin-refresh .businesses-page .businesses-directory{border-radius:16px}
+  .admin-refresh .businesses-page .businesses-directory-heading{padding:19px 16px 15px}
+  .admin-refresh .businesses-page .businesses-directory-heading h2{font-size:20px}
+  .admin-refresh .businesses-page .businesses-directory-heading p{font-size:11px}
+  .admin-refresh .businesses-page .businesses-actions{width:100%;gap:8px}
+  .admin-refresh .businesses-page .businesses-actions>.secondary-button,
+  .admin-refresh .businesses-page .businesses-actions>.businesses-create{
+    flex:1;min-width:0;min-height:41px;padding:9px 10px;font-size:11px;
+  }
+  .admin-refresh .businesses-page .businesses-toolbar{
+    grid-template-columns:minmax(0,1fr) auto;gap:9px;padding:0 16px 16px;
+  }
+  .admin-refresh .businesses-page .businesses-toolbar .directory-search{grid-column:1/-1}
+  .admin-refresh .businesses-page .businesses-status-filter select{height:42px}
+  .admin-refresh .businesses-page .businesses-clear{min-height:42px;min-width:84px}
+  .admin-refresh .businesses-page .businesses-mobile-list{
+    grid-template-columns:minmax(0,1fr);padding:0 13px 14px;gap:9px;
+  }
+  .admin-refresh .businesses-page .businesses-pagination{padding:14px 13px}
+}
+@media(max-width:420px){
+  .admin-refresh .businesses-page .businesses-summary{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .businesses-page .businesses-stat{min-height:86px;padding:15px}
+}
+@media(prefers-reduced-motion:reduce){
+  .admin-refresh .businesses-page *{transition:none!important;animation:none!important}
+}
