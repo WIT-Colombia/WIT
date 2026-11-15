@@ -2831,3 +2831,445 @@
     min-height:44px;
   }
 }
+
+
+/* Contacto: evitar el subrayado automático de teléfono y WhatsApp en móviles. */
+.business-detail-page #business-panel-contact .business-contact-info-field:is([data-contact-field="Teléfono"],[data-contact-field="WhatsApp"]) .business-reference-value,
+.business-detail-page #business-panel-contact .business-contact-info-field:is([data-contact-field="Teléfono"],[data-contact-field="WhatsApp"]) .business-reference-value a,
+.business-detail-page #business-panel-contact .business-contact-info-field:is([data-contact-field="Teléfono"],[data-contact-field="WhatsApp"]) .business-reference-value a[x-apple-data-detectors]{
+  color:#162443!important;
+  text-decoration:none!important;
+  text-decoration-line:none!important;
+  border-bottom:0!important;
+}
+.business-detail-page #business-panel-contact .business-contact-info-field:is([data-contact-field="Teléfono"],[data-contact-field="WhatsApp"]) .business-reference-value a{
+  font:inherit;
+}
+
+/* Editores de portada y perfil: presentación uniforme fuera del contenedor de Mi negocio. */
+body>.business-image-editor-overlay{
+  position:fixed;
+  inset:0;
+  z-index:3000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100vh;
+  height:100dvh;
+  box-sizing:border-box;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:16px;
+  background:rgba(10,24,50,.62);
+}
+body>.business-image-editor-overlay>.business-image-editor-modal{
+  display:grid;
+  align-content:start;
+  grid-template-columns:minmax(0,1fr);
+  gap:0;
+  flex:0 1 700px;
+  width:min(100%,700px);
+  min-width:0;
+  max-width:700px;
+  max-height:calc(100vh - 32px);
+  max-height:calc(100dvh - 32px);
+  margin:auto;
+  padding:0;
+  box-sizing:border-box;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid #dbe7fa;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 28px 80px #0f27474a;
+  color:#12203f;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+}
+body>.business-image-editor-overlay .business-image-editor-heading{
+  position:sticky;
+  top:0;
+  z-index:2;
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  min-width:0;
+  margin:0 0 18px;
+  padding:22px 22px 16px;
+  border-bottom:1px solid #e7edf6;
+  background:#fff;
+}
+body>.business-image-editor-overlay .business-image-editor-heading-icon{
+  display:grid;
+  flex:0 0 42px;
+  place-items:center;
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  background:#eaf1ff;
+  color:#2563eb;
+}
+body>.business-image-editor-overlay .business-image-editor-heading-icon svg{
+  display:block;
+  width:25px;
+  height:25px;
+}
+body>.business-image-editor-overlay .business-image-editor-heading>div{
+  flex:1 1 auto;
+  min-width:0;
+}
+body>.business-image-editor-overlay .business-image-editor-heading h2{
+  margin:0 0 5px;
+  color:#12203f;
+  font-size:18px;
+  font-weight:750;
+  line-height:1.24;
+  letter-spacing:-.022em;
+}
+body>.business-image-editor-overlay .business-image-editor-heading p{
+  margin:0;
+  color:#5b708e;
+  font-size:12px;
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+body>.business-image-editor-overlay .business-image-editor-heading>.close-button{
+  display:grid;
+  flex:0 0 38px;
+  place-items:center;
+  width:38px;
+  height:38px;
+  min-width:38px;
+  min-height:38px;
+  margin:0;
+  padding:0;
+  border:1px solid #bbd0ff;
+  border-radius:10px;
+  background:#fff;
+  color:#1e5adf;
+  font-size:24px;
+  line-height:1;
+  cursor:pointer;
+}
+body>.business-image-editor-overlay .business-image-editor-heading>.close-button:hover:not(:disabled){
+  background:#ecf3ff;
+  border-color:#2563eb;
+}
+body>.business-image-editor-overlay .business-image-editor-heading>.close-button:focus-visible,
+body>.business-image-editor-overlay .business-image-editor-actions button:focus-visible,
+body>.business-image-editor-overlay .business-cover-photo-options>button:focus-visible,
+body>.business-image-editor-overlay .business-profile-photo-options>button:focus-visible{
+  outline:3px solid #93b4f9;
+  outline-offset:2px;
+}
+body>.business-image-editor-overlay .business-cover-photo-options,
+body>.business-image-editor-overlay .business-profile-photo-options{
+  display:grid;
+  grid-template-rows:repeat(2,104px);
+  grid-auto-flow:column;
+  grid-auto-columns:140px;
+  justify-content:start;
+  gap:10px;
+  width:calc(100% - 44px);
+  max-width:none;
+  max-height:none;
+  min-width:0;
+  height:auto;
+  margin:0 22px 18px;
+  padding:4px;
+  box-sizing:border-box;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x proximity;
+  scrollbar-width:thin;
+  scrollbar-color:#b8cff6 transparent;
+  touch-action:pan-x;
+  border:1px solid #dfebff;
+  border-radius:13px;
+  background:#f3f7ff;
+}
+body>.business-image-editor-overlay .business-cover-photo-options>button,
+body>.business-image-editor-overlay .business-profile-photo-options>button{
+  display:block;
+  width:100%;
+  height:100%;
+  min-height:0;
+  min-width:0;
+  box-sizing:border-box;
+  padding:3px;
+  border:2px solid transparent;
+  border-radius:10px;
+  background:#fff;
+  overflow:hidden;
+  scroll-snap-align:start;
+  opacity:1;
+}
+body>.business-image-editor-overlay .business-cover-photo-options>button.selected,
+body>.business-image-editor-overlay .business-profile-photo-options>button.selected{
+  border-color:#2563eb;
+  box-shadow:0 0 0 2px #c8dcff;
+}
+body>.business-image-editor-overlay .business-cover-photo-options>button img,
+body>.business-image-editor-overlay .business-profile-photo-options>button img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+body>.business-image-editor-overlay .business-cover-preview,
+body>.business-image-editor-overlay .business-image-crop-preview--cover{
+  display:block;
+  width:calc(100% - 44px);
+  max-height:280px;
+  margin:0 22px 18px;
+  box-sizing:border-box;
+  aspect-ratio:16/6;
+  border:1px solid #dfebff;
+  border-radius:13px;
+  background:#f3f7ff;
+  box-shadow:none;
+  overflow:hidden;
+}
+body>.business-image-editor-overlay .business-cover-preview img,
+body>.business-image-editor-overlay .business-image-crop-preview--cover img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+body>.business-image-editor-overlay .business-image-crop-preview--profile{
+  display:block;
+  width:min(220px,calc(100% - 44px));
+  max-width:100%;
+  margin:0 auto 18px;
+  box-sizing:border-box;
+  aspect-ratio:1;
+  border:1px solid #dfebff;
+  border-radius:15px;
+  background:#f3f7ff;
+  box-shadow:none;
+  overflow:hidden;
+}
+body>.business-image-editor-overlay .business-image-crop-preview--profile img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+body>.business-image-editor-overlay .business-image-crop-controls{
+  display:grid;
+  gap:12px;
+  width:calc(100% - 44px);
+  min-width:0;
+  margin:0 22px 18px;
+  padding:16px;
+  box-sizing:border-box;
+  border:1px solid #dfebff;
+  border-radius:13px;
+  background:#f3f7ff;
+}
+body>.business-image-editor-overlay .business-image-crop-controls label{
+  display:grid;
+  gap:9px;
+  color:#1e3154;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.4;
+}
+body>.business-image-editor-overlay .business-image-crop-controls input{
+  display:block;
+  width:100%;
+  max-width:100%;
+  accent-color:#2563eb;
+}
+body>.business-image-editor-overlay .business-profile-photo-empty{
+  margin:0 22px 18px;
+  padding:20px;
+  border:1px dashed #c8dafc;
+  border-radius:13px;
+  background:#f3f7ff;
+}
+body>.business-image-editor-overlay .business-profile-photo-empty p{
+  margin:0;
+  color:#5b708e;
+  font-size:13px;
+}
+body>.business-image-editor-overlay .business-profile-photo-empty .text-link{
+  justify-self:start;
+  border:1px solid #bbd0ff;
+  border-radius:9px;
+  background:#fff;
+  padding:9px 13px;
+  color:#1e5adf;
+  font-size:12px;
+  font-weight:700;
+  text-decoration:none;
+}
+body>.business-image-editor-overlay .business-image-editor-modal>.form-error{
+  margin:0 22px 18px;
+  padding:12px;
+  border:1px solid #f3c4c7;
+  border-radius:10px;
+  background:#fff8f8;
+  color:#b4232d;
+  font-size:12px;
+  overflow-wrap:anywhere;
+}
+body>.business-image-editor-overlay .business-image-editor-actions{
+  position:sticky;
+  bottom:0;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:10px;
+  width:100%;
+  margin:0;
+  padding:15px 22px max(15px,env(safe-area-inset-bottom,0px));
+  box-sizing:border-box;
+  border-top:1px solid #dfebff;
+  background:#fff;
+  box-shadow:0 -6px 15px #0f274708;
+}
+body>.business-image-editor-overlay .business-image-editor-actions>button{
+  flex:0 1 auto;
+  width:auto;
+  max-width:100%;
+  min-width:0;
+  min-height:42px;
+  margin:0;
+  padding:9px 14px;
+  border-radius:10px;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.4;
+  white-space:normal;
+  text-align:center;
+}
+body>.business-image-editor-overlay .business-image-editor-actions>.outline-button{
+  border:1px solid #bbd0ff;
+  background:#fff;
+  color:#1e5adf;
+}
+body>.business-image-editor-overlay .business-image-editor-actions>.outline-button:hover:not(:disabled){
+  border-color:#2563eb;
+  background:#ecf3ff;
+}
+body>.business-image-editor-overlay .business-image-editor-actions>.action-button{
+  border:1px solid #2563eb;
+  background:#2563eb;
+  color:#fff;
+  box-shadow:none;
+}
+body>.business-image-editor-overlay .business-image-editor-actions>.action-button:hover:not(:disabled){
+  border-color:#1d4ed8;
+  background:#1d4ed8;
+}
+@media(max-width:900px){
+  body>.business-image-editor-overlay>.business-image-editor-modal{
+    max-width:640px;
+  }
+  body>.business-image-editor-overlay .business-cover-photo-options,
+  body>.business-image-editor-overlay .business-profile-photo-options{
+    grid-template-rows:repeat(2,90px);
+    grid-auto-columns:120px;
+  }
+}
+@media(max-width:600px){
+  body>.business-image-editor-overlay{
+    padding:8px;
+  }
+  body>.business-image-editor-overlay>.business-image-editor-modal{
+    width:100%;
+    max-width:none;
+    max-height:calc(100vh - 16px);
+    max-height:calc(100dvh - 16px);
+    border-radius:14px;
+  }
+  body>.business-image-editor-overlay .business-image-editor-heading{
+    gap:10px;
+    margin-bottom:14px;
+    padding:16px 14px 13px;
+  }
+  body>.business-image-editor-overlay .business-image-editor-heading-icon{
+    flex-basis:38px;
+    width:38px;
+    height:38px;
+  }
+  body>.business-image-editor-overlay .business-image-editor-heading-icon svg{
+    width:23px;
+    height:23px;
+  }
+  body>.business-image-editor-overlay .business-image-editor-heading h2{
+    font-size:17px;
+  }
+  body>.business-image-editor-overlay .business-image-editor-heading p{
+    font-size:12px;
+  }
+  body>.business-image-editor-overlay .business-image-editor-heading>.close-button{
+    flex-basis:38px;
+    width:38px;
+    min-width:38px;
+  }
+  body>.business-image-editor-overlay .business-cover-photo-options,
+  body>.business-image-editor-overlay .business-profile-photo-options{
+    grid-template-rows:repeat(2,78px);
+    grid-auto-columns:105px;
+    gap:8px;
+    width:calc(100% - 28px);
+    margin:0 14px 14px;
+    padding:3px;
+  }
+  body>.business-image-editor-overlay .business-cover-preview,
+  body>.business-image-editor-overlay .business-image-crop-preview--cover{
+    width:calc(100% - 28px);
+    max-height:200px;
+    margin:0 14px 14px;
+    aspect-ratio:16/6;
+  }
+  body>.business-image-editor-overlay .business-image-crop-preview--profile{
+    width:min(180px,calc(100% - 28px));
+    margin:0 auto 14px;
+  }
+  body>.business-image-editor-overlay .business-image-crop-controls{
+    width:calc(100% - 28px);
+    gap:12px;
+    margin:0 14px 14px;
+    padding:12px;
+  }
+  body>.business-image-editor-overlay .business-profile-photo-empty{
+    margin:0 14px 14px;
+    padding:14px;
+  }
+  body>.business-image-editor-overlay .business-image-editor-modal>.form-error{
+    margin:0 14px 14px;
+  }
+  body>.business-image-editor-overlay .business-image-editor-actions{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:8px;
+    padding:12px 14px max(12px,env(safe-area-inset-bottom,0px));
+  }
+  body>.business-image-editor-overlay .business-image-editor-actions>button{
+    width:100%;
+    min-height:43px;
+    padding:10px 12px;
+  }
+}
+@media(max-height:620px){
+  body>.business-image-editor-overlay .business-image-editor-heading{
+    padding-top:12px;
+    padding-bottom:10px;
+  }
+  body>.business-image-editor-overlay .business-image-crop-preview--profile{
+    width:min(150px,calc(100% - 28px));
+  }
+  body>.business-image-editor-overlay .business-cover-preview,
+  body>.business-image-editor-overlay .business-image-crop-preview--cover{
+    max-height:150px;
+  }
+}
