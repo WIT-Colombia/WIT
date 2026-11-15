@@ -86,7 +86,7 @@ function GrowthChart({ points, label }: { points: { month: string; value: number
         <polyline className="xa-business-growth-line" points={coords} pointerEvents="none" />
         {points.map((point, index) => <circle key={point.month} className="xa-business-growth-point" cx={x(index)} cy={y(point.value)} r={activeIndex === index ? 5.5 : 3.5} tabIndex={0} aria-label={formatMonth(point.month) + ': ' + formatValue(point.value)} onFocus={() => setActiveIndex(index)} onClick={() => setActiveIndex(index)} />)}
         {activePoint && activeIndex !== null && <>
-          <line className="xa-business-growth-guide" x1={x(activeIndex)} y1={y(activePoint.value)} x2={x(activeIndex)} y2={baseY} pointerEvents="none" />
+          <line className="xa-business-growth-guide" x1={x(activeIndex)} y1={top} x2={x(activeIndex)} y2={baseY} pointerEvents="none" />
           <circle cx={x(activeIndex)} cy={y(activePoint.value)} r="6" fill="#fff" stroke="#285cf1" strokeWidth="2.6" pointerEvents="none" />
           {(() => {
             const tooltipX = Math.max(left, Math.min(width - right - 78, x(activeIndex) - 39));
@@ -100,7 +100,7 @@ function GrowthChart({ points, label }: { points: { month: string; value: number
         {points.map((point, index) => (index % labelEvery === 0 || index === points.length - 1) && <text key={point.month} x={x(index)} y={height - 18} textAnchor="middle" fontSize="11" fill="#6f82a1">{formatMonth(point.month)}</text>)}
       </svg>
     </div>
-    <p className="xa-business-growth-hint">{activePoint ? <>Valor seleccionado: <strong>{formatValue(activePoint.value)}</strong></> : 'Mueve el cursor o desliza el dedo para consultar los valores.'}</p>
+    <p className="xa-business-growth-hint">{activePoint ? <>Valor seleccionado: <strong>{formatValue(activePoint.value)}</strong></> : 'Mueve el cursor o desliza el dedo: los meses con 0 registros también aparecen.'}</p>
   </div>;
 }
 
