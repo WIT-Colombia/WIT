@@ -1,5 +1,6 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
+import { notifyBusinessOwners, notifyPlatformUser, statusTitle } from '../notifications/platform-notifications.service.js';
 import type { BusinessReportReason, BusinessReportStatus, Prisma } from '../../generated/prisma/client.js';
 
 const reasons: BusinessReportReason[] = ['IMPERSONATION','FALSE_INFORMATION','SUSPECTED_FRAUD','INAPPROPRIATE_CONTENT','OTHER'];
@@ -64,12 +65,20 @@ export async function decideBusinessReport(adminId: string, id: string, rawStatu
   return prisma.$transaction(async tx => {
     const before = await tx.businessReport.findUnique({ where: { id } });
     if (!before) throw new AppError(404, 'BUSINESS_REPORT_NOT_FOUND', 'Reporte no encontrado.');
+    if (before.status === rawStatus) throw new AppError(409, 'BUSINESS_REPORT_UNCHANGED', 'El reporte ya tiene ese estado.');
+    if (['RESOLVED','REJECTED'].includes(before.status)) throw new AppError(409, 'BUSINESS_REPORT_ALREADY_CLOSED', 'Este reporte ya fue cerrado.');
+    if (rawStatus === 'PENDING') throw new AppError(400, 'BUSINESS_REPORT_INVALID_TRANSITION', 'No se puede regresar a pendiente.');
     const report = await tx.businessReport.update({ where: { id }, data: { status: rawStatus as BusinessReportStatus, decisionNote: note || null } });
     await tx.auditLog.create({ data: {
       actorUserId: adminId, entityType: 'BUSINESS', entityId: before.businessId,
       action: 'BUSINESS_REPORT_MODERATED', previousState: { reportId: id, status: before.status },
       newState: { reportId: id, status: rawStatus }, reason: note || null,
     } });
+    await notifyPlatformUser(tx, { userId: before.reporterId, sourceType: 'BUSINESS_REPORT', sourceId: id,
+      title: 'Reporte sobre negocio: ' + statusTitle(rawStatus as typeof report.status),
+      message: 'El reporte que presentaste sobre un negocio ahora está ' + statusTitle(rawStatus as typeof report.status).toLocaleLowerCase('es-CO') + '.' });
+    if (rawStatus === 'RESOLVED') await notifyBusinessOwners(tx, before.businessId,
+      'Revisión de un reporte concluida', 'Se concluyó la revisión de un reporte sobre tu negocio. No se incluyen datos personales de quien lo presentó.');
     return report;
   });
 }
