@@ -1,7 +1,7 @@
 import { prisma } from '../../config/prisma.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { photoMimeType, readPhoto } from '../business/photo-storage.js';
+import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 
 type Filters={q?:string;kind?:string;status?:string;city?:string;categoryId?:string;period?:string;page?:number};
 type ModerationAction='HIDE'|'RESTORE';
@@ -143,7 +143,11 @@ export async function getAdminContentPhoto(photoId:string){
   const photo=await prisma.photo.findFirst({where:{id:photoId,offerId:{not:null}},select:{storageKey:true}});
   if(!photo)throw new AppError(404,'ADMIN_CONTENT_PHOTO_NOT_FOUND','No encontramos la fotografía.');
   try{return {buffer:await readPhoto(photo.storageKey),mimeType:photoMimeType(photo.storageKey)};}
-  catch{throw new AppError(404,'ADMIN_CONTENT_PHOTO_MISSING','La fotografía no está disponible.');}
+  catch(error){
+    if(isPhotoMissingError(error)||(error instanceof Error && (error as NodeJS.ErrnoException).code==='ENOENT'))
+      throw new AppError(404,'ADMIN_CONTENT_PHOTO_MISSING','La fotografía ya no está disponible.');
+    throw new AppError(503,'ADMIN_CONTENT_PHOTO_STORAGE_UNAVAILABLE','El almacenamiento de fotografías no está disponible temporalmente.');
+  }
 }
 export async function moderateAdminContent(id:string,actorId:string,action:'HIDE'|'RESTORE',note:string){
   const reason=note.trim();
