@@ -889,3 +889,543 @@
     transition:none;
   }
 }
+
+
+/* Medidas de Productos homologadas con Servicios. Se conservan los tamaños
+   actuales de las fotografías y todos los indicadores, controles y acciones. */
+.catalog-products-design .catalog-products-heading h1{
+  font-size:clamp(28px,3vw,36px);
+}
+.catalog-products-design .catalog-products-heading p{
+  font-size:14px;
+  line-height:1.5;
+}
+.catalog-products-design .catalog-products-heading .page-eyebrow{
+  font-size:11px;
+}
+.catalog-products-design .catalog-products-heading .catalog-products-add{
+  min-height:42px;
+  padding:9px 16px;
+  font-size:12px;
+  border-radius:10px;
+}
+.catalog-products-design .catalog-controls{
+  gap:11px;
+}
+.catalog-products-design .catalog-toolbar .search-box,
+.catalog-products-design .catalog-toolbar .filter-box select{
+  min-height:41px;
+  font-size:12px;
+}
+.catalog-products-design .catalog-toolbar .search-box input{
+  font-size:12px;
+}
+.catalog-products-design .catalog-summary,
+.catalog-products-design .catalog-summary strong{
+  font-size:11px;
+}
+.catalog-products-design .catalog-row{
+  min-height:104px;
+  column-gap:15px;
+  padding:12px 22px;
+}
+.catalog-products-design .catalog-row .catalog-info h2{
+  margin-bottom:5px;
+  font-size:13px;
+  font-weight:750;
+  line-height:1.4;
+}
+.catalog-products-design .catalog-row .catalog-info p{
+  font-size:11px;
+  line-height:1.4;
+}
+.catalog-products-design .catalog-row .catalog-info>span{
+  margin-top:5px;
+  font-size:11px;
+  font-weight:700;
+}
+.catalog-products-design .catalog-row .catalog-interest strong{
+  font-size:12px;
+}
+.catalog-products-design .catalog-row .catalog-interest small{
+  font-size:9px;
+}
+.catalog-products-design .catalog-row .state-tag{
+  min-height:30px;
+  padding:6px 10px;
+  font-size:10px;
+  font-weight:700;
+}
+.catalog-products-design .catalog-row .row-actions button{
+  min-width:44px;
+  min-height:36px;
+  padding:7px 10px;
+  font-size:10px;
+  font-weight:700;
+}
+/* Los botones conservan los iconos vectoriales pero se ajustan al texto compacto. */
+.catalog-products-design .catalog-action-icon{
+  flex-basis:15px;
+  width:15px;
+  height:15px;
+}
+@media(min-width:701px) and (max-width:1100px){
+  .catalog-products-design .catalog-row{
+    min-height:98px;
+    padding:12px 18px;
+  }
+  .catalog-products-design .catalog-products-heading .catalog-products-add{
+    min-height:42px;
+    padding:9px 15px;
+    font-size:12px;
+  }
+}
+@media(max-width:700px){
+  .catalog-products-design .catalog-products-heading h1{
+    font-size:28px;
+  }
+  .catalog-products-design .catalog-products-heading p{
+    font-size:13px;
+  }
+  .catalog-products-design .catalog-products-heading .catalog-products-add{
+    min-height:44px;
+    font-size:12px;
+  }
+  .catalog-products-design .catalog-row{
+    min-height:0;
+    padding:12px 16px;
+  }
+  .catalog-products-design .catalog-row .catalog-info h2{
+    font-size:13px;
+  }
+  .catalog-products-design .catalog-row .catalog-info p,
+  .catalog-products-design .catalog-row .catalog-info>span{
+    font-size:11px;
+  }
+  .catalog-products-design .catalog-row .row-actions button{
+    min-height:42px;
+    font-size:10px;
+  }
+}
+@media(max-width:480px){
+  .catalog-products-design .catalog-row{
+    padding:12px 14px;
+  }
+  .catalog-products-design .catalog-row .catalog-info h2{
+    font-size:13px;
+  }
+  .catalog-products-design .catalog-row .catalog-info p,
+  .catalog-products-design .catalog-row .catalog-info>span{
+    font-size:11px;
+  }
+  .catalog-products-design .catalog-row .row-actions button{
+    min-width:0;
+    min-height:44px;
+  }
+}
+
+/* Editor de CREAR / EDITAR producto.
+   El portal evita recortes por el contenedor de la página y por la navegación
+   móvil. Misma lógica del formulario y misma imagen de cada producto. */
+body>.catalog-product-editor-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:220;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  width:100%;
+  height:100vh;
+  height:100dvh;
+  margin:0;
+  padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  background:rgba(10,24,50,.64);
+}
+body>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+  display:block;
+  flex:0 1 640px;
+  box-sizing:border-box;
+  width:min(100%,640px);
+  min-width:0;
+  max-width:640px;
+  max-height:calc(100vh - 32px);
+  max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  margin:auto;
+  padding:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid #dbe7fa;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 28px 80px #0f27474a;
+  color:#12203f;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading{
+  position:sticky;
+  top:0;
+  z-index:3;
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  min-width:0;
+  margin:0;
+  padding:22px 24px 18px;
+  border-bottom:1px solid #e3eaf7;
+  background:rgba(255,255,255,.98);
+}
+body>.catalog-product-editor-backdrop .catalog-editor-heading-icon{
+  display:grid;
+  place-items:center;
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  background:#eaf1ff;
+  color:#2563eb;
+}
+body>.catalog-product-editor-backdrop .catalog-editor-heading-icon svg{
+  width:25px;
+  height:25px;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading>div{
+  flex:1 1 auto;
+  min-width:0;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading .page-eyebrow{
+  display:block;
+  margin:0 0 5px;
+  color:#2563eb;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.09em;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading h2{
+  margin:0 0 5px;
+  color:#12203f;
+  font-size:18px;
+  font-weight:750;
+  line-height:1.3;
+  letter-spacing:-.02em;
+  overflow-wrap:anywhere;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-editor-intro{
+  margin:0;
+  color:#5b708e;
+  font-size:12px;
+  line-height:1.55;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .close-button{
+  display:grid;
+  place-items:center;
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  min-height:38px;
+  margin:0;
+  padding:0;
+  border:1px solid #bbd0ff;
+  border-radius:10px;
+  background:#fff;
+  color:#1e5adf;
+  box-shadow:none;
+  font-size:24px;
+  line-height:1;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .close-button:hover{
+  border-color:#2563eb;
+  background:#ecf3ff;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-form{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:16px;
+  min-width:0;
+  margin:0;
+  padding:20px 24px 0;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .form-field,
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-field,
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .adult-classification-field{
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .form-field>label,
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-field>span,
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .adult-classification-field legend{
+  color:#1e3154;
+  font-size:12px;
+  font-weight:750;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .form-field input,
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .form-field textarea{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  min-height:44px;
+  padding:11px 13px;
+  border:1px solid #cdddf8;
+  border-radius:10px;
+  background:#fff;
+  color:#172747;
+  font-size:14px;
+  line-height:1.5;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .form-field textarea{
+  min-height:110px;
+  resize:vertical;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .form-field input:focus,
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .form-field textarea:focus{
+  border-color:#2563eb;
+  outline:3px solid #dbe7ff;
+  outline-offset:1px;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .price-negotiable-field{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  min-width:0;
+  margin:0;
+  padding:12px 14px;
+  border:1px solid #dfebff;
+  border-radius:11px;
+  background:#f3f7ff;
+  color:#1e3154;
+  font-size:12px;
+  line-height:1.5;
+  white-space:normal;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .price-negotiable-field input,
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .adult-classification-field input{
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  accent-color:#2563eb;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .adult-classification-field{
+  display:grid;
+  gap:11px;
+  margin:0;
+  padding:16px;
+  border:1px solid #dfebff;
+  border-radius:12px;
+  background:#f3f7ff;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .adult-classification-field>label{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  min-width:0;
+  color:#1e3154;
+  font-size:12px;
+  line-height:1.5;
+  white-space:normal;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .adult-classification-field p,
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .adult-classification-field small{
+  color:#5b708e;
+  font-size:11px;
+  line-height:1.5;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-field{
+  display:grid;
+  gap:9px;
+  padding:15px;
+  border:1px solid #dfebff;
+  border-radius:12px;
+  background:#f3f7ff;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-field input[type=file]{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  padding:12px;
+  border:1px dashed #a8c5fb;
+  border-radius:10px;
+  background:#fff;
+  color:#172747;
+  font-size:12px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-field input[type=file]::file-selector-button{
+  max-width:100%;
+  margin:0 10px 0 0;
+  padding:8px 10px;
+  border:1px solid #bbd0ff;
+  border-radius:8px;
+  background:#eaf1ff;
+  color:#1e5adf;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:750;
+  cursor:pointer;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-previews{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  min-width:0;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-preview{
+  min-width:0;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-preview button{
+  min-width:30px;
+  min-height:30px;
+  width:30px;
+  height:30px;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions{
+  position:sticky;
+  bottom:0;
+  z-index:3;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  min-width:0;
+  margin:8px -24px 0;
+  padding:16px 24px max(16px,env(safe-area-inset-bottom,0px));
+  border-top:1px solid #e3eaf7;
+  background:rgba(255,255,255,.99);
+  box-shadow:0 -7px 18px #17305c0a;
+  backdrop-filter:blur(8px);
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions>button{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  margin:0;
+  padding:10px 13px;
+  border-radius:10px;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.4;
+  text-align:center;
+  white-space:normal;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions>.outline-button{
+  border:1px solid #bbd0ff;
+  background:#fff;
+  color:#1e5adf;
+  box-shadow:none;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions>.outline-button:hover{
+  border-color:#2563eb;
+  background:#ecf3ff;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions>.action-button{
+  border:1px solid #5d50f7;
+  background:linear-gradient(105deg,#743fff,#245cf2 66%,#16a6f7);
+  color:#fff;
+  box-shadow:0 6px 16px #4e53e327;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions>.action-button:hover:not(:disabled){
+  filter:brightness(1.06);
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions>.action-button:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions>button:focus-visible,
+body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .close-button:focus-visible{
+  outline:3px solid #93b4f9;
+  outline-offset:3px;
+}
+@media(min-width:701px) and (max-width:1100px){
+  body>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+    flex-basis:580px;
+    max-width:580px;
+    max-height:calc(100vh - 32px);
+    max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+  }
+}
+@media(max-width:700px){
+  body>.catalog-product-editor-backdrop{
+    padding:max(8px,env(safe-area-inset-top,0px)) 8px max(8px,env(safe-area-inset-bottom,0px));
+  }
+  body>.catalog-product-editor-backdrop>.catalog-product-editor-dialog{
+    flex:1 1 auto;
+    width:100%;
+    max-width:none;
+    max-height:calc(100vh - 16px);
+    max-height:calc(100dvh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));
+    margin:auto;
+    border-radius:14px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading{
+    gap:10px;
+    padding:15px 14px 13px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-editor-heading-icon{
+    flex-basis:37px;
+    width:37px;
+    height:37px;
+    border-radius:11px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-editor-heading-icon svg{
+    width:22px;
+    height:22px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading h2{
+    font-size:17px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading .close-button{
+    flex-basis:36px;
+    width:36px;
+    height:36px;
+    min-height:36px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-form{
+    gap:13px;
+    padding:15px 14px 0;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .form-field input,
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .form-field textarea{
+    font-size:16px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions{
+    gap:8px;
+    margin:8px -14px 0;
+    padding:12px 14px max(12px,env(safe-area-inset-bottom,0px));
+  }
+}
+@media(max-width:400px){
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-actions{
+    grid-template-columns:minmax(0,1fr);
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-field{
+    padding:12px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .product-image-previews{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-height:580px){
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-heading{
+    padding-top:10px;
+    padding-bottom:10px;
+  }
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog .modal-form{
+    padding-top:10px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  body>.catalog-product-editor-backdrop .catalog-product-editor-dialog button{
+    transition:none;
+  }
+}
