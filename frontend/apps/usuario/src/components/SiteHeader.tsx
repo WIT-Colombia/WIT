@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useLocationContext } from "../context/LocationContext";
 import { useAuth } from "../context/AuthContext";
 import { useAccountAvatar } from "../hooks/useAccountAvatar";
 import { getNotifications, getProfile } from "../services/userDataService";
+import { listPlatformNotices } from '../services/platformNotificationService';
 import { SearchBar } from "./SearchBar";
 import "./SiteHeader.css";
 
@@ -33,7 +35,34 @@ export function SiteHeader({ active, onProfile, onSearchChange }: { active?: Sit
   const profileInitial = profileName.charAt(0).toLocaleUpperCase("es-CO") || "D";
   const profilePhoto = (accountAvatar ?? profile.photo) || "";
   const profileTarget = isAuthenticated ? "/profile" : "/register?mode=login";
-  const unreadNotifications = getNotifications().filter((item) => !item.read).length;
+  const [serverUnread, setServerUnread] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(() => getNotifications().filter(item => !item.read).length);
+  useEffect(() => {
+    if (!isAuthenticated) { setServerUnread(0); return; }
+    let active = true;
+    const refresh = () => {
+      void listPlatformNotices().then(data => {
+        if (!active) return;
+        setServerUnread(data.unread);
+      }).catch(() => { /* Keep last known count; opening the inbox shows the error. */ });
+    };
+    refresh();
+    const visible = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', visible);
+    const timer = window.setInterval(visible, 60_000);
+    return () => { active = false; window.clearInterval(timer); document.removeEventListener('visibilitychange', visible); };
+  }, [isAuthenticated, user?.id]);
+  useEffect(() => {
+    const changed = (event: Event) => {
+      const count = (event as CustomEvent<number>).detail;
+      if (typeof count === 'number' && Number.isFinite(count)) setUnreadNotifications(count);
+    };
+    window.addEventListener('xamuko-user-notifications-updated', changed);
+    return () => window.removeEventListener('xamuko-user-notifications-updated', changed);
+  }, []);
+  useEffect(() => {
+    setUnreadNotifications(getNotifications().filter(item => !item.read).length + serverUnread);
+  }, [serverUnread]);
   const profileContent = isAuthenticated
     ? profilePhoto ? <img src={profilePhoto} alt={`Foto de ${profileName}`} /> : profileInitial
     : <UserIcon />;
