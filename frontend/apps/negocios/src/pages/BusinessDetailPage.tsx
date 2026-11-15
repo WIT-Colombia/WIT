@@ -112,6 +112,10 @@ function DetailSectionIcon({ title }: { title: string }) {
     "Virtual": <><rect x="4" y="4" width="16" height="12" rx="2" /><path d="M2 20h20l-2-4H4l-2 4Z" /></>,
     "A domicilio": <><path d="M3 6h11v12H3zM14 10h4l3 4v4h-7V10Z" /><circle cx="7.5" cy="18.5" r="2" /><circle cx="17.5" cy="18.5" r="2" /></>,
     "Información de contacto": <path d="m8 3 3 5-3 3a17 17 0 0 0 5 5l3-3 5 3-1 4c-1 3-9-1-13-5S0 4 3 3l5 0Z" />,
+    "Teléfono": <path d="m8 3 3 5-3 3a17 17 0 0 0 5 5l3-3 5 3-1 4c-1 3-9-1-13-5S0 4 3 3l5 0Z" />,
+    "WhatsApp": <><path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.5-4.7A8.5 8.5 0 1 1 20.5 11.7Z" /><path d="m9 8.5 1.3 2-1 1c.7 1.2 1.8 2.2 3 2.9l1-1 2 1.3-.6 1.5c-2.5.5-6.9-3.8-7-6.5l1.3-1.2Z" /></>,
+    "Correo": <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3.5 7 8.5 7 8.5-7" /></>,
+    "Sitio web": <><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c-3 2.8-4.2 5.8-4.2 9s1.2 6.2 4.2 9M12 3c3 2.8 4.2 5.8 4.2 9s-1.2 6.2-4.2 9" /></>,
     "Categoría principal": <><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5" /></>,
     "Clasificación +18": <><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" /><path d="M8 12h8M12 8v8" /></>,
     "Personas con acceso": <><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5" /></>,
@@ -902,14 +906,29 @@ export function BusinessDetailPage() {
     { key: "xUrl" as const, label: "X", platform: "x" as const, placeholder: "https://x.com/…", value: business.xUrl },
     { key: "tiktokUrl" as const, label: "TikTok", platform: "tiktok" as const, placeholder: "https://tiktok.com/@…", value: business.tiktokUrl },
   ];
-  const contactSection = <section className="business-detail-section" data-business-section="contact">
-    <div className="business-section-heading"><div><h3>Información de contacto pública</h3><p>Los datos que registres aquí aparecerán en el perfil público de tu negocio.</p></div>{canEditContact && <button className="text-button business-section-edit" type="button" onClick={() => beginSectionEdit("contact")}>✎ Editar</button>}</div>
-    {editingSection === "contact" ? <form className="business-detail-inline-form" onSubmit={event => { event.preventDefault(); void saveSection("contact"); }}>
+  const contactSection = <section className="business-detail-section business-contact-section" data-business-section="contact">
+    <div className="business-panel-title business-section-heading business-general-panel-title business-contact-heading">
+      <span className="business-contact-heading-icon" aria-hidden="true"><DetailSectionIcon title="Información de contacto" /></span>
+      <div><h3>Información de contacto pública</h3><p>Los datos que registres aquí aparecerán en el perfil público de tu negocio.</p></div>
+      {canEditContact && <button className="text-button business-section-edit" type="button" onClick={() => beginSectionEdit("contact")}>✎ Editar</button>}
+    </div>
+    {editingSection === "contact"
+      ? <div className="business-contact-editor"><form className="business-detail-inline-form" onSubmit={event => { event.preventDefault(); void saveSection("contact"); }}>
       <div className="form-grid"><div><PhoneNumberField label="WhatsApp" ariaLabel="WhatsApp" country={whatsappCountry} number={whatsappNumber} onCountryChange={country => { setWhatsappCountry(country); setWhatsappNumber(""); }} onNumberChange={setWhatsappNumber} /></div><label className="form-field"><span>Sitio web</span><input value={draft.website} onChange={event => updateDraft("website", event.target.value)} type="text" inputMode="url" placeholder="www.ejemplo.com" /></label><div><PhoneNumberField label="Teléfono" ariaLabel="teléfono" country={phoneCountry} number={phoneNumber} onCountryChange={country => { setPhoneCountry(country); setPhoneNumber(""); }} onNumberChange={setPhoneNumber} lineType={phoneLineType} onLineTypeChange={type => { setPhoneLineType(type); setPhoneNumber(""); }} /></div><div><label className="form-field"><span>Correo electrónico</span><input value={draft.email} onChange={event => updateDraft("email", event.target.value)} type="email" /></label></div></div>
       <section className="business-socials-editor" aria-labelledby="business-socials-heading"><div><h4 id="business-socials-heading">Redes sociales</h4><p>Conecta tus redes sociales para que tus clientes puedan conocerte y seguirte.</p></div><div className="business-socials-editor-grid">{socialLinks.map(network => <label className="business-social-field" data-social-network={network.platform} key={network.key}><span className="business-social-field-label"><SocialNetworkIcon platform={network.platform} />{network.label}</span><span className="business-social-field-control"><input value={draft[network.key]} onChange={event => updateDraft(network.key, event.target.value)} type="url" inputMode="url" placeholder={network.placeholder} /><button type="button" className="business-social-clear" onClick={() => updateDraft(network.key, "")} disabled={!draft[network.key]} aria-label={`Eliminar enlace de ${network.label}`}>Eliminar</button></span></label>)}</div></section>
       {sectionError && <p className="form-error" role="alert">{sectionError}</p>}
       <div className="business-detail-inline-actions"><button className="outline-button" type="button" onClick={cancelSectionEdit}>Cancelar</button><button className="action-button" type="submit" disabled={sectionSaving !== null}>{sectionSaving === "contact" ? "Guardando…" : "Guardar cambios"}</button></div>
-    </form> : <><>{info([["Teléfono", business.phone], ["WhatsApp", business.whatsapp], ["Correo", business.email], ["Sitio web", business.website]])}</><section className="business-socials" aria-labelledby="business-socials-title"><div><h4 id="business-socials-title">Redes sociales</h4><p>Conecta tus redes sociales para que tus clientes puedan conocerte y seguirte.</p></div>{socialLinks.some(network => network.value) ? <div className="business-social-links">{socialLinks.filter(network => network.value).map(network => <a data-social-network={network.platform} key={network.key} href={network.value} target="_blank" rel="noopener noreferrer"><SocialNetworkIcon platform={network.platform} /><span>{network.label}</span></a>)}</div> : <p className="business-socials-empty">Aún no has agregado redes sociales.</p>}</section></>}
+    </form></div>
+      : <div className="business-contact-view">
+          <div className="business-reference-grid business-contact-info-grid">
+            {([["Teléfono", business.phone], ["WhatsApp", business.whatsapp], ["Correo", business.email], ["Sitio web", business.website]] as const).map(([label, value]) =>
+              <div className="business-reference-field business-contact-info-field" key={label}>
+                <span className="business-contact-field-icon" aria-hidden="true"><DetailSectionIcon title={label} /></span>
+                <div className="business-contact-field-copy"><h3>{label}</h3><div className="business-reference-value">{value || "Sin información"}</div></div>
+              </div>)}
+          </div>
+          <section className="business-socials" aria-labelledby="business-socials-title"><div><h4 id="business-socials-title">Redes sociales</h4><p>Conecta tus redes sociales para que tus clientes puedan conocerte y seguirte.</p></div>{socialLinks.some(network => network.value) ? <div className="business-social-links">{socialLinks.filter(network => network.value).map(network => <a data-social-network={network.platform} key={network.key} href={network.value} target="_blank" rel="noopener noreferrer"><SocialNetworkIcon platform={network.platform} /><span>{network.label}</span></a>)}</div> : <p className="business-socials-empty">Aún no has agregado redes sociales.</p>}</section>
+        </div>}
   </section>;
   const openingState = modalitiesLoading ? { label: "Cargando horario…", isOpen: null } : getBusinessOpeningState(modalities, clock);
   const sedeLabel = business.sede?.trim() ? (/^sede\b/i.test(business.sede.trim()) ? business.sede.trim() : `Sede ${business.sede.trim()}`) : "";
