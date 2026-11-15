@@ -110,7 +110,7 @@ try {
         assert.ok(before.closeClickable, label + ': header does not block close/cancel');
         assert.ok(before.rowDelete.height >= 42, label + ': Eliminar has touch-sized height');
         assert.ok(before.rowDelete.left >= before.row.left-1 && before.rowDelete.right <= before.row.right+1, label + ': Eliminar stays inside row');
-        assert.equal(before.pageTitleSize, width >= 1400 ? '33px' : '28px', label + ': title follows Inicio typography');
+        assert.ok(Math.abs(parseFloat(before.pageTitleSize) - Math.max(28, Math.min(33, width * 0.024))) < 0.15, label + ': title follows Inicio responsive typography');
         assert.equal(before.eyebrowSize, width <= 700 ? '10px' : '11px', label + ': eyebrow follows Inicio typography');
         assert.equal(before.pageDescriptionSize, width <= 700 ? '12px' : '13px', label + ': description follows Inicio typography');
         if (width <= 1100) {
