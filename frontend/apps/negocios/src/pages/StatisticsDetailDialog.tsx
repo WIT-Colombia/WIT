@@ -168,6 +168,141 @@ function getDetail(p: Props): Detail {
   return unavailable('La API todavía no ofrece un desglose adicional.');
 }
 
+
+/** What was measured and how to read it; never imply that a recorded click is a sale. */
+type Explanation = { origin: string; meaning: string };
+const metricExplanations: Record<string, Explanation> = {
+  businessViews: {
+    origin: 'Se cuentan los eventos de apertura de la ficha de tu negocio que registra XAMUKO (BUSINESS_VIEW), agrupados por hora, día o mes según el filtro.',
+    meaning: 'Indica cuántas veces se abrió la ficha, no cuántas personas diferentes entraron. Una persona puede abrirla varias veces. No demuestra compras ni visitas al local.',
+  },
+  searchAppearances: {
+    origin: 'Proviene de los eventos de impresión en resultados de búsqueda (SEARCH_IMPRESSION), guardados cuando XAMUKO muestra tu negocio en una búsqueda.',
+    meaning: 'Cuenta las veces que tu negocio apareció como resultado, aunque nadie haya tocado el resultado. No equivale a visitas a tu ficha ni a clientes adquiridos.',
+  },
+  whatsappClicks: {
+    origin: 'Se cuentan los eventos WHATSAPP_CLICK registrados al pulsar el enlace de WhatsApp desde XAMUKO.',
+    meaning: 'Mide la intención de iniciar contacto. No permite saber si el usuario envió el mensaje, recibió respuesta o realizó una compra.',
+  },
+  phoneClicks: {
+    origin: 'Se cuentan los eventos PHONE_CLICK registrados cuando alguien pulsa el botón para llamar desde XAMUKO.',
+    meaning: 'Cada pulsación es un intento de contacto, no necesariamente una llamada completada o una conversación.',
+  },
+  directionsClicks: {
+    origin: 'Se cuentan los eventos DIRECTIONS_CLICK al abrir la opción «Cómo llegar» del negocio desde XAMUKO.',
+    meaning: 'Refleja interés por la ubicación, pero no prueba que la persona haya seguido la ruta ni visitado el establecimiento.',
+  },
+  uniqueVisitors: {
+    origin: 'XAMUKO cuenta identificadores técnicos seudónimos distintos que quedaron asociados a eventos de apertura de la ficha en el período.',
+    meaning: 'Es una estimación de visitantes diferentes según los identificadores disponibles. No identifica personas por nombre y puede no incluir aperturas sin identificador técnico.',
+  },
+  repeatVisitors: {
+    origin: 'Dentro de los eventos de apertura de ficha, se cuentan identificadores seudónimos que registraron más de una apertura durante el período.',
+    meaning: 'Indica cuántos identificadores repitieron una visita digital. Son parte de los visitantes únicos; no deben sumarse a ellos como usuarios adicionales.',
+  },
+  viewEvolution: {
+    origin: 'Se agrupan por fecha los mismos eventos BUSINESS_VIEW que alimentan «Visualizaciones del negocio».',
+    meaning: 'Permite observar cuándo se abrió más o menos la ficha. Los ceros indican períodos transcurridos sin aperturas registradas, no ausencia total de clientes.',
+  },
+  searchEvolution: {
+    origin: 'Se agrupan por fecha los eventos SEARCH_IMPRESSION generados cuando el negocio apareció en resultados de búsqueda.',
+    meaning: 'Permite identificar los períodos en que hubo mayor exposición en búsquedas, no necesariamente más aperturas de ficha o ventas.',
+  },
+  contactRate: {
+    origin: 'El servidor calcula (clics en WhatsApp + clics para llamar) ÷ aperturas de ficha × 100 para el mismo período.',
+    meaning: 'Indica cuántas acciones de contacto se generaron por cada 100 aperturas de la ficha. Una visita puede producir varios clics; por eso no es un porcentaje de compradores. Sin aperturas, la tasa no se calcula.',
+  },
+  interactionRate: {
+    origin: 'El servidor suma clics en WhatsApp, llamadas, indicaciones y aperturas de productos o servicios, y divide el total entre las aperturas de ficha.',
+    meaning: 'Mide acciones digitales por cada 100 aperturas. Una misma persona puede interactuar varias veces y el porcentaje puede superar 100 %. No representa una tasa de ventas.',
+  },
+  navigationRate: {
+    origin: 'Se divide el número de clics en «Cómo llegar» entre las aperturas de la ficha del negocio y se multiplica por 100.',
+    meaning: 'Indica cuántas solicitudes de indicaciones se produjeron por cada 100 aperturas. No confirma que alguien haya llegado físicamente.',
+  },
+  hourlyActivity: {
+    origin: 'Los eventos BUSINESS_VIEW se agrupan por hora del día en el huso de Bogotá, sumando los días comprendidos en el período.',
+    meaning: 'Cada barra muestra cuántas aperturas se registraron a esa hora entre todos los días seleccionados. Una hora con 0 no tuvo aperturas registradas; no es la evolución de un día particular.',
+  },
+  weekdayActivity: {
+    origin: 'Los eventos BUSINESS_VIEW se agrupan por lunes, martes, miércoles y los demás días de la semana en hora de Bogotá.',
+    meaning: 'Sirve para comparar qué días de la semana concentran más aperturas durante el período. Son totales acumulados por día de semana, no fechas consecutivas.',
+  },
+  visitOrigins: {
+    origin: 'Proviene del campo de origen asociado a las aperturas de ficha cuando XAMUKO pudo registrar esa procedencia.',
+    meaning: 'Muestra las aperturas clasificadas por su procedencia, como búsqueda o acceso directo. Las visitas sin origen identificable pueden no aparecer en este desglose.',
+  },
+  keywords: {
+    origin: 'Son términos de búsqueda agregados asociados a eventos SEARCH_IMPRESSION. El servidor muestra los términos más frecuentes, sin identificar a quien buscó.',
+    meaning: 'Sirve para conocer con qué expresiones se mostró tu negocio. No refleja necesariamente los términos de todos los usuarios ni demuestra que hayan abierto la ficha.',
+  },
+  averagePosition: {
+    origin: 'El servidor obtiene el promedio de la posición registrada en resultados de búsqueda, solo en impresiones donde existe ese dato.',
+    meaning: 'Una posición promedio menor significa una aparición más alta en la lista. No es un puesto fijo ni representa todas las búsquedas realizadas.',
+  },
+  categoryPerformance: {
+    origin: 'Se agrupan las aperturas de ficha que traen una categoría asociada en el evento registrado por XAMUKO.',
+    meaning: 'Permite comparar aperturas atribuidas a categorías. Pueden faltar eventos sin categoría registrada; no representa el tamaño de cada categoría en la plataforma.',
+  },
+  topProducts: {
+    origin: 'Son eventos de apertura de fichas de productos (OFFER_VIEW), ordenados por cantidad durante el período. Se muestran hasta cinco productos.',
+    meaning: 'Compara cuáles productos recibieron más consultas de detalle. El ranking puede excluir otros productos y una apertura no significa una venta.',
+  },
+  topServices: {
+    origin: 'Son eventos de apertura de fichas de servicios (OFFER_VIEW), ordenados por cantidad durante el período. Se muestran hasta cinco servicios.',
+    meaning: 'Compara cuáles servicios recibieron más consultas de detalle. No incluye necesariamente todo el catálogo ni confirma contrataciones.',
+  },
+  favoriteEvolution: {
+    origin: 'Se agrupan por fecha de creación los registros de favoritos que todavía existen en XAMUKO para el negocio.',
+    meaning: 'Muestra cuándo se añadieron los favoritos que siguen vigentes. Los favoritos retirados ya no forman parte de la serie, por lo que no es un histórico completo de altas y bajas.',
+  },
+  ratingEvolution: {
+    origin: 'Se calcula el promedio de estrellas de las opiniones publicadas, agrupadas según su fecha de creación.',
+    meaning: 'Cada punto es el promedio de las opiniones registradas en esa fecha o período. Si no hubo opiniones, no existe promedio: no debe confundirse con una calificación de 0 estrellas. Las modificaciones posteriores no se reconstruyen.',
+  },
+  featuredPerformance: {
+    origin: 'Se cuentan los eventos de apertura e interacción marcados por XAMUKO como provenientes de apariciones destacadas.',
+    meaning: 'Compara visualizaciones e interacciones atribuidas a destacados, no clientes únicos. La tasa de interacción resulta de las acciones registradas frente a esas visualizaciones.',
+  },
+  periodComparison: {
+    origin: 'Compara los eventos de apertura de la ficha del período actual con la misma porción transcurrida del período anterior, cuando es comparable.',
+    meaning: 'Sirve para observar si las aperturas aumentaron o disminuyeron en intervalos equivalentes. Con un valor anterior igual a 0 no se calcula un crecimiento porcentual fiable.',
+  },
+  commercialIndex: {
+    origin: 'El índice requeriría suficientes negocios comparables de la misma ciudad y categoría, además de una metodología de referencia.',
+    meaning: 'Todavía no hay una medición calculada y validada. No debe interpretarse como nivel de ventas, éxito comercial ni posición competitiva.',
+  },
+};
+const referralExplanations: Explanation[] = [
+  {
+    origin: 'Se cuenta cuántas personas mantienen actualmente tu negocio en su lista de favoritos de XAMUKO.',
+    meaning: 'Es el número de favoritos vigentes, no la cantidad de veces que se pulsó el botón históricamente. No existe un desglose diario fiable para este total.',
+  },
+  {
+    origin: 'Se cuentan las reacciones «Me gusta» que siguen registradas en los productos y servicios no eliminados del catálogo del negocio.',
+    meaning: 'Es un total actual de reacciones. No equivale a compras ni se dispone de una serie diaria completa de altas y bajas.',
+  },
+  {
+    origin: 'Se cuentan las opiniones que XAMUKO registra como publicadas y creadas dentro del período seleccionado.',
+    meaning: 'Mide opiniones públicas recibidas, no visitas a la ficha. Una opinión retirada o no publicada deja de formar parte del total visible.',
+  },
+  {
+    origin: 'Se consultan las opiniones publicadas actuales y se cuentan por calificación de una a cinco estrellas.',
+    meaning: 'Permite observar cómo se distribuyen las calificaciones. Este desglose corresponde a las opiniones publicadas actuales, no exclusivamente al período del selector.',
+  },
+  {
+    origin: 'Se consultan las aperturas de detalle de productos y servicios (OFFER_VIEW) del período; el servidor entrega un ranking limitado.',
+    meaning: 'Muestra las publicaciones con más aperturas dentro del ranking ofrecido. La suma de sus barras no necesariamente coincide con todas las aperturas del catálogo.',
+  },
+];
+function explainSelection(selection: StatisticsSelection, detail: Detail): Explanation {
+  if (selection.section === 'referral') {
+    const index = referralCards.findIndex(card => card.key === selection.key);
+    return referralExplanations[index] ?? { origin: detail.source, meaning: detail.description };
+  }
+  return metricExplanations[selection.key] ?? { origin: detail.source, meaning: detail.description };
+}
+
 function DataChart({ points, chart, unit }: { points: Point[]; chart: ChartKind; unit?: 'count' | 'rating' }) {
   const [active, setActive] = useState<number | null>(null);
   if (!points.length) return <div className="stats-detail-empty">No hay registros desglosados para mostrar.</div>;
@@ -255,6 +390,7 @@ export function StatisticsDetailDialog(props: Props) {
   const points = detail.points ?? [];
   const hasChart = Boolean(detail.chart && points.length && detail.status !== 'locked');
   const periodLabel = periods.find(item => item.id === period)?.label ?? period;
+  const explanation = explainSelection(selection, detail);
   return createPortal(<div className="stats-detail-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
     <section className="stats-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="stats-detail-title" aria-describedby="stats-detail-desc">
       <header className="stats-detail-header"><div><span>ANÁLISIS DETALLADO · {periodLabel.toLocaleUpperCase('es-CO')}</span><h2 id="stats-detail-title">{detail.title}</h2><p id="stats-detail-desc">{detail.description}</p></div><button ref={closeButton} type="button" onClick={onClose} aria-label="Cerrar detalle">×</button></header>
@@ -264,8 +400,25 @@ export function StatisticsDetailDialog(props: Props) {
           <div className="stats-detail-callout"><strong>{detail.status === 'locked' ? 'Acceso restringido' : 'Detalle no disponible'}</strong><p>{detail.note ?? detail.source}</p></div> :
           hasChart ? <div className="stats-detail-chart-card"><div className="stats-detail-chart-head"><div><h3>Explora los datos</h3><p>{detail.chart === 'line' ? 'Evolución registrada' : 'Desglose del indicador'} · Datos del servidor</p></div><div className="stats-detail-switch" role="group" aria-label="Tipo de visualización"><button type="button" aria-pressed={display === 'chart'} className={display === 'chart' ? 'active' : ''} onClick={() => setDisplay('chart')}>Gráfica</button><button type="button" aria-pressed={display === 'data'} className={display === 'data' ? 'active' : ''} onClick={() => setDisplay('data')}>Tabla</button></div></div>{display === 'chart' ? <DataChart key={selection.section + selection.key} points={points} chart={detail.chart!} unit={detail.unit} /> : <DataTable points={points} />}</div> : null
         }
-        {detail.note && detail.status !== 'pending' && <p className="stats-detail-note"><strong>Cómo interpretar este dato:</strong> {detail.note}</p>}
-        <p className="stats-detail-source"><strong>Fuente:</strong> {detail.source} {data && <span>Zona horaria: {data.timezone}.</span>}</p>
+        <section className="stats-detail-explanation" aria-labelledby="stats-detail-explanation-title">
+          <h3 id="stats-detail-explanation-title">Cómo interpretar este dato</h3>
+          <p>{explanation.meaning}</p>
+          <h4>¿De dónde se obtiene este valor?</h4>
+          <p>{explanation.origin}</p>
+          {detail.note && detail.status !== 'pending' && <p className="stats-detail-explanation-precision"><strong>Ten en cuenta:</strong> {detail.note}</p>}
+          {detail.chart === 'line' && detail.unit !== 'rating' && <p className="stats-detail-explanation-precision">
+            <strong>¿Qué significa un 0?</strong> En un intervalo transcurrido con cero eventos registrados de este indicador,
+            el punto se muestra en 0. No se omite ese período ni se inventa actividad para completar la gráfica.
+          </p>}
+          {detail.chart === 'line' && detail.unit === 'rating' && <p className="stats-detail-explanation-precision">
+            <strong>Sin calificaciones no significa 0 estrellas:</strong> si no existen opiniones en un período, no se puede calcular un promedio.
+          </p>}
+          {!hasChart && detail.status !== 'locked' && <p className="stats-detail-explanation-precision">
+            <strong>Sin gráfica temporal:</strong> el servidor no entrega un historial desglosado suficiente para este indicador.
+            No se construye una evolución artificial a partir de un único total.
+          </p>}
+          {data && <small>Período seleccionado: {periodLabel}. Zona horaria de referencia: {data.timezone}.</small>}
+        </section>
       </div>
       <footer className="stats-detail-footer"><span>Solo se muestran mediciones disponibles del negocio.</span><button type="button" onClick={onClose}>Volver a estadísticas</button></footer>
     </section>
