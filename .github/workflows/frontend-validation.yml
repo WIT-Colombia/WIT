@@ -72,6 +72,9 @@ jobs:
       - name: Check Business promotions dialogs on desktop, iPad and iPhone
         run: node scripts/check-business-promotions-responsive.mjs
 
+      - name: Check Business Opiniones and reply/report dialogs on desktop, iPad and iPhone
+        run: node scripts/check-business-reviews-responsive.mjs
+
       - name: Check Admin sidebar in desktop and mobile browsers
         run: node scripts/check-admin-sidebar.mjs
 
