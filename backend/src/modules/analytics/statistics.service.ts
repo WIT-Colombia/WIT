@@ -48,6 +48,43 @@ export function statisticsWindow(period: StatisticsPeriod, now = new Date()) {
 
 const toNumber = (value: bigint | number) => Number(value);
 const series = (rows: Array<{ bucket: string; total: bigint }>) => rows.map(row => ({ label: row.bucket, value: toNumber(row.total) }));
+/**
+ * The database returns only buckets containing events. For count metrics,
+ * an empty bucket INSIDE a queried interval means zero recorded events.
+ * Create every elapsed Bogotá calendar bucket; do not add future buckets.
+ * Averages (e.g. ratings) must not use this function: absent ≠ zero stars.
+ */
+export function completeCountTrend(
+  rows: Array<{ label: string; value: number }>,
+  period: StatisticsPeriod, from: Date, until: Date,
+): Array<{ label: string; value: number }> {
+  const bogota = (date: Date) => new Date(date.getTime() - 5 * 60 * 60 * 1000);
+  const beginning = bogota(from), ending = bogota(until);
+  const unit = period === 'day' ? 'hour' : period === 'week' || period === 'month' ? 'day' : 'month';
+  const cursor = new Date(Date.UTC(
+    beginning.getUTCFullYear(), beginning.getUTCMonth(),
+    unit === 'month' ? 1 : beginning.getUTCDate(),
+    unit === 'hour' ? beginning.getUTCHours() : 0,
+  ));
+  const last = new Date(Date.UTC(
+    ending.getUTCFullYear(), ending.getUTCMonth(),
+    unit === 'month' ? 1 : ending.getUTCDate(),
+    unit === 'hour' ? ending.getUTCHours() : 0,
+  ));
+  const counts = new Map(rows.map(row => [row.label, row.value]));
+  const finished: Array<{ label: string; value: number }> = [];
+  for (; cursor <= last && finished.length < 744; ) {
+    const date = cursor.toISOString().slice(0, 10);
+    const label = unit === 'hour' ? date + ' ' + String(cursor.getUTCHours()).padStart(2, '0') + ':00'
+      : unit === 'month' ? date.slice(0, 7) : date;
+    finished.push({ label, value: counts.get(label) ?? 0 });
+    if (unit === 'hour') cursor.setUTCHours(cursor.getUTCHours() + 1);
+    else if (unit === 'day') cursor.setUTCDate(cursor.getUTCDate() + 1);
+    else cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  return finished;
+}
+
 
 export async function authorizeStatisticsBusiness(userId: string, identifier: string, db: Pick<typeof prisma, 'business'> = prisma) {
   const business = await db.business.findFirst({
@@ -124,7 +161,7 @@ export async function getBusinessStatistics(userId: string, identifier: string, 
   const unlockedReferralStatistics = Math.min(5, Math.max(0, recognition.minimum === 0 ? 0 : recognition.minimum >= 500 ? 5 : recognition.minimum >= 250 ? 4 : recognition.minimum >= 100 ? 3 : recognition.minimum >= 50 ? 2 : 1));
   const referralsUnlocked = unlockedReferralStatistics > 0;
   // All-time totals remain complete; its chart is bounded to the latest 24 months.
-  const trendStart = window.start ?? new Date(Date.UTC(now.getUTCFullYear() - 2, now.getUTCMonth() + 1, 1));
+  const trendStart = window.start ?? (() => { const local = new Date(now.getTime() - 5 * 60 * 60 * 1000); return new Date(Date.UTC(local.getUTCFullYear() - 2, local.getUTCMonth() + 1, 1, 5)); })();
   const format = period === 'day' ? '%Y-%m-%d %H:00' : period === 'year' || period === 'all' ? '%Y-%m' : '%Y-%m-%d';
   const eventSeries = await prisma.$queryRaw<Array<{ eventType: keyof typeof eventKeys; bucket: string; total: bigint }>>(Prisma.sql`
     SELECT eventType, DATE_FORMAT(DATE_SUB(createdAt, INTERVAL 5 HOUR), ${format}) AS bucket, COUNT(*) AS total
@@ -138,6 +175,11 @@ export async function getBusinessStatistics(userId: string, identifier: string, 
     // treated as a free dashboard series just because it shares the event table.
     const metric = eventKeys[row.eventType];
     if (metric) trends[metric].push({ label: row.bucket, value: toNumber(row.total) });
+  }
+  // Equal-length, real calendar intervals prevent zero days from disappearing
+  // or producing misleading straight lines between distant event dates.
+  for (const key of Object.values(eventKeys)) {
+    trends[key] = completeCountTrend(trends[key], period, trendStart, now);
   }
   const result: {
     period: StatisticsPeriod;
@@ -226,7 +268,7 @@ export async function getBusinessStatistics(userId: string, identifier: string, 
       promotionViews,
       mostViewedPromotions: promotionRanking.map(row => ({ id: row.promotionId, title: byId.get(row.promotionId) ?? 'Promoción', value: row._count._all })),
       ratingEvolution: ratingRows.map(row => ({ label: row.bucket, value: Number(row.average) })),
-      favoriteAcquisitions: series(favoriteRows),
+      favoriteAcquisitions: completeCountTrend(series(favoriteRows), period, trendStart, now),
       uniqueVisitors: toNumber(uniqueVisitorRows[0]?.total ?? 0),
       repeatVisitors: toNumber(repeatVisitorRows[0]?.total ?? 0),
       visitOrigins: origins.map(row => ({ label: row.label, value: toNumber(row.total) })),
