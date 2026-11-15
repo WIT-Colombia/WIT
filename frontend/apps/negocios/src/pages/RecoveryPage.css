@@ -1,250 +1,353 @@
-/* Estas reglas se limitan a /recuperar en XAMUKO Business.
-   No modificar los estilos generales de autenticación ni las páginas ajenas. */
-.auth-page.business-recovery-page {
-  min-height: 100vh;
-  background: #f7fafc;
-  color: #101b36;
+/* XAMUKO Business — cambiar, recuperar y restablecer contraseñas.
+   Estilos aislados: respetan AppShell para cuentas autenticadas y el acceso público. */
+.business-recovery-page {
+  --recovery-blue:#225cf1;
+  --recovery-blue-dark:#114bd9;
+  --recovery-navy:#111d3b;
+  --recovery-muted:#657895;
+  --recovery-line:#dfe7f5;
+  --recovery-pale:#edf3ff;
+  box-sizing:border-box;width:100%;min-width:0;color:var(--recovery-navy);
 }
-.auth-page.business-recovery-page .business-header {
-  display: flex;
+.business-recovery-page *, .business-recovery-page *::before, .business-recovery-page *::after {
+  box-sizing:border-box;
+}
+.business-recovery-page svg {display:block;flex:none;width:21px;height:21px}
+.business-recovery-page.business-recovery-guest {
+  min-height:100svh;padding:32px clamp(16px,4vw,60px) 70px;
+  background:linear-gradient(145deg,#f7faff 0%,#edf3ff 100%);
+}
+.business-recovery-page.business-recovery-workspace {
+  min-height:0;margin:0;padding:0 0 40px;background:transparent;
 }
 .business-recovery-page .business-recovery-layout {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  width: min(calc(100% - 48px), 1050px);
-  max-width: 1050px;
-  min-height: calc(100vh - 76px);
-  margin: 0 auto;
-  padding: 34px 0 48px;
-  background: transparent;
+  display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+  gap:0;width:100%;min-width:0;max-width:1200px;min-height:0;
+  margin:0 auto;padding:0;background:transparent;
 }
-.business-recovery-page .business-recovery-intro {
-  width: 100%;
-  margin: 0;
+.business-recovery-page .business-recovery-top-back {
+  display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;
+  width:max-content;min-height:36px;margin:0 0 25px;padding:0 14px;
+  border:1px solid #bfdbfe;border-radius:999px;background:#fff;
+  color:#2563eb;font-size:11px;font-weight:750;line-height:1.2;
+  text-decoration:none;box-shadow:0 5px 14px #2563eb14;
+  transition:border-color .18s,background-color .18s,transform .18s;
 }
-.business-recovery-page .business-recovery-intro > span,
-.business-recovery-page .business-recovery-card .auth-kicker {
-  display: block;
-  margin-bottom: 10px;
-  color: #1769ed;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: .12em;
+.business-recovery-page .business-recovery-top-back:hover {
+  border-color:#93c5fd;background:#eff6ff;color:#1d4ed8;
+  text-decoration:none;transform:translateX(-1px);
 }
-.business-recovery-page .business-recovery-intro h1 {
-  margin: 0 0 8px;
-  color: #101b36;
-  font-size: clamp(30px, 4vw, 40px);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -1.2px;
+.business-recovery-page .business-recovery-heading {
+  margin:0 0 26px;
 }
-.business-recovery-page .business-recovery-intro p {
-  margin: 0;
-  color: #61708b;
-  font-size: 13px;
-  line-height: 1.55;
+.business-recovery-page .business-recovery-eyebrow {
+  display:block;margin:0 0 15px 4px;
+  color:#285eec;font-size:11px;font-weight:800;letter-spacing:.105em;
+}
+.business-recovery-page .business-recovery-heading-main {
+  display:flex;align-items:center;gap:16px;min-width:0;
+}
+.business-recovery-page .business-recovery-heading-main>div {min-width:0}
+.business-recovery-page .business-recovery-heading-icon {
+  display:grid;place-items:center;
+  flex:0 0 72px;width:72px;height:72px;
+  border:1px solid #cad9fc;border-radius:18px;
+  background:linear-gradient(145deg,#e8eaff,#d0dfff);
+  color:#285beb;box-shadow:0 6px 16px #4655be16;
+}
+.business-recovery-page .business-recovery-heading-icon svg {width:36px;height:36px}
+.business-recovery-page .business-recovery-heading h1 {
+  margin:0 0 8px;color:var(--recovery-navy);
+  font-size:clamp(28px,2.8vw,38px);font-weight:800;
+  line-height:1.13;letter-spacing:-.04em;overflow-wrap:anywhere;
+}
+.business-recovery-page .business-recovery-heading p {
+  max-width:800px;margin:0;
+  color:var(--recovery-muted);font-size:13px;line-height:1.55;
+}
+.business-recovery-page .business-recovery-content {
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,300px);
+  align-items:start;gap:20px;min-width:0;
 }
 .business-recovery-page .business-recovery-card {
-  box-sizing: border-box;
-  width: min(100%, 480px);
-  max-width: 480px;
-  margin: 0;
-  padding: 32px;
-  border: 1px solid #dfe7f1;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 12px 36px rgba(15, 23, 42, .08);
+  align-self:start;width:100%;max-width:none;min-width:0;
+  margin:0;padding:30px;
+  border:1px solid var(--recovery-line);border-radius:20px;
+  background:#fff;box-shadow:0 10px 30px #14305f10;
 }
-.business-recovery-page .business-recovery-card .auth-form-heading h2 {
-  margin: 0 0 9px;
-  color: #101b36;
-  font-size: 27px;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -.8px;
+.business-recovery-page .business-recovery-card-heading {
+  display:flex;align-items:center;gap:14px;
+  min-width:0;margin:0 0 23px;padding:0 0 23px;
+  border-bottom:1px solid #edf1f8;
 }
-.business-recovery-page .business-recovery-card .auth-form-heading p {
-  margin: 0 0 22px;
-  color: #61708b;
-  font-size: 13px;
-  line-height: 1.55;
+.business-recovery-page .business-recovery-card-heading>div {min-width:0}
+.business-recovery-page .business-recovery-card-icon {
+  display:grid;place-items:center;
+  flex:0 0 52px;width:52px;height:52px;
+  border:1px solid #d5e1ff;border-radius:15px;
+  background:#eaf1ff;color:#225cf1;
 }
-.business-recovery-page .business-recovery-card .auth-form {
-  display: grid;
-  gap: 14px;
+.business-recovery-page .business-recovery-card-icon svg {width:27px;height:27px}
+.business-recovery-page .business-recovery-card-eyebrow {
+  display:block;margin-bottom:7px;color:#285eec;
+  font-size:10px;font-weight:800;letter-spacing:.12em;
 }
-.business-recovery-page .business-recovery-card .auth-form label {
-  display: grid;
-  gap: 7px;
-  color: #1b2941;
-  font-size: 12px;
-  font-weight: 700;
+.business-recovery-page .business-recovery-card-heading h2 {
+  margin:0 0 7px;color:#152747;
+  font-size:21px;font-weight:800;line-height:1.25;letter-spacing:-.025em;
 }
-.business-recovery-page .business-recovery-card .auth-form input {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 43px;
-  padding: 10px 12px;
-  border: 1px solid #d5dfeb;
-  border-radius: 9px;
-  background: #fff;
-  color: #101b36;
-  font-size: 13px;
-  outline: 0;
-  transition: border-color .18s ease, box-shadow .18s ease;
+.business-recovery-page .business-recovery-card-heading p {
+  margin:0;color:#647795;font-size:12px;line-height:1.65;
 }
-.business-recovery-page .business-recovery-card .auth-form input:focus {
-  border-color: #1769ed;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
+.business-recovery-page .business-recovery-form {
+  display:grid;gap:17px;min-width:0;margin:0;
 }
-.business-recovery-page .business-recovery-card .auth-form input[readonly] {
-  border-color: #e2e8f0;
-  background: #f1f5f9;
-  color: #94a3b8;
-  cursor: not-allowed;
+.business-recovery-page .business-recovery-field {
+  display:grid;align-content:start;gap:9px;min-width:0;
+  font-size:13px;font-weight:750;
 }
-.business-recovery-page .business-recovery-card .auth-form input[readonly]:focus {
-  box-shadow: none;
+.business-recovery-page .business-recovery-field>span:first-child {
+  color:#243858;font-size:13px;font-weight:750;line-height:1.35;
 }
-.business-recovery-page .business-recovery-card .auth-submit {
-  width: 100%;
-  min-height: 43px;
-  margin-top: 5px;
-  border: 0;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #1769ed, #2563eb 65%, #0ea5e9);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  box-shadow: 0 7px 17px rgba(37, 99, 235, .2);
+.business-recovery-page .business-recovery-field>input,
+.business-recovery-page .business-recovery-password-control>input {
+  width:100%;min-width:0;min-height:50px;
+  padding:11px 14px;border:1px solid #d4dff1;border-radius:12px;
+  background:#fff;color:#172748;font:inherit;
+  font-size:13px;font-weight:450;line-height:1.5;
+  outline:none;box-shadow:none;
+  transition:border-color .18s,box-shadow .18s;
 }
-.business-recovery-page .business-recovery-card .auth-submit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #1057d2, #1d4ed8 65%, #0284c7);
+.business-recovery-page .business-recovery-field input::placeholder {
+  color:#8a98ad;
 }
-.business-recovery-page .business-recovery-card .auth-submit:disabled {
-  opacity: .65;
-  cursor: not-allowed;
+.business-recovery-page .business-recovery-field input:focus {
+  border-color:#6c94ff;box-shadow:0 0 0 3px #dce8ff;
 }
-.business-recovery-page .business-recovery-card .form-error {
-  margin: 0;
-  color: #b42318;
-  font-size: 11px;
-  line-height: 1.5;
+.business-recovery-page .business-recovery-field input[readonly] {
+  background:#f6f8fc;border-color:#e3eaf6;color:#475b77;
+  cursor:default;
 }
-.business-recovery-page .business-recovery-card .auth-status {
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid #caead9;
-  border-radius: 8px;
-  background: #f1f9f4;
-  color: #256345;
-  font-size: 11px;
-  line-height: 1.5;
+.business-recovery-page .business-recovery-password-control {
+  display:block;position:relative;min-width:0;
 }
-.business-recovery-page .business-recovery-card .recovery-switch,
-.business-recovery-page .business-recovery-card .auth-back {
-  display: block;
-  margin: 18px auto 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: #1769ed;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.5;
-  text-align: center;
-  text-decoration: none;
+.business-recovery-page .business-recovery-password-control>input {
+  padding-right:57px;
 }
-.business-recovery-page .business-recovery-card .recovery-switch:hover,
-.business-recovery-page .business-recovery-card .auth-back:hover {
-  text-decoration: underline;
+.business-recovery-page .business-recovery-visibility {
+  position:absolute;top:50%;right:7px;transform:translateY(-50%);
+  display:grid;place-items:center;width:40px;height:39px;
+  padding:0;border:0;border-radius:9px;
+  background:transparent;color:#56729f;
+  cursor:pointer;
 }
-.business-recovery-page .business-recovery-card .auth-back {
-  margin-top: 12px;
+.business-recovery-page .business-recovery-visibility svg {
+  width:19px;height:19px;
 }
-.business-recovery-email-page .business-recovery-card {
-  border-radius: 16px;
-  box-shadow: 0 16px 38px rgba(24, 52, 91, .08);
+.business-recovery-page .business-recovery-visibility:hover {
+  background:#eff5ff;color:#225cf1;
 }
-@media (max-width: 800px) {
-  .auth-page.business-recovery-page .business-header {
-    display: flex;
+.business-recovery-page .business-recovery-rule {
+  display:flex;align-items:center;gap:8px;
+  min-width:0;margin-top:-7px;
+  color:#72839c;font-size:11px;line-height:1.5;
+}
+.business-recovery-page .business-recovery-rule svg {
+  width:16px;height:16px;
+}
+.business-recovery-page .business-recovery-rule.is-valid {
+  color:#13764c;font-weight:700;
+}
+.business-recovery-page .business-recovery-inline-error {
+  margin:-7px 0 0;color:#b13e4c;
+  font-size:11px;line-height:1.5;
+}
+.business-recovery-page .business-recovery-form-footer {
+  display:flex;justify-content:flex-end;
+  margin-top:5px;padding-top:18px;border-top:1px solid #edf1f8;
+}
+.business-recovery-page .business-recovery-submit {
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-height:49px;padding:11px 20px;
+  border:1px solid transparent;border-radius:12px;
+  background:linear-gradient(105deg,#743fff 0%,#245cf2 65%,#16a6f7 100%);
+  box-shadow:0 10px 23px #4e53e324;
+  color:#fff;font:inherit;font-size:13px;font-weight:800;line-height:1.35;
+  cursor:pointer;transition:filter .18s,box-shadow .18s;
+}
+.business-recovery-page .business-recovery-submit svg {
+  width:19px;height:19px;
+}
+.business-recovery-page .business-recovery-submit:hover:not(:disabled) {
+  filter:brightness(1.06);box-shadow:0 12px 24px #4e53e336;
+}
+.business-recovery-page .business-recovery-submit:disabled {
+  opacity:.54;cursor:not-allowed;box-shadow:none;
+}
+.business-recovery-page .business-recovery-switch {
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  width:max-content;max-width:100%;min-height:38px;
+  margin:17px 0 0;padding:5px 0;border:0;
+  background:transparent;color:var(--recovery-blue);
+  font:inherit;font-size:12px;font-weight:750;line-height:1.4;
+  text-align:left;text-decoration:none;cursor:pointer;
+}
+.business-recovery-page .business-recovery-switch svg {
+  width:16px;height:16px;
+}
+.business-recovery-page .business-recovery-switch:hover {
+  color:var(--recovery-blue-dark);text-decoration:underline;
+  text-underline-offset:3px;
+}
+.business-recovery-page .business-recovery-feedback {
+  display:flex;align-items:flex-start;gap:13px;
+  padding:17px 18px;border:1px solid;border-radius:13px;
+  font-size:12px;line-height:1.7;overflow-wrap:anywhere;
+}
+.business-recovery-page .business-recovery-feedback>svg {
+  flex:0 0 22px;width:22px;height:22px;margin-top:1px;
+}
+.business-recovery-page .business-recovery-feedback>div {min-width:0}
+.business-recovery-page .business-recovery-feedback h3 {
+  margin:0 0 6px;font-size:15px;font-weight:800;line-height:1.4;
+}
+.business-recovery-page .business-recovery-feedback p {
+  margin:0;font-size:12px;line-height:1.7;
+}
+.business-recovery-page .business-recovery-feedback.is-success {
+  border-color:#bcebd7;background:#f0fff7;color:#166746;
+}
+.business-recovery-page .business-recovery-feedback.is-error {
+  border-color:#f0cbd1;background:#fff6f7;color:#a53442;
+}
+.business-recovery-page .business-recovery-feedback a {
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:13px;color:#135c9c;
+  font-size:12px;font-weight:800;text-decoration:none;
+}
+.business-recovery-page .business-recovery-feedback a svg {width:16px;height:16px}
+.business-recovery-page .business-recovery-feedback a:hover {
+  text-decoration:underline;
+}
+.business-recovery-page .business-recovery-aside {
+  display:grid;align-content:start;gap:14px;min-width:0;
+}
+.business-recovery-page .business-recovery-tips {
+  min-width:0;padding:24px 23px;
+  border:1px solid #dbe6ff;border-radius:19px;
+  background:linear-gradient(155deg,#f9fbff,#ecf3ff);
+  box-shadow:0 8px 24px #193f8b0d;
+}
+.business-recovery-page .business-recovery-tips-icon {
+  display:grid;place-items:center;width:48px;height:48px;
+  margin:0 0 17px;border-radius:13px;background:#e0ebff;color:#225cf1;
+}
+.business-recovery-page .business-recovery-tips-icon svg {
+  width:25px;height:25px;
+}
+.business-recovery-page .business-recovery-tips h2 {
+  margin:0 0 8px;color:#162b50;
+  font-size:18px;font-weight:800;letter-spacing:-.02em;line-height:1.3;
+}
+.business-recovery-page .business-recovery-tips p {
+  margin:0;color:#60738f;font-size:12px;line-height:1.65;
+}
+.business-recovery-page .business-recovery-tips ul {
+  display:grid;gap:13px;margin:18px 0 0;padding:18px 0 0;
+  border-top:1px solid #d8e5fa;list-style:none;
+}
+.business-recovery-page .business-recovery-tips li {
+  position:relative;padding-left:21px;color:#465e81;
+  font-size:11px;line-height:1.6;
+}
+.business-recovery-page .business-recovery-tips li::before {
+  content:"✓";position:absolute;top:0;left:0;
+  color:#245cf2;font-size:13px;font-weight:800;
+}
+.business-recovery-page .business-recovery-side-note {
+  display:flex;align-items:flex-start;gap:8px;
+  margin:0;padding:0 4px;color:#72829c;
+  font-size:11px;line-height:1.6;
+}
+.business-recovery-page .business-recovery-side-note svg {
+  flex:0 0 18px;width:18px;height:18px;color:#456ed0;
+}
+.business-recovery-page :is(a,button,input):focus-visible {
+  outline:3px solid #a9c4ff;outline-offset:3px;
+}
+@media(max-width:1050px) {
+  .business-recovery-page .business-recovery-content {
+    grid-template-columns:minmax(0,1fr);
   }
-  .business-recovery-page .business-recovery-layout {
-    width: min(calc(100% - 32px), 480px);
-    min-height: calc(100vh - 68px);
-    gap: 20px;
-    padding: 24px 0 32px;
+  .business-recovery-page .business-recovery-aside {
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+@media(max-width:700px) {
+  .business-recovery-page.business-recovery-guest {
+    padding:22px 16px 48px;
+  }
+  .business-recovery-page .business-recovery-heading {
+    margin-bottom:19px;
+  }
+  .business-recovery-page .business-recovery-eyebrow {
+    margin-bottom:11px;font-size:10px;
+  }
+  .business-recovery-page .business-recovery-top-back {
+    margin-bottom:22px;
+  }
+  .business-recovery-page .business-recovery-heading-main {
+    align-items:flex-start;gap:12px;
+  }
+  .business-recovery-page .business-recovery-heading-icon {
+    flex-basis:52px;width:52px;height:52px;border-radius:14px;
+  }
+  .business-recovery-page .business-recovery-heading-icon svg {
+    width:28px;height:28px;
+  }
+  .business-recovery-page .business-recovery-heading h1 {
+    font-size:27px;
+  }
+  .business-recovery-page .business-recovery-heading p {
+    font-size:12px;
   }
   .business-recovery-page .business-recovery-card {
-    padding: 25px 20px;
+    padding:20px 18px;border-radius:17px;
   }
-  .business-recovery-page .business-recovery-intro h1 {
-    font-size: 30px;
+  .business-recovery-page .business-recovery-card-heading {
+    align-items:flex-start;gap:11px;margin-bottom:20px;
   }
-}
-@media (max-width: 480px) {
-  .business-recovery-page .business-recovery-card .auth-form-heading h2 {
-    font-size: 25px;
+  .business-recovery-page .business-recovery-card-icon {
+    flex-basis:42px;width:42px;height:42px;border-radius:12px;
   }
-}
-
-/* Within the authenticated Business dashboard, use the same header and sidebar
-   as /perfil; these overrides never affect the guest password-reset screen. */
-.business-recovery-page.business-recovery-workspace {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-  background: transparent;
-}
-.business-recovery-page.business-recovery-workspace .business-recovery-layout {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 0;
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-}
-.business-recovery-page.business-recovery-workspace .page-heading {
-  width: 100%;
-  margin-bottom: 24px;
-}
-.business-recovery-page.business-recovery-workspace .business-recovery-card {
-  align-self: center;
-  width: min(100%,480px);
-  margin: 0;
-}
-
-@media(max-width:800px) {
-  .business-recovery-page.business-recovery-workspace .business-recovery-layout {
-    width: 100%;
-    min-height: 0;
-    padding: 0;
+  .business-recovery-page .business-recovery-card-icon svg {
+    width:23px;height:23px;
   }
-  .business-recovery-page.business-recovery-workspace.business-recovery-email-page .business-recovery-layout {
-    padding-top: 20px;
+  .business-recovery-page .business-recovery-card-heading h2 {
+    font-size:18px;
+  }
+  .business-recovery-page .business-recovery-form-footer {
+    align-items:stretch;
+  }
+  .business-recovery-page .business-recovery-submit {
+    width:100%;
+  }
+  .business-recovery-page .business-recovery-tips {
+    padding:20px;border-radius:16px;
   }
 }
-
-/* Match Usuarios recovery structure, with Business blue as the primary accent. */
-.business-recovery-page .business-recovery-layout{align-items:stretch;justify-content:flex-start;gap:0}
-.business-recovery-page .business-recovery-top-back{display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;width:max-content;min-height:36px;margin:0 0 22px;padding:0 13px;border:1px solid #bfdbfe;border-radius:999px;background:#fff;color:#2563eb;font-size:11px;font-weight:700;line-height:1;text-decoration:none;box-shadow:0 5px 14px rgba(37,99,235,.08);transition:background .18s ease,border-color .18s ease,transform .18s ease}
-.business-recovery-page .business-recovery-top-back:hover,.business-recovery-page .business-recovery-top-back:focus-visible{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8;text-decoration:none;transform:translateX(-1px)}
-.business-recovery-page .business-recovery-top-back:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
-.business-recovery-page .business-recovery-intro{margin-bottom:24px}
-.business-recovery-page .business-recovery-card{align-self:center}
-.business-recovery-page .business-recovery-card .auth-form input[readonly]{color:#475569;cursor:default}
-.business-recovery-page.business-recovery-workspace .business-recovery-top-back{margin-bottom:22px}
+@media(max-width:420px) {
+  .business-recovery-page .business-recovery-card {
+    padding:18px 14px;
+  }
+  .business-recovery-page .business-recovery-switch {
+    width:100%;text-align:center;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .business-recovery-page *,
+  .business-recovery-page *::before,
+  .business-recovery-page *::after {
+    transition-duration:.01ms!important;animation-duration:.01ms!important;
+  }
+}
