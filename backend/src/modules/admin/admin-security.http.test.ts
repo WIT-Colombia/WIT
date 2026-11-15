@@ -43,6 +43,73 @@ test('bloquea segunda activación mediante el endpoint HTTP real', async () => {
 
 test('requiere el código también al finalizar la activación HTTP', async () => { const fixture = await createAdminFixture(); try { const pending = await createPendingOAuth(fixture.googleSub); const options = await request('/api/v1/admin/auth/passkey/activation/options', { headers: { cookie: pending.cookie, 'x-admin-activation-code': 'ci-activation-code' } }); assert.equal(options.status, 200); const activationCookie = options.headers.get('set-cookie') ?? ''; const response = await request('/api/v1/admin/auth/passkey/activation/verify', { method: 'POST', headers: { cookie: activationCookie, 'content-type': 'application/json' }, body: '{}' }); assert.equal(response.status, 403); assert.equal((await response.json() as any).error.code, 'ADMIN_ACTIVATION_AUTH_REQUIRED'); } finally { await fixture.cleanup(); } });
 
+test('directorio de usuarios exige sesión Admin, muestra perfiles y protege la baja', async () => {
+  const unauthenticated = await request('/api/v1/admin/users/overview');
+  assert.equal(unauthenticated.status, 401);
+  const fixture = await createAdminFixture();
+  const target = await prisma.user.create({ data: { displayName: 'Usuario de integración' }, select: { id: true } });
+  try {
+    const session = await createAdminSession(fixture.userId);
+    const headers = { cookie: session.cookie };
+    const overview = await request('/api/v1/admin/users/overview', { headers });
+    assert.equal(overview.status, 200);
+    const counts = await overview.json() as any;
+    assert.equal(counts.series.length, 12);
+    assert.ok(counts.total >= 2);
+
+    const listing = await request('/api/v1/admin/users?q=Usuario%20de%20integraci%C3%B3n', { headers });
+    assert.equal(listing.status, 200);
+    const listData = await listing.json() as any;
+    assert.ok(listData.users.some((user: any) => user.id === target.id));
+
+    const details = await request('/api/v1/admin/users/' + target.id, { headers });
+    assert.equal(details.status, 200);
+    const detail = (await details.json() as any).user;
+    assert.equal(detail.deletion.allowed, true);
+    assert.deepEqual(detail.businesses, []);
+    assert.deepEqual(detail.administrativeRoles, []);
+
+    const csrfResponse = await request('/api/v1/admin/auth/session', { headers });
+    assert.equal(csrfResponse.status, 200);
+    const csrf = (await csrfResponse.json() as any).csrfToken as string;
+    const body = JSON.stringify({ confirmation: 'ELIMINAR', reason: 'Baja administrativa registrada para prueba de integridad.' });
+
+    const noCsrf = await request('/api/v1/admin/users/' + target.id + '/deactivate', {
+      method: 'POST', headers: { ...headers, origin: env.trustedOrigins[0]!, 'content-type': 'application/json' }, body,
+    });
+    assert.equal(noCsrf.status, 403);
+    assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: target.id } })).status, 'ACTIVE');
+
+    const account = await prisma.businessAccount.create({ data: { name: 'Cuenta protegida', createdById: target.id }, select: { id: true } });
+    const blocked = await request('/api/v1/admin/users/' + target.id + '/deactivate', {
+      method: 'POST', headers: { ...headers, origin: env.trustedOrigins[0]!, 'x-admin-csrf': csrf, 'content-type': 'application/json' }, body,
+    });
+    assert.equal(blocked.status, 409, 'No debe eliminar personas con cuentas de negocio vinculadas');
+    await prisma.businessAccount.delete({ where: { id: account.id } });
+
+    const self = await request('/api/v1/admin/users/' + fixture.userId + '/deactivate', {
+      method: 'POST', headers: { ...headers, origin: env.trustedOrigins[0]!, 'x-admin-csrf': csrf, 'content-type': 'application/json' }, body,
+    });
+    assert.equal(self.status, 403, 'El administrador no puede eliminarse a sí mismo');
+
+    const removed = await request('/api/v1/admin/users/' + target.id + '/deactivate', {
+      method: 'POST', headers: { ...headers, origin: env.trustedOrigins[0]!, 'x-admin-csrf': csrf, 'content-type': 'application/json' }, body,
+    });
+    assert.equal(removed.status, 200);
+    assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: target.id } })).status, 'DELETED');
+    assert.ok(await prisma.auditLog.findFirst({ where: { entityType: 'USER', entityId: target.id, action: 'ADMIN_USER_DEACTIVATED' } }));
+    const repeated = await request('/api/v1/admin/users/' + target.id + '/deactivate', {
+      method: 'POST', headers: { ...headers, origin: env.trustedOrigins[0]!, 'x-admin-csrf': csrf, 'content-type': 'application/json' }, body,
+    });
+    assert.equal(repeated.status, 409);
+  } finally {
+    await prisma.businessAccount.deleteMany({ where: { createdById: target.id } });
+    await prisma.auditLog.deleteMany({ where: { entityType: 'USER', entityId: target.id } });
+    await prisma.user.delete({ where: { id: target.id } });
+    await fixture.cleanup();
+  }
+});
+
 test('evolución de negocios usa una ruta propia, requiere Admin y entrega meses reales', async () => {
   const anonymous = await request('/api/v1/admin/business-analytics?period=6m');
   assert.equal(anonymous.status, 401);
