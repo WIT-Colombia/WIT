@@ -1627,3 +1627,272 @@
   }
 }
 
+/* Formulario Información general: tarjetas y tipografía 15/13 como Editar ubicación. */
+
+/* Formulario Información general: tarjetas y tipografía 15/13 como Editar ubicación.
+   Solo modo edición; la vista de consulta y la tarjeta digital quedan intactas. */
+.business-detail-page #business-panel-general .business-general-edit-form{
+  display:grid;
+  gap:16px;
+  min-width:0;
+  margin:0;
+}
+.business-detail-page #business-panel-general .business-general-edit-fields{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px 18px;
+  min-width:0;
+}
+.business-detail-page #business-panel-general .business-general-edit-field{
+  display:flex;
+  align-items:flex-start;
+  gap:13px;
+  min-height:108px;
+  min-width:0;
+  padding:15px 16px;
+  box-sizing:border-box;
+  border:1px solid #dfebff;
+  border-radius:13px;
+  background:#f3f7ff;
+}
+.business-detail-page #business-panel-general .business-general-edit-wide{
+  grid-column:1 / -1;
+  min-height:0;
+}
+.business-detail-page #business-panel-general .business-general-edit-icon{
+  display:grid;
+  place-items:center;
+  flex:0 0 32px;
+  width:32px;
+  height:36px;
+  margin-top:23px;
+  color:#2563eb;
+}
+.business-detail-page #business-panel-general .business-general-edit-icon svg{
+  display:block;
+  width:26px;
+  height:26px;
+  stroke-width:1.85;
+}
+.business-detail-page #business-panel-general .business-general-edit-copy{
+  display:grid;
+  align-content:start;
+  flex:1 1 auto;
+  gap:8px;
+  min-width:0;
+}
+.business-detail-page #business-panel-general .business-general-edit-label{
+  display:block;
+  margin:0;
+  color:#1e3154;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:15px;
+  font-weight:750;
+  line-height:1.35;
+  letter-spacing:normal;
+}
+.business-detail-page #business-panel-general .business-general-edit-optional{
+  color:#657792;
+  font-size:12px;
+  font-weight:500;
+}
+.business-detail-page #business-panel-general .business-general-edit-field input,
+.business-detail-page #business-panel-general .business-general-edit-field select,
+.business-detail-page #business-panel-general .business-general-edit-field textarea{
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  margin:0;
+  padding:9px 12px;
+  border:1px solid #d6e3fb;
+  border-radius:10px;
+  background:#fff;
+  color:#162443;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:13px;
+  font-weight:600;
+  line-height:1.5;
+  outline:none;
+  box-shadow:none;
+}
+.business-detail-page #business-panel-general .business-general-edit-field input,
+.business-detail-page #business-panel-general .business-general-edit-field select{
+  height:44px;
+  min-height:44px;
+}
+.business-detail-page #business-panel-general .business-general-edit-field select{
+  padding-right:26px;
+  text-overflow:ellipsis;
+}
+.business-detail-page #business-panel-general .business-general-edit-field textarea{
+  min-height:106px;
+  resize:vertical;
+}
+.business-detail-page #business-panel-general .business-general-edit-field input::placeholder,
+.business-detail-page #business-panel-general .business-general-edit-field textarea::placeholder{
+  color:#71809a;
+  opacity:1;
+  font-weight:400;
+}
+.business-detail-page #business-panel-general .business-general-edit-field input:focus-visible,
+.business-detail-page #business-panel-general .business-general-edit-field select:focus-visible,
+.business-detail-page #business-panel-general .business-general-edit-field textarea:focus-visible{
+  border-color:#7b3ffb;
+  box-shadow:0 0 0 3px rgba(123,63,251,.14);
+}
+.business-detail-page #business-panel-general .business-general-edit-adult{
+  display:block;
+  min-width:0;
+  min-height:0;
+  margin:0;
+  padding:15px 16px;
+  box-sizing:border-box;
+  border:1px solid #e6d9ff;
+  border-radius:13px;
+  background:#f9f6ff;
+}
+.business-detail-page #business-panel-general .business-general-edit-adult .adult-only-row{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  min-height:54px;
+}
+.business-detail-page #business-panel-general .business-general-edit-adult-icon{
+  flex:0 0 32px;
+  width:32px;
+  margin-top:0;
+  color:#7b3ffb;
+}
+.business-detail-page #business-panel-general .business-general-edit-adult .adult-only-copy{
+  display:grid;
+  flex:1 1 auto;
+  gap:5px;
+  min-width:0;
+  color:#1e3154;
+}
+.business-detail-page #business-panel-general .business-general-edit-adult .adult-only-copy strong{
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:15px;
+  font-weight:750;
+  line-height:1.35;
+}
+.business-detail-page #business-panel-general .business-general-edit-adult .adult-only-copy small{
+  color:#5b708e;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  font-weight:400;
+  line-height:1.55;
+}
+.business-detail-page #business-panel-general .business-general-edit-adult .adult-only-control{
+  flex:0 0 auto;
+  align-items:center;
+  gap:9px;
+}
+.business-detail-page #business-panel-general .business-general-edit-adult .adult-only-control input{
+  width:22px;
+  height:22px;
+  accent-color:#7b3ffb;
+}
+.business-detail-page #business-panel-general .business-general-edit-adult .adult-only-control input:focus-visible{
+  outline:3px solid #7b3ffb;
+  outline-offset:3px;
+}
+.business-detail-page #business-panel-general .business-general-edit-actions{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  margin-top:4px;
+  padding:17px 0 0;
+  border-top:1px solid #e3eaf7;
+}
+.business-detail-page #business-panel-general .business-general-edit-actions > button{
+  flex:0 0 auto;
+  min-width:132px;
+  min-height:44px;
+  padding:10px 18px;
+  box-sizing:border-box;
+  border-radius:11px;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.35;
+  white-space:normal;
+}
+.business-detail-page #business-panel-general .business-general-edit-actions > .outline-button{
+  border-color:#d5e1f4;
+  background:#fff;
+  color:#192744;
+}
+.business-detail-page #business-panel-general .business-general-edit-actions > .action-button{
+  border-color:#2563eb;
+  background:#2563eb;
+  color:#fff;
+}
+.business-detail-page #business-panel-general .business-general-edit-actions > .action-button:hover:not(:disabled){
+  border-color:#1d4ed8;
+  background:#1d4ed8;
+}
+.business-detail-page #business-panel-general .business-general-edit-actions > button:focus-visible{
+  outline:3px solid #7b3ffb;
+  outline-offset:3px;
+}
+/* Ajustes por espacio disponible en la ficha, no solo por ancho del dispositivo. */
+@container business-detail-shell (max-width:950px){
+  .business-detail-page #business-panel-general .business-general-edit-fields{gap:12px;}
+  .business-detail-page #business-panel-general .business-general-edit-field{gap:10px;padding:13px;}
+  .business-detail-page #business-panel-general .business-general-edit-field > .business-general-edit-icon{margin-top:22px;}
+}
+@container business-detail-shell (max-width:700px){
+  .business-detail-page #business-panel-general .business-general-edit-fields{
+    grid-template-columns:minmax(0,1fr);
+    gap:10px;
+  }
+  .business-detail-page #business-panel-general .business-general-edit-field{min-height:0;}
+}
+@container business-detail-shell (max-width:560px){
+  .business-detail-page #business-panel-general .business-general-edit-form{gap:13px;}
+  .business-detail-page #business-panel-general .business-general-edit-field{gap:11px;padding:12px;}
+  .business-detail-page #business-panel-general .business-general-edit-icon{
+    flex-basis:27px;width:27px;
+  }
+  .business-detail-page #business-panel-general .business-general-edit-icon svg{
+    width:23px;height:23px;
+  }
+  .business-detail-page #business-panel-general .business-general-edit-label,
+  .business-detail-page #business-panel-general .business-general-edit-adult .adult-only-copy strong{
+    font-size:14px;
+  }
+  .business-detail-page #business-panel-general .business-general-edit-field input,
+  .business-detail-page #business-panel-general .business-general-edit-field select,
+  .business-detail-page #business-panel-general .business-general-edit-field textarea{
+    font-size:16px;
+  }
+  .business-detail-page #business-panel-general .business-general-edit-adult{
+    padding:13px 12px;
+  }
+  .business-detail-page #business-panel-general .business-general-edit-adult .adult-only-row{
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .business-detail-page #business-panel-general .business-general-edit-adult .adult-only-copy{
+    flex:1 1 calc(100% - 43px);
+  }
+  .business-detail-page #business-panel-general .business-general-edit-adult .adult-only-control{
+    margin-left:37px;
+  }
+  .business-detail-page #business-panel-general .business-general-edit-actions{
+    flex-direction:column-reverse;
+    gap:9px;
+    margin-top:2px;
+    padding-top:15px;
+  }
+  .business-detail-page #business-panel-general .business-general-edit-actions > button{
+    width:100%;
+    min-height:46px;
+    font-size:13px;
+  }
+}
+
