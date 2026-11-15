@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useBusinessStore } from "../services/businessStore";
 import { changePassword, clearAccessToken, confirmPasswordReset, requestPasswordReset } from "../services/businessAuthService";
@@ -78,6 +78,20 @@ export function RecoveryPage() {
     : mode === "reset"
       ? "Establece una contraseña nueva para proteger tu cuenta."
       : "Actualiza la contraseña que utilizas para acceder a XAMUKO Business.";
+
+  // React Router keeps the previous scroll offset when navigating between views.
+  // Reset both the window and Business content scroller on entry or mode changes.
+  // Repeat on the next animation frame for iOS Safari / iPadOS layout updates.
+  useLayoutEffect(() => {
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.querySelector<HTMLElement>(".business-app .page-content")?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    };
+    scrollToTop();
+    const frame = window.requestAnimationFrame(scrollToTop);
+    return () => window.cancelAnimationFrame(frame);
+  }, [mode]);
 
   // Keep the one-time token out of the visible URL without invalidating the form.
   useEffect(() => {
