@@ -109,11 +109,15 @@ export async function decideSupportRequest(adminId: string, id: string, rawStatu
       },
     });
     const type = before.kind === 'NEED' ? 'Necesidad registrada' : before.kind === 'SUPPORT' ? 'Solicitud de soporte' : 'Sugerencia';
-    const publicMessage = 'Tu solicitud «' + before.title.slice(0, 100) + '» está ' + statusTitle(status).toLocaleLowerCase('es-CO') + '. Consulta el estado con el equipo de XAMUKO.';
+    const subject = 'Tu solicitud «' + before.title.slice(0, 100) + '» está ' + statusTitle(status).toLocaleLowerCase('es-CO') + '.';
+    // The applicant sees the actual response. Never forward a report's private administrative
+    // notes to the potentially reported business; this branch concerns the applicant's own request.
+    const response = decisionNote ? ' Respuesta de XAMUKO: ' + decisionNote.slice(0, 320) : '';
     await notifyPlatformUser(tx, { userId: before.userId, sourceType: 'SUPPORT_REQUEST', sourceId: id,
-      title: type + ': ' + statusTitle(status), message: publicMessage });
+      title: type + ': ' + statusTitle(status), message: subject + response });
     if (before.businessId) await notifyBusinessOwners(tx, before.businessId, type + ': ' + statusTitle(status),
-      'La solicitud de tu negocio «' + before.title.slice(0, 100) + '» cambió de estado en XAMUKO Admin.');
+      'Solicitud «' + before.title.slice(0, 90) + '»: ' + statusTitle(status) + '.' +
+      (decisionNote ? ' Respuesta administrativa: ' + decisionNote.slice(0, 280) : ''));
     return result;
   });
 }
