@@ -34,7 +34,7 @@ const sharedSelect={
   business:{select:{id:true,publicId:true,name:true,publicationStatus:true,
     location:{select:{cityName:true,countryCode:true}},category:{select:categorySelect}}},
   _count:{select:{likes:true,reports:true}},
-} as const;
+} satisfies Prisma.BusinessOfferSelect;
 function compactOffer(item:any) {
   return {
     id:item.id,internalCode:item.internalCode,kind:item.kind,name:item.name,description:item.description,
@@ -149,7 +149,7 @@ export async function getAdminContentPhoto(photoId:string){
     throw new AppError(503,'ADMIN_CONTENT_PHOTO_STORAGE_UNAVAILABLE','El almacenamiento de fotografías no está disponible temporalmente.');
   }
 }
-export async function moderateAdminContent(id:string,actorId:string,action:'HIDE'|'RESTORE',note:string){
+export async function moderateAdminContent(id:string,actorId:string,action:ModerationAction,note:string){
   const reason=note.trim();
   if(action!=='HIDE'&&action!=='RESTORE')throw new AppError(400,'ADMIN_CONTENT_ACTION_INVALID','Selecciona una acción válida.');
   if(reason.length<12||reason.length>500)throw new AppError(400,'ADMIN_CONTENT_REASON_REQUIRED','El motivo debe tener entre 12 y 500 caracteres.');
