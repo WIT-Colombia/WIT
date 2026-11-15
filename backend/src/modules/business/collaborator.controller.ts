@@ -1,6 +1,6 @@
 import type { RequestHandler } from 'express';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
-import { acceptInvitation, cancelInvitation, inviteCollaborator, leaveBusiness, listCollaborators, listNotifications, deleteNotification, markNotificationRead, reactivateCollaborator, readCollaboratorAvatar, rejectInvitation, resolveCollaboratorRecipient, revokeCollaborator, setPermissions, suspendCollaborator } from './collaborator.service.js';
+import { acceptInvitation, cancelInvitation, inviteCollaborator, leaveBusiness, listCollaborators, listNotifications, deleteNotification, markNotificationRead, unreadNotificationCount, markAllNotificationsRead, reactivateCollaborator, readCollaboratorAvatar, rejectInvitation, resolveCollaboratorRecipient, revokeCollaborator, setPermissions, suspendCollaborator } from './collaborator.service.js';
 const uid=(req:any)=>(req as AuthenticatedRequest).auth.userId;
 const run=(fn:(req:any)=>Promise<unknown>,status=200):RequestHandler=>async(req,res,next)=>{try{res.status(status).json(await fn(req));}catch(error){next(error);}};
 export const collaboratorsController=run(async req=>({memberships:await listCollaborators(uid(req),req.params.businessId)}));
@@ -16,9 +16,15 @@ export const revokeController=run(async req=>({membership:await revokeCollaborat
 export const permissionsController=run(async req=>({result:await setPermissions(uid(req),req.params.membershipId,Array.isArray(req.body?.permissions)?req.body.permissions:[])}));
 export const leaveController=run(async req=>({membership:await leaveBusiness(uid(req),req.params.businessId)}));
 export const notificationsController=run(async req=>({notifications:await listNotifications(uid(req))}));
-export const scopedNotificationsController=run(async req=>({
-  notifications:await listNotifications(uid(req),req.params.businessId),
-}));
+export const scopedNotificationsController=run(async req=>{
+  const [notifications, unread] = await Promise.all([
+    listNotifications(uid(req),req.params.businessId),
+    unreadNotificationCount(uid(req),req.params.businessId),
+  ]);
+  return { notifications, unread };
+});
+export const scopedMarkAllNotificationsReadController=run(async req=>
+  markAllNotificationsRead(uid(req),req.params.businessId));
 export const scopedReadNotificationController=run(async req=>
   markNotificationRead(uid(req),req.params.notificationId,req.params.businessId));
 export const scopedDeleteNotificationController=run(async req=>
