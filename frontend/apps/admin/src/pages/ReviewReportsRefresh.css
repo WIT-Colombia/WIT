@@ -1,0 +1,40 @@
+.admin-refresh .rr-page,.admin-refresh .rr-page *{box-sizing:border-box}
+.admin-refresh .rr-page{display:grid;gap:15px;color:#152949;min-width:0}
+.admin-refresh .rr-page :is(button,a){text-decoration:none!important}
+.admin-refresh .rr-page :is(button,select):focus-visible{outline:3px solid #a9c5fc;outline-offset:2px}
+.admin-refresh .rr-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.admin-refresh .rr-summary>div{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid #e0e7f5;border-radius:14px;background:#fff}
+.admin-refresh .rr-icon,.admin-refresh .rr-card-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:11px;background:#e9eeff;color:#4b57d7}
+.admin-refresh .rr-summary strong{font-size:24px;color:#203755}
+.admin-refresh .rr-summary span:last-child{font-size:11px;color:#7183a0}
+.admin-refresh .rr-toolbar{display:flex;align-items:end;gap:12px;flex-wrap:wrap;padding:14px 17px;border:1px solid #e1e8f5;border-radius:14px;background:#fff}
+.admin-refresh .rr-toolbar label{display:grid;gap:6px;flex:1;min-width:180px;font-size:11px;font-weight:800;color:#6b7e9a}
+.admin-refresh .rr-toolbar select{min-height:42px;padding:8px 12px;border:1px solid #d7e2f5;border-radius:10px;background:#fff;color:#27436b;font-size:12px}
+.admin-refresh .rr-toolbar button,.admin-refresh .rr-actions button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:9px 13px;border:1px solid #d5e1f5;border-radius:10px;background:#f3f7ff;color:#2757ae;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.admin-refresh .rr-actions .rr-danger{color:#ac445a;border-color:#efcad2;background:#fff2f4}
+.admin-refresh .rr-page button:disabled{opacity:.45;cursor:not-allowed}
+.admin-refresh .rr-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.admin-refresh .rr-card{display:grid;align-content:start;gap:14px;min-width:0;padding:19px;border:1px solid #dfe8f6;border-radius:15px;background:#fff;box-shadow:0 7px 21px #1a31570d}
+.admin-refresh .rr-head{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.admin-refresh .rr-head>div{flex:1;min-width:130px}
+.admin-refresh .rr-head h2{margin:0 0 5px;color:#1e3659;font-size:14px;overflow-wrap:anywhere}
+.admin-refresh .rr-head small{color:#8294aa;font-size:10px}
+.admin-refresh .rr-badge{display:inline-flex;padding:6px 9px;border-radius:99px;background:#f5ebd9;color:#9d6e1e;font-size:10px;font-weight:800}
+.admin-refresh .rr-badge.under_review{background:#eaf0ff;color:#4165b8}.admin-refresh .rr-badge.resolved{background:#e7f9ef;color:#158256}.admin-refresh .rr-badge.rejected{background:#f2ebf8;color:#8b5d9c}
+.admin-refresh .rr-comment{padding:13px;border:1px solid #e6ecf6;border-radius:11px;background:#fafcff}
+.admin-refresh .rr-comment>div{display:flex;align-items:center;justify-content:space-between;color:#7588a4;font-size:11px}
+.admin-refresh .rr-comment strong{color:#e8a32a;font-size:13px}
+.admin-refresh .rr-comment p{margin:9px 0 0;color:#314b6f;font-size:12px;line-height:1.65;overflow-wrap:anywhere;white-space:pre-wrap}
+.admin-refresh .rr-card dl{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0}
+.admin-refresh .rr-card dl>div{display:grid;gap:5px;min-width:0}
+.admin-refresh .rr-card dl>.rr-description{grid-column:1/-1}
+.admin-refresh .rr-card dt{color:#8290a7;font-size:10px;font-weight:750}
+.admin-refresh .rr-card dd{margin:0;color:#3e5679;font-size:12px;overflow-wrap:anywhere}
+.admin-refresh .rr-actions{display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid #edf1f8;padding-top:12px}
+.admin-refresh .rr-muted{font-size:11px;color:#8292a6}
+.admin-refresh .rr-empty{display:grid;justify-items:center;gap:10px;margin:0;padding:40px 20px;border:1px solid #e2e9f5;border-radius:15px;background:#fff;color:#7387a2;text-align:center}
+.admin-refresh .rr-empty h2{margin:0;font-size:17px;color:#27405f}.admin-refresh .rr-empty p{margin:0;font-size:12px}
+.admin-refresh .rr-success,.admin-refresh .rr-error{margin:0;padding:12px;border:1px solid #cfebdc;border-radius:10px;background:#f1fcf6;color:#237c50;font-size:12px}
+.admin-refresh .rr-error{border-color:#f0d1d7;background:#fff4f5;color:#ac4358}
+@media(max-width:900px){.admin-refresh .rr-list{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.admin-refresh .rr-summary{gap:9px}.admin-refresh .rr-summary>div{padding:12px}.admin-refresh .rr-card{padding:14px}.admin-refresh .rr-actions button{flex:1 1 100%}.admin-refresh .rr-toolbar button{width:100%}}
