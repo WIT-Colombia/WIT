@@ -428,6 +428,10 @@ export function StatisticsDetailDialog(props: Props) {
             <strong>Sin gráfica temporal:</strong> el servidor no entrega un historial desglosado suficiente para este indicador.
             No se construye una evolución artificial a partir de un único total.
           </p>}
+          {period === 'all' && detail.chart === 'line' && <p className="stats-detail-explanation-precision">
+            <strong>Alcance del histórico:</strong> el total del indicador puede incluir toda la vida del negocio,
+            pero la gráfica histórica se limita a los últimos 24 meses. Por eso su suma puede ser menor que el total.
+          </p>}
           {data && <small>Período seleccionado: {periodLabel}. Zona horaria de referencia: {data.timezone}.</small>}
         </section>
       </div>
