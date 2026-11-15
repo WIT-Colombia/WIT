@@ -74,7 +74,7 @@ export function DocumentsPage({ section }: { section: DocumentSection }) {
   }
   if (!allowed) return <section className="ad-empty"><span className="ad-large-icon"><Icon name="lock" size={28}/></span><h1>Archivo de acceso restringido</h1><p>Solo la administración principal con permiso de gestión puede acceder a estos documentos.</p></section>;
   return <section className="ad-documents" aria-labelledby="documents-title">
-    <header className="ad-page-heading"><div><span className="ad-kicker">JURÍDICA Y CORPORATIVA</span><h1 id="documents-title">{config.title}</h1><p>{config.caption}</p></div><button className="ad-button ad-button--primary" disabled={busy} onClick={() => { setActionError(''); setTitle(''); setDescription(''); setFile(null); setUploadOpen(true); }}><Icon name="upload" size={18}/>{config.button}</button></header>
+    <header className="admin-section-heading"><h1 id="documents-title">{config.title}</h1><button className="ad-button ad-button--primary" disabled={busy} onClick={() => { setActionError(''); setTitle(''); setDescription(''); setFile(null); setUploadOpen(true); }}><Icon name="upload" size={18}/>{config.button}</button></header>
     <div className="ad-summary-grid" aria-label="Resumen documental">
       <article><span className="ad-summary-icon"><Icon name="box"/></span><div><small>Documentos activos</small><strong>{data?.summary.active ?? '—'}</strong><span>En el archivo privado</span></div></article>
       <article><span className="ad-summary-icon ad-summary-icon--blue"><Icon name="database"/></span><div><small>Volumen documental</small><strong>{data ? (data.summary.sizeBytes ? formatDocumentBytes(data.summary.sizeBytes) : '0 KB') : '—'}</strong><span>Archivos activos de esta sección</span></div></article>
