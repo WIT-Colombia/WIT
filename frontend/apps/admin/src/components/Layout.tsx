@@ -40,7 +40,10 @@ export function Layout() {
     let active = true;
     const refresh = () => {
       void getAdminSupportAttention().then(result => {
-        if (active) setSupportCounts(result.counts);
+        // Some older API versions or test stubs omit counters; never break the sidebar.
+        if (active && result && typeof result.counts === 'object' && result.counts !== null)
+          setSupportCounts(result.counts);
+
       }).catch(() => { /* Navigation still works when counters are unavailable. */ });
     };
     refresh();
