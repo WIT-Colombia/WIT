@@ -81,6 +81,8 @@ export async function listAdminUsersExtended(filters: Filters) {
   return {
     users: users.map(({ memberships, createdBusinesses, adminRoleAssignments, ...user }) => ({
       ...user,
+      // Never expose the internal object-storage key to the Admin frontend.
+      avatarUrl: user.avatarUrl?.startsWith('private-avatar:') ? '/api/v1/admin/users/' + encodeURIComponent(user.id) + '/avatar' : null,
       ownedBusinesses: memberships.filter(item => item.role === 'OWNER').length,
       collaboratingBusinesses: memberships.filter(item => item.role === 'COLLABORATOR').length,
       createdBusinesses: createdBusinesses.length,
@@ -154,7 +156,9 @@ export async function getAdminUserProfile(id: string) {
   });
   const { memberships: _m, createdBusinesses: _c, adminRoleAssignments: _a, createdBusinessAccounts: _accounts, ...profile } = user;
   return {
-    user: { ...profile, authProviders: user.authIdentities, businesses: links, administrativeRoles: user.adminRoleAssignments.map(item => item.role),
+    user: { ...profile,
+      avatarUrl: profile.avatarUrl?.startsWith('private-avatar:') ? '/api/v1/admin/users/' + encodeURIComponent(profile.id) + '/avatar' : null,
+      authProviders: user.authIdentities, businesses: links, administrativeRoles: user.adminRoleAssignments.map(item => item.role),
       businessAccounts: user.createdBusinessAccounts,
       activity: { reviews, favorites, offerLikes, sessions, reports },
       deletion: { allowed: user.status !== 'DELETED' && blockers.length === 0, blockers },
