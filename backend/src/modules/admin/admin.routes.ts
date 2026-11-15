@@ -2,7 +2,7 @@ import { Router, type RequestHandler } from 'express';
 import { getAdminDashboardStats } from './admin-dashboard.service.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
-import { requireAdmin } from './admin-auth.service.js';
+import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
@@ -69,7 +69,8 @@ adminRouter.get('/users/:id', requireAdmin('ADMINS_MANAGE'), async (req, res, ne
 });
 adminRouter.post('/users/:id/deactivate', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
   try {
-    if (req.admin?.role !== 'SUPER_ADMIN') {
+    const context = adminFromRequest(req);
+    if (context.role !== 'SUPER_ADMIN') {
       res.status(403).json({ error: { code: 'ADMIN_SUPER_ADMIN_REQUIRED', message: 'Solo el administrador principal puede dar de baja cuentas.' } });
       return;
     }
@@ -79,7 +80,7 @@ adminRouter.post('/users/:id/deactivate', requireTrustedOrigin, requireAdmin('AD
       return;
     }
     res.setHeader('Cache-Control', 'no-store');
-    res.json(await deactivateAdminUser(String(req.params.id), req.admin.userId, String(req.body?.reason ?? '')));
+    res.json(await deactivateAdminUser(String(req.params.id), context.userId, String(req.body?.reason ?? '')));
   } catch (error) { next(error); }
 });
 adminRouter.get('/content', requireAdmin('CATALOG_READ'), async (req, res, next) => {
