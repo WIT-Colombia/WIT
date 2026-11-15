@@ -52,7 +52,7 @@ function Timeline({points,mode}:{points:Entry[];mode:ChartMode}){
         width={barWidth} height={Math.max(1,baseline-y(p.value))} rx="5"
         fill="url(#ac-timeline-bars)" tabIndex={0} aria-label={p.label+': '+num(p.value)} onFocus={()=>setActive(i)}/>)}
       {selected&&active!==null&&<>
-        <line className="ac-chart-guide" x1={selX} x2={selX} y1={y(selected.value)} y2={baseline} pointerEvents="none"/>
+        <line className="ac-chart-guide" x1={selX} x2={selX} y1={top} y2={baseline} pointerEvents="none"/>
         <circle cx={selX} cy={y(selected.value)} r="6" fill="#fff" stroke="#225cf1" strokeWidth="2.6" pointerEvents="none"/>
         {(()=>{const tx=Math.max(left,Math.min(width-right-80,selX-40)),ty=Math.max(2,y(selected.value)-44);return <g pointerEvents="none">
           <rect x={tx} y={ty} width="80" height="33" rx="9" fill="#182e54"/>
@@ -62,7 +62,7 @@ function Timeline({points,mode}:{points:Entry[];mode:ChartMode}){
       {points.map((p,i)=>(i%labelStep===0||i===points.length-1)&&<text key={i} className="ac-chart-axis"
         x={mode==='bars'?left+(i+.5)*w/points.length:x(i)} y={height-17} textAnchor="middle">{p.label}</text>)}
     </svg>
-    <p className="ac-chart-hint">{selected?<><strong>{num(selected.value)}</strong> registros</>:'Mueve el cursor o desliza el dedo para consultar los valores.'}</p>
+    <p className="ac-chart-hint">{selected?<><strong>{num(selected.value)}</strong> registros</>:'Explora cada mes: el valor 0 indica que no hubo registros de ese tipo.'}</p>
   </div>;
 }
 function exportCSV(points:Entry[],label:string){
