@@ -362,6 +362,16 @@
   border-color:#d66b81;
   background:#fff0f4;
 }
+/* Cancel the old shared pages.css hover underline for these two actions.
+   Keep the focus outline, XAMUKO colors and disabled behavior unchanged. */
+.reviews-page .review-actions button.review-report-button,
+.reviews-page .review-actions button.review-report-button:hover,
+.reviews-page .review-actions button.review-report-button:focus-visible,
+.reviews-page .review-actions button.review-reply-button:disabled,
+.reviews-page .review-actions button.review-reply-button:disabled:hover,
+.reviews-page .review-actions button.review-reply-button:disabled:focus-visible{
+  text-decoration:none;
+}
 .reviews-page .review-actions button:disabled{
   border-color:#e3e8f0;
   background:#f4f6f9;
