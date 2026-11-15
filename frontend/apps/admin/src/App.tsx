@@ -9,6 +9,7 @@ import { AdminCategoriesPage } from './pages/AdminCategoriesPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { AdminUserDetailPage } from './pages/AdminUserDetailPage';
 import { AdminContentPage } from './pages/AdminContentPage';
+import { AdminContentDetailPage } from './pages/AdminContentDetailPage';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
 import { ReviewReportsPage } from './pages/ReviewReportsPage';
@@ -67,12 +68,13 @@ export default function App() {
         <Route path="/users" element={<AdminUsersPage />} />
         <Route path="/users/:id" element={<AdminUserDetailPage />} />
         <Route path="/content" element={<AdminContentPage />} />
+        <Route path="/content/:id" element={<AdminContentDetailPage />} />
         <Route path="/corporate" element={<DocumentsPage key="CORPORATE" section="CORPORATE" />} />
         <Route path="/legal-documents" element={<DocumentsPage key="LEGAL" section="LEGAL" />} />
         <Route path="/legal-cases" element={<DocumentsPage key="CASES" section="CASES" />} />
         <Route path="/user-needs" element={<OperationalInboxPage kind="needs" />} />
         {navigation.filter(item => !implementedPaths.includes(item.path)).map(item => <Route key={item.path} path={item.path} element={<PendingModulePage />} />)}
-        {['reports', 'content', 'reviews', 'needs', 'zones', 'categories', 'notifications', 'audit', 'settings'].map(path => <Route key={path} path={`/${path}/:id`} element={<PendingModulePage />} />)}
+        {['reports', 'reviews', 'needs', 'zones', 'categories', 'notifications', 'audit', 'settings'].map(path => <Route key={path} path={`/${path}/:id`} element={<PendingModulePage />} />)}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Route>
