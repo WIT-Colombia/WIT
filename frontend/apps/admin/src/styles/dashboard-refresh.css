@@ -221,3 +221,49 @@
 .businesses-layout .businesses-empty-preview strong{font-size:21px}
 .businesses-layout .businesses-empty-preview span{font-size:12px;text-align:center}
 }
+
+
+/* Global admin content-first layout. All modules start with an unobtrusive
+   title; oversized welcome / breadcrumb / decorative introductions are gone. */
+.admin-refresh .admin-section-heading {
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:12px;min-width:0;margin:0 0 14px;padding:0;
+  border:0;border-radius:0;background:transparent;box-shadow:none;
+}
+.admin-refresh .admin-section-heading h1 {
+  margin:0;padding:0;color:#142746;
+  font-size:clamp(22px,2.2vw,30px);font-weight:850;
+  line-height:1.2;letter-spacing:-.035em;
+  overflow-wrap:anywhere;
+}
+.admin-refresh .admin-section-heading .admin-section-controls{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0;
+}
+.admin-refresh .admin-section-heading :is(a,button,a:hover){
+  text-decoration:none!important;
+}
+.admin-refresh .admin-section-heading .xa-dashboard-month-filter{
+  display:flex;align-items:center;gap:8px;
+}
+.admin-refresh .admin-section-heading .xa-dashboard-month-filter input{
+  min-height:38px;max-width:100%;padding:6px 10px;
+  border:1px solid #d7e2f2;border-radius:9px;
+  background:#fff;color:#24436e;font:inherit;font-size:12px;
+}
+.admin-refresh .admin-section-heading :is(button,input,a):focus-visible{
+  outline:3px solid #aac4fa;outline-offset:2px;
+}
+@media(max-width:900px){
+  .admin-refresh .admin-section-heading{gap:10px;margin-bottom:12px}
+  .admin-refresh .admin-section-heading h1{font-size:25px}
+}
+@media(max-width:580px){
+  .admin-refresh .admin-section-heading{
+    align-items:stretch;flex-direction:column;gap:11px;
+    margin-bottom:12px;padding:0 1px;
+  }
+  .admin-refresh .admin-section-heading h1{font-size:23px}
+  .admin-refresh .admin-section-heading .admin-section-controls{width:100%}
+  .admin-refresh .admin-section-heading .xa-dashboard-month-filter{flex:1;min-width:0}
+  .admin-refresh .admin-section-heading :is(.ad-button,.ac-secondary){justify-content:center}
+}
