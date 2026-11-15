@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type MouseEvent } from 'react';
 import { BusinessProBenefitsDialog } from '../components/business/BusinessProBenefitsDialog';
 import { BusinessProfileThumbnail } from '../components/layout/Sidebar';
 import { developmentReferralTestFor, recognitionLevelFor, recognitionLevels } from '../config/businessRecognition';
@@ -6,6 +6,7 @@ import { freeCards, periods, proCards, referralCards, type Period } from '../con
 import { businessApi, type BusinessStatisticsDashboard, type OfferViewRanking } from '../services/businessApiClient';
 import { useBusinessStore } from '../services/businessStore';
 import './StatisticsDashboardV1.css';
+import { StatisticsDetailDialog, type StatisticsSelection } from './StatisticsDetailDialog';
 
 type Point = { label: string; value: number };
 const number = (value: number) => value.toLocaleString('es-CO', { maximumFractionDigits: 1 });
@@ -117,6 +118,14 @@ export function StatisticsDashboardV1() {
   const [retry, setRetry] = useState(0);
   const [referralHelp, setReferralHelp] = useState(false);
   const [proHelp, setProHelp] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState<StatisticsSelection | null>(null);
+  const closeDetail = useCallback(() => setSelectedDetail(null), []);
+  const openFromCard = (event: MouseEvent<HTMLElement>, section: StatisticsSelection['section'], key: string) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest('button, a, summary, details, input, select')) return;
+    setSelectedDetail({ section, key });
+  };
+  const detailButton = (section: StatisticsSelection['section'], key: string, locked = false) => <button type="button" className="stats-v1-explore" onClick={() => setSelectedDetail({ section, key })}>{locked ? 'Consultar acceso' : 'Explorar detalle'} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>;
   useEffect(() => {
     setPeriodReadyKey(null);
     setPeriod('month');
@@ -213,12 +222,13 @@ export function StatisticsDashboardV1() {
         const previous = data?.previous?.[key];
         const delta = value === undefined ? null : change(value, previous);
         const points = data?.trends[key] ?? [];
-        return <article className="stats-v1-card" key={key} aria-busy={loading}>
+        return <article className="stats-v1-card stats-v1-explorable" key={key} aria-busy={loading} onClick={event => openFromCard(event, 'free', key)}>
           <div className="stats-v1-card-top"><span className="stats-v1-card-icon"><FreeCardIcon metric={key} icon={card.icon} /></span><h3>{card.label}</h3></div>
           <div className="stats-v1-number">{loading ? '…' : value === undefined ? '—' : number(value)}{delta !== null && <small className={delta >= 0 ? 'up' : 'down'}>{delta > 0 ? '+' : ''}{delta} %</small>}</div>
           <p className="stats-v1-description">{card.caption}</p>
           <Sparkline points={points} color={key === 'whatsappClicks' ? '#16a34a' : '#7b3ffb'} />
           <DataTable points={points} />
+          {detailButton('free', key)}
         </article>;
       })}</div>
     </section>
@@ -242,18 +252,21 @@ export function StatisticsDashboardV1() {
         const currentStateValue = isCurrentFavorites ? currentFavorites : isCurrentOfferLikes ? currentOfferLikes : periodReviewCount;
         const metricUnavailable = isPeriodReviewCount && reviewCountError && currentStateValue === undefined;
         const currentStateLabel = number(currentStateValue ?? 0);
-        if (isOfferViews) return <article className={`stats-v1-card stats-v1-referral-card stats-v1-offer-views ${unlocked ? '' : 'locked'}`} key={card.key}>
+        if (isOfferViews) return <article onClick={event => openFromCard(event, 'referral', card.key)} className={`stats-v1-card stats-v1-referral-card stats-v1-offer-views ${unlocked ? '' : 'locked'}`} key={card.key}>
           <div className="stats-v1-card-top"><span className="stats-v1-card-icon">{unlocked ? '◉' : '♙'}</span><h3>{card.label}</h3></div>
           {!unlocked ? <><div className="stats-v1-number">Bloqueada</div><p className="stats-v1-description">Requiere nivel {card.requiredLevel} ({card.requiredMinimum} referidos válidos).</p></> : loading || !offerViewRanking ? <><div className="stats-v1-number">Cargando…</div><p className="stats-v1-description">Aperturas de productos y servicios durante el período elegido.</p></> : offerViewRanking.offers.length === 0 ? <><div className="stats-v1-number">0</div><p className="stats-v1-description">Aperturas de productos y servicios durante el período elegido.</p></> : <><p className="stats-v1-description">Productos y servicios que más personas abrieron para ver su detalle.</p><ol className="stats-v1-offer-ranking">{offerViewRanking.offers.map((offer, index) => <li key={offer.offerId}><span><b>{index + 1}. {offer.name}</b><small>{offer.kind === 'PRODUCT' ? 'Producto' : 'Servicio'}</small></span><strong>{number(offer.value)}</strong></li>)}</ol></>}
+          {detailButton('referral', card.key, !unlocked)}
         </article>;
-        if (isRatingDistribution) return <article className={`stats-v1-card stats-v1-referral-card stats-v1-rating-card ${unlocked ? '' : 'locked'}`} key={card.key}>
+        if (isRatingDistribution) return <article onClick={event => openFromCard(event, 'referral', card.key)} className={`stats-v1-card stats-v1-referral-card stats-v1-rating-card ${unlocked ? '' : 'locked'}`} key={card.key}>
           <div className="stats-v1-card-top"><span className="stats-v1-card-icon">{unlocked ? '◉' : '♙'}</span><h3>{card.label}</h3></div>
           {!unlocked ? <><div className="stats-v1-number">Bloqueada</div><p className="stats-v1-description">Requiere nivel {card.requiredLevel} ({card.requiredMinimum} referidos válidos).</p></> : loading || !reviewStatistics ? <><div className="stats-v1-number">Cargando…</div><p className="stats-v1-description">Opiniones públicas vigentes, agrupadas por la puntuación que recibiste.</p></> : reviewCountError ? <><div className="stats-v1-number">No disponible</div><p className="stats-v1-description">No pudimos consultar tus opiniones públicas en este momento.</p></> : <><p className="stats-v1-description">Opiniones públicas vigentes, agrupadas por la puntuación que recibiste.</p><RatingDistribution distribution={reviewStatistics.distribution} total={reviewStatistics.total} /></>}
+          {detailButton('referral', card.key, !unlocked)}
         </article>;
-        return <article className={`stats-v1-card stats-v1-referral-card ${unlocked ? '' : 'locked'}`} key={card.key}>
+        return <article onClick={event => openFromCard(event, 'referral', card.key)} className={`stats-v1-card stats-v1-referral-card ${unlocked ? '' : 'locked'}`} key={card.key}>
           <div className="stats-v1-card-top"><span className="stats-v1-card-icon">{unlocked ? '◉' : '♙'}</span><h3>{card.label}</h3></div>
           <div className="stats-v1-number">{loading || (currentStateMetric && currentStateValue === undefined && !metricUnavailable) ? 'Cargando…' : error || metricUnavailable ? 'No disponible' : !unlocked ? 'Bloqueada' : currentStateMetric ? currentStateLabel : 'Medición pendiente'}</div>
           <p className="stats-v1-description">{!unlocked ? `Requiere nivel ${card.requiredLevel} (${card.requiredMinimum} referidos válidos).` : isCurrentFavorites ? 'Personas que actualmente tienen guardado tu negocio.' : isCurrentOfferLikes ? 'Me gusta activos en tus productos y servicios.' : isPeriodReviewCount ? 'Opiniones publicadas recibidas durante el período elegido.' : 'Aún no tiene una medición disponible.'}</p>
+          {detailButton('referral', card.key, !unlocked)}
         </article>;
       })}</div>
     </section>
@@ -267,28 +280,30 @@ export function StatisticsDashboardV1() {
         const isCommercialIndex = card.key === 'commercialIndex';
         const hasNoRatingHistory = card.key === 'ratingEvolution' && availablePro && data && content === null;
         const points = content && 'points' in content ? content.points : undefined;
-        if (isRanking) return <article className={`stats-v1-card stats-v1-pro-card stats-v1-pro-ranking-card ${availablePro ? '' : 'locked'}`} key={card.key}>
+        if (isRanking) return <article onClick={event => openFromCard(event, 'pro', card.key)} className={`stats-v1-card stats-v1-pro-card stats-v1-pro-ranking-card ${availablePro ? '' : 'locked'}`} key={card.key}>
           <h3>{card.label}</h3>
           <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
           {!availablePro ? <strong>Bloqueada</strong> : <HorizontalRanking points={ranking} emptyMessage={card.key === 'keywords' ? 'Aún no hay búsquedas registradas.' : card.key === 'categoryPerformance' ? 'Aún no hay actividad por categoría.' : 'Aún no hay aperturas registradas.'} />}
-          
+          {detailButton('pro', card.key, !availablePro)}
         </article>;
-        if (isCommercialIndex) return <article className={`stats-v1-card stats-v1-pro-card stats-v1-commercial-index ${availablePro ? '' : 'locked'}`} key={card.key}>
+        if (isCommercialIndex) return <article onClick={event => openFromCard(event, 'pro', card.key)} className={`stats-v1-card stats-v1-pro-card stats-v1-commercial-index ${availablePro ? '' : 'locked'}`} key={card.key}>
           <h3>{card.label}</h3>
           <strong>{loading ? 'Cargando…' : error ? 'No disponible' : !availablePro ? 'Bloqueada' : 'Aún no hay datos comparables suficientes'}</strong>
           <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
+          {detailButton('pro', card.key, !availablePro)}
         </article>;
-        return <article className={`stats-v1-card stats-v1-pro-card ${availablePro ? '' : 'locked'}`} key={card.key}>
+        return <article onClick={event => openFromCard(event, 'pro', card.key)} className={`stats-v1-card stats-v1-pro-card ${availablePro ? '' : 'locked'}`} key={card.key}>
           <h3>{card.label}</h3>
           <strong>{loading ? 'Cargando…' : error ? 'No disponible' : !availablePro ? 'Bloqueada' : hasNoRatingHistory ? 'Sin calificaciones en este período' : content ? content.value : 'Medición pendiente'}</strong>
           <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
           {points && content && ('kind' in content && content.kind === 'bar' ? <Bars points={points} /> : <Sparkline points={points} />)}
           {points && <DataTable points={points} />}
           {availablePro && card.key === 'ratingEvolution' && data?.period === 'all' && <span className="stats-v1-history-note">Todo el tiempo muestra los últimos 24 meses.</span>}
-          
+          {detailButton('pro', card.key, !availablePro)}
         </article>;
       })}</div>
     </section>
     {proHelp && <BusinessProBenefitsDialog onClose={() => setProHelp(false)} />}
+    {selectedDetail && <StatisticsDetailDialog selection={selectedDetail} onClose={closeDetail} data={data} period={period} favoriteCount={favoriteCount} offerLikeCount={offerLikeCount} reviewStatistics={reviewStatistics} offerViewRanking={offerViewRanking} unlockedReferralStatistics={unlockedReferralStatistics} availablePro={Boolean(availablePro)} loading={loading} error={error} />}
   </div>;
 }
