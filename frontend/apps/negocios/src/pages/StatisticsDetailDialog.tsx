@@ -31,7 +31,8 @@ function getDetail(p: Props): Detail {
   const proCard = proCards.find(card => card.key === selection.key);
   const title = basic?.label ?? referred?.label ?? proCard?.label ?? 'Detalle de estadística';
   const unavailable = (message: string): Detail => ({ title, description: message, value: 'No disponible', valueLabel: 'Valor del indicador', source: message, status: 'unavailable' });
-  if (loading || !data) return unavailable(error ? 'No se pudieron cargar las estadísticas. Usa Reintentar en el panel.' : 'Cargando los datos del período seleccionado.');
+  if (loading) return { title, description: 'Consultando las estadísticas del período.', value: 'Cargando…', valueLabel: 'Valor del indicador', source: 'Esperando datos del servidor.', status: 'pending' };
+  if (!data) return unavailable(error ? 'No se pudieron cargar las estadísticas. Usa Reintentar en el panel.' : 'No hay datos disponibles del período seleccionado.');
   if (basic) {
     const current = data.metrics[basic.key];
     return { title, description: basic.caption, value: count(current), valueLabel: 'Eventos del período',
@@ -236,7 +237,7 @@ export function StatisticsDetailDialog(props: Props) {
     <section className="stats-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="stats-detail-title" aria-describedby="stats-detail-desc">
       <header className="stats-detail-header"><div><span>ANÁLISIS DETALLADO · {periodLabel.toLocaleUpperCase('es-CO')}</span><h2 id="stats-detail-title">{detail.title}</h2><p id="stats-detail-desc">{detail.description}</p></div><button ref={closeButton} type="button" onClick={onClose} aria-label="Cerrar detalle">×</button></header>
       <div className="stats-detail-body">
-        <div className="stats-detail-summary"><div><span>{detail.valueLabel}</span><strong>{detail.value}</strong></div><div><span>Período</span><strong>{periodLabel}</strong></div>{delta !== null && <div><span>Variación frente al anterior</span><strong className={delta >= 0 ? 'positive' : 'negative'}>{(delta > 0 ? '+' : '') + delta + ' %'}</strong></div>}</div>
+        <div className="stats-detail-summary"><div><span>{detail.valueLabel}</span><strong>{detail.value}</strong></div><div><span>Período</span><strong>{periodLabel}</strong></div>{measured(previous) && <div><span>Período anterior</span><strong>{count(previous)}</strong>{delta !== null && <small className={delta >= 0 ? 'positive' : 'negative'}>{(delta > 0 ? '+' : '') + delta + ' % respecto al anterior'}</small>}</div>}</div>
         {detail.status === 'locked' || detail.status === 'unavailable' || detail.status === 'pending' ?
           <div className="stats-detail-callout"><strong>{detail.status === 'locked' ? 'Acceso restringido' : 'Detalle no disponible'}</strong><p>{detail.note ?? detail.source}</p></div> :
           hasChart ? <div className="stats-detail-chart-card"><div className="stats-detail-chart-head"><div><h3>Explora los datos</h3><p>{detail.chart === 'line' ? 'Evolución registrada' : 'Desglose del indicador'} · Datos del servidor</p></div><div className="stats-detail-switch" role="group" aria-label="Tipo de visualización"><button type="button" aria-pressed={display === 'chart'} className={display === 'chart' ? 'active' : ''} onClick={() => setDisplay('chart')}>Gráfica</button><button type="button" aria-pressed={display === 'data'} className={display === 'data' ? 'active' : ''} onClick={() => setDisplay('data')}>Tabla</button></div></div>{display === 'chart' ? <DataChart key={selection.section + selection.key} points={points} chart={detail.chart!} unit={detail.unit} /> : <DataTable points={points} />}</div> :
