@@ -5,6 +5,8 @@ import { StatePanel } from '../components/common';
 import { Icon } from '../components/Icon';
 import { getSession } from '../services/adminService';
 import { AdminBusinessGrowthPanel } from './AdminBusinessGrowthPanel';
+import adminWorkspacePreview from '../assets/admin-workspace-960.webp';
+import adminWorkspace4k from '../assets/admin-workspace-4k.webp';
 import './AdminBusinessesRefresh.css';
 
 const PAGE_SIZE = 10;
@@ -101,21 +103,10 @@ export function AdminBusinessesPage() {
           <div><h1 id="businesses-page-title">Negocios</h1><p>Gestiona tu directorio, supervisa sus estados y analiza el crecimiento de la plataforma desde un mismo lugar.</p></div>
         </div>
       </div>
-      <svg className="businesses-hero-art" viewBox="0 0 420 148" aria-hidden="true" focusable="false">
-        <defs><linearGradient id="businesses-hero-fill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#dbe7ff" /><stop offset="100%" stopColor="#ede4ff" /></linearGradient></defs>
-        <path d="M65 119C38 112 27 82 46 64c10-9 23-10 33-6C93 21 135 18 158 45c23-24 62-15 71 12 32-10 65 16 57 46-4 15-15 26-32 30H87c-9 0-16-5-22-14Z" fill="url(#businesses-hero-fill)" opacity=".8"/>
-        <rect x="109" y="52" width="105" height="76" rx="10" fill="#fff" stroke="#adc5ff" strokeWidth="3"/>
-        <path d="M98 62l17-25h93l17 25" fill="#7450e7" stroke="#5941cb" strokeWidth="3" strokeLinejoin="round"/>
-        <path d="M100 62q12 17 26 0 12 17 26 0 13 17 26 0 13 17 26 0 12 17 22 0" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round"/>
-        <rect x="131" y="88" width="34" height="40" rx="5" fill="#dbe6ff"/>
-        <rect x="175" y="88" width="27" height="23" rx="4" fill="#e9e4ff"/>
-        <path d="M232 116h133" stroke="#98b4f1" strokeWidth="2" strokeDasharray="5 6"/>
-        <path d="M245 100l28-27 27 9 27-45 35-10" fill="none" stroke="#285ff0" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx="273" cy="73" r="6" fill="#fff" stroke="#285ff0" strokeWidth="3"/>
-        <circle cx="300" cy="82" r="6" fill="#fff" stroke="#285ff0" strokeWidth="3"/>
-        <circle cx="327" cy="37" r="6" fill="#fff" stroke="#285ff0" strokeWidth="3"/>
-        <circle cx="362" cy="27" r="7" fill="#fff" stroke="#743fff" strokeWidth="3"/>
-      </svg>
+      <picture className="businesses-hero-media">
+        <source srcSet={`${adminWorkspacePreview} 960w, ${adminWorkspace4k} 3840w`} sizes="(max-width: 700px) calc(100vw - 64px), (max-width: 1000px) 38vw, 340px" type="image/webp" />
+        <img src={adminWorkspacePreview} alt="Ilustración de XAMUKO Admin para la gestión y el crecimiento de negocios" width="3840" height="2160" loading="eager" decoding="async" />
+      </picture>
     </header>
 
     <section className="business-stats businesses-summary" aria-label="Resumen de negocios">
