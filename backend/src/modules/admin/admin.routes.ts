@@ -6,6 +6,7 @@ import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
+import { getAdminSupportAttention } from './admin-support-attention.service.js';
 import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto, moderateAdminContent } from './admin-content.service.js';
 import { listAdminUsersExtended, getAdminUserOverview, getAdminUserProfile, deactivateAdminUser } from './admin-users.service.js';
 import { prisma } from '../../config/prisma.js';
@@ -141,6 +142,12 @@ adminRouter.put('/administrators/:userId/permissions', requireTrustedOrigin, req
 adminRouter.get('/pioneers', requireAdmin('PIONEER_MANAGE'), pioneerRegistryController);
 adminRouter.post('/pioneers/claims/:claimId/review', requireTrustedOrigin, requireAdmin('PIONEER_MANAGE'), pioneerClaimController);
 adminRouter.post('/pioneers/brands/:brandId/assign', requireTrustedOrigin, requireAdmin('PIONEER_MANAGE'), pioneerAssignController);
+adminRouter.get('/support-attention', requireAdmin(), async (req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await getAdminSupportAttention(adminFromRequest(req)));
+  } catch (error) { next(error); }
+});
 adminRouter.get('/verifications', requireAdmin('BUSINESSES_READ'), listVerificationController);
 adminRouter.get('/verifications/:requestId/document', requireAdmin('BUSINESSES_READ'), verificationDocumentController);
 adminRouter.post('/verifications/:requestId/decision', requireTrustedOrigin, requireAdmin('CONTENT_MODERATE'), decisionVerificationController);
