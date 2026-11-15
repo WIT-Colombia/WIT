@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ChartPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { freeCards, periods, proCards, referralCards, type Period } from '../config/statisticsDashboard';
 import type { BusinessStatisticsDashboard, OfferViewRanking } from '../services/businessApiClient';
@@ -188,8 +188,27 @@ function DataChart({ points, chart, unit }: { points: Point[]; chart: ChartKind;
   const lineCoords = points.map((p, i) => x(i) + ',' + y(p.value)).join(' ');
   const area = points.length > 1 ? 'M' + x(0) + ' ' + base + ' L' + points.map((p, i) => x(i) + ' ' + y(p.value)).join(' L') + ' L' + x(points.length - 1) + ' ' + base + ' Z' : '';
   const barWidth = Math.min(47, pw / points.length * .62);
+  // Explore nearest data point along the X axis across the entire chart surface.
+  // Screen coordinate transforms support responsive SVG sizing on mobile and iPad.
+  const selectNearest = (event: ChartPointerEvent<SVGSVGElement>) => {
+    const svg = event.currentTarget;
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return;
+    const pointer = svg.createSVGPoint();
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    const relativeX = pointer.matrixTransform(matrix.inverse()).x;
+    const ratio = Math.max(0, Math.min(1, (relativeX - left) / pw));
+    const index = chart === 'columns'
+      ? Math.min(points.length - 1, Math.floor(ratio * points.length))
+      : Math.round(ratio * (points.length - 1));
+    setActive(index);
+  };
+  const activePoint = active === null ? null : points[active];
+  const activeX = active === null ? 0 : chart === 'columns'
+    ? left + (active + .5) * pw / points.length : x(active);
   return <div className="stats-detail-plot">
-    <svg viewBox={'0 0 ' + w + ' ' + h} role="group" aria-label="Gráfica. Navega entre los puntos para consultar sus valores.">
+    <svg viewBox={'0 0 ' + w + ' ' + h} role="group" aria-label="Gráfica interactiva. Mueve el cursor o desliza el dedo para consultar el punto más cercano." onPointerMove={selectNearest} onPointerDown={selectNearest} onPointerLeave={() => setActive(null)}>
       <defs><linearGradient id="stats-detail-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563eb" stopOpacity=".25" /><stop offset="100%" stopColor="#2563eb" stopOpacity="0" /></linearGradient><linearGradient id="stats-detail-bar" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stopColor="#275cf1" /><stop offset="100%" stopColor="#7954eb" /></linearGradient></defs>
       {[0, 1, 2, 3, 4].map(i => <g key={i}><line x1={left} y1={top + i * ph / 4} x2={w - right} y2={top + i * ph / 4} stroke="#e1e9f5" strokeDasharray="4 5" /><text x={left - 11} y={top + i * ph / 4 + 4} textAnchor="end" fill="#7183a0" fontSize="11">{count(ceiling * (1 - i / 4))}</text></g>)}
       {chart === 'line' ? <>
@@ -198,14 +217,17 @@ function DataChart({ points, chart, unit }: { points: Point[]; chart: ChartKind;
         {points.map((p, i) => <circle key={p.label + i} cx={x(i)} cy={y(p.value)} r={active === i ? 6 : 4} fill="#fff" stroke="#275cf1" strokeWidth="2.5" tabIndex={0} aria-label={p.label + ': ' + count(p.value)} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onClick={() => setActive(i)} />)}
       </> : points.map((p, i) => <rect key={p.label + i} x={left + (i + .5) * pw / points.length - barWidth / 2} y={y(p.value)} width={barWidth} height={Math.max(1, base - y(p.value))} rx="5" fill="url(#stats-detail-bar)" tabIndex={0} aria-label={p.label + ': ' + count(p.value)} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onClick={() => setActive(i)} />)}
       {points.map((p, i) => (i % labelsStep === 0 || i === points.length - 1) && <text key={p.label + i} x={chart === 'columns' ? left + (i + .5) * pw / points.length : x(i)} y={h - 21} textAnchor="middle" fill="#6e819e" fontSize="11">{p.label.length > 12 ? p.label.slice(0, 11) + '…' : p.label}</text>)}
-      {active !== null && points[active] && (() => {
-        const p = points[active]; const xx = chart === 'columns' ? left + (active + .5) * pw / points.length : x(active);
-        const tx = Math.max(left, Math.min(w - right - 154, xx - 75));
-        const ty = Math.max(3, y(p.value) - 42);
-        return <g pointerEvents="none"><rect x={tx} y={ty} width="154" height="32" rx="8" fill="#172b51" /><text x={tx + 77} y={ty + 21} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="700">{p.label.slice(0, 13) + ': ' + count(p.value)}</text></g>;
+      {activePoint && <>
+        <line className="stats-detail-crosshair" x1={activeX} y1={y(activePoint.value)} x2={activeX} y2={base} stroke="#82a1dc" strokeWidth="1.4" strokeDasharray="4 5" pointerEvents="none" />
+        <circle className="stats-detail-crosshair-dot" cx={activeX} cy={y(activePoint.value)} r="5.5" fill="#fff" stroke="#245cf2" strokeWidth="2.4" pointerEvents="none" />
+      </>}
+      {activePoint && (() => {
+        const tx = Math.max(left, Math.min(w - right - 154, activeX - 75));
+        const ty = Math.max(3, y(activePoint.value) - 42);
+        return <g pointerEvents="none"><rect x={tx} y={ty} width="154" height="32" rx="8" fill="#172b51" /><text x={tx + 77} y={ty + 21} textAnchor="middle" fill="#fff" fontSize="12" fontWeight="700">{activePoint.label.slice(0, 13) + ": " + count(activePoint.value)}</text></g>;
       })()}
     </svg>
-    <p className="stats-detail-chart-hint">{active === null ? 'Pasa el cursor o selecciona un punto para consultar su valor.' : points[active].label + ': ' + count(points[active].value)}</p>
+    <p className="stats-detail-chart-hint">{active === null ? 'Mueve el cursor por la gráfica o desliza el dedo para explorar los valores.' : points[active].label + ': ' + count(points[active].value)}</p>
   </div>;
 }
 
@@ -240,8 +262,7 @@ export function StatisticsDetailDialog(props: Props) {
         <div className="stats-detail-summary"><div><span>{detail.valueLabel}</span><strong>{detail.value}</strong></div><div><span>Período</span><strong>{periodLabel}</strong></div>{measured(previous) && <div><span>Período anterior</span><strong>{count(previous)}</strong>{delta !== null && <small className={delta >= 0 ? 'positive' : 'negative'}>{(delta > 0 ? '+' : '') + delta + ' % respecto al anterior'}</small>}</div>}</div>
         {detail.status === 'locked' || detail.status === 'unavailable' || detail.status === 'pending' ?
           <div className="stats-detail-callout"><strong>{detail.status === 'locked' ? 'Acceso restringido' : 'Detalle no disponible'}</strong><p>{detail.note ?? detail.source}</p></div> :
-          hasChart ? <div className="stats-detail-chart-card"><div className="stats-detail-chart-head"><div><h3>Explora los datos</h3><p>{detail.chart === 'line' ? 'Evolución registrada' : 'Desglose del indicador'} · Datos del servidor</p></div><div className="stats-detail-switch" role="group" aria-label="Tipo de visualización"><button type="button" aria-pressed={display === 'chart'} className={display === 'chart' ? 'active' : ''} onClick={() => setDisplay('chart')}>Gráfica</button><button type="button" aria-pressed={display === 'data'} className={display === 'data' ? 'active' : ''} onClick={() => setDisplay('data')}>Tabla</button></div></div>{display === 'chart' ? <DataChart key={selection.section + selection.key} points={points} chart={detail.chart!} unit={detail.unit} /> : <DataTable points={points} />}</div> :
-            <div className="stats-detail-callout"><strong>Dato agregado</strong><p>El servidor devuelve el valor total, pero no ofrece un historial detallado para graficar este indicador.</p></div>
+          hasChart ? <div className="stats-detail-chart-card"><div className="stats-detail-chart-head"><div><h3>Explora los datos</h3><p>{detail.chart === 'line' ? 'Evolución registrada' : 'Desglose del indicador'} · Datos del servidor</p></div><div className="stats-detail-switch" role="group" aria-label="Tipo de visualización"><button type="button" aria-pressed={display === 'chart'} className={display === 'chart' ? 'active' : ''} onClick={() => setDisplay('chart')}>Gráfica</button><button type="button" aria-pressed={display === 'data'} className={display === 'data' ? 'active' : ''} onClick={() => setDisplay('data')}>Tabla</button></div></div>{display === 'chart' ? <DataChart key={selection.section + selection.key} points={points} chart={detail.chart!} unit={detail.unit} /> : <DataTable points={points} />}</div> : null
         }
         {detail.note && detail.status !== 'pending' && <p className="stats-detail-note"><strong>Cómo interpretar este dato:</strong> {detail.note}</p>}
         <p className="stats-detail-source"><strong>Fuente:</strong> {detail.source} {data && <span>Zona horaria: {data.timezone}.</span>}</p>
