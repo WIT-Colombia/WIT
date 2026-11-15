@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ChartPointerEvent } from 'react';
 import { Icon } from '../components/Icon';
-import { getAdminBusinessAnalytics, type AdminBusinessAnalytics } from '../services/adminApiClient';
+import { AdminApiError, getAdminBusinessAnalytics, type AdminBusinessAnalytics } from '../services/adminApiClient';
 import './AdminBusinessGrowthPanel.css';
 
 type Range = '6m' | '12m' | '24m' | '60m' | 'all';
@@ -161,7 +161,11 @@ export function AdminBusinessGrowthPanel() {
     }).catch(cause => {
       if (!active) return;
       setData(null);
-      setError(cause instanceof Error ? cause.message : 'No se pudo consultar la evolución.');
+      const backendNotUpdated = cause instanceof AdminApiError &&
+        (cause.status === 404 || cause.code === 'BUSINESS_NOT_FOUND');
+      setError(backendNotUpdated
+        ? 'El servidor de Admin no tiene todavía habilitada la consulta de evolución. Es necesario desplegar el backend actualizado.'
+        : cause instanceof Error ? cause.message : 'No se pudo consultar la evolución.');
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [period, city, categoryId, status, attempt]);
