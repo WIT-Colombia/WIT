@@ -103,7 +103,7 @@ try {
           };
         });
         const label = sizeName + ' ' + name;
-        assert.ok(before.dialog.top >= -2 && before.dialog.bottom <= before.viewportHeight+2, label + ': dialog within visible viewport');
+        assert.ok(before.dialog.top >= -2 && before.dialog.bottom <= before.viewportHeight+2, label + ': dialog within visible viewport ' + JSON.stringify({dialog:before.dialog,overlay:before.overlay,viewportHeight:before.viewportHeight}));
         assert.ok(before.dialog.left >= -2 && before.dialog.right <= before.viewportWidth+2, label + ': dialog fits width');
         assert.ok(before.heading.top >= -2 && before.heading.bottom <= before.viewportHeight+2, label + ': heading fully visible');
         assert.ok(before.close.top >= -2 && before.close.bottom <= before.viewportHeight+2, label + ': close/cancel visible');
