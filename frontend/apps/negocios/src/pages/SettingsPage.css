@@ -1,0 +1,501 @@
+/* XAMUKO Business — Configuración.
+   SVG vectoriales (nítidos en 4K/Retina) y contenido HTML real. */
+.business-settings-page,.business-settings-page *{box-sizing:border-box}
+.business-settings-page{width:100%;min-width:0;color:#172747}
+.business-settings-page button,
+.business-settings-page button:is(:hover,:focus,:focus-visible,:active,:disabled),
+body>.settings-dialog-backdrop button,
+body>.settings-dialog-backdrop button:is(:hover,:focus,:focus-visible,:active,:disabled){text-decoration:none}
+.business-settings-page button:focus-visible,
+.business-settings-page input:focus-visible,
+body>.settings-dialog-backdrop button:focus-visible{
+  outline:3px solid #92b6ff;outline-offset:3px;
+}
+.business-settings-page svg,
+body>.settings-dialog-backdrop svg{
+  display:block;width:21px;height:21px;max-width:100%;max-height:100%;
+}
+.business-settings-page .page-heading.settings-page-heading{
+  display:grid;gap:12px;width:100%;min-width:0;margin:0 0 24px;
+}
+.business-settings-page .settings-page-eyebrow{
+  display:block;margin:0 0 0 4px;color:#285eec;
+  font-size:11px;font-weight:800;line-height:1.4;letter-spacing:.105em;
+}
+.business-settings-page .settings-page-heading-main{
+  display:flex;align-items:center;gap:16px;min-width:0;
+}
+.business-settings-page .settings-page-heading-main>div{min-width:0}
+.business-settings-page .settings-page-heading-icon{
+  display:grid;place-items:center;flex:0 0 72px;
+  width:72px;height:72px;border:1px solid #cad9fc;border-radius:18px;
+  background:linear-gradient(145deg,#e8eaff,#d0dfff);
+  color:#285beb;box-shadow:0 6px 16px #4655be16;
+}
+.business-settings-page .settings-page-heading-icon svg{width:36px;height:36px}
+.business-settings-page .settings-page-heading h1{
+  margin:0 0 8px;color:#111d3b;font-size:clamp(28px,2.4vw,33px);
+  font-weight:800;line-height:1.15;letter-spacing:-.04em;
+  overflow-wrap:anywhere;
+}
+.business-settings-page .settings-page-heading p{
+  margin:0;color:#657895;font-size:13px;font-weight:450;
+  line-height:1.5;overflow-wrap:anywhere;
+}
+.business-settings-page .settings-layout{
+  display:grid;grid-template-columns:minmax(0,1fr);
+  gap:19px;width:100%;max-width:1120px;min-width:0;
+  margin:0 auto;
+}
+.business-settings-page .settings-layout>.content-stack{
+  display:grid;gap:19px;min-width:0;
+}
+.business-settings-page .settings-section{
+  min-width:0;width:100%;max-width:100%;margin:0;
+  padding:clamp(19px,2.5vw,28px);
+  border:1px solid #dfe7f5;border-radius:19px;
+  background:#fff;box-shadow:0 10px 28px #14305f10;
+}
+.business-settings-page .settings-section:hover{
+  border-color:#d5e1f4;box-shadow:0 10px 28px #14305f10;
+}
+.business-settings-page .settings-section .card-heading,
+.business-settings-page .ownership-heading{
+  display:flex;align-items:flex-start;flex-wrap:wrap;
+  gap:12px;min-width:0;margin:0 0 20px;
+}
+.business-settings-page .settings-section .card-heading>div,
+.business-settings-page .ownership-heading>div{
+  flex:1 1 280px;min-width:0;
+}
+.business-settings-page .settings-section .card-heading h2,
+.business-settings-page .ownership-heading h2{
+  margin:0 0 6px;color:#1a2e50;font-size:19px;
+  font-weight:800;line-height:1.3;letter-spacing:-.02em;
+}
+.business-settings-page .settings-section .card-heading p,
+.business-settings-page .ownership-heading p{
+  margin:0;color:#637796;font-size:12px;
+  line-height:1.55;overflow-wrap:anywhere;
+}
+.business-settings-page .settings-card-icon,
+.business-settings-page .ownership-icon{
+  display:grid;place-items:center;
+  flex:0 0 48px;width:48px;height:48px;
+  border:1px solid #d8ddff;border-radius:14px;
+  background:linear-gradient(145deg,#8552ff,#245cf2);
+  color:#fff;box-shadow:0 6px 17px #5d43e927;
+}
+.business-settings-page .settings-card-icon.verification{
+  border-color:#c6e3fa;
+  background:linear-gradient(145deg,#35cffa,#1c91ee 53%,#2557e9);
+}
+.business-settings-page .ownership-icon{
+  border-color:#ecd2ff;
+  background:linear-gradient(145deg,#aa64ff,#7041ea 55%,#4a31d8);
+}
+.business-settings-page .settings-card-icon svg,
+.business-settings-page .ownership-icon svg{width:25px;height:25px}
+
+/* Privacidad / periodo de visibilidad. */
+.business-settings-page .visibility-panel{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:start;gap:17px;min-width:0;
+  margin:0;padding:21px;
+  border:1px solid #dfe7f5;border-radius:15px;
+  background:linear-gradient(135deg,#fcfdff,#f4f7ff);
+}
+.business-settings-page .visibility-panel>div:first-child{min-width:0}
+.business-settings-page .settings-visibility-title{
+  display:flex;align-items:center;gap:9px;min-width:0;
+  color:#233a5c;font-size:14px;font-weight:800;line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.business-settings-page .settings-visibility-title svg{
+  flex:0 0 19px;width:19px;height:19px;color:#245ce8;
+}
+.business-settings-page .visibility-panel p{
+  margin:9px 0 0;color:#627693;font-size:12px;line-height:1.55;
+  overflow-wrap:anywhere;
+}
+.business-settings-page .visibility-status{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:6px;min-width:0;margin:0;padding:8px 11px;
+  border:1px solid #dae1ed;border-radius:999px;
+  font-size:11px;font-weight:800;line-height:1.3;
+}
+.business-settings-page .visibility-status.active{
+  border-color:#c0e5d1;background:#eafaef;color:#087c46;
+}
+.business-settings-page .visibility-status.expired{
+  border-color:#ecd9b9;background:#fff7e9;color:#9b6714;
+}
+.business-settings-page .visibility-actions{
+  display:flex;flex-wrap:wrap;align-items:center;gap:11px;
+  grid-column:1/-1;min-width:0;margin:0;
+}
+.business-settings-page .visibility-renew-note{
+  order:3;flex:1 1 100%;min-width:0;margin:0;
+  color:#6a7e9a;font-size:11px;line-height:1.5;
+  overflow-wrap:anywhere;
+}
+
+/* Acciones: CTA XAMUKO, secundarias azul y destructivas coral. */
+.business-settings-page button.action-button,
+.business-settings-page .visibility-actions button.action-button,
+.business-settings-page button.verification-submit{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  flex:0 1 auto;min-width:0;min-height:46px;height:auto;
+  margin:0;padding:11px 16px;border:1px solid transparent;
+  border-radius:11px;
+  background:linear-gradient(105deg,#743fff,#245cf2 65%,#16a6f7);
+  color:#fff;font-family:inherit;font-size:12px;font-weight:800;
+  line-height:1.4;text-align:center;white-space:normal;
+  overflow-wrap:anywhere;
+  box-shadow:0 8px 18px #4e53e325;cursor:pointer;
+}
+.business-settings-page button.action-button:hover:not(:disabled),
+.business-settings-page .visibility-actions button.action-button:hover:not(:disabled){
+  filter:brightness(1.05);box-shadow:0 9px 22px #4e53e339;
+}
+.business-settings-page button.outline-button{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-width:0;min-height:46px;height:auto;margin:0;padding:10px 15px;
+  border:1px solid #b9ccf9;border-radius:11px;
+  background:#fff;color:#245ce8;font-family:inherit;
+  font-size:12px;font-weight:750;line-height:1.4;
+  text-align:center;white-space:normal;cursor:pointer;
+}
+.business-settings-page button.outline-button:hover:not(:disabled){
+  border-color:#6c93ec;background:#edf4ff;color:#1c4ecc;
+}
+.business-settings-page button.danger-button{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-width:0;min-height:44px;height:auto;margin:0;padding:10px 14px;
+  border:1px solid #d6506b;border-radius:11px;
+  background:linear-gradient(120deg,#d94a69,#bc3154);
+  color:#fff;font-family:inherit;font-size:12px;font-weight:750;
+  line-height:1.4;text-align:center;white-space:normal;cursor:pointer;
+}
+.business-settings-page button.danger-button:hover:not(:disabled){
+  background:linear-gradient(120deg,#c83a5a,#a92349);
+}
+.business-settings-page button:disabled{opacity:.58;cursor:not-allowed}
+.business-settings-page button svg{flex:0 0 18px;width:18px;height:18px}
+.business-settings-page .settings-legal-links{
+  display:flex;flex-wrap:wrap;gap:12px 22px;
+  min-width:0;margin:22px 0 0;padding:17px 0 0;
+  border-top:1px solid #e4ebf6;
+}
+.business-settings-page .settings-legal-links a{
+  color:#245ce8;font-size:12px;font-weight:700;
+  line-height:1.5;overflow-wrap:anywhere;
+}
+.business-settings-page .settings-legal-links a:focus-visible{
+  outline:3px solid #92b6ff;outline-offset:3px;
+}
+
+/* Verificación, estados y carga documental. */
+.business-settings-page .verification-settings{
+  background:linear-gradient(145deg,#fff,#fcfdff);
+}
+.business-settings-page .verification-settings .card-heading{align-items:center}
+.business-settings-page .verification-settings .card-heading>div{
+  flex:1 1 240px;min-width:0;
+}
+.business-settings-page .verification-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  flex:0 1 auto;min-width:0;min-height:32px;
+  margin:0;padding:7px 11px;border-radius:999px;
+  font-size:11px;font-weight:800;line-height:1.35;
+  text-align:center;white-space:normal;overflow-wrap:anywhere;
+}
+.business-settings-page .verification-copy{
+  display:grid;gap:15px;width:100%;max-width:none;min-width:0;
+}
+.business-settings-page .verification-copy>p:first-child{
+  margin:0;color:#586e8d;font-size:12px;line-height:1.6;
+}
+.business-settings-page .settings-notice{
+  min-width:0;padding:14px 16px;border-radius:12px;
+  font-size:12px;line-height:1.5;overflow-wrap:anywhere;
+}
+.business-settings-page .settings-notice p{margin:0;line-height:1.55}
+.business-settings-page .verification-file-field{
+  display:grid;gap:9px;min-width:0;margin:0;
+  color:#253c60;font-size:12px;font-weight:750;
+}
+.business-settings-page .verification-file-field input[type=file]{
+  box-sizing:border-box;display:block;
+  width:100%;max-width:100%;min-width:0;min-height:49px;
+  padding:11px 12px;border:1px dashed #b9caee;border-radius:11px;
+  background:#f7f9ff;color:#344b6d;font-size:12px;
+}
+.business-settings-page .verification-copy ul{
+  display:grid;gap:8px;min-width:0;
+  margin:0;padding:13px 0 0 19px;
+  border-top:1px solid #e4ebf6;
+  color:#647795;font-size:12px;line-height:1.55;
+}
+.business-settings-page .verification-copy .verification-submit{
+  justify-self:start;min-height:46px;
+}
+
+/* Transferencia: riesgo destacado sin alterar reglas o API. */
+.business-settings-page .ownership-settings{overflow:hidden}
+.business-settings-page .ownership-heading{align-items:center;gap:13px}
+.business-settings-page .ownership-form{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;gap:14px 18px;min-width:0;
+  margin:0;padding:20px;border:1px solid #e2e8f4;
+  border-radius:14px;background:#f9fbff;
+}
+.business-settings-page .ownership-form .form-field{
+  display:grid;gap:8px;grid-column:1/-1;
+  width:100%;max-width:610px;min-width:0;
+  color:#253c60;font-size:12px;font-weight:750;
+}
+.business-settings-page .ownership-form .form-field input{
+  box-sizing:border-box;display:block;
+  width:100%;min-width:0;min-height:47px;
+  padding:10px 13px;border:1px solid #cbd8ee;
+  border-radius:11px;background:#fff;color:#1b3459;
+  font-size:14px;font-weight:500;
+}
+.business-settings-page .ownership-form .form-field small{
+  color:#647795;font-size:11px;line-height:1.5;
+}
+.business-settings-page .ownership-form .form-error{
+  color:#b82e49;font-size:11px;font-weight:650;
+  line-height:1.5;overflow-wrap:anywhere;
+}
+.business-settings-page .ownership-form .collab-recipient{
+  min-width:0;max-width:100%;grid-column:1;
+}
+.business-settings-page .ownership-form .collab-recipient.resolved{
+  width:100%;max-width:610px;overflow-wrap:anywhere;
+}
+.business-settings-page .ownership-submit{
+  grid-column:2;grid-row:auto;
+}
+.business-settings-page .ownership-confirm{
+  display:grid;gap:8px;min-width:0;
+  margin:0;padding:18px;border:1px solid #eed7df;
+  border-radius:13px;background:#fff8fa;
+}
+.business-settings-page .ownership-confirm strong{
+  color:#7e2e47;font-size:13px;font-weight:800;overflow-wrap:anywhere;
+}
+.business-settings-page .ownership-confirm p{
+  margin:0;color:#626d84;font-size:12px;line-height:1.6;
+  overflow-wrap:anywhere;
+}
+.business-settings-page .ownership-confirm small{
+  display:block;min-width:0;margin:0;color:#71839e;
+  font-size:11px;line-height:1.5;overflow-wrap:anywhere;
+}
+.business-settings-page .ownership-confirm>button{
+  justify-self:start;margin-top:6px;
+}
+
+/* The two destructive confirmations sit above the Business header, and
+   follow visualViewport including Safari safe areas and virtual keyboards. */
+body>.settings-dialog-backdrop{
+  position:fixed;
+  top:var(--settings-viewport-top,0px);
+  left:var(--settings-viewport-left,0px);
+  right:auto;bottom:auto;
+  z-index:1500;
+  display:flex;align-items:flex-start;justify-content:center;
+  box-sizing:border-box;
+  width:var(--settings-viewport-width,100vw);
+  height:var(--settings-viewport-height,100dvh);
+  min-width:0;min-height:0;max-width:none;max-height:none;
+  margin:0;
+  padding:max(14px,env(safe-area-inset-top,0px)) 14px max(14px,env(safe-area-inset-bottom,0px));
+  overflow-x:hidden;overflow-y:auto;
+  overscroll-behavior:contain;isolation:isolate;
+  -webkit-overflow-scrolling:touch;
+  background:rgba(12,25,52,.68);
+}
+body>.settings-dialog-backdrop>.settings-confirm-dialog{
+  display:block;position:relative;
+  flex:0 1 490px;box-sizing:border-box;
+  width:min(100%,490px);min-width:0;
+  max-width:490px;max-height:100%;
+  margin:auto;padding:25px;
+  overflow-x:hidden;overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid #d8e5fb;border-radius:19px;
+  background:#fff;box-shadow:0 25px 80px #0b1c3f55;
+  color:#172747;
+}
+body>.settings-dialog-backdrop .settings-dialog-heading{
+  display:flex;align-items:center;gap:13px;
+  min-width:0;margin:0 0 15px;
+}
+body>.settings-dialog-backdrop .settings-dialog-heading>div{min-width:0}
+body>.settings-dialog-backdrop .settings-dialog-icon{
+  display:grid;place-items:center;
+  flex:0 0 48px;width:48px;height:48px;
+  border:1px solid #f0ccd6;border-radius:14px;
+  background:linear-gradient(135deg,#f4efff,#fff0f4);
+  color:#bb3150;
+}
+body>.settings-dialog-backdrop .settings-dialog-icon svg{width:25px;height:25px}
+body>.settings-dialog-backdrop .settings-dialog-eyebrow{
+  display:block;color:#245ce8;
+  font-size:10px;font-weight:800;letter-spacing:.085em;
+  line-height:1.4;overflow-wrap:anywhere;
+}
+body>.settings-dialog-backdrop .settings-dialog-heading h2{
+  margin:6px 0 0;color:#111d3b;
+  font-size:21px;font-weight:800;line-height:1.24;
+  letter-spacing:-.03em;overflow-wrap:anywhere;
+}
+body>.settings-dialog-backdrop .settings-confirm-dialog>p,
+body>.settings-dialog-backdrop .settings-dialog-copy p{
+  margin:0 0 10px;color:#586c89;font-size:13px;
+  line-height:1.6;overflow-wrap:anywhere;
+}
+body>.settings-dialog-backdrop .settings-dialog-copy strong{
+  color:#20375a;font-weight:800;
+}
+body>.settings-dialog-backdrop .settings-dialog-error{
+  margin:12px 0 0;padding:10px 12px;
+  border:1px solid #f1bdc6;border-radius:10px;
+  background:#fff2f4;color:#a7223d;
+  font-size:12px;line-height:1.5;overflow-wrap:anywhere;
+}
+body>.settings-dialog-backdrop .settings-dialog-actions{
+  position:sticky;bottom:0;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;min-width:0;
+  margin:19px 0 0;padding:16px 0 0;
+  border-top:1px solid #e2e9f6;background:#fff;
+}
+body>.settings-dialog-backdrop .settings-dialog-actions button{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  box-sizing:border-box;width:100%;min-width:0;
+  min-height:46px;margin:0;padding:10px 12px;
+  border-radius:11px;font-family:inherit;font-size:12px;
+  font-weight:750;line-height:1.4;text-align:center;
+  white-space:normal;overflow-wrap:anywhere;cursor:pointer;
+}
+body>.settings-dialog-backdrop .settings-dialog-actions .outline-button{
+  border:1px solid #b9ccf9;background:#fff;color:#245ce8;
+}
+body>.settings-dialog-backdrop .settings-dialog-actions .outline-button:hover:not(:disabled){
+  border-color:#668def;background:#edf4ff;
+}
+body>.settings-dialog-backdrop .settings-dialog-actions .danger-button{
+  border:1px solid #c63859;
+  background:linear-gradient(120deg,#d94a69,#bc3154);
+  color:#fff;box-shadow:0 6px 15px #ba31502a;
+}
+body>.settings-dialog-backdrop .settings-dialog-actions .danger-button:hover:not(:disabled){
+  background:linear-gradient(120deg,#c83a5a,#a92349);
+}
+body>.settings-dialog-backdrop .settings-dialog-actions svg{
+  flex:0 0 17px;width:17px;height:17px;
+}
+body>.settings-dialog-backdrop button:disabled{opacity:.55;cursor:wait}
+@media(max-width:1100px){
+  body.settings-dialog-active .mobile-topbar,
+  body.settings-dialog-active .business-desktop-header,
+  body.settings-dialog-active .app-content>.topbar,
+  body.settings-dialog-active .mobile-nav,
+  body.settings-dialog-active .business-mobile-menu-layer{
+    visibility:hidden!important;pointer-events:none!important;
+  }
+}
+@media(max-width:800px){
+  .business-settings-page .settings-layout>.content-stack{gap:16px}
+  .business-settings-page .settings-section{padding:21px;border-radius:16px}
+  .business-settings-page .ownership-form{
+    grid-template-columns:minmax(0,1fr);gap:13px;padding:16px;
+  }
+  .business-settings-page .ownership-form .form-field,
+  .business-settings-page .ownership-form .collab-recipient,
+  .business-settings-page .ownership-form .ownership-submit{
+    grid-column:1;grid-row:auto;max-width:none;width:100%;
+  }
+}
+@media(max-width:700px){
+  .business-settings-page .page-heading.settings-page-heading{gap:10px;margin-bottom:19px}
+  .business-settings-page .settings-page-eyebrow{font-size:10px}
+  .business-settings-page .settings-page-heading-main{align-items:flex-start;gap:12px}
+  .business-settings-page .settings-page-heading-icon{
+    flex-basis:54px;width:54px;height:54px;border-radius:14px;
+  }
+  .business-settings-page .settings-page-heading-icon svg{width:28px;height:28px}
+  .business-settings-page .settings-page-heading h1{font-size:28px}
+  .business-settings-page .settings-page-heading p{font-size:12px}
+  .business-settings-page .settings-section{padding:17px;border-radius:15px}
+  .business-settings-page .settings-section .card-heading,
+  .business-settings-page .ownership-heading{gap:10px;margin-bottom:17px}
+  .business-settings-page .settings-card-icon,
+  .business-settings-page .ownership-icon{
+    flex-basis:42px;width:42px;height:42px;border-radius:12px;
+  }
+  .business-settings-page .settings-card-icon svg,
+  .business-settings-page .ownership-icon svg{width:23px;height:23px}
+  .business-settings-page .settings-section .card-heading h2,
+  .business-settings-page .ownership-heading h2{font-size:17px}
+  .business-settings-page .visibility-panel{
+    grid-template-columns:minmax(0,1fr);gap:11px;padding:15px;
+  }
+  .business-settings-page .visibility-status{justify-self:start}
+  .business-settings-page .visibility-actions{
+    align-items:stretch;flex-direction:column;gap:10px;
+  }
+  .business-settings-page .visibility-actions button{
+    width:100%;min-height:46px;
+  }
+  .business-settings-page .visibility-renew-note{order:3;flex-basis:auto;font-size:11px}
+  .business-settings-page .verification-settings .card-heading{align-items:flex-start}
+  .business-settings-page .verification-badge{max-width:100%}
+  .business-settings-page .verification-copy .verification-submit{
+    justify-self:stretch;width:100%;
+  }
+  .business-settings-page .settings-legal-links{flex-direction:column;gap:13px}
+  .business-settings-page .ownership-confirm>button{justify-self:stretch;width:100%}
+  body>.settings-dialog-backdrop{
+    padding:max(8px,env(safe-area-inset-top,0px)) 8px max(8px,env(safe-area-inset-bottom,0px));
+  }
+  body>.settings-dialog-backdrop>.settings-confirm-dialog{
+    flex:1 1 auto;width:100%;max-width:none;
+    padding:19px 17px;border-radius:16px;
+  }
+  body>.settings-dialog-backdrop .settings-dialog-heading h2{font-size:19px}
+  body>.settings-dialog-backdrop .settings-confirm-dialog>p,
+  body>.settings-dialog-backdrop .settings-dialog-copy p{font-size:12px}
+}
+@media(max-width:420px){
+  .business-settings-page .settings-section .card-heading>div,
+  .business-settings-page .ownership-heading>div{flex-basis:100%}
+  .business-settings-page .settings-section .card-heading{row-gap:9px}
+  .business-settings-page .settings-card-icon{flex-basis:40px;width:40px;height:40px}
+  .business-settings-page .visibility-panel{padding:13px}
+  .business-settings-page .ownership-form{padding:13px}
+  body>.settings-dialog-backdrop .settings-dialog-actions{
+    grid-template-columns:minmax(0,1fr);gap:8px;
+  }
+  body>.settings-dialog-backdrop .settings-dialog-actions button{min-height:44px}
+}
+@media(max-height:430px){
+  body>.settings-dialog-backdrop{
+    padding:max(6px,env(safe-area-inset-top,0px)) 6px max(6px,env(safe-area-inset-bottom,0px));
+  }
+  body>.settings-dialog-backdrop>.settings-confirm-dialog{padding:14px}
+  body>.settings-dialog-backdrop .settings-dialog-heading{gap:9px;margin-bottom:10px}
+  body>.settings-dialog-backdrop .settings-dialog-icon{flex-basis:38px;width:38px;height:38px}
+  body>.settings-dialog-backdrop .settings-dialog-icon svg{width:20px;height:20px}
+  body>.settings-dialog-backdrop .settings-dialog-heading h2{font-size:18px}
+  body>.settings-dialog-backdrop .settings-dialog-actions{margin-top:10px;padding-top:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .business-settings-page button,
+  body>.settings-dialog-backdrop button{transition:none}
+}
