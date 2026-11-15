@@ -157,6 +157,19 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
       assert.equal(secondInbox.response.status, 200, JSON.stringify(secondInbox.body));
       assert.ok(secondInbox.body.notifications.some((item: any) => item.id === second.id));
       assert.ok(!secondInbox.body.notifications.some((item: any) => item.id === first.id));
+      await prisma.businessNotification.createMany({ data: Array.from({ length: 105 }, (_, index) => ({
+        userId, businessId: otherBusinessId, type: 'COLLABORATION_UPDATE' as const,
+        title: 'Aviso ' + index, message: 'Notificación de prueba de volumen del negocio secundario.',
+      })) });
+      const many = await send('/businesses/' + otherBusinessId + '/notifications', { headers: user() });
+      assert.equal(many.response.status, 200);
+      assert.equal(many.body.notifications.length, 100, 'La bandeja pagina los últimos 100 avisos');
+      assert.ok(many.body.unread >= 106, 'El contador incluye todos los avisos aunque no estén en la primera página');
+      const readAll = await post('/businesses/' + otherBusinessId + '/notifications/read-all', {}, user());
+      assert.equal(readAll.response.status, 200);
+      assert.equal((await send('/businesses/' + otherBusinessId + '/notifications', { headers: user() })).body.unread, 0);
+      assert.ok((await send('/businesses/' + businessId + '/notifications', { headers: user() })).body.unread > 0,
+        'Marcar todas las del segundo negocio no debe afectar el primero');
       const wrongRead = await post('/businesses/' + otherBusinessId + '/notifications/' + first.id + '/read', {}, user());
       assert.equal(wrongRead.response.status, 404);
       const goodRead = await post('/businesses/' + businessId + '/notifications/' + first.id + '/read', {}, user());
