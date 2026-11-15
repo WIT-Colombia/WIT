@@ -11,6 +11,20 @@ assert.ok(files.length, 'Business CSS build is required');
 const css = (await Promise.all(files.map(name => readFile(join(cssDirectory, name), 'utf8')))).join('\n');
 
 const svg = '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 4h4m-7 3 .7 13h8.6L17 7"/></svg>';
+// Read the actual shipped SVG markup, not copied test substitutes.
+const promotionsTsx = await readFile(fileURLToPath(new URL('../apps/negocios/src/pages/PromotionsPage.tsx', import.meta.url)), 'utf8');
+const summaryStart = promotionsTsx.indexOf('<section className="promotions-summary"');
+const summaryEnd = promotionsTsx.indexOf('</section>', summaryStart);
+assert.ok(summaryStart >= 0 && summaryEnd > summaryStart, 'Promotions summary must exist');
+const actualSummary = promotionsTsx.slice(summaryStart, summaryEnd);
+const sourceIcons = [...actualSummary.matchAll(/<span className="promotions-summary-icon (violet|coral|blue|magenta)" aria-hidden="true">(<svg[\s\S]*?<\/svg>)<\/span>/g)];
+assert.deepEqual(sourceIcons.map(match => match[1]), ['violet', 'coral', 'blue', 'magenta'], 'Four approved XAMUKO icon types must be present in order');
+assert.ok(sourceIcons.every(match => /viewBox="0 0 48 48"/.test(match[2])), 'All four icons must be scale-independent SVG');
+const summaryLabels = ['Activas', 'Programadas', 'Finalizadas', 'Visualizaciones generales'];
+const summaryCardsHtml = sourceIcons.map(([_, kind, icon], i) =>
+  '<article><span class="promotions-summary-icon ' + kind + '" aria-hidden="true">' + icon + '</span>' +
+  '<div><strong>' + [0, 0, 1, 9][i] + '</strong><small>' + summaryLabels[i] + '</small></div></article>'
+).join('');
 function shell() {
   return '<!doctype html><html lang="es"><head><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head>' +
     '<body class="promotions-dialog-active"><div class="business-app"><div class="app-content"><div class="body-layout"><div class="business-shell-workspace">' +
@@ -19,6 +33,7 @@ function shell() {
     '<header class="page-heading promotions-heading"><div class="promotions-heading-copy"><span class="promotions-eyebrow">TU OFERTA</span><div class="promotions-heading-main">' +
     '<span class="promotions-heading-icon">' + svg + '</span><div><h1>Ofertas y promociones</h1><p>Publicaciones de tu negocio en XAMUKO.</p></div></div></div>' +
     '<button class="action-button promotions-new" type="button">' + svg + 'Crear publicación</button></header>' +
+    '<section class="promotions-summary" aria-label="Resumen de promociones">' + summaryCardsHtml + '</section>' +
     '<div class="promotions-workspace"><section class="promotions-list-panel"><div class="promotions-items"><article class="promotion-row">' +
     '<div class="promotion-row-photos"><span>%</span></div><div class="promotion-row-main"><h2>Oferta de ejemplo</h2><p>Un producto en descuento</p></div>' +
     '<div class="promotion-row-actions"><button>Editar</button><button>Finalizar</button><button class="danger">' + svg + 'Eliminar</button></div>' +
@@ -103,6 +118,36 @@ try {
           };
         });
         const label = sizeName + ' ' + name;
+        const summaryIcons = await page.evaluate(() => {
+          const cards = [...document.querySelectorAll('.promotions-summary article')];
+          return cards.map(card => {
+            const icon = card.querySelector('.promotions-summary-icon');
+            const svg = icon.querySelector('svg');
+            const ir = icon.getBoundingClientRect();
+            const cr = card.getBoundingClientRect();
+            const sr = svg.getBoundingClientRect();
+            const iconStyle = getComputedStyle(icon);
+            return {
+              hasVector: svg instanceof SVGSVGElement && svg.viewBox.baseVal.width === 48,
+              hasGradient: iconStyle.backgroundImage.includes('linear-gradient'),
+              iconIsWhite: getComputedStyle(svg).color === 'rgb(255, 255, 255)',
+              iconWithinCard: ir.left >= cr.left - 1 && ir.right <= cr.right + 1 && ir.top >= cr.top - 1 && ir.bottom <= cr.bottom + 1,
+              svgWithinIcon: sr.left >= ir.left - 1 && sr.right <= ir.right + 1 && sr.top >= ir.top - 1 && sr.bottom <= ir.bottom + 1,
+              cardNoOverflow: card.scrollWidth <= card.clientWidth + 2,
+              iconSize: ir.width,
+              summaryLabel: card.querySelector('small')?.textContent,
+            };
+          });
+        });
+        assert.equal(summaryIcons.length, 4, label + ': four summary icons still exist');
+        for (const [index, icon] of summaryIcons.entries()) {
+          assert.ok(icon.hasVector, label + ': vector SVG used in summary ' + index);
+          assert.ok(icon.hasGradient, label + ': XAMUKO gradient used in summary ' + index);
+          assert.ok(icon.iconIsWhite, label + ': white pictogram in summary ' + index);
+          assert.ok(icon.iconWithinCard && icon.svgWithinIcon && icon.cardNoOverflow, label + ': summary ' + index + ' fits its card on this device');
+          assert.ok(icon.iconSize >= 33, label + ': summary ' + index + ' touch-visible size');
+          assert.equal(icon.summaryLabel, summaryLabels[index], label + ': label preserved');
+        }
         assert.ok(before.dialog.top >= -2 && before.dialog.bottom <= before.viewportHeight+2, label + ': dialog within visible viewport ' + JSON.stringify({dialog:before.dialog,overlay:before.overlay,viewportHeight:before.viewportHeight}));
         assert.ok(before.dialog.left >= -2 && before.dialog.right <= before.viewportWidth+2, label + ': dialog fits width');
         assert.ok(before.heading.top >= -2 && before.heading.bottom <= before.viewportHeight+2, label + ': heading fully visible');
