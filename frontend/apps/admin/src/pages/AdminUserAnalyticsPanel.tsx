@@ -64,13 +64,13 @@ function RegistrationChart({ points, mode }: { points: Point[]; mode: 'area' | '
         rx="5" fill="url(#au-bars)" tabIndex={0} aria-label={p.label+': '+number(p.value)}
         onFocus={()=>setActive(i)} onClick={()=>setActive(i)}/>)}
       {selected && active !== null && <>
-        <line className="au-plot-guide" x1={selectedX} x2={selectedX} y1={yy(selected.value)} y2={base} pointerEvents="none"/>
+        <line className="au-plot-guide" x1={selectedX} x2={selectedX} y1={top} y2={base} pointerEvents="none"/>
         <circle cx={selectedX} cy={yy(selected.value)} r="6" fill="#fff" stroke="#225cf1" strokeWidth="2.5" pointerEvents="none"/>
         {(() => {const tx=Math.max(left,Math.min(width-right-83,selectedX-41));const ty=Math.max(3,yy(selected.value)-42);return <g pointerEvents="none"><rect x={tx} y={ty} width="83" height="31" rx="9" fill="#172b51"/><text x={tx+41.5} y={ty+21} textAnchor="middle" fontSize="14" fontWeight="800" fill="#fff">{number(selected.value)}</text></g>;})()}
       </>}
       {points.map((p,i)=>(i%step===0||i===points.length-1)&&<text key={p.label} className="au-plot-axis" x={mode==='bars'?left+(i+.5)*pw/points.length:xx(i)} y={h-16} textAnchor="middle">{p.label}</text>)}
     </svg>
-    <p className="au-chart-hint">{selected ? <><strong>{number(selected.value)}</strong> altas · {selected.label}</> : 'Desliza el dedo o mueve el cursor sobre la gráfica para explorar.'}</p>
+    <p className="au-chart-hint">{selected ? <><strong>{number(selected.value)}</strong> altas · {selected.label}</> : 'Mueve el cursor o desliza el dedo: los meses sin altas aparecen con valor 0.'}</p>
   </div>;
 }
 
