@@ -4,10 +4,10 @@ import { Icon } from './Icon';
 import './SupportDecisionDialog.css';
 
 export function SupportDecisionDialog({
-  title, description, affected, confirmWord, initialReason = '', onClose, onConfirm,
+  title, description, affected, confirmWord, initialReason = '', shareReason = false, onClose, onConfirm,
 }: {
   title: string; description: string; affected: string; confirmWord: string;
-  initialReason?: string; onClose: () => void; onConfirm: (reason: string) => Promise<void>;
+  initialReason?: string; shareReason?: boolean; onClose: () => void; onConfirm: (reason: string) => Promise<void>;
 }) {
   const [reason, setReason] = useState(initialReason);
   const [typed, setTyped] = useState('');
@@ -53,9 +53,9 @@ export function SupportDecisionDialog({
       <h2 id="sd-title">{title}</h2>
       <p id="sd-description">{description}</p>
       <div className="sd-target"><Icon name="message" size={21}/><strong>{affected}</strong></div>
-      <p className="sd-notice">La decisión quedará registrada en la auditoría. Se enviará una notificación interna al interesado, si existe una cuenta identificada. La notificación no enviará datos personales de denunciantes a terceros.</p>
+      <p className="sd-notice">{shareReason ? "La respuesta que escribas se enviará al solicitante identificado por notificación interna. No incluyas datos privados ni deliberaciones internas." : "La justificación quedará en la auditoría administrativa. El interesado recibirá solo el cambio de estado, sin detalles privados de la investigación."}</p>
       <form onSubmit={submit}>
-        <label htmlFor="sd-reason">Motivo o respuesta administrativa (mínimo 10 caracteres)</label>
+        <label htmlFor="sd-reason">{shareReason ? "Respuesta para el solicitante (mínimo 10 caracteres)" : "Justificación administrativa (mínimo 10 caracteres)"}</label>
         <textarea id="sd-reason" value={reason} onChange={event => setReason(event.target.value)} minLength={10} maxLength={1000} rows={4} required disabled={busy}
           placeholder="Describe los hechos y la decisión tomada." />
         <label htmlFor="sd-confirm">Escribe <strong>{confirmWord}</strong> para confirmar</label>
