@@ -170,12 +170,8 @@ export function FinancialManagementPage() {
   };
   return (
     <section className="finance-page">
-      <header className="page-heading">
-        <div>
-          <p className="eyebrow">FINANZAS · GASTOS TECNOLÓGICOS</p>
-          <h1>Control financiero</h1>
-          <p>Edición controlada y trazabilidad.</p>
-        </div>
+      <header className="admin-section-heading">
+        <h1>Control financiero</h1>
         <div className="ad-finance-exports">
           <button className="ad-button" onClick={() => download("csv")}>
             <Icon name="download" size={16}/>CSV
