@@ -178,7 +178,7 @@
 .admin-refresh .au-accounts{display:grid;gap:10px;padding-top:16px;border-top:1px solid #ebf1fa}
 .admin-refresh .au-accounts>div{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:12px 14px;border:1px solid #e5ebf6;border-radius:11px;background:#fafcff;color:#577197;font-size:11px}
 .admin-refresh .au-accounts>div strong{color:#20395f;flex:1}
-.admin-refresh .au-activity-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}
+.admin-refresh .au-activity-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
 .admin-refresh .au-activity-grid article{display:grid;align-content:start;gap:10px;min-width:0;padding:15px;border:1px solid #e5ebf8;border-radius:12px;background:#fafcff}
 .admin-refresh .au-activity-grid strong{color:#172f57;font-size:22px;font-weight:850}
 .admin-refresh .au-activity-grid article>span:last-child{font-size:11px;line-height:1.5;color:#7585a0}
