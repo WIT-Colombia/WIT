@@ -26,7 +26,7 @@ export async function getAdminBusinessAnalytics(query: Query, now = new Date()) 
     ...(categoryId ? { categoryId } : {}),
     ...(city ? { location: { is: { countryCode: city.country, cityName: city.cityName } } } : {}),
   };
-  const [first, total, categories, locations] = await Promise.all([
+  const [first, total, categories, locations, firstUser, totalUsers, totalReviews] = await Promise.all([
     prisma.business.findFirst({ where, orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
     prisma.business.count({ where }),
     prisma.category.findMany({
@@ -40,10 +40,15 @@ export async function getAdminBusinessAnalytics(query: Query, now = new Date()) 
       select: { countryCode: true, cityName: true },
       orderBy: [{ countryCode: 'asc' }, { cityName: 'asc' }],
     }),
+    prisma.user.findFirst({ where: { status: { not: 'DELETED' } }, orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
+    prisma.user.count({ where: { status: { not: 'DELETED' } } }),
+    prisma.businessReview.count({ where: { status: 'PUBLISHED', business: where } }),
   ]);
   const todayMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const isGlobal = !city && !categoryId && status === 'all';
+  const oldestDate = isGlobal && firstUser && (!first || firstUser.createdAt < first.createdAt) ? firstUser.createdAt : first?.createdAt;
   const start = period === 'all'
-    ? first ? new Date(Date.UTC(first.createdAt.getUTCFullYear(), first.createdAt.getUTCMonth(), 1)) : todayMonth
+    ? oldestDate ? new Date(Date.UTC(oldestDate.getUTCFullYear(), oldestDate.getUTCMonth(), 1)) : todayMonth
     : new Date(Date.UTC(todayMonth.getUTCFullYear(), todayMonth.getUTCMonth() - Number.parseInt(period, 10) + 1, 1));
   const end = new Date(Date.UTC(todayMonth.getUTCFullYear(), todayMonth.getUTCMonth() + 1, 1));
   const conditions: Prisma.Sql[] = [
@@ -57,22 +62,56 @@ export async function getAdminBusinessAnalytics(query: Query, now = new Date()) 
     SELECT 1 FROM BusinessLocation l WHERE l.businessId = b.id
       AND l.countryCode = ${city.country} AND l.cityName = ${city.cityName}
   )`);
-  const records = await prisma.$queryRaw<Array<{ month: string; quantity: bigint }>>(Prisma.sql`
-    SELECT DATE_FORMAT(b.createdAt, '%Y-%m') AS month, COUNT(*) AS quantity
-    FROM Business b WHERE ${Prisma.join(conditions, ' AND ')}
-    GROUP BY DATE_FORMAT(b.createdAt, '%Y-%m') ORDER BY month ASC
-  `);
+  const reviewsConditions: Prisma.Sql[] = [
+    Prisma.sql`r.status = 'PUBLISHED'`,
+    Prisma.sql`b.deletionStatus <> 'DELETED'`,
+    Prisma.sql`r.createdAt >= ${start}`,
+    Prisma.sql`r.createdAt < ${end}`,
+  ];
+  if (publicationStatus) reviewsConditions.push(Prisma.sql`b.publicationStatus = ${publicationStatus}`);
+  if (categoryId) reviewsConditions.push(Prisma.sql`b.categoryId = ${categoryId}`);
+  if (city) reviewsConditions.push(Prisma.sql`EXISTS (
+    SELECT 1 FROM BusinessLocation l WHERE l.businessId = b.id
+      AND l.countryCode = ${city.country} AND l.cityName = ${city.cityName}
+  )`);
+  const [records, reviewRecords, userRecords] = await Promise.all([
+    prisma.$queryRaw<Array<{ month: string; quantity: bigint }>>(Prisma.sql`
+      SELECT DATE_FORMAT(b.createdAt, '%Y-%m') AS month, COUNT(*) AS quantity
+      FROM Business b WHERE ${Prisma.join(conditions, ' AND ')}
+      GROUP BY DATE_FORMAT(b.createdAt, '%Y-%m') ORDER BY month ASC
+    `),
+    prisma.$queryRaw<Array<{ month: string; quantity: bigint }>>(Prisma.sql`
+      SELECT DATE_FORMAT(r.createdAt, '%Y-%m') AS month, COUNT(*) AS quantity
+      FROM BusinessReview r INNER JOIN Business b ON b.id = r.businessId
+      WHERE ${Prisma.join(reviewsConditions, ' AND ')}
+      GROUP BY DATE_FORMAT(r.createdAt, '%Y-%m') ORDER BY month ASC
+    `),
+    prisma.$queryRaw<Array<{ month: string; quantity: bigint }>>(Prisma.sql`
+      SELECT DATE_FORMAT(u.createdAt, '%Y-%m') AS month, COUNT(*) AS quantity
+      FROM `User` u WHERE u.status <> 'DELETED'
+        AND u.createdAt >= ${start} AND u.createdAt < ${end}
+      GROUP BY DATE_FORMAT(u.createdAt, '%Y-%m') ORDER BY month ASC
+    `),
+  ]);
   const monthly = new Map(records.map(item => [item.month, Number(item.quantity)]));
-  const series: Array<{ month: string; registrations: number; cumulative: number }> = [];
+  const monthlyReviews = new Map(reviewRecords.map(item => [item.month, Number(item.quantity)]));
+  const monthlyUsers = new Map(userRecords.map(item => [item.month, Number(item.quantity)]));
+  const series: Array<{ month: string; registrations: number; cumulative: number; reviews: number; reviewCumulative: number; users: number; userCumulative: number }> = [];
   let cumulative = total - [...monthly.values()].reduce((a, b) => a + b, 0);
+  let reviewCumulative = totalReviews - [...monthlyReviews.values()].reduce((a, b) => a + b, 0);
+  let userCumulative = totalUsers - [...monthlyUsers.values()].reduce((a, b) => a + b, 0);
   for (let cursor = new Date(start); cursor < end; cursor.setUTCMonth(cursor.getUTCMonth() + 1)) {
     const month = cursor.toISOString().slice(0, 7);
     const registrations = monthly.get(month) ?? 0;
+    const reviews = monthlyReviews.get(month) ?? 0;
+    const users = monthlyUsers.get(month) ?? 0;
     cumulative += registrations;
-    series.push({ month, registrations, cumulative });
+    reviewCumulative += reviews;
+    userCumulative += users;
+    series.push({ month, registrations, cumulative, reviews, reviewCumulative, users, userCumulative });
   }
   return {
-    period, status, timezone: 'UTC', total,
+    period, status, timezone: 'UTC', total, totalUsers, totalReviews,
     filters: {
       cities: locations.map(loc => ({ value: loc.countryCode + '|' + loc.cityName, label: loc.cityName + ' · ' + loc.countryCode })),
       categories: categories.map(category => ({
@@ -83,6 +122,6 @@ export async function getAdminBusinessAnalytics(query: Query, now = new Date()) 
       })),
     },
     series,
-    definition: 'Registros agrupados por fecha de creación. El estado es el actual, no un historial de cambios de estado. Se excluyen negocios eliminados.',
+    definition: 'Negocios y usuarios se agrupan por fecha de registro; opiniones por fecha de publicación. Los estados corresponden a la situación actual, no a un historial de cambios. Se excluyen negocios y usuarios eliminados. La estadística de usuarios es global, sin segmentación por ciudad o categoría.',
   };
 }
