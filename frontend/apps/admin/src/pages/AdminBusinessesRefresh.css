@@ -346,3 +346,143 @@
 @media(prefers-reduced-motion:reduce){
   .admin-refresh .businesses-page *{transition:none!important;animation:none!important}
 }
+
+
+/* Detail page: the same Admin visual system and meaningful status cards. */
+.admin-refresh .admin-business-detail-refreshed{
+  display:grid;gap:20px;min-width:0;color:#132440;
+}
+.admin-refresh .admin-business-detail-refreshed a{text-decoration:none!important}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-back{
+  display:inline-flex;align-items:center;justify-self:start;gap:9px;
+  min-height:39px;padding:8px 15px;border:1px solid #d5e3fa;
+  border-radius:999px;background:#fff;color:#2258cb;
+  font-size:11px;font-weight:800;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-back svg{
+  transform:rotate(180deg);
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-back:hover{
+  background:#eef5ff;border-color:#a8c7ff;color:#1248b0;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-hero{
+  display:flex;align-items:center;gap:19px;min-width:0;
+  padding:27px 29px;border:1px solid #dae5f8;border-radius:20px;
+  background:linear-gradient(120deg,#fff 0%,#f6f9ff 68%,#eeeaff 100%);
+  box-shadow:0 10px 29px #14305f10;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-hero>div{
+  min-width:0;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-icon{
+  display:grid;place-items:center;flex:0 0 67px;width:67px;height:67px;
+  border:1px solid #c9d8ff;border-radius:18px;
+  background:linear-gradient(135deg,#e9edff,#d9e4ff);color:#245cf2;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-eyebrow{
+  display:block;margin-bottom:8px;color:#315ddd;
+  font-size:10px;font-weight:850;letter-spacing:.12em;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-hero h1{
+  margin:0 0 7px;color:#13223e;
+  font-size:clamp(24px,2.5vw,34px);
+  font-weight:850;letter-spacing:-.035em;line-height:1.2;
+  overflow-wrap:anywhere;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-hero p{
+  margin:0;color:#6b7e99;font-size:12px;line-height:1.6;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-highlights{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;
+  width:100%;min-width:0;margin:0;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-highlights article{
+  display:grid;align-content:center;gap:13px;
+  min-width:0;min-height:108px;padding:19px;
+  border:1px solid #dfe7f5;border-radius:16px;
+  background:#fff;box-shadow:0 8px 22px #14305f0b;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-highlights article>span{
+  display:inline-flex;align-items:center;gap:9px;
+  color:#667b97;font-size:12px;font-weight:700;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-highlights article>span svg{color:#245cf2}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-highlights article>strong{
+  display:inline-flex;align-items:center;justify-self:start;
+  font-size:17px;font-weight:800;color:#172a4f;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-highlights .business-status-text{
+  padding:8px 13px;border-radius:99px;font-size:12px;line-height:1.4;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-information{
+  min-width:0;padding:25px 26px;border:1px solid #dfe7f5;
+  border-radius:19px;background:#fff;box-shadow:0 9px 25px #14305f0d;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-section-heading{
+  display:flex;align-items:center;gap:13px;
+  min-width:0;padding-bottom:22px;margin-bottom:20px;
+  border-bottom:1px solid #edf1f8;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-section-heading>div{min-width:0}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-section-icon{
+  display:grid;place-items:center;flex:0 0 47px;width:47px;height:47px;
+  border-radius:13px;background:#eaf1ff;color:#245cf2;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-section-heading h2{
+  margin:0 0 6px;color:#132746;font-size:19px;font-weight:800;
+  letter-spacing:-.025em;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-section-heading p{
+  margin:0;color:#70839d;font-size:11px;line-height:1.5;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-information dl{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;
+  min-width:0;margin:0;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-information dl>div{
+  display:grid;align-content:start;gap:8px;
+  min-width:0;margin:0;padding:16px 18px;
+  border:1px solid #edf1f8;border-radius:12px;background:#fafcff;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-information dt{
+  margin:0;color:#7587a2;font-size:11px;font-weight:750;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-information dd{
+  margin:0;color:#1f3556;font-size:13px;font-weight:650;
+  line-height:1.65;overflow-wrap:anywhere;
+}
+.admin-refresh .admin-business-detail-refreshed .ad-business-detail-information .ad-business-detail-description{
+  grid-column:1/-1;
+}
+@media(max-width:900px){
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-highlights{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:650px){
+  .admin-refresh .admin-business-detail-refreshed{gap:14px}
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-hero{
+    padding:19px 16px;gap:12px;border-radius:16px;
+  }
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-icon{
+    flex-basis:49px;width:49px;height:49px;border-radius:13px;
+  }
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-icon svg{width:26px;height:26px}
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-hero h1{font-size:22px}
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-hero p{font-size:11px}
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-highlights{
+    grid-template-columns:minmax(0,1fr);gap:10px;
+  }
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-highlights article{
+    min-height:82px;padding:16px;gap:9px;
+  }
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-information{
+    padding:19px 14px;border-radius:16px;
+  }
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-information dl{
+    grid-template-columns:minmax(0,1fr);gap:10px;
+  }
+  .admin-refresh .admin-business-detail-refreshed .ad-business-detail-information .ad-business-detail-description{
+    grid-column:auto;
+  }
+}
