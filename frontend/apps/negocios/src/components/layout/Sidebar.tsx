@@ -27,14 +27,25 @@ export function Sidebar({ empty = false, onNavigate }: { empty?: boolean; onNavi
   const demoPro = new URLSearchParams(location.search).get("demoPro") === "1";
   const [notice, setNotice] = useState<"pro" | null>(null);
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
-  const [isPro, setIsPro] = useState(false);
+  // Avoid a Pro upsell flash while the selected business plan is unresolved.
+  // Key the result by business to prevent showing a previous business's plan.
+  const [resolvedPlan, setResolvedPlan] = useState<{ businessId: string; isPro: boolean } | null>(null);
+  const planBusinessId = business.source === "real" ? business.id : null;
+  const confirmedPro = planBusinessId && resolvedPlan?.businessId === planBusinessId ? resolvedPlan.isPro : null;
+  const isPro = demoPro || confirmedPro === true;
+  const showProOffer = !demoPro && (planBusinessId ? confirmedPro === false : true);
   const unread = notifications.filter(item => !item.read).length + persistentNotificationCount;
   useEffect(() => {
     let active = true;
-    if (business.source !== "real" || !business.id) { setIsPro(false); return () => { active = false; }; }
-    businessApi.getCatalogLimits(business.id).then(limits => { if (active) setIsPro(demoPro || limits.plan === "PRO"); }).catch(() => { if (active) setIsPro(false); });
+    if (!planBusinessId) {
+      setResolvedPlan(null);
+      return () => { active = false; };
+    }
+    businessApi.getCatalogLimits(planBusinessId)
+      .then(limits => { if (active) setResolvedPlan({ businessId: planBusinessId, isPro: limits.plan === "PRO" }); })
+      .catch(() => { if (active) setResolvedPlan(null); });
     return () => { active = false; };
-  }, [business.id, business.source, demoPro]);
+  }, [planBusinessId]);
   useEffect(() => { let objectUrl: string | null = null; if (!user?.avatarUrl) { setAvatarSrc(null); return; } if (!user.avatarUrl.startsWith("/api/v1/auth/me/avatar")) { setAvatarSrc(user.avatarUrl); return; } void getAvatarBlob(user.avatarUrl).then(blob => { objectUrl = URL.createObjectURL(blob); setAvatarSrc(objectUrl); }).catch(() => setAvatarSrc(null)); return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); }; }, [user?.avatarUrl]);
   const displayName = user?.displayName || (business.source === "real" ? "" : account.name);
   const initials = displayName.split(" ").map(part => part[0]).slice(0, 2).join("");
@@ -58,7 +69,7 @@ export function Sidebar({ empty = false, onNavigate }: { empty?: boolean; onNavi
   return <aside className="sidebar business-shell-sidebar">
     <Link className="sidebar-brand" to="/inicio" aria-label="XAMUKO Business, inicio" onClick={onNavigate}><span className="sidebar-brand-artwork"><img src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" /><img className="sidebar-brand-wordmark" src="/brand/xamuko-lockup.png" alt="" aria-hidden="true" width="2170" height="725" /></span><span>BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
     <nav aria-label="Navegación principal" className="sidebar-nav">{visibleEntries.map(entry => <NavLink key={entry.label} to={entry.to} end={entry.to === "/"} onClick={onNavigate} className={({ isActive }) => `nav-link${(entry.label === "Colaboradores" ? collaborators && !empty : entry.label === "Mi negocio" ? !collaborators && location.pathname.startsWith("/mi-negocio") : entry.label === "Configuración" ? (isActive || legalFromSettings) : isActive) ? " active" : ""}`}><SidebarIcon name={entry.icon} /><span>{entry.label}</span>{entry.label === "Notificaciones" && unread > 0 && <span className="notification-dot">{unread}</span>}</NavLink>)}</nav>
-    {!isPro && <section className="sidebar-pro-card"><div><span className="sidebar-pro-icon" aria-hidden="true"><SidebarIcon name="crown" /></span><strong><em>XAMUKO</em>Business Pro</strong></div><p>Haz crecer tu negocio con herramientas exclusivas.</p><button type="button" onClick={() => setNotice("pro")}>Conocer beneficios</button></section>}
+    {showProOffer && <section className="sidebar-pro-card"><div><span className="sidebar-pro-icon" aria-hidden="true"><SidebarIcon name="crown" /></span><strong><em>XAMUKO</em>Business Pro</strong></div><p>Haz crecer tu negocio con herramientas exclusivas.</p><button type="button" onClick={() => setNotice("pro")}>Conocer beneficios</button></section>}
     <nav aria-label="Ayuda y soporte" className="sidebar-support"><Link to="/ayuda" onClick={onNavigate}><SidebarIcon name="help" />Centro de ayuda</Link><Link to="/soporte" onClick={onNavigate}><SidebarIcon name="support" />Soporte técnico</Link><Link to="/sugerencias" onClick={onNavigate}><SidebarIcon name="message" />Sugerencias</Link></nav>
     <Link className="sidebar-account-link" to={empty ? "/perfil?empty=1" : "/perfil"} onClick={onNavigate}><span className="sidebar-account-avatar">{avatarSrc ? <img src={avatarSrc} alt="" /> : initials}</span><span><strong>{displayName}</strong><small>Mi cuenta</small></span><span className="sidebar-account-arrow">›</span></Link>
     {notice === "pro" && <BusinessProBenefitsDialog onClose={() => setNotice(null)} />}
