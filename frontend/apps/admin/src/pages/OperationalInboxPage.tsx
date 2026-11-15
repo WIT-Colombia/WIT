@@ -29,6 +29,7 @@ const date = (value: string) => {
 export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
   const [records, setRecords] = useState<OperationalRecord[]>([]);
   const [total, setTotal] = useState(0);
+  const [actionCounts, setActionCounts] = useState({ pending: 0, reviewing: 0 });
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('ALL');
@@ -51,6 +52,21 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
     } finally { setLoading(false); }
   }, [kind, page, search, status]);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    const fetchCounts = async () => {
+      try {
+        const [pending, reviewing] = await Promise.all([
+          listOperationalRecords(kind, { page: 1, status: 'PENDING' }),
+          listOperationalRecords(kind, { page: 1, status: 'UNDER_REVIEW' }),
+        ]);
+        if (active) setActionCounts({ pending: pending.pagination.total, reviewing: reviewing.pagination.total });
+      } catch { /* The directory remains usable if summary counters are unavailable. */ }
+    };
+    void fetchCounts();
+    return () => { active = false; };
+  }, [kind, page, status, search, confirmation]);
+
   useEffect(() => { setSelected(null); setConfirmation(''); setNote(''); }, [kind, page, status, search]);
   const chosen = records.find(record => record.id === selected);
   async function decide(next: OperationalStatus, justification: string) {
@@ -66,6 +82,14 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
   }
   return <section className="ops-inbox" aria-labelledby="ops-title">
     <header className="admin-section-heading"><h1 id="ops-title">{config[kind].title}</h1></header>
+    <div className="ops-attention-summary" aria-label="Casos que requieren atención">
+      <button type="button" aria-pressed={status === 'PENDING'} onClick={() => { setPage(1); setStatus('PENDING'); }}>
+        <span>Pendientes de atención</span><strong>{actionCounts.pending}</strong>
+      </button>
+      <button type="button" aria-pressed={status === 'UNDER_REVIEW'} onClick={() => { setPage(1); setStatus('UNDER_REVIEW'); }}>
+        <span>En seguimiento</span><strong>{actionCounts.reviewing}</strong>
+      </button>
+    </div>
     <div className="ops-toolbar">
       <form onSubmit={event => { event.preventDefault(); setPage(1); setSearch(query); }}>
         <label>Buscar<input type="search" aria-label="Buscar solicitudes" value={query} placeholder="Nombre, motivo o descripción" onChange={event => setQuery(event.target.value)} /></label>
