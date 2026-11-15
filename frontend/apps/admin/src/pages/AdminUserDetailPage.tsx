@@ -144,7 +144,7 @@ export function AdminUserDetailPage() {
     <div className="au-business-link-info"><Link to={'/businesses/'+encodeURIComponent(item.id)}><strong>{item.name}</strong><Icon name="arrow" size={15}/></Link>
       <small>{item.category}{item.city?' · '+item.city:''}</small>
       <div className="au-business-link-badges"><span className={'au-role '+item.role.toLowerCase()}>{roleLabel(item.role)}</span>
-        <span className={'au-membership '+item.membershipStatus.toLowerCase()}>{membershipLabel[item.membershipStatus]??item.membershipStatus}</span>
+        <span className={'au-membership '+item.membershipStatus.toLowerCase()}>{membershipLabel[item.membershipStatus]??'Estado de vinculación no identificado'}</span>
         <span className="au-business-publication">{item.publicationStatus==='PUBLISHED'?'Publicado':item.publicationStatus==='REVIEW'?'En revisión':'No publicado'}</span></div></div>
   </article>;
   return <div className="au-page au-detail-page">
