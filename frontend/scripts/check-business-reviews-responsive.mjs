@@ -41,7 +41,7 @@ function pageMarkup() {
     '<button class="review-report-button">' + star + 'Reportar comentario</button></div>' +
     '<div class="business-response"><strong>Respuesta del negocio</strong><p>' + long + '</p></div></div></article>' +
     '<article class="review-entry"><div class="review-avatar">J</div><div><div class="review-entry-head"><strong>Jorge</strong><time>12 de noviembre de 2026</time></div>' +
-    '<div class="review-stars">★★★★<span>☆</span></div><p>Buena experiencia</p><div class="review-actions"><button class="review-reply-button">Responder</button>' +
+    '<div class="review-stars">★★★★<span>☆</span></div><p>Buena experiencia</p><div class="review-actions"><button class="review-reply-button" disabled>Respuesta bloqueada</button>' +
     '<button class="review-report-button">Reportar comentario</button></div></div></article></section></div></div></main></div></div></div>' +
     '<header class="mobile-topbar">Cabecera móvil</header><nav class="mobile-nav">Navegación móvil</nav></div>';
 }
@@ -81,6 +81,16 @@ try {
     const context = await browser.newContext({ viewport:{width,height}, isMobile:mobile, hasTouch:mobile, deviceScaleFactor: mobile?2:1 });
     const page = await context.newPage();
     try {
+      // Regression: old shared CSS underlined both links on hover.
+      await page.setContent(pageMarkup() + '</body></html>');
+      await page.addStyleTag({ content:css });
+      const blocked = page.getByRole('button', { name:'Respuesta bloqueada' });
+      assert.equal(await blocked.isDisabled(), true, sizeName+': expired reply remains blocked');
+      assert.equal(await blocked.evaluate(el => getComputedStyle(el).textDecorationLine), 'none', sizeName+': blocked reply has no underline');
+      const report = page.getByRole('button', { name:'Reportar comentario' }).first();
+      assert.equal(await report.evaluate(el => getComputedStyle(el).textDecorationLine), 'none', sizeName+': report link has no underline');
+      await report.hover();
+      assert.equal(await report.evaluate(el => getComputedStyle(el).textDecorationLine), 'none', sizeName+': report link remains without underline on hover');
       for (const mode of ['reply','report']) {
         await page.setContent(dialogMarkup(mode));
         await page.addStyleTag({ content:css });
