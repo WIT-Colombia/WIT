@@ -5,6 +5,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import { sendTransactionalEmail } from '../../shared/email/email-service.js';
 import { colombiaCatalog } from './colombia-catalog.js';
 import { zoneState, type ZoneScope } from './zones.service.js';
+import { dispatchRegisteredZoneLaunchAlerts } from './zones-user-alerts.service.js';
 
 const hash=(token:string)=>createHash('sha256').update(token).digest('hex');
 const expireMs=48*60*60*1000;
@@ -145,7 +146,9 @@ export function startZoneLaunchAlertScheduler(){
   const run=async()=>{
     if(busy)return;busy=true;
     try{await dispatchZoneLaunchAlerts();}
-    catch(e){console.error('Error al revisar avisos de aperturas territoriales',e instanceof Error?e.message:'error');}
+    catch(e){console.error('Error al revisar avisos de aperturas territoriales por correo',e instanceof Error?e.message:'error');}
+    try{await dispatchRegisteredZoneLaunchAlerts();}
+    catch(e){console.error('Error al revisar notificaciones de aperturas para usuarios',e instanceof Error?e.message:'error');}
     finally{busy=false;}
   };
   void run();
