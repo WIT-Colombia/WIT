@@ -214,11 +214,24 @@ export async function getPromotionPhotoContent(userId: string, identifier: strin
   catch (error) { if (isPhotoMissingError(error)) throw new AppError(404, 'PROMOTION_PHOTO_NOT_FOUND', 'No encontramos esa fotografía.'); throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la fotografía.'); }
 }
 
+import { readZonePolicy, isBusinessInActiveZone } from '../zones/zone-policy.service.js';
 const publicBusinessWhere = { businessAccount: { status: 'ACTIVE' }, lifecycleStatus: 'ACTIVE', publicationStatus: 'PUBLISHED', visibilityStatus: 'VISIBLE', deletionStatus: 'NONE' } as const;
+async function assertPublicPromotionTerritory(businessId:string){
+  const [policy,business]=await Promise.all([
+    readZonePolicy(),
+    prisma.business.findUnique({where:{id:businessId},
+      select:{location:{select:{cityName:true,regionName:true,regionCode:true,countryCode:true}},
+        modalities:{where:{status:'ACTIVE'},select:{type:true}}}}),
+  ]);
+  if(!business||!isBusinessInActiveZone(business,policy))
+    throw new AppError(404,'PROMOTION_NOT_AVAILABLE','La promoción no está disponible.');
+}
+
 
 export async function listPublicPromotions(publicId: string) {
   const business = await prisma.business.findFirst({ where: { publicId, ...publicBusinessWhere }, select: { id: true } });
   if (!business) throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese negocio.');
+  await assertPublicPromotionTerritory(business.id);
   const rows = await prisma.businessPromotion.findMany({ where: { businessId: business.id, active: true, deletedAt: null, startsAt: { lte: new Date() } }, include: includePhotos, orderBy: [{ startsAt: 'asc' }, { id: 'asc' }] });
   return rows.filter(row => state(row) === 'ACTIVE').map(row => ({ ...serialize(row, business.id, 0), photos: (row.photos?.length ? row.photos : (row.relatedOffer?.photos ?? [])).map((photo: any) => ({ id: photo.id, url: row.photos?.length ? `/api/v1/public/promotions/${row.id}/photos/${photo.id}` : `/api/v1/public/businesses/${business.id}/photos/${photo.id}/content`, sortOrder: photo.sortOrder })) }));
 }
@@ -229,6 +242,7 @@ export async function getPublicPromotion(promotionId: string) {
     include: { ...includePhotos, business: { select: { publicId: true, name: true, category: { select: { translations: { where: { locale: 'es' }, select: { name: true }, take: 1 } } } } } },
   });
   if (!row) throw new AppError(404, 'PROMOTION_NOT_AVAILABLE', 'Esta promoción no está disponible.');
+  await assertPublicPromotionTerritory(row.businessId);
   const promotionState = state(row);
   if (promotionState === 'SCHEDULED') throw new AppError(404, 'PROMOTION_NOT_AVAILABLE', 'Esta promoción no está disponible.');
   return {
@@ -240,8 +254,9 @@ export async function getPublicPromotion(promotionId: string) {
 }
 
 export async function getPublicPromotionPhoto(promotionId: string, photoId: string) {
-  const photo = await prisma.businessPromotionPhoto.findFirst({ where: { id: photoId, promotionId, promotion: { deletedAt: null, business: publicBusinessWhere } }, select: { storageKey: true, promotion: { select: { active: true, startsAt: true, endsAt: true, recurrence: true, recurrenceUntil: true } } } });
+  const photo = await prisma.businessPromotionPhoto.findFirst({ where: { id: photoId, promotionId, promotion: { deletedAt: null, business: publicBusinessWhere } }, select: { storageKey: true, promotion: { select: { businessId: true, active: true, startsAt: true, endsAt: true, recurrence: true, recurrenceUntil: true } } } });
   if (!photo || state(photo.promotion) === 'SCHEDULED') throw new AppError(404, 'PROMOTION_PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
+  await assertPublicPromotionTerritory(photo.promotion.businessId);
   try { return { content: await readPhoto(photo.storageKey), mimeType: photoMimeType(photo.storageKey) }; }
   catch (error) { if (isPhotoMissingError(error)) throw new AppError(404, 'PROMOTION_PHOTO_NOT_FOUND', 'No encontramos esa fotografía.'); throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la fotografía.'); }
 }
@@ -249,6 +264,7 @@ export async function getPublicPromotionPhoto(promotionId: string, photoId: stri
 export async function recordPromotionView(promotionId: string, dedupeKey?: string) {
   const promotion = await prisma.businessPromotion.findFirst({ where: { id: promotionId, active: true, deletedAt: null, business: publicBusinessWhere }, select: { id: true, businessId: true, active: true, startsAt: true, endsAt: true, recurrence: true, recurrenceUntil: true } });
   if (!promotion || state(promotion) !== 'ACTIVE') throw new AppError(404, 'PROMOTION_NOT_AVAILABLE', 'La promoción no está disponible.');
+  await assertPublicPromotionTerritory(promotion.businessId);
   if (dedupeKey) {
     try { await prisma.businessPromotionView.create({ data: { businessId: promotion.businessId, promotionId, dedupeKey: `${promotionId}:${dedupeKey}`.slice(0, 191) } }); }
     catch (error) { if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error; }
