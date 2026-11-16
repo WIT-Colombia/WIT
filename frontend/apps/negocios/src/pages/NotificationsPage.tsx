@@ -4,6 +4,7 @@ import { PageHeader } from "../components/common/PageHeader";
 import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type PersistedBusinessNotification } from "../services/businessApiClient";
 import { toBusinessDetails } from "../services/realBusinessAdapter";
+import { useBusinessAuth } from "../services/businessAuthContext";
 
 const icons = { review: "☆", interest: "↗", profile: "▣", wit: "✦", admin: "✉", offer: "✦", security: "✓", collaboration: "♙" };
 const destination = { review: "/opiniones", interest: "/productos", profile: "/mis-negocios/editar", wit: "/mi-negocio", admin: "/configuracion", offer: "/estadisticas", security: "/perfil" } as const;
@@ -42,6 +43,10 @@ function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) 
 
 export function NotificationsPage() {
   const { notifications, setNotifications, businesses, business, setBusinesses, setBusiness } = useBusinessStore();
+  const auth = useBusinessAuth();
+  const accountId = auth.state.status === "authenticated" ? auth.user?.id ?? "" : "";
+  const accountRef = useRef(accountId);
+  accountRef.current = accountId;
   const navigate = useNavigate();
   const businessIndex = Math.max(0, businesses.findIndex(item => item.id === business.id));
   const selectedBusinessId = business.id ?? "";
@@ -50,7 +55,8 @@ export function NotificationsPage() {
   const [filter, setFilter] = useState<"Todas" | "No leídas">("Todas");
   const [confirmingInvitation, setConfirmingInvitation] = useState<{ id: string; accepted: boolean } | null>(null);
   const [persisted, setPersisted] = useState<PersistedBusinessNotification[]>([]);
-  const [scopedUnread, setScopedUnread] = useState<{ businessId: string; count: number }>({ businessId: "", count: 0 });
+  const [persistedScope, setPersistedScope] = useState({ userId: "", businessId: "" });
+  const [scopedUnread, setScopedUnread] = useState<{ userId: string; businessId: string; count: number }>({ userId: "", businessId: "", count: 0 });
   const [markingAll, setMarkingAll] = useState(false);
   const [apiError, setApiError] = useState("");
   const [busyInvitation, setBusyInvitation] = useState<string | null>(null);
@@ -62,24 +68,27 @@ export function NotificationsPage() {
 
   const reloadPersisted = useCallback(async () => {
     const id = selectedBusinessId;
-    if (!id) { setPersisted([]); return; }
+    const uid = accountId;
+    if (!id || !uid) { setPersisted([]); return; }
     try {
       const { notifications: rows, unread } = await businessApi.listBusinessNotifications(id);
-      if (selectedBusinessRef.current !== id) return;
+      if (selectedBusinessRef.current !== id || accountRef.current !== uid) return;
       setPersisted(rows);
-      setScopedUnread({ businessId: id, count: unread });
+      setPersistedScope({ userId: uid, businessId: id });
+      setScopedUnread({ userId: uid, businessId: id, count: unread });
       setApiError("");
       window.dispatchEvent(new CustomEvent("xamuko-notifications-updated", {
         detail: { businessId: id, count: unread },
       }));
     } catch {
-      if (selectedBusinessRef.current === id)
+      if (selectedBusinessRef.current === id && accountRef.current === uid)
         setApiError("No fue posible consultar las notificaciones de este negocio.");
     }
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, accountId]);
   useEffect(() => {
     setPersisted([]);
-    setScopedUnread({ businessId: "", count: 0 });
+    setPersistedScope({ userId: "", businessId: "" });
+    setScopedUnread({ userId: "", businessId: "", count: 0 });
     setConfirmingInvitation(null);
     setConfirmingTransfer(null);
     setConfirmingDelete(null);
@@ -97,16 +106,17 @@ export function NotificationsPage() {
   }, [reloadPersisted]);
   const removePersisted = async (id: string) => {
     const requestedBusinessId = selectedBusinessId;
-    if (!requestedBusinessId || busyDelete) return;
+    const requestedUserId = accountId;
+    if (!requestedBusinessId || !requestedUserId || busyDelete) return;
     setBusyDelete(id); setApiError("");
     try {
       await businessApi.deleteBusinessNotification(id, requestedBusinessId);
-      if (selectedBusinessRef.current === requestedBusinessId) {
+      if (selectedBusinessRef.current === requestedBusinessId && accountRef.current === requestedUserId) {
         setConfirmingDelete(null);
         await reloadPersisted();
       }
     } catch (cause) {
-      if (selectedBusinessRef.current === requestedBusinessId)
+      if (selectedBusinessRef.current === requestedBusinessId && accountRef.current === requestedUserId)
         setApiError(cause instanceof Error ? cause.message : "No se pudo descartar el aviso.");
     } finally { setBusyDelete(null); }
   };
@@ -127,10 +137,11 @@ export function NotificationsPage() {
   const visible = currentLocal.filter(item => filter === "Todas" || !item.read)
     .sort((left, right) => notificationTime(right) - notificationTime(left));
   const visiblePersisted = useMemo(() => persisted.filter(item =>
+    persistedScope.userId === accountId && persistedScope.businessId === selectedBusinessId &&
     item.businessId === selectedBusinessId && (filter === "Todas" || !item.readAt)),
-    [filter, persisted, selectedBusinessId]);
+    [filter, persisted, persistedScope, selectedBusinessId, accountId]);
   const totalUnread = currentLocal.filter(item => !item.read).length +
-    (scopedUnread.businessId === selectedBusinessId ? scopedUnread.count : 0);
+    (scopedUnread.userId === accountId && scopedUnread.businessId === selectedBusinessId ? scopedUnread.count : 0);
 
   const respondPersisted = async (item: PersistedBusinessNotification, accept: boolean) => {
     if (!item.membershipId) return;
@@ -153,10 +164,10 @@ export function NotificationsPage() {
     setNotifications(notifications.map(item =>
       currentLocal.some(current => current.id === item.id) ? { ...item, read: true } : item));
     try {
-      if (id && scopedUnread.businessId === id && scopedUnread.count > 0)
+      if (id && accountId && scopedUnread.userId === accountId && scopedUnread.businessId === id && scopedUnread.count > 0)
         await businessApi.markAllBusinessNotificationsRead(id);
-      await reloadPersisted();
-    } catch { if (selectedBusinessRef.current === id) setApiError("No se pudieron actualizar todas las notificaciones."); }
+      if (selectedBusinessRef.current === id && accountRef.current === accountId) await reloadPersisted();
+    } catch { if (selectedBusinessRef.current === id && accountRef.current === accountId) setApiError("No se pudieron actualizar todas las notificaciones."); }
     finally { setMarkingAll(false); }
   };
   const respondTransfer = async (id: string, accept: boolean) => { setBusyTransfer(id); setApiError(""); try { await businessApi.respondOwnershipTransfer(id, accept); const fresh = (await businessApi.list()).businesses.map(toBusinessDetails); setBusinesses(fresh); const selected = fresh.find(value => value.id === business.id) ?? fresh[0]; if (selected) setBusiness(selected); await reloadTransfers(); await reloadPersisted(); setConfirmingTransfer(null); } catch (cause) { setApiError(cause instanceof Error ? cause.message : "No se pudo responder la transferencia."); } finally { setBusyTransfer(null); } };
