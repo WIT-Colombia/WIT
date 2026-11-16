@@ -16,9 +16,13 @@ const normalize = (value: string) => value.normalize('NFD')
 const categoryName = (category: AdminCategoryRecord) =>
   category.translations.find(item => item.locale.toLowerCase().startsWith('es'))?.name
     ?? category.translations[0]?.name ?? category.code;
-const products = (category: AdminCategoryRecord) => category.productCount ?? 0;
-const services = (category: AdminCategoryRecord) => category.serviceCount ?? 0;
-const offers = (category: AdminCategoryRecord) => products(category) + services(category);
+const products = (category: AdminCategoryRecord): number | null =>
+  Number.isFinite(category.productCount) ? category.productCount! : null;
+const services = (category: AdminCategoryRecord): number | null =>
+  Number.isFinite(category.serviceCount) ? category.serviceCount! : null;
+const offers = (category: AdminCategoryRecord) => products(category) !== null &&
+  services(category) !== null ? products(category)! + services(category)! : category._count.offers;
+const displayCount = (value: number | null) => value === null ? '—' : number(value);
 const safeCsv = (value: string | number) => {
   const raw = String(value);
   const safe = /^\s*[=+@-]/.test(raw) ? "'" + raw : raw;
@@ -99,8 +103,8 @@ function CategoryDetails({ category, onClose, canOpenBusinesses }: {
       </div>
       <div className="cat-detail-metrics">
         <div><small>Negocios</small><strong>{number(category._count.businesses)}</strong></div>
-        <div><small>Productos</small><strong>{number(products(category))}</strong></div>
-        <div><small>Servicios</small><strong>{number(services(category))}</strong></div>
+        <div><small>Productos</small><strong>{displayCount(products(category))}</strong></div>
+        <div><small>Servicios</small><strong>{displayCount(services(category))}</strong></div>
       </div>
       <section className="cat-detail-section">
         <h3><Icon name="globe" size={17} /> Nombres e idiomas</h3>
@@ -114,8 +118,9 @@ function CategoryDetails({ category, onClose, canOpenBusinesses }: {
         <h3><Icon name="database" size={17} /> Cómo se calculan las cifras</h3>
         <p>Los negocios se agrupan por su categoría principal. Productos y servicios
           son las publicaciones no eliminadas de esos negocios, incluso cuando la
-          publicación no tiene categoría individual asignada. Los contadores incluyen
-          valores cero y no representan ventas ni publicaciones necesariamente visibles.</p>
+          publicación no tiene categoría individual asignada. Un cero representa un conteo
+          confirmado; «—» significa que el servidor todavía no suministra ese dato.
+          No representan ventas ni publicaciones necesariamente visibles.</p>
       </section>
       <footer className="cat-detail-actions">
         {canOpenBusinesses && <Link to={'/businesses?categoryId=' + encodeURIComponent(category.id)}
@@ -163,8 +168,9 @@ export function AdminCategoriesPage() {
     active: categories.filter(category => category.active).length,
     inactive: categories.filter(category => !category.active).length,
     businesses: categories.reduce((sum, category) => sum + category._count.businesses, 0),
-    products: categories.reduce((sum, category) => sum + products(category), 0),
-    services: categories.reduce((sum, category) => sum + services(category), 0),
+    products: categories.reduce((sum, category) => sum + (products(category) ?? 0), 0),
+    services: categories.reduce((sum, category) => sum + (services(category) ?? 0), 0),
+    complete: categories.every(category => products(category) !== null && services(category) !== null),
     empty: categories.filter(category => category._count.businesses === 0).length,
   }), [categories]);
   const filtered = useMemo(() => {
@@ -197,10 +203,11 @@ export function AdminCategoriesPage() {
     setSearch(''); setFilter('ALL'); setSort('ORDER'); setPage(1);
   };
   const exportCsv = () => {
-    const header = ['Categoría', 'Código', 'Estado', 'Negocios', 'Productos', 'Servicios', 'Total publicaciones', 'Orden'];
+    const header = ['Categoría', 'Código', 'Estado', 'Negocios', 'Productos', 'Servicios',
+      stats.complete ? 'Publicaciones por categoría del negocio' : 'Publicaciones con categoría individual (datos antiguos)', 'Orden'];
     const rows = filtered.map(category => [categoryName(category), category.code,
       category.active ? 'Activa' : 'Inactiva', category._count.businesses,
-      products(category), services(category), offers(category), category.sortOrder]);
+      products(category) ?? '', services(category) ?? '', offers(category), category.sortOrder]);
     const csv = '\ufeff' + [header, ...rows].map(row => row.map(safeCsv).join(';')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
@@ -239,6 +246,10 @@ export function AdminCategoriesPage() {
       </button>
     </header>
 
+    {categories.length > 0 && !stats.complete && <div className="cat-warning cat-warning--info" role="status">
+      <Icon name="database" size={18} /><span>El servidor actual todavía no ofrece
+        el desglose por categoría del negocio. Mostramos «—» en lugar de inventar cifras;
+        los contadores de negocios siguen disponibles.</span></div>}
     {error && <div className="cat-warning" role="alert">
       <Icon name="flag" size={18} /> <span>No se pudieron actualizar las categorías.
         Se muestran los últimos datos consultados: {error}</span>
@@ -253,8 +264,13 @@ export function AdminCategoriesPage() {
         value={stats.inactive} hint="No habilitadas" />
       <Metric icon="store" tone="purple" title="Negocios asignados"
         value={stats.businesses} hint="Por categoría principal" />
-      <Metric icon="box" tone="teal" title="Productos y servicios"
-        value={stats.products + stats.services} hint={number(stats.products) + ' productos · ' + number(stats.services) + ' servicios'} />
+      {stats.complete ? <Metric icon="box" tone="teal" title="Productos y servicios"
+        value={stats.products + stats.services}
+        hint={number(stats.products) + ' productos · ' + number(stats.services) + ' servicios'} /> :
+        <article className="cat-metric cat-metric--neutral"><span className="cat-metric-icon"><Icon name="box" size={20} /></span>
+          <div className="cat-metric-info"><span>Productos y servicios</span>
+            <strong>—</strong><small>Desglose pendiente del servidor</small></div>
+        </article>}
     </div>
 
     <div className="cat-layout">
@@ -318,8 +334,8 @@ export function AdminCategoriesPage() {
               </td>
               <td data-label="Estado"><CategoryStatus active={category.active} /></td>
               <td className="cat-numeric" data-label="Negocios"><strong>{number(category._count.businesses)}</strong></td>
-              <td className="cat-numeric" data-label="Productos"><strong>{number(products(category))}</strong></td>
-              <td className="cat-numeric" data-label="Servicios"><strong>{number(services(category))}</strong></td>
+              <td className="cat-numeric" data-label="Productos"><strong>{displayCount(products(category))}</strong></td>
+              <td className="cat-numeric" data-label="Servicios"><strong>{displayCount(services(category))}</strong></td>
               <td data-label="Detalle"><button className="cat-details-button" type="button"
                 aria-label={'Ver detalle de ' + categoryName(category)}
                 onClick={() => setSelectedId(category.id)}>
@@ -345,8 +361,9 @@ export function AdminCategoriesPage() {
         </nav>}
         <p className="cat-directory-note">
           <Icon name="database" size={15} />
-          Los contadores representan registros de negocios y publicaciones no eliminadas agrupadas
-          por la categoría principal del negocio. Incluyen los valores cero.
+          {stats.complete
+            ? 'Los negocios y publicaciones no eliminadas se agrupan por la categoría principal del negocio. Los valores cero son reales.'
+            : 'El servidor aún no ofrece un desglose completo de productos y servicios. Un guion significa dato no disponible, no cero.'}
         </p>
       </Panel>
 
@@ -368,7 +385,7 @@ export function AdminCategoriesPage() {
                   categoryName(category) + ': ' + number(category._count.businesses) + ' negocios'}>
                   <span style={{ width: (max ? 100 * category._count.businesses / max : 0) + '%' }} />
                 </div>
-                <small>{number(offers(category))} productos y servicios</small>
+                <small>{number(offers(category))} {stats.complete ? 'productos y servicios' : 'publicaciones con categoría individual'}</small>
               </li>;
             })}
           </ol> : <p className="cat-side-empty">Todavía no hay negocios asignados a categorías.</p>}
@@ -395,8 +412,10 @@ export function AdminCategoriesPage() {
           <h2>Cómo interpretar estos datos</h2>
           <p><strong>Negocios:</strong> cantidad de negocios vinculados a su categoría principal,
             independientemente de que estén publicados.</p>
-          <p><strong>Productos y servicios:</strong> publicaciones no eliminadas dentro de los negocios
-            de cada categoría. No son ventas, visualizaciones ni contenido necesariamente visible.</p>
+          <p><strong>Productos y servicios:</strong> {stats.complete
+            ? 'publicaciones no eliminadas dentro de los negocios de cada categoría.'
+            : 'el desglose por categoría del negocio todavía no está disponible en este servidor.'}
+            No representan ventas, visualizaciones ni contenido necesariamente visible.</p>
           <p><strong>Estado:</strong> indica si la categoría está habilitada en el catálogo,
             no la disponibilidad territorial de sus negocios.</p>
         </section>
