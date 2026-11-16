@@ -143,6 +143,8 @@ enum MembershipStatus {
 enum BusinessNotificationType {
   COLLABORATION_INVITATION
   COLLABORATION_UPDATE
+  VISIBILITY_REMINDER
+  VISIBILITY_EXPIRED
 }
 
 enum MembershipPermissionCode {
@@ -791,6 +793,19 @@ model PlatformNotification {
   @@index([userId, deletedAt, createdAt])
   @@index([userId, readAt, createdAt])
   @@index([sourceType, sourceId])
+}
+
+// One durable dispatch key per notice, recipient and channel. Remains after inbox deletion.
+model BusinessLifecycleNoticeDispatch {
+  id         String   @id @default(uuid()) @db.Char(36)
+  dedupeKey  String   @unique @db.VarChar(180)
+  businessId String   @db.Char(36)
+  userId     String   @db.Char(36)
+  event      String   @db.VarChar(32)
+  channel    String   @db.VarChar(16)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+
+  @@index([businessId, createdAt])
 }
 
 model BusinessNotification {
