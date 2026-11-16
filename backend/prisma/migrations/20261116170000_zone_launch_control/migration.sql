@@ -21,3 +21,24 @@ ALTER TABLE `AuditLog` MODIFY `entityType`
 -- Todos los demás municipios son CLOSED mientras no exista una decisión administrativa de apertura.
 INSERT INTO `ZoneLaunch` (`id`,`scope`,`code`,`name`,`state`,`opensAt`,`updatedById`,`createdAt`,`updatedAt`)
 VALUES (UUID(),'MUNICIPALITY','76520','Palmira','OPEN',NULL,NULL,CURRENT_TIMESTAMP(3),CURRENT_TIMESTAMP(3));
+
+-- Avisos solicitados de forma voluntaria. El email solo entra en la lista después de confirmar el enlace.
+CREATE TABLE `ZoneLaunchAlert` (
+  `id` CHAR(36) NOT NULL,
+  `scope` ENUM('MUNICIPALITY','DEPARTMENT') NOT NULL,
+  `code` VARCHAR(5) NOT NULL,
+  `emailNormalized` VARCHAR(320) NOT NULL,
+  `confirmTokenHash` CHAR(64) NOT NULL,
+  `confirmExpiresAt` DATETIME(3) NOT NULL,
+  `confirmedAt` DATETIME(3) NULL,
+  `lastDispatchAttempt` DATETIME(3) NULL,
+  `notifiedAt` DATETIME(3) NULL,
+  `unsubscribedAt` DATETIME(3) NULL,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `ZoneLaunchAlert_scope_code_emailNormalized_key` (`scope`,`code`,`emailNormalized`),
+  UNIQUE INDEX `ZoneLaunchAlert_confirmTokenHash_key` (`confirmTokenHash`),
+  INDEX `ZoneLaunchAlert_confirmedAt_notifiedAt_unsubscribedAt_idx` (`confirmedAt`,`notifiedAt`,`unsubscribedAt`),
+  INDEX `ZoneLaunchAlert_scope_code_idx` (`scope`,`code`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
