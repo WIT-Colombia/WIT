@@ -130,8 +130,8 @@ function CategoryDetails({ category, onClose, canOpenBusinesses }: {
 
 export function AdminCategoriesPage() {
   const session = getSession();
-  const allowed = session?.permissions?.includes('catalog:read') ??
-    (session?.realRole === 'SUPER_ADMIN');
+  const allowed = session?.permissions?.includes('catalog:read') === true ||
+    session?.realRole === 'SUPER_ADMIN';
   const canOpenBusinesses = session?.permissions?.includes('business:write') ?? false;
   const [categories, setCategories] = useState<AdminCategoryRecord[]>([]);
   const [loading, setLoading] = useState(Boolean(allowed));
