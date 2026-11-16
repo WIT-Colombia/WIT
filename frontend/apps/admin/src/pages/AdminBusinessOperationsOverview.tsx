@@ -1,5 +1,5 @@
 import { Icon } from '../components/Icon';
-import type { AdminBusinessOverview } from '../services/adminApiClient';
+import type { AdminBusinessOverview, AdminDashboardStats } from '../services/adminApiClient';
 
 const cards = [
   { key: 'total', label: 'Registrados', icon: 'store', tone: 'blue', hint: 'Excluye negocios eliminados' },
@@ -17,8 +17,8 @@ const cards = [
 ] as const;
 const fmt = (n: number) => n.toLocaleString('es-CO');
 
-export function AdminBusinessOperationsOverview({ data, loading, error, retry }: {
-  data: AdminBusinessOverview | null; loading: boolean; error: string; retry: () => void;
+export function AdminBusinessOperationsOverview({ data, legacy, loading, error, retry }: {
+  data: AdminBusinessOverview | null; legacy: AdminDashboardStats | null; loading: boolean; error: string; retry: () => void;
 }) {
   return <section className="ad-ops-overview" aria-labelledby="ad-ops-overview-title">
     <div className="ad-ops-section-heading">
@@ -26,14 +26,27 @@ export function AdminBusinessOperationsOverview({ data, loading, error, retry }:
         <p>Indicadores reales de la base de datos. Cada estado tiene un significado distinto.</p></div>
       <button type="button" onClick={retry} aria-label="Actualizar indicadores"><Icon name="refresh" size={17}/> Actualizar</button>
     </div>
-    {error && <p className="ad-ops-overview-error" role="alert">No pudimos consultar el resumen: {error}</p>}
-    <div className="ad-ops-kpi-grid">
+    {!data && legacy && <div className="ad-ops-compatibility" role="status">
+      <Icon name="clock" size={19}/> Indicadores básicos disponibles. Los controles de visibilidad, planes y filtros avanzados requieren la actualización pendiente del backend.
+    </div>}
+    {error && !legacy && <p className="ad-ops-overview-error" role="alert">No pudimos consultar el resumen: {error}</p>}
+    {!data && legacy ? <div className="ad-ops-kpi-grid">
+      {[
+        { label: 'Negocios registrados', value: legacy.totals.businesses, icon: 'store' },
+        { label: 'Publicados', value: legacy.businessStatuses.published, icon: 'eye' },
+        { label: 'En revisión', value: legacy.businessStatuses.review, icon: 'clock' },
+        { label: 'No publicados', value: legacy.businessStatuses.unpublished, icon: 'eye-off' },
+      ].map(card => <article className="ad-ops-kpi tone-blue" key={card.label}>
+        <span className="ad-ops-kpi-heading"><i><Icon name={card.icon} size={20}/></i><span>{card.label}</span></span>
+        <strong>{fmt(card.value)}</strong><small>Registro real del backend disponible</small>
+      </article>)}
+    </div> : <div className="ad-ops-kpi-grid">
       {cards.map(card => <article key={card.key} className={'ad-ops-kpi tone-' + card.tone}>
         <span className="ad-ops-kpi-heading"><i><Icon name={card.icon} size={20}/></i><span>{card.label}</span></span>
         <strong aria-busy={loading}>{loading ? '…' : data ? fmt(data[card.key]) : '—'}</strong>
         <small>{card.hint}</small>
       </article>)}
-    </div>
+    </div>}
     {data && <div className="ad-ops-distribution">
       <header><div><h3>Distribución de visibilidad</h3><p>Porcentaje sobre el total de negocios no eliminados</p></div><strong>{fmt(data.total)} negocios</strong></header>
       <div className="ad-ops-distribution-bars">

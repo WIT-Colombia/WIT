@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { getAdminBusiness, listAdminBusinesses, getAdminBusinessesOverview, getAdminBusinessesFilterOptions,
+import { getAdminBusiness, listAdminBusinesses, getAdminBusinessesOverview, getAdminBusinessesFilterOptions, getAdminDashboardStats,
   adminBusinessVisibilityLabel, type AdminBusinessPage, type AdminBusinessRecord, type AdminBusinessOverview,
-  type AdminBusinessFilterOptions, type AdminBusinessesFilters, type AdminVisibilityAction } from '../services/adminApiClient';
+  type AdminBusinessFilterOptions, type AdminBusinessesFilters, type AdminVisibilityAction, type AdminDashboardStats } from '../services/adminApiClient';
 import { StatePanel } from '../components/common';
 import { Icon } from '../components/Icon';
 import { getSession } from '../services/adminService';
@@ -25,6 +25,7 @@ const visibilityTone: Record<string, string> = { VISIBLE: 'status-visible', HIDD
 const verificationTone: Record<string, string> = { NONE: 'status-none', PENDING: 'status-pending', INFORMATION: 'status-information', APPROVED: 'status-approved', REJECTED: 'status-rejected' };
 const verificationLabels: Record<string, string> = { NONE: 'Sin verificar', PENDING: 'Pendiente de verificación', INFORMATION: 'Información solicitada', APPROVED: 'Verificado', REJECTED: 'Rechazado' };
 const translatedStatus = (labels: Record<string, string>, value: string) => labels[value] ?? 'Estado no reconocido';
+const planLabel = (business: AdminBusinessRecord) => business.isPro === true ? 'PRO' : business.isPro === false ? 'Básico' : 'Por verificar';
 
 function StoreIllustration() {
   return <svg className="business-empty-illustration" viewBox="0 0 360 180" role="img" aria-label="Ilustración de una tienda">
@@ -40,6 +41,9 @@ function StoreIllustration() {
 export function AdminBusinessesPage() {
   const allowed = getSession()?.permissions?.includes('business:write') ?? false;
   const canDelete = getSession()?.role === 'SUPER_ADMIN';
+  const [featureReady, setFeatureReady] = useState(false);
+  const [legacyStats, setLegacyStats] = useState<AdminDashboardStats | null>(null);
+  const canModerate = canDelete && featureReady;
   const [deleteTarget, setDeleteTarget] = useState<AdminBusinessRecord | null>(null);
   const [visibilityTarget, setVisibilityTarget] = useState<{ business: AdminBusinessRecord; action: AdminVisibilityAction } | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -81,8 +85,14 @@ export function AdminBusinessesPage() {
     if (!allowed) return;
     let active = true;
     setOverviewLoading(true); setOverviewError('');
-    void getAdminBusinessesOverview().then(value => { if (active) setOverview(value); })
-      .catch(cause => { if (active) setOverviewError(cause instanceof Error ? cause.message : 'No disponible'); })
+    void getAdminBusinessesOverview().then(value => { if (active) { setOverview(value); setFeatureReady(true); setLegacyStats(null); } })
+      .catch(cause => {
+        if (!active) return;
+        setOverview(null); setFeatureReady(false);
+        setOverviewError(cause instanceof Error ? cause.message : 'No disponible');
+        void getAdminDashboardStats().then(value => { if (active) setLegacyStats(value); })
+          .catch(() => { if (active) setLegacyStats(null); });
+      })
       .finally(() => { if (active) setOverviewLoading(false); });
     return () => { active = false; };
   }, [allowed, revision]);
@@ -125,7 +135,7 @@ export function AdminBusinessesPage() {
     <header className="admin-section-heading"><h1 id="businesses-page-title">Negocios</h1></header>
     {notice && <div className="admin-business-delete-success" role="status">{notice}</div>}
 
-    <AdminBusinessOperationsOverview data={overview} loading={overviewLoading} error={overviewError} retry={() => setRevision(n => n + 1)} />
+    <AdminBusinessOperationsOverview data={overview} legacy={legacyStats} loading={overviewLoading} error={overviewError} retry={() => setRevision(n => n + 1)} />
 
     <section className="panel business-directory businesses-directory">
       <div className="directory-heading businesses-directory-heading"><div><h2>Listado de negocios</h2><p>Administra, consulta y gestiona los negocios registrados en XAMUKO.</p></div><div className="businesses-actions"><button className="secondary-button" onClick={exportBusinesses} disabled={!rows.length} title="Exporta los negocios visibles en la página actual"><Icon name="download" size={17} /> Exportar página</button><a className="primary businesses-create" href="https://business.xamuko.com"><span aria-hidden="true">＋</span> Crear negocio</a></div></div>
@@ -136,9 +146,10 @@ export function AdminBusinessesPage() {
       </form>
       <div className="ad-ops-filter-bar">
         <span><Icon name="search" size={16}/> {filtersActive ? `${filtersActive} filtro(s) activo(s)` : 'Todas las ubicaciones y categorías'}</span>
-        <button type="button" onClick={() => setAdvancedOpen(open => !open)} aria-expanded={advancedOpen} aria-controls="ad-ops-advanced-filters">
+        <button type="button" onClick={() => setAdvancedOpen(open => !open)} disabled={!featureReady} title={!featureReady ? 'Disponible cuando se actualice el backend' : undefined} aria-expanded={advancedOpen} aria-controls="ad-ops-advanced-filters">
           <Icon name="settings" size={17}/> {advancedOpen ? 'Ocultar filtros avanzados' : 'Filtros avanzados'} <Icon name="chevron" size={16}/>
         </button>
+        {!featureReady && <small className="ad-ops-backend-pending">Los filtros avanzados y las medidas administrativas se habilitarán después de actualizar la API.</small>}
       </div>
       <div id="ad-ops-advanced-filters" className="ad-ops-advanced-filters" hidden={!advancedOpen}>
         <label>Ciudad<select aria-label="Ciudad" value={advanced.city} onChange={event => setFilter('city', event.target.value)}>
@@ -166,8 +177,8 @@ export function AdminBusinessesPage() {
             const category = categoryName(item.category);
             const tone = item.administrativeRestriction ? (item.administrativeRestriction === 'SUSPENDED' ? 'status-expired' : 'status-hidden') : (visibilityTone[item.visibilityStatus] ?? 'status-review');
             return <tr key={item.id}><td className="business-number">#{String((page - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}</td><td><Link to={`/businesses/${item.id}`} className="business-cell"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{item.memberships?.[0]?.user?.displayName || item.createdBy.displayName || 'Sin propietario'}</small></div></Link></td><td><span className="business-category"><Icon name="grid" size={14} />{category}</span></td><td><span className={`badge ${tone}`}><span aria-hidden="true">●</span> {adminBusinessVisibilityLabel(item)}</span></td>
-              <td><span className={item.isPro ? 'ad-ops-plan pro' : 'ad-ops-plan'}>{item.isPro ? 'PRO' : 'Básico'}</span></td>
-              <td><span className="ad-ops-reports">{item._count?.reports ?? 0}</span></td><td className="business-date">{date(item.createdAt)}</td><td><div className="business-row-actions"><Link className="icon-button businesses-view" to={`/businesses/${item.id}`} aria-label={`Ver ${item.name}`}><Icon name="eye" size={18} /></Link>{canDelete && item.deletionStatus !== 'DELETED' && (item.administrativeRestriction
+              <td><span className={item.isPro ? 'ad-ops-plan pro' : 'ad-ops-plan'}>{planLabel(item)}</span></td>
+              <td><span className="ad-ops-reports">{item._count?.reports ?? 0}</span></td><td className="business-date">{date(item.createdAt)}</td><td><div className="business-row-actions"><Link className="icon-button businesses-view" to={`/businesses/${item.id}`} aria-label={`Ver ${item.name}`}><Icon name="eye" size={18} /></Link>{canModerate && item.deletionStatus !== 'DELETED' && (item.administrativeRestriction
               ? <>
                 {item.administrativeRestriction === 'HIDDEN' && <button type="button" className="icon-button ad-ops-suspend-button" title={'Suspender ' + item.name} aria-label={'Suspender ' + item.name} onClick={() => setVisibilityTarget({ business: item, action: 'SUSPEND' })}><Icon name="lock" size={18}/></button>}
                 {item.administrativeRestriction === 'SUSPENDED' && <button type="button" className="icon-button ad-ops-hide-button" title={'Cambiar a ocultamiento ' + item.name} aria-label={'Ocultar ' + item.name} onClick={() => setVisibilityTarget({ business: item, action: 'HIDE' })}><Icon name="eye-off" size={18}/></button>}
@@ -179,7 +190,7 @@ export function AdminBusinessesPage() {
               </>)}
               {canDelete && item.deletionStatus !== 'DELETED' && <button type="button" className="icon-button businesses-delete" aria-label={`Eliminar ${item.name}`} title={`Eliminar ${item.name}`} onClick={() => setDeleteTarget(item)}><Icon name="trash" size={18}/></button>}</div></td></tr>;
           })}</tbody></table></div>
-          <div className="business-mobile-list businesses-mobile-list">{rows.map(item => <article className="business-mobile-card" key={item.id}><Link to={`/businesses/${item.id}`} className="businesses-mobile-card-link"><div className="mobile-business-heading"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{categoryName(item.category)} · {item.location?.cityName ?? 'Sin ubicación'}</small></div><Icon name="arrow" size={17} /></div><div className="mobile-business-badges"><span className={`badge ${item.administrativeRestriction === 'SUSPENDED' ? 'status-expired' : item.administrativeRestriction === 'HIDDEN' ? 'status-hidden' : visibilityTone[item.visibilityStatus] ?? 'status-review'}`}>{adminBusinessVisibilityLabel(item)}</span><span className={item.isPro ? 'ad-ops-plan pro' : 'ad-ops-plan'}>{item.isPro ? 'PRO' : 'Básico'}</span></div><small className="mobile-expiry">Registro: {date(item.createdAt)}</small></Link>{canDelete && item.deletionStatus !== 'DELETED' && <div className="ad-ops-mobile-actions">
+          <div className="business-mobile-list businesses-mobile-list">{rows.map(item => <article className="business-mobile-card" key={item.id}><Link to={`/businesses/${item.id}`} className="businesses-mobile-card-link"><div className="mobile-business-heading"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{categoryName(item.category)} · {item.location?.cityName ?? 'Sin ubicación'}</small></div><Icon name="arrow" size={17} /></div><div className="mobile-business-badges"><span className={`badge ${item.administrativeRestriction === 'SUSPENDED' ? 'status-expired' : item.administrativeRestriction === 'HIDDEN' ? 'status-hidden' : visibilityTone[item.visibilityStatus] ?? 'status-review'}`}>{adminBusinessVisibilityLabel(item)}</span><span className={item.isPro ? 'ad-ops-plan pro' : 'ad-ops-plan'}>{planLabel(item)}</span></div><small className="mobile-expiry">Registro: {date(item.createdAt)}</small></Link>{canModerate && item.deletionStatus !== 'DELETED' && <div className="ad-ops-mobile-actions">
               {item.administrativeRestriction ? <>
                   {item.administrativeRestriction === 'HIDDEN' && <button type="button" onClick={() => setVisibilityTarget({ business: item, action: 'SUSPEND' })}><Icon name="lock" size={16}/> Suspender</button>}
                   {item.administrativeRestriction === 'SUSPENDED' && <button type="button" onClick={() => setVisibilityTarget({ business: item, action: 'HIDE' })}><Icon name="eye-off" size={16}/> Ocultar</button>}
@@ -205,6 +216,7 @@ export function AdminBusinessesPage() {
 export function AdminBusinessDetailPage() {
   const allowed = getSession()?.permissions?.includes('business:write') ?? false;
   const canDelete = getSession()?.role === 'SUPER_ADMIN';
+  const [managementReady, setManagementReady] = useState(false);
   const navigate = useNavigate();
   const [deleteTarget, setDeleteTarget] = useState<AdminBusinessRecord | null>(null);
   const [visibilityAction, setVisibilityAction] = useState<AdminVisibilityAction | null>(null);
@@ -220,6 +232,13 @@ export function AdminBusinessDetailPage() {
     getAdminBusiness(id).then(result => { if (active) setItem(result); }).catch(cause => { if (active) setError(cause instanceof Error ? cause.message : 'No se pudo consultar el negocio.'); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [allowed, id, revision]);
+  useEffect(() => {
+    if (!allowed) return;
+    let active = true;
+    void getAdminBusinessesOverview().then(() => { if (active) setManagementReady(true); })
+      .catch(() => { if (active) setManagementReady(false); });
+    return () => { active = false; };
+  }, [allowed]);
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso para consultar negocios." />;
   if (loading) return <StatePanel kind="loading" title="Cargando negocio" message="Consultando el registro real." />;
   if (error || !item) return <StatePanel kind="error" title="No se pudo abrir el negocio" message={error || 'No encontramos el registro.'} />;
@@ -230,13 +249,13 @@ export function AdminBusinessDetailPage() {
       <span className="ad-business-detail-icon"><Icon name="store" size={31} /></span>
       <div><span className="ad-business-detail-eyebrow">FICHA ADMINISTRATIVA</span><h1>{item.name}</h1><p>Registro de negocio · Actualizado el {date(item.updatedAt)}</p></div>
       {canDelete && item.deletionStatus !== 'DELETED' && <div className="ad-ops-detail-actions">
-        {item.administrativeRestriction ? <>
+        {managementReady && (item.administrativeRestriction ? <>
           {item.administrativeRestriction === 'HIDDEN' && <button type="button" className="ad-ops-suspend-action" onClick={() => setVisibilityAction('SUSPEND')}><Icon name="lock" size={17}/> Suspender</button>}
           {item.administrativeRestriction === 'SUSPENDED' && <button type="button" onClick={() => setVisibilityAction('HIDE')}><Icon name="eye-off" size={17}/> Cambiar a ocultamiento</button>}
           <button type="button" className="ad-ops-restore-action" onClick={() => setVisibilityAction('RESTORE')}><Icon name="check" size={17}/> Levantar restricción</button>
         </>
           : <><button type="button" onClick={() => setVisibilityAction('HIDE')}><Icon name="eye-off" size={17}/> Ocultar</button>
-            <button type="button" className="ad-ops-suspend-action" onClick={() => setVisibilityAction('SUSPEND')}><Icon name="lock" size={17}/> Suspender</button></>}
+            <button type="button" className="ad-ops-suspend-action" onClick={() => setVisibilityAction('SUSPEND')}><Icon name="lock" size={17}/> Suspender</button></>)}
         <button type="button" className="ad-business-delete-trigger" onClick={() => setDeleteTarget(item)}><Icon name="trash" size={17}/> Eliminar negocio</button>
       </div>}
     </header>
@@ -244,7 +263,7 @@ export function AdminBusinessDetailPage() {
       <article><span><Icon name="eye" size={18} /> Visibilidad</span><strong className={'business-status-text ' + (item.administrativeRestriction === 'SUSPENDED' ? 'status-expired' : item.administrativeRestriction === 'HIDDEN' ? 'status-hidden' : (visibilityTone[item.visibilityStatus] ?? 'status-review'))}>{adminBusinessVisibilityLabel(item)}</strong></article>
       <article><span><Icon name="shield" size={18} /> Verificación</span><strong className={'business-status-text ' + (verificationTone[item.verificationStatus] ?? 'status-information')}>{translatedStatus(verificationLabels, item.verificationStatus)}</strong></article>
       <article><span><Icon name="check" size={18} /> Completitud</span><strong>{item.completeness}%</strong></article>
-      <article><span><Icon name="crown" size={18} /> Suscripción</span><strong>{item.isPro ? 'Business PRO' : 'Plan Básico'}</strong></article>
+      <article><span><Icon name="crown" size={18} /> Suscripción</span><strong>{item.isPro === true ? 'Business PRO' : item.isPro === false ? 'Plan Básico' : 'Pendiente de confirmar'}</strong></article>
       <article><span><Icon name="flag" size={18} /> Reportes recibidos</span><strong>{item._count?.reports ?? 0}</strong></article>
     </section>
     <section className="panel admin-business-information ad-business-detail-information" aria-labelledby="ad-business-detail-info-title">
@@ -275,7 +294,7 @@ export function AdminBusinessDetailPage() {
           {item.administrativeRestrictionReason ? ' · Motivo: ' + item.administrativeRestrictionReason : ''}</p>
       </div>
     </div>}
-    <AdminBusinessAuditTimeline businessId={item.id} revision={revision} />
+    {managementReady && <AdminBusinessAuditTimeline businessId={item.id} revision={revision} />}
     {visibilityAction && <AdminBusinessVisibilityDialog business={item} action={visibilityAction}
       onClose={() => setVisibilityAction(null)}
       onSuccess={message => { setVisibilityAction(null); setNotice(message); setRevision(n => n + 1); }}/>}
