@@ -131,7 +131,7 @@ export function ZoneAvailabilityNotice({ city, region }: { city: string; region?
         <circle cx="12" cy="12" r="9"/><path d="m8 12 2.6 2.6L16.5 9"/>
       </svg>
       <span><strong>¡Notificación activada!</strong> Te avisaremos en Xamuko cuando habilitemos {data.city}.</span>
-    </p>
+    </p>}
     {units && <div className="zone-availability-card__countdown" role="timer" aria-label={'Tiempo hasta la apertura de ' + data.city}>
       <span>Abriremos en</span>
       <div>{units.map((n, i) => <span key={i}><b>{i === 0 ? n : part(n)}</b> {['días', 'h', 'min', 's'][i]}</span>)}</div>
