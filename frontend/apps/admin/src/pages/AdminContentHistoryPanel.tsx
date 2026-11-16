@@ -15,21 +15,30 @@ export function AdminContentHistoryPanel({id,revision}:{id:string;revision:numbe
   const [rows,setRows]=useState<AdminContentHistoryRow[]>([]);
   const [error,setError]=useState('');
   const [loading,setLoading]=useState(true);
-  const [expanded,setExpanded]=useState(false);
+  const [page,setPage]=useState(1);
+  const [total,setTotal]=useState(0);
+  const [moreLoading,setMoreLoading]=useState(false);
   useEffect(()=>{
-    let active=true;setLoading(true);setError('');
-    getAdminContentHistory(id).then(result=>{if(active)setRows(result.history);})
+    let active=true;setLoading(true);setError('');setRows([]);setPage(1);setTotal(0);
+    getAdminContentHistory(id,1).then(result=>{if(active){setRows(result.history);setTotal(result.total);}})
       .catch(cause=>{if(active)setError(cause instanceof Error?cause.message:'Historial no disponible.');})
       .finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
   },[id,revision]);
+  const more=async()=>{
+    if(moreLoading||rows.length>=total)return;setMoreLoading(true);
+    try{const result=await getAdminContentHistory(id,page+1);
+      setRows(old=>[...old,...result.history]);setPage(result.page);setTotal(result.total);
+    }catch(cause){setError(cause instanceof Error?cause.message:'No pudimos cargar más actuaciones.');}
+    finally{setMoreLoading(false);}
+  };
   return <section className="ac-card ac-history" aria-labelledby="ac-history-title">
     <div className="ac-section-head"><span className="ac-section-icon"><Icon name="clock" size={20}/></span>
       <div><h2 id="ac-history-title">Historial y trazabilidad</h2><p>Cambios de Admin y del negocio, conservados en la auditoría.</p></div></div>
     {loading?<p className="ac-muted">Consultando decisiones…</p>:
       error?<p role="alert" className="ac-modal-error">{error}</p>:
       !rows.length?<p className="ac-muted">Todavía no se registran actuaciones en este contenido.</p>:
-      <><ol className="ac-history-list">{(expanded?rows:rows.slice(0,8)).map(row=><li key={row.id}>
+      <><p className="ac-muted">{rows.length} de {total} actuaciones registradas</p><ol className="ac-history-list">{rows.map(row=><li key={row.id}>
         <span className="ac-history-node" aria-hidden="true"><Icon name="shield" size={15}/></span>
         <div><div className="ac-history-top"><strong>{actionLabel[row.action]??row.action}</strong>
           <time dateTime={row.createdAt}>{displayDate(row.createdAt)}</time></div>
@@ -37,8 +46,8 @@ export function AdminContentHistoryPanel({id,revision}:{id:string;revision:numbe
           {row.reason&&<p>Motivo: {row.reason}</p>}
           {row.comment&&<p>Nota: {row.comment}</p>}
         </div></li>)}</ol>
-        {rows.length>8&&<button type="button" className="ac-secondary ac-history-more"
-          onClick={()=>setExpanded(v=>!v)}>{expanded?'Mostrar menos':`Ver ${rows.length-8} registros más`}</button>}
+        {rows.length<total&&<button type="button" disabled={moreLoading} className="ac-secondary ac-history-more"
+          onClick={more}>{moreLoading?'Cargando…':'Cargar más actuaciones'}</button>}
       </>}
   </section>;
 }
