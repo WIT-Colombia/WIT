@@ -34,15 +34,13 @@ export function ZoneAvailabilityNotice({ city, region }: { city: string; region?
   const [offset, setOffset] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const [revision, setRevision] = useState(0);
-  const [subscription, setSubscription] = useState<'off' | 'on' | 'checking'>('off');
+  const [subscription, setSubscription] = useState<'off' | 'on' | 'checking' | 'unavailable'>('off');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const abort = new AbortController();
     const start = Date.now();
     setData(null);
-    setError('');
     const query = new URLSearchParams({ city, ...(region ? { region } : {}) });
     void fetch(buildApiUrl('/public/zones/status?' + query), { signal: abort.signal, cache: 'no-store' })
       .then(async r => { if (!r.ok) throw new Error('Unavailable'); return r.json() as Promise<{ zone: ZoneStatus; serverTime: string }>; })
@@ -61,7 +59,11 @@ export function ZoneAvailabilityNotice({ city, region }: { city: string; region?
     setSubscription('checking');
     void getZoneAlert(data.code)
       .then(result => { if (active) setSubscription(result.subscribed ? 'on' : 'off'); })
-      .catch(() => { if (active) { setSubscription('off'); setError('No pudimos comprobar tus avisos.'); } });
+      .catch(() => {
+        // La API aún no desplegada puede responder 404; no mostrar errores técnicos
+        // ni confundirlo con una suscripción realmente confirmada.
+        if (active) setSubscription('unavailable');
+      });
     return () => { active = false; };
   }, [data?.code, isAuthenticated, revision]);
 
@@ -82,8 +84,7 @@ export function ZoneAvailabilityNotice({ city, region }: { city: string; region?
   }, [clock, data, offset]);
 
   async function toggle() {
-    if (!data?.code || busy || subscription === 'checking' || status === 'loading') return;
-    setError('');
+    if (!data?.code || busy || subscription === 'checking' || subscription === 'unavailable' || status === 'loading') return;
     if (!isAuthenticated) {
       savePendingZoneAlert(data.code, data.city);
       navigate('/register');
@@ -99,7 +100,11 @@ export function ZoneAvailabilityNotice({ city, region }: { city: string; region?
         setSubscription('on');
       }
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'No pudimos actualizar la notificación. Inténtalo nuevamente.');
+      // No presentar mensajes técnicos cuando el backend todavía no tiene la ruta.
+      // Una suscripción fallida nunca debe mostrarse como activada.
+      if (caught instanceof ApiError && (caught.status === 404 || caught.status === 503)) {
+        setSubscription('unavailable');
+      }
     } finally { setBusy(false); }
   }
 
@@ -116,15 +121,17 @@ export function ZoneAvailabilityNotice({ city, region }: { city: string; region?
     <div className="zone-availability-card__divider" aria-hidden="true" />
     <strong className="zone-availability-card__question">¿Quieres que te avisemos cuando lleguemos?</strong>
     <button className="zone-availability-card__notify" type="button" onClick={() => { void toggle(); }}
-      disabled={busy || subscription === 'checking' || status === 'loading' || !data.code}
+      disabled={busy || subscription === 'checking' || subscription === 'unavailable' || status === 'loading' || !data.code}
       aria-pressed={active} title={active ? 'Pulsa para cancelar este aviso' : undefined}>
       <BellIcon active={active}/><span>{busy ? 'Actualizando…' : subscription === 'checking' ? 'Comprobando…' :
         active ? 'Notificación activada' : 'Notificarme cuando lleguen'}</span>
     </button>
-    <small className="zone-availability-card__helper">{active
-      ? 'Te avisaremos cuando habilitemos esta ciudad. Pulsa el botón de nuevo para cancelar.'
-      : 'Recibirás una notificación cuando habilitemos esta ciudad.'}</small>
-    {error && <p className="zone-availability-card__error" role="alert">{error}</p>}
+    {active && <p className="zone-availability-card__confirmed" role="status">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2">
+        <circle cx="12" cy="12" r="9"/><path d="m8 12 2.6 2.6L16.5 9"/>
+      </svg>
+      <span><strong>¡Notificación activada!</strong> Te avisaremos en Xamuko cuando habilitemos {data.city}.</span>
+    </p>}
     {units && <div className="zone-availability-card__countdown" role="timer" aria-label={'Tiempo hasta la apertura de ' + data.city}>
       <span>Abriremos en</span>
       <div>{units.map((n, i) => <span key={i}><b>{i === 0 ? n : part(n)}</b> {['días', 'h', 'min', 's'][i]}</span>)}</div>

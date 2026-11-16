@@ -21,14 +21,13 @@ export function ZoneAlertResume() {
     void subscribeZoneAlert(pending.code).then(() => {
       clearPendingZoneAlert();
       window.dispatchEvent(new Event(ZONE_ALERT_CHANGED));
-      if (active) setNotice('Notificación activada para ' + pending.city + '.');
+      if (active) setNotice('¡Notificación activada! Te avisaremos en Xamuko cuando habilitemos ' + pending.city + '.');
     }).catch(error => {
       if (error instanceof ApiError && error.code === 'ZONE_ALREADY_OPEN') {
         clearPendingZoneAlert();
-        if (active) setNotice('XAMUKO ya está disponible en ' + pending.city + '.');
-      } else if (active) {
-        setNotice('No pudimos activar el aviso para ' + pending.city + '. Puedes intentarlo desde esa ciudad.');
+        // La ciudad ya está abierta: no hay aviso pendiente que confirmar.
       }
+      // Si la API no existe todavía, conservar la intención sin confirmar falsamente.
     });
     return () => { active = false; };
   }, [isAuthenticated, user?.id]);
@@ -40,7 +39,7 @@ export function ZoneAlertResume() {
   return notice ? <div role="status" aria-live="polite" style={{
     position: 'fixed', zIndex: 10000, right: 16, bottom: 'max(16px, env(safe-area-inset-bottom))',
     maxWidth: 'min(400px, calc(100vw - 32px))', padding: '13px 18px', borderRadius: 14,
-    background: '#282e64', boxShadow: '0 12px 28px #1f244533', color: '#fff',
+    background: '#146c43', boxShadow: '0 12px 28px #146c4333', color: '#fff',
     fontSize: 14, fontWeight: 600,
   }}>{notice}</div> : null;
 }

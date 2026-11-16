@@ -13,15 +13,15 @@ const privateResponse: RequestHandler = (_req, res, next) => {
 };
 const userId = (req: Parameters<RequestHandler>[0]) => (req as AuthenticatedRequest).auth.userId;
 
-zoneUserAlertsRouter.get('/user/zones/alerts/:code', requireAuth, privateResponse, async (req, res, next) => {
+zoneUserAlertsRouter.get('/user/zones/alerts/:code', privateResponse, requireAuth, async (req, res, next) => {
   try { res.json(await getRegisteredZoneAlert(userId(req), String(req.params.code))); }
   catch (error) { next(error); }
 });
-zoneUserAlertsRouter.post('/user/zones/alerts/:code', requireAuth, requireTrustedOrigin, privateResponse, async (req, res, next) => {
+zoneUserAlertsRouter.post('/user/zones/alerts/:code', privateResponse, requireAuth, requireTrustedOrigin, async (req, res, next) => {
   try { res.json(await subscribeRegisteredZoneAlert(userId(req), String(req.params.code))); }
   catch (error) { next(error); }
 });
-zoneUserAlertsRouter.delete('/user/zones/alerts/:code', requireAuth, requireTrustedOrigin, privateResponse, async (req, res, next) => {
+zoneUserAlertsRouter.delete('/user/zones/alerts/:code', privateResponse, requireAuth, requireTrustedOrigin, async (req, res, next) => {
   try { res.json(await unsubscribeRegisteredZoneAlert(userId(req), String(req.params.code))); }
   catch (error) { next(error); }
 });
