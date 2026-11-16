@@ -31,6 +31,7 @@ const Reviews = lazy(() => import("./pages/Reviews"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Notifications = lazy(() => import("./pages/Notifications"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const Legal = lazy(() => import("./pages/Legal"));
 const FaqPage = lazy(() => import("./pages/FaqPage"));
 const PasswordRecovery = lazy(() => import("./pages/PasswordRecovery"));
@@ -162,6 +163,6 @@ export default function App() {
     <Route path="/profile" element={<RequireAccount><Profile /></RequireAccount>} />
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
-    <Route path="*" element={<Navigate to="/home" replace />} />
+    <Route path="*" element={<NotFound />} />
   </Routes></Suspense><StandaloneFooter /></InitialLocationGate>;
 }
