@@ -81,3 +81,9 @@ jobs:
 
       - name: Automated tests
         run: npm test
+
+      - name: Read-only smoke and deployment regression
+        working-directory: .
+        run: |
+          node --test scripts/backend-production-smoke.test.mjs
+          bash deploy/test-schema-approval.sh
