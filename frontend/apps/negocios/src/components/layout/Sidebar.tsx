@@ -1,4 +1,5 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { useBusinessAccountWelcomeUnread } from "../../services/businessWelcomeStatus";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useBusinessAuth } from "../../services/businessAuthContext";
 import { useBusinessStore } from "../../services/businessStore";
@@ -34,7 +35,8 @@ export function Sidebar({ empty = false, onNavigate }: { empty?: boolean; onNavi
   const confirmedPro = planBusinessId && resolvedPlan?.businessId === planBusinessId ? resolvedPlan.isPro : null;
   const isPro = demoPro || confirmedPro === true;
   const showProOffer = !demoPro && (planBusinessId ? confirmedPro === false : true);
-  const unread = notifications.filter(item => !item.read).length + persistentNotificationCount;
+  const accountWelcomeUnread = useBusinessAccountWelcomeUnread(user?.id);
+  const unread = notifications.filter(item => !item.read).length + persistentNotificationCount + (empty && accountWelcomeUnread ? 1 : 0);
   useEffect(() => {
     let active = true;
     if (!planBusinessId) {
