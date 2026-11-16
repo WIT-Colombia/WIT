@@ -84,7 +84,7 @@ export const businessReviews = {
 } as const;
 
 export const initialNotifications: BusinessNotification[] = [
-  { id: "welcome", createdAt: "2026-10-30T09:00:00-05:00", title: "¡Qué alegría que tu negocio esté en XAMUKO!", description: "Sabemos cuánto esfuerzo e ilusión hay detrás de cada negocio. Nos alegra acompañarte para mostrar lo que haces, conectar con nuevas personas y seguir creciendo. ¡Gracias por confiar en XAMUKO!", date: "Hoy", type: "wit", read: false },
+  { id: "welcome", createdAt: "2026-10-30T09:00:00-05:00", title: "¡Qué alegría tenerte en XAMUKO Business!", description: "Nos encanta que estés aquí. Este es el comienzo: crea tu primer negocio, comparte lo que te hace especial y descubre nuevas oportunidades para conectar con más personas. ¡Estamos contigo en cada paso!", date: "Hoy", type: "wit", read: false },
 ];
 
 export const initialPreferences: Preferences = { emailUpdates: true, reviewAlerts: true, interestAlerts: true, profileVisible: true, visibilityUntil: addBusinessVisibilityPeriod().toISOString() };
