@@ -2,7 +2,7 @@ import { buildApiUrl } from './api';
 
 export type ZoneAvailability = {
   city:string;department:string;status:'OPEN'|'SCHEDULED'|'CLOSED'|'PAUSED';
-  opensAt:string|null;coveredBy:string|null;virtualAvailable:true;serverTime:string;
+  opensAt:string|null;coveredBy:string|null;zoneKey:string|null;virtualAvailable:true;serverTime:string;
 };
 export type NextZoneOpening = {
   key:string;level:'MUNICIPALITY'|'DEPARTMENT'|'COUNTRY';
