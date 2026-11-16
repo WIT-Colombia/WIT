@@ -330,3 +330,22 @@
 }
 
 .admin-refresh .cat-warning--info { background: #f2f5ff; border-color: #dbe4f7; color: #4d628b; }
+
+/* Identidad visual semántica del catálogo: iconos SVG finos y acentos discretos. */
+.admin-refresh .cat-category-icon--violet, .cat-detail .cat-category-icon--violet { color: #714cce; background-color: #f1ecff; }
+.admin-refresh .cat-category-icon--blue, .cat-detail .cat-category-icon--blue { color: #3868b4; background-color: #e9f1ff; }
+.admin-refresh .cat-category-icon--teal, .cat-detail .cat-category-icon--teal { color: #197b79; background-color: #e5f7f4; }
+.admin-refresh .cat-category-icon--amber, .cat-detail .cat-category-icon--amber { color: #a36a2c; background-color: #fff2df; }
+.admin-refresh .cat-category-icon--rose, .cat-detail .cat-category-icon--rose { color: #bc5d84; background-color: #fcebf2; }
+.admin-refresh .cat-category-icon--slate, .cat-detail .cat-category-icon--slate { color: #586983; background-color: #edf1f6; }
+.admin-refresh .cat-category-icon svg, .cat-detail .cat-detail-icon svg,
+.admin-refresh .cat-ranking-glyph svg { stroke-width: 1.85; flex: none; }
+.admin-refresh .cat-ranking-glyph {
+  width: 25px; height: 25px; border-radius: 7px; display: inline-grid;
+  place-items: center; flex: none;
+}
+.admin-refresh .cat-ranking-top > span { align-items: center; }
+@media(max-width:760px) {
+  .admin-refresh .cat-category-icon { width: 37px; height: 37px; border-radius: 11px; }
+  .admin-refresh .cat-ranking-glyph { width: 27px; height: 27px; }
+}
