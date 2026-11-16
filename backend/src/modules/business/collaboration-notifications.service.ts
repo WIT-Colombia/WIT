@@ -3,6 +3,13 @@ import { notifyPlatformUser } from '../notifications/platform-notifications.serv
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PAGE_SIZE = 200;
+export type CollaborationDeadline = 'ONE_DAY' | 'EXPIRED';
+export function collaborationDeadline(expiresAt: Date, now: Date): CollaborationDeadline | null {
+  const milliseconds = expiresAt.getTime() - now.getTime();
+  if (milliseconds <= 0) return 'EXPIRED';
+  return milliseconds <= DAY_MS ? 'ONE_DAY' : null;
+}
+
 
 /**
  * An inbox item can be deleted by its recipient. A separate durable dispatch
@@ -17,8 +24,10 @@ async function processInvitation(membershipId: string, now: Date) {
       select: { id: true, businessId: true, userId: true, invitedAt: true, expiresAt: true,
         business: { select: { name: true, memberships: { where: { role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } }, select: { userId: true } } } } },
     });
-    if (!membership?.expiresAt || membership.expiresAt.getTime() > now.getTime() + DAY_MS) return 0;
-    const expired = membership.expiresAt <= now;
+    if (!membership?.expiresAt) return 0;
+    const deadline = collaborationDeadline(membership.expiresAt, now);
+    if (!deadline) return 0;
+    const expired = deadline === 'EXPIRED';
     const event = expired ? 'COLLAB_INVITE_EXPIRED' : 'COLLAB_INVITE_1DAY';
     const ownerIds = [...new Set(membership.business.memberships.map(item => item.userId))].filter(id => id !== membership.userId);
     const audience: Array<{ userId: string; channel: string }> = [{ userId: membership.userId, channel: 'user' }];
@@ -61,8 +70,10 @@ async function processTransfer(transferId: string, now: Date) {
       select: { id: true, businessId: true, fromUserId: true, toUserId: true, expiresAt: true,
         business: { select: { name: true } } },
     });
-    if (!transfer?.expiresAt || transfer.expiresAt.getTime() > now.getTime() + DAY_MS) return 0;
-    const expired = transfer.expiresAt <= now;
+    if (!transfer?.expiresAt) return 0;
+    const deadline = collaborationDeadline(transfer.expiresAt, now);
+    if (!deadline) return 0;
+    const expired = deadline === 'EXPIRED';
     const event = expired ? 'OWNERSHIP_EXPIRED' : 'OWNERSHIP_1DAY';
     if (expired) {
       const changed = await tx.ownershipTransfer.updateMany({
