@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { AppError } from '../../shared/errors/app-error.js';
 import { getAdminDashboardStats } from './admin-dashboard.service.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
-import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
+import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController, pioneerBrandReviewController } from './admin.controller.js';
 import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, setAdminBusinessVisibility } from './admin-businesses.service.js';
@@ -271,6 +271,7 @@ adminRouter.put('/administrators/:userId/permissions', requireTrustedOrigin, req
 adminRouter.get('/pioneers', requireAdmin('PIONEER_MANAGE'), pioneerRegistryController);
 adminRouter.post('/pioneers/claims/:claimId/review', requireTrustedOrigin, requireAdmin('PIONEER_MANAGE'), pioneerClaimController);
 adminRouter.post('/pioneers/brands/:brandId/assign', requireTrustedOrigin, requireAdmin('PIONEER_MANAGE'), pioneerAssignController);
+adminRouter.post('/pioneers/brands/:brandId/verify', requireTrustedOrigin, requireAdmin('PIONEER_MANAGE'), pioneerBrandReviewController);
 adminRouter.get('/support-attention', requireAdmin(), async (req, res, next) => {
   try {
     res.setHeader('Cache-Control', 'private, no-store');
