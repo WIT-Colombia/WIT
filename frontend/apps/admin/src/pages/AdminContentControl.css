@@ -1,4 +1,6 @@
 /* Admin Contenido — acciones, estados y trazabilidad (escritorio, iPad, móvil). */
+.admin-refresh .ac-page .ac-head-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:9px}
+.admin-refresh .ac-page .ac-head-actions>*{display:inline-flex;align-items:center;gap:7px}
 .admin-refresh .ac-page .ac-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
 .admin-refresh .ac-page .ac-bulk-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 22px;border-block:1px solid #e6ecf8;background:#f7f9ff}
 .admin-refresh .ac-page .ac-bulk-toolbar strong{font-size:12px;color:#324a74;margin-inline-end:auto}
@@ -40,6 +42,8 @@
   .admin-refresh .ac-page .ac-bulk-toolbar{padding-inline:14px}
 }
 @media(max-width:800px){
+  .admin-refresh .ac-page .ac-head-actions{width:100%;justify-content:stretch}
+  .admin-refresh .ac-page .ac-head-actions>*{flex:1;justify-content:center}
   .admin-refresh .ac-control-actions>button{flex:1 1 185px;justify-content:center}
   .admin-refresh .ac-page .ac-bulk-toolbar button{flex:1 1 150px;justify-content:center}
   .admin-refresh .ac-page .ac-bulk-toolbar strong{width:100%;margin:0}
