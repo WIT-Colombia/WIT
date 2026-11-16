@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { AppError } from '../../shared/errors/app-error.js';
+import { notifyPlatformUser } from '../notifications/platform-notifications.service.js';
 
 const businessSelect = {
   id: true, publicId: true, name: true, description: true, email: true, phone: true,
@@ -49,6 +50,17 @@ export async function deleteAdminBusiness(identifier: string, actorUserId: strin
     if (updated.count !== 1)
       throw new AppError(409, 'ADMIN_BUSINESS_CONCURRENT_CHANGE', 'El negocio cambió de estado. Actualiza la página antes de continuar.');
     const now = new Date();
+    const owners = await tx.businessMembership.findMany({
+      where: { businessId: business.id, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } },
+      select: { userId: true },
+    });
+    for (const ownerId of new Set(owners.map(owner => owner.userId))) {
+      await notifyPlatformUser(tx, {
+        userId: ownerId, sourceType: 'BUSINESS_DELETED', sourceId: business.id,
+        title: 'Tu negocio fue retirado de XAMUKO',
+        message: 'El negocio ' + business.name + ' fue eliminado mediante una decisión administrativa y ya no está disponible en XAMUKO. Consulta con el equipo de soporte si necesitas revisar esta decisión.',
+      });
+    }
     await tx.ownershipTransfer.updateMany({
       where: { businessId: business.id, status: 'PENDING' },
       data: { status: 'CANCELLED', respondedAt: now },
