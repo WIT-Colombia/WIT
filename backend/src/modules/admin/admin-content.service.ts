@@ -4,7 +4,6 @@ import { AppError } from '../../shared/errors/app-error.js';
 import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 
 type Filters={q?:string;kind?:string;status?:string;city?:string;categoryId?:string;businessId?:string;order?:string;period?:string;page?:number};
-type ModerationAction='HIDE'|'RESTORE';
 const categorySelect={id:true,code:true,translations:{select:{locale:true,name:true}}} as const;
 const nameOf=(category:{code:string;translations:Array<{locale:string;name:string}>}|null)=>
   category?.translations.find(t=>t.locale==='es-CO')?.name ??

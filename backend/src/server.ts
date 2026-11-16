@@ -2,11 +2,14 @@ import { env } from './config/env.js';
 import { app } from './app.js';
 import { prisma } from './config/prisma.js';
 import { startVisibilityNotificationScheduler } from './modules/business/visibility-notifications.service.js';
+import { startZoneOpeningNotificationScheduler } from './modules/zones/zone-interest.service.js';
 
 let stopVisibilityScheduler: (() => void) | undefined;
+let stopZoneOpeningScheduler: (() => void) | undefined;
 const server = app.listen(env.port, env.host, () => {
   console.info(`WIT backend disponible en http://${env.host}:${env.port}/api/v1/health`);
   stopVisibilityScheduler = startVisibilityNotificationScheduler();
+  stopZoneOpeningScheduler = startZoneOpeningNotificationScheduler();
 });
 server.on('error', (error) => {
   console.error('No se pudo iniciar el servidor:', error.message);
@@ -18,6 +21,7 @@ function shutdown(signal: string) {
   if (closing) return;
   closing = true;
   stopVisibilityScheduler?.();
+  stopZoneOpeningScheduler?.();
   console.info(`Cerrando servidor (${signal})...`);
   const timeout = setTimeout(() => {
     console.error('Se agotó el tiempo de cierre del servidor.');

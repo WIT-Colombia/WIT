@@ -15,9 +15,37 @@ import { listAdminUsersExtended, getAdminUserOverview, getAdminUserAnalytics, ge
 import { prisma } from '../../config/prisma.js';
 import { readOwnAvatar } from '../auth/avatar.service.js';
 import { adminDocumentsRouter } from './admin-documents.routes.js';
+import { getAdminZones, getZoneInsights, setAdminZone } from '../zones/admin-zones.service.js';
 
 export const adminRouter = Router();
 adminRouter.use('/documents', adminDocumentsRouter);
+const zoneBody = z.object({
+  level:z.enum(['MUNICIPALITY','DEPARTMENT','COUNTRY']),
+  name:z.string().trim().min(2).max(160),
+  department:z.string().trim().max(160).optional(),
+  status:z.enum(['ACTIVE','SCHEDULED','CLOSED','PAUSED']),
+  opensAt:z.string().datetime({offset:true}).nullable(),
+  reason:z.string().trim().min(12).max(500),
+}).strict();
+adminRouter.get('/zones', requireAdmin('BUSINESSES_READ'), async (_req,res,next)=>{
+  try{res.setHeader('Cache-Control','no-store');res.json(await getAdminZones());}
+  catch(error){next(error);}
+});
+adminRouter.get('/zones/insights', requireAdmin('BUSINESSES_READ'), async (req,res,next)=>{
+  try {
+    const key=String(req.query.key??'');
+    if(key.length>240||!key)throw new AppError(400,'ZONE_KEY_INVALID','Identificador de zona inválido.');
+    res.setHeader('Cache-Control','no-store');res.json(await getZoneInsights(key));
+  }catch(error){next(error);}
+});
+adminRouter.post('/zones',requireTrustedOrigin,requireAdmin('BUSINESSES_READ'),async(req,res,next)=>{
+  try {
+    const parsed=zoneBody.safeParse(req.body);
+    if(!parsed.success)throw new AppError(400,'ZONE_INVALID_INPUT','Revisa el territorio, fecha y motivo.');
+    res.setHeader('Cache-Control','no-store');
+    res.json({zone:await setAdminZone(parsed.data,adminFromRequest(req))});
+  }catch(error){next(error);}
+});
 adminRouter.get('/me', requireAdmin(), adminMeController);
 adminRouter.get('/businesses', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
   try { res.setHeader('Cache-Control', 'no-store'); res.json(await listAdminBusinesses({ q: String(req.query.q ?? ''), page: Number(req.query.page) || 1, pageSize: Number(req.query.pageSize) || 20, status: String(req.query.status ?? ''), city: String(req.query.city ?? ''), categoryId: String(req.query.categoryId ?? ''), visibility: String(req.query.visibility ?? ''), verification: String(req.query.verification ?? ''), plan: String(req.query.plan ?? ''), restriction: String(req.query.restriction ?? ''), from: String(req.query.from ?? ''), to: String(req.query.to ?? ''), order: String(req.query.order ?? '') })); }
