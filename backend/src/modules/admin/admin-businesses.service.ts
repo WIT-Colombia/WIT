@@ -53,6 +53,11 @@ export async function deleteAdminBusiness(identifier: string, actorUserId: strin
       where: { businessId: business.id, status: 'PENDING' },
       data: { status: 'CANCELLED', respondedAt: now },
     });
+    // A deleted business must not keep active plans or automatic renewal enabled.
+    await tx.businessSubscription.updateMany({
+      where: { businessId: business.id, status: { in: ['ACTIVE', 'PENDING'] } },
+      data: { status: 'REVOKED', autoRenew: false, revokedAt: now, revocationReason: 'Baja administrativa del negocio' },
+    });
     await tx.auditLog.create({
       data: {
         actorUserId, entityType: 'BUSINESS', entityId: business.id, action: 'ADMIN_BUSINESS_DELETED',
