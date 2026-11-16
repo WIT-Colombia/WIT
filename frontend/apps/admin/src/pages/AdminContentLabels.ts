@@ -1,6 +1,8 @@
 import type { AdminOfferRecord } from '../services/adminApiClient';
 export const offerKindLabel=(kind:string)=>kind==='PRODUCT'?'Producto':kind==='SERVICE'?'Servicio':'Tipo no identificado';
-export const contentStatusLabel=(status:string,deletedAt?:string|null)=>deletedAt?'Eliminado':({
+export const administrativeContentLabel=(status:string)=>({NONE:'Sin restricción',HIDDEN:'Ocultado por Admin',REVIEW:'En revisión administrativa',DELETED:'Eliminado por Admin'} as Record<string,string>)[status]??'Estado desconocido';
+export const contentStatusLabel=(status:string,deletedAt?:string|null,administrativeStatus?:string)=>
+  deletedAt?'Eliminado':administrativeStatus&&administrativeStatus!=='NONE'?administrativeContentLabel(administrativeStatus):({
   PUBLISHED:'Publicado',REVIEW:'En revisión',UNPUBLISHED:'No publicado',
 } as Record<string,string>)[status]??'Estado no identificado';
 export const reportStatusLabel=(status:string)=>({
