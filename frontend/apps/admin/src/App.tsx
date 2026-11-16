@@ -11,6 +11,7 @@ import { AdminUsersPage } from './pages/AdminUsersPage';
 import { AdminUserDetailPage } from './pages/AdminUserDetailPage';
 import { AdminContentPage } from './pages/AdminContentPage';
 import { AdminContentDetailPage } from './pages/AdminContentDetailPage';
+import { AdminContentErrorBoundary } from './components/AdminContentErrorBoundary';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
 import { ReviewReportsPage } from './pages/ReviewReportsPage';
@@ -68,8 +69,8 @@ export default function App() {
         <Route path="/categories" element={<AdminCategoriesPage />} />
         <Route path="/users" element={<AdminUsersPage />} />
         <Route path="/users/:id" element={<AdminUserDetailPage />} />
-        <Route path="/content" element={<AdminContentPage />} />
-        <Route path="/content/:id" element={<AdminContentDetailPage />} />
+        <Route path="/content" element={<AdminContentErrorBoundary><AdminContentPage /></AdminContentErrorBoundary>} />
+        <Route path="/content/:id" element={<AdminContentErrorBoundary><AdminContentDetailPage /></AdminContentErrorBoundary>} />
         <Route path="/corporate" element={<DocumentsPage key="CORPORATE" section="CORPORATE" />} />
         <Route path="/legal-documents" element={<DocumentsPage key="LEGAL" section="LEGAL" />} />
         <Route path="/legal-cases" element={<DocumentsPage key="CASES" section="CASES" />} />

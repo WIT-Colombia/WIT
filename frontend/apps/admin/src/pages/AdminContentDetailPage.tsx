@@ -10,7 +10,7 @@ import { AdminContentHistoryPanel } from './AdminContentHistoryPanel';
 import { contentStatusLabel, displayDate, offerKindLabel, offerPrice, reportReasonLabel, reportStatusLabel, administrativeContentLabel } from './AdminContentLabels';
 import './AdminContentRefresh.css';
 import './AdminContentControl.css';
-const num=(n:number)=>new Intl.NumberFormat('es-CO').format(n);
+const num=(n:number)=>Number.isFinite(n)?new Intl.NumberFormat('es-CO').format(n):'—';
 export function AdminContentDetailPage(){
   const id=useParams().id??'';
   const allowed=getSession()?.permissions?.includes('catalog:read')??false;
@@ -47,7 +47,7 @@ export function AdminContentDetailPage(){
       <div><span className="ac-eyebrow">FICHA ADMINISTRATIVA · {offerKindLabel(offer.kind).toLocaleUpperCase('es-CO')}</span>
         <h1>{offer.name}</h1><p>{offer.business.name} · Código {offer.internalCode}</p>
         <div className="ac-detail-badges"><span className={'ac-kind '+offer.kind.toLowerCase()}>{offerKindLabel(offer.kind)}</span>
-          <span className={'ac-status '+(offer.deletedAt?'deleted':offer.publicationStatus.toLowerCase())}>{contentStatusLabel(offer.publicationStatus,offer.deletedAt)}</span>
+          <span className={'ac-status '+(offer.deletedAt?'deleted':(offer.publicationStatus??'unknown').toLowerCase())}>{contentStatusLabel(offer.publicationStatus,offer.deletedAt,offer.administrativeStatus)}</span>
           {!offer.active&&<span className="ac-pill-muted">Inactivo</span>}</div></div>
     </header>
     {notice&&<div className="ac-success" role="status"><Icon name="check" size={18}/>{notice}</div>}

@@ -22,16 +22,40 @@ function exportVisibleContent(rows:AdminOfferRecord[]){
   window.setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
-const num=(value:number)=>new Intl.NumberFormat('es-CO').format(value);
+const num=(value:number)=>Number.isFinite(value)?new Intl.NumberFormat('es-CO').format(value):'—';
 function Status({offer}:{offer:Pick<AdminOfferRecord,'publicationStatus'|'deletedAt'|'administrativeStatus'>}){
-  return <span className={'ac-status '+(offer.deletedAt?'deleted':offer.administrativeStatus!=='NONE'?offer.administrativeStatus.toLowerCase():offer.publicationStatus.toLowerCase())}>{contentStatusLabel(offer.publicationStatus,offer.deletedAt,offer.administrativeStatus)}</span>;
+  // The mobile SPA may update before the API deployment. Never dereference
+  // an administrative state missing from an older server response.
+  const adminStatus=typeof offer.administrativeStatus==='string'?offer.administrativeStatus:'UNKNOWN';
+  const publication=typeof offer.publicationStatus==='string'?offer.publicationStatus:'UNKNOWN';
+  const tone=offer.deletedAt?'deleted':adminStatus==='NONE'?publication.toLowerCase():adminStatus.toLowerCase();
+  return <span className={'ac-status '+tone}>{contentStatusLabel(publication,offer.deletedAt,adminStatus)}</span>;
 }
 function ContentBadge({item}:{item:AdminOfferRecord}){
-  return <div className="ac-badges"><span className={'ac-kind '+item.kind.toLowerCase()}>{offerKindLabel(item.kind)}</span>
+  return <div className="ac-badges"><span className={'ac-kind '+(item.kind??'unknown').toLowerCase()}>{offerKindLabel(item.kind)}</span>
     <Status offer={item}/>{!item.active&&!item.deletedAt&&<span className="ac-pill-muted">Inactivo</span>}
     {item.adultOnly&&<span className="ac-pill-age">Solo adultos</span>}</div>;
 }
+function useMobileCatalogLayout(){
+  const matches=()=>typeof window!=='undefined' && typeof window.matchMedia==='function' &&
+    window.matchMedia('(max-width: 900px)').matches;
+  const [mobile,setMobile]=useState(matches);
+  useEffect(()=>{
+    if(typeof window.matchMedia!=='function')return;
+    const query=window.matchMedia('(max-width: 900px)');
+    const update=()=>setMobile(query.matches);
+    update();
+    if(typeof query.addEventListener==='function'){
+      query.addEventListener('change',update);
+      return()=>query.removeEventListener('change',update);
+    }
+    query.addListener(update);
+    return()=>query.removeListener(update);
+  },[]);
+  return mobile;
+}
 export function AdminContentPage(){
+  const mobile=useMobileCatalogLayout();
   const allowed=getSession()?.permissions?.includes('catalog:read')??false;
   const [params,setParams]=useSearchParams();
   const q=params.get('q')??'',kind=params.get('kind')??'',status=params.get('status')??'',
@@ -154,24 +178,24 @@ export function AdminContentPage(){
       {loading?<StatePanel kind="loading" title="Consultando contenido" message="Cargando productos y servicios registrados."/>:
         error?<StatePanel kind="error" title="No se pudo cargar el contenido" message={error} retry={()=>setRevision(v=>v+1)}/>:
         directory&&(directory.offers.length===0?<StatePanel kind="empty" title="Sin resultados" message="Prueba otros filtros o consulta otro período."/>:<>
-          <div className="ac-table-scroll"><table className="ac-table"><thead><tr>{canModerate&&<th scope="col"><span className="sr-only">Seleccionar</span></th>}<th>Publicación</th><th>Negocio</th><th>Categoría</th><th>Precio</th><th>Estado</th><th>Actividad</th><th>Detalle</th></tr></thead>
+          {!mobile&&<div className="ac-table-scroll"><table className="ac-table"><thead><tr>{canModerate&&<th scope="col"><span className="sr-only">Seleccionar</span></th>}<th>Publicación</th><th>Negocio</th><th>Categoría</th><th>Precio</th><th>Estado</th><th>Actividad</th><th>Detalle</th></tr></thead>
             <tbody>{directory.offers.map(offer=><tr key={offer.id}>
               {canModerate&&<td><input type="checkbox" aria-label={'Seleccionar '+offer.name}
                 checked={selectedIds.includes(offer.id)} disabled={Boolean(offer.deletedAt)}
                 onChange={()=>toggleSelection(offer.id)}/></td>}
-              <td><div className="ac-title-cell"><AdminContentPhoto photoId={offer.photoId} alt={offer.photoAlt??offer.name} type={offer.kind}/><div><Link to={'/content/'+encodeURIComponent(offer.id)}><strong>{offer.name}</strong></Link><small>{offer.internalCode} · {offerKindLabel(offer.kind)}</small><small>Actualizado: {displayDate(offer.updatedAt)}</small></div></div></td>
+              <td><div className="ac-title-cell"><AdminContentPhoto photoId={offer.photoId} alt={offer.photoAlt??offer.name} type={offer.kind} thumbnail/><div><Link to={'/content/'+encodeURIComponent(offer.id)}><strong>{offer.name}</strong></Link><small>{offer.internalCode} · {offerKindLabel(offer.kind)}</small><small>Actualizado: {displayDate(offer.updatedAt)}</small></div></div></td>
               <td><Link className="ac-business-link" to={'/businesses/'+encodeURIComponent(offer.business.id)}>{offer.business.name}</Link><small className="ac-table-sub">{offer.business.city??'Ubicación no registrada'}</small></td>
               <td>{offer.category}</td><td className="ac-price">{offerPrice(offer)}</td>
               <td><Status offer={offer}/>{!offer.active&&!offer.deletedAt&&<span className="ac-table-sub">Inactivo</span>}</td>
               <td><div className="ac-activity-mini"><span title="Me gusta"><Icon name="heart" size={14}/>{num(offer.likes)}</span><span title="Vistas"><Icon name="eye" size={14}/>{num(offer.views)}</span><span title="Reportes"><Icon name="flag" size={14}/>{num(offer.reports)}</span></div></td>
               <td><Link className="ac-view" to={'/content/'+encodeURIComponent(offer.id)}>Ver detalle <Icon name="arrow" size={16}/></Link></td>
-            </tr>)}</tbody></table></div>
-          <div className="ac-mobile-grid">{directory.offers.map(offer=><article className="ac-mobile-card" key={offer.id}>
-            <Link className="ac-mobile-image" to={'/content/'+encodeURIComponent(offer.id)}><AdminContentPhoto photoId={offer.photoId} alt={offer.photoAlt??offer.name} type={offer.kind}/></Link>
+            </tr>)}</tbody></table></div>}
+          {mobile&&<div className="ac-mobile-grid">{directory.offers.map(offer=><article className="ac-mobile-card" key={offer.id}>
+            <Link className="ac-mobile-image" to={'/content/'+encodeURIComponent(offer.id)}><AdminContentPhoto photoId={offer.photoId} alt={offer.photoAlt??offer.name} type={offer.kind} thumbnail/></Link>
             <div className="ac-mobile-body">{canModerate&&<label className="ac-mobile-select"><input type="checkbox" checked={selectedIds.includes(offer.id)}
               disabled={Boolean(offer.deletedAt)} onChange={()=>toggleSelection(offer.id)}/> Seleccionar</label>}<ContentBadge item={offer}/><h3>{offer.name}</h3><p>{offer.category} · {offer.business.name}</p>
               <strong className="ac-mobile-price">{offerPrice(offer)}</strong><div className="ac-mobile-foot"><span>{offer.business.city??'Sin ubicación'}</span><Link className="ac-view" to={'/content/'+encodeURIComponent(offer.id)}>Explorar <Icon name="arrow" size={16}/></Link></div></div>
-          </article>)}</div>
+          </article>)}</div>}
         </>)}
       {directory&&directory.pagination.totalPages>1&&<nav className="ac-pagination" aria-label="Páginas de contenido">
         <span>Página {page} de {directory.pagination.totalPages}</span><div><button type="button" className="ac-secondary" disabled={page<=1} onClick={()=>go(page-1)}>Anterior</button><button type="button" className="ac-primary" disabled={page>=directory.pagination.totalPages} onClick={()=>go(page+1)}>Siguiente <Icon name="arrow" size={16}/></button></div></nav>}
