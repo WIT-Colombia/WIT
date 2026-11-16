@@ -17,6 +17,8 @@ import {
 } from './public-business.controller.js';
 import { listReviewsController } from '../reviews/review.controller.js';
 import { publicZoneAvailability, publicUpcomingZone } from '../zones/zone-policy.service.js';
+import { confirmZoneInterest, subscribeZoneInterest, unsubscribeZoneInterest, zoneEmailResultHtml } from '../zones/zone-interest.service.js';
+import { z } from 'zod';
 import { AppError } from '../../shared/errors/app-error.js';
 
 export const publicBusinessRouter = Router();
@@ -32,6 +34,36 @@ const publicReadRateLimit = rateLimit({
 });
 publicBusinessRouter.use(publicReadRateLimit);
 publicBusinessRouter.use(optionalAuth);
+
+const interestSchema=z.object({zoneKey:z.string().min(1).max(240),
+  email:z.email().max(320),consent:z.literal(true)}).strict();
+const interestRateLimit=rateLimit({
+  windowMs:60*60*1000,limit:env.nodeEnv==='development'?50:5,
+  standardHeaders:'draft-8',legacyHeaders:false,
+  handler:(_req,res)=>{res.status(429).json({error:{code:'ZONE_INTEREST_RATE_LIMIT',message:'Has solicitado demasiados avisos. Inténtalo más tarde.'}});},
+});
+publicBusinessRouter.post('/zones/interest',interestRateLimit,async(req,res,next)=>{
+  try{
+    const input=interestSchema.safeParse(req.body);
+    if(!input.success)throw new AppError(400,'ZONE_INTEREST_INVALID','Indica un correo válido y acepta el aviso de apertura.');
+    res.setHeader('Cache-Control','no-store');
+    res.status(202).json(await subscribeZoneInterest(input.data));
+  }catch(error){next(error);}
+});
+publicBusinessRouter.get('/zones/confirm',async(req,res,next)=>{
+  try{
+    const result=await confirmZoneInterest(String(req.query.token??''));
+    res.setHeader('Cache-Control','no-store');
+    res.type('html').send(zoneEmailResultHtml(result.title,result.message));
+  }catch(error){next(error);}
+});
+publicBusinessRouter.get('/zones/unsubscribe',async(req,res,next)=>{
+  try{
+    const result=await unsubscribeZoneInterest(String(req.query.token??''));
+    res.setHeader('Cache-Control','no-store');
+    res.type('html').send(zoneEmailResultHtml(result.title,result.message));
+  }catch(error){next(error);}
+});
 publicBusinessRouter.get('/zones/next', async (_req, res, next) => {
   try { res.setHeader('Cache-Control','no-store'); res.json(await publicUpcomingZone()); }
   catch(error) { next(error); }
