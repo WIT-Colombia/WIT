@@ -62,8 +62,9 @@ function stored<T>(key: string, fallback: T): T {
 
 function storedWelcomeNotifications(): BusinessNotification[] {
   const value = stored("notifications", initialNotifications);
-  const welcome = value.find((item) => item.id === "welcome") ?? initialNotifications[0];
-  return welcome ? [welcome] : [];
+  const welcome = Array.isArray(value) ? value.find((item) => item.id === "welcome") : undefined;
+  // Keep the existing read/deleted state, while updating the welcome copy in previews.
+  return welcome ? [{ ...welcome, title: initialNotifications[0].title, description: initialNotifications[0].description }] : [];
 }
 
 function useStoredState<T>(key: string, fallback: T): [T, (value: T) => void] {
