@@ -30,6 +30,7 @@ export default function Notifications() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'Todas' | 'No leídas' | 'Leídas'>('Todas');
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleted, setDeleted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -75,6 +76,7 @@ export default function Notifications() {
     ...visibleLocal.map(item => ({ id: item.id, title: item.title, body: item.body, date: item.date, read: item.read, source: 'local' as const })),
   ], [visibleLocal, visibleRemote]);
   const unread = notices.filter(item => !item.read).length;
+  const filteredNotices = notices.filter(item => filter === "Todas" || (filter === "No leídas" ? !item.read : item.read));
   const announce = (next: PlatformNotice[], nextLocal: UserNotification[]) => {
     if (accountId) notifyCount(accountId,
       next.filter(item => !item.readAt).length + nextLocal.filter(item => !item.read).length);
@@ -134,28 +136,29 @@ export default function Notifications() {
     </div>
     {error && <p className="notification-success" role="alert">{error} <button type="button" onClick={() => void load()}>Reintentar</button></p>}
     {loading && <p role="status">Actualizando notificaciones…</p>}
-    {notices.length ? <>
-      <div className="notification-list">{notices.slice(0, visibleCount).map(item =>
+    <div className="notification-filter-bar" role="group" aria-label="Filtrar notificaciones">{(["Todas", "No leídas", "Leídas"] as const).map(value => <button key={value} type="button" className={filter === value ? "active" : ""} aria-pressed={filter === value} onClick={() => { setFilter(value); setVisibleCount(10); setPendingDeleteId(null); }}>{value}{value === "No leídas" && <span>{unread}</span>}</button>)}</div>
+    {filteredNotices.length ? <>
+      <div className="notification-list">{filteredNotices.slice(0, visibleCount).map(item =>
         <div className={'notification-item' + (item.read ? ' is-read' : '') + (selectedId === item.id ? ' is-selected' : '')} key={item.source + ':' + item.id}>
           <button type="button" className="notification-main-action" disabled={busy} onClick={() => void select(item)}>
             <span className="notification-icon"><img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#fff', borderRadius: '50%' }}/></span>
             <span className="notification-copy"><b>{item.title}</b><small>{item.body}</small><time>{item.date}</time></span>
             {!item.read && <i aria-label="Sin leer"/>}
           </button>
-          {selectedId === item.id && <span className="notification-actions">
+          {<span className="notification-actions">
             <button type="button" className="notification-delete" aria-label={'Eliminar ' + item.title} disabled={busy} onClick={event => {event.stopPropagation();setPendingDeleteId(item.id);}}>×</button>
-            {pendingDeleteId === item.id && <span className="notification-delete-confirm">¿Eliminarla?
+            {pendingDeleteId === item.id && <span className="notification-delete-confirm">¿Eliminar esta notificación?
               <button type="button" disabled={busy} onClick={() => void remove(item)}>Sí</button>
               <button type="button" onClick={() => setPendingDeleteId(null)}>No</button>
             </span>}
           </span>}
         </div>,
       )}</div>
-      {notices.length > 10 && <div className="notifications-pagination">
-        {visibleCount < notices.length
-          ? <button type="button" onClick={() => setVisibleCount(v => Math.min(v + 10, notices.length))}>Ver más notificaciones →</button>
+      {filteredNotices.length > 10 && <div className="notifications-pagination">
+        {visibleCount < filteredNotices.length
+          ? <button type="button" onClick={() => setVisibleCount(v => Math.min(v + 10, filteredNotices.length))}>Ver más notificaciones →</button>
           : <button type="button" onClick={() => { setVisibleCount(10); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Volver arriba ↑</button>}
       </div>}
-    </> : !loading && <div className="user-empty-state"><h2>No tienes notificaciones</h2><p>Cuando haya novedades, aparecerán aquí.</p><Link to="/home">Ir al inicio</Link></div>}
+    </> : !loading && <div className="user-empty-state"><h2>{filter === "No leídas" ? "Todo al día" : filter === "Leídas" ? "No hay notificaciones leídas" : "No tienes notificaciones"}</h2><p>Cuando haya novedades, aparecerán aquí.</p><Link to="/home">Ir al inicio</Link></div>}
   </PageLayout>;
 }
