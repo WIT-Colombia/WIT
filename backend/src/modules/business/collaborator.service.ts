@@ -224,13 +224,13 @@ export async function markAllNotificationsRead(userId: string, businessId: strin
  * membership, invitation and ownership-transfer workflows are untouched.
  */
 export async function deleteNotification(userId: string, id: string, businessId?: string) {
-  const deleted = await prisma.businessNotification.deleteMany({ where: { id, userId, ...(businessId ? { businessId } : {}) } });
+  const deleted = await prisma.businessNotification.deleteMany({ where: { id, userId, ...(businessId ? { businessId } : { type: 'COLLABORATION_INVITATION' }) } });
   if (!deleted.count) throw new AppError(404, 'NOTIFICATION_NOT_FOUND', 'Notificación no encontrada.');
   return { deleted: true };
 }
 export async function markNotificationRead(userId: string, id: string, businessId?: string) {
   const notification = await prisma.businessNotification.findFirst({
-    where: { id, userId, ...(businessId ? { businessId } : {}) },
+    where: { id, userId, ...(businessId ? { businessId } : { type: 'COLLABORATION_INVITATION' }) },
     select: { id: true, readAt: true },
   });
   if (!notification) throw new AppError(404, 'NOTIFICATION_NOT_FOUND', 'Notificación no encontrada.');
