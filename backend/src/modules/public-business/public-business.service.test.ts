@@ -100,6 +100,13 @@ test('las rutas públicas no requieren autenticación', () => {
     .filter((layer: any) => layer.route)
     .map((layer: any) => `${Object.keys(layer.route.methods)[0].toUpperCase()} ${layer.route.path}`);
   assert.deepEqual(routes, [
+    'POST /zones/alerts',
+    'GET /zones/alerts/confirm',
+    'POST /zones/alerts/confirm',
+    'GET /zones/alerts/unsubscribe',
+    'POST /zones/alerts/unsubscribe',
+    'GET /zones/next-launch',
+    'GET /zones/status',
     'GET /businesses',
     'GET /search',
     'GET /categories',
