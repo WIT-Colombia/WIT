@@ -9,6 +9,7 @@ import { deactivateAdminUser, fetchAdminUserAvatar, getAdminUserProfile, getAdmi
 import { AdminUserStatusDialog } from '../components/users/AdminUserStatusDialog';
 import { AdminUserAuditTimeline } from './AdminUserAuditTimeline';
 import { accountStatus } from './AdminUsersPage';
+import { formatNickname } from '../utils/format';
 import './AdminUsersRefresh.css';
 import './AdminUsersControl.css';
 
@@ -165,7 +166,7 @@ export function AdminUserDetailPage() {
   return <div className="au-page au-detail-page">
     <Link className="au-back" to="/users"><Icon name="arrow" size={17}/> Volver al directorio</Link>
     <header className="au-detail-hero"><div className="au-profile-avatar">{avatarSrc?<img src={avatarSrc} alt="" onError={()=>setAvatarSrc(null)}/>:initials(profile.displayName)}</div>
-      <div className="au-detail-heading"><span className="au-eyebrow">FICHA ADMINISTRATIVA · USUARIO</span><h1>{profile.displayName}</h1><p>{profile.emailNormalized??'Sin correo electrónico'}{profile.nickname?' · @'+profile.nickname:''}</p>
+      <div className="au-detail-heading"><span className="au-eyebrow">FICHA ADMINISTRATIVA · USUARIO</span><h1>{profile.displayName}</h1><p>{profile.emailNormalized??'Sin correo electrónico'}{profile.nickname?' · '+formatNickname(profile.nickname):''}</p>
         <div className="au-profile-badges"><span className={'au-status '+profile.status.toLowerCase()}>{accountStatus[profile.status]}</span>
           {profile.administrativeRoles.map(role=><span className="au-admin-mini" key={role}>{adminRoleName(role)}</span>)}</div></div>
       <div className="au-detail-hero-actions au-control-detail-actions">
@@ -193,7 +194,7 @@ export function AdminUserDetailPage() {
       <section className="au-info-card" aria-labelledby="au-info-title"><header className="au-section-title"><span className="au-section-icon"><Icon name="users" size={20}/></span><div><h2 id="au-info-title">Información de la cuenta</h2><p>Datos registrados en XAMUKO.</p></div></header>
         <dl className="au-info-grid">
           <div><dt>Nombre completo</dt><dd>{profile.displayName}</dd></div><div><dt>Correo electrónico</dt><dd>{profile.emailNormalized??'No registrado'}</dd></div>
-          <div><dt>Alias</dt><dd>{profile.nickname?'@'+profile.nickname:'No registrado'}</dd></div><div><dt>Idioma</dt><dd>{localeName(profile.locale)}</dd></div>
+          <div><dt>Alias</dt><dd>{formatNickname(profile.nickname)||'No registrado'}</dd></div><div><dt>Idioma</dt><dd>{localeName(profile.locale)}</dd></div>
           <div><dt>Identificador público</dt><dd className="au-code">{profile.publicId}</dd></div><div><dt>Última actualización</dt><dd>{dateTime(profile.updatedAt)}</dd></div>
           <div><dt>Ubicación preferida</dt><dd>{[profile.preferredLocationCity,profile.preferredLocationRegion,profile.preferredLocationCountry].filter(Boolean).join(', ')||'No registrada'}</dd></div>
           <div><dt>Identificador interno</dt><dd className="au-code">{profile.id}</dd></div>
