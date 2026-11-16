@@ -88,7 +88,7 @@ try{
       assert.equal(await page.getByText('Negocio sin marca').isVisible(),true,device+': brandless claim visible');
       await page.getByRole('button',{name:'Aprobar reclamación'}).click();
       assert.equal(await page.getByRole('dialog',{name:'Aprobar reclamación'}).isVisible(),true,device+': confirmation dialog');
-      await page.getByRole('button',{name:'Cerrar'}).click();
+      await page.getByRole('button',{name:'Cerrar',exact:true}).click();
       await page.getByRole('button',{name:'Marcas'}).click();
       assert.equal(await page.getByText('Marca Sol').first().isVisible(),true,device+': brands tab');
       assert.equal(errors.length,0,device+': JS errors '+errors.join(' | '));
