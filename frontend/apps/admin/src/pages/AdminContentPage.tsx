@@ -13,7 +13,7 @@ import './AdminContentControl.css';
 import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
 
 function exportVisibleContent(rows:AdminOfferRecord[]){
-  const safe=(value:string)=>'"'+(/^[=+@-]/.test(value)||(value.length>0&&value.charCodeAt(0)<32)?"'":'')+value.replaceAll('"','""')+'"';
+  const safe=(value:string)=>'"'+((['=','+','-','@'].includes(value.trimStart()[0]??'')||value.charCodeAt(0)<32)?"'":'')+value.replaceAll('"','""')+'"';
   const headers=['Código','Nombre','Tipo','Negocio','Categoría','Precio','Estado','Me gusta','Vistas','Reportes','Actualización'];
   const lines=[headers,...rows.map(o=>[o.internalCode,o.name,offerKindLabel(o.kind),o.business.name,o.category,offerPrice(o),contentStatusLabel(o.publicationStatus,o.deletedAt,o.administrativeStatus),String(o.likes),String(o.views),String(o.reports),displayDate(o.updatedAt)])];
   const csv=String.fromCharCode(0xFEFF)+lines.map(row=>row.map(safe).join(';')).join(String.fromCharCode(13,10));
