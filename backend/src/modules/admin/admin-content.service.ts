@@ -67,7 +67,14 @@ export async function listAdminContent(filters:Filters){
     prisma.businessOffer.findMany({where,select:sharedSelect,orderBy:order,
       skip:(page-1)*pageSize,take:pageSize}),
   ]);
-  return {offers:offers.map(compactOffer),pagination:{page,pageSize,total,totalPages:Math.ceil(total/pageSize)}};
+  const ids=offers.map(o=>o.id);
+  const viewed=ids.length?await prisma.businessAnalyticsEvent.groupBy({
+    by:['offerId'],where:{eventType:'OFFER_VIEW',offerId:{in:ids}},
+    _count:{_all:true},
+  }):[];
+  const viewMap=new Map(viewed.map(v=>[v.offerId, v._count._all]));
+  return {offers:offers.map(o=>({...compactOffer(o),views:viewMap.get(o.id)??0})),
+    pagination:{page,pageSize,total,totalPages:Math.ceil(total/pageSize)}};
 }
 export async function getAdminContentInsights(filters:Filters,now=new Date()){
   const where=whereFor(filters);
