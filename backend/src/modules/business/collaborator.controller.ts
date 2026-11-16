@@ -15,7 +15,7 @@ export const reactivateController=run(async req=>({membership:await reactivateCo
 export const revokeController=run(async req=>({membership:await revokeCollaborator(uid(req),req.params.membershipId)}));
 export const permissionsController=run(async req=>({result:await setPermissions(uid(req),req.params.membershipId,Array.isArray(req.body?.permissions)?req.body.permissions:[])}));
 export const leaveController=run(async req=>({membership:await leaveBusiness(uid(req),req.params.businessId)}));
-export const notificationsController=run(async req=>({notifications:await listNotifications(uid(req))}));
+export const notificationsController=run(async req=>({notifications:await listNotifications(uid(req),undefined,true)}));
 export const scopedNotificationsController=run(async req=>{
   const [notifications, unread] = await Promise.all([
     listNotifications(uid(req),req.params.businessId),
