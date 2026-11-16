@@ -4,7 +4,7 @@ import { deleteAdminBusiness, validateAdminVisibilityAction, adminBusinessWhere,
 
 test('la eliminación administrativa del negocio requiere un motivo suficiente', async () => {
   await assert.rejects(
-    () => deleteAdminBusiness('negocio', 'admin', 'demasiado corto'),
+    () => deleteAdminBusiness('negocio', 'admin', 'corto'),
     (error: any) => {
       assert.equal(error.code, 'ADMIN_BUSINESS_REASON_REQUIRED');
       assert.equal(error.statusCode, 400);
