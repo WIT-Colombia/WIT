@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ApiError } from '../services/httpClient';
 import {
-  clearPendingZoneAlert, readPendingZoneAlert, subscribeZoneAlert, ZONE_ALERT_CHANGED,
+  claimPendingZoneAlertAttempt, clearPendingZoneAlert, readPendingZoneAlert, subscribeZoneAlert, ZONE_ALERT_CHANGED,
 } from '../services/zoneAlertService';
 
 /** Completa la suscripción solicitada antes del registro, después del login, Google o verificación. */
@@ -17,6 +17,7 @@ export function ZoneAlertResume() {
     const key = user.id + ':' + pending.code;
     if (lastAttempt.current === key) return;
     lastAttempt.current = key;
+    if (!claimPendingZoneAlertAttempt(user.id, pending.code)) return;
     let active = true;
     void subscribeZoneAlert(pending.code).then(() => {
       clearPendingZoneAlert();
@@ -33,7 +34,7 @@ export function ZoneAlertResume() {
   }, [isAuthenticated, user?.id]);
   useEffect(() => {
     if (!notice) return;
-    const timer = window.setTimeout(() => setNotice(''), 8000);
+    const timer = window.setTimeout(() => setNotice(''), 5000);
     return () => window.clearTimeout(timer);
   }, [notice]);
   return notice ? <div role="status" aria-live="polite" style={{
