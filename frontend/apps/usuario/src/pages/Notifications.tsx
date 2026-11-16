@@ -74,7 +74,7 @@ export default function Notifications() {
       date: readableDate(item.createdAt), read: Boolean(item.readAt), source: 'server' as const,
     })),
     ...visibleLocal.map(item => ({ id: item.id, title: item.title, body: item.body, date: item.date, read: item.read, source: 'local' as const })),
-  ], [visibleLocal, visibleRemote]);
+  ].sort((a, b) => Number(b.source === "local" && b.id === "welcome") - Number(a.source === "local" && a.id === "welcome")), [visibleLocal, visibleRemote]);
   const unread = notices.filter(item => !item.read).length;
   const filteredNotices = notices.filter(item => filter === "Todas" || (filter === "No leídas" ? !item.read : item.read));
   const announce = (next: PlatformNotice[], nextLocal: UserNotification[]) => {
@@ -141,7 +141,7 @@ export default function Notifications() {
       <div className="notification-list">{filteredNotices.slice(0, visibleCount).map(item =>
         <div className={'notification-item' + (item.read ? ' is-read' : '') + (selectedId === item.id ? ' is-selected' : '')} key={item.source + ':' + item.id}>
           <button type="button" className="notification-main-action" disabled={busy} onClick={() => void select(item)}>
-            <span className="notification-icon"><img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#fff', borderRadius: '50%' }}/></span>
+            <span className="notification-icon notification-brand-icon"><img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#fff', borderRadius: '50%' }}/></span>
             <span className="notification-copy"><b>{item.title}</b><small>{item.body}</small><time>{item.date}</time></span>
             {!item.read && <i aria-label="Sin leer"/>}
           </button>
