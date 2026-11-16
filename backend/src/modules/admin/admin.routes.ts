@@ -82,14 +82,14 @@ adminRouter.get('/categories', requireAdmin('CATALOG_READ'), async (_req, res, n
           translations: { select: { locale: true, name: true } },
           _count: { select: { businesses: true } } },
       }),
-      // Offer/category attribution is based on the business's PRIMARY category.
-      // A publication without its own category must not disappear from the counters.
+      // Respect an offer's explicit category and inherit the business's primary category
+      // when the offer has no category. Match Admin -> Contenido filters.
       prisma.$queryRaw<Array<{ categoryId: string; kind: 'PRODUCT' | 'SERVICE'; total: bigint }>>`
-        SELECT b.categoryId, o.kind, COUNT(*) AS total
+        SELECT COALESCE(o.categoryId, b.categoryId) AS categoryId, o.kind, COUNT(*) AS total
         FROM BusinessOffer AS o
         INNER JOIN Business AS b ON b.id = o.businessId
         WHERE o.deletedAt IS NULL
-        GROUP BY b.categoryId, o.kind
+        GROUP BY COALESCE(o.categoryId, b.categoryId), o.kind
       `,
     ]);
     const counts = new Map<string, { products: number; services: number }>();
