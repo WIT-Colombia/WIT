@@ -59,7 +59,7 @@ function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) 
   return <span className={`notification-artwork ${variant}`} role="img" aria-label={`Notificación de ${item.business.name}`}>
     <span className="notification-artwork-glyph" aria-hidden="true">{glyph}</span>
     {isSystemEvent ? <img className="notification-platform-brand" src="/brand/xamuko-symbol.jpg" alt="" /> :
-      privateActorImage ? <img src={privateActorImage} alt="" onError={event => { URL.revokeObjectURL(privateActorImage); setPrivateActorImage(null); }} /> :
+      privateActorImage ? <img src={privateActorImage} alt="" onError={() => { URL.revokeObjectURL(privateActorImage); setPrivateActorImage(null); }} /> :
       actorAvatar ? <img src={actorAvatar} alt="" onError={event => { event.currentTarget.remove(); }} /> :
       image && <img src={image} alt="" onError={event => { URL.revokeObjectURL(image); setImage(null); event.currentTarget.remove(); }} />}
   </span>;
