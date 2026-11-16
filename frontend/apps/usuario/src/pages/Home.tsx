@@ -5,6 +5,7 @@ import { businesses as sampleBusinesses, products as sampleProducts, type Busine
 import { useLocationContext } from "../context/LocationContext";
 import { LocationStarter } from "../components/LocationStarter";
 import { searchUniversal } from "../services/businessService";
+import { ZoneLaunchNotice } from "../components/ZoneLaunchNotice";
 import { listDiscoverBusinesses } from "../services/discoverBusinessService";
 import { bogotaDayIndex, selectDiscoverBusinesses } from "../utils/discoverBusinesses";
 import { listPublicProducts, listPublicPromotions, listPublicServices, listPublicNewArrivals, listPublicCategories, type PublicBusinessCategory, type PublicNewArrival } from "../services/publicBusinessApi";
@@ -685,6 +686,7 @@ export default function Home() {
 
     <main id="inicio">
       <LocationStarter />
+      <ZoneLaunchNotice city={selectedLocation?.name} department={selectedLocation?.context}/>
 
       <section className="home-city-banner-section" aria-label={`Descubre negocios cerca de ${locationLabel}`}><div className="home-city-banner"><img src={xamukoLocalHero} alt="Comercios locales de la ciudad"/><div className="home-city-banner__shade"/><span className="home-city-banner__location"><Icon name="pin"/>{cityName}</span><p className="home-city-banner__signature" aria-hidden="true">Nuestra gente,<br/>nuestra ciudad.</p><div className="home-city-banner__copy"><span>EXPLORA TU CIUDAD</span><h2>Lo local está<br/><em>más cerca</em> de ti</h2><p>Encuentra negocios, productos y servicios que hacen especial a tu comunidad.</p><Link to="/map" className="home-city-banner__action"><Icon name="map"/>Explorar negocios</Link></div></div></section>
 
