@@ -327,12 +327,54 @@ export function moderateReviewReport(reportId: string, status: string, reviewSta
 
 export function listAdminReviews(page = 1, pageSize = 20) { return request<AdminReviewsResponse>(`/admin/reviews?page=${page}&pageSize=${pageSize}`); }
 
-export type PioneerAssignment = { id: string; number: number; assignedAt: string; brand: { id: string; legalName: string; verification: string } };
-export type PioneerBrand = { id: string; legalName: string; verification: string; businesses: { id: string; publicId: string; name: string; publicationStatus: string; visibilityStatus: string }[]; claims: { id: string; claimantId: string; reviewedById: string | null; reviewedAt: string | null }[] };
-export type PioneerRegistry = { max: number; available: number; brands: PioneerBrand[]; assignments: PioneerAssignment[] };
+export type PioneerAssignment = {
+  id: string; brandId: string; number: number; assignedAt: string;
+  brand: { id: string; legalName: string; verification: string };
+  assignedBy: { publicId: string; displayName: string };
+};
+export type PioneerBrand = {
+  id: string; legalName: string; verification: 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
+  evidenceSummary: string | null; verifiedAt: string | null; createdAt: string; updatedAt: string;
+  businesses: Array<{ id: string; publicId: string; name: string; publicationStatus: string;
+    lifecycleStatus: string; visibilityStatus: string; deletionStatus: string;
+    businessAccount: { status: string }; location: { cityName: string; countryCode: string } | null }>;
+  claims: Array<{ id: string; claimantId: string; status: string; reviewedById: string | null; reviewedAt: string | null }>;
+  eligibleForPioneer: boolean;
+  eligibility: { verified: boolean; approvedClaim: boolean; visibleBusiness: boolean; alreadyAssigned: boolean };
+};
+export type PioneerPendingClaim = {
+  id: string; status: string; claimantId: string; brandId: string | null;
+  evidenceType: string; evidenceNote: string | null; createdAt: string; reviewedAt: string | null;
+  claimant: { displayName: string };
+  business: { id: string; name: string; publicId: string; brandId: string | null;
+    publicationStatus: string; visibilityStatus: string };
+  brand: { id: string; legalName: string; verification: string } | null;
+};
+export type PioneerAction = {
+  id: string; entityId: string; action: string; reason: string | null; createdAt: string;
+  actor: { displayName: string } | null;
+};
+export type PioneerRegistry = {
+  max: number; available: number; brands: PioneerBrand[];
+  assignments: PioneerAssignment[]; pendingClaims: PioneerPendingClaim[];
+  recentActions: PioneerAction[]; generatedAt: string; definition: string;
+};
 export function listPioneers() { return request<PioneerRegistry>('/admin/pioneers'); }
-export function reviewPioneerClaim(claimId: string, approve: boolean, reason: string) { return request(`/admin/pioneers/claims/${encodeURIComponent(claimId)}/review`, { method: 'POST', body: JSON.stringify({ approve, reason }) }); }
-export function assignPioneer(brandId: string, reason: string) { return request(`/admin/pioneers/brands/${encodeURIComponent(brandId)}/assign`, { method: 'POST', body: JSON.stringify({ reason }) }); }
+export function reviewPioneerClaim(claimId: string, approve: boolean, reason: string) {
+  return request('/admin/pioneers/claims/' + encodeURIComponent(claimId) + '/review', {
+    method: 'POST', body: JSON.stringify({ approve, reason }),
+  });
+}
+export function reviewPioneerBrand(brandId: string, approve: boolean, reason: string) {
+  return request('/admin/pioneers/brands/' + encodeURIComponent(brandId) + '/verify', {
+    method: 'POST', body: JSON.stringify({ approve, reason }),
+  });
+}
+export function assignPioneer(brandId: string, reason: string) {
+  return request('/admin/pioneers/brands/' + encodeURIComponent(brandId) + '/assign', {
+    method: 'POST', body: JSON.stringify({ reason }),
+  });
+}
 
 export type AdminVerificationRequest = { id: string; businessId: string; status: string; businessNameAtRequest: string; documentType: string; documentSizeBytes: number; documentDeletionStatus: string; requestedAt: string; updatedAt: string; resolvedAt: string | null; business?: { id: string; publicId: string; name: string; createdBy?: { displayName: string; emailNormalized: string | null } }; requester?: { displayName: string; emailNormalized: string | null } };
 export function listVerificationRequests() { return request<{ requests: AdminVerificationRequest[] }>('/admin/verifications'); }

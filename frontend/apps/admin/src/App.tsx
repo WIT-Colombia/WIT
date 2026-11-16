@@ -18,6 +18,7 @@ import { ReviewReportsPage } from './pages/ReviewReportsPage';
 import { OperationalInboxPage } from './pages/OperationalInboxPage';
 import { ReviewsPage } from './pages/ReviewsPage';
 import { PioneersPage } from './pages/PioneersPage';
+import { PioneersErrorBoundary } from './components/PioneersErrorBoundary';
 import { VerificationsPage } from './pages/VerificationsPage';
 import { getSession, restoreSession } from './services/adminService';
 import { navigation } from './data/navigation';
@@ -63,7 +64,7 @@ export default function App() {
         <Route path="/support" element={<OperationalInboxPage kind="support" />} />
         <Route path="/suggestions" element={<OperationalInboxPage kind="suggestions" />} />
         <Route path="/reviews" element={<ReviewsPage />} />
-        <Route path="/pioneers" element={<PioneersPage />} />
+        <Route path="/pioneers" element={<PioneersErrorBoundary><PioneersPage /></PioneersErrorBoundary>} />
         <Route path="/financial-reports" element={<FinancialExpensesPage />} />
         <Route path="/administrators" element={<AdministratorsPage />} />
         <Route path="/categories" element={<AdminCategoriesPage />} />

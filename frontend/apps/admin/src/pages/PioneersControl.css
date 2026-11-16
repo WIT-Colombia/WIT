@@ -1,0 +1,171 @@
+/* Negocios Pioneros — complementos del diseño actual de Admin. */
+.admin-refresh .pioneer-control-page{max-width:1500px;margin:0 auto;padding:18px 0 38px;min-width:0}
+.admin-refresh .pioneer-control-page *{box-sizing:border-box}
+.admin-refresh .pioneer-control-page .pioneer-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:20px}
+.admin-refresh .pioneer-control-page .pioneer-summary-card{min-width:0}
+.admin-refresh .pioneer-control-page .pioneer-usage-card{grid-column:auto}
+.admin-refresh .pioneer-notice,.admin-refresh .pioneer-error{display:flex;gap:9px;align-items:flex-start;padding:13px 15px;margin-bottom:16px;border-radius:11px;font-size:12px;line-height:1.5}
+.admin-refresh .pioneer-notice{color:#166534;background:#effbf1;border:1px solid #bbebc2}
+.admin-refresh .pioneer-error{color:#8a2525;background:#fff4f4;border:1px solid #f3d0d0}
+.admin-refresh .pioneer-analytics{min-width:0;overflow:hidden;background:#fff;border:1px solid var(--admin-border,#e3e8f2);border-radius:16px;box-shadow:0 3px 16px #192c5010;margin-bottom:22px}
+.admin-refresh .pioneer-section-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:19px 22px;border-bottom:1px solid #e7ecf6}
+.admin-refresh .pioneer-section-heading>div{min-width:0}
+.admin-refresh .pioneer-section-heading h2{display:flex;align-items:center;gap:9px;color:#1e3355;font-size:18px;margin:5px 0;font-weight:800}
+.admin-refresh .pioneer-section-heading h2 svg{color:#7953e5;flex:none}
+.admin-refresh .pioneer-section-heading p{font-size:12px;line-height:1.5;color:#7182a0}
+.admin-refresh .pioneer-eyebrow{display:block;color:#7357cf;font-size:10px;letter-spacing:.08em;font-weight:800;text-transform:uppercase}
+.admin-refresh .pioneer-section-heading button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:39px;white-space:nowrap}
+.admin-refresh .pioneer-chart-controls{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:16px 20px 10px}
+.admin-refresh .pioneer-chart-controls label{display:grid;gap:6px;font-size:11px;font-weight:750;color:#526683;min-width:142px;flex:1}
+.admin-refresh .pioneer-chart-controls select{min-height:39px;min-width:0;width:100%;padding:0 11px;border:1px solid #d9e1ef;border-radius:9px;background:#fbfcff;color:#273e62;font-size:12px}
+.admin-refresh .pioneer-chart-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid #e0e7f5;border-radius:10px;background:#f4f7fd}
+.admin-refresh .pioneer-chart-switch button{border:0;background:transparent;min-height:34px;padding:0 12px;border-radius:7px;color:#60738f;font-size:11px;font-weight:750;cursor:pointer}
+.admin-refresh .pioneer-chart-switch button.selected{color:#244fc7;background:#fff;box-shadow:0 1px 5px #10274e1a}
+.admin-refresh .pioneer-chart-canvas{min-width:0;width:100%;padding:8px 18px 0}
+.admin-refresh .pioneer-chart-canvas svg{display:block;width:100%;height:auto;max-height:330px;touch-action:pan-y}
+.admin-refresh .pioneer-chart-gridline{stroke:#e5eaf4;stroke-width:1}
+.admin-refresh .pioneer-chart-axis{font-size:10px;fill:#8998b0}
+.admin-refresh .pioneer-chart-line{stroke:#7255e3;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round}
+.admin-refresh .pioneer-chart-dot{fill:#fff;stroke:#6e56e5;stroke-width:2}
+.admin-refresh .pioneer-chart-guide{stroke:#715ce5;stroke-width:1.3;stroke-dasharray:4 5}
+.admin-refresh .pioneer-chart-caption{min-height:28px;padding:1px 12px 8px;text-align:center;color:#7685a0;font-size:11px;line-height:1.5}
+.admin-refresh .pioneer-chart-caption strong{color:#273f67}
+.admin-refresh .pioneer-chart-table{overflow-x:auto;padding:12px 20px}
+.admin-refresh .pioneer-chart-table table{width:100%;min-width:490px;border-collapse:collapse}
+.admin-refresh .pioneer-chart-table th,.admin-refresh .pioneer-chart-table td{padding:10px 12px;border-bottom:1px solid #e8edf7;text-align:right;color:#415978;font-size:12px}
+.admin-refresh .pioneer-chart-table th:first-child{text-align:left}
+.admin-refresh .pioneer-chart-insights{display:flex;flex-wrap:wrap;gap:12px;padding:12px 20px;border-top:1px solid #e7ecf4}
+.admin-refresh .pioneer-chart-insights>span{flex:1 1 220px;font-size:12px;color:#687e9c}
+.admin-refresh .pioneer-chart-insights strong{font-size:14px;color:#213d63}
+.admin-refresh .pioneer-analytics-definition{display:flex;align-items:flex-start;gap:9px;margin:0;background:#f8faff;border-top:1px solid #e9eef9;padding:14px 20px;font-size:11px;line-height:1.7;color:#617692}
+.admin-refresh .pioneer-analytics-definition svg{flex:none;color:#7255e3;margin-top:1px}
+.admin-refresh .pioneer-tabs{display:flex;gap:5px;border:1px solid #e2e8f4;border-radius:13px;padding:5px;margin-bottom:13px;background:#f7f9fd;overflow-x:auto;scrollbar-width:thin}
+.admin-refresh .pioneer-tabs button{display:inline-flex;justify-content:center;align-items:center;gap:8px;flex:1 0 auto;min-height:42px;padding:0 15px;border:0;border-radius:9px;background:transparent;color:#526987;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.admin-refresh .pioneer-tabs button.selected{background:#fff;color:#274dbb;box-shadow:0 2px 9px #15396a17}
+.admin-refresh .pioneer-tab-count{background:#f5ecff;color:#7b4adb;padding:2px 6px;border-radius:8px;font-size:10px}
+.admin-refresh .pioneer-directory-filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin-bottom:14px}
+.admin-refresh .pioneer-directory-filters>label:not(.pioneer-search){display:grid;gap:5px;flex:1 1 160px;min-width:0;font-size:11px;font-weight:750;color:#647895}
+.admin-refresh .pioneer-directory-filters .pioneer-search{flex:2 1 250px;background:#fff}
+.admin-refresh .pioneer-directory-filters select{width:100%;min-width:0;border:1px solid #d4deef;min-height:43px;border-radius:10px;padding:0 12px;background:#fff;color:#304665;font-size:12px}
+.admin-refresh .pioneer-directory-filters button{min-height:43px;display:inline-flex;gap:7px;align-items:center;justify-content:center}
+.admin-refresh .pioneer-directory-count{margin:0;padding:12px 21px;color:#667d9d;font-size:12px;font-weight:700;border-bottom:1px solid #e7ecf5}
+.admin-refresh .pioneer-directory .pioneer-table{min-width:850px}
+.admin-refresh .pioneer-directory .pioneer-table td{vertical-align:middle}
+.admin-refresh .pioneer-directory .pioneer-table td>strong{color:#263b5d}
+.admin-refresh .pioneer-business-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.admin-refresh .pioneer-business{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px;max-width:100%;font-size:11px;line-height:1.5;color:#3b5172}
+.admin-refresh .pioneer-business a{color:#315ec8;text-decoration:none;font-weight:750}
+.admin-refresh .pioneer-business small{color:#7a8ca5}
+.admin-refresh .pioneer-muted{color:#8494aa;font-size:11px;line-height:1.6}
+.admin-refresh .pioneer-mobile-list{padding:12px;display:grid;gap:12px}
+.admin-refresh .pioneer-mobile-item{padding:16px;display:grid;gap:9px;border-radius:12px;border:1px solid #e4eafa;background:#fff;min-width:0}
+.admin-refresh .pioneer-mobile-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.admin-refresh .pioneer-mobile-head strong{font-size:17px;color:#273f66}
+.admin-refresh .pioneer-mobile-item h3{font-size:14px;color:#253f64;overflow-wrap:anywhere}
+.admin-refresh .pioneer-mobile-item>small{color:#7287a4;font-size:11px}
+.admin-refresh .pioneer-pagination{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:15px 19px;border-top:1px solid #e7ecf4;font-size:12px;color:#647996}
+.admin-refresh .pioneer-pagination>div{display:flex;gap:9px}
+.admin-refresh .pioneer-pagination button{min-height:35px}
+.admin-refresh .pioneer-claim-list{padding:17px;display:grid;gap:13px}
+.admin-refresh .pioneer-claim-card{padding:17px;border:1px solid #e4e9f3;border-radius:13px;background:#fcfdff;display:grid;gap:13px;min-width:0}
+.admin-refresh .pioneer-claim-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.admin-refresh .pioneer-claim-heading h3{margin:4px 0;color:#233d64;font-size:15px;overflow-wrap:anywhere}
+.admin-refresh .pioneer-claim-heading p,.admin-refresh .pioneer-claim-heading time{font-size:11px;color:#6a7e9a}
+.admin-refresh .pioneer-claim-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0}
+.admin-refresh .pioneer-claim-meta>div{border-radius:9px;background:#f0f4fc;padding:10px;min-width:0}
+.admin-refresh .pioneer-claim-meta dt{font-size:10px;color:#798aa6}
+.admin-refresh .pioneer-claim-meta dd{margin:5px 0 0;font-size:12px;font-weight:750;overflow-wrap:anywhere;color:#314769}
+.admin-refresh .pioneer-claim-evidence{padding:11px;background:#fff;border:1px solid #e5ebf5;border-radius:9px;overflow-wrap:anywhere;font-size:11px;line-height:1.6;color:#4e6585}
+.admin-refresh .pioneer-claim-actions,.admin-refresh .pioneer-brand-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.admin-refresh .pioneer-claim-actions>*,
+.admin-refresh .pioneer-brand-actions>*{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:8px 12px;border-radius:9px;font-size:12px;cursor:pointer}
+.admin-refresh .pioneer-brand-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:17px}
+.admin-refresh .pioneer-brand-card{display:grid;align-content:start;gap:13px;min-width:0;padding:16px;border:1px solid #e2e8f5;border-radius:13px;background:#fff}
+.admin-refresh .pioneer-brand-card>header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:8px}
+.admin-refresh .pioneer-brand-card h3{margin:0 0 7px;color:#253e62;font-size:15px;overflow-wrap:anywhere}
+.admin-refresh .pioneer-verify-status{display:inline-flex;font-size:10px;border-radius:7px;padding:5px 8px;background:#edf2fa;color:#5f748f;font-weight:750}
+.admin-refresh .pioneer-verify-status.verified{color:#166534;background:#e8faed}
+.admin-refresh .pioneer-verify-status.rejected{color:#a52c2c;background:#fff0f0}
+.admin-refresh .pioneer-verify-status.pending{color:#905b18;background:#fff6e3}
+.admin-refresh .pioneer-permanent{display:inline-flex;align-items:center;gap:6px;font-weight:750;font-size:10px;border-radius:7px;color:#7350c8;background:#f1ebff;padding:6px 9px}
+.admin-refresh .pioneer-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.admin-refresh .pioneer-checks li{display:inline-flex;align-items:center;gap:6px;min-width:0;font-size:11px;color:#6c7b91;line-height:1.4}
+.admin-refresh .pioneer-checks li.ok svg{color:#198151}
+.admin-refresh .pioneer-checks li.missing svg{color:#ca5555}
+.admin-refresh .pioneer-audit-list{list-style:none;margin:0;padding:9px 20px}
+.admin-refresh .pioneer-audit-list>li{display:grid;grid-template-columns:31px minmax(0,1fr);gap:11px;padding:12px 0;border-bottom:1px solid #e5ebf5}
+.admin-refresh .pioneer-audit-icon{display:grid;place-items:center;width:31px;height:31px;border-radius:50%;background:#f1eeff;color:#7251cf}
+.admin-refresh .pioneer-audit-title{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.admin-refresh .pioneer-audit-title strong{font-size:12px;color:#253f67}
+.admin-refresh .pioneer-audit-title time,.admin-refresh .pioneer-audit-list small{font-size:11px;color:#7b8da8}
+.admin-refresh .pioneer-audit-list p{margin:7px 0;line-height:1.6;font-size:11px;color:#4f6282;overflow-wrap:anywhere}
+.admin-refresh .pioneer-footnote{display:flex;gap:9px;align-items:flex-start;padding:15px 2px;color:#788ca9;font-size:11px;line-height:1.7}
+.admin-refresh .pioneer-footnote svg{flex:none;margin-top:2px;color:#7851d8}
+.pioneer-modal-backdrop{position:fixed;inset:0;z-index:10000;background:#061429a8;display:flex;align-items:center;justify-content:center;padding:16px}
+.pioneer-modal{width:min(560px,100%);max-height:calc(100dvh - 32px);overflow-y:auto;background:#fff;border:1px solid #e2e8f4;box-shadow:0 24px 70px #071b3c38;border-radius:18px;padding:24px;outline:0;color:#293e60}
+.pioneer-modal>header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.pioneer-modal-icon{display:grid;place-items:center;width:49px;height:49px;border-radius:14px;background:#edecff;color:#7354df}
+.pioneer-modal-icon.danger{background:#fff0f0;color:#c43b3b}
+.pioneer-modal-close{display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:10px;border:1px solid #e4eaf4;background:#fff;cursor:pointer;color:#607593}
+.pioneer-modal h2{font-size:20px;line-height:1.3;margin:0 0 9px;font-weight:850;color:#1f3656}
+.pioneer-modal>p{font-size:12px;line-height:1.6;margin:0 0 14px;color:#637995}
+.pioneer-modal .pioneer-modal-subject{display:grid;gap:4px;border:1px solid #dfe9f7;border-radius:10px;padding:12px;background:#f7faff}
+.pioneer-modal .pioneer-modal-subject strong{font-size:13px;color:#314e78}
+.pioneer-modal .pioneer-modal-subject span{font-size:11px;color:#62799c}
+.pioneer-modal form{display:grid;gap:14px}
+.pioneer-modal form label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#445d82}
+.pioneer-modal form textarea,.pioneer-modal form input{width:100%;font:inherit;font-size:13px;border:1px solid #cfdaeb;border-radius:9px;padding:11px;min-width:0;background:#fff;color:#233c60}
+.pioneer-modal form textarea{resize:vertical}
+.pioneer-modal form footer{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px}
+.pioneer-modal form footer button{min-height:41px;padding:10px 15px;border-radius:10px;cursor:pointer}
+.pioneer-modal form footer button:disabled{opacity:.5;cursor:not-allowed}
+.pioneer-decision-error{border:1px solid #f3c8c8;background:#fff4f4;color:#a02b2b;font-size:12px;line-height:1.5;padding:10px;border-radius:8px}
+@media(max-width:1000px){
+  .admin-refresh .pioneer-brand-grid{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .pioneer-control-page .pioneer-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .pioneer-directory-filters .pioneer-search{flex-basis:100%}
+}
+@media(max-width:800px){
+  .admin-refresh .pioneer-control-page{padding:12px 0 24px}
+  .admin-refresh .pioneer-section-heading{padding:15px;align-items:flex-start}
+  .admin-refresh .pioneer-section-heading button{font-size:11px}
+  .admin-refresh .pioneer-chart-controls{padding:13px;gap:8px}
+  .admin-refresh .pioneer-chart-controls label{flex:1 1 145px}
+  .admin-refresh .pioneer-chart-switch{flex:1 1 auto}
+  .admin-refresh .pioneer-chart-switch button{flex:1}
+  .admin-refresh .pioneer-directory-filters{padding:0 2px}
+  .admin-refresh .pioneer-claim-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .admin-refresh .pioneer-control-page .pioneer-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .admin-refresh .pioneer-control-page .pioneer-summary-card{min-height:88px;padding:11px;gap:9px}
+  .admin-refresh .pioneer-control-page .pioneer-summary-card strong{font-size:22px}
+  .admin-refresh .pioneer-control-page .pioneer-summary-card small{font-size:10px}
+  .admin-refresh .pioneer-control-page .pioneer-summary-icon{width:35px;height:35px;flex:none}
+  .admin-refresh .pioneer-control-page .pioneer-summary-icon svg{width:18px;height:18px}
+  .admin-refresh .pioneer-section-heading{flex-wrap:wrap}
+  .admin-refresh .pioneer-section-heading button{width:100%}
+  .admin-refresh .pioneer-chart-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .pioneer-chart-controls label{min-width:0}
+  .admin-refresh .pioneer-chart-switch{width:100%}
+  .admin-refresh .pioneer-chart-canvas{padding:6px 3px 0}
+  .admin-refresh .pioneer-tabs button{min-height:41px;padding:0 12px;font-size:11px}
+  .admin-refresh .pioneer-directory-filters{display:grid;grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .pioneer-directory-filters>label{min-width:0;width:100%}
+  .admin-refresh .pioneer-directory-filters button{width:100%}
+  .admin-refresh .pioneer-directory-count{padding:11px 14px}
+  .admin-refresh .pioneer-claim-list{padding:10px}
+  .admin-refresh .pioneer-claim-card{padding:12px}
+  .admin-refresh .pioneer-claim-heading{display:grid}
+  .admin-refresh .pioneer-claim-meta{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .pioneer-claim-actions>*,.admin-refresh .pioneer-brand-actions>*{width:100%}
+  .admin-refresh .pioneer-brand-grid{padding:10px}
+  .admin-refresh .pioneer-checks{grid-template-columns:minmax(0,1fr)}
+  .pioneer-modal-backdrop{padding:0;align-items:stretch}
+  .pioneer-modal{width:100%;height:100dvh;max-height:100dvh;border-radius:0;padding:20px 15px 24px}
+}
+@media(max-width:360px){
+  .admin-refresh .pioneer-control-page .pioneer-summary-grid{grid-template-columns:1fr}
+  .admin-refresh .pioneer-chart-controls{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){.admin-refresh .pioneer-control-page *{scroll-behavior:auto!important}}
