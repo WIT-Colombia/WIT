@@ -61,6 +61,8 @@ export async function getAdminContentHistory(id: string, requestedPage = 1) {
 }
 
 export async function controlAdminContent(id: string, actorId: string, action: ContentControlAction, note: string) {
+  if (!['HIDE','REVIEW','RELEASE','DELETE','RESTORE'].includes(action))
+    throw new AppError(400,'ADMIN_CONTENT_ACTION_INVALID','Acción administrativa no permitida.');
   const reason = statement(note);
   const response = await prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM BusinessOffer WHERE id = ${id} FOR UPDATE`;
