@@ -1,4 +1,4 @@
-import { requestWithSession } from './authService';
+import { requestWithSession, requestBlobWithSession } from './authService';
 
 export type PlatformNotice = {
   id: string; title: string; message: string; sourceType: string; sourceId: string;
@@ -16,4 +16,9 @@ export function readAllPlatformNotices() {
 }
 export function dismissPlatformNotice(id: string) {
   return requestWithSession<{ ok: boolean }>('/api/v1/user/notifications/' + encodeURIComponent(id), { method: 'DELETE' });
+}
+
+/** Private illustration: only the recipient may request the pictured business. */
+export function loadNoticeArtwork(id: string) {
+  return requestBlobWithSession('/api/v1/user/notifications/' + encodeURIComponent(id) + '/artwork');
 }
