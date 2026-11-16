@@ -31,7 +31,13 @@ async function processInvitation(membershipId: string, now: Date) {
     const event = expired ? 'COLLAB_INVITE_EXPIRED' : 'COLLAB_INVITE_1DAY';
     const ownerIds = [...new Set(membership.business.memberships.map(item => item.userId))].filter(id => id !== membership.userId);
     const audience: Array<{ userId: string; channel: string }> = [{ userId: membership.userId, channel: 'user' }];
-    if (expired) audience.push(...ownerIds.map(userId => ({ userId, channel: 'business' })));
+    if (expired) {
+      audience.push(...ownerIds.map(userId => ({ userId, channel: 'business' })));
+      await tx.platformNotification.updateMany({ where: {
+        userId: membership.userId, sourceType: 'COLLABORATION_INVITED',
+        sourceId: membership.businessId, readAt: null,
+      }, data: { readAt: now } });
+    }
     let delivered = 0;
     for (const recipient of audience) {
       const reserved = await tx.businessLifecycleNoticeDispatch.createMany({
