@@ -67,6 +67,8 @@ jobs:
           npm test
           npm run typecheck
           npm run build
+      - name: Verify release database readiness (read-only, isolated MySQL)
+        run: npm run preflight:production
       - name: Verify CORS implementation
         run: grep -q "Access-Control-Allow-Origin" src/app.ts
       - name: Prepare production dependency tree
