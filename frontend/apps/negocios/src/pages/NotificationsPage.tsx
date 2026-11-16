@@ -226,9 +226,14 @@ export function NotificationsPage() {
     <section className="surface-card notifications-card">
       <div className="notification-tabs" role="group" aria-label="Filtrar notificaciones"><button type="button" onClick={() => setFilter("Todas")} className={filter === "Todas" ? "active" : ""} aria-pressed={filter === "Todas"}>Todas</button><button type="button" onClick={() => setFilter("No leídas")} className={filter === "No leídas" ? "active" : ""} aria-pressed={filter === "No leídas"}>No leídas <span>{totalUnread}</span></button><button type="button" onClick={() => setFilter("Leídas")} className={filter === "Leídas" ? "active" : ""} aria-pressed={filter === "Leídas"}>Leídas</button></div>
       {showWelcome && (filter === "Todas" || (filter === "No leídas" ? !welcomeState.read : welcomeState.read)) && <article className={`notification-row notification-welcome-row ${welcomeState.read ? "" : "unread"}`} onClick={() => { if (!welcomeState.read) changeWelcome(true, false); }} aria-label="Bienvenida de XAMUKO">
-        <span className="notification-icon wit" aria-hidden="true">✦</span>
+        <span className="notification-icon wit notification-welcome-brand" aria-hidden="true"><img src="/brand/xamuko-symbol.jpg" alt=""/></span>
         <div><div className="notification-title"><h2>¡Bienvenido a XAMUKO Business!</h2>{!welcomeState.read && <span aria-label="Sin leer"/>}</div><p>Tu negocio ya tiene un espacio para crecer en XAMUKO. Desde aquí puedes administrar su información, productos, servicios y novedades. ¡Nos alegra tenerte con nosotros!</p><small>Equipo XAMUKO · Mensaje de bienvenida</small></div>
-        <div className="notification-actions" onClick={event => event.stopPropagation()}>{confirmingLocalDelete === "business-welcome" ? <div className="notification-delete-confirm" role="group" aria-label="Confirmar eliminación"><span>¿Eliminar este mensaje de bienvenida?</span><button type="button" className="danger-button" onClick={() => { changeWelcome(welcomeState.read, true); setConfirmingLocalDelete(null); }}>Eliminar</button><button type="button" className="outline-button" onClick={() => setConfirmingLocalDelete(null)}>Cancelar</button></div> : <button type="button" className="notification-delete" aria-label="Eliminar bienvenida" onClick={() => setConfirmingLocalDelete("business-welcome")}>Eliminar</button>}</div>
+
+        <div className="notification-actions" onClick={event => event.stopPropagation()}>
+          <button type="button" className="notification-delete" title="Eliminar notificación" aria-label="Eliminar bienvenida" onClick={() => setConfirmingLocalDelete("business-welcome")}>
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg>
+          </button>
+        </div>
       </article>}
       {visiblePersisted.map(item => {
         const pending = item.type === "COLLABORATION_INVITATION" && item.membership?.status === "INVITED";
