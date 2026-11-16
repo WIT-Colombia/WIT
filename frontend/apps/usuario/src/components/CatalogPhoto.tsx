@@ -16,5 +16,5 @@ export function CatalogPhoto({ src, alt }: { src: string; alt: string }) {
     }).catch(() => { if (active) setUrl(""); });
     return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [src]);
-  return url ? <img src={url} alt={alt} loading="lazy" /> : <div className="catalog-photo-fallback" role="img" aria-label={alt} />;
+  return url ? <img src={url} alt={alt} loading="lazy" decoding="async" /> : <div className="catalog-photo-fallback" role="img" aria-label={alt} />;
 }
