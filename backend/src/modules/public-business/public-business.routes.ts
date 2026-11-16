@@ -49,7 +49,7 @@ publicBusinessRouter.get(alertConfirmPath,(req,res)=>{
   res.setHeader('Cache-Control','no-store');
   if(!/^[a-f0-9]{64}$/.test(token))return res.status(400).type('html').send(zoneAlertHtml('Enlace no válido','Solicita un nuevo aviso desde XAMUKO.'));
   res.type('html').send(zoneAlertHtml('Confirma tu correo','Pulsa el botón para autorizar el aviso de apertura territorial.',{
-    action:alertConfirmPath+'?token='+encodeURIComponent(token),label:'Confirmar aviso',
+    action:'/api/v1/public'+alertConfirmPath+'?token='+encodeURIComponent(token),label:'Confirmar aviso',
   }));
 });
 publicBusinessRouter.post(alertConfirmPath,async(req,res)=>{
@@ -64,7 +64,7 @@ publicBusinessRouter.get(alertUnsubscribePath,(req,res)=>{
   res.setHeader('Cache-Control','no-store');
   if(!/^[a-f0-9]{64}$/.test(token)||id.length!==36)return res.status(400).type('html').send(zoneAlertHtml('Enlace no válido','No fue posible confirmar la solicitud.'));
   res.type('html').send(zoneAlertHtml('Cancelar aviso','Dejarás de recibir notificaciones sobre esta apertura.',{
-    action:alertUnsubscribePath+'?id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token),label:'Cancelar suscripción',
+    action:'/api/v1/public'+alertUnsubscribePath+'?id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token),label:'Cancelar suscripción',
   }));
 });
 publicBusinessRouter.post(alertUnsubscribePath,async(req,res)=>{
