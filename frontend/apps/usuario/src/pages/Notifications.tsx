@@ -198,6 +198,7 @@ export default function Notifications() {
           const welcome = item.source === 'local' && item.id === 'welcome';
           const manageBusiness = item.sourceType === 'BUSINESS_VISIBILITY' || item.sourceType === 'BUSINESS_RECOVERY' ||
             item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'COLLABORATION_PERMISSIONS' ||
+            item.sourceType === 'COLLABORATION_EXPIRED' && item.title.includes('vence mañana') ||
             item.sourceType === 'OWNERSHIP_TRANSFER' && /proponen|vence mañana|solicitud para transferir/i.test(item.title);
           const ownAction = item.sourceType === 'REVIEW_RESPONSE' ? '/reviews' : item.sourceType === 'ACCOUNT_SECURITY' ? '/settings' : null;
           const title = item.title.toLocaleLowerCase('es-CO');
@@ -218,7 +219,7 @@ export default function Notifications() {
                 <span className="notification-meta"><span>{kind === 'collaboration' || kind === 'transfer' || item.sourceType === 'REVIEW_RESPONSE' ? 'Actividad del negocio' : 'Equipo XAMUKO'}</span><time>{item.date}</time></span>
               </span>
             </button>
-            {manageBusiness && <a className="notification-business-action" href="https://business.xamuko.com/mis-negocios" target="_blank" rel="noopener noreferrer">{item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'OWNERSHIP_TRANSFER' ? 'Responder en XAMUKO Business' : 'Gestionar en XAMUKO Business'} <span aria-hidden="true">↗</span></a>}
+            {manageBusiness && <a className="notification-business-action" href="https://business.xamuko.com/mis-negocios" target="_blank" rel="noopener noreferrer">{item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'COLLABORATION_EXPIRED' || item.sourceType === 'OWNERSHIP_TRANSFER' ? 'Ver solicitudes en XAMUKO Business' : 'Gestionar en XAMUKO Business'} <span aria-hidden="true">↗</span></a>}
             {ownAction && <Link className="notification-business-action" to={ownAction}>{item.sourceType === 'REVIEW_RESPONSE' ? 'Ver mi opinión' : 'Revisar seguridad de la cuenta'} <span aria-hidden="true">→</span></Link>}
             <button type="button" className="notification-delete" disabled={busy}
               title="Eliminar notificación" aria-label={'Eliminar ' + item.title}
