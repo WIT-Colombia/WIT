@@ -71,10 +71,21 @@ export async function processVisibilityBusiness(businessId: string, now = new Da
     if (!stage) return { sent: 0, skipped: true };
 
     if (stage === 'EXPIRED' && business.visibilityStatus === 'VISIBLE') {
-      await tx.business.updateMany({
+      const expired = await tx.business.updateMany({
         where: { id: business.id, visibilityStatus: 'VISIBLE', deletionStatus: 'NONE' },
         data: { visibilityStatus: 'EXPIRED' },
       });
+      if (expired.count) {
+        await tx.auditLog.create({
+          data: {
+            actorUserId: null, entityType: 'BUSINESS', entityId: business.id,
+            action: 'BUSINESS_VISIBILITY_EXPIRED',
+            previousState: { visibilityStatus: 'VISIBLE', periodId: period.id },
+            newState: { visibilityStatus: 'EXPIRED' },
+            reason: 'Vencimiento automático del periodo de visibilidad',
+          },
+        });
+      }
     }
     let sent = 0;
     const ownerIds = [...new Set(business.memberships.map(member => member.userId))];
