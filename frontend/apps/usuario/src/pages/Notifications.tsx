@@ -205,7 +205,7 @@ export default function Notifications() {
           const kind = welcome ? 'welcome' :
             item.sourceType?.startsWith('COLLABORATION') ? 'collaboration' :
             item.sourceType === 'OWNERSHIP_TRANSFER' ? 'transfer' :
-            item.sourceType === 'VERIFICATION' || item.sourceType?.includes('REPORT') ? 'system' :
+            item.sourceType === 'VERIFICATION' || item.sourceType === 'SUPPORT_REQUEST' || item.sourceType === 'ACCOUNT_SECURITY' || item.sourceType?.includes('REPORT') ? 'system' :
             title.includes('opini') || title.includes('reseña') ? 'review' :
             title.includes('negocio') || title.includes('favorito') ? 'business' :
             title.includes('cuenta') || title.includes('seguridad') ? 'account' : 'general';
