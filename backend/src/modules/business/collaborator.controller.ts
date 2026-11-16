@@ -1,6 +1,6 @@
 import type { RequestHandler } from 'express';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
-import { acceptInvitation, cancelInvitation, inviteCollaborator, leaveBusiness, listCollaborators, listNotifications, deleteNotification, markNotificationRead, unreadNotificationCount, markAllNotificationsRead, reactivateCollaborator, readCollaboratorAvatar, rejectInvitation, resolveCollaboratorRecipient, revokeCollaborator, setPermissions, suspendCollaborator } from './collaborator.service.js';
+import { acceptInvitation, cancelInvitation, inviteCollaborator, leaveBusiness, listCollaborators, listNotifications, deleteNotification, markNotificationRead, unreadNotificationCount, markAllNotificationsRead, reactivateCollaborator, readCollaboratorAvatar, readNotificationActorAvatar, rejectInvitation, resolveCollaboratorRecipient, revokeCollaborator, setPermissions, suspendCollaborator } from './collaborator.service.js';
 const uid=(req:any)=>(req as AuthenticatedRequest).auth.userId;
 const run=(fn:(req:any)=>Promise<unknown>,status=200):RequestHandler=>async(req,res,next)=>{try{res.status(status).json(await fn(req));}catch(error){next(error);}};
 export const collaboratorsController=run(async req=>({memberships:await listCollaborators(uid(req),req.params.businessId)}));
@@ -30,5 +30,12 @@ export const scopedReadNotificationController=run(async req=>
 export const scopedDeleteNotificationController=run(async req=>
   deleteNotification(uid(req),req.params.notificationId,req.params.businessId));
 
+export const notificationActorAvatarController: RequestHandler = async (req, res, next) => {
+  try {
+    const avatar = await readNotificationActorAvatar(uid(req), String(req.params.businessId), String(req.params.notificationId));
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.type(avatar.mimeType).send(avatar.content);
+  } catch (error) { next(error); }
+};
 export const readNotificationController=run(async req=>markNotificationRead(uid(req),req.params.notificationId));
 export const deleteNotificationController=run(async req=>deleteNotification(uid(req),req.params.notificationId));
