@@ -413,26 +413,63 @@ export default function Home() {
   }, [hasSampleCatalog, items]);
   useEffect(() => {
     const viewport = bannerViewportRef.current;
-    if (!viewport || !bannerBusinesses.length || bannerPaused || bannerInteracting || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const group = bannerGroupRef.current;
+    // A single card cannot loop; never schedule animation for an invisible carousel.
+    if (!viewport || !group || bannerBusinesses.length < 2 || bannerPaused || bannerInteracting ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const loopWidth = bannerGroupRef.current?.getBoundingClientRect().width ?? 0;
-    if (viewport.scrollLeft === 0 && loopWidth) viewport.scrollLeft = loopWidth;
+    let loopWidth = 0;
     let frame = 0;
-    let lastFrameTime = 0;
-    function move(timestamp: number) {
-      const currentViewport = bannerViewportRef.current;
-      const currentLoopWidth = bannerGroupRef.current?.getBoundingClientRect().width ?? 0;
-      if (currentViewport && currentLoopWidth) {
-        if (lastFrameTime) {
-          const nextScroll = currentViewport.scrollLeft - (timestamp - lastFrameTime) * 0.018;
-          currentViewport.scrollLeft = nextScroll <= 1 ? currentLoopWidth : nextScroll;
-        }
-        lastFrameTime = timestamp;
-        frame = window.requestAnimationFrame(move);
+    let lastStepTime = 0;
+    let isVisible = false;
+
+    const stop = () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      frame = 0;
+      lastStepTime = 0;
+    };
+    const tick = (timestamp: number) => {
+      frame = 0;
+      if (!isVisible || document.hidden || !loopWidth) return;
+      if (!lastStepTime) lastStepTime = timestamp;
+      // Limit costly scrollLeft writes to about 30 FPS, while keeping velocity time-based.
+      const elapsed = timestamp - lastStepTime;
+      if (elapsed >= 32) {
+        const nextScroll = viewport.scrollLeft - Math.min(elapsed, 64) * 0.018;
+        viewport.scrollLeft = nextScroll <= 1 ? loopWidth : nextScroll;
+        lastStepTime = timestamp;
       }
-    }
-    frame = window.requestAnimationFrame(move);
-    return () => window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(tick);
+    };
+    const start = () => {
+      if (!frame && isVisible && !document.hidden && loopWidth) {
+        lastStepTime = 0;
+        frame = window.requestAnimationFrame(tick);
+      }
+    };
+    // Measure only when dimensions change, not on every animation frame.
+    const measure = () => {
+      loopWidth = group.getBoundingClientRect().width;
+      if (loopWidth && viewport.scrollLeft === 0) viewport.scrollLeft = loopWidth;
+      start();
+    };
+    measure();
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(group);
+    const intersectionObserver = new IntersectionObserver(([entry]) => {
+      isVisible = entry?.isIntersecting ?? false;
+      if (isVisible) start();
+      else stop();
+    }, { rootMargin: "100px" });
+    intersectionObserver.observe(viewport);
+    const onVisibilityChange = () => { if (document.hidden) stop(); else start(); };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      stop();
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [bannerBusinesses.length, bannerPaused, bannerInteracting]);
 
   useEffect(() => () => {
