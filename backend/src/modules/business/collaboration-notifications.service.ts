@@ -71,6 +71,13 @@ async function processTransfer(transferId: string, now: Date) {
       });
       if (!changed.count) return 0;
     }
+    if (expired) {
+      // Retire only old pending transfer notices, before creating the new expiry notice.
+      await tx.platformNotification.updateMany({ where: {
+        userId: transfer.toUserId, sourceType: 'OWNERSHIP_TRANSFER',
+        sourceId: transfer.businessId, readAt: null,
+      }, data: { readAt: now } });
+    }
     let delivered = 0;
     for (const userId of new Set([transfer.fromUserId, transfer.toUserId])) {
       const reserved = await tx.businessLifecycleNoticeDispatch.createMany({
@@ -99,10 +106,6 @@ async function processTransfer(transferId: string, now: Date) {
           message: 'La transferencia de ' + transfer.business.name + ' venció. Sigues siendo el propietario.' } });
         delivered++;
       }
-      await tx.platformNotification.updateMany({ where: {
-        userId: transfer.toUserId, sourceType: 'OWNERSHIP_TRANSFER',
-        sourceId: transfer.businessId, readAt: null,
-      }, data: { readAt: now } });
     }
     return delivered;
   });
