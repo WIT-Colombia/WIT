@@ -15,3 +15,17 @@
 .zone-launch-notice__actions a:first-child{border-color:#7354d9;background:#7354d9;color:#fff}
 @media(max-width:640px){.zone-launch-notice{gap:10px;padding:16px 12px;margin:14px 0;border-radius:13px}.zone-launch-notice__icon{width:32px;height:32px;font-size:22px}.zone-launch-notice__copy{gap:8px}.zone-launch-notice h2{font-size:19px}.zone-launch-notice__countdown{gap:5px}.zone-launch-notice__countdown>span{min-width:54px}.zone-launch-notice__countdown b{min-width:54px;min-height:49px;font-size:20px}.zone-launch-notice__actions a{flex:1 1 170px;justify-content:center}}
 @media(max-width:360px){.zone-launch-notice__icon{display:none}.zone-launch-notice__countdown b{min-width:49px}.zone-launch-notice__countdown>span{min-width:49px}}
+
+.zone-launch-notice__signup{display:grid;gap:9px;width:min(100%,440px);margin:8px 0 4px;padding:13px;border:1px solid #e6e1fa;border-radius:11px;background:#ffffffa8}
+.zone-launch-notice__signup>label:first-child{font-size:12px;font-weight:850;color:#365176}
+.zone-launch-notice__signup>div{display:flex;gap:7px}
+.zone-launch-notice__signup>div input{flex:1;min-width:0;min-height:39px;padding:9px 10px;border:1px solid #d5deef;border-radius:8px;font-size:12px;background:#fff}
+.zone-launch-notice__signup>div button{min-height:39px;padding:8px 14px;flex:none;border:0;border-radius:8px;background:#7351db;color:#fff;font-size:12px;font-weight:800}
+.zone-launch-notice__signup>div button:disabled{opacity:.55;cursor:not-allowed}
+.zone-launch-notice__signup .zone-launch-notice__consent{display:flex;gap:7px;align-items:flex-start;font-size:10px;line-height:1.6;color:#667c9d}
+.zone-launch-notice__consent input{flex:none;width:16px;height:16px;margin-top:1px;accent-color:#7251df}
+.zone-launch-notice__consent a{color:#7251cb;text-decoration:underline}
+.zone-launch-notice__ok,.zone-launch-notice__form-error{padding:9px;border-radius:8px;font-size:11px}
+.zone-launch-notice__ok{background:#e9f9ee;color:#286e45}
+.zone-launch-notice__form-error{background:#fff0f0;color:#a12f2f}
+@media(max-width:420px){.zone-launch-notice__signup>div{display:grid;grid-template-columns:1fr}.zone-launch-notice__signup>div button{width:100%}}
