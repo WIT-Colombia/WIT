@@ -78,10 +78,10 @@ describe('Admin → Zonas: experiencia visual y operaciones reales', () => {
     const dialog = screen.getByRole('dialog', { name: 'Palmira' });
     expect(within(dialog).getByText(/Apertura inicial/)).toBeInTheDocument();
     fireEvent.change(within(dialog).getByLabelText('Acción territorial'), { target: { value: 'PAUSED' } });
-    fireEvent.change(within(dialog).getByLabelText('Motivo administrativo'), {
+    fireEvent.change(within(dialog).getByLabelText(/Motivo administrativo/), {
       target: { value: 'Pausa operativa autorizada para controlar la expansión.' },
     });
-    fireEvent.change(within(dialog).getByLabelText('Confirmación de seguridad'), {
+    fireEvent.change(within(dialog).getByLabelText(/Confirmación de seguridad/), {
       target: { value: 'APLICAR' },
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Guardar decisión' }));
