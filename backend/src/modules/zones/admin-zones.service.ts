@@ -2,7 +2,7 @@ import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import type { AdminContext } from '../admin/admin-auth.service.js';
-import { effectiveStatus, normalizeTerritory, readZonePolicy, zoneKey, type ZoneLevel, type ZoneStatus } from './zone-policy.service.js';
+import { effectiveStatus, normalizeTerritory, zoneKey, type ZoneLevel, type ZoneStatus } from './zone-policy.service.js';
 
 export type ZoneMutation = {
   level: ZoneLevel; name: string; department?: string;
