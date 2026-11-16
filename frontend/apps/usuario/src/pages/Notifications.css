@@ -69,3 +69,11 @@
 .notifications-page .notification-main-action:focus-visible,.notifications-page .notification-delete:focus-visible{outline:2px solid var(--xamuko-violet);outline-offset:2px}
 .notifications-page .notification-delete-confirm{max-width:min(90vw,350px);white-space:normal}
 @media(max-width:700px){.notifications-page .notification-delete-confirm{position:absolute;right:0;top:27px;z-index:5;min-width:210px;box-shadow:0 12px 30px rgba(15,23,42,.14)}}
+
+
+/* Matching notification card hierarchy with the User violet palette. */
+.notifications-page .notification-list{max-width:none}
+.notifications-page .notification-item{border-radius:14px}
+.notifications-page .notification-brand-icon{overflow:hidden;background:#f2edff;box-shadow:0 4px 12px rgba(123,63,251,.08)}
+.notifications-page .notification-item:not(.is-read){border-left:3px solid var(--xamuko-violet)}
+.notifications-page .notification-copy b{font-weight:800}

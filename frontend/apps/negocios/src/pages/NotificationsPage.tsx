@@ -66,6 +66,25 @@ export function NotificationsPage() {
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [busyDelete, setBusyDelete] = useState<string | null>(null);
   const [confirmingLocalDelete, setConfirmingLocalDelete] = useState<string | null>(null);
+  // Each real business has its own one-time welcome. Dismissal is persisted per account/business.
+  const welcomeKey = accountId && selectedBusinessId ? `xamuko-business-welcome:${accountId}:${selectedBusinessId}` : "";
+  const [welcomeState, setWelcomeState] = useState<{ key: string; read: boolean; dismissed: boolean }>({ key: "", read: false, dismissed: false });
+  useEffect(() => {
+    if (!welcomeKey) { setWelcomeState({ key: "", read: false, dismissed: false }); return; }
+    try {
+      const saved = localStorage.getItem(welcomeKey);
+      const parsed = saved ? JSON.parse(saved) as { read?: boolean; dismissed?: boolean } : {};
+      setWelcomeState({ key: welcomeKey, read: Boolean(parsed.read), dismissed: Boolean(parsed.dismissed) });
+    } catch { setWelcomeState({ key: welcomeKey, read: false, dismissed: false }); }
+  }, [welcomeKey]);
+  const changeWelcome = (read: boolean, dismissed: boolean) => {
+    if (!welcomeKey) return;
+    const next = { key: welcomeKey, read, dismissed };
+    setWelcomeState(next);
+    try { localStorage.setItem(welcomeKey, JSON.stringify({ read, dismissed })); } catch { /* Browser storage may be disabled. */ }
+  };
+  const showWelcome = business.source === "real" && welcomeState.key === welcomeKey && !welcomeState.dismissed;
+
 
   const reloadPersisted = useCallback(async () => {
     const id = selectedBusinessId;
@@ -142,7 +161,7 @@ export function NotificationsPage() {
     persistedScope.userId === accountId && persistedScope.businessId === selectedBusinessId &&
     item.businessId === selectedBusinessId && (filter === "Todas" || (filter === "No leídas" ? !item.readAt : Boolean(item.readAt)))),
     [filter, persisted, persistedScope, selectedBusinessId, accountId]);
-  const totalUnread = currentLocal.filter(item => !item.read).length +
+  const totalUnread = currentLocal.filter(item => !item.read).length + (showWelcome && !welcomeState.read ? 1 : 0) +
     (scopedUnread.userId === accountId && scopedUnread.businessId === selectedBusinessId ? scopedUnread.count : 0);
 
   const respondPersisted = async (item: PersistedBusinessNotification, accept: boolean) => {
@@ -162,6 +181,7 @@ export function NotificationsPage() {
   const markAllRead = async () => {
     if (markingAll) return;
     setMarkingAll(true);
+    if (showWelcome && !welcomeState.read) changeWelcome(true, false);
     const id = selectedBusinessId;
     setNotifications(notifications.map(item =>
       currentLocal.some(current => current.id === item.id) ? { ...item, read: true } : item));
@@ -179,6 +199,11 @@ export function NotificationsPage() {
     {apiError && <div className="notification-page-alert" role="alert">{apiError}</div>}
     <section className="surface-card notifications-card">
       <div className="notification-tabs" role="group" aria-label="Filtrar notificaciones"><button type="button" onClick={() => setFilter("Todas")} className={filter === "Todas" ? "active" : ""} aria-pressed={filter === "Todas"}>Todas</button><button type="button" onClick={() => setFilter("No leídas")} className={filter === "No leídas" ? "active" : ""} aria-pressed={filter === "No leídas"}>No leídas <span>{totalUnread}</span></button><button type="button" onClick={() => setFilter("Leídas")} className={filter === "Leídas" ? "active" : ""} aria-pressed={filter === "Leídas"}>Leídas</button></div>
+      {showWelcome && (filter === "Todas" || (filter === "No leídas" ? !welcomeState.read : welcomeState.read)) && <article className={`notification-row notification-welcome-row ${welcomeState.read ? "" : "unread"}`} onClick={() => { if (!welcomeState.read) changeWelcome(true, false); }} aria-label="Bienvenida de XAMUKO">
+        <span className="notification-icon wit" aria-hidden="true">✦</span>
+        <div><div className="notification-title"><h2>¡Bienvenido a XAMUKO Business!</h2>{!welcomeState.read && <span aria-label="Sin leer"/>}</div><p>Tu negocio ya tiene un espacio para crecer en XAMUKO. Desde aquí puedes administrar su información, productos, servicios y novedades. ¡Nos alegra tenerte con nosotros!</p><small>Equipo XAMUKO · Mensaje de bienvenida</small></div>
+        <div className="notification-actions" onClick={event => event.stopPropagation()}>{confirmingLocalDelete === "business-welcome" ? <div className="notification-delete-confirm" role="group" aria-label="Confirmar eliminación"><span>¿Eliminar este mensaje de bienvenida?</span><button type="button" className="danger-button" onClick={() => { changeWelcome(welcomeState.read, true); setConfirmingLocalDelete(null); }}>Eliminar</button><button type="button" className="outline-button" onClick={() => setConfirmingLocalDelete(null)}>Cancelar</button></div> : <button type="button" className="notification-delete" onClick={() => setConfirmingLocalDelete("business-welcome")}>Eliminar</button>}</div>
+      </article>}
       {visiblePersisted.map(item => {
         const pending = item.type === "COLLABORATION_INVITATION" && item.membership?.status === "INVITED";
         const permissionText = item.membership?.permissions.filter(permission => permission.allowed).map(permission => permissionLabels[permission.permission] ?? permission.permission).join(", ");
@@ -204,7 +229,7 @@ export function NotificationsPage() {
         </article>;
       })}
       {visible.map(item => { const to = item.id.startsWith("visibility-reminder-") ? "/configuracion" : item.type === "profile" ? `${destination.profile}/${businessIndex}` : item.type === "collaboration" ? "/notificaciones" : destination[item.type]; return <article className={`notification-row ${item.read ? "" : "unread"}${item.id.startsWith("visibility-reminder-") ? " is-actionable" : ""}`} key={item.id} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); if (item.id.startsWith("visibility-reminder-")) navigate("/configuracion"); }}><span className={`notification-icon ${item.type}`}>{icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2>{!item.read && <span aria-label="Sin leer"/>}</div><p>{item.description}</p><small>{item.date}</small><Link className="notification-link" to={to}>Ver detalle →</Link></div><div className="notification-actions" onClick={event => event.stopPropagation()}>{!item.read && <button className="subtle-button" onClick={event => { event.stopPropagation(); setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }}>Marcar leída</button>}{confirmingLocalDelete === item.id ? <div className="notification-delete-confirm" role="group" aria-label="Confirmar eliminación"><span>¿Eliminar esta notificación?</span><button type="button" className="danger-button" onClick={() => { setNotifications(notifications.filter(current => current.id !== item.id)); setConfirmingLocalDelete(null); }}>Eliminar</button><button type="button" className="outline-button" onClick={() => setConfirmingLocalDelete(null)}>Cancelar</button></div> : <button type="button" className="notification-delete" aria-label={`Eliminar ${item.title}`} onClick={() => setConfirmingLocalDelete(item.id)}>Eliminar</button>}</div></article>; })}
-      {!visiblePersisted.length && !visible.length && <div className="empty-state"><span>✓</span><h2>Todo al día</h2><p>No hay notificaciones para el filtro seleccionado.</p></div>}
+      {!visiblePersisted.length && !visible.length && !(showWelcome && (filter === "Todas" || (filter === "No leídas" ? !welcomeState.read : welcomeState.read))) && <div className="empty-state"><span>✓</span><h2>Todo al día</h2><p>No hay notificaciones para el filtro seleccionado.</p></div>}
     </section>
   </>;
 }
