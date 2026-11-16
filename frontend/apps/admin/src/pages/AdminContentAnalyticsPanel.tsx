@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ChartPointer
 import { Icon } from '../components/Icon';
 import type { AdminContentFilters, AdminContentInsights } from '../services/adminApiClient';
 const num = (n:number) => new Intl.NumberFormat('es-CO').format(n);
-const labelDate = (key:string) => {
+const labelDate = (key:string,full=false) => {
   const daily=key.length===10;
   const date=new Date((daily?key:key+'-01')+'T12:00:00Z');
-  return Number.isNaN(date.getTime())?key:date.toLocaleDateString('es-CO',daily?{day:'2-digit',month:'short',timeZone:'UTC'}:{month:'short',year:'2-digit',timeZone:'UTC'});
+  return Number.isNaN(date.getTime())?key:date.toLocaleDateString('es-CO',daily?{day:'2-digit',month:'short',...(full?{year:'numeric' as const}:{ }),timeZone:'UTC'}:{month:'short',year:full?'numeric':'2-digit',timeZone:'UTC'});
 };
 type Series = 'total'|'products'|'services'|'views'|'likes';
 type ChartMode='line'|'bars';
-type Entry={label:string;value:number};
+type Entry={label:string;fullLabel:string;value:number};
 function Timeline({points,mode,unit}:{points:Entry[];mode:ChartMode;unit:string}){
   const ref=useRef<HTMLDivElement>(null);
   const [width,setWidth]=useState(780);
@@ -62,7 +62,7 @@ function Timeline({points,mode,unit}:{points:Entry[];mode:ChartMode;unit:string}
         <circle cx={selX} cy={y(selected.value)} r="6" fill="#fff" stroke="#225cf1" strokeWidth="2.6" pointerEvents="none"/>
         {(()=>{const tx=Math.max(left,Math.min(width-right-120,selX-60)),ty=Math.max(2,y(selected.value)-62);return <g pointerEvents="none">
           <rect x={tx} y={ty} width="120" height="48" rx="9" fill="#182e54"/>
-          <text x={tx+60} y={ty+18} textAnchor="middle" fill="#b9cef6" fontWeight="650" fontSize="11">{selected.label}</text>
+          <text x={tx+60} y={ty+18} textAnchor="middle" fill="#b9cef6" fontWeight="650" fontSize="11">{selected.fullLabel}</text>
           <text x={tx+60} y={ty+37} textAnchor="middle" fill="#fff" fontWeight="800" fontSize="16">{num(selected.value)}</text>
         </g>;})()}
         <rect x={Math.max(left,Math.min(width-right-65,selX-32))} y={height-38} width="65" height="22" rx="5" fill="#182e54" pointerEvents="none"/>
@@ -71,7 +71,7 @@ function Timeline({points,mode,unit}:{points:Entry[];mode:ChartMode;unit:string}
       {points.map((p,i)=>(i%labelStep===0||i===points.length-1)&&<text key={i} className="ac-chart-axis"
         x={mode==='bars'?left+(i+.5)*w/points.length:x(i)} y={height-17} textAnchor="middle">{p.label}</text>)}
     </svg>
-    <p className="ac-chart-hint" role="status">{selected?<><strong>{selected.label}</strong>: {num(selected.value)} {unit}</>:'Mueve el cursor o toca la gráfica para consultar una fecha. Los valores 0 se muestran expresamente.'}</p>
+    <p className="ac-chart-hint" role="status">{selected?<><strong>{selected.fullLabel}</strong>: {num(selected.value)} {unit}</>:'Mueve el cursor o toca la gráfica para consultar una fecha. Los valores 0 se muestran expresamente.'}</p>
   </div>;
 }
 function exportCSV(points:Entry[],label:string){
@@ -91,7 +91,7 @@ export function AdminContentAnalyticsPanel({data,loading,error,period,onPeriod,f
   const [mode,setMode]=useState<ChartMode>('line');
   const [view,setView]=useState<'chart'|'table'>('chart');
   const chartRef=useRef<HTMLDivElement>(null);
-  const points=useMemo(()=>data?.series.map(m=>({label:labelDate(m.month),value:m[series]}))??[],[data,series]);
+  const points=useMemo(()=>data?.series.map(m=>({label:labelDate(m.month),fullLabel:labelDate(m.month,true),value:m[series]}))??[],[data,series]);
   const unit=series==='views'?'vistas':series==='likes'?'me gusta':'registros';
   const activeFilters=[filters.kind,filters.status,filters.city,filters.categoryId].filter(Boolean).length;
   const show=()=>{setOpen(false);window.requestAnimationFrame(()=>chartRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
