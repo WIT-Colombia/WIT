@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getAdminBusiness, getAdminDashboardStats, listAdminBusinesses, type AdminBusinessPage, type AdminBusinessRecord, type AdminDashboardStats } from '../services/adminApiClient';
 import { StatePanel } from '../components/common';
 import { Icon } from '../components/Icon';
@@ -140,6 +140,9 @@ export function AdminBusinessesPage() {
 
 export function AdminBusinessDetailPage() {
   const allowed = getSession()?.permissions?.includes('business:write') ?? false;
+  const canDelete = getSession()?.role === 'SUPER_ADMIN';
+  const navigate = useNavigate();
+  const [deleteTarget, setDeleteTarget] = useState<AdminBusinessRecord | null>(null);
   const { id = '' } = useParams();
   const [item, setItem] = useState<AdminBusinessRecord | null>(null);
   const [loading, setLoading] = useState(allowed);
@@ -158,6 +161,7 @@ export function AdminBusinessDetailPage() {
     <header className="ad-business-detail-hero">
       <span className="ad-business-detail-icon"><Icon name="store" size={31} /></span>
       <div><span className="ad-business-detail-eyebrow">FICHA ADMINISTRATIVA</span><h1>{item.name}</h1><p>Registro de negocio · Actualizado el {date(item.updatedAt)}</p></div>
+      {canDelete && item.deletionStatus !== "DELETED" && <button type="button" className="ad-business-delete-trigger" onClick={() => setDeleteTarget(item)}><Icon name="trash" size={17}/> Eliminar negocio</button>}
     </header>
     <section className="admin-business-facts ad-business-detail-highlights" aria-label="Estado del negocio">
       <article><span><Icon name="eye" size={18} /> Visibilidad</span><strong className={'business-status-text ' + (visibilityTone[item.visibilityStatus] ?? 'status-review')}>{translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</strong></article>
@@ -179,5 +183,8 @@ export function AdminBusinessDetailPage() {
         <div className="ad-business-detail-description"><dt>Descripción</dt><dd>{item.description ?? 'No registrada'}</dd></div>
       </dl>
     </section>
+    {deleteTarget && <AdminBusinessDeleteDialog business={deleteTarget}
+      onClose={() => setDeleteTarget(null)}
+      onSuccess={() => navigate("/businesses", { replace: true })}/>}
   </div>;
 }
