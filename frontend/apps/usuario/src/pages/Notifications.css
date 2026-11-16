@@ -58,3 +58,14 @@
  .notifications-page .notification-copy b{font-size:12px}
  .notifications-page .notification-copy small{font-size:10px}
 }
+
+
+/* XAMUKO notification inbox filters and accessible actions. */
+.notifications-page .notification-filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 17px}
+.notifications-page .notification-filter-bar button{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 15px;border:1px solid var(--xamuko-border);border-radius:999px;background:#fff;color:var(--xamuko-muted);font-size:11px;font-weight:700;cursor:pointer}
+.notifications-page .notification-filter-bar button.active{background:var(--xamuko-violet);border-color:var(--xamuko-violet);color:#fff}
+.notifications-page .notification-filter-bar button span{display:grid;place-items:center;min-width:20px;height:20px;border-radius:999px;background:#eee8ff;color:var(--xamuko-violet);font-size:10px}
+.notifications-page .notification-item:focus-within{outline:2px solid #c5b3ff;outline-offset:2px}
+.notifications-page .notification-main-action:focus-visible,.notifications-page .notification-delete:focus-visible{outline:2px solid var(--xamuko-violet);outline-offset:2px}
+.notifications-page .notification-delete-confirm{max-width:min(90vw,350px);white-space:normal}
+@media(max-width:700px){.notifications-page .notification-delete-confirm{position:absolute;right:0;top:27px;z-index:5;min-width:210px;box-shadow:0 12px 30px rgba(15,23,42,.14)}}
