@@ -85,7 +85,7 @@ async function processTransfer(transferId: string, now: Date) {
     if (expired) {
       // Retire only old pending transfer notices, before creating the new expiry notice.
       await tx.platformNotification.updateMany({ where: {
-        userId: transfer.toUserId, sourceType: 'OWNERSHIP_TRANSFER',
+        userId: { in: [transfer.fromUserId, transfer.toUserId] }, sourceType: 'OWNERSHIP_TRANSFER',
         sourceId: transfer.businessId, readAt: null,
       }, data: { readAt: now } });
     }
