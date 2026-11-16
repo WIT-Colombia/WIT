@@ -14,6 +14,7 @@ import { AdminUserAnalyticsPanel } from './AdminUserAnalyticsPanel';
 import './AdminUsersRefresh.css';
 import './AdminUsersControl.css';
 import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
+import { formatNickname } from '../utils/format';
 
 const date = (value: string | null) => value
   ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value))
@@ -186,7 +187,7 @@ export function AdminUsersPage() {
             <thead><tr><th>Usuario</th><th>Estado</th><th>Negocios vinculados</th><th>Registro</th><th>Último acceso</th><th>Identidades</th><th>Acciones</th></tr></thead>
             <tbody>{data.users.map(user=><tr key={user.id}>
               <td><Link to={'/users/'+encodeURIComponent(user.id)} className="au-user-cell"><UserAvatar user={user}/><span>
-                <strong>{user.displayName}</strong><small>{user.emailNormalized??'Sin correo registrado'}</small>{user.nickname&&<small>@{user.nickname}</small>}
+                <strong>{user.displayName}</strong><small>{user.emailNormalized??'Sin correo registrado'}</small>{user.nickname&&<small>{formatNickname(user.nickname)}</small>}
               </span></Link></td>
               <td><span className={'au-status '+user.status.toLowerCase()}>{accountStatus[user.status]}</span>
                 {user.isAdmin&&<span className="au-admin-mini">Administrador</span>}</td>
