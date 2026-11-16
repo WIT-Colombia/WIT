@@ -55,7 +55,7 @@ function SpecialOfferImage({ src, alt }: { src: string; alt: string }) {
     }).catch(() => { if (active) setImageUrl(""); });
     return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [src]);
-  return imageUrl ? <img src={imageUrl} alt={alt} loading="lazy"/> : null;
+  return imageUrl ? <img src={imageUrl} alt={alt} loading="lazy" decoding="async"/> : null;
 }
 
 const categoryIconPaths: Record<string, string> = {
@@ -391,11 +391,14 @@ export default function Home() {
     // Promotions must belong to the same city-filtered businesses as Home.
     void Promise.resolve(items).then(async businesses => {
       const grouped = await Promise.all(businesses.map(async business => {
-        const [promotions, products, services] = await Promise.all([
-          listPublicPromotions(business.id).catch(() => []),
-          listPublicProducts(business.id).catch(() => []),
-          listPublicServices(business.id).catch(() => []),
-        ]);
+        const promotions = await listPublicPromotions(business.id).catch(() => []);
+        // Do not load two entire catalogs when the business has no linked promotion.
+        const [products, services] = promotions.some(promotion => promotion.relatedOfferId)
+          ? await Promise.all([
+            listPublicProducts(business.id).catch(() => []),
+            listPublicServices(business.id).catch(() => []),
+          ])
+          : [[], []];
         const catalogById = new Map([...products, ...services].map(item => [item.id, item]));
         return promotions.map(promotion => {
           const linkedOffer = promotion.relatedOfferId ? catalogById.get(promotion.relatedOfferId) : undefined;
@@ -733,7 +736,7 @@ export default function Home() {
         {showAllCategories && categoryScroll.max > 0 && <div className="category-scroll-control"><input type="range" min="0" max={categoryScroll.max} step="1" value={Math.min(categoryScroll.left, categoryScroll.max)} aria-label="Desplazar categorías" onChange={(event) => { const left = Number(event.target.value); if (categoryListRef.current) categoryListRef.current.scrollLeft = left; setCategoryScroll((current) => ({ ...current, left })); }} /></div>}
       </section>}
 
-      {bannerBusinesses.length > 0 && <section className="home-business-banner home-business-banner--below-hero" aria-label="Descubre negocios"><div className="home-business-banner__heading"><div className="home-section-intro"><h2><span className="home-section-symbol" aria-hidden="true"><Icon name="star"/></span>Descubre negocios</h2><p>Negocios de tu ciudad, nuevas historias por descubrir.</p></div><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div><div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}><div className="home-business-banner__track">{(bannerBusinesses.length > 1 ? [0, 1] : [0]).map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__badge"><Icon name="star"/><small>{typeof business.pioneerNumber === "number" ? "Pionero" : business.plan === "premium" || business.isFeatured ? "Destacado" : isRecentlyAdded(business.createdAt) ? "Nuevo en tu ciudad" : "Descubre"}</small></span><span className="home-business-banner__copy"><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}</div></div></section>}
+      {bannerBusinesses.length > 0 && <section className="home-business-banner home-business-banner--below-hero" aria-label="Descubre negocios"><div className="home-business-banner__heading"><div className="home-section-intro"><h2><span className="home-section-symbol" aria-hidden="true"><Icon name="star"/></span>Descubre negocios</h2><p>Negocios de tu ciudad, nuevas historias por descubrir.</p></div><div className="home-business-banner__controls"><button type="button" aria-label="Mover negocios hacia la izquierda" onClick={() => moveBanner(-1)}>←</button><button type="button" aria-label="Mover negocios hacia la derecha" onClick={() => moveBanner(1)}>→</button><button type="button" aria-pressed={bannerPaused} onClick={() => setBannerPaused((paused) => !paused)}>{bannerPaused ? "▶ Reanudar" : "Ⅱ Pausar"}</button></div></div><div className={`home-business-banner__viewport${bannerDragging ? " is-dragging" : ""}`} ref={bannerViewportRef} onPointerEnter={pauseBannerForInteraction} onPointerLeave={resumeBannerAfterInteraction} onPointerDown={startBannerDrag} onPointerMove={moveBannerDrag} onPointerUp={endBannerDrag} onPointerCancel={endBannerDrag} onClickCapture={(event) => { if (ignoreBannerClickRef.current) { event.preventDefault(); event.stopPropagation(); } }} onFocusCapture={pauseBannerForInteraction} onBlurCapture={resumeBannerAfterInteraction}><div className="home-business-banner__track">{(bannerBusinesses.length > 1 ? [0, 1] : [0]).map((group) => <div className="home-business-banner__group" key={group} ref={group === 0 ? bannerGroupRef : undefined} aria-hidden={group === 1 ? true : undefined}>{bannerBusinesses.map((business) => <Link className="home-business-banner__card" to={`/business/${business.id}`} key={business.id} tabIndex={group === 1 ? -1 : undefined} draggable={false}><img src={business.image} alt="" loading="lazy" decoding="async" draggable={false}/><span className="home-business-banner__shade"/><span className="home-business-banner__badge"><Icon name="star"/><small>{typeof business.pioneerNumber === "number" ? "Pionero" : business.plan === "premium" || business.isFeatured ? "Destacado" : isRecentlyAdded(business.createdAt) ? "Nuevo en tu ciudad" : "Descubre"}</small></span><span className="home-business-banner__copy"><b>{business.name}</b><em>{business.category}</em></span></Link>)}</div>)}</div></div></section>}
 
       <div className="admob-banner-slot admob-banner-slot--home-inline"><AdMobBanner /></div>
 
