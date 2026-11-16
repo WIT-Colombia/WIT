@@ -73,6 +73,7 @@ try{
     try{
       await page.goto(origin+'/pioneers',{waitUntil:'domcontentloaded'});
       await page.getByRole('heading',{name:'Negocios Pioneros',exact:true}).waitFor({state:'visible'});
+      await page.getByText('Marca Sol').first().waitFor({state:'visible',timeout:15000});
       assert.equal(await page.getByText('Marca Sol').first().isVisible(),true,device+': assignment');
       assert.equal(await page.getByRole('heading',{name:'Evolución de Negocios Pioneros'}).isVisible(),true,device+': chart');
       if(viewport.width<=800){
@@ -83,6 +84,7 @@ try{
         assert.equal(await page.locator('.pioneer-mobile-item').count(),0,device+': mobile cards not mounted');
       }
       await page.getByRole('button',{name:/Reclamaciones/}).click();
+      await page.getByText('Negocio sin marca').waitFor({state:'visible',timeout:15000});
       assert.equal(await page.getByText('Negocio sin marca').isVisible(),true,device+': brandless claim visible');
       await page.getByRole('button',{name:'Aprobar reclamación'}).click();
       assert.equal(await page.getByRole('dialog',{name:'Aprobar reclamación'}).isVisible(),true,device+': confirmation dialog');
