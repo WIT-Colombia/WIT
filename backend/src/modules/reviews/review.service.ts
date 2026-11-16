@@ -1,3 +1,4 @@
+import { publicReleaseWhere } from '../zones/zones.service.js';
 import { Prisma, type BusinessReviewReportReason, type BusinessReviewReportStatus, type BusinessReviewModerationStatus } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
@@ -9,7 +10,7 @@ const REVIEW_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 const publicBusinessWhere = { businessAccount: { status: 'ACTIVE' }, lifecycleStatus: 'ACTIVE', publicationStatus: 'PUBLISHED', visibilityStatus: 'VISIBLE', deletionStatus: 'NONE' } as const;
 
 async function business(identifier: string, publicOnly = false) {
-  const row = await prisma.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }], ...(publicOnly ? publicBusinessWhere : {}) }, select: { id: true, publicId: true, name: true } });
+  const row = await prisma.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }], ...(publicOnly ? { AND: [publicBusinessWhere, await publicReleaseWhere()] } : {}) }, select: { id: true, publicId: true, name: true } });
   if (!row) throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento.');
   return row;
 }
