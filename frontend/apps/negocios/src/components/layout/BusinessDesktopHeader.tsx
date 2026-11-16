@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useBusinessAuth } from "../../services/businessAuthContext";
+import { useBusinessAccountWelcomeUnread } from "../../services/businessWelcomeStatus";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useBusinessStore } from "../../services/businessStore";
 import { BusinessProfileThumbnail, BusinessIndicatorRow, SidebarIcon } from "./Sidebar";
@@ -20,7 +22,9 @@ export function BusinessDesktopHeader() {
   const title = isRecoveryPage ? "Mi cuenta" : isLegalPage ? (legalFromProfile ? "Mi cuenta" : "Configuración") : searchParams.get("section") === "collaborators" ? "Colaboradores" : titles[location.pathname.split("/")[1]] ?? "Inicio";
   const legalDocumentTitle = location.pathname.endsWith("/terms") ? "Términos y condiciones" : "Política de privacidad";
   const recoveryTitle = searchParams.has("token") ? "Restablecer contraseña" : searchParams.get("mode") === "email" ? "Recuperar contraseña" : "Cambiar contraseña";
-  const unread = notifications.filter(item => !item.read).length + persistentNotificationCount;
+  const auth = useBusinessAuth();
+  const accountWelcomeUnread = useBusinessAccountWelcomeUnread(auth.user?.id);
+  const unread = notifications.filter(item => !item.read).length + persistentNotificationCount + (businesses.length === 0 && accountWelcomeUnread ? 1 : 0);
   useEffect(() => { setOpen(false); }, [location.pathname, location.search]);
   useEffect(() => {
     if (!open) return;
