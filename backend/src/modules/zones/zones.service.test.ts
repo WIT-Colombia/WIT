@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { after, test } from 'node:test';
+import { prisma } from '../../config/prisma.js';
+
+after(async () => { await prisma.$disconnect(); });
 import { releaseWhere, zoneState, type ZoneRecord } from './zones.service.js';
 
 const start=new Date('2026-11-16T15:00:00Z');
