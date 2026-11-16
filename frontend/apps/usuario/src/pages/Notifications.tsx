@@ -4,7 +4,7 @@ import {
   deleteNotification, getNotifications, markAllNotificationsRead, markNotificationRead, type UserNotification,
 } from '../services/userDataService';
 import {
-  dismissPlatformNotice, listPlatformNotices, readAllPlatformNotices, readPlatformNotice, type PlatformNotice,
+  dismissPlatformNotice, listPlatformNotices, readAllPlatformNotices, readPlatformNotice, loadNoticeArtwork, type PlatformNotice,
 } from '../services/platformNotificationService';
 import { useAuth } from '../context/AuthContext';
 import { PageLayout } from '../components/PageLayout';
@@ -18,6 +18,44 @@ const notifyCount = (userId: string, count: number) =>
 const readableDate = (iso: string) => new Intl.DateTimeFormat('es-CO', {
   dateStyle: 'medium', timeStyle: 'short',
 }).format(new Date(iso));
+
+
+const businessArtworkSourceTypes = new Set([
+  'BUSINESS_VISIBILITY', 'BUSINESS_RECOVERY', 'BUSINESS_DELETED',
+  'COLLABORATION_INVITED', 'COLLABORATION_ACCESS', 'COLLABORATION_PERMISSIONS',
+  'COLLABORATION_EXPIRED', 'OWNERSHIP_TRANSFER', 'REVIEW_RESPONSE',
+]);
+
+/** Photos are fetched with recipient authentication; a vector icon remains the fallback. */
+function PersonalNoticeImage({ notice, kind }: { notice: DisplayNotice; kind: string }) {
+  const [photo, setPhoto] = useState<string | null>(null);
+  useEffect(() => {
+    if (notice.source !== 'server' || !notice.sourceType || !businessArtworkSourceTypes.has(notice.sourceType)) {
+      setPhoto(null);
+      return;
+    }
+    let active = true;
+    let url: string | null = null;
+    void loadNoticeArtwork(notice.id).then(blob => {
+      if (!blob.type.startsWith('image/')) return;
+      url = URL.createObjectURL(blob);
+      if (active) setPhoto(url);
+      else URL.revokeObjectURL(url);
+    }).catch(() => { if (active) setPhoto(null); });
+    return () => { active = false; if (url) URL.revokeObjectURL(url); };
+  }, [notice.id, notice.source, notice.sourceType]);
+
+  return <span className={'notification-icon notification-icon-' + kind} aria-hidden="true">
+    {photo ? <img className="notification-entity-photo" src={photo} alt=""/> : kind === 'welcome' || kind === 'system' ?
+      <img src="/brand/xamuko-symbol.jpg" alt=""/> :
+      kind === 'review' ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.7 8.7 0 0 1-4.5-1.2L3 20l1.2-5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg> :
+      kind === 'business' || kind === 'collaboration' || kind === 'transfer' ?
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h18l-2-6H5l-2 6ZM5 10v10h14V10M9 20v-6h6v6"/></svg> :
+      kind === 'account' ?
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> :
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>}
+  </span>;
+}
 
 export default function Notifications() {
   const { user, isAuthenticated } = useAuth();
@@ -158,27 +196,28 @@ export default function Notifications() {
       <section className="notification-list" aria-label="Tus notificaciones">
         {filteredNotices.slice(0, visibleCount).map(item => {
           const welcome = item.source === 'local' && item.id === 'welcome';
-          const manageBusiness = item.sourceType === 'BUSINESS_VISIBILITY' || item.sourceType === 'BUSINESS_RECOVERY';
+          const manageBusiness = item.sourceType === 'BUSINESS_VISIBILITY' || item.sourceType === 'BUSINESS_RECOVERY' ||
+            item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'COLLABORATION_PERMISSIONS' ||
+            item.sourceType === 'OWNERSHIP_TRANSFER' && /proponen|vence mañana|solicitud para transferir/i.test(item.title);
           const title = item.title.toLocaleLowerCase('es-CO');
-          const kind = welcome ? 'welcome' : title.includes('opini') || title.includes('reseña') ? 'review' :
-            title.includes('negocio') || title.includes('favorito') ? 'business' : title.includes('cuenta') || title.includes('seguridad') ? 'account' : 'general';
+          const kind = welcome ? 'welcome' :
+            item.sourceType?.startsWith('COLLABORATION') ? 'collaboration' :
+            item.sourceType === 'OWNERSHIP_TRANSFER' ? 'transfer' :
+            item.sourceType === 'VERIFICATION' || item.sourceType?.includes('REPORT') ? 'system' :
+            title.includes('opini') || title.includes('reseña') ? 'review' :
+            title.includes('negocio') || title.includes('favorito') ? 'business' :
+            title.includes('cuenta') || title.includes('seguridad') ? 'account' : 'general';
           return <article className={'notification-item' + (item.read ? ' is-read' : ' is-unread') + (selectedId === item.id ? ' is-selected' : '') + (manageBusiness ? ' has-business-action' : '')} key={item.source + ':' + item.id}>
             <button type="button" className="notification-main-action" disabled={busy} onClick={() => void select(item)}
               aria-label={item.title + '. ' + (item.read ? 'Leída' : 'Sin leer') + '. Abrir notificación'}>
-              <span className={'notification-icon notification-icon-' + kind} aria-hidden="true">
-                {kind === 'welcome' ? <img src="/brand/xamuko-symbol.jpg" alt=""/> :
-                  kind === 'review' ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.7 8.7 0 0 1-4.5-1.2L3 20l1.2-5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg> :
-                  kind === 'business' ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h18l-2-6H5l-2 6ZM5 10v10h14V10M9 20v-6h6v6"/></svg> :
-                  kind === 'account' ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> :
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>}
-              </span>
+              <PersonalNoticeImage notice={item} kind={kind}/>
               <span className="notification-copy">
                 <span className="notification-copy-heading"><b>{item.title}</b>{!item.read && <span className="notification-unread-dot" aria-label="Sin leer"/>}</span>
                 <span className="notification-description">{item.body}</span>
-                <span className="notification-meta"><span>Equipo XAMUKO</span><time>{item.date}</time></span>
+                <span className="notification-meta"><span>{kind === 'collaboration' || kind === 'transfer' || item.sourceType === 'REVIEW_RESPONSE' ? 'Actividad del negocio' : 'Equipo XAMUKO'}</span><time>{item.date}</time></span>
               </span>
             </button>
-            {manageBusiness && <a className="notification-business-action" href="https://business.xamuko.com/mis-negocios" target="_blank" rel="noopener noreferrer">Gestionar en XAMUKO Business <span aria-hidden="true">↗</span></a>}
+            {manageBusiness && <a className="notification-business-action" href={item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'OWNERSHIP_TRANSFER' ? 'https://business.xamuko.com/notificaciones' : 'https://business.xamuko.com/mis-negocios'} target="_blank" rel="noopener noreferrer">{item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'OWNERSHIP_TRANSFER' ? 'Responder en XAMUKO Business' : 'Gestionar en XAMUKO Business'} <span aria-hidden="true">↗</span></a>}
             <button type="button" className="notification-delete" disabled={busy}
               title="Eliminar notificación" aria-label={'Eliminar ' + item.title}
               onClick={() => setPendingDeleteId(item.source + ':' + item.id)}>
