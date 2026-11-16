@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { moderateAdminContent } from './admin-content-control.service.js';
+import { controlAdminContent } from './admin-content-control.service.js';
 
 test('la moderación administrativa rechaza acciones desconocidas sin tocar la base de datos', async () => {
   await assert.rejects(
