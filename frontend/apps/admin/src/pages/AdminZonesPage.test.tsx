@@ -63,8 +63,9 @@ describe('Admin → Zonas: experiencia visual y operaciones reales', () => {
     render(<AdminZonesPage />);
     await screen.findByRole('heading', { name: 'Zonas y expansión territorial' });
     fireEvent.change(screen.getByPlaceholderText(/Ciudad, departamento/), { target: { value: 'Yumbo' } });
-    expect(screen.getByText('Yumbo')).toBeInTheDocument();
-    expect(screen.queryByText('Palmira')).not.toBeInTheDocument();
+    const filteredTable = document.querySelector('.zones-table') as HTMLElement;
+    expect(within(filteredTable).getByText('Yumbo')).toBeInTheDocument();
+    expect(within(filteredTable).queryByText('Palmira')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Departamentos/ }));
     expect(screen.getByText('Valle del Cauca')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Auditoría/ }));
