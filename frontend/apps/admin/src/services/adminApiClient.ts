@@ -189,7 +189,7 @@ export type AdminOfferRecord = {
   active:boolean;adultOnly:boolean;publicationStatus:'PUBLISHED'|'REVIEW'|'UNPUBLISHED';
   administrativeStatus:'NONE'|'HIDDEN'|'REVIEW'|'DELETED';adminRestrictedAt:string|null;
   deletedAt:string|null;createdAt:string;updatedAt:string;
-  category:string;photoId:string|null;photoAlt:string|null;likes:number;reports:number;
+  category:string;photoId:string|null;photoAlt:string|null;likes:number;reports:number;views:number;
   business:{id:string;publicId:string;name:string;city:string|null;country:string|null;publicationStatus:string};
 };
 export type AdminOfferPage = {
