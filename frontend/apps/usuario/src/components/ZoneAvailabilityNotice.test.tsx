@@ -64,14 +64,20 @@ describe('Aviso de apertura territorial', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Notificarme cuando lleguen' })).toHaveAttribute('aria-pressed', 'false'));
     expect(screen.queryByRole('status')).toBeNull();
   });
-  it('no muestra Ruta no encontrada ni confirma nada si el backend sigue sin desplegar', async () => {
+  it('deja el botón disponible para pruebas y reintentos aunque la API GET devuelva 404', async () => {
     state.authenticated = true;
     state.get.mockRejectedValueOnce(new Error('Ruta no encontrada.'));
+    state.subscribe.mockRejectedValueOnce(new Error('Ruta no encontrada.'));
     show();
     const button = await screen.findByRole('button', { name: 'Notificarme cuando lleguen' });
-    await waitFor(() => expect(button).toBeDisabled());
+    await waitFor(() => expect(button).toBeEnabled());
+    fireEvent.click(button);
+    await waitFor(() => expect(state.subscribe).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(button).toBeEnabled());
     expect(screen.queryByText('Ruta no encontrada.')).toBeNull();
     expect(screen.queryByText('¡Notificación activada!')).toBeNull();
-    expect(state.subscribe).not.toHaveBeenCalled();
+    fireEvent.click(button);
+    await waitFor(() => expect(state.subscribe).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole('button', { name: 'Notificación activada' })).toHaveAttribute('aria-pressed', 'true');
   });
 });
