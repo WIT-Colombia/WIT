@@ -4,6 +4,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import type { BusinessCreateInput, BusinessUpdateInput } from './business.schemas.js';
 import { modalityRules } from './modality.service.js';
 import { ensureInitialVisibilityPeriod } from './visibility.service.js';
+import { notifyPlatformUser } from '../notifications/platform-notifications.service.js';
 
 type Db = PrismaClient | Prisma.TransactionClient;
 type RequestMeta = { ipAddress?: string };
@@ -299,6 +300,19 @@ export async function requestBusinessDeletion(userId: string, identifier: string
   const updated = await prisma.$transaction(async (tx) => {
     const business = await tx.business.update({ where: { id: current.id }, data: { deletionStatus: 'RECOVERY' }, include: businessInclude });
     await audit(tx, userId, current.id, 'BUSINESS_DELETION_REQUESTED', { deletionStatus: current.deletionStatus }, { deletionStatus: business.deletionStatus }, meta);
+    // Once the business enters recovery it is excluded from public listings.
+    // Notify the personal inbox, which stays accessible without an active business.
+    const owners = await tx.businessMembership.findMany({
+      where: { businessId: business.id, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } },
+      select: { userId: true },
+    });
+    for (const ownerId of new Set(owners.map(owner => owner.userId))) {
+      await notifyPlatformUser(tx, {
+        userId: ownerId, sourceType: 'BUSINESS_RECOVERY', sourceId: business.id,
+        title: 'Tu negocio ya no está visible en XAMUKO',
+        message: 'Solicitaste retirar ' + business.name + ' de XAMUKO. El negocio ya no aparece públicamente y está en estado de recuperación. Entra a XAMUKO Business si deseas restaurarlo.',
+      });
+    }
     return business;
   });
   return serialize(updated, userId);

@@ -230,3 +230,23 @@
   .notifications-page .notification-meta time{font-size:10px}
   .notifications-page .notification-delete{width:31px;height:31px;right:8px}
 }
+
+
+/* Action for account-level visibility notices: positioned outside the card button. */
+.notifications-page .notification-item.has-business-action .notification-main-action {
+  padding-bottom:58px;
+}
+.notifications-page .notification-business-action {
+  display:inline-flex;position:absolute;bottom:11px;left:80px;z-index:2;
+  align-items:center;gap:8px;min-height:31px;max-width:calc(100% - 130px);
+  padding:6px 11px;border:1px solid #dfd3ff;border-radius:9px;
+  background:#f6f1ff;color:#6833d4;font-size:11px;font-weight:800;
+  line-height:1.35;text-decoration:none;white-space:normal;
+}
+.notifications-page .notification-business-action:hover {
+  background:#ede4ff;color:#4c1d95;
+}
+@media(max-width:700px) {
+  .notifications-page .notification-business-action {left:57px;max-width:calc(100% - 105px);font-size:10px}
+  .notifications-page .notification-item.has-business-action .notification-main-action {padding-bottom:61px}
+}
