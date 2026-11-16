@@ -505,3 +505,32 @@ export async function getAdminDocumentBlob(id: string): Promise<Blob> {
   if (!response.headers.get('content-type')?.includes('application/pdf')) throw new Error('El servidor no devolvió un documento PDF.');
   return response.blob();
 }
+
+export type AdminZoneLevel = 'MUNICIPALITY'|'DEPARTMENT'|'COUNTRY';
+export type AdminZoneStatus = 'ACTIVE'|'SCHEDULED'|'CLOSED'|'PAUSED';
+export type AdminZoneRecord = {
+  id:string;key:string;level:AdminZoneLevel;name:string;department:string|null;
+  status:AdminZoneStatus;effectiveStatus:'OPEN'|'SCHEDULED'|'CLOSED'|'PAUSED';
+  opensAt:string|null;createdAt:string;updatedAt:string;updatedById:string|null;
+};
+export type AdminZonesResponse = {
+  zones:AdminZoneRecord[];
+  overview:{configured:number;active:number;scheduled:number;paused:number;virtualAlwaysAvailable:boolean};
+  audit:Array<{id:string;zoneId:string;actorUserId:string;action:string;reason:string;createdAt:string}>;
+  timezone:string;serverTime:string;policy:string;
+};
+export type AdminZoneInsights = {
+  zone:{id:string;key:string;level:string;name:string;department:string|null;effectiveStatus:string};
+  summary:{registeredBusinesses:number;readyBusinesses:number;usersWithLocationPreference:number};
+  series:Array<{month:string;registrations:number;cumulative:number}>;
+  generatedAt:string;definition:string;
+};
+export function getAdminZones(){return request<AdminZonesResponse>('/admin/zones');}
+export function saveAdminZone(input:{
+  level:AdminZoneLevel;name:string;department?:string;status:AdminZoneStatus;opensAt:string|null;reason:string;
+}){return request<{zone:AdminZoneRecord}>('/admin/zones',{
+  method:'POST',body:JSON.stringify(input),
+});}
+export function getAdminZoneInsights(key:string){
+  return request<AdminZoneInsights>('/admin/zones/insights?'+new URLSearchParams({key}));
+}
