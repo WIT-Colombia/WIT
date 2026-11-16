@@ -16,6 +16,8 @@ import {
   listPublicCategoriesController,
 } from './public-business.controller.js';
 import { listReviewsController } from '../reviews/review.controller.js';
+import { publicZoneAvailability, publicUpcomingZone } from '../zones/zone-policy.service.js';
+import { AppError } from '../../shared/errors/app-error.js';
 
 export const publicBusinessRouter = Router();
 const publicReadRateLimit = rateLimit({
@@ -30,6 +32,20 @@ const publicReadRateLimit = rateLimit({
 });
 publicBusinessRouter.use(publicReadRateLimit);
 publicBusinessRouter.use(optionalAuth);
+publicBusinessRouter.get('/zones/next', async (_req, res, next) => {
+  try { res.setHeader('Cache-Control','no-store'); res.json(await publicUpcomingZone()); }
+  catch(error) { next(error); }
+});
+publicBusinessRouter.get('/zones/availability', async (req, res, next) => {
+  try {
+    const city=typeof req.query.city==='string'?req.query.city.trim():'';
+    const department=typeof req.query.department==='string'?req.query.department.trim():'';
+    if(!city||city.length>160||department.length>160)
+      throw new AppError(400,'ZONE_CITY_INVALID','Selecciona una ciudad válida.');
+    res.setHeader('Cache-Control','no-store');
+    res.json(await publicZoneAvailability(city,department));
+  } catch(error) { next(error); }
+});
 publicBusinessRouter.get('/businesses', listPublicBusinessesController);
 publicBusinessRouter.get('/search', searchPublicUniversalController);
 publicBusinessRouter.get('/categories', listPublicCategoriesController);
