@@ -36,21 +36,27 @@ export async function subscribeRegisteredZoneAlert(userId: string, code: string)
 
 export async function unsubscribeRegisteredZoneAlert(userId: string, code: string) {
   municipality(code);
-  await prisma.zoneLaunchUserAlert.deleteMany({ where: { userId, code, notifiedAt: null } });
+  await prisma.zoneLaunchUserAlert.deleteMany({ where: { userId, code } });
   return { subscribed: false };
 }
 
 /** Dispara una única notificación persistente por cuenta y apertura, incluso si hay varias instancias del servidor. */
 export async function dispatchRegisteredZoneLaunchAlerts() {
   const now = new Date();
-  const [records, alerts] = await Promise.all([
-    prisma.zoneLaunch.findMany({ select: { scope: true, code: true, state: true, opensAt: true } }),
-    prisma.zoneLaunchUserAlert.findMany({
-      where: { notifiedAt: null, user: { status: 'ACTIVE' } },
-      orderBy: { createdAt: 'asc' },
-      take: 100,
-    }),
-  ]);
+  const records = await prisma.zoneLaunch.findMany({
+    select: { scope: true, code: true, state: true, opensAt: true },
+  });
+  // Filtrar antes de limitar resultados evita que cientos de ciudades cerradas
+  // bloqueen indefinidamente los avisos de las ciudades que ya abrieron.
+  const openCodes = colombiaCatalog.municipalities
+    .filter(city => zoneState('MUNICIPALITY', city.id, records, now).state === 'OPEN')
+    .map(city => city.id);
+  if (!openCodes.length) return { sent: 0 };
+  const alerts = await prisma.zoneLaunchUserAlert.findMany({
+    where: { code: { in: openCodes }, notifiedAt: null, user: { status: 'ACTIVE' } },
+    orderBy: { createdAt: 'asc' },
+    take: 100,
+  });
   let sent = 0;
   for (const alert of alerts) {
     if (zoneState('MUNICIPALITY', alert.code, records, now).state !== 'OPEN') continue;
