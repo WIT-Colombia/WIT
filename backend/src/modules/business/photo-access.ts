@@ -12,7 +12,7 @@ export function canManageBusinessPhoto(membership: PhotoMembership, permission: 
 
 export async function findBusinessForPhotoRead(userId: string, businessId: string) {
   const business = await prisma.business.findFirst({
-    where: { id: businessId, memberships: { some: { userId, status: 'ACTIVE' } } },
+    where: { id: businessId, deletionStatus: { not: 'DELETED' }, memberships: { some: { userId, status: 'ACTIVE' } } },
     select: { id: true, businessAccount: { select: { status: true } }, memberships: { where: { userId, status: 'ACTIVE' }, include: { permissions: true }, take: 1 } },
   });
   if (!business || business.businessAccount.status !== 'ACTIVE') throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese negocio.');
