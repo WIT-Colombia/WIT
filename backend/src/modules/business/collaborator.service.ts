@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { isPhotoMissingError, photoMimeType, readPhoto } from './photo-storage.js';
+import { notifyPlatformUser } from '../notifications/platform-notifications.service.js';
 
 const allowedPermissions = ['MANAGE_CATALOG', 'MANAGE_PROMOTIONS', 'READ_ANALYTICS', 'EDIT_BUSINESS'] as const;
 type Permission = typeof allowedPermissions[number];
@@ -92,7 +93,12 @@ export async function inviteCollaborator(actorId: string, businessId: string, id
     await tx.businessMembershipPermission.deleteMany({ where: { membershipId: m.id } });
     await tx.businessMembershipPermission.createMany({ data: permissions.map(permission => ({ membershipId: m.id, permission, allowed: true })) });
     await tx.businessNotification.updateMany({ where: { membershipId: m.id, type: 'COLLABORATION_INVITATION', readAt: null }, data: { readAt: new Date() } });
-    await tx.businessNotification.create({ data: { userId: recipient.id, businessId, membershipId: m.id, type: 'COLLABORATION_INVITATION', title: 'Invitación para colaborar', message: `${business.name} te ha invitado a colaborar en su establecimiento.` } });
+    await tx.businessNotification.create({ data: { userId: recipient.id, businessId, membershipId: m.id, type: 'COLLABORATION_INVITATION', title: 'Invitación para colaborar', message: `${business.name} te ha invitado a colaborar en su establecimiento. Tienes 7 días para responder.` } });
+    await notifyPlatformUser(tx, {
+      userId: recipient.id, sourceType: 'COLLABORATION_INVITED', sourceId: businessId,
+      title: 'Te invitaron a colaborar',
+      message: `${business.name} te invitó a formar parte de su equipo. Puedes aceptar o rechazar en XAMUKO Business durante los próximos 7 días.`,
+    });
     await tx.auditLog.create({ data: { actorUserId: actorId, entityType: 'MEMBERSHIP', entityId: m.id, action: 'COLLABORATOR_INVITED', newState: { businessId, recipientUserId: recipient.id, status: 'INVITED', expiresAt: expiresAt.toISOString(), permissions } } });
     return m;
   });
@@ -110,6 +116,7 @@ async function respond(actorId: string, membershipId: string, status: 'ACTIVE'|'
     const result = await tx.businessMembership.updateMany({ where: { id: membership.id, userId: actorId, status: 'INVITED', expiresAt: { gt: now } }, data: { status, acceptedAt: status === 'ACTIVE' ? now : null, expiresAt: null } });
     if (result.count !== 1) throw new AppError(409, 'INVITATION_ALREADY_RESOLVED', 'La invitación ya fue procesada.');
     await tx.businessNotification.updateMany({ where: { membershipId: membership.id, userId: actorId, type: 'COLLABORATION_INVITATION', readAt: null }, data: { readAt: now } });
+    await tx.platformNotification.updateMany({ where: { userId: actorId, sourceType: 'COLLABORATION_INVITED', sourceId: membership.businessId, readAt: null }, data: { readAt: now } });
     await tx.businessNotification.create({ data: { userId: ownerUserId, businessId: membership.businessId, membershipId: membership.id, type: 'COLLABORATION_UPDATE', title: status === 'ACTIVE' ? 'Invitación aceptada' : 'Invitación rechazada', message: `${membership.user.displayName} ${status === 'ACTIVE' ? 'aceptó' : 'rechazó'} tu invitación para colaborar en ${membership.business.name}.` } });
     await tx.auditLog.create({ data: { actorUserId: actorId, entityType: 'MEMBERSHIP', entityId: membership.id, action: status === 'ACTIVE' ? 'INVITATION_ACCEPTED' : 'INVITATION_REJECTED', previousState: { status: 'INVITED' }, newState: { status, businessId: membership.businessId } } });
     return tx.businessMembership.findUniqueOrThrow({ where: { id: membership.id }, include: { permissions: true } });
@@ -127,6 +134,14 @@ async function changeByOwner(userId: string, id: string, status: 'ACTIVE'|'SUSPE
     const title = status === 'SUSPENDED' ? 'Acceso suspendido' : status === 'ACTIVE' ? 'Acceso reactivado' : 'Acceso revocado';
     const description = status === 'SUSPENDED' ? 'El propietario suspendió temporalmente tu acceso' : status === 'ACTIVE' ? 'El propietario reactivó tu acceso' : 'El propietario revocó tu acceso';
     await tx.businessNotification.create({ data: { userId: m.userId, businessId: m.businessId, membershipId: id, type: 'COLLABORATION_UPDATE', title, message: `${description} a ${m.business.name}.` } });
+    await notifyPlatformUser(tx, {
+      userId: m.userId, sourceType: 'COLLABORATION_ACCESS', sourceId: m.businessId, title,
+      message: status === 'SUSPENDED'
+        ? `Tu acceso a ${m.business.name} fue suspendido temporalmente. Podrás volver cuando el propietario lo reactive.`
+        : status === 'REVOKED'
+          ? `El propietario finalizó tu colaboración con ${m.business.name}. Ya no tienes acceso a sus herramientas de administración.`
+          : `¡Tu acceso a ${m.business.name} fue reactivado! Puedes volver a colaborar en XAMUKO Business.`,
+    });
     await tx.auditLog.create({ data: { actorUserId: userId, entityType: 'MEMBERSHIP', entityId: id, action, previousState: { status: m.status }, newState: { status, businessId: m.businessId } } });
     return tx.businessMembership.findUniqueOrThrow({ where: { id }, include: { permissions: true } });
   });
@@ -146,6 +161,9 @@ export async function cancelInvitation(userId: string, id: string) {
     await tx.businessNotification.updateMany({ where: { membershipId: id, type: 'COLLABORATION_INVITATION', readAt: null }, data: { readAt: now } });
     const business = await tx.business.findUniqueOrThrow({ where: { id: membership.businessId }, select: { name: true } });
     await tx.businessNotification.create({ data: { userId: membership.userId, businessId: membership.businessId, membershipId: id, type: 'COLLABORATION_UPDATE', title: 'Invitación cancelada', message: `El propietario canceló tu invitación para colaborar en ${business.name}.` } });
+    await tx.platformNotification.updateMany({ where: { userId: membership.userId, sourceType: 'COLLABORATION_INVITED', sourceId: membership.businessId, readAt: null }, data: { readAt: now } });
+    await notifyPlatformUser(tx, { userId: membership.userId, sourceType: 'COLLABORATION_ACCESS', sourceId: membership.businessId,
+      title: 'Invitación cancelada', message: `El propietario de ${business.name} canceló la invitación que te había enviado. Ya no necesitas responder.` });
     await tx.auditLog.create({ data: { actorUserId: userId, entityType: 'MEMBERSHIP', entityId: id, action: 'INVITATION_CANCELLED', previousState: { status: membership.status }, newState: { status: 'REVOKED', businessId: membership.businessId } } });
     return updated;
   });
@@ -160,7 +178,7 @@ export async function leaveBusiness(userId: string, businessId: string) {
     if (changed.count !== 1) throw new AppError(409, 'MEMBERSHIP_STATE_INVALID', 'La membresía cambió de estado.');
     await tx.businessMembershipPermission.deleteMany({ where: { membershipId: membership.id } });
     const ownerUserId = membership.business.memberships[0]?.userId;
-    if (ownerUserId) await tx.businessNotification.create({ data: { userId: ownerUserId, businessId, membershipId: membership.id, type: 'COLLABORATION_UPDATE', title: 'Colaborador retirado', message: `${membership.user.displayName} dejó de colaborar en ${membership.business.name}.` } });
+    if (ownerUserId) await tx.businessNotification.create({ data: { userId: ownerUserId, businessId, membershipId: membership.id, type: 'COLLABORATION_UPDATE', title: 'Colaborador retirado', message: `${membership.user.displayName} decidió finalizar voluntariamente su colaboración con ${membership.business.name}. Sus permisos fueron retirados automáticamente.` } });
     await tx.auditLog.create({ data: { actorUserId: userId, entityType: 'MEMBERSHIP', entityId: membership.id, action: 'COLLABORATOR_LEFT', previousState: { status: 'ACTIVE' }, newState: { status: 'REVOKED', businessId } } });
     return tx.businessMembership.findUniqueOrThrow({ where: { id: membership.id } });
   });
@@ -181,6 +199,11 @@ export async function setPermissions(userId: string, id: string, values: string[
       const labels: Record<Permission, string> = { MANAGE_CATALOG: 'Productos y servicios', MANAGE_PROMOTIONS: 'Promociones', READ_ANALYTICS: 'Estadísticas', EDIT_BUSINESS: 'Información del negocio' };
       const permissionText = permissions.map(permission => labels[permission]).join(', ');
       await tx.businessNotification.create({ data: { userId: membership.userId, businessId: membership.businessId, membershipId: id, type: 'COLLABORATION_UPDATE', title: 'Permisos actualizados', message: `El propietario actualizó tus permisos en ${membership.business.name}: ${permissionText}.` } });
+      if (previousPermissions.some(previous => !permissions.includes(previous))) await notifyPlatformUser(tx, {
+        userId: membership.userId, sourceType: 'COLLABORATION_PERMISSIONS', sourceId: membership.businessId,
+        title: 'Tus permisos de colaboración cambiaron',
+        message: `Algunos permisos que tenías en ${membership.business.name} fueron retirados. Revisa tus accesos actuales en XAMUKO Business.`,
+      });
     }
     await tx.auditLog.create({ data: { actorUserId: userId, entityType: 'MEMBERSHIP', entityId: id, action: 'COLLABORATOR_PERMISSIONS_UPDATED', previousState: { businessId: membership.businessId, permissions: previousPermissions }, newState: { businessId: membership.businessId, permissions } } });
   });
@@ -193,7 +216,7 @@ export async function listNotifications(userId: string, businessId?: string, inv
     },
     include: {
       business: { select: { id: true, name: true, profilePhoto: { select: { id: true } }, memberships: { where: { role: 'OWNER', status: 'ACTIVE' }, select: { user: { select: { displayName: true } } }, take: 1 } } },
-      membership: { select: { id: true, status: true, expiresAt: true, permissions: true } },
+      membership: { select: { id: true, status: true, expiresAt: true, permissions: true, user: { select: { displayName: true, avatarUrl: true } } } },
     },
     orderBy: { createdAt: 'desc' },
     take: 100,
@@ -201,6 +224,7 @@ export async function listNotifications(userId: string, businessId?: string, inv
   const now = new Date();
   return rows.map(row => ({
     ...row,
+    membership: row.membership ? { ...row.membership, user: { displayName: row.membership.user.displayName, avatarUrl: publicAvatarUrl(row.membership.user.avatarUrl) } } : null,
     business: { ...row.business, profilePhoto: row.business.profilePhoto ? { url: `/api/v1/businesses/${row.business.id}/photos/${row.business.profilePhoto.id}/content` } : null },
     ...(row.membership?.status === 'INVITED' && row.membership.expiresAt && row.membership.expiresAt <= now
       ? { membership: { ...row.membership, status: 'EXPIRED' as const } }
