@@ -77,3 +77,26 @@
 .notifications-page .notification-brand-icon{overflow:hidden;background:#f2edff;box-shadow:0 4px 12px rgba(123,63,251,.08)}
 .notifications-page .notification-item:not(.is-read){border-left:3px solid var(--xamuko-violet)}
 .notifications-page .notification-copy b{font-weight:800}
+
+
+/* Approved notifications layout: User uses violet #7B3FFB, blue actions, cyan accents. */
+.notifications-page{background:#fff}
+.notifications-page .user-content-main{box-sizing:border-box;max-width:1040px;min-width:0;padding-top:clamp(24px,4vw,44px)}
+.notifications-page .notifications-heading{align-items:center;gap:16px}
+.notifications-page .notifications-heading>button{background:#2563eb;border-color:#2563eb;color:#fff;font-size:12px;min-height:40px;padding:0 17px}
+.notifications-page .notifications-heading>button:hover{background:#1d4ed8;border-color:#1d4ed8}
+.notifications-page .notification-unread-count{background:#f1eaff;border-color:#e0d2ff;color:#7b3ffb}
+.notifications-page .notification-filter-bar button{font-size:12px;min-height:38px}
+.notifications-page .notification-list{max-width:none}
+.notifications-page .notification-item{box-sizing:border-box;min-width:0;min-height:92px;border-radius:15px;border:1px solid #e2e8f0;box-shadow:0 4px 16px rgba(15,23,42,.035)}
+.notifications-page .notification-item:not(.is-read){border:1px solid #d7c4ff;border-left:3px solid #7b3ffb;background:#fcfaff}
+.notifications-page .notification-main-action{min-width:0;min-height:90px;gap:15px;padding:18px 58px 18px 18px}
+.notifications-page .notification-copy{min-width:0;overflow-wrap:anywhere}
+.notifications-page .notification-copy b{font-size:14px;line-height:1.4;color:#0f172a}
+.notifications-page .notification-copy small{font-size:12px;line-height:1.55;color:#475569}
+.notifications-page .notification-copy time{font-size:11px;color:#64748b}
+.notifications-page .notification-icon{flex:0 0 44px;height:44px}
+.notifications-page .notification-delete{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#f1f5f9}
+.notifications-page .notification-delete-confirm{position:absolute;top:calc(50% + 18px);right:0;z-index:10;max-width:min(320px,calc(100vw - 52px));padding:12px;white-space:normal;box-shadow:0 12px 28px rgba(15,23,42,.14)}
+@media(max-width:900px){.notifications-page .user-content-main{width:calc(100% - 40px)}.notifications-page .notifications-heading{flex-wrap:wrap}.notifications-page .notification-copy b{font-size:13px}}
+@media(max-width:600px){.notifications-page .user-content-main{width:calc(100% - 28px);padding-top:24px}.notifications-page .notifications-heading>button{width:100%;justify-content:center}.notifications-page .notification-main-action{min-height:90px;gap:10px;padding:14px 48px 14px 12px}.notifications-page .notification-icon{flex-basis:36px;height:36px}.notifications-page .notification-copy b{font-size:12px}.notifications-page .notification-copy small{font-size:11px}.notifications-page .notification-copy time{font-size:10px}.notifications-page .notification-filter-bar{gap:6px}.notifications-page .notification-filter-bar button{padding:0 11px;font-size:11px}.notifications-page .notification-delete-confirm{top:calc(50% + 16px)}}
