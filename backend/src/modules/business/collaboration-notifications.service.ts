@@ -133,7 +133,7 @@ export async function sweepCollaborationNotifications(now = new Date()) {
   let sent = 0, failed = 0, examined = 0;
   let cursor: string | undefined;
   do {
-    const rows = await prisma.businessMembership.findMany({
+    const rows: Array<{ id: string }> = await prisma.businessMembership.findMany({
       where: { role: 'COLLABORATOR', status: 'INVITED', expiresAt: { lte: cutoff },
         business: { deletionStatus: { not: 'DELETED' }, businessAccount: { status: 'ACTIVE' } },
         user: { status: 'ACTIVE' } },
@@ -149,7 +149,7 @@ export async function sweepCollaborationNotifications(now = new Date()) {
   } while (true);
   cursor = undefined;
   do {
-    const rows = await prisma.ownershipTransfer.findMany({
+    const rows: Array<{ id: string }> = await prisma.ownershipTransfer.findMany({
       where: { status: 'PENDING', expiresAt: { lte: cutoff },
         business: { deletionStatus: { not: 'DELETED' } } },
       select: { id: true }, orderBy: { id: 'asc' }, take: PAGE_SIZE,
