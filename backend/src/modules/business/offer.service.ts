@@ -71,6 +71,7 @@ export async function updateOffer(userId: string, businessIdentifier: string, of
   const business = await findBusiness(userId, businessIdentifier, prisma);
   const current = await prisma.businessOffer.findFirst({ where: { id: offerId, businessId: business.id }, include: offerInclude });
   if (!current || current.deletedAt) throw new AppError(404, 'OFFER_NOT_FOUND', 'No encontramos ese producto o servicio.');
+  if (current.administrativeStatus !== 'NONE') throw new AppError(409, 'OFFER_ADMIN_RESTRICTED', 'Esta publicación tiene una restricción administrativa. Solicita una revisión antes de modificarla.');
   const updated = await prisma.$transaction(async tx => {
     const offer = await tx.businessOffer.update({ where: { id: current.id }, data: { ...(input.kind !== undefined ? { kind: input.kind } : {}), ...(input.name !== undefined ? { name: input.name } : {}), ...(input.description !== undefined ? { description: input.description } : {}), ...(input.priceAmount !== undefined ? { priceAmount: amount(input.priceAmount) } : {}), ...(input.currency !== undefined ? { currency: input.currency } : {}), ...(input.priceText !== undefined ? { priceText: input.priceText } : {}), ...(input.negotiable !== undefined ? { negotiable: input.negotiable } : {}), ...(input.active !== undefined ? { active: input.active } : {}), ...(input.adultOnly !== undefined ? { adultOnly: input.adultOnly } : {}), ...(input.publicationStatus !== undefined ? { publicationStatus: input.publicationStatus } : {}) }, include: offerInclude });
     await audit(tx, userId, offer.id, input.adultOnly === undefined || input.adultOnly === current.adultOnly ? 'OFFER_UPDATED' : 'OFFER_ADULT_CLASSIFICATION_CHANGED', { adultOnly: current.adultOnly }, { adultOnly: offer.adultOnly }, meta);
@@ -94,6 +95,7 @@ export async function deleteOffer(userId: string, businessIdentifier: string, of
   const business = await findBusiness(userId, businessIdentifier, prisma);
   const current = await prisma.businessOffer.findFirst({ where: { id: offerId, businessId: business.id } });
   if (!current || current.deletedAt) throw new AppError(404, 'OFFER_NOT_FOUND', 'No encontramos ese producto o servicio.');
+  if (current.administrativeStatus !== 'NONE') throw new AppError(409, 'OFFER_ADMIN_RESTRICTED', 'Esta publicación tiene una restricción administrativa. Solicita una revisión antes de modificarla.');
   await prisma.$transaction(async tx => {
     await tx.businessOffer.update({ where: { id: current.id }, data: { deletedAt: new Date() } });
     await audit(tx, userId, current.id, 'OFFER_DELETED', { deletedAt: null }, { deletedAt: new Date().toISOString() }, meta);
