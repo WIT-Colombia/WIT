@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/common/PageHeader";
 import { useBusinessStore } from "../services/businessStore";
@@ -15,60 +15,87 @@ export function BusinessPage() {
   const { business, businesses, setBusiness, setBusinesses } = useBusinessStore();
   const auth = useBusinessAuth();
   const { state: authState, refresh } = auth;
+  const accountId = authState.status === "authenticated" ? auth.user?.id ?? "" : "";
+  const accountRef = useRef(accountId);
+  accountRef.current = accountId;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retryAttempt, setRetryAttempt] = useState(0);
   const [transfers, setTransfers] = useState<Awaited<ReturnType<typeof businessApi.listReceivedOwnershipTransfers>>["transfers"]>([]);
+  const [transfersAccount, setTransfersAccount] = useState("");
   const [transferChoice, setTransferChoice] = useState<{ id: string; accept: boolean } | null>(null);
   const [transferBusy, setTransferBusy] = useState(false);
   const [transferError, setTransferError] = useState("");
   useEffect(() => {
-    if (authState.status !== "authenticated") { setTransfers([]); return; }
+    setTransfers([]);
+    setTransfersAccount("");
+    setTransferChoice(null);
+    setTransferError("");
+    if (!accountId) return;
     let active = true;
     void businessApi.listReceivedOwnershipTransfers().then(({ transfers: incoming }) => {
-      if (active) setTransfers(incoming.filter(item => item.status === "PENDING"));
-    }).catch(() => { if (active) setTransferError("No se pudieron consultar las transferencias de propiedad."); });
+      if (active && accountRef.current === accountId) {
+        setTransfers(incoming.filter(item => item.status === "PENDING"));
+        setTransfersAccount(accountId);
+      }
+    }).catch(() => { if (active && accountRef.current === accountId)
+      setTransferError("No se pudieron consultar las transferencias de propiedad."); });
     return () => { active = false; };
-  }, [authState.status]);
+  }, [accountId]);
   const respondTransfer = async (id: string, accept: boolean) => {
-    if (transferBusy) return;
+    if (transferBusy || !accountId || transfersAccount !== accountId) return;
+    const requestedAccountId = accountId;
     setTransferBusy(true); setTransferError("");
     try {
       await businessApi.respondOwnershipTransfer(id, accept);
       const next = (await businessApi.list()).businesses.map(toBusinessDetails);
+      if (accountRef.current !== requestedAccountId) return;
       setBusinesses(next);
       if (!business.id && next[0]) setBusiness(next[0]);
       setTransfers(current => current.filter(item => item.id !== id));
       setTransferChoice(null);
     } catch (cause) {
-      setTransferError(cause instanceof Error ? cause.message : "No fue posible responder la transferencia.");
+      if (accountRef.current === requestedAccountId)
+        setTransferError(cause instanceof Error ? cause.message : "No fue posible responder la transferencia.");
     } finally { setTransferBusy(false); }
   };
   const [invitations, setInvitations] = useState<PersistedBusinessNotification[]>([]);
+  const [invitationsAccount, setInvitationsAccount] = useState("");
   const [invitationChoice, setInvitationChoice] = useState<{ id: string; accept: boolean } | null>(null);
   const [invitationBusy, setInvitationBusy] = useState(false);
   const [invitationError, setInvitationError] = useState("");
   useEffect(() => {
-    if (authState.status !== "authenticated") { setInvitations([]); return; }
+    setInvitations([]);
+    setInvitationsAccount("");
+    setInvitationChoice(null);
+    setInvitationError("");
+    if (!accountId) return;
     let active = true;
     void businessApi.listAllBusinessInvitations().then(({ notifications }) => {
-      if (active) setInvitations(notifications.filter(item =>
-        item.type === "COLLABORATION_INVITATION" && item.membership?.status === "INVITED"));
-    }).catch(() => { if (active) setInvitationError("No se pudieron consultar las invitaciones pendientes."); });
+      if (active && accountRef.current === accountId) {
+        setInvitations(notifications.filter(item =>
+          item.type === "COLLABORATION_INVITATION" && item.membership?.status === "INVITED"));
+        setInvitationsAccount(accountId);
+      }
+    }).catch(() => { if (active && accountRef.current === accountId)
+      setInvitationError("No se pudieron consultar las invitaciones pendientes."); });
     return () => { active = false; };
-  }, [authState.status]);
+  }, [accountId]);
   const respondInvitation = async (item: PersistedBusinessNotification, accept: boolean) => {
-    if (!item.membershipId || invitationBusy) return;
+    if (!item.membershipId || invitationBusy || !accountId || invitationsAccount !== accountId) return;
+    const requestedAccountId = accountId;
     setInvitationBusy(true); setInvitationError("");
     try {
       await businessApi.respondCollaboratorInvitation(item.membershipId, accept);
       const refreshed = (await businessApi.list()).businesses.map(toBusinessDetails);
+      if (accountRef.current !== requestedAccountId) return;
       setBusinesses(refreshed);
       if (!business.id && refreshed[0]) setBusiness(refreshed[0]);
       setInvitations(current => current.filter(candidate => candidate.id !== item.id));
       setInvitationChoice(null);
     } catch (cause) {
-      setInvitationError(cause instanceof Error ? cause.message : "No se pudo responder la invitación.");
+      if (accountRef.current === requestedAccountId)
+        setInvitationError(cause instanceof Error ? cause.message : "No se pudo responder la invitación.");
     } finally { setInvitationBusy(false); }
   };
   useEffect(() => {
@@ -104,15 +131,17 @@ export function BusinessPage() {
     };
     void load(true);
     return () => { active = false; };
-  }, [authState.status, refresh, retryAttempt, setBusiness, setBusinesses]);
+  }, [authState.status, accountId, refresh, retryAttempt, setBusiness, setBusinesses]);
+  const visibleInvitations = invitationsAccount === accountId && accountId ? invitations : [];
+  const visibleTransfers = transfersAccount === accountId && accountId ? transfers : [];
   const selectBusiness = (item: BusinessDetails, index: number) => { setBusiness(item); navigate(`/mi-negocio/detalle/${index}`); };
   const listedBusinesses = businesses.map((item, index) => ({ item, index })).filter(({ item }) => item.deletionStatus !== "DELETED");
   return <><PageHeader eyebrow="" title="Mis negocios" description="Administra todos los negocios asociados a tu cuenta." />
-    {invitations.length > 0 && <section className="business-invitations surface-card" aria-labelledby="business-invitations-title">
+    {visibleInvitations.length > 0 && <section className="business-invitations surface-card" aria-labelledby="business-invitations-title">
       <div className="card-heading"><div><h2 id="business-invitations-title">Invitaciones para colaborar</h2>
         <p>Estas solicitudes corresponden a tu cuenta y a negocios a los que todavía no perteneces. No se mezclan con las notificaciones del negocio seleccionado.</p></div>
-        <span className="business-invitation-count">{invitations.length} pendiente{invitations.length === 1 ? "" : "s"}</span></div>
-      {invitations.map(item => <article className="business-invitation-row" key={item.id}>
+        <span className="business-invitation-count">{visibleInvitations.length} pendiente{visibleInvitations.length === 1 ? "" : "s"}</span></div>
+      {visibleInvitations.map(item => <article className="business-invitation-row" key={item.id}>
         <div className="business-invitation-information"><strong>{item.business.name}</strong>
           <span>{item.message}</span><small>Invitación recibida · {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(item.createdAt))}</small></div>
         <div className="business-invitation-buttons">
@@ -129,11 +158,11 @@ export function BusinessPage() {
         </div></article>)}
     </section>}
     {invitationError && <div className="form-error" role="alert">{invitationError}</div>}
-    {transfers.length > 0 && <section className="business-invitations surface-card" aria-labelledby="business-transfers-title">
+    {visibleTransfers.length > 0 && <section className="business-invitations surface-card" aria-labelledby="business-transfers-title">
       <div className="card-heading"><div><h2 id="business-transfers-title">Transferencias de propiedad pendientes</h2>
         <p>Solicitudes dirigidas a tu cuenta. Al aceptar asumirás la propiedad del negocio; estas solicitudes no se mezclan con sus notificaciones.</p></div>
-        <span className="business-invitation-count">{transfers.length} pendiente{transfers.length === 1 ? "" : "s"}</span></div>
-      {transfers.map(item => <article className="business-invitation-row" key={item.id}>
+        <span className="business-invitation-count">{visibleTransfers.length} pendiente{visibleTransfers.length === 1 ? "" : "s"}</span></div>
+      {visibleTransfers.map(item => <article className="business-invitation-row" key={item.id}>
         <div className="business-invitation-information"><strong>{item.business.name}</strong>
           <span>Solicitud de transferencia enviada por {item.fromUser.displayName}.</span>
           <small>Recibida el {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(item.requestedAt))}</small>
