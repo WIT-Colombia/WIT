@@ -183,7 +183,7 @@ export function AdminContentPage(){
               {canModerate&&<td><input type="checkbox" aria-label={'Seleccionar '+offer.name}
                 checked={selectedIds.includes(offer.id)} disabled={Boolean(offer.deletedAt)}
                 onChange={()=>toggleSelection(offer.id)}/></td>}
-              <td><div className="ac-title-cell"><AdminContentPhoto photoId={offer.photoId} alt={offer.photoAlt??offer.name} type={offer.kind}/><div><Link to={'/content/'+encodeURIComponent(offer.id)}><strong>{offer.name}</strong></Link><small>{offer.internalCode} · {offerKindLabel(offer.kind)}</small><small>Actualizado: {displayDate(offer.updatedAt)}</small></div></div></td>
+              <td><div className="ac-title-cell"><AdminContentPhoto photoId={offer.photoId} alt={offer.photoAlt??offer.name} type={offer.kind} thumbnail/><div><Link to={'/content/'+encodeURIComponent(offer.id)}><strong>{offer.name}</strong></Link><small>{offer.internalCode} · {offerKindLabel(offer.kind)}</small><small>Actualizado: {displayDate(offer.updatedAt)}</small></div></div></td>
               <td><Link className="ac-business-link" to={'/businesses/'+encodeURIComponent(offer.business.id)}>{offer.business.name}</Link><small className="ac-table-sub">{offer.business.city??'Ubicación no registrada'}</small></td>
               <td>{offer.category}</td><td className="ac-price">{offerPrice(offer)}</td>
               <td><Status offer={offer}/>{!offer.active&&!offer.deletedAt&&<span className="ac-table-sub">Inactivo</span>}</td>
@@ -191,7 +191,7 @@ export function AdminContentPage(){
               <td><Link className="ac-view" to={'/content/'+encodeURIComponent(offer.id)}>Ver detalle <Icon name="arrow" size={16}/></Link></td>
             </tr>)}</tbody></table></div>}
           {mobile&&<div className="ac-mobile-grid">{directory.offers.map(offer=><article className="ac-mobile-card" key={offer.id}>
-            <Link className="ac-mobile-image" to={'/content/'+encodeURIComponent(offer.id)}><AdminContentPhoto photoId={offer.photoId} alt={offer.photoAlt??offer.name} type={offer.kind}/></Link>
+            <Link className="ac-mobile-image" to={'/content/'+encodeURIComponent(offer.id)}><AdminContentPhoto photoId={offer.photoId} alt={offer.photoAlt??offer.name} type={offer.kind} thumbnail/></Link>
             <div className="ac-mobile-body">{canModerate&&<label className="ac-mobile-select"><input type="checkbox" checked={selectedIds.includes(offer.id)}
               disabled={Boolean(offer.deletedAt)} onChange={()=>toggleSelection(offer.id)}/> Seleccionar</label>}<ContentBadge item={offer}/><h3>{offer.name}</h3><p>{offer.category} · {offer.business.name}</p>
               <strong className="ac-mobile-price">{offerPrice(offer)}</strong><div className="ac-mobile-foot"><span>{offer.business.city??'Sin ubicación'}</span><Link className="ac-view" to={'/content/'+encodeURIComponent(offer.id)}>Explorar <Icon name="arrow" size={16}/></Link></div></div>
