@@ -97,7 +97,7 @@ export async function publicUpcomingZone(){
   const upcoming=zones.filter(zone=>zone.status==='SCHEDULED'&&zone.opensAt&&zone.opensAt>now)
     .sort((a,b)=>a.opensAt!.getTime()-b.opensAt!.getTime())[0];
   return { nextOpening:upcoming?{
-    level:upcoming.level,name:upcoming.name,department:upcoming.department,
+    key:upcoming.key,level:upcoming.level,name:upcoming.name,department:upcoming.department,
     opensAt:upcoming.opensAt!.toISOString(),
   }:null,serverTime:now.toISOString() };
 }
