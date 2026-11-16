@@ -5,6 +5,7 @@ import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type PersistedBusinessNotification } from "../services/businessApiClient";
 import { toBusinessDetails } from "../services/realBusinessAdapter";
 import { useBusinessAuth } from "../services/businessAuthContext";
+import { announceBusinessAccountWelcomeUpdate } from "../services/businessWelcomeStatus";
 
 const icons = { review: "☆", interest: "↗", profile: "▣", wit: "✦", admin: "✉", offer: "✦", security: "✓", collaboration: "♙" };
 const destination = { review: "/opiniones", interest: "/productos", profile: "/mis-negocios/editar", wit: "/mi-negocio", admin: "/configuracion", offer: "/estadisticas", security: "/perfil" } as const;
@@ -68,7 +69,7 @@ export function NotificationsPage() {
   const [confirmingLocalDelete, setConfirmingLocalDelete] = useState<string | null>(null);
   // Before the first business exists, the welcome belongs to the Business account.
   // Once a business is selected, its own welcome is isolated by business and account.
-  const hasSelectedBusiness = business.source === "real" && Boolean(selectedBusinessId);
+  const hasSelectedBusiness = business.source === "real" && Boolean(selectedBusinessId) && businesses.some(item => item.id === selectedBusinessId);
   const welcomeKey = accountId
     ? hasSelectedBusiness
       ? `xamuko-business-welcome:${accountId}:${selectedBusinessId}`
@@ -88,6 +89,7 @@ export function NotificationsPage() {
     const next = { key: welcomeKey, read, dismissed };
     setWelcomeState(next);
     try { localStorage.setItem(welcomeKey, JSON.stringify({ read, dismissed })); } catch { /* Browser storage may be disabled. */ }
+    if (!hasSelectedBusiness && accountId) announceBusinessAccountWelcomeUpdate(accountId);
   };
   const showWelcome = Boolean(welcomeKey) && welcomeState.key === welcomeKey && !welcomeState.dismissed;
 
