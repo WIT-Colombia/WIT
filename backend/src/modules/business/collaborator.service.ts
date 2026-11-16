@@ -244,7 +244,8 @@ export async function readNotificationActorAvatar(userId: string, businessId: st
   const avatar = notice?.actorUser?.avatarUrl;
   if (!avatar?.startsWith('private-avatar:')) throw new AppError(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'No hay fotografía para este aviso.');
   const key = avatar.slice('private-avatar:'.length);
-  if (!new RegExp('^user-avatars/[0-9a-f-]{36}/[0-9a-f-]{36}[.](jpg|png|webp)(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'No hay fotografía para este aviso.');
+  if (!/^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(key))
+    throw new AppError(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'No hay fotografía para este aviso.');
   try {
     return { content: await readPhoto(key), mimeType: photoMimeType(key) };
   } catch (error) {
