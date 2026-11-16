@@ -518,6 +518,25 @@ enum ZoneLaunchState {
   PAUSED
 }
 
+model ZoneLaunchAlert {
+  id                   String     @id @default(uuid()) @db.Char(36)
+  scope                ZoneScope
+  code                 String     @db.VarChar(5)
+  emailNormalized      String     @db.VarChar(320)
+  confirmTokenHash     String     @unique @db.Char(64)
+  confirmExpiresAt     DateTime   @db.DateTime(3)
+  confirmedAt          DateTime?  @db.DateTime(3)
+  lastDispatchAttempt  DateTime?  @db.DateTime(3)
+  notifiedAt           DateTime?  @db.DateTime(3)
+  unsubscribedAt       DateTime?  @db.DateTime(3)
+  createdAt            DateTime   @default(now()) @db.DateTime(3)
+  updatedAt            DateTime   @updatedAt @db.DateTime(3)
+
+  @@unique([scope, code, emailNormalized])
+  @@index([confirmedAt, notifiedAt, unsubscribedAt])
+  @@index([scope, code])
+}
+
 model ZoneLaunch {
   id          String          @id @default(uuid()) @db.Char(36)
   scope       ZoneScope
