@@ -179,6 +179,54 @@
 .au-control-dialog-actions .danger{background:#b03b59;border-color:#b03b59;color:#fff}
 .au-control-dialog-actions .restore{background:#176a50;border-color:#176a50;color:#fff}
 .au-control-dialog-actions button:disabled{opacity:.5;cursor:not-allowed}
+.admin-refresh .au-control-distribution{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;min-width:0;
+  padding:0 21px 18px;
+}
+.admin-refresh .au-control-distribution-card{
+  display:grid;align-content:start;gap:17px;min-width:0;padding:20px;
+  border:1px solid #e1e9f5;border-radius:15px;background:#fff;
+  box-shadow:0 5px 18px #17305c08;
+}
+.admin-refresh .au-control-distribution-card h3{margin:0 0 5px;font-size:15px;line-height:1.4;font-weight:850;color:#1c3456}
+.admin-refresh .au-control-distribution-card header p,.admin-refresh .au-control-distribution-card>p{
+  margin:0;font-size:11px;color:#7185a2;line-height:1.6;
+}
+.admin-refresh .au-control-donut-layout{display:flex;align-items:center;justify-content:space-evenly;gap:22px;min-width:0}
+.admin-refresh .au-control-donut{width:min(48%,170px);height:auto;flex:0 0 auto}
+.admin-refresh .au-control-donut-legend{display:grid;gap:12px;min-width:0;flex:1}
+.admin-refresh .au-control-donut-legend>div{
+  display:grid;align-items:center;grid-template-columns:10px minmax(0,1fr) auto auto;gap:8px;
+  color:#687d9b;font-size:11px;min-width:0;
+}
+.admin-refresh .au-control-donut-legend strong{color:#203a5e;font-variant-numeric:tabular-nums}
+.admin-refresh .au-control-donut-legend small{color:#8193aa;font-size:10px;font-variant-numeric:tabular-nums;text-align:right}
+.admin-refresh .au-control-dot{width:10px;height:10px;border-radius:50%}
+.admin-refresh .au-control-dot.active{background:#225cf1}
+.admin-refresh .au-control-dot.suspended{background:#efad40}
+.admin-refresh .au-control-dot.deleted{background:#b3bfd1}
+.admin-refresh .au-control-relationship-bars{display:grid;gap:18px}
+.admin-refresh .au-control-relationship-row{display:grid;gap:8px}
+.admin-refresh .au-control-relationship-row>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.admin-refresh .au-control-relationship-row>div:first-child>span{display:inline-flex;align-items:center;gap:8px;color:#577196;font-size:12px;font-weight:750}
+.admin-refresh .au-control-relationship-row>div:first-child>strong{color:#203b66;font-size:13px;font-variant-numeric:tabular-nums}
+.admin-refresh .au-control-relationship-track{width:100%;height:9px;border-radius:99px;background:#edf1f7;overflow:hidden}
+.admin-refresh .au-control-relationship-track i{display:block;height:100%;border-radius:99px}
+.admin-refresh .au-control-relationship-track .owners{background:#7249df}
+.admin-refresh .au-control-relationship-track .collaborators{background:#2c71e5}
+.admin-refresh .au-control-relationship-track .admins{background:#18a087}
+@media(max-width:1050px){
+  .admin-refresh .au-control-distribution{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:760px){
+  .admin-refresh .au-control-distribution{padding:0 13px 14px}
+  .admin-refresh .au-control-distribution-card{padding:14px}
+}
+@media(max-width:440px){
+  .admin-refresh .au-control-donut-layout{flex-direction:column;align-items:stretch;gap:14px}
+  .admin-refresh .au-control-donut{width:min(70%,165px);margin:0 auto}
+  .admin-refresh .au-control-donut-legend{gap:10px}
+}
 @media(max-width:1400px){.admin-refresh .au-control-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:1050px){
   .admin-refresh .au-control-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}

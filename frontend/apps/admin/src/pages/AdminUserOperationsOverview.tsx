@@ -16,6 +16,7 @@ const indicators = [
   { key: 'adminCount', label: 'Administradores', icon: 'shield', tone: 'violet', hint: 'Cuentas con rol administrativo activo' },
 ] as const;
 
+const totalValue = (value: number) => Math.max(1, value);
 export function AdminUserOperationsOverview({ data, loading, error, retry }: {
   data: AdminUserOverview | null; loading: boolean; error: string; retry: () => void;
 }) {
@@ -35,6 +36,56 @@ export function AdminUserOperationsOverview({ data, loading, error, retry }: {
         </article>;
       })}
     </div>
+    {data && <div className="au-control-distribution">
+      <div className="au-control-distribution-card">
+        <header><h3>Estado actual de las cuentas</h3><p>Distribución por estado, sin duplicaciones</p></header>
+        {(() => {
+          const states = [
+            {label:'Activas',value:data.active,color:'#225cf1',tone:'active'},
+            {label:'Suspendidas',value:data.suspended,color:'#efad40',tone:'suspended'},
+            {label:'Eliminadas',value:data.deleted,color:'#b3bfd1',tone:'deleted'},
+          ];
+          const total=Math.max(1,data.total);
+          const circumference=2*Math.PI*57;
+          let offset=0;
+          return <div className="au-control-donut-layout">
+            <svg className="au-control-donut" viewBox="0 0 160 160" role="img" aria-label={states.map(st=>st.label+': '+st.value).join('; ')}>
+              <circle cx="80" cy="80" r="57" stroke="#edf1f8" strokeWidth="18" fill="none"/>
+              {states.map(st=>{
+                const len=st.value/total*circumference;
+                const element=<circle key={st.label} cx="80" cy="80" r="57" fill="none"
+                  stroke={st.color} strokeWidth="18" strokeDasharray={len+' '+(circumference-len)}
+                  strokeDashoffset={-offset} transform="rotate(-90 80 80)"/>;
+                offset+=len;
+                return element;
+              })}
+              <text x="80" y="78" textAnchor="middle" fontSize="26" fontWeight="850" fill="#152a4b">{data.total.toLocaleString('es-CO')}</text>
+              <text x="80" y="96" textAnchor="middle" fontSize="10" fill="#74849c">Cuentas</text>
+            </svg>
+            <div className="au-control-donut-legend">{states.map(st=><div key={st.label}>
+              <span className={'au-control-dot '+st.tone}/><span>{st.label}</span>
+              <strong>{st.value.toLocaleString('es-CO')}</strong><small>{(st.value/total*100).toLocaleString('es-CO',{maximumFractionDigits:1})}%</small>
+            </div>)}</div>
+          </div>;
+        })()}
+      </div>
+      <div className="au-control-distribution-card">
+        <header><h3>Vinculación con XAMUKO Business</h3><p>Usuarios únicos con vínculos activos</p></header>
+        <div className="au-control-relationship-bars">
+          {[
+            {label:'Propietarios',value:data.owners,tone:'owners',icon:'store'},
+            {label:'Colaboradores',value:data.collaborators,tone:'collaborators',icon:'users'},
+            {label:'Administradores',value:data.adminCount,tone:'admins',icon:'shield'},
+          ].map(group=><div key={group.label} className="au-control-relationship-row">
+            <div><span><Icon name={group.icon} size={16}/>{group.label}</span><strong>{group.value.toLocaleString('es-CO')}</strong></div>
+            <div className="au-control-relationship-track" role="meter" aria-valuemin={0} aria-valuemax={totalValue(data.total)} aria-valuenow={group.value} aria-label={group.label}>
+              <i className={group.tone} style={{width:(data.total?Math.min(100,group.value/data.total*100):0)+'%'}}/>
+            </div>
+          </div>)}
+        </div>
+        <p>Estas categorías pueden coincidir: una misma cuenta puede administrar y colaborar en distintos negocios.</p>
+      </div>
+    </div>}
     <p className="au-control-overview-note"><Icon name="shield" size={15}/> Las métricas de actividad se basan en último inicio de sesión, no en navegación anónima ni sesiones activas.</p>
   </section>;
 }
