@@ -1532,3 +1532,39 @@ model SupportRequest {
   @@index([userId, createdAt])
   @@index([businessId, createdAt])
 }
+
+/**
+ * Expansión territorial: registrar usuarios y negocios no depende de la apertura.
+ * Un municipio prevalece sobre el departamento; el departamento sobre Colombia.
+ * SCHEDULED se vuelve visible al llegar opensAt sin tarea programada.
+ */
+model ExpansionZone {
+  id           String   @id @default(uuid()) @db.Char(36)
+  key          String   @unique @db.VarChar(240)
+  level        String   @db.VarChar(16)
+  name         String   @db.VarChar(160)
+  department   String?  @db.VarChar(160)
+  countryCode  String   @default("CO") @db.Char(2)
+  status       String   @default("CLOSED") @db.VarChar(16)
+  opensAt      DateTime? @db.DateTime(3)
+  createdAt    DateTime @default(now()) @db.DateTime(3)
+  updatedAt    DateTime @updatedAt @db.DateTime(3)
+  updatedById  String?  @db.Char(36)
+
+  @@index([status, opensAt])
+  @@index([level, department, name])
+}
+
+model ExpansionZoneAudit {
+  id          String   @id @default(uuid()) @db.Char(36)
+  zoneId      String   @db.Char(36)
+  actorUserId String   @db.Char(36)
+  action      String   @db.VarChar(32)
+  previous    Json?
+  current     Json
+  reason      String   @db.VarChar(500)
+  createdAt   DateTime @default(now()) @db.DateTime(3)
+
+  @@index([zoneId, createdAt])
+  @@index([createdAt])
+}
