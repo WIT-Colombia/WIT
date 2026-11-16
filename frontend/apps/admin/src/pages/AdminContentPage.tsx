@@ -22,12 +22,17 @@ function exportVisibleContent(rows:AdminOfferRecord[]){
   window.setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
-const num=(value:number)=>new Intl.NumberFormat('es-CO').format(value);
+const num=(value:number)=>Number.isFinite(value)?new Intl.NumberFormat('es-CO').format(value):'—';
 function Status({offer}:{offer:Pick<AdminOfferRecord,'publicationStatus'|'deletedAt'|'administrativeStatus'>}){
-  return <span className={'ac-status '+(offer.deletedAt?'deleted':offer.administrativeStatus!=='NONE'?offer.administrativeStatus.toLowerCase():offer.publicationStatus.toLowerCase())}>{contentStatusLabel(offer.publicationStatus,offer.deletedAt,offer.administrativeStatus)}</span>;
+  // The mobile SPA may update before the API deployment. Never dereference
+  // an administrative state missing from an older server response.
+  const adminStatus=typeof offer.administrativeStatus==='string'?offer.administrativeStatus:'UNKNOWN';
+  const publication=typeof offer.publicationStatus==='string'?offer.publicationStatus:'UNKNOWN';
+  const tone=offer.deletedAt?'deleted':adminStatus==='NONE'?publication.toLowerCase():adminStatus.toLowerCase();
+  return <span className={'ac-status '+tone}>{contentStatusLabel(publication,offer.deletedAt,adminStatus)}</span>;
 }
 function ContentBadge({item}:{item:AdminOfferRecord}){
-  return <div className="ac-badges"><span className={'ac-kind '+item.kind.toLowerCase()}>{offerKindLabel(item.kind)}</span>
+  return <div className="ac-badges"><span className={'ac-kind '+(item.kind??'unknown').toLowerCase()}>{offerKindLabel(item.kind)}</span>
     <Status offer={item}/>{!item.active&&!item.deletedAt&&<span className="ac-pill-muted">Inactivo</span>}
     {item.adultOnly&&<span className="ac-pill-age">Solo adultos</span>}</div>;
 }
