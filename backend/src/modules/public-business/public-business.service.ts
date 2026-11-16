@@ -468,7 +468,7 @@ export async function listPublicCategories(
   });
   const counts = new Map<string, { id: string; code: string; name: string; iconKey: string | null; businessCount: number }>();
   for (const business of rows) {
-    if (!business.modalities.length && (normalizeCityFilterName(business.location?.cityName) !== normalizeCityFilterName(input.city)
+    if (!(business.modalities?.length) && (normalizeCityFilterName(business.location?.cityName) !== normalizeCityFilterName(input.city)
       || (input.region && normalizeRegionFilterName(business.location?.regionName) !== normalizeRegionFilterName(input.region)))) continue;
     const seen = new Set<string>();
     for (const raw of [business.category, ...business.secondaryCategories.map(item => item.category)]) {
@@ -656,7 +656,7 @@ export async function listPublicNewArrivals(
     orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
   });
   const matching = rows.filter(row =>
-    row.business.modalities.length>0 || (normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
+    (row.business.modalities?.length ?? 0)>0 || (normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
     && (!input.region || normalizeRegionFilterName(row.business.location?.regionName) === normalizeRegionFilterName(input.region))),
   );
   const ordered = rotatePublicNewArrivals(matching, colombiaArrivalDay(now.getTime()));
