@@ -40,6 +40,16 @@ export async function renewVisibility(userId: string, identifier: string) {
   const period = await prisma.$transaction(async tx => {
     const next = await tx.businessVisibilityPeriod.create({ data: { businessId: business.id, kind: 'MANUAL_EXTENSION', startsAt, expiresAt: expiresAtFrom(startsAt), requestedById: userId, reason: 'Renovación manual' } });
     await tx.business.update({ where: { id: business.id }, data: { visibilityStatus: 'VISIBLE' } });
+    // A fresh forty-day period supersedes unanswered reminders from the old period.
+    // Keep the history but stop showing expired warnings as unread.
+    await tx.businessNotification.updateMany({
+      where: { businessId: business.id, type: { in: ['VISIBILITY_REMINDER', 'VISIBILITY_EXPIRED'] }, readAt: null },
+      data: { readAt: startsAt },
+    });
+    await tx.platformNotification.updateMany({
+      where: { sourceType: 'BUSINESS_VISIBILITY', sourceId: business.id, readAt: null },
+      data: { readAt: startsAt },
+    });
     return next;
   });
   return { businessId: business.id, visibilityStatus: 'VISIBLE', isWithinPeriod: true, period: { id: period.id, kind: period.kind, startsAt: period.startsAt, expiresAt: period.expiresAt, requestedAt: period.requestedAt } };
