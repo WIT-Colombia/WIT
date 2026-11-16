@@ -18,7 +18,13 @@ const permissionLabels: Record<string, string> = {
 
 function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) {
   const photoUrl = item.business.profilePhoto?.url;
+  const title = item.title.toLocaleLowerCase("es-CO");
+  const isPersonEvent = /nueva opinión|invitación (aceptada|rechazada)|colaborador retirado|transferencia (aceptada|rechazada)/i.test(title);
+  const privateActorUrl = isPersonEvent && item.actorUser
+    ? `/businesses/${encodeURIComponent(item.businessId)}/notifications/${encodeURIComponent(item.id)}/actor-avatar`
+    : null;
   const [image, setImage] = useState<string | null>(null);
+  const [privateActorImage, setPrivateActorImage] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
     let objectUrl: string | null = null;
@@ -32,11 +38,20 @@ function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) 
     }
     return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [photoUrl]);
+  useEffect(() => {
+    let active = true;
+    let url: string | null = null;
+    setPrivateActorImage(null);
+    if (privateActorUrl) void businessApi.photoBlob(privateActorUrl).then(blob => {
+      if (!blob.type.startsWith('image/')) return;
+      url = URL.createObjectURL(blob);
+      if (active) setPrivateActorImage(url);
+      else URL.revokeObjectURL(url);
+    }).catch(() => { if (active) setPrivateActorImage(null); });
+    return () => { active = false; if (url) URL.revokeObjectURL(url); };
+  }, [privateActorUrl]);
 
-  const title = item.title.toLocaleLowerCase("es-CO");
-  // Owner updates feature the collaborator's public avatar when available.
-  // Invitations, permissions, transfers and system alerts retain the business logo.
-  const isPersonEvent = /nueva opinión|invitación (aceptada|rechazada)|colaborador retirado|transferencia (aceptada|rechazada)/i.test(title);
+  // Use a person's photo for their actions, and the business logo for other events.
   const isSystemEvent = /verificaci|reporte|moderaci|publicación (retirada|restaurada)|solicitud de soporte|sugerencia|información adicional requerida/i.test(title);
   const actorAvatar = isPersonEvent ? item.actorUser?.avatarUrl ?? item.membership?.user?.avatarUrl : null;
   const variant = isSystemEvent ? "system" : item.type === "VISIBILITY_REMINDER" || item.type === "VISIBILITY_EXPIRED" ? "visibility" : title.includes("permiso") ? "permissions" : title.includes("suspend") || title.includes("revoc") ? "access" : title.includes("reactiv") || title.includes("aceptad") ? "success" : "invitation";
@@ -44,6 +59,7 @@ function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) 
   return <span className={`notification-artwork ${variant}`} role="img" aria-label={`Notificación de ${item.business.name}`}>
     <span className="notification-artwork-glyph" aria-hidden="true">{glyph}</span>
     {isSystemEvent ? <img className="notification-platform-brand" src="/brand/xamuko-symbol.jpg" alt="" /> :
+      privateActorImage ? <img src={privateActorImage} alt="" onError={event => { URL.revokeObjectURL(privateActorImage); setPrivateActorImage(null); }} /> :
       actorAvatar ? <img src={actorAvatar} alt="" onError={event => { event.currentTarget.remove(); }} /> :
       image && <img src={image} alt="" onError={event => { URL.revokeObjectURL(image); setImage(null); event.currentTarget.remove(); }} />}
   </span>;
