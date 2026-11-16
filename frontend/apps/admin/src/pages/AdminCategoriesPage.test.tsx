@@ -46,6 +46,23 @@ describe('Admin → Categorías', () => {
     expect(within(fashion).getAllByText('0')).toHaveLength(3);
   });
 
+  it('renders a distinct professional icon in the directory, ranking and drawer', async () => {
+    show();
+    await screen.findByRole('heading', { name: 'Categorías' });
+    const directory = document.querySelector<HTMLElement>('.cat-table')!;
+    const restaurant = within(directory).getByText('Restaurantes').closest('tr')!;
+    const fashion = within(directory).getByText('Moda y accesorios').closest('tr')!;
+    const health = within(directory).getByText('Salud y bienestar').closest('tr')!;
+    expect(restaurant.querySelector('[data-category-glyph]')).toHaveAttribute('data-category-glyph', 'utensils');
+    expect(fashion.querySelector('[data-category-glyph]')).toHaveAttribute('data-category-glyph', 'shirt');
+    expect(health.querySelector('[data-category-glyph]')).toHaveAttribute('data-category-glyph', 'heart-pulse');
+    const ranking = document.querySelector('.cat-ranking')!;
+    expect(ranking.querySelector('[data-category-glyph]')).toHaveAttribute('data-category-glyph', 'utensils');
+    fireEvent.click(screen.getByRole('button', { name: 'Ver detalle de Salud y bienestar' }));
+    const detail = screen.getByRole('dialog', { name: 'Salud y bienestar' });
+    expect(detail.querySelector('[data-category-glyph]')).toHaveAttribute('data-category-glyph', 'heart-pulse');
+  });
+
   it('filters by state and search and does not hide independent analytics', async () => {
     show();
     await screen.findByRole('heading', { name: 'Categorías' });

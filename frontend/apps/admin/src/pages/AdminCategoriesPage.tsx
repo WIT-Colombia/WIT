@@ -5,6 +5,7 @@ import { Panel, StatePanel } from '../components/common';
 import { getSession } from '../services/adminService';
 import { listAdminCategories, type AdminCategoryRecord } from '../services/adminApiClient';
 import './AdminCategoriesPage.css';
+import { resolveCategoryVisual } from './categoryVisuals';
 
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE' | 'WITHOUT_BUSINESSES';
 type SortOrder = 'ORDER' | 'NAME' | 'BUSINESSES' | 'OFFERS';
@@ -36,6 +37,16 @@ function Metric({ title, value, hint, icon, tone }: {
     <div className="cat-metric-info"><span>{title}</span>
       <strong>{number(value)}</strong><small>{hint}</small></div>
   </article>;
+}
+function CategoryIcon({category,detail=false,compact=false}: {
+  category: AdminCategoryRecord; detail?: boolean; compact?: boolean;
+}) {
+  const visual = resolveCategoryVisual(category.code,categoryName(category));
+  const className = (detail ? 'cat-detail-icon' : compact ? 'cat-ranking-glyph' : 'cat-category-icon')
+    + ' cat-category-icon--' + visual.tone;
+  return <span className={className} data-category-glyph={visual.glyph} aria-hidden="true">
+    <Icon name={visual.glyph} size={detail ? 23 : compact ? 15 : 19} />
+  </span>;
 }
 function CategoryStatus({ active }: { active: boolean }) {
   return <span className={'cat-state ' + (active ? 'cat-state--active' : 'cat-state--inactive')}>
@@ -87,7 +98,7 @@ function CategoryDetails({ category, onClose, canOpenBusinesses }: {
     <aside ref={dialogRef} className="cat-detail" role="dialog" aria-modal="true"
       aria-labelledby="cat-detail-title" aria-describedby="cat-detail-description">
       <header className="cat-detail-top">
-        <span className="cat-detail-icon"><Icon name="tag" size={22} /></span>
+        <CategoryIcon category={category} detail />
         <button ref={closeButton} type="button" className="cat-detail-close"
           aria-label="Cerrar ficha de categoría" onClick={onClose}>
           <Icon name="close" size={19} />
@@ -328,7 +339,7 @@ export function AdminCategoriesPage() {
             </tr></thead>
             <tbody>{visible.map(category => <tr key={category.id}>
               <td className="cat-name-cell" data-label="Categoría">
-                <span className="cat-category-icon"><Icon name="tag" size={18} /></span>
+                <CategoryIcon category={category} />
                 <span className="cat-name-info"><strong>{categoryName(category)}</strong>
                   <small>{category.code}</small></span>
               </td>
@@ -379,6 +390,7 @@ export function AdminCategoriesPage() {
               return <li key={category.id}>
                 <div className="cat-ranking-top">
                   <span><small>{String(index + 1).padStart(2, '0')}</small>
+                    <CategoryIcon category={category} compact />
                     <strong>{categoryName(category)}</strong></span>
                   <b>{number(category._count.businesses)}</b></div>
                 <div className="cat-ranking-bar" role="img" aria-label={
