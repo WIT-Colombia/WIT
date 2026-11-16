@@ -4,6 +4,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { getCurrentUser } from './auth.service.js';
 import { sendSecurityNotificationEmail } from '../../shared/email/email-service.js';
+import { notifyPlatformUser } from '../notifications/platform-notifications.service.js';
 import type { EmailApplication } from '../../shared/email/email-brand.js';
 import type { AdultContentPreferenceInput, ChangePasswordInput, ProfileUpdateInput } from './auth.schemas.js';
 
@@ -49,6 +50,11 @@ export async function changePassword(userId: string, currentSessionId: string, i
   await prisma.$transaction(async (transaction) => {
     await transaction.authIdentity.update({ where: { id: identity.id }, data: { passwordHash } });
     await transaction.session.updateMany({ where: { userId, id: { not: currentSessionId }, revokedAt: null }, data: { revokedAt: now } });
+    await notifyPlatformUser(transaction, {
+      userId, sourceType: 'ACCOUNT_SECURITY', sourceId: userId,
+      title: 'Se cambió la contraseña de tu cuenta',
+      message: 'La contraseña de tu cuenta XAMUKO fue modificada. Cerramos las demás sesiones activas. Si no reconoces este cambio, contacta al equipo de soporte de inmediato.',
+    });
   });
 
   // Never notify before the password change commits. Email delivery problems
