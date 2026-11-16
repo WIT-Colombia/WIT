@@ -210,3 +210,11 @@
     animation: none;
   }
 }
+
+/* Firefox: avoid repainting a full-width sticky frosted layer while scrolling. */
+@supports (-moz-appearance: none) {
+  .site-header {
+    background: #f1f1f5;
+    backdrop-filter: none;
+  }
+}
