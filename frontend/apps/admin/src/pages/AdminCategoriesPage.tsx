@@ -117,8 +117,8 @@ function CategoryDetails({ category, onClose, canOpenBusinesses }: {
       <section className="cat-detail-section">
         <h3><Icon name="database" size={17} /> Cómo se calculan las cifras</h3>
         <p>Los negocios se agrupan por su categoría principal. Productos y servicios
-          son las publicaciones no eliminadas de esos negocios, incluso cuando la
-          publicación no tiene categoría individual asignada. Un cero representa un conteo
+          son las publicaciones no eliminadas con esta categoría asignada. Si la publicación
+          no tiene categoría propia, se utiliza la categoría principal de su negocio. Un cero representa un conteo
           confirmado; «—» significa que el servidor todavía no suministra ese dato.
           No representan ventas ni publicaciones necesariamente visibles.</p>
       </section>
@@ -362,7 +362,7 @@ export function AdminCategoriesPage() {
         <p className="cat-directory-note">
           <Icon name="database" size={15} />
           {stats.complete
-            ? 'Los negocios y publicaciones no eliminadas se agrupan por la categoría principal del negocio. Los valores cero son reales.'
+            ? 'Los negocios se agrupan por categoría principal. Las publicaciones usan su categoría propia, o la del negocio cuando no tienen una. Los ceros son reales.'
             : 'El servidor aún no ofrece un desglose completo de productos y servicios. Un guion significa dato no disponible, no cero.'}
         </p>
       </Panel>
@@ -413,7 +413,7 @@ export function AdminCategoriesPage() {
           <p><strong>Negocios:</strong> cantidad de negocios vinculados a su categoría principal,
             independientemente de que estén publicados.</p>
           <p><strong>Productos y servicios:</strong> {stats.complete
-            ? 'publicaciones no eliminadas dentro de los negocios de cada categoría.'
+            ? 'publicaciones no eliminadas con categoría propia o, si no existe, la categoría principal de su negocio.'
             : 'el desglose por categoría del negocio todavía no está disponible en este servidor.'}
             No representan ventas, visualizaciones ni contenido necesariamente visible.</p>
           <p><strong>Estado:</strong> indica si la categoría está habilitada en el catálogo,
