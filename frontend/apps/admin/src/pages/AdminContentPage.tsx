@@ -102,6 +102,7 @@ export function AdminContentPage(){
     {label:'Publicados',value:totals.published,icon:'check',tone:'green',hint:'Activos y publicados'},
     {label:'Ocultos por Admin',value:totals.hidden,icon:'eye-off',tone:'violet',hint:'Medida administrativa vigente'},
     {label:'En revisión',value:totals.inReview,icon:'flag',tone:'cyan',hint:'Pendientes de decisión'},
+    {label:'Eliminados',value:totals.deletedOverall,icon:'clock',tone:'violet',hint:'Recuperables desde la administración'},
   ]:[];
   if(!allowed)return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso de catálogo para consultar el contenido."/>;
   return <div className="ac-page">
