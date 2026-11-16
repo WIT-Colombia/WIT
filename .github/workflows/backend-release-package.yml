@@ -53,7 +53,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify deployment script safeguards
         working-directory: .
-        run: bash deploy/test-github-release-poll.sh
+        run: |
+          bash deploy/test-github-release-poll.sh
+          bash deploy/test-schema-approval.sh
+          node --test scripts/backend-production-smoke.test.mjs
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
