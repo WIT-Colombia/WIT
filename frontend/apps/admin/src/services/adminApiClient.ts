@@ -184,7 +184,7 @@ export function deactivateAdminUser(id: string, reason: string, confirmation: st
 }
 export type AdminContentFilters = { q?:string; kind?:string; status?:string; city?:string; categoryId?:string; businessId?:string; order?:string; period?:string; page?:number };
 export type AdminOfferRecord = {
-  id:string;internalCode:string;kind:'PRODUCT'|'SERVICE';name:string;description:string|null;
+  id:string;internalCode:string;kind:'PRODUCT'|'SERVICE';name:string;description:string|null;categoryId:string|null;
   priceAmount:string|null;currency:string|null;priceText:string|null;negotiable:boolean;
   active:boolean;adultOnly:boolean;publicationStatus:'PUBLISHED'|'REVIEW'|'UNPUBLISHED';
   administrativeStatus:'NONE'|'HIDDEN'|'REVIEW'|'DELETED';adminRestrictedAt:string|null;
