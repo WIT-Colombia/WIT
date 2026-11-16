@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ChartPointerEvent } from 'react';
 import { Icon } from '../components/Icon';
 import type { AdminContentFilters, AdminContentInsights } from '../services/adminApiClient';
-const num = (n:number) => new Intl.NumberFormat('es-CO').format(n);
+const num = (n:number) => Number.isFinite(n) ? new Intl.NumberFormat('es-CO').format(n) : '—';
 const labelDate = (key:string,full=false) => {
   const daily=key.length===10;
   const date=new Date((daily?key:key+'-01')+'T12:00:00Z');
@@ -91,7 +91,9 @@ export function AdminContentAnalyticsPanel({data,loading,error,period,onPeriod,f
   const [mode,setMode]=useState<ChartMode>('line');
   const [view,setView]=useState<'chart'|'table'>('chart');
   const chartRef=useRef<HTMLDivElement>(null);
-  const points=useMemo(()=>data?.series.map(m=>({label:labelDate(m.month),fullLabel:labelDate(m.month,true),value:m[series]}))??[],[data,series]);
+  const metricAvailable=Boolean(data?.series?.every(row=>typeof row[series]==='number'&&Number.isFinite(row[series])));
+  const points=useMemo(()=>data?.series?.filter(row=>typeof row[series]==='number'&&Number.isFinite(row[series]))
+    .map(m=>({label:labelDate(m.month),fullLabel:labelDate(m.month,true),value:m[series]}))??[],[data,series]);
   const unit=series==='views'?'vistas':series==='likes'?'me gusta':'registros';
   const activeFilters=[filters.kind,filters.status,filters.city,filters.categoryId].filter(Boolean).length;
   const show=()=>{setOpen(false);window.requestAnimationFrame(()=>chartRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
@@ -122,7 +124,8 @@ export function AdminContentAnalyticsPanel({data,loading,error,period,onPeriod,f
               <div className="ac-segmented" role="group" aria-label="Ver datos"><button type="button" className={view==='chart'?'selected':''} aria-pressed={view==='chart'} onClick={()=>setView('chart')}>Gráfica</button><button type="button" className={view==='table'?'selected':''} aria-pressed={view==='table'} onClick={()=>setView('table')}>Tabla</button></div>
             </div>
           </div>
-          {view==='chart'?<Timeline points={points} mode={mode} unit={unit}/>:<div className="ac-chart-table-wrap"><table><thead><tr><th>Fecha</th><th>Productos</th><th>Servicios</th><th>Total</th><th>Vistas</th><th>Me gusta</th></tr></thead><tbody>{data.series.map(p=><tr key={p.month}><td>{labelDate(p.month)}</td><td>{num(p.products)}</td><td>{num(p.services)}</td><td>{num(p.total)}</td><td>{num(p.views)}</td><td>{num(p.likes)}</td></tr>)}</tbody></table></div>}
+          {!metricAvailable?<p className="ac-analytics-state" role="status">Este indicador no está disponible en la versión actual del servidor. Los valores desconocidos no se muestran como cero.</p>:
+          view==='chart'?<Timeline points={points} mode={mode} unit={unit}/>:<div className="ac-chart-table-wrap"><table><thead><tr><th>Fecha</th><th>Productos</th><th>Servicios</th><th>Total</th><th>Vistas</th><th>Me gusta</th></tr></thead><tbody>{data.series.map(p=><tr key={p.month}><td>{labelDate(p.month)}</td><td>{num(p.products)}</td><td>{num(p.services)}</td><td>{num(p.total)}</td><td>{num(p.views)}</td><td>{num(p.likes)}</td></tr>)}</tbody></table></div>}
         </div>
         <div className="ac-chart-bottom"><div className="ac-status-card"><h3>Estado del catálogo</h3><div className="ac-status-bars">{[
           {label:'Publicados',value:data.totals.published,color:'blue'},
