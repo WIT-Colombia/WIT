@@ -1,4 +1,5 @@
 import { Router, type RequestHandler } from 'express';
+import { z } from 'zod';
 import { getAdminDashboardStats } from './admin-dashboard.service.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
@@ -7,7 +8,8 @@ import { decisionVerificationController, listVerificationController, verificatio
 import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, setAdminBusinessVisibility } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
-import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto, moderateAdminContent } from './admin-content.service.js';
+import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto } from './admin-content.service.js';
+import { controlAdminContent, controlAdminContentBulk, editAdminContent, getAdminContentHistory, removeAdminContentPhoto, type ContentControlAction } from './admin-content-control.service.js';
 import { listAdminUsersExtended, getAdminUserOverview, getAdminUserAnalytics, getAdminUserHistory, getAdminUserProfile, deactivateAdminUser, setAdminUserStatus, revokeAdminUserSessions } from './admin-users.service.js';
 import { prisma } from '../../config/prisma.js';
 import { readOwnAvatar } from '../auth/avatar.service.js';
@@ -166,6 +168,7 @@ adminRouter.post('/users/:id/deactivate', requireTrustedOrigin, requireAdmin('AD
 const contentFilters = (query: Record<string, unknown>) => ({
   q:String(query.q ?? ''),kind:String(query.kind ?? ''),status:String(query.status ?? ''),
   city:String(query.city ?? ''),categoryId:String(query.categoryId ?? ''),
+  businessId:String(query.businessId ?? ''),order:String(query.order ?? ''),
   period:String(query.period ?? ''),page:Number(query.page) || 1,
 });
 adminRouter.get('/content', requireAdmin('CATALOG_READ'), async (req,res,next) => {
@@ -188,13 +191,64 @@ adminRouter.get('/content/:id', requireAdmin('CATALOG_READ'), async (req,res,nex
   try{res.setHeader('Cache-Control','no-store');res.json(await getAdminContentDetail(String(req.params.id)));}
   catch(error){next(error);}
 });
-adminRouter.post('/content/:id/moderate', requireTrustedOrigin, requireAdmin('CONTENT_MODERATE'), async(req,res,next)=>{
+const contentActionSchema=z.object({
+  action:z.enum(['HIDE','REVIEW','RELEASE','DELETE','RESTORE']),
+  reason:z.string().trim().min(12).max(500),
+}).strict();
+const contentEditSchema=z.object({
+  reason:z.string().trim().min(12).max(500),
+  changes:z.object({
+    name:z.string().trim().min(2).max(180).optional(),
+    description:z.string().max(5000).nullable().optional(),
+    priceAmount:z.string().regex(/^\\d{1,10}(\\.\\d{1,2})?$/).nullable().optional(),
+    currency:z.string().regex(/^[A-Z]{3}$/).nullable().optional(),
+    priceText:z.string().max(180).nullable().optional(),
+    negotiable:z.boolean().optional(),
+    adultOnly:z.boolean().optional(),
+    categoryId:z.string().uuid().nullable().optional(),
+  }).strict().refine(value=>Object.keys(value).length>0),
+}).strict();
+adminRouter.get('/content-capabilities',requireAdmin('CATALOG_READ'),(req,res)=>{
+  const context=adminFromRequest(req);res.setHeader('Cache-Control','no-store');
+  res.json({canModerate:context.permissions.includes('CONTENT_MODERATE'),
+    canDelete:context.role==='SUPER_ADMIN'&&context.permissions.includes('CONTENT_MODERATE')});
+});
+adminRouter.get('/content/:id/history',requireAdmin('CATALOG_READ'),async(req,res,next)=>{
+  try{res.setHeader('Cache-Control','no-store');res.json(await getAdminContentHistory(String(req.params.id)));}
+  catch(error){next(error);}
+});
+adminRouter.post('/content/moderate-bulk',requireTrustedOrigin,requireAdmin('CONTENT_MODERATE'),async(req,res,next)=>{
   try{
-    const action=req.body?.action;
-    if(action!=='HIDE'&&action!=='RESTORE')return res.status(400).json({error:{code:'ADMIN_CONTENT_ACTION_INVALID',message:'Selecciona una acción válida.'}});
-    const actor=adminFromRequest(req);
+    const input=z.object({ids:z.array(z.string().uuid()).min(1).max(25),
+      action:z.enum(['HIDE','REVIEW']),reason:z.string().trim().min(12).max(500)}).strict().parse(req.body);
     res.setHeader('Cache-Control','no-store');
-    res.json(await moderateAdminContent(String(req.params.id),actor.userId,action,String(req.body?.reason??'')));
+    res.json(await controlAdminContentBulk(input.ids,adminFromRequest(req).userId,input.action,input.reason));
+  }catch(error){next(error);}
+});
+adminRouter.patch('/content/:id',requireTrustedOrigin,requireAdmin('CONTENT_MODERATE'),async(req,res,next)=>{
+  try{
+    const input=contentEditSchema.parse(req.body);
+    res.setHeader('Cache-Control','no-store');
+    res.json(await editAdminContent(String(req.params.id),adminFromRequest(req).userId,input.changes,input.reason));
+  }catch(error){next(error);}
+});
+adminRouter.delete('/content-photos/:photoId',requireTrustedOrigin,requireAdmin('CONTENT_MODERATE'),async(req,res,next)=>{
+  try{
+    const context=adminFromRequest(req);
+    if(context.role!=='SUPER_ADMIN')return res.status(403).json({error:{code:'ADMIN_SUPER_ADMIN_REQUIRED',message:'Solo el administrador principal puede retirar fotografías.'}});
+    const input=z.object({reason:z.string().trim().min(12).max(500)}).strict().parse(req.body);
+    res.setHeader('Cache-Control','no-store');
+    res.json(await removeAdminContentPhoto(String(req.params.photoId),context.userId,input.reason));
+  }catch(error){next(error);}
+});
+adminRouter.post('/content/:id/moderate',requireTrustedOrigin,requireAdmin('CONTENT_MODERATE'),async(req,res,next)=>{
+  try{
+    const input=contentActionSchema.parse(req.body);
+    const context=adminFromRequest(req);
+    if(['DELETE','RESTORE'].includes(input.action)&&context.role!=='SUPER_ADMIN')
+      return res.status(403).json({error:{code:'ADMIN_SUPER_ADMIN_REQUIRED',message:'Solo el administrador principal puede eliminar o recuperar publicaciones.'}});
+    res.setHeader('Cache-Control','no-store');
+    res.json(await controlAdminContent(String(req.params.id),context.userId,input.action as ContentControlAction,input.reason));
   }catch(error){next(error);}
 });
 adminRouter.get('/dashboard/stats', requireAdmin(), async (_req, res, next) => {
