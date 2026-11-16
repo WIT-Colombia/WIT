@@ -5,7 +5,7 @@ export type ZoneAvailability = {
   opensAt:string|null;coveredBy:string|null;virtualAvailable:true;serverTime:string;
 };
 export type NextZoneOpening = {
-  level:'MUNICIPALITY'|'DEPARTMENT'|'COUNTRY';
+  key:string;level:'MUNICIPALITY'|'DEPARTMENT'|'COUNTRY';
   name:string;department:string|null;opensAt:string;
 };
 export type UpcomingZoneResponse = {nextOpening:NextZoneOpening|null;serverTime:string};
@@ -29,4 +29,14 @@ export function remainingUntil(iso:string,serverOffsetMs=0,now=Date.now()){
   const seconds=Math.floor(ms/1000);
   return {days:Math.floor(seconds/86400),hours:Math.floor(seconds%86400/3600),
     minutes:Math.floor(seconds%3600/60),seconds:seconds%60,done:ms<=0};
+}
+
+export async function subscribeZoneOpening(input:{zoneKey:string;email:string;consent:true}){
+  const response=await fetch(buildApiUrl('/public/zones/interest'),{
+    method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
+    body:JSON.stringify(input),
+  });
+  const data=await response.json() as {ok?:boolean;message?:string;error?:{message?:string}};
+  if(!response.ok)throw new Error(data.error?.message??'No se pudo registrar el aviso de apertura.');
+  return {ok:true,message:data.message??'Revisa tu correo para confirmar.'};
 }
