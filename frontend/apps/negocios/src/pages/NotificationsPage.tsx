@@ -34,11 +34,16 @@ function NotificationArtwork({ item }: { item: PersistedBusinessNotification }) 
   }, [photoUrl]);
 
   const title = item.title.toLocaleLowerCase("es-CO");
+  // Owner updates feature the collaborator's public avatar when available.
+  // Invitations, permissions, transfers and system alerts retain the business logo.
+  const actorAvatar = item.type === "COLLABORATION_UPDATE" && /invitación (aceptada|rechazada)|colaborador retirado/i.test(title)
+    ? item.membership?.user?.avatarUrl : null;
   const variant = item.type === "VISIBILITY_REMINDER" || item.type === "VISIBILITY_EXPIRED" ? "visibility" : title.includes("permiso") ? "permissions" : title.includes("suspend") || title.includes("revoc") ? "access" : title.includes("reactiv") || title.includes("aceptad") ? "success" : "invitation";
   const glyph = variant === "visibility" ? "◷" : variant === "permissions" ? "☷" : variant === "access" ? "⌑" : variant === "success" ? "✓" : "✉";
   return <span className={`notification-artwork ${variant}`} role="img" aria-label={`Notificación de ${item.business.name}`}>
     <span className="notification-artwork-glyph" aria-hidden="true">{glyph}</span>
-    {image && <img src={image} alt="" onError={event => { URL.revokeObjectURL(image); setImage(null); event.currentTarget.remove(); }} />}
+    {actorAvatar ? <img src={actorAvatar} alt="" onError={event => { event.currentTarget.remove(); }} /> :
+      image && <img src={image} alt="" onError={event => { URL.revokeObjectURL(image); setImage(null); event.currentTarget.remove(); }} />}
   </span>;
 }
 
