@@ -4,7 +4,8 @@ import type { Business } from "../data/mockData";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { businesses, products, services, type Product, type Service } from "../data/mockData";
-import { getBusinessById, getProductById, getServiceById } from "../services/businessService";
+import { getOfferPageDetail } from "../services/businessService";
+import { ApiError } from "../services/httpClient";
 import { recordPublicPromotionView } from "../services/publicBusinessApi";
 import { getLikeCount } from "../services/userDataService";
 import { isRealOfferId, useOfferLikes } from "../services/offerLikesService";
@@ -44,6 +45,11 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const routeContext = (location.state as { analyticsContext?: AnalyticsContext } | null)?.analyticsContext;
   const analyticsContextRef = useRef<AnalyticsContext>(routeContext ?? { source: 'direct' });
   const isProduct = kind === "product";
+  const businessParam = new URLSearchParams(location.search).get("business") ?? "";
+  const businessHint = /^[a-zA-Z0-9-]{1,100}$/.test(businessParam) ? businessParam : undefined;
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error" | "not-found">("loading");
+  const [loadError, setLoadError] = useState("");
+  const [loadRetry, setLoadRetry] = useState(0);
   async function shareOffer() {
     const url = window.location.href;
     const title = offer?.name ?? (kind === "product" ? "Producto" : "Servicio");
@@ -75,54 +81,84 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
 
   useEffect(() => {
     let cancelled = false;
+    setLoadState("loading");
+    setLoadError("");
+    setOffer(undefined);
+    setBusiness(undefined);
     setVerifiedSeo(null);
 
     void (async () => {
-      const loaded = kind === "product"
-        ? await getProductById(id).catch(() => undefined)
-        : await getServiceById(id).catch(() => undefined);
-      if (cancelled || !loaded) return;
-
-      setOffer(loaded);
-      const loadedBusiness = await getBusinessById(loaded.businessId).catch(() => undefined);
-      if (cancelled) return;
-      const inheritedContext = routeContext ?? activeBusinessContext(loaded.businessId);
-      const analyticsContext: AnalyticsContext = {
-        ...inheritedContext,
-        category: inheritedContext.category ?? loadedBusiness?.category,
-        isFeatured: inheritedContext.isFeatured ?? Boolean(loadedBusiness?.plan === 'premium' || loadedBusiness?.isFeatured),
-      };
-      analyticsContextRef.current = analyticsContext;
-      if (isRealOfferId(loaded.id)) {
-        const offerViewId = offerViewIdRef.current ?? createAnalyticsInteractionId();
-        offerViewIdRef.current = offerViewId;
-        const trackingKey = `${kind}:${loaded.businessId}:${loaded.id}:${offerViewId}`;
-        if (trackedOfferViewRef.current !== trackingKey) {
-          trackedOfferViewRef.current = trackingKey;
-          recordBusinessEvent(loaded.businessId, "OFFER_VIEW", offerViewId, loaded.id, analyticsContext);
+      try {
+        const detail = await getOfferPageDetail(kind, id, businessHint);
+        if (cancelled) return;
+        if (!detail) {
+          setLoadState("not-found");
+          return;
         }
-      }
-      if (loaded.promotionId) {
-        const trackingKey = `${kind}:${id}:${loaded.promotionId}`;
-        if (trackedPromotionRef.current !== trackingKey) {
-          trackedPromotionRef.current = trackingKey;
-          const dedupeKey = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          void recordPublicPromotionView(loaded.promotionId, dedupeKey).catch(() => undefined);
-        }
-      }
-      if (!cancelled && loadedBusiness) {
+        const { offer: loaded, business: loadedBusiness } = detail;
+        setOffer(loaded);
         setBusiness(loadedBusiness);
+        setLoadState("ready");
+
+        const inheritedContext = routeContext ?? activeBusinessContext(loaded.businessId);
+        const analyticsContext: AnalyticsContext = {
+          ...inheritedContext,
+          category: inheritedContext.category ?? loadedBusiness.category,
+          isFeatured: inheritedContext.isFeatured ?? Boolean(loadedBusiness.plan === 'premium' || loadedBusiness.isFeatured),
+        };
+        analyticsContextRef.current = analyticsContext;
+        if (isRealOfferId(loaded.id)) {
+          const offerViewId = offerViewIdRef.current ?? createAnalyticsInteractionId();
+          offerViewIdRef.current = offerViewId;
+          const trackingKey = `${kind}:${loaded.businessId}:${loaded.id}:${offerViewId}`;
+          if (trackedOfferViewRef.current !== trackingKey) {
+            trackedOfferViewRef.current = trackingKey;
+            recordBusinessEvent(loaded.businessId, "OFFER_VIEW", offerViewId, loaded.id, analyticsContext);
+          }
+        }
+        if (loaded.promotionId) {
+          const trackingKey = `${kind}:${id}:${loaded.promotionId}`;
+          if (trackedPromotionRef.current !== trackingKey) {
+            trackedPromotionRef.current = trackingKey;
+            const dedupeKey = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            void recordPublicPromotionView(loaded.promotionId, dedupeKey).catch(() => undefined);
+          }
+        }
         if (isRealOfferId(loaded.id)) setVerifiedSeo({ offer: loaded, business: loadedBusiness, kind });
+      } catch (error) {
+        if (cancelled) return;
+        const message = error instanceof ApiError && error.status === 429
+          ? "XAMUKO está recibiendo demasiadas solicitudes en este momento. El producto puede seguir disponible; inténtalo nuevamente en unos momentos."
+          : "No pudimos consultar la información en este momento. Esto no significa que el producto haya sido eliminado.";
+        setLoadError(message);
+        setLoadState("error");
       }
     })();
+    return () => { cancelled = true; };
+  }, [id, kind, businessHint, loadRetry, routeContext]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [id, kind, routeContext]);
+  if (loadState === "loading") {
+    return <PageLayout><PublicOfferSeo verified={null}/><div className="business-not-found" role="status">
+      <h1>Cargando {isProduct ? "producto" : "servicio"}…</h1>
+      <p>Estamos consultando la información de este establecimiento.</p>
+    </div></PageLayout>;
+  }
 
-  if (!offer || !business) {
-    return <PageLayout><PublicOfferSeo verified={null} /><div className="business-not-found"><h1>No encontramos {isProduct ? "este producto" : "este servicio"}</h1><Link to="/home">Volver a explorar</Link></div></PageLayout>;
+  if (loadState === "error") {
+    return <PageLayout><PublicOfferSeo verified={null}/><div className="business-not-found" role="alert">
+      <h1>No pudimos cargar {isProduct ? "este producto" : "este servicio"}</h1>
+      <p>{loadError}</p>
+      <button type="button" onClick={() => setLoadRetry(value => value + 1)}>Reintentar</button>
+      <Link to="/home">Volver a explorar</Link>
+    </div></PageLayout>;
+  }
+
+  if (loadState === "not-found" || !offer || !business) {
+    return <PageLayout><PublicOfferSeo verified={null}/><div className="business-not-found">
+      <h1>No encontramos {isProduct ? "este producto" : "este servicio"}</h1>
+      <p>No aparece disponible en el catálogo público del establecimiento.</p>
+      <Link to="/home">Volver a explorar</Link>
+    </div></PageLayout>;
   }
 
   const item = offer as Product | Service;

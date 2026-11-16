@@ -1,5 +1,6 @@
 import { type Business, type Product, type Review, type Service } from "../data/mockData";
 import { listPublicBusinesses, getPublicBusiness, listPublicProducts, listPublicServices, searchPublicUniversal } from "./publicBusinessApi";
+import { ApiError } from "./httpClient";
 
 export type BusinessFilters = { query?: string; category?: string };
 export type UniversalSearchResult = { businesses: Business[]; products: Product[]; services: Service[]; pagination?: any };
@@ -128,20 +129,59 @@ export async function getProductsByBusinessId(businessId: string): Promise<Produ
   return listPublicProducts(businessId);
 }
 
-export async function getProductById(id: string): Promise<Product | undefined> {
+/**
+ * Existing links without a business hint require a compatibility lookup.
+ * Limit concurrency and preserve HTTP errors: a 429 is NOT an empty catalog.
+ */
+async function findOfferWithoutBusinessHint<T extends Product | Service>(
+  id: string, load: (businessId: string) => Promise<T[]>,
+): Promise<T | undefined> {
   const publicBusinesses = await listPublicBusinesses();
-  const productsByBusiness = await Promise.all(publicBusinesses.map(item => listPublicProducts(item.id).catch(() => [])));
-  return productsByBusiness.flat().find(item => item.id === id);
+  let firstError: unknown = null;
+  const batchSize = 3;
+  for (let index = 0; index < publicBusinesses.length; index += batchSize) {
+    const batch = publicBusinesses.slice(index, index + batchSize);
+    const settled = await Promise.allSettled(batch.map(business => load(business.id)));
+    for (const result of settled) {
+      if (result.status === "fulfilled") {
+        const match = result.value.find(offer => offer.id === id);
+        if (match) return match;
+      } else {
+        if (result.reason instanceof ApiError && result.reason.status === 429) throw result.reason;
+        if (firstError === null) firstError = result.reason;
+      }
+    }
+  }
+  if (firstError !== null) throw firstError;
+  return undefined;
+}
+
+export function getProductById(id: string): Promise<Product | undefined> {
+  return findOfferWithoutBusinessHint(id, listPublicProducts);
 }
 
 export async function getServicesByBusinessId(businessId: string): Promise<Service[]> {
   return listPublicServices(businessId);
 }
 
-export async function getServiceById(id: string): Promise<Service | undefined> {
-  const publicBusinesses = await listPublicBusinesses();
-  const servicesByBusiness = await Promise.all(publicBusinesses.map(item => listPublicServices(item.id).catch(() => [])));
-  return servicesByBusiness.flat().find(item => item.id === id);
+export function getServiceById(id: string): Promise<Service | undefined> {
+  return findOfferWithoutBusinessHint(id, listPublicServices);
+}
+
+/** New product/service links load the correct business in ONE public request. */
+export async function getOfferPageDetail(kind: "product" | "service", id: string, businessId?: string):
+  Promise<{ offer: Product | Service; business: Business } | null> {
+  if (businessId) {
+    const result = await getPublicBusiness(businessId);
+    if (!result) return null;
+    const offer = (kind === "product" ? result.products : result.services).find(item => item.id === id);
+    return offer ? { offer, business: result.business } : null;
+  }
+  // Support existing shared links without a business query parameter.
+  const offer = kind === "product" ? await getProductById(id) : await getServiceById(id);
+  if (!offer) return null;
+  const business = await getBusinessById(offer.businessId);
+  return business ? { offer, business } : null;
 }
 
 export async function getReviewsByBusinessId(businessId: string): Promise<Review[]> {
