@@ -114,10 +114,10 @@ tar -xzf "$archive" -C "$work"
 [[ $(df --output=avail -k "$base" | tail -1) -gt 4194304 ]] || fail "Espacio insuficiente."
 
 # No permitir cambios de esquema sin revision
-if [[ -d "$old/backend/prisma" || -d "$work/prisma" ]]; then
-  [[ -d "$old/backend/prisma" && -d "$work/prisma" ]] || fail "Estructura Prisma diferente."
-  diff -qr "$old/backend/prisma" "$work/prisma" >/dev/null || fail "Cambios Prisma requieren revision manual."
-fi
+[[ -x /usr/local/sbin/xamuko-verify-schema-approval ]] ||
+  fail "Instala el verificador de aprobacion de cambios Prisma."
+/usr/local/sbin/xamuko-verify-schema-approval \
+  "$old/backend/prisma" "$work/prisma" "$sha" "$base"
 
 # The service runs as ssm-user. With umask 077, mkdir -p creates
 # root-only directories and prevents the server from starting.

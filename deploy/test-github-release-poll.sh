@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-for f in deploy/bootstrap.sh deploy/deploy-github-release.sh deploy/github-release-poll.sh deploy/install-github-release-poll.sh deploy/verify-persistent-storage.sh; do
+for f in deploy/bootstrap.sh deploy/deploy-github-release.sh deploy/github-release-poll.sh deploy/install-github-release-poll.sh deploy/verify-persistent-storage.sh deploy/verify-schema-approval.sh; do
   bash -n "$f"
 done
 grep -q 'integration/preserve-all-20261029' .github/workflows/backend-release-package.yml
@@ -34,4 +34,6 @@ grep -q 'amazonlinux:2023' .github/workflows/backend-release-package.yml
 grep -q 'argon2' .github/workflows/backend-release-package.yml
 grep -q 'mariadb' .github/workflows/backend-release-package.yml
 ! grep -q 'configure-aws-credentials' deploy/github-release-poll.sh
+grep -Fq '/usr/local/sbin/xamuko-verify-schema-approval' deploy/deploy-github-release.sh
+grep -Fq '/usr/local/sbin/xamuko-verify-schema-approval' deploy/deploy.sh
 echo 'GitHub release deployment regression checks passed'

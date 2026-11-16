@@ -85,9 +85,12 @@ if [[ $action == deploy ]]; then
   [[ -f "$old_env" ]] || { echo 'Active release EnvironmentFile missing'; exit 78; }
   [[ "$(stat -c '%a' "$old_env")" == "600" ]] || { echo 'Active EnvironmentFile permissions invalid'; exit 78; }
   [[ "$(stat -c '%U:%G' "$old_env")" == "root:root" ]] || { echo 'Active EnvironmentFile owner invalid'; exit 78; }
-  if [[ -d "$old/backend/prisma" && -d "$work/package/prisma" ]]; then
-    diff -qr "$old/backend/prisma" "$work/package/prisma" >/dev/null || { echo 'Prisma changes require manual review'; exit 65; }
-  fi
+  [[ -x /usr/local/sbin/xamuko-verify-schema-approval ]] || {
+    echo 'Install the reviewed schema-approval verifier before deploying.' >&2
+    exit 78
+  }
+  /usr/local/sbin/xamuko-verify-schema-approval \
+    "$old/backend/prisma" "$work/package/prisma" "$sha" "$base"
   mkdir -p "$release/backend"
   cp -a "$work/package/." "$release/backend/"
   install -o root -g root -m 0600 "$old_env" "$release/backend/.env"
