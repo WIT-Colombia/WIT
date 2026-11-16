@@ -12,6 +12,16 @@ import './AdminContentRefresh.css';
 import './AdminContentControl.css';
 import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
 
+function exportVisibleContent(rows:AdminOfferRecord[]){
+  const safe=(value:string)=>'"'+(/^[=+\\-@\\t\\r\\n]/.test(value)?"'":'')+value.replaceAll('"','""')+'"';
+  const headers=['Código','Nombre','Tipo','Negocio','Categoría','Precio','Estado','Me gusta','Vistas','Reportes','Actualización'];
+  const lines=[headers,...rows.map(o=>[o.internalCode,o.name,offerKindLabel(o.kind),o.business.name,o.category,offerPrice(o),contentStatusLabel(o.publicationStatus,o.deletedAt,o.administrativeStatus),String(o.likes),String(o.views),String(o.reports),displayDate(o.updatedAt)])];
+  const csv='\\ufeff'+lines.map(row=>row.map(safe).join(';')).join('\\r\\n');
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download='xamuko-contenido-pagina.csv';a.click();
+  window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
 const num=(value:number)=>new Intl.NumberFormat('es-CO').format(value);
 function Status({offer}:{offer:Pick<AdminOfferRecord,'publicationStatus'|'deletedAt'|'administrativeStatus'>}){
   return <span className={'ac-status '+(offer.deletedAt?'deleted':offer.administrativeStatus!=='NONE'?offer.administrativeStatus.toLowerCase():offer.publicationStatus.toLowerCase())}>{contentStatusLabel(offer.publicationStatus,offer.deletedAt,offer.administrativeStatus)}</span>;
@@ -105,7 +115,9 @@ export function AdminContentPage(){
       filters={filters} onFilter={apply} onRetry={()=>setAnalyticsRevision(v=>v+1)}/>
     <section className="ac-directory" aria-labelledby="ac-directory-title">
       <div className="ac-panel-head"><div><span className="ac-eyebrow">GESTIÓN DE PUBLICACIONES</span><h2 id="ac-directory-title">Directorio de contenido</h2><p>Productos y servicios de los negocios registrados en XAMUKO.</p></div>
-        <Link to="/offer-reports" className="ac-secondary"><Icon name="flag" size={17}/> Revisar reportes</Link></div>
+        <div className="ac-head-actions"><button className="ac-secondary" type="button" disabled={!directory?.offers.length}
+        onClick={()=>exportVisibleContent(directory?.offers??[])}><Icon name="download" size={16}/> CSV de esta página</button>
+        <Link to="/offer-reports" className="ac-secondary"><Icon name="flag" size={17}/> Revisar reportes</Link></div></div>
       <form className="ac-toolbar" onSubmit={submit}>
         <label className="ac-search" htmlFor="ac-query"><Icon name="search" size={18}/><input id="ac-query" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar publicación, código o negocio"/></label>
         <label className="ac-filter-label"><span>Tipo</span><select aria-label="Filtrar por tipo" value={kind} onChange={e=>apply('kind',e.target.value)}>
@@ -150,7 +162,7 @@ export function AdminContentPage(){
               <td><Link className="ac-business-link" to={'/businesses/'+encodeURIComponent(offer.business.id)}>{offer.business.name}</Link><small className="ac-table-sub">{offer.business.city??'Ubicación no registrada'}</small></td>
               <td>{offer.category}</td><td className="ac-price">{offerPrice(offer)}</td>
               <td><Status offer={offer}/>{!offer.active&&!offer.deletedAt&&<span className="ac-table-sub">Inactivo</span>}</td>
-              <td><div className="ac-activity-mini"><span><Icon name="heart" size={14}/>{num(offer.likes)}</span><span><Icon name="flag" size={14}/>{num(offer.reports)}</span></div></td>
+              <td><div className="ac-activity-mini"><span title="Me gusta"><Icon name="heart" size={14}/>{num(offer.likes)}</span><span title="Vistas"><Icon name="eye" size={14}/>{num(offer.views)}</span><span title="Reportes"><Icon name="flag" size={14}/>{num(offer.reports)}</span></div></td>
               <td><Link className="ac-view" to={'/content/'+encodeURIComponent(offer.id)}>Ver detalle <Icon name="arrow" size={16}/></Link></td>
             </tr>)}</tbody></table></div>
           <div className="ac-mobile-grid">{directory.offers.map(offer=><article className="ac-mobile-card" key={offer.id}>
