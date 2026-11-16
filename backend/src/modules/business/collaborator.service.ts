@@ -233,6 +233,27 @@ export async function listNotifications(userId: string, businessId?: string, inv
       : {}),
   }));
 }
+/** Private actor avatar is visible only to the recipient of this particular notification.
+ * This continues working when collaboration has already ended.
+ */
+export async function readNotificationActorAvatar(userId: string, businessId: string, notificationId: string) {
+  const notice = await prisma.businessNotification.findFirst({
+    where: { id: notificationId, businessId, userId },
+    select: { actorUser: { select: { avatarUrl: true } } },
+  });
+  const avatar = notice?.actorUser?.avatarUrl;
+  if (!avatar?.startsWith('private-avatar:')) throw new AppError(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'No hay fotografía para este aviso.');
+  const key = avatar.slice('private-avatar:'.length);
+  if (!/^user-avatars\\/[0-9a-f-]{36}\\/[0-9a-f-]{36}\\.(jpg|png|webp)$/.test(key))
+    throw new AppError(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'No hay fotografía para este aviso.');
+  try {
+    return { content: await readPhoto(key), mimeType: photoMimeType(key) };
+  } catch (error) {
+    if (isPhotoMissingError(error) || (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'ENOENT'))
+      throw new AppError(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'La fotografía ya no está disponible.');
+    throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la fotografía.');
+  }
+}
 export async function unreadNotificationCount(userId: string, businessId: string) {
   return prisma.businessNotification.count({ where: { userId, businessId, readAt: null } });
 }
