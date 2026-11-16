@@ -32,7 +32,9 @@ const publicReadRateLimit = rateLimit({
 });
 publicBusinessRouter.use(publicReadRateLimit);
 publicBusinessRouter.use(optionalAuth);
-publicBusinessRouter.post('/zones/alerts',async(req,res,next)=>{
+publicBusinessRouter.post('/zones/alerts',
+  rateLimit({windowMs:60_000,limit:env.nodeEnv==='development'?60:6,
+    standardHeaders:'draft-8',legacyHeaders:false}),async(req,res,next)=>{
   try{
     const {scope,code,email,consent}=req.body??{};
     if((scope!=='MUNICIPALITY'&&scope!=='DEPARTMENT')||typeof code!=='string'||
