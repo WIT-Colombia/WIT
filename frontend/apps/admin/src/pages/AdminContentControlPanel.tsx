@@ -45,6 +45,7 @@ export function AdminContentControlPanel({offer,selectedPhotoId,onDone}:{
   const [error,setError]=useState('');
   const ref=useRef<HTMLElement>(null);
   const cancelRef=useRef<HTMLButtonElement>(null);
+  const busyRef=useRef(false);busyRef.current=busy;
   useEffect(()=>{
     let mounted=true;
     getAdminContentCapabilities().then(result=>{if(mounted)setCap(result);})
@@ -61,7 +62,7 @@ export function AdminContentControlPanel({offer,selectedPhotoId,onDone}:{
     document.body.style.overflow='hidden';
     cancelRef.current?.focus({preventScroll:true});
     const keydown=(event:KeyboardEvent)=>{
-      if(event.key==='Escape'&&!busy){event.preventDefault();setAction(null);}
+      if(event.key==='Escape'&&!busyRef.current){event.preventDefault();setAction(null);}
       if(event.key!=='Tab')return;
       const nodes=Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled)')??[])
         .filter(node=>node.getClientRects().length>0);
@@ -71,7 +72,7 @@ export function AdminContentControlPanel({offer,selectedPhotoId,onDone}:{
     };
     document.addEventListener('keydown',keydown);
     return()=>{active=false;document.removeEventListener('keydown',keydown);document.body.style.overflow=prev;previousFocus?.focus({preventScroll:true});};
-  },[action,offer.id,busy]);
+  },[action,offer.id]);
   if(!session?.permissions?.includes('content:moderate:write')||!cap.canModerate)return null;
   const open=(value:Action)=>setAction(value);
   const close=()=>{if(!busy)setAction(null);};
