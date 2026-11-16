@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import { RequireAccount } from "./components/RequireAccount";
 import { SiteFooter } from "./components/SiteFooter";
 import { PageMetadata } from "@wit/ui";
+import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 import { getAuthPageMetadata, getPrivateAuthPageMetadata, metadataTags } from "@wit/utils";
 const Home = lazy(() => import("./pages/Home"));
 const ManualLocation = lazy(() => import("./pages/ManualLocation"));
@@ -124,8 +125,17 @@ function PrivateAuthMetadata() {
   return metadata ? <PageMetadata {...metadata} tags={metadataTags(metadata)} /> : null;
 }
 
+function RoutePending() {
+  return <main className="xamuko-route-pending" role="status" aria-live="polite">
+    <img src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" />
+    <span className="xamuko-route-pending__spinner" aria-hidden="true" />
+    <p>Cargando página…</p>
+  </main>;
+}
+
 export default function App() {
-  return <InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<main role="status" aria-live="polite" style={{ minHeight: "100svh", display: "grid", placeItems: "center" }}>Cargando página…</main>}><Routes>
+  const { pathname } = useLocation();
+  return <RouteErrorBoundary key={pathname}><InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<RoutePending />}><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Navigate to="/home" replace />} />
@@ -164,5 +174,5 @@ export default function App() {
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<NotFound />} />
-  </Routes></Suspense><StandaloneFooter /></InitialLocationGate>;
+  </Routes></Suspense><StandaloneFooter /></InitialLocationGate></RouteErrorBoundary>;
 }

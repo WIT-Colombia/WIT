@@ -1,0 +1,32 @@
+.xamuko-route-pending,.xamuko-route-recovery {
+  box-sizing:border-box;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;min-height:clamp(340px,68svh,690px);
+  width:min(100% - 32px,900px);margin:16px auto 40px;padding:40px 24px;
+  text-align:center;font-family:Inter,Arial,sans-serif;color:#281348;
+}
+.xamuko-route-pending img,.xamuko-route-recovery img {
+  display:block;width:min(190px,70%);height:auto;object-fit:contain;
+}
+.xamuko-route-pending__spinner {
+  width:34px;height:34px;margin:26px 0 16px;border:3px solid #ece3ff;
+  border-top-color:#7b3ffb;border-radius:50%;animation:xamuko-route-spin .8s linear infinite;
+}
+.xamuko-route-pending p {font-size:14px;font-weight:600;color:#524168;margin:0}
+.xamuko-route-recovery {gap:17px}
+.xamuko-route-recovery h1 {margin:0;font-size:clamp(23px,4vw,30px);line-height:1.3}
+.xamuko-route-recovery p {margin:0;max-width:520px;line-height:1.65;font-size:14px;color:#625475}
+.xamuko-route-recovery__actions {display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
+.xamuko-route-recovery__actions button,.xamuko-route-recovery__actions a {
+  box-sizing:border-box;min-height:46px;min-width:160px;padding:12px 20px;border-radius:999px;
+  font:700 14px/1.3 Inter,Arial,sans-serif;text-decoration:none;cursor:pointer;
+}
+.xamuko-route-recovery__actions button {border:1px solid #7140de;background:#7b3ffb;color:white}
+.xamuko-route-recovery__actions a {border:1px solid #dacaff;background:#f5efff;color:#5e21bc}
+.xamuko-route-recovery__actions :is(a,button):focus-visible {outline:3px solid #7b3ffb;outline-offset:3px}
+@keyframes xamuko-route-spin {to{transform:rotate(360deg)}}
+@media(max-width:600px){
+  .xamuko-route-pending,.xamuko-route-recovery {min-height:calc(100svh - 120px);padding:26px 14px}
+  .xamuko-route-recovery__actions {flex-direction:column;width:100%}
+  .xamuko-route-recovery__actions button,.xamuko-route-recovery__actions a {width:min(100%,280px)}
+}
+@media(prefers-reduced-motion:reduce){.xamuko-route-pending__spinner{animation:none}}
