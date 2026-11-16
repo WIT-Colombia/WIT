@@ -35,7 +35,7 @@ function whereFor(filters:Filters):Prisma.BusinessOfferWhereInput {
   return {AND:parts};
 }
 const sharedSelect={
-  id:true,internalCode:true,kind:true,name:true,description:true,priceAmount:true,currency:true,priceText:true,
+  id:true,internalCode:true,kind:true,name:true,description:true,categoryId:true,priceAmount:true,currency:true,priceText:true,
   negotiable:true,active:true,adultOnly:true,publicationStatus:true,administrativeStatus:true,adminRestrictedAt:true,deletedAt:true,createdAt:true,updatedAt:true,
   photos:{take:1,orderBy:[{sortOrder:'asc' as const},{createdAt:'asc' as const}],select:{id:true,altText:true}},
   category:{select:categorySelect},
@@ -45,7 +45,7 @@ const sharedSelect={
 } satisfies Prisma.BusinessOfferSelect;
 function compactOffer(item:any) {
   return {
-    id:item.id,internalCode:item.internalCode,kind:item.kind,name:item.name,description:item.description,
+    id:item.id,internalCode:item.internalCode,kind:item.kind,name:item.name,description:item.description,categoryId:item.categoryId,
     priceAmount:item.priceAmount?.toString()??null,currency:item.currency,priceText:item.priceText,
     negotiable:item.negotiable,active:item.active,adultOnly:item.adultOnly,publicationStatus:item.publicationStatus,
     administrativeStatus:item.administrativeStatus,adminRestrictedAt:item.adminRestrictedAt,
