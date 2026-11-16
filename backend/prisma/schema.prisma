@@ -1568,3 +1568,22 @@ model ExpansionZoneAudit {
   @@index([zoneId, createdAt])
   @@index([createdAt])
 }
+
+/** Opt-in por zona. La dirección solo se usa después de verificarla por correo. */
+model ZoneOpeningInterest {
+  id                  String    @id @default(uuid()) @db.Char(36)
+  zoneKey             String    @db.VarChar(240)
+  emailNormalized     String    @db.VarChar(320)
+  confirmationHash    String    @db.Char(64)
+  unsubscribeToken    String    @unique @db.VarChar(64)
+  consentAt           DateTime  @db.DateTime(3)
+  confirmedAt         DateTime? @db.DateTime(3)
+  notifiedAt          DateTime? @db.DateTime(3)
+  notificationLeaseAt DateTime? @db.DateTime(3)
+  createdAt           DateTime  @default(now()) @db.DateTime(3)
+  updatedAt           DateTime  @updatedAt @db.DateTime(3)
+
+  @@unique([zoneKey, emailNormalized])
+  @@index([zoneKey, confirmedAt, notifiedAt])
+  @@index([notificationLeaseAt])
+}
