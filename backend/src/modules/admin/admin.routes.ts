@@ -4,7 +4,7 @@ import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-or
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
 import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
-import { getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
+import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
 import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto, moderateAdminContent } from './admin-content.service.js';
@@ -38,6 +38,17 @@ adminRouter.get('/businesses/analytics', requireAdmin('BUSINESSES_READ'), busine
 adminRouter.get('/businesses/:id', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
   try { res.setHeader('Cache-Control', 'no-store'); const business = await getAdminBusiness(String(req.params.id)); if (!business) return res.status(404).json({ error: { code: 'BUSINESS_NOT_FOUND', message: 'No encontramos el negocio.' } }); res.json({ business }); }
   catch (error) { next(error); }
+});
+adminRouter.post('/businesses/:id/delete', requireTrustedOrigin, requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try {
+    const context = adminFromRequest(req);
+    if (context.role !== 'SUPER_ADMIN')
+      return res.status(403).json({ error: { code: 'ADMIN_SUPER_ADMIN_REQUIRED', message: 'Solo el administrador principal puede eliminar negocios.' } });
+    if (req.body?.confirmation !== 'ELIMINAR')
+      return res.status(400).json({ error: { code: 'ADMIN_BUSINESS_CONFIRMATION_REQUIRED', message: 'Escribe ELIMINAR para confirmar la baja del negocio.' } });
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await deleteAdminBusiness(String(req.params.id), context.userId, String(req.body?.reason ?? '')));
+  } catch (error) { next(error); }
 });
 adminRouter.get('/categories', requireAdmin('CATALOG_READ'), async (_req, res, next) => {
   try {

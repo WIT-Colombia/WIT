@@ -136,7 +136,7 @@ export async function getAdminUserProfile(id: string) {
         },
       },
       createdBusinesses: { where: activeBusiness, select: businessBrief },
-      createdBusinessAccounts: { select: { id: true, name: true, status: true } },
+      createdBusinessAccounts: { select: { id: true, name: true, status: true, businesses: { where: activeBusiness, select: { id: true } } } },
     },
   });
   if (!user) throw new AppError(404, 'ADMIN_USER_NOT_FOUND', 'No encontramos este usuario.');
@@ -152,7 +152,7 @@ export async function getAdminUserProfile(id: string) {
   const blockers = deletionBlockers({
     ownBusinesses: links.filter(item => item.role === 'OWNER' && item.membershipStatus === 'ACTIVE').length,
     createdBusinesses: user.createdBusinesses.length,
-    businessAccounts: user.createdBusinessAccounts.length,
+    businessAccounts: user.createdBusinessAccounts.filter(account => account.businesses.length > 0).length,
     adminRoles: user.adminRoleAssignments.length,
     pendingTransfers,
   });
@@ -161,7 +161,7 @@ export async function getAdminUserProfile(id: string) {
     user: { ...profile,
       avatarUrl: profile.avatarUrl?.startsWith('private-avatar:') ? '/api/v1/admin/users/' + encodeURIComponent(profile.id) + '/avatar' : null,
       authProviders: user.authIdentities, businesses: links, administrativeRoles: user.adminRoleAssignments.map(item => item.role),
-      businessAccounts: user.createdBusinessAccounts,
+      businessAccounts: user.createdBusinessAccounts.map(({ businesses: _linked, ...account }) => account),
       activity: { reviews, favorites, offerLikes, sessions, reports, pendingTransfers },
       deletion: { allowed: user.status !== 'DELETED' && blockers.length === 0, blockers },
     },
@@ -189,13 +189,15 @@ export async function deactivateAdminUser(userId: string, actorId: string, reaso
     const [owners, created, accounts, adminRoles, pendingTransfers] = await Promise.all([
       tx.businessMembership.count({ where: { userId, role: 'OWNER', status: 'ACTIVE', business: activeBusiness } }),
       tx.business.count({ where: { createdById: userId, ...activeBusiness } }),
-      tx.businessAccount.count({ where: { createdById: userId } }),
+      tx.businessAccount.count({ where: { createdById: userId, businesses: { some: activeBusiness } } }),
       tx.adminRoleAssignment.count({ where: { userId, active: true } }),
       tx.ownershipTransfer.count({ where: { status: 'PENDING', OR: [{ fromUserId: userId }, { toUserId: userId }] } }),
     ]);
     const blockers = deletionBlockers({ ownBusinesses: owners, createdBusinesses: created, businessAccounts: accounts, adminRoles, pendingTransfers });
     if (blockers.length) throw new AppError(409, 'ADMIN_USER_DEPENDENCIES', blockers.join(' '));
     const now = new Date();
+    // Empty / historically deleted Business accounts must not keep the user active.
+    await tx.businessAccount.updateMany({ where: { createdById: userId, businesses: { none: activeBusiness } }, data: { status: 'CLOSED' } });
     await tx.user.update({ where: { id: userId }, data: { status: 'DELETED' } });
     await tx.session.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: now } });
     await tx.adminSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: now } });
@@ -205,6 +207,6 @@ export async function deactivateAdminUser(userId: string, actorId: string, reaso
         previousState: { status: user.status, displayName: user.displayName, emailNormalized: user.emailNormalized },
         newState: { status: 'DELETED' }, reason: justification },
     });
-    return { id: userId, status: 'DELETED' as const, message: 'Baja administrativa realizada. Se conservaron los registros históricos y la trazabilidad.' };
+    return { id: userId, status: 'DELETED' as const, message: 'Cuenta desactivada en XAMUKO Usuarios y Business; sesiones revocadas y cuentas Business sin negocios activos cerradas. Se conservó la trazabilidad.' };
   });
 }

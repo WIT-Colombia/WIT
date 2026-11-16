@@ -9,7 +9,7 @@ type RequestMeta = { ipAddress?: string };
 
 async function findBusiness(userId: string, identifier: string, db: Db) {
   const business = await db.business.findFirst({
-    where: { OR: [{ id: identifier }, { publicId: identifier }], memberships: { some: { userId, status: 'ACTIVE' } } },
+    where: { OR: [{ id: identifier }, { publicId: identifier }], deletionStatus: { not: 'DELETED' }, memberships: { some: { userId, status: 'ACTIVE' } } },
     select: { id: true, businessAccount: { select: { status: true } }, adultOnly: true, memberships: { where: { userId, status: 'ACTIVE' }, include: { permissions: true } } },
   });
   if (!business || business.businessAccount.status !== 'ACTIVE') throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese negocio.');

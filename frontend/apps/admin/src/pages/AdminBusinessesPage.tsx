@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getAdminBusiness, getAdminDashboardStats, listAdminBusinesses, type AdminBusinessPage, type AdminBusinessRecord, type AdminDashboardStats } from '../services/adminApiClient';
 import { StatePanel } from '../components/common';
 import { Icon } from '../components/Icon';
 import { getSession } from '../services/adminService';
 import { AdminBusinessGrowthPanel } from './AdminBusinessGrowthPanel';
+import { AdminBusinessDeleteDialog } from '../components/businesses/AdminBusinessDeleteDialog';
 import './AdminBusinessesRefresh.css';
 
 const PAGE_SIZE = 10;
@@ -33,6 +34,9 @@ function StoreIllustration() {
 
 export function AdminBusinessesPage() {
   const allowed = getSession()?.permissions?.includes('business:write') ?? false;
+  const canDelete = getSession()?.role === 'SUPER_ADMIN';
+  const [deleteTarget, setDeleteTarget] = useState<AdminBusinessRecord | null>(null);
+  const [notice, setNotice] = useState('');
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const status = params.get('status') ?? '';
@@ -94,6 +98,7 @@ export function AdminBusinessesPage() {
   return <div className="businesses-page">
 
     <header className="admin-section-heading"><h1 id="businesses-page-title">Negocios</h1></header>
+    {notice && <div className="admin-business-delete-success" role="status">{notice}</div>}
 
     <section className="business-stats businesses-summary" aria-label="Resumen de negocios">
       {(statValues.length ? statValues : [
@@ -119,19 +124,25 @@ export function AdminBusinessesPage() {
           <div className="business-table-wrap"><table className="business-table businesses-table"><caption className="sr-only">Listado de negocios de XAMUKO</caption><thead><tr><th>#</th><th>Negocio</th><th>Categoría</th><th>Visibilidad</th><th>Registro</th><th>Acciones</th></tr></thead><tbody>{rows.map((item: AdminBusinessRecord, index: number) => {
             const category = categoryName(item.category);
             const tone = visibilityTone[item.visibilityStatus] ?? 'status-review';
-            return <tr key={item.id}><td className="business-number">#{String((page - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}</td><td><Link to={`/businesses/${item.id}`} className="business-cell"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{item.createdBy.displayName || 'Administrador'}</small></div></Link></td><td><span className="business-category"><Icon name="grid" size={14} />{category}</span></td><td><span className={`badge ${tone}`}><span aria-hidden="true">●</span> {translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</span></td><td className="business-date">{date(item.createdAt)}</td><td><div className="business-row-actions"><Link className="icon-button businesses-view" to={`/businesses/${item.id}`} aria-label={`Ver ${item.name}`}><Icon name="eye" size={18} /></Link></div></td></tr>;
+            return <tr key={item.id}><td className="business-number">#{String((page - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}</td><td><Link to={`/businesses/${item.id}`} className="business-cell"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{item.createdBy.displayName || 'Administrador'}</small></div></Link></td><td><span className="business-category"><Icon name="grid" size={14} />{category}</span></td><td><span className={`badge ${tone}`}><span aria-hidden="true">●</span> {translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</span></td><td className="business-date">{date(item.createdAt)}</td><td><div className="business-row-actions"><Link className="icon-button businesses-view" to={`/businesses/${item.id}`} aria-label={`Ver ${item.name}`}><Icon name="eye" size={18} /></Link>{canDelete && <button type="button" className="icon-button businesses-delete" aria-label={`Eliminar ${item.name}`} title={`Eliminar ${item.name}`} onClick={() => setDeleteTarget(item)}><Icon name="trash" size={18}/></button>}</div></td></tr>;
           })}</tbody></table></div>
-          <div className="business-mobile-list businesses-mobile-list">{rows.map(item => <Link to={`/businesses/${item.id}`} className="business-mobile-card" key={item.id}><div className="mobile-business-heading"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{categoryName(item.category)} · {item.location?.cityName ?? 'Sin ubicación'}</small></div><Icon name="arrow" size={17} /></div><div className="mobile-business-badges"><span className={`badge ${visibilityTone[item.visibilityStatus] ?? 'status-review'}`}>{translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</span></div><small className="mobile-expiry">Registro: {date(item.createdAt)}</small></Link>)}</div>
+          <div className="business-mobile-list businesses-mobile-list">{rows.map(item => <article className="business-mobile-card" key={item.id}><Link to={`/businesses/${item.id}`} className="businesses-mobile-card-link"><div className="mobile-business-heading"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{categoryName(item.category)} · {item.location?.cityName ?? 'Sin ubicación'}</small></div><Icon name="arrow" size={17} /></div><div className="mobile-business-badges"><span className={`badge ${visibilityTone[item.visibilityStatus] ?? 'status-review'}`}>{translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</span></div><small className="mobile-expiry">Registro: {date(item.createdAt)}</small></Link>{canDelete && <button type="button" className="businesses-mobile-delete" onClick={() => setDeleteTarget(item)}><Icon name="trash" size={16}/> Eliminar negocio</button>}</article>)}</div>
           <div className="business-pagination businesses-pagination"><span>Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min((page - 1) * PAGE_SIZE + rows.length, total)} de {count(total)} negocios</span><div><button className="secondary-button page-arrow" aria-label="Página anterior" disabled={page <= 1} onClick={() => goToPage(page - 1)}>‹</button>{pageNumbers.map(number => <button className={`page-number ${page === number ? 'selected' : ''}`} key={number} aria-current={page === number ? 'page' : undefined} onClick={() => goToPage(number)}>{number}</button>)}{totalPages > 3 && <><span className="page-ellipsis">…</span><button className="page-number" onClick={() => goToPage(totalPages)}>{totalPages}</button></>}<button className="secondary-button page-arrow" aria-label="Página siguiente" disabled={page >= totalPages} onClick={() => goToPage(page + 1)}>›</button></div></div>
         </>}
       </>}
     </section>
     <AdminBusinessGrowthPanel />
+    {deleteTarget && <AdminBusinessDeleteDialog business={deleteTarget}
+      onClose={() => setDeleteTarget(null)}
+      onSuccess={message => { setDeleteTarget(null); setNotice(message); setRevision(value => value + 1); }}/>}
   </div>;
 }
 
 export function AdminBusinessDetailPage() {
   const allowed = getSession()?.permissions?.includes('business:write') ?? false;
+  const canDelete = getSession()?.role === 'SUPER_ADMIN';
+  const navigate = useNavigate();
+  const [deleteTarget, setDeleteTarget] = useState<AdminBusinessRecord | null>(null);
   const { id = '' } = useParams();
   const [item, setItem] = useState<AdminBusinessRecord | null>(null);
   const [loading, setLoading] = useState(allowed);
@@ -150,6 +161,7 @@ export function AdminBusinessDetailPage() {
     <header className="ad-business-detail-hero">
       <span className="ad-business-detail-icon"><Icon name="store" size={31} /></span>
       <div><span className="ad-business-detail-eyebrow">FICHA ADMINISTRATIVA</span><h1>{item.name}</h1><p>Registro de negocio · Actualizado el {date(item.updatedAt)}</p></div>
+      {canDelete && item.deletionStatus !== "DELETED" && <button type="button" className="ad-business-delete-trigger" onClick={() => setDeleteTarget(item)}><Icon name="trash" size={17}/> Eliminar negocio</button>}
     </header>
     <section className="admin-business-facts ad-business-detail-highlights" aria-label="Estado del negocio">
       <article><span><Icon name="eye" size={18} /> Visibilidad</span><strong className={'business-status-text ' + (visibilityTone[item.visibilityStatus] ?? 'status-review')}>{translatedStatus(visibilityStatusLabels, item.visibilityStatus)}</strong></article>
@@ -171,5 +183,8 @@ export function AdminBusinessDetailPage() {
         <div className="ad-business-detail-description"><dt>Descripción</dt><dd>{item.description ?? 'No registrada'}</dd></div>
       </dl>
     </section>
+    {deleteTarget && <AdminBusinessDeleteDialog business={deleteTarget}
+      onClose={() => setDeleteTarget(null)}
+      onSuccess={() => navigate("/businesses", { replace: true })}/>}
   </div>;
 }

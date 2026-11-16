@@ -1,5 +1,6 @@
 import { prisma } from '../../config/prisma.js';
 import type { Prisma } from '../../generated/prisma/client.js';
+import { AppError } from '../../shared/errors/app-error.js';
 
 const businessSelect = {
   id: true, publicId: true, name: true, description: true, email: true, phone: true,
@@ -26,4 +27,47 @@ export async function listAdminBusinesses(query: { q?: string; page?: number; pa
 
 export async function getAdminBusiness(id: string) {
   return prisma.business.findFirst({ where: { OR: [{ id }, { publicId: id }] }, select: businessSelect });
+}
+
+/** Baja lógica del negocio: no elimina la identidad de su propietario ni el historial contable. */
+export async function deleteAdminBusiness(identifier: string, actorUserId: string, reason: string) {
+  const justification = reason.trim();
+  if (justification.length < 12 || justification.length > 500)
+    throw new AppError(400, 'ADMIN_BUSINESS_REASON_REQUIRED', 'Indica un motivo de entre 12 y 500 caracteres.');
+  return prisma.$transaction(async tx => {
+    const business = await tx.business.findFirst({
+      where: { OR: [{ id: identifier }, { publicId: identifier }] },
+      select: { id: true, name: true, deletionStatus: true, publicationStatus: true, visibilityStatus: true },
+    });
+    if (!business) throw new AppError(404, 'ADMIN_BUSINESS_NOT_FOUND', 'No encontramos este negocio.');
+    if (business.deletionStatus === 'DELETED')
+      throw new AppError(409, 'ADMIN_BUSINESS_ALREADY_DELETED', 'El negocio ya está eliminado.');
+    const updated = await tx.business.updateMany({
+      where: { id: business.id, deletionStatus: business.deletionStatus },
+      data: { deletionStatus: 'DELETED', publicationStatus: 'UNPUBLISHED', visibilityStatus: 'HIDDEN' },
+    });
+    if (updated.count !== 1)
+      throw new AppError(409, 'ADMIN_BUSINESS_CONCURRENT_CHANGE', 'El negocio cambió de estado. Actualiza la página antes de continuar.');
+    const now = new Date();
+    await tx.ownershipTransfer.updateMany({
+      where: { businessId: business.id, status: 'PENDING' },
+      data: { status: 'CANCELLED', respondedAt: now },
+    });
+    // A deleted business must not keep active plans or automatic renewal enabled.
+    await tx.businessSubscription.updateMany({
+      where: { businessId: business.id, status: { in: ['ACTIVE', 'PENDING'] } },
+      data: { status: 'REVOKED', autoRenew: false, revokedAt: now, revocationReason: 'Baja administrativa del negocio' },
+    });
+    await tx.auditLog.create({
+      data: {
+        actorUserId, entityType: 'BUSINESS', entityId: business.id, action: 'ADMIN_BUSINESS_DELETED',
+        previousState: { name: business.name, deletionStatus: business.deletionStatus,
+          publicationStatus: business.publicationStatus, visibilityStatus: business.visibilityStatus },
+        newState: { deletionStatus: 'DELETED', publicationStatus: 'UNPUBLISHED', visibilityStatus: 'HIDDEN' },
+        reason: justification,
+      },
+    });
+    return { id: business.id, status: 'DELETED' as const,
+      message: 'Negocio retirado de XAMUKO. La cuenta del propietario permanece activa y el historial se conserva.' };
+  });
 }

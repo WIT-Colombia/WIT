@@ -23,6 +23,13 @@ export function getAdminBusinessAnalytics(filters: { period: string; city: strin
 }
 export function listAdminBusinesses(q = '', page = 1, pageSize = 3, status = '') { const params = new URLSearchParams({ q, page: String(page), pageSize: String(pageSize) }); if (status) params.set('status', status); return request<AdminBusinessPage>(`/admin/businesses?${params.toString()}`); }
 export async function getAdminBusiness(id: string) { return (await request<{ business: AdminBusinessRecord }>(`/admin/businesses/${encodeURIComponent(id)}`)).business; }
+export function deleteAdminBusiness(id: string, reason: string, confirmation: string) {
+  return request<{ id: string; status: 'DELETED'; message: string }>(
+    '/admin/businesses/' + encodeURIComponent(id) + '/delete',
+    { method: 'POST', body: JSON.stringify({ reason, confirmation }) },
+  );
+}
+
 export type AdminCategoryRecord = { id: string; code: string; active: boolean; sortOrder: number; translations: { locale: string; name: string }[]; _count: { businesses: number; offers: number } };
 export async function listAdminCategories() { return (await request<{ categories: AdminCategoryRecord[] }>('/admin/categories')).categories; }
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED';

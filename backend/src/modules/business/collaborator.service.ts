@@ -32,7 +32,7 @@ function collaboratorAvatarUrl(businessId: string, userId: string, value: string
   return publicAvatarUrl(value);
 }
 async function owner(userId: string, businessId: string) {
-  const m = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId } } });
+  const m = await prisma.businessMembership.findFirst({ where: { businessId, userId, business: { deletionStatus: { not: 'DELETED' }, businessAccount: { status: 'ACTIVE' } } } });
   if (!m || m.role !== 'OWNER' || m.status !== 'ACTIVE') throw new AppError(403, 'OWNER_REQUIRED', 'Solo el propietario puede administrar colaboradores.');
   return m;
 }
