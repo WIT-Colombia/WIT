@@ -125,40 +125,80 @@ export default function Notifications() {
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo eliminar la notificación.'); }
     finally { setBusy(false); }
   };
+  const toDelete = notices.find(item => item.source + ':' + item.id === pendingDeleteId);
   return <PageLayout className="notifications-page">
     <Link className="offer-detail-back" to="/profile">← Volver al perfil</Link>
-    <div className="notifications-heading">
-      <div className="user-page-heading"><span>Tu actividad en XAMUKO</span><h1>Notificaciones</h1>
-        <span className="notification-unread-count">{unread} {unread === 1 ? 'pendiente' : 'pendientes'} por leer</span>
-        {deleted && <p className="notification-success" role="status">La notificación se eliminó correctamente.</p>}
+    <header className="notifications-heading">
+      <div className="notifications-heading-main">
+        <span className="notifications-heading-icon" aria-hidden="true">
+          <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+        </span>
+        <div className="user-page-heading">
+          <span>TU ACTIVIDAD EN XAMUKO</span>
+          <h1>Notificaciones</h1>
+          <p className="notification-unread-count" aria-live="polite">{unread} {unread === 1 ? 'pendiente' : 'pendientes'} por leer</p>
+        </div>
       </div>
-      {unread > 0 && <button type="button" disabled={busy} onClick={() => void markAllRead()}>Marcar todas como leídas</button>}
+      {unread > 0 && <button className="notifications-mark-all" type="button" disabled={busy} onClick={() => void markAllRead()}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+        Marcar todas como leídas
+      </button>}
+    </header>
+    {deleted && <p className="notification-success" role="status">La notificación se eliminó correctamente.</p>}
+    {error && <div className="notification-error" role="alert">{error} <button type="button" onClick={() => void load()}>Reintentar</button></div>}
+    {loading && <p className="notification-loading" role="status">Actualizando notificaciones…</p>}
+    <div className="notification-filter-bar" role="group" aria-label="Filtrar notificaciones">
+      {(["Todas", "No leídas", "Leídas"] as const).map(value =>
+        <button key={value} type="button" className={filter === value ? "active" : ""} aria-pressed={filter === value}
+          onClick={() => { setFilter(value); setVisibleCount(10); setPendingDeleteId(null); }}>
+          {value}{value === "No leídas" && <span>{unread}</span>}
+        </button>)}
     </div>
-    {error && <p className="notification-success" role="alert">{error} <button type="button" onClick={() => void load()}>Reintentar</button></p>}
-    {loading && <p role="status">Actualizando notificaciones…</p>}
-    <div className="notification-filter-bar" role="group" aria-label="Filtrar notificaciones">{(["Todas", "No leídas", "Leídas"] as const).map(value => <button key={value} type="button" className={filter === value ? "active" : ""} aria-pressed={filter === value} onClick={() => { setFilter(value); setVisibleCount(10); setPendingDeleteId(null); }}>{value}{value === "No leídas" && <span>{unread}</span>}</button>)}</div>
     {filteredNotices.length ? <>
-      <div className="notification-list">{filteredNotices.slice(0, visibleCount).map(item =>
-        <div className={'notification-item' + (item.read ? ' is-read' : '') + (selectedId === item.id ? ' is-selected' : '')} key={item.source + ':' + item.id}>
-          <button type="button" className="notification-main-action" disabled={busy} onClick={() => void select(item)}>
-            <span className="notification-icon notification-brand-icon"><img src="/brand/xamuko-symbol.jpg" alt="XAMUKO" style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#fff', borderRadius: '50%' }}/></span>
-            <span className="notification-copy"><b>{item.title}</b><small>{item.body}</small><time>{item.date}</time></span>
-            {!item.read && <i aria-label="Sin leer"/>}
-          </button>
-          {<span className="notification-actions">
-            <button type="button" className="notification-delete" aria-label={'Eliminar ' + item.title} disabled={busy} onClick={event => {event.stopPropagation();setPendingDeleteId(item.id);}}>×</button>
-            {pendingDeleteId === item.id && <span className="notification-delete-confirm">¿Eliminar esta notificación?
-              <button type="button" disabled={busy} onClick={() => void remove(item)}>Sí</button>
-              <button type="button" onClick={() => setPendingDeleteId(null)}>No</button>
-            </span>}
-          </span>}
-        </div>,
-      )}</div>
-      {filteredNotices.length > 10 && <div className="notifications-pagination">
-        {visibleCount < filteredNotices.length
-          ? <button type="button" onClick={() => setVisibleCount(v => Math.min(v + 10, filteredNotices.length))}>Ver más notificaciones →</button>
-          : <button type="button" onClick={() => { setVisibleCount(10); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Volver arriba ↑</button>}
+      <section className="notification-list" aria-label="Tus notificaciones">
+        {filteredNotices.slice(0, visibleCount).map(item => {
+          const welcome = item.source === 'local' && item.id === 'welcome';
+          const title = item.title.toLocaleLowerCase('es-CO');
+          const kind = welcome ? 'welcome' : title.includes('opini') || title.includes('reseña') ? 'review' :
+            title.includes('negocio') || title.includes('favorito') ? 'business' : title.includes('cuenta') || title.includes('seguridad') ? 'account' : 'general';
+          return <article className={'notification-item' + (item.read ? ' is-read' : ' is-unread') + (selectedId === item.id ? ' is-selected' : '')} key={item.source + ':' + item.id}>
+            <button type="button" className="notification-main-action" disabled={busy} onClick={() => void select(item)}
+              aria-label={item.title + '. ' + (item.read ? 'Leída' : 'Sin leer') + '. Abrir notificación'}>
+              <span className={'notification-icon notification-icon-' + kind} aria-hidden="true">
+                {kind === 'welcome' ? <img src="/brand/xamuko-symbol.jpg" alt=""/> :
+                  kind === 'review' ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.7 8.7 0 0 1-4.5-1.2L3 20l1.2-5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg> :
+                  kind === 'business' ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h18l-2-6H5l-2 6ZM5 10v10h14V10M9 20v-6h6v6"/></svg> :
+                  kind === 'account' ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> :
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>}
+              </span>
+              <span className="notification-copy">
+                <span className="notification-copy-heading"><b>{item.title}</b>{!item.read && <span className="notification-unread-dot" aria-label="Sin leer"/>}</span>
+                <span className="notification-description">{item.body}</span>
+                <span className="notification-meta"><span>Equipo XAMUKO</span><time>{item.date}</time></span>
+              </span>
+            </button>
+            <button type="button" className="notification-delete" disabled={busy}
+              title="Eliminar notificación" aria-label={'Eliminar ' + item.title}
+              onClick={() => setPendingDeleteId(item.source + ':' + item.id)}>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg>
+            </button>
+          </article>;
+        })}
+      </section>
+      {visibleCount < filteredNotices.length && <div className="notifications-pagination">
+        <button type="button" onClick={() => setVisibleCount(v => Math.min(v + 10, filteredNotices.length))}>Ver más notificaciones <span aria-hidden="true">→</span></button>
       </div>}
-    </> : !loading && <div className="user-empty-state"><h2>{filter === "No leídas" ? "Todo al día" : filter === "Leídas" ? "No hay notificaciones leídas" : "No tienes notificaciones"}</h2><p>Cuando haya novedades, aparecerán aquí.</p><Link to="/home">Ir al inicio</Link></div>}
+    </> : !loading && <div className="user-empty-state"><h2>{filter === "No leídas" ? "Todo al día" : filter === "Leídas" ? "No hay notificaciones leídas" : "No tienes notificaciones"}</h2><p>Cuando haya novedades, aparecerán aquí.</p><button type="button" onClick={() => { setFilter("Todas"); setVisibleCount(10); }}>Ver todas</button></div>}
+    {toDelete && <div className="notification-confirm-backdrop" role="presentation" onClick={() => setPendingDeleteId(null)}>
+      <div className="notification-confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="notification-confirm-title" aria-describedby="notification-confirm-description" onClick={event => event.stopPropagation()} onKeyDown={event => { if (event.key === 'Escape') setPendingDeleteId(null); }}>
+        <span className="notification-confirm-symbol" aria-hidden="true">!</span>
+        <h2 id="notification-confirm-title">¿Eliminar notificación?</h2>
+        <p id="notification-confirm-description">Se eliminará de tu bandeja. Esta acción no se puede deshacer.</p>
+        <div className="notification-confirm-actions">
+          <button type="button" disabled={busy} onClick={() => setPendingDeleteId(null)}>Cancelar</button>
+          <button type="button" className="notification-confirm-danger" disabled={busy} onClick={() => void remove(toDelete)}>{busy ? 'Eliminando…' : 'Eliminar'}</button>
+        </div>
+      </div>
+    </div>}
   </PageLayout>;
 }
