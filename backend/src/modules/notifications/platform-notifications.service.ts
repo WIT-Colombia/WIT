@@ -1,6 +1,7 @@
 import { prisma } from '../../config/prisma.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { AppError } from '../../shared/errors/app-error.js';
+import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 
 type Transaction = Prisma.TransactionClient;
 type Notice = { userId: string | null | undefined; sourceType: string; sourceId: string; title: string; message: string };
@@ -74,4 +75,35 @@ export async function deletePlatformNotification(userId: string, id: string) {
   });
   if (!result.count) throw new AppError(404, 'PLATFORM_NOTIFICATION_NOT_FOUND', 'No encontramos esta notificación.');
   return { ok: true };
+}
+
+/** Artwork is returned only when the authenticated recipient owns the notice.
+ * Covers deleted / hidden businesses without exposing private photos publicly.
+ */
+const businessArtworkEvents = new Set([
+  'BUSINESS_VISIBILITY', 'BUSINESS_RECOVERY', 'BUSINESS_DELETED',
+  'COLLABORATION_INVITED', 'COLLABORATION_ACCESS', 'COLLABORATION_PERMISSIONS',
+  'COLLABORATION_EXPIRED', 'OWNERSHIP_TRANSFER', 'REVIEW_RESPONSE',
+]);
+
+export async function readPersonalNoticeArtwork(userId: string, noticeId: string) {
+  const notice = await prisma.platformNotification.findFirst({
+    where: { id: noticeId, userId, deletedAt: null },
+    select: { sourceType: true, sourceId: true },
+  });
+  if (!notice || !businessArtworkEvents.has(notice.sourceType))
+    throw new AppError(404, 'NOTIFICATION_ARTWORK_NOT_FOUND', 'No hay imagen para esta notificación.');
+  const business = await prisma.business.findUnique({
+    where: { id: notice.sourceId },
+    select: { profilePhoto: { select: { storageKey: true } } },
+  });
+  const key = business?.profilePhoto?.storageKey;
+  if (!key) throw new AppError(404, 'NOTIFICATION_ARTWORK_NOT_FOUND', 'El negocio no tiene una imagen disponible.');
+  try {
+    return { content: await readPhoto(key), mimeType: photoMimeType(key) };
+  } catch (error) {
+    if (isPhotoMissingError(error) || (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'ENOENT'))
+      throw new AppError(404, 'NOTIFICATION_ARTWORK_NOT_FOUND', 'La imagen ya no está disponible.');
+    throw new AppError(503, 'NOTIFICATION_ARTWORK_UNAVAILABLE', 'No se pudo cargar la imagen.');
+  }
 }
