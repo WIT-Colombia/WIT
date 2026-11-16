@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PageHeader } from "../components/common/PageHeader";
+import "./NotificationsPage.css";
 import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type PersistedBusinessNotification } from "../services/businessApiClient";
 import { toBusinessDetails } from "../services/realBusinessAdapter";
@@ -153,6 +153,7 @@ export function NotificationsPage() {
     return 0;
   };
   const currentLocal = notifications.filter(item =>
+    item.id === "welcome" && business.source !== "real" ? true :
     item.businessId ? item.businessId === selectedBusinessId :
       business.source !== "real" && Boolean(item.businessName) && item.businessName === business.name);
   const visible = currentLocal.filter(item => filter === "Todas" || (filter === "No leídas" ? !item.read : item.read))
@@ -194,15 +195,45 @@ export function NotificationsPage() {
   };
   const respondTransfer = async (id: string, accept: boolean) => { setBusyTransfer(id); setApiError(""); try { await businessApi.respondOwnershipTransfer(id, accept); const fresh = (await businessApi.list()).businesses.map(toBusinessDetails); setBusinesses(fresh); const selected = fresh.find(value => value.id === business.id) ?? fresh[0]; if (selected) setBusiness(selected); await reloadTransfers(); await reloadPersisted(); setConfirmingTransfer(null); } catch (cause) { setApiError(cause instanceof Error ? cause.message : "No se pudo responder la transferencia."); } finally { setBusyTransfer(null); } };
 
-  return <>
-    <PageHeader eyebrow="BANDEJA DEL NEGOCIO" title="Notificaciones" description={business.name ? `Avisos y decisiones relacionados exclusivamente con ${business.name}.` : "Selecciona un negocio para consultar sus notificaciones."} action={totalUnread > 0 && <button type="button" className="outline-button" disabled={markingAll} onClick={() => void markAllRead()}>{markingAll ? "Actualizando…" : "Marcar todas como leídas"}</button>} />
+
+  const deletePending = Boolean(confirmingDelete || confirmingLocalDelete);
+  const executeDelete = () => {
+    if (confirmingDelete) { void removePersisted(confirmingDelete); return; }
+    if (!confirmingLocalDelete) return;
+    if (confirmingLocalDelete === "business-welcome") changeWelcome(welcomeState.read, true);
+    else setNotifications(notifications.filter(item => item.id !== confirmingLocalDelete));
+    setConfirmingLocalDelete(null);
+  };
+  return <div className="business-notifications-page">
+    <header className="business-notifications-heading">
+      <div className="business-notifications-heading-main">
+        <span className="business-notifications-heading-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+        </span>
+        <div>
+          <span className="business-notifications-eyebrow">ACTIVIDAD DE TU NEGOCIO</span>
+          <h1>Notificaciones</h1>
+          <p>{business.name ? "Avisos y decisiones relacionados con " + business.name + "." : "Selecciona un negocio para consultar sus notificaciones."}</p>
+          <span className="business-notifications-count" aria-live="polite">{totalUnread} {totalUnread === 1 ? "pendiente" : "pendientes"} por leer</span>
+        </div>
+      </div>
+      {totalUnread > 0 && <button type="button" className="business-notifications-mark-all" disabled={markingAll} onClick={() => void markAllRead()}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+        {markingAll ? "Actualizando…" : "Marcar todas como leídas"}
+      </button>}
+    </header>
     {apiError && <div className="notification-page-alert" role="alert">{apiError}</div>}
     <section className="surface-card notifications-card">
       <div className="notification-tabs" role="group" aria-label="Filtrar notificaciones"><button type="button" onClick={() => setFilter("Todas")} className={filter === "Todas" ? "active" : ""} aria-pressed={filter === "Todas"}>Todas</button><button type="button" onClick={() => setFilter("No leídas")} className={filter === "No leídas" ? "active" : ""} aria-pressed={filter === "No leídas"}>No leídas <span>{totalUnread}</span></button><button type="button" onClick={() => setFilter("Leídas")} className={filter === "Leídas" ? "active" : ""} aria-pressed={filter === "Leídas"}>Leídas</button></div>
       {showWelcome && (filter === "Todas" || (filter === "No leídas" ? !welcomeState.read : welcomeState.read)) && <article className={`notification-row notification-welcome-row ${welcomeState.read ? "" : "unread"}`} onClick={() => { if (!welcomeState.read) changeWelcome(true, false); }} aria-label="Bienvenida de XAMUKO">
-        <span className="notification-icon wit" aria-hidden="true">✦</span>
+        <span className="notification-icon wit notification-welcome-brand" aria-hidden="true"><img src="/brand/xamuko-symbol.jpg" alt=""/></span>
         <div><div className="notification-title"><h2>¡Bienvenido a XAMUKO Business!</h2>{!welcomeState.read && <span aria-label="Sin leer"/>}</div><p>Tu negocio ya tiene un espacio para crecer en XAMUKO. Desde aquí puedes administrar su información, productos, servicios y novedades. ¡Nos alegra tenerte con nosotros!</p><small>Equipo XAMUKO · Mensaje de bienvenida</small></div>
-        <div className="notification-actions" onClick={event => event.stopPropagation()}>{confirmingLocalDelete === "business-welcome" ? <div className="notification-delete-confirm" role="group" aria-label="Confirmar eliminación"><span>¿Eliminar este mensaje de bienvenida?</span><button type="button" className="danger-button" onClick={() => { changeWelcome(welcomeState.read, true); setConfirmingLocalDelete(null); }}>Eliminar</button><button type="button" className="outline-button" onClick={() => setConfirmingLocalDelete(null)}>Cancelar</button></div> : <button type="button" className="notification-delete" aria-label="Eliminar bienvenida" onClick={() => setConfirmingLocalDelete("business-welcome")}>Eliminar</button>}</div>
+
+        <div className="notification-actions" onClick={event => event.stopPropagation()}>
+          <button type="button" className="notification-delete" title="Eliminar notificación" aria-label="Eliminar bienvenida" onClick={() => setConfirmingLocalDelete("business-welcome")}>
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg>
+          </button>
+        </div>
       </article>}
       {visiblePersisted.map(item => {
         const pending = item.type === "COLLABORATION_INVITATION" && item.membership?.status === "INVITED";
@@ -219,17 +250,36 @@ export function NotificationsPage() {
           </div>
           <div className="notification-actions" onClick={event => event.stopPropagation()}>
             {!item.readAt && !pending && <button type="button" className="subtle-button" onClick={() => void businessApi.markBusinessNotificationRead(item.id, selectedBusinessId).then(reloadPersisted).catch(() => setApiError("No se pudo actualizar la notificación."))}>Marcar leída</button>}
-            {confirmingDelete === item.id ? <div className="notification-delete-confirm" role="group" aria-label="Confirmar descarte de aviso">
-              <span>¿Descartar este aviso? La solicitud asociada no se cancela.</span>
-              <button type="button" className="danger-button" disabled={busyDelete === item.id} onClick={() => void removePersisted(item.id)}>
-                {busyDelete === item.id ? "Descartando…" : "Descartar"}</button>
-              <button type="button" className="outline-button" disabled={busyDelete === item.id} onClick={() => setConfirmingDelete(null)}>Cancelar</button>
-            </div> : <button type="button" className="notification-discard" disabled={Boolean(busyDelete)} onClick={() => setConfirmingDelete(item.id)}>Descartar aviso</button>}
+
+            <button type="button" className="notification-delete" disabled={Boolean(busyDelete)} title="Eliminar notificación" aria-label={'Eliminar ' + item.title}
+              onClick={() => setConfirmingDelete(item.id)}>
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg>
+            </button>
           </div>
         </article>;
       })}
-      {visible.map(item => { const to = item.id.startsWith("visibility-reminder-") ? "/configuracion" : item.type === "profile" ? `${destination.profile}/${businessIndex}` : item.type === "collaboration" ? "/notificaciones" : destination[item.type]; return <article className={`notification-row ${item.read ? "" : "unread"}${item.id.startsWith("visibility-reminder-") ? " is-actionable" : ""}`} key={item.id} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); if (item.id.startsWith("visibility-reminder-")) navigate("/configuracion"); }}><span className={`notification-icon ${item.type}`}>{icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2>{!item.read && <span aria-label="Sin leer"/>}</div><p>{item.description}</p><small>{item.date}</small><Link className="notification-link" to={to}>Ver detalle →</Link></div><div className="notification-actions" onClick={event => event.stopPropagation()}>{!item.read && <button className="subtle-button" onClick={event => { event.stopPropagation(); setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }}>Marcar leída</button>}{confirmingLocalDelete === item.id ? <div className="notification-delete-confirm" role="group" aria-label="Confirmar eliminación"><span>¿Eliminar esta notificación?</span><button type="button" className="danger-button" onClick={() => { setNotifications(notifications.filter(current => current.id !== item.id)); setConfirmingLocalDelete(null); }}>Eliminar</button><button type="button" className="outline-button" onClick={() => setConfirmingLocalDelete(null)}>Cancelar</button></div> : <button type="button" className="notification-delete" aria-label={`Eliminar ${item.title}`} onClick={() => setConfirmingLocalDelete(item.id)}>Eliminar</button>}</div></article>; })}
+      {visible.map(item => { const to = item.id.startsWith("visibility-reminder-") ? "/configuracion" : item.type === "profile" ? `${destination.profile}/${businessIndex}` : item.type === "collaboration" ? "/notificaciones" : destination[item.type]; return <article className={`notification-row ${item.read ? "" : "unread"}${item.id.startsWith("visibility-reminder-") ? " is-actionable" : ""}`} key={item.id} onClick={() => { if (!item.read) setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); if (item.id.startsWith("visibility-reminder-")) navigate("/configuracion"); }}><span className={`notification-icon ${item.type}`}>{icons[item.type]}</span><div><div className="notification-title"><h2>{item.title}</h2>{!item.read && <span aria-label="Sin leer"/>}</div><p>{item.description}</p><small>{item.date}</small><Link className="notification-link" to={to}>Ver detalle →</Link></div><div className="notification-actions" onClick={event => event.stopPropagation()}>{!item.read && <button className="subtle-button" onClick={event => { event.stopPropagation(); setNotifications(notifications.map(current => current.id === item.id ? { ...current, read: true } : current)); }}>Marcar leída</button>}
+            <button type="button" className="notification-delete" title="Eliminar notificación" aria-label={'Eliminar ' + item.title} onClick={() => setConfirmingLocalDelete(item.id)}>
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg>
+            </button>
+</div></article>; })}
       {!visiblePersisted.length && !visible.length && !(showWelcome && (filter === "Todas" || (filter === "No leídas" ? !welcomeState.read : welcomeState.read))) && <div className="empty-state"><span>✓</span><h2>Todo al día</h2><p>No hay notificaciones para el filtro seleccionado.</p></div>}
+
     </section>
-  </>;
+    {deletePending && <div className="business-notification-confirm-backdrop" role="presentation"
+      onClick={() => { if (!busyDelete) { setConfirmingDelete(null); setConfirmingLocalDelete(null); } }}>
+      <div className="business-notification-confirm-dialog" role="alertdialog" aria-modal="true"
+        aria-labelledby="business-delete-title" aria-describedby="business-delete-description"
+        onClick={event => event.stopPropagation()}
+        onKeyDown={event => { if (event.key === 'Escape' && !busyDelete) { setConfirmingDelete(null); setConfirmingLocalDelete(null); } }}>
+        <span className="business-notification-confirm-symbol" aria-hidden="true">!</span>
+        <h2 id="business-delete-title">¿Eliminar notificación?</h2>
+        <p id="business-delete-description">Este aviso desaparecerá de la bandeja de {business.name}. Las solicitudes y tareas asociadas seguirán pendientes hasta que se resuelvan.</p>
+        <div className="business-notification-confirm-actions">
+          <button type="button" disabled={Boolean(busyDelete)} onClick={() => { setConfirmingDelete(null); setConfirmingLocalDelete(null); }}>Cancelar</button>
+          <button type="button" className="business-notification-confirm-danger" disabled={Boolean(busyDelete)} onClick={executeDelete}>{busyDelete ? "Eliminando…" : "Eliminar"}</button>
+        </div>
+      </div>
+    </div>}
+  </div>;
 }
