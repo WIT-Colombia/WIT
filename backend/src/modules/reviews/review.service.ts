@@ -82,7 +82,7 @@ export async function upsertResponse(userId: string, reviewId: string, body: str
     if (existing) return tx.businessReviewResponse.update({ where: { reviewId: r.id }, data: { body: clean } });
     const reply = await tx.businessReviewResponse.create({ data: { reviewId: r.id, ownerId: userId, body: clean } });
     const business = await tx.business.findUniqueOrThrow({ where: { id: r.businessId }, select: { name: true } });
-    await notifyPlatformUser(tx, {
+    if (r.userId !== userId) await notifyPlatformUser(tx, {
       userId: r.userId, sourceType: 'REVIEW_RESPONSE', sourceId: r.businessId,
       title: 'Respondieron a tu opinión',
       message: 'El equipo de ' + business.name + ' respondió a tu opinión. Entra a Mis opiniones para conocer su respuesta.',
