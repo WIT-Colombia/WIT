@@ -592,6 +592,10 @@ model Business {
   lifecycleStatus       BusinessLifecycleStatus     @default(DRAFT)
   publicationStatus     BusinessPublicationStatus   @default(UNPUBLISHED)
   visibilityStatus      BusinessVisibilityStatus    @default(REVIEW)
+  administrativeRestriction String?                 @db.VarChar(16)
+  administrativePreviousVisibility BusinessVisibilityStatus?
+  administrativeRestrictedAt DateTime?             @db.DateTime(3)
+  administrativeRestrictionReason String?          @db.VarChar(500)
   verificationStatus    BusinessVerificationStatus  @default(NONE)
   deletionStatus        BusinessDeletionStatus      @default(NONE)
   createdAt             DateTime                    @default(now()) @db.DateTime(3)
@@ -631,6 +635,7 @@ model Business {
   @@unique([businessAccountId, slug])
   @@index([businessAccountId, lifecycleStatus])
   @@index([publicationStatus, visibilityStatus, deletionStatus])
+  @@index([administrativeRestriction])
   @@index([categoryId, lifecycleStatus])
   @@index([createdById])
 }

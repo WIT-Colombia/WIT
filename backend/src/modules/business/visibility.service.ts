@@ -11,7 +11,7 @@ function expiresAtFrom(start: Date) {
 async function authorizedBusiness(userId: string, identifier: string) {
   const business = await prisma.business.findFirst({
     where: { OR: [{ id: identifier }, { publicId: identifier }], deletionStatus: { not: 'DELETED' }, memberships: { some: { userId, status: 'ACTIVE' } } },
-    select: { id: true, publicId: true, createdAt: true, visibilityStatus: true, memberships: { where: { userId, status: 'ACTIVE' }, select: { role: true, permissions: { where: { allowed: true }, select: { permission: true } } } } },
+    select: { id: true, publicId: true, createdAt: true, visibilityStatus: true, administrativeRestriction: true, memberships: { where: { userId, status: 'ACTIVE' }, select: { role: true, permissions: { where: { allowed: true }, select: { permission: true } } } } },
   });
   if (!business) throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos el negocio.');
   const membership = business.memberships[0];
@@ -36,10 +36,11 @@ export async function ensureInitialVisibilityPeriod(tx: any, businessId: string,
 
 export async function renewVisibility(userId: string, identifier: string) {
   const business = await authorizedBusiness(userId, identifier);
+  if (business.administrativeRestriction) throw new AppError(403, 'BUSINESS_ADMIN_RESTRICTION', 'Este negocio tiene una restricción administrativa. Comunícate con soporte para solicitar revisión.');
   const startsAt = new Date();
   const period = await prisma.$transaction(async tx => {
     const next = await tx.businessVisibilityPeriod.create({ data: { businessId: business.id, kind: 'MANUAL_EXTENSION', startsAt, expiresAt: expiresAtFrom(startsAt), requestedById: userId, reason: 'Renovación manual' } });
-    await tx.business.update({ where: { id: business.id }, data: { visibilityStatus: 'VISIBLE' } });
+    await tx.business.update({ where: { id: business.id, administrativeRestriction: null }, data: { visibilityStatus: 'VISIBLE' } });
     // A fresh forty-day period supersedes unanswered reminders from the old period.
     // Keep the history but stop showing expired warnings as unread.
     await tx.businessNotification.updateMany({
@@ -57,9 +58,10 @@ export async function renewVisibility(userId: string, identifier: string) {
 
 export async function setVisibility(userId: string, identifier: string, visible: boolean) {
   const business = await authorizedBusiness(userId, identifier);
+  if (business.administrativeRestriction) throw new AppError(403, 'BUSINESS_ADMIN_RESTRICTION', 'Este negocio tiene una restricción administrativa. Comunícate con soporte para solicitar revisión.');
   const period = await currentPeriod(business.id);
   const activePeriod = period && period.startsAt <= new Date() && period.expiresAt > new Date();
   const visibilityStatus = visible ? (activePeriod ? 'VISIBLE' : 'EXPIRED') : 'HIDDEN';
-  await prisma.business.update({ where: { id: business.id }, data: { visibilityStatus } });
+  await prisma.business.update({ where: { id: business.id, administrativeRestriction: null }, data: { visibilityStatus } });
   return { businessId: business.id, visibilityStatus, period };
 }

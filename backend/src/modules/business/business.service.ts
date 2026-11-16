@@ -274,6 +274,7 @@ async function assertPublicationPermission(userId: string, identifier: string) {
 
 export async function publishBusiness(userId: string, identifier: string, meta?: RequestMeta) {
   const current = await assertPublicationPermission(userId, identifier);
+  if (current.administrativeRestriction) throw new AppError(403, 'BUSINESS_ADMIN_RESTRICTION', 'El negocio está sujeto a una restricción administrativa y no puede publicarse.');
   const readiness = publicationReadiness(current);
   if (!readiness.ready) {
     throw new AppError(422, 'BUSINESS_PUBLICATION_INCOMPLETE', 'Completa los requisitos antes de publicar el negocio.', { requirements: JSON.stringify(readiness.blockers) });
@@ -286,7 +287,7 @@ export async function publishBusiness(userId: string, identifier: string, meta?:
     throw new AppError(409, 'BUSINESS_PUBLICATION_MANAGED', 'El estado administrativo actual no permite publicación automática.');
   }
   const updated = await prisma.$transaction(async (tx) => {
-    let business = await tx.business.update({ where: { id: current.id }, data: publishedBusinessState, include: businessInclude });
+    let business = await tx.business.update({ where: { id: current.id, administrativeRestriction: null }, data: publishedBusinessState, include: businessInclude });
     await audit(tx, userId, current.id, 'BUSINESS_PUBLISHED', stateOf(current), stateOf(business), meta);
     business = await assignAutomaticPioneer(tx, business, userId);
     return business;

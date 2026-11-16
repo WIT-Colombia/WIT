@@ -4,7 +4,36 @@ export type AdminPermission = 'BUSINESSES_READ' | 'CATALOG_READ' | 'REPORTS_REVI
 export type RealAdmin = { user: { id: string; publicId: string; displayName: string; emailNormalized: string | null; avatarUrl: string | null; locale: string }; role: 'ADMIN' | 'SUPER_ADMIN'; permissions: AdminPermission[] };
 export type AdministratorRecord = { id: string; displayName: string; emailNormalized: string | null; status: string; adminRoleAssignments: { role: string; active: boolean }[]; adminPermissionGrants: { permission: string; granted: boolean }[] };
 export async function listAdministrators() { return (await request<{ administrators: AdministratorRecord[] }>('/admin/administrators')).administrators; }
-export type AdminBusinessRecord = { id: string; publicId: string; name: string; description: string | null; email: string | null; phone: string | null; lifecycleStatus: string; publicationStatus: string; visibilityStatus: string; verificationStatus: string; deletionStatus: string; completeness: number; createdAt: string; updatedAt: string; createdBy: { displayName: string; emailNormalized: string | null }; location: { cityName: string; countryCode: string; address: string } | null; category: { code: string; translations: { locale: string; name: string }[] } };
+export type AdminBusinessRecord = {
+  id: string; publicId: string; name: string; description: string | null;
+  email: string | null; phone: string | null;
+  lifecycleStatus: string; publicationStatus: string; visibilityStatus: string; verificationStatus: string; deletionStatus: string;
+  administrativeRestriction: 'HIDDEN' | 'SUSPENDED' | null;
+  administrativePreviousVisibility: string | null; administrativeRestrictedAt: string | null;
+  administrativeRestrictionReason: string | null;
+  isPro: boolean;
+  completeness: number; createdAt: string; updatedAt: string;
+  createdBy: { displayName: string; emailNormalized: string | null };
+  memberships: Array<{ user: { displayName: string; nickname: string | null } }>;
+  _count: { offers: number; reviews: number; reports: number; memberships: number };
+  location: { cityName: string; regionName: string | null; countryCode: string; zoneName: string | null; address: string } | null;
+  category: { id: string; code: string; translations: Array<{ locale: string; name: string }> };
+};
+export type AdminBusinessesFilters = {
+  q?: string; status?: string; city?: string; categoryId?: string; visibility?: string;
+  verification?: string; plan?: string; restriction?: string; from?: string; to?: string; order?: string;
+};
+export type AdminBusinessOverview = {
+  generatedAt: string; total: number; visible: number; hidden: number; expired: number;
+  adminHidden: number; suspended: number; verified: number; pro: number; reported: number;
+  review: number; deleted: number; expiring: number;
+};
+export type AdminBusinessFilterOptions = {
+  categories: Array<{ id: string; name: string }>; cities: Array<{ value: string; label: string }>;
+};
+export type AdminBusinessAuditEntry = { id: string; action: string; reason: string | null; comment: string | null;
+  createdAt: string; actor: { displayName: string } | null };
+export type AdminVisibilityAction = 'HIDE' | 'SUSPEND' | 'RESTORE';
 export type AdminBusinessPage = { businesses: AdminBusinessRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
 export type AdminBusinessAnalytics = {
   period: '6m' | '12m' | '24m' | '60m' | 'all';
@@ -21,7 +50,32 @@ export function getAdminBusinessAnalytics(filters: { period: string; city: strin
   const query = new URLSearchParams(filters);
   return request<AdminBusinessAnalytics>('/admin/business-analytics?' + query.toString());
 }
-export function listAdminBusinesses(q = '', page = 1, pageSize = 20, status = '') { const params = new URLSearchParams({ q, page: String(page), pageSize: String(pageSize) }); if (status) params.set('status', status); return request<AdminBusinessPage>(`/admin/businesses?${params.toString()}`); }
+export function listAdminBusinesses(
+  q = '', page = 1, pageSize = 20, status = '', advanced: AdminBusinessesFilters = {},
+) {
+  const params = new URLSearchParams({ q, page: String(page), pageSize: String(pageSize) });
+  if (status) params.set('status', status);
+  for (const key of ['city','categoryId','visibility','verification','plan','restriction','from','to','order'] as const)
+    if (advanced[key]) params.set(key, advanced[key]!);
+  return request<AdminBusinessPage>(`/admin/businesses?${params.toString()}`);
+}
+export function getAdminBusinessesOverview() { return request<AdminBusinessOverview>('/admin/businesses/overview'); }
+export function getAdminBusinessesFilterOptions() { return request<AdminBusinessFilterOptions>('/admin/businesses/filters'); }
+export function getAdminBusinessHistory(id: string) {
+  return request<{ history: AdminBusinessAuditEntry[] }>(`/admin/businesses/${encodeURIComponent(id)}/history`);
+}
+export function changeAdminBusinessVisibility(id: string, action: AdminVisibilityAction, reason: string) {
+  return request<{ message: string; visibilityStatus: string; administrativeRestriction: string | null }>(
+    `/admin/businesses/${encodeURIComponent(id)}/visibility`,
+    { method: 'POST', body: JSON.stringify({ action, reason }) },
+  );
+}
+export function adminBusinessVisibilityLabel(business: Pick<AdminBusinessRecord, 'visibilityStatus' | 'administrativeRestriction'>): string {
+  if (business.administrativeRestriction === 'SUSPENDED') return 'Suspendido por Admin';
+  if (business.administrativeRestriction === 'HIDDEN') return 'Oculto por Admin';
+  return ({ VISIBLE: 'Visible', HIDDEN: 'Oculto por propietario', EXPIRED: 'Vencido', REVIEW: 'En revisión' } as Record<string, string>)[business.visibilityStatus]
+    ?? 'Estado desconocido';
+}
 export async function getAdminBusiness(id: string) { return (await request<{ business: AdminBusinessRecord }>(`/admin/businesses/${encodeURIComponent(id)}`)).business; }
 export function deleteAdminBusiness(id: string, reason: string, confirmation: string) {
   return request<{ id: string; status: 'DELETED'; message: string }>(

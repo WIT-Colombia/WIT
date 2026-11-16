@@ -109,13 +109,16 @@ function GrowthCanvas({ points, measure, shape }: { points: Datum[]; measure: Me
         aria-label={item.label + ': ' + number(values[index])} onFocus={() => setActive(index)} onClick={() => setActive(index)} />)}
       {selected && active !== null && <>
         <line x1={selectedX} x2={selectedX} y1={top} y2={baseline} className="ad-business-growth-guide" pointerEvents="none" />
+        <line x1={left} x2={width - right} y1={yy(selected[measure])} y2={yy(selected[measure])}
+          className="ad-business-growth-guide" strokeDasharray="4 5" opacity=".42" pointerEvents="none" />
         <circle cx={selectedX} cy={yy(selected[measure])} r="6" fill="#fff" stroke="#245cf2" strokeWidth="2.5" pointerEvents="none" />
         {(() => {
-          const x = Math.max(left, Math.min(width - right - 84, selectedX - 42));
+          const x = Math.max(left + 10, Math.min(width - right - 95, selectedX - 42));
           const y = Math.max(3, yy(selected[measure]) - 44);
           return <g className="ad-business-growth-tooltip" pointerEvents="none">
-            <rect x={x} y={y} width="84" height="33" rx="9" fill="#172c53" />
-            <text x={x + 42} y={y + 22} textAnchor="middle" fill="#fff">{number(selected[measure])}</text>
+            <rect x={x - 10} y={y - 11} width="104" height="54" rx="10" fill="#172c53" />
+            <text x={x + 42} y={y + 8} textAnchor="middle" fill="#bacefb" fontSize="11">{selected.label}</text>
+            <text x={x + 42} y={y + 29} textAnchor="middle" fill="#fff" fontWeight="800" fontSize="15">{number(selected[measure])}</text>
           </g>;
         })()}
       </>}

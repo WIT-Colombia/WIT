@@ -1,0 +1,227 @@
+/* XAMUKO Admin | Negocios: operational controls. Scoped to the existing Admin design system. */
+.admin-refresh .ad-ops-overview,.admin-refresh .ad-ops-overview *,
+.admin-refresh .ad-ops-advanced-filters,.admin-refresh .ad-ops-advanced-filters *,
+.admin-refresh .ad-ops-filter-bar,.admin-refresh .ad-ops-filter-bar *,
+.admin-refresh .ad-ops-audit,.admin-refresh .ad-ops-audit *{box-sizing:border-box}
+.admin-refresh .ad-ops-overview{
+  min-width:0;margin:0 0 22px;padding:23px;
+  border:1px solid #dfe7f5;border-radius:20px;
+  background:linear-gradient(155deg,#fff 0%,#f9fbff 100%);
+  box-shadow:0 10px 30px #14305f0c;color:#17294a;
+}
+.admin-refresh .ad-ops-section-heading{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:15px;margin-bottom:19px;min-width:0;
+}
+.admin-refresh .ad-ops-section-heading>div{min-width:0}
+.admin-refresh .ad-ops-section-heading>div>span{
+  display:block;margin:0 0 6px;color:#285be1;font-size:10px;
+  font-weight:850;letter-spacing:.12em;
+}
+.admin-refresh .ad-ops-section-heading h2{
+  margin:0 0 5px;color:#162a4b;font-size:clamp(20px,2vw,25px);
+  font-weight:850;letter-spacing:-.03em;line-height:1.24;
+}
+.admin-refresh .ad-ops-section-heading p{margin:0;color:#657895;font-size:12px;line-height:1.6}
+.admin-refresh .ad-ops-section-heading button{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:42px;padding:9px 14px;border:1px solid #cfdcf2;
+  background:#fff;border-radius:10px;color:#2854a1;font-size:12px;font-weight:750;cursor:pointer;
+}
+.admin-refresh .ad-ops-section-heading button:hover{background:#edf4ff}
+.admin-refresh .ad-ops-overview-error{
+  color:#aa3758;background:#fff2f4;border:1px solid #f4d5dc;
+  border-radius:11px;padding:12px 14px;font-size:12px;overflow-wrap:anywhere;
+}
+.admin-refresh .ad-ops-kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.admin-refresh .ad-ops-kpi{
+  display:flex;flex-direction:column;gap:11px;min-width:0;min-height:150px;
+  padding:15px;border:1px solid #e1e9f6;border-radius:15px;background:#fff;
+  box-shadow:0 6px 17px #12305f07;
+}
+.admin-refresh .ad-ops-kpi-heading{display:flex;align-items:center;gap:9px;min-width:0;color:#5a708e;font-size:11px;font-weight:750;line-height:1.3}
+.admin-refresh .ad-ops-kpi-heading>span{min-width:0;overflow-wrap:anywhere}
+.admin-refresh .ad-ops-kpi-heading i{
+  display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;
+  color:#285cf1;background:#eaf1ff;border-radius:10px;font-style:normal;
+}
+.admin-refresh .ad-ops-kpi.tone-green i{color:#138752;background:#e7f8ee}
+.admin-refresh .ad-ops-kpi.tone-violet i{color:#773fe1;background:#f0eaff}
+.admin-refresh .ad-ops-kpi.tone-red i{color:#b73755;background:#fff0f4}
+.admin-refresh .ad-ops-kpi.tone-amber i{color:#a96e16;background:#fff5dc}
+.admin-refresh .ad-ops-kpi.tone-neutral i{color:#65748a;background:#edf1f7}
+.admin-refresh .ad-ops-kpi>strong{
+  font-size:clamp(22px,2.3vw,30px);font-weight:850;letter-spacing:-.04em;
+  line-height:1.1;color:#142744;font-variant-numeric:tabular-nums;
+}
+.admin-refresh .ad-ops-kpi>small{margin-top:auto;font-size:10px;color:#7a8ba3;line-height:1.45}
+.admin-refresh .ad-ops-distribution{
+  display:grid;gap:16px;min-width:0;margin-top:20px;padding:20px;
+  border:1px solid #e2e9f6;border-radius:15px;background:#fff;
+}
+.admin-refresh .ad-ops-distribution header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.admin-refresh .ad-ops-distribution h3{margin:0 0 4px;font-size:15px;font-weight:800;color:#1d3151}
+.admin-refresh .ad-ops-distribution header p,.admin-refresh .ad-ops-distribution>p{margin:0;color:#72839b;font-size:11px;line-height:1.5}
+.admin-refresh .ad-ops-distribution header strong{color:#2457c7;font-size:13px}
+.admin-refresh .ad-ops-distribution-bars{display:grid;gap:11px}
+.admin-refresh .ad-ops-distribution-row{
+  display:grid;grid-template-columns:minmax(120px,180px) minmax(0,1fr) 50px;
+  align-items:center;gap:12px;color:#4d6384;font-size:11px;line-height:1.4;
+}
+.admin-refresh .ad-ops-distribution-row strong{text-align:right;color:#223b64;font-variant-numeric:tabular-nums}
+.admin-refresh .ad-ops-distribution-track{height:9px;overflow:hidden;border-radius:99px;background:#ebeff7}
+.admin-refresh .ad-ops-distribution-track i{display:block;height:100%;border-radius:99px;min-width:0;transition:width .25s}
+.admin-refresh .ad-ops-distribution-track .visible{background:#22ad74}
+.admin-refresh .ad-ops-distribution-track .owner-hidden{background:#94a3b8}
+.admin-refresh .ad-ops-distribution-track .admin-hidden{background:#8054e8}
+.admin-refresh .ad-ops-distribution-track .suspended{background:#df5872}
+.admin-refresh .ad-ops-distribution-track .expired{background:#d5a048}
+.admin-refresh .businesses-page .ad-ops-filter-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;padding:10px 25px 15px;color:#687d99;font-size:11px;font-weight:700;
+}
+.admin-refresh .businesses-page .ad-ops-filter-bar>span{display:inline-flex;gap:8px;align-items:center}
+.admin-refresh .businesses-page .ad-ops-filter-bar>button{
+  display:inline-flex;align-items:center;gap:8px;border:0;background:transparent;
+  color:#245bd8;font-size:12px;font-weight:800;cursor:pointer;padding:9px 0;
+}
+.admin-refresh .businesses-page .ad-ops-advanced-filters{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+  margin:0 25px 19px;padding:18px;border:1px solid #dce6f7;border-radius:15px;background:#f8faff;
+}
+.admin-refresh .businesses-page .ad-ops-advanced-filters[hidden]{display:none!important}
+.admin-refresh .businesses-page .ad-ops-advanced-filters label{
+  display:grid;gap:8px;min-width:0;color:#354f76;font-size:11px;font-weight:750;
+}
+.admin-refresh .businesses-page .ad-ops-advanced-filters :is(select,input){
+  width:100%;min-width:0;min-height:44px;padding:10px 11px;
+  color:#1c3457;background:#fff;border:1px solid #d6e0ef;border-radius:10px;
+  font:600 12px/1.45 Arial,sans-serif;cursor:pointer;
+}
+.admin-refresh .businesses-page .ad-ops-advanced-filters :is(select,input):focus-visible{outline:3px solid #b5caff;outline-offset:2px}
+.admin-refresh .businesses-page .ad-ops-plan{
+  display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;
+  background:#eef2f8;color:#60758d;font-size:10px;font-weight:800;white-space:nowrap;
+}
+.admin-refresh .businesses-page .ad-ops-plan.pro{background:#efe8ff;color:#693bc9}
+.admin-refresh .businesses-page .ad-ops-reports{font-variant-numeric:tabular-nums;font-size:12px;font-weight:800;color:#334866}
+.admin-refresh .businesses-page .businesses-table{min-width:880px}
+.admin-refresh .businesses-page .business-row-actions{align-items:center;flex-wrap:wrap;gap:6px}
+.admin-refresh .businesses-page .business-row-actions .icon-button{
+  width:35px;height:35px;display:grid;place-items:center;border:1px solid #dce5f5;
+  background:#fff;color:#315bb0;border-radius:9px;cursor:pointer;
+}
+.admin-refresh .businesses-page .business-row-actions .ad-ops-hide-button{color:#637796}
+.admin-refresh .businesses-page .business-row-actions .ad-ops-suspend-button{color:#b44961;background:#fff8f9}
+.admin-refresh .businesses-page .business-row-actions .ad-ops-restore-button{color:#148354;background:#f2fff8}
+.admin-refresh .businesses-page .business-row-actions .icon-button:hover{filter:brightness(.95);border-color:#a9bce2}
+.admin-refresh .businesses-page .ad-ops-mobile-actions{display:flex;gap:8px;flex-wrap:wrap;margin:11px 0 0}
+.admin-refresh .businesses-page .ad-ops-mobile-actions button{
+  display:inline-flex;gap:6px;align-items:center;justify-content:center;flex:1 1 102px;
+  min-height:37px;border:1px solid #cddaf1;border-radius:9px;background:#f9fbff;
+  color:#294a7a;font-size:11px;font-weight:750;cursor:pointer;
+}
+.admin-refresh .businesses-page .ad-ops-mobile-actions button:hover{background:#edf3ff}
+.admin-refresh .admin-business-detail .ad-ops-detail-actions{
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;max-width:100%;
+}
+.admin-refresh .admin-business-detail .ad-ops-detail-actions button{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:42px;padding:10px 13px;border:1px solid #cdd9ec;border-radius:10px;
+  background:#fff;color:#315988;font-size:12px;font-weight:750;cursor:pointer;
+}
+.admin-refresh .admin-business-detail .ad-ops-detail-actions .ad-ops-restore-action{background:#ebfaef;border-color:#bfebd2;color:#16784d}
+.admin-refresh .admin-business-detail .ad-ops-detail-actions .ad-ops-suspend-action{color:#a9435b;border-color:#e7c4cd}
+.admin-refresh .admin-business-detail .ad-ops-detail-actions .ad-business-delete-trigger{color:#a92c45;border-color:#efcbd3}
+.admin-refresh .admin-business-detail .ad-ops-detail-notice{
+  margin:10px 0 18px;padding:13px 16px;border:1px solid #bfe8d1;background:#f0fff5;color:#166945;border-radius:12px;font-size:12px;
+}
+.admin-refresh .admin-business-detail .ad-ops-restriction-status{
+  display:flex;align-items:flex-start;gap:13px;margin:18px 0;padding:18px;
+  border:1px solid #efccd4;border-radius:15px;background:#fff7f9;color:#923e54;
+}
+.admin-refresh .admin-business-detail .ad-ops-restriction-status strong{font-size:13px}
+.admin-refresh .admin-business-detail .ad-ops-restriction-status p{margin:6px 0 0;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.admin-refresh .admin-business-detail .ad-ops-id{overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.admin-refresh .ad-ops-audit{
+  min-width:0;margin:22px 0;padding:23px;border:1px solid #dfe7f5;
+  border-radius:19px;background:#fff;box-shadow:0 8px 26px #14305f0e;
+}
+.admin-refresh .ad-ops-audit>p{color:#61758e;font-size:12px;line-height:1.5}
+.admin-refresh .ad-ops-audit-list{margin:0;padding:0;list-style:none}
+.admin-refresh .ad-ops-audit-list li{
+  display:flex;align-items:flex-start;gap:13px;padding:13px 0;border-top:1px solid #e9eff8;
+}
+.admin-refresh .ad-ops-audit-marker{
+  display:grid;place-items:center;flex:0 0 35px;width:35px;height:35px;
+  border-radius:10px;background:#ecf1ff;color:#275bdf;
+}
+.admin-refresh .ad-ops-audit-list li>div{min-width:0}
+.admin-refresh .ad-ops-audit-list strong{font-size:12px;color:#21395c}
+.admin-refresh .ad-ops-audit-list p{margin:6px 0;font-size:12px;color:#586e8e;line-height:1.5;overflow-wrap:anywhere}
+.admin-refresh .ad-ops-audit-list small{font-size:10px;color:#7d8ca3}
+.ad-business-visibility-overlay{
+  position:fixed;inset:0;z-index:11000;display:grid;place-items:center;
+  background:#102647b8;padding:22px;overflow-y:auto;backdrop-filter:blur(5px);
+}
+.ad-business-visibility-dialog{
+  box-sizing:border-box;width:min(100%,560px);max-height:min(92dvh,780px);
+  overflow-y:auto;padding:29px;border:1px solid #dee7f6;border-radius:21px;
+  background:#fff;box-shadow:0 25px 80px #0a235b55;color:#1b3153;
+}
+.ad-business-visibility-dialog *{box-sizing:border-box}
+.ad-business-visibility-symbol{
+  display:grid;place-items:center;width:53px;height:53px;margin:0 0 15px;
+  border:1px solid #cedeff;border-radius:15px;background:#eaf1ff;color:#2e5ecb;
+}
+.ad-business-visibility-dialog h2{margin:0 0 6px;font-size:clamp(21px,4vw,27px);line-height:1.22;letter-spacing:-.025em}
+.ad-business-visibility-dialog p{margin:0 0 12px;font-size:12px;line-height:1.7;color:#61748f}
+.ad-business-visibility-dialog .ad-business-visibility-name{font-size:14px;font-weight:850;color:#284b82}
+.ad-business-visibility-dialog form{display:grid;gap:10px;margin-top:20px}
+.ad-business-visibility-dialog label{font-size:12px;font-weight:800;color:#304765}
+.ad-business-visibility-dialog label small{font-weight:600;color:#7989a0}
+.ad-business-visibility-dialog textarea{
+  resize:vertical;width:100%;min-height:105px;padding:13px;
+  border:1px solid #cbd8ed;border-radius:11px;color:#253c5f;
+  background:#fcfdff;font:500 13px/1.6 Arial,sans-serif;
+}
+.ad-business-visibility-dialog textarea:focus-visible{outline:3px solid #bbcbff;outline-offset:2px}
+.ad-business-visibility-dialog .ad-business-visibility-hint{font-size:11px;color:#697d99}
+.ad-business-visibility-dialog .ad-business-visibility-error{color:#ad3d50;font-weight:700}
+.ad-business-visibility-dialog-actions{display:flex;gap:11px;justify-content:flex-end;flex-wrap:wrap}
+.ad-business-visibility-dialog-actions button{
+  display:inline-flex;align-items:center;justify-content:center;min-height:44px;
+  padding:11px 16px;border-radius:10px;border:1px solid #cbd7eb;
+  color:#294a75;background:#fff;font-size:12px;font-weight:800;cursor:pointer;
+}
+.ad-business-visibility-dialog-actions .confirm-restrict{background:#af3e56;border-color:#af3e56;color:#fff}
+.ad-business-visibility-dialog-actions .confirm-restore{background:#196c55;border-color:#196c55;color:#fff}
+.ad-business-visibility-dialog-actions button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:1350px){.admin-refresh .ad-ops-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:1050px){.admin-refresh .ad-ops-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:900px){
+  .admin-refresh .businesses-page .ad-ops-advanced-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .ad-ops-distribution-row{grid-template-columns:minmax(100px,150px) minmax(0,1fr) 40px}
+}
+@media(max-width:700px){
+  .admin-refresh .ad-ops-overview,.admin-refresh .ad-ops-audit{padding:16px;border-radius:16px}
+  .admin-refresh .ad-ops-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .admin-refresh .ad-ops-kpi{padding:12px;min-height:128px;gap:9px}
+  .admin-refresh .ad-ops-kpi-heading{font-size:10px;gap:7px}
+  .admin-refresh .ad-ops-kpi-heading i{width:31px;height:31px;flex-basis:31px}
+  .admin-refresh .ad-ops-distribution{padding:14px}
+  .admin-refresh .businesses-page .ad-ops-filter-bar{padding:9px 14px 12px}
+  .admin-refresh .businesses-page .ad-ops-advanced-filters{margin:0 12px 16px;padding:13px;gap:10px}
+  .admin-refresh .ad-ops-distribution-row{grid-template-columns:1fr minmax(0,1fr) 32px;gap:6px}
+  .admin-refresh .admin-business-detail .ad-ops-detail-actions{width:100%}
+  .admin-refresh .admin-business-detail .ad-ops-detail-actions button{flex:1 1 135px}
+  .ad-business-visibility-dialog{padding:21px}
+}
+@media(max-width:410px){
+  .admin-refresh .ad-ops-distribution-row{grid-template-columns:1fr auto}
+  .admin-refresh .ad-ops-distribution-track{grid-column:1/-1;grid-row:2}
+  .admin-refresh .businesses-page .ad-ops-advanced-filters{grid-template-columns:minmax(0,1fr)}
+  .ad-business-visibility-overlay{padding:12px}
+  .ad-business-visibility-dialog-actions button{flex:1 1 100%}
+}
+@media(prefers-reduced-motion:reduce){.admin-refresh .ad-ops-distribution-track i{transition:none}}

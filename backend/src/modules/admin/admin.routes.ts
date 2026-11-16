@@ -4,7 +4,7 @@ import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-or
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
 import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
-import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses } from './admin-businesses.service.js';
+import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, setAdminBusinessVisibility } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
 import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto, moderateAdminContent } from './admin-content.service.js';
@@ -17,8 +17,26 @@ export const adminRouter = Router();
 adminRouter.use('/documents', adminDocumentsRouter);
 adminRouter.get('/me', requireAdmin(), adminMeController);
 adminRouter.get('/businesses', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
-  try { res.setHeader('Cache-Control', 'no-store'); res.json(await listAdminBusinesses({ q: String(req.query.q ?? ''), page: Number(req.query.page) || 1, pageSize: Number(req.query.pageSize) || 20, status: String(req.query.status ?? '') })); }
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await listAdminBusinesses({ q: String(req.query.q ?? ''), page: Number(req.query.page) || 1, pageSize: Number(req.query.pageSize) || 20, status: String(req.query.status ?? ''), city: String(req.query.city ?? ''), categoryId: String(req.query.categoryId ?? ''), visibility: String(req.query.visibility ?? ''), verification: String(req.query.verification ?? ''), plan: String(req.query.plan ?? ''), restriction: String(req.query.restriction ?? ''), from: String(req.query.from ?? ''), to: String(req.query.to ?? ''), order: String(req.query.order ?? '') })); }
   catch (error) { next(error); }
+});
+adminRouter.get('/businesses/overview', requireAdmin('BUSINESSES_READ'), async (_req, res, next) => {
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessesOverview()); } catch (error) { next(error); }
+});
+adminRouter.get('/businesses/filters', requireAdmin('BUSINESSES_READ'), async (_req, res, next) => {
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessesFilters()); } catch (error) { next(error); }
+});
+adminRouter.get('/businesses/:id/history', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessHistory(String(req.params.id))); } catch (error) { next(error); }
+});
+adminRouter.post('/businesses/:id/visibility', requireTrustedOrigin, requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try {
+    const context = adminFromRequest(req);
+    if (context.role !== 'SUPER_ADMIN')
+      return res.status(403).json({ error: { code: 'ADMIN_SUPER_ADMIN_REQUIRED', message: 'Solo el administrador principal puede imponer o levantar medidas administrativas.' } });
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await setAdminBusinessVisibility(String(req.params.id), context.userId, String(req.body?.action ?? ''), String(req.body?.reason ?? '')));
+  } catch (error) { next(error); }
 });
 // Prefer an unambiguous endpoint that cannot match /businesses/:id.
 // Keep /businesses/analytics as a compatibility alias for existing clients.
