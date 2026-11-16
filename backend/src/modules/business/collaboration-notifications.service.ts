@@ -28,6 +28,13 @@ async function processInvitation(membershipId: string, now: Date) {
     const deadline = collaborationDeadline(membership.expiresAt, now);
     if (!deadline) return 0;
     const expired = deadline === 'EXPIRED';
+    if (expired) {
+      const changed = await tx.businessMembership.updateMany({
+        where: { id: membership.id, status: 'INVITED', expiresAt: { lte: now } },
+        data: { status: 'EXPIRED' },
+      });
+      if (!changed.count) return 0;
+    }
     const event = expired ? 'COLLAB_INVITE_EXPIRED' : 'COLLAB_INVITE_1DAY';
     const ownerIds = [...new Set(membership.business.memberships.map(item => item.userId))].filter(id => id !== membership.userId);
     const audience: Array<{ userId: string; channel: string }> = [{ userId: membership.userId, channel: 'user' }];
