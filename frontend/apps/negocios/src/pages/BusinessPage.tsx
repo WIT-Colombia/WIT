@@ -133,7 +133,9 @@ export function BusinessPage() {
     return () => { active = false; };
   }, [authState.status, accountId, refresh, retryAttempt, setBusiness, setBusinesses]);
   const visibleInvitations = invitationsAccount === accountId && accountId ? invitations : [];
-  const visibleTransfers = transfersAccount === accountId && accountId ? transfers : [];
+  const visibleTransfers = transfersAccount === accountId && accountId
+    ? transfers.filter(item => item.status === 'PENDING' && (!item.expiresAt || Date.parse(item.expiresAt) > Date.now()))
+    : [];
   const selectBusiness = (item: BusinessDetails, index: number) => { setBusiness(item); navigate(`/mi-negocio/detalle/${index}`); };
   const listedBusinesses = businesses.map((item, index) => ({ item, index })).filter(({ item }) => item.deletionStatus !== "DELETED");
   return <><PageHeader eyebrow="" title="Mis negocios" description="Administra todos los negocios asociados a tu cuenta." />
