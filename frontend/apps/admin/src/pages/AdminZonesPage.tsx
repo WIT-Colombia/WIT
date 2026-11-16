@@ -121,6 +121,10 @@ function ZoneDecisionDialog({ value, records, close, save }: {
   const [error, setError] = useState('');
   const dialogRef = useRef<HTMLElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef(close);
+  const workingRef = useRef(working);
+  closeRef.current = close;
+  workingRef.current = working;
   const originalStatus = previous?.state ?? value.zone.state;
 
   useEffect(() => {
@@ -129,9 +133,9 @@ function ZoneDecisionDialog({ value, records, close, save }: {
     document.body.style.overflow = 'hidden';
     cancelRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !working) {
+      if (event.key === 'Escape' && !workingRef.current) {
         event.preventDefault();
-        close();
+        closeRef.current();
       }
       if (event.key !== 'Tab') return;
       const controls = [...(dialogRef.current?.querySelectorAll<HTMLElement>(
@@ -151,7 +155,7 @@ function ZoneDecisionDialog({ value, records, close, save }: {
       document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
-  }, [close, working]);
+  }, []);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
