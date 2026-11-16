@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PageHeader } from "../components/common/PageHeader";
+import "./NotificationsPage.css";
 import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type PersistedBusinessNotification } from "../services/businessApiClient";
 import { toBusinessDetails } from "../services/realBusinessAdapter";
@@ -153,6 +153,7 @@ export function NotificationsPage() {
     return 0;
   };
   const currentLocal = notifications.filter(item =>
+    item.id === "welcome" && business.source !== "real" ? true :
     item.businessId ? item.businessId === selectedBusinessId :
       business.source !== "real" && Boolean(item.businessName) && item.businessName === business.name);
   const visible = currentLocal.filter(item => filter === "Todas" || (filter === "No leídas" ? !item.read : item.read))
@@ -194,8 +195,33 @@ export function NotificationsPage() {
   };
   const respondTransfer = async (id: string, accept: boolean) => { setBusyTransfer(id); setApiError(""); try { await businessApi.respondOwnershipTransfer(id, accept); const fresh = (await businessApi.list()).businesses.map(toBusinessDetails); setBusinesses(fresh); const selected = fresh.find(value => value.id === business.id) ?? fresh[0]; if (selected) setBusiness(selected); await reloadTransfers(); await reloadPersisted(); setConfirmingTransfer(null); } catch (cause) { setApiError(cause instanceof Error ? cause.message : "No se pudo responder la transferencia."); } finally { setBusyTransfer(null); } };
 
-  return <>
-    <PageHeader eyebrow="BANDEJA DEL NEGOCIO" title="Notificaciones" description={business.name ? `Avisos y decisiones relacionados exclusivamente con ${business.name}.` : "Selecciona un negocio para consultar sus notificaciones."} action={totalUnread > 0 && <button type="button" className="outline-button" disabled={markingAll} onClick={() => void markAllRead()}>{markingAll ? "Actualizando…" : "Marcar todas como leídas"}</button>} />
+
+  const deletePending = Boolean(confirmingDelete || confirmingLocalDelete);
+  const executeDelete = () => {
+    if (confirmingDelete) { void removePersisted(confirmingDelete); return; }
+    if (!confirmingLocalDelete) return;
+    if (confirmingLocalDelete === "business-welcome") changeWelcome(welcomeState.read, true);
+    else setNotifications(notifications.filter(item => item.id !== confirmingLocalDelete));
+    setConfirmingLocalDelete(null);
+  };
+  return <div className="business-notifications-page">
+    <header className="business-notifications-heading">
+      <div className="business-notifications-heading-main">
+        <span className="business-notifications-heading-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+        </span>
+        <div>
+          <span className="business-notifications-eyebrow">ACTIVIDAD DE TU NEGOCIO</span>
+          <h1>Notificaciones</h1>
+          <p>{business.name ? "Avisos y decisiones relacionados con " + business.name + "." : "Selecciona un negocio para consultar sus notificaciones."}</p>
+          <span className="business-notifications-count" aria-live="polite">{totalUnread} {totalUnread === 1 ? "pendiente" : "pendientes"} por leer</span>
+        </div>
+      </div>
+      {totalUnread > 0 && <button type="button" className="business-notifications-mark-all" disabled={markingAll} onClick={() => void markAllRead()}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+        {markingAll ? "Actualizando…" : "Marcar todas como leídas"}
+      </button>}
+    </header>
     {apiError && <div className="notification-page-alert" role="alert">{apiError}</div>}
     <section className="surface-card notifications-card">
       <div className="notification-tabs" role="group" aria-label="Filtrar notificaciones"><button type="button" onClick={() => setFilter("Todas")} className={filter === "Todas" ? "active" : ""} aria-pressed={filter === "Todas"}>Todas</button><button type="button" onClick={() => setFilter("No leídas")} className={filter === "No leídas" ? "active" : ""} aria-pressed={filter === "No leídas"}>No leídas <span>{totalUnread}</span></button><button type="button" onClick={() => setFilter("Leídas")} className={filter === "Leídas" ? "active" : ""} aria-pressed={filter === "Leídas"}>Leídas</button></div>
