@@ -1,0 +1,252 @@
+/* XAMUKO · página 404 aprobada. Ilustración SVG de calidad vectorial (4K+), texto HTML. */
+.xamuko-not-found {
+  --x404-main: #7b3ffb;
+  --x404-main-dark: #5815b5;
+  --x404-pin-light: #bd83ff;
+  --x404-map-light: #e7d6ff;
+  --x404-map-soft: #f1e8ff;
+  --x404-map-dark: #d1b1fa;
+  --x404-map-stroke: #d3b9f4;
+  --x404-cloud: #e6d9ff;
+  --x404-ink: #281348;
+  --x404-gradient-top: #f6f0ff;
+  --x404-gradient-bottom: #e8d4ff;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  width: min(100%, 1080px);
+  min-width: 0;
+  min-height: clamp(550px, calc(100svh - 170px), 780px);
+  margin: 22px auto 38px;
+  padding: clamp(28px, 4vw, 48px) 24px 88px;
+  border: 1px solid color-mix(in srgb, var(--x404-main) 14%, white);
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse 40% 40% at 97% 3%, var(--x404-gradient-top), transparent 92%),
+    radial-gradient(ellipse 40% 40% at 0% 84%, var(--x404-gradient-top), transparent 95%),
+    #fff;
+  color: var(--x404-ink);
+  box-shadow: 0 18px 50px rgba(36,26,82,.07);
+  font-family: Inter, 'Segoe UI', Arial, sans-serif;
+  text-align: center;
+}
+.xamuko-not-found *, .xamuko-not-found *::before, .xamuko-not-found *::after { box-sizing: border-box; }
+.xamuko-not-found[data-variant="business"] {
+  --x404-main: #2563eb;
+  --x404-main-dark: #0943b4;
+  --x404-pin-light: #55bcff;
+  --x404-map-light: #d9eaff;
+  --x404-map-soft: #edf6ff;
+  --x404-map-dark: #abcfff;
+  --x404-map-stroke: #b3d2f5;
+  --x404-cloud: #d5e9ff;
+  --x404-ink: #0b2851;
+  --x404-gradient-top: #e5f3ff;
+  --x404-gradient-bottom: #c8e6ff;
+}
+.xamuko-not-found[data-variant="admin"] {
+  --x404-main: #193b72;
+  --x404-main-dark: #091d3c;
+  --x404-pin-light: #4a7fb9;
+  --x404-map-light: #d4e3f6;
+  --x404-map-soft: #ebf2fa;
+  --x404-map-dark: #aec7e2;
+  --x404-map-stroke: #bdd1ea;
+  --x404-cloud: #d4e4f7;
+  --x404-ink: #0b2345;
+  --x404-gradient-top: #e8effa;
+  --x404-gradient-bottom: #c8d8ed;
+}
+.xamuko-not-found[data-variant="landing"] {
+  --x404-main: #cf1682;
+  --x404-main-dark: #970b6d;
+  --x404-pin-light: #f476c3;
+  --x404-map-light: #f5d8f5;
+  --x404-map-soft: #fceafb;
+  --x404-map-dark: #e9bfe7;
+  --x404-map-stroke: #e4bfe5;
+  --x404-cloud: #f4d9f4;
+  --x404-ink: #281239;
+  --x404-gradient-top: #fce7f8;
+  --x404-gradient-bottom: #f2d2f2;
+}
+.x404-ambient {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: var(--x404-gradient-bottom);
+  opacity: .45;
+}
+.x404-ambient-top { width: 230px; height: 230px; right: -100px; top: -135px; }
+.x404-ambient-left { width: 250px; height: 200px; left: -145px; bottom: -55px; }
+.x404-ambient-right { width: 250px; height: 200px; right: -140px; bottom: -75px; }
+.x404-wave {
+  position: absolute;
+  z-index: -1;
+  left: -6%;
+  right: -6%;
+  bottom: -66px;
+  height: 150px;
+  border-radius: 50% 50% 0 0 / 70% 66% 0 0;
+  pointer-events: none;
+}
+.x404-wave-back {
+  bottom: -80px;
+  transform: rotate(4deg);
+  background: color-mix(in srgb, var(--x404-gradient-bottom) 65%, white);
+}
+.x404-wave-front {
+  bottom: -99px;
+  transform: rotate(-3deg);
+  background: color-mix(in srgb, var(--x404-gradient-bottom) 85%, white);
+  opacity: .8;
+}
+.x404-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 650px);
+  min-width: 0;
+  margin: 0 auto;
+}
+.x404-brand { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 14px; }
+.x404-brand img {
+  display: block;
+  width: clamp(176px, 22vw, 228px);
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.x404-brand-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 4px 16px;
+  border-radius: 100px;
+  background: color-mix(in srgb, var(--x404-main) 17%, white);
+  color: var(--x404-main-dark);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+.x404-artwork {
+  display: block;
+  width: min(100%, 475px);
+  height: auto;
+  margin: 0 auto -2px;
+  overflow: visible;
+  filter: drop-shadow(0 8px 9px rgba(19,29,78,.07));
+}
+.x404-error-code {
+  margin: 0;
+  color: var(--x404-ink);
+  font-size: clamp(53px, 7.2vw, 86px);
+  font-weight: 850;
+  line-height: 1.02;
+  letter-spacing: -.055em;
+}
+.xamuko-not-found h1 {
+  margin: 5px 0 0;
+  color: var(--x404-ink);
+  font-size: clamp(20px, 2.6vw, 30px);
+  font-weight: 780;
+  line-height: 1.24;
+  letter-spacing: -.025em;
+  overflow-wrap: anywhere;
+}
+.x404-description {
+  max-width: 450px;
+  margin: 15px 0 23px;
+  color: #48566d;
+  font-size: clamp(13px, 1.2vw, 15px);
+  font-weight: 450;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.x404-actions { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 10px; }
+.xamuko-not-found .x404-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: min(100%, 252px);
+  max-width: 100%;
+  min-height: 48px;
+  padding: 12px 22px;
+  border: 1px solid transparent;
+  border-radius: 100px;
+  background: linear-gradient(145deg, var(--x404-main), var(--x404-main-dark));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 760;
+  line-height: 1.4;
+  text-decoration: none;
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--x404-main) 22%, transparent);
+  transition: transform .2s, filter .2s, box-shadow .2s;
+}
+.xamuko-not-found .x404-primary:hover {
+  color: #fff;
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 9px 22px color-mix(in srgb, var(--x404-main) 26%, transparent);
+}
+.xamuko-not-found .x404-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 100px;
+  background: transparent;
+  color: var(--x404-main-dark);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.xamuko-not-found .x404-back:hover {
+  background: color-mix(in srgb, var(--x404-main) 9%, white);
+}
+.x404-primary svg, .x404-back svg { flex: 0 0 18px; width: 18px; height: 18px; }
+.xamuko-not-found :is(a,button):focus-visible { outline: 3px solid var(--x404-main); outline-offset: 4px; }
+@media (max-width: 900px) {
+  .xamuko-not-found { min-height: 610px; margin: 16px auto 30px; padding: 29px 20px 85px; border-radius: 22px; }
+  .x404-brand { margin-bottom: 3px; }
+  .x404-artwork { width: min(100%, 410px); }
+}
+@media (max-width: 600px) {
+  .xamuko-not-found {
+    width: 100%;
+    min-height: min(650px, calc(100svh - 115px));
+    margin: 10px auto 28px;
+    padding: 22px 14px 70px;
+    border-radius: 18px;
+  }
+  .x404-brand img { width: 178px; }
+  .x404-brand-badge { font-size: 10px; min-height: 22px; }
+  .x404-artwork { width: min(100%, 320px); }
+  .x404-error-code { font-size: clamp(51px, 13vw, 70px); }
+  .xamuko-not-found h1 { font-size: clamp(19px, 5.4vw, 24px); }
+  .x404-description { font-size: 12px; max-width: 320px; margin: 13px auto 19px; }
+  .xamuko-not-found .x404-primary { min-height: 45px; width: min(100%, 255px); font-size: 13px; }
+  .xamuko-not-found .x404-back { font-size: 12px; }
+}
+@media (max-width: 390px) {
+  .xamuko-not-found { padding: 15px 10px 64px; }
+  .x404-artwork { width: min(100%, 260px); }
+  .x404-brand img { width: 158px; }
+  .x404-error-code { font-size: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xamuko-not-found .x404-primary { transition: none; }
+}
