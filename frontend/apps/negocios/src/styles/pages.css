@@ -1329,3 +1329,11 @@
 .business-app .notifications-card :is(button,a,a:hover){text-decoration:none!important}
 @media(max-width:900px){.business-app .notifications-card .notification-actions{grid-column:2;justify-content:flex-start}}
 @media(max-width:600px){.business-app .notifications-card .notification-actions{grid-column:1 / -1;width:100%;justify-content:stretch}.business-app .notifications-card .notification-delete-confirm{width:100%;justify-content:flex-start}.business-app .notifications-card .notification-delete-confirm span{width:100%;max-width:none}.business-app .notifications-card .notification-discard{width:100%}}
+
+
+/* Shared notification card language, preserving Business blue palette. */
+.notifications-card .notification-row{border-radius:12px;margin:8px 12px;border:1px solid #e5ecf5;box-shadow:0 4px 14px rgba(25,52,89,.035)}
+.notifications-card .notification-row.unread{border-left:3px solid var(--wit-primary)}
+.notifications-card .notification-welcome-row .notification-icon{width:44px;height:44px;border-radius:13px;background:#eaf1ff;color:var(--wit-primary)}
+.notifications-card .notification-row .notification-actions{align-self:center}
+@media(max-width:700px){.notifications-card .notification-row{margin:7px 8px;grid-template-columns:40px minmax(0,1fr);gap:10px}.notifications-card .notification-row .notification-actions{grid-column:2;justify-self:start}.notifications-card .notification-welcome-row .notification-icon{width:38px;height:38px}}
