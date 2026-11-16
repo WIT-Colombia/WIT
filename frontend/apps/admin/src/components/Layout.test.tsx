@@ -82,7 +82,7 @@ describe('Sidebar aprobado de Admin', () => {
     expect(group('configuracion').querySelector('a[href="/zones"]')).toBeNull();
     expect(group('configuracion').querySelector('a[href="/categories"]')).toBeNull();
     expect(navigation.find(item => item.path === '/zones')?.label).toBe('Zonas');
-    expect(navigation.find(item => item.path === '/zones')?.pending).toBe(true);
+    expect(navigation.find(item => item.path === '/zones')?.pending).not.toBe(true);
   });
 
   it('no muestra header, búsqueda ni acceso al perfil y conserva la hamburguesa móvil', () => {

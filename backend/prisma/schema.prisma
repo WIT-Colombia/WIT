@@ -213,6 +213,7 @@ enum VisibilityPeriodKind {
 }
 
 enum AuditEntityType {
+  ZONE
   USER
   BUSINESS_ACCOUNT
   BUSINESS
@@ -503,6 +504,52 @@ model Session {
 
   @@index([userId, expiresAt])
   @@index([revokedAt])
+}
+
+enum ZoneScope {
+  MUNICIPALITY
+  DEPARTMENT
+}
+
+enum ZoneLaunchState {
+  CLOSED
+  SCHEDULED
+  OPEN
+  PAUSED
+}
+
+model ZoneLaunchAlert {
+  id                   String     @id @default(uuid()) @db.Char(36)
+  scope                ZoneScope
+  code                 String     @db.VarChar(5)
+  emailNormalized      String     @db.VarChar(320)
+  confirmTokenHash     String     @unique @db.Char(64)
+  confirmExpiresAt     DateTime   @db.DateTime(3)
+  confirmedAt          DateTime?  @db.DateTime(3)
+  lastDispatchAttempt  DateTime?  @db.DateTime(3)
+  notifiedAt           DateTime?  @db.DateTime(3)
+  unsubscribedAt       DateTime?  @db.DateTime(3)
+  createdAt            DateTime   @default(now()) @db.DateTime(3)
+  updatedAt            DateTime   @updatedAt @db.DateTime(3)
+
+  @@unique([scope, code, emailNormalized])
+  @@index([confirmedAt, notifiedAt, unsubscribedAt])
+  @@index([scope, code])
+}
+
+model ZoneLaunch {
+  id          String          @id @default(uuid()) @db.Char(36)
+  scope       ZoneScope
+  code        String          @db.VarChar(5)
+  name        String          @db.VarChar(160)
+  state       ZoneLaunchState @default(CLOSED)
+  opensAt     DateTime?       @db.DateTime(3)
+  updatedById String?         @db.Char(36)
+  createdAt   DateTime        @default(now()) @db.DateTime(3)
+  updatedAt   DateTime        @updatedAt @db.DateTime(3)
+
+  @@unique([scope, code])
+  @@index([state, opensAt])
 }
 
 model BusinessBrand {

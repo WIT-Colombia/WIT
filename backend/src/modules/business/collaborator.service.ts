@@ -244,49 +244,7 @@ export async function readNotificationActorAvatar(userId: string, businessId: st
   const avatar = notice?.actorUser?.avatarUrl;
   if (!avatar?.startsWith('private-avatar:')) throw new AppError(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'No hay fotografía para este aviso.');
   const key = avatar.slice('private-avatar:'.length);
-  if (!new RegExp('^user-avatars/[0-9a-f-]{36}/[0-9a-f-]{36}[.](jpg|png|webp)
-    throw new AppError(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'No hay fotografía para este aviso.');
-  try {
-    return { content: await readPhoto(key), mimeType: photoMimeType(key) };
-  } catch (error) {
-    if (isPhotoMissingError(error) || (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'ENOENT'))
-      throw new AppError(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'La fotografía ya no está disponible.');
-    throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo leer la fotografía.');
-  }
-}
-export async function unreadNotificationCount(userId: string, businessId: string) {
-  return prisma.businessNotification.count({ where: { userId, businessId, readAt: null } });
-}
-
-/** Mark all events in the selected business as read, including older pages. */
-export async function markAllNotificationsRead(userId: string, businessId: string) {
-  await prisma.businessNotification.updateMany({
-    where: { userId, businessId, readAt: null }, data: { readAt: new Date() },
-  });
-  return { ok: true };
-}
-
-/**
- * Remove only the authenticated recipient's inbox entry. The related
- * membership, invitation and ownership-transfer workflows are untouched.
- */
-export async function deleteNotification(userId: string, id: string, businessId?: string) {
-  const deleted = await prisma.businessNotification.deleteMany({ where: { id, userId, ...(businessId ? { businessId } : { type: 'COLLABORATION_INVITATION' }) } });
-  if (!deleted.count) throw new AppError(404, 'NOTIFICATION_NOT_FOUND', 'Notificación no encontrada.');
-  return { deleted: true };
-}
-export async function markNotificationRead(userId: string, id: string, businessId?: string) {
-  const notification = await prisma.businessNotification.findFirst({
-    where: { id, userId, ...(businessId ? { businessId } : { type: 'COLLABORATION_INVITATION' }) },
-    select: { id: true, readAt: true },
-  });
-  if (!notification) throw new AppError(404, 'NOTIFICATION_NOT_FOUND', 'Notificación no encontrada.');
-  if (!notification.readAt) await prisma.businessNotification.update({
-    where: { id }, data: { readAt: new Date() },
-  });
-  return { ok: true };
-}
-).test(key))
+  if (!/^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(key))
     throw new AppError(404, 'NOTIFICATION_AVATAR_NOT_FOUND', 'No hay fotografía para este aviso.');
   try {
     return { content: await readPhoto(key), mimeType: photoMimeType(key) };

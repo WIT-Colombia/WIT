@@ -18,7 +18,11 @@ export const corsMiddleware: RequestHandler = (request, response, next) => {
   }
 
   response.vary('Origin');
-  if (!env.trustedOrigins.includes(origin)) {
+  // Public launch information and explicit opt-in are also used by the marketing landing.
+  // Permit only the two official marketing origins, only on the dedicated public zone routes.
+  const landingZonesOrigin = ['https://xamuko.com', 'https://www.xamuko.com'].includes(origin)
+    && request.path.startsWith('/api/v1/public/zones/');
+  if (!env.trustedOrigins.includes(origin) && !landingZonesOrigin) {
     if (request.method === 'OPTIONS') {
       response.status(403).json({ error: { code: 'CORS_ORIGIN_NOT_ALLOWED', message: 'Origen no permitido.' } });
       return;
@@ -28,7 +32,7 @@ export const corsMiddleware: RequestHandler = (request, response, next) => {
   }
 
   response.setHeader('Access-Control-Allow-Origin', origin);
-  response.setHeader('Access-Control-Allow-Credentials', 'true');
+  if (!landingZonesOrigin) response.setHeader('Access-Control-Allow-Credentials', 'true');
   response.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With, X-Admin-CSRF, X-Admin-Activation-Code');
   if (request.method === 'OPTIONS') {

@@ -505,3 +505,27 @@ export async function getAdminDocumentBlob(id: string): Promise<Blob> {
   if (!response.headers.get('content-type')?.includes('application/pdf')) throw new Error('El servidor no devolvió un documento PDF.');
   return response.blob();
 }
+
+export type ZoneScope = 'MUNICIPALITY'|'DEPARTMENT';
+export type ZoneLaunchState = 'CLOSED'|'SCHEDULED'|'OPEN'|'PAUSED';
+export type ZoneEntry = {
+  id?:string; code:string; name:string; state:ZoneLaunchState;
+  opensAt:string|null; source:'DIRECT'|'DEPARTMENT'|'INITIAL'|'DEFAULT';
+  configured:boolean;registered:number;ready:number;departmentCode?:string;context?:string;
+};
+export type ZoneHistoryItem = {id:string;action:string;reason:string|null;entityId:string;createdAt:string;
+  actor:{displayName:string}|null;previousState:unknown;newState:unknown};
+export type ZoneRegistry = {
+  municipalities:ZoneEntry[];departments:ZoneEntry[];
+  records:Array<{id:string;scope:ZoneScope;code:string;name:string;state:ZoneLaunchState;opensAt:string|null;updatedAt:string}>;
+  audit:ZoneHistoryItem[];serverTime:string;
+  nextLaunch:{scope:ZoneScope;code:string;name:string;opensAt:string;timezone:string}|null;
+  summary:{municipalitiesActive:number;municipalitiesScheduled:number;municipalitiesClosed:number;
+    registered:number;ready:number};
+};
+export function getAdminZones(){return request<ZoneRegistry>('/admin/zones');}
+export function updateAdminZone(input:{scope:ZoneScope;code:string;state:ZoneLaunchState;opensAt:string|null;reason:string}){
+  return request<{zone:{id:string;state:ZoneLaunchState}}>('/admin/zones',{
+    method:'PUT',body:JSON.stringify(input),
+  });
+}

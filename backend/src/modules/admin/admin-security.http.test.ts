@@ -81,10 +81,20 @@ test('directorio de usuarios exige sesión Admin, muestra perfiles y protege la 
     assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: target.id } })).status, 'ACTIVE');
 
     const account = await prisma.businessAccount.create({ data: { name: 'Cuenta protegida', createdById: target.id }, select: { id: true } });
+    const category = await prisma.category.create({
+      data: { code: 'admin-user-deletion-' + target.id }, select: { id: true },
+    });
+    const linkedBusiness = await prisma.business.create({
+      data: { businessAccountId: account.id, createdById: target.id, categoryId: category.id,
+        name: 'Negocio que bloquea la baja', slug: 'admin-user-deletion-' + target.id },
+      select: { id: true },
+    });
     const blocked = await request('/api/v1/admin/users/' + target.id + '/deactivate', {
       method: 'POST', headers: { ...headers, origin: env.trustedOrigins[0]!, 'x-admin-csrf': csrf, 'content-type': 'application/json' }, body,
     });
     assert.equal(blocked.status, 409, 'No debe eliminar personas con cuentas de negocio vinculadas');
+    await prisma.business.delete({ where: { id: linkedBusiness.id } });
+    await prisma.category.delete({ where: { id: category.id } });
     await prisma.businessAccount.delete({ where: { id: account.id } });
 
     const self = await request('/api/v1/admin/users/' + fixture.userId + '/deactivate', {
@@ -103,6 +113,8 @@ test('directorio de usuarios exige sesión Admin, muestra perfiles y protege la 
     });
     assert.equal(repeated.status, 409);
   } finally {
+    await prisma.business.deleteMany({ where: { createdById: target.id } });
+    await prisma.category.deleteMany({ where: { code: 'admin-user-deletion-' + target.id } });
     await prisma.businessAccount.deleteMany({ where: { createdById: target.id } });
     await prisma.auditLog.deleteMany({ where: { entityType: 'USER', entityId: target.id } });
     await prisma.user.delete({ where: { id: target.id } });

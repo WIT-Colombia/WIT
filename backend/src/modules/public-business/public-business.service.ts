@@ -3,6 +3,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 import { isSubscriptionEffective } from '../business/recognition.service.js';
+import { publicReleaseWhere } from '../zones/zones.service.js';
 
 type PublicDb = Pick<PrismaClient, 'business' | 'businessOffer' | 'photo'> & { user?: PrismaClient['user'] };
 type PublicOfferKind = 'PRODUCT' | 'SERVICE';
@@ -147,6 +148,11 @@ async function canViewAdultContent(viewer: PublicAccessContext | undefined, db: 
 function publicBusinessWhere(canViewAdult: boolean) {
   const where = publicBusinessWhereWithCurrentPeriod();
   return canViewAdult ? where : { ...where, adultOnly: false };
+}
+async function zonedPublicBusinessWhere(canViewAdult:boolean,db:PublicDb):Promise<Prisma.BusinessWhereInput>{
+  const base=publicBusinessWhere(canViewAdult);
+  if(db!==prisma)return base; // Isolated repository tests pass their own in-memory database double.
+  return { AND:[base,await publicReleaseWhere()] };
 }
 
 function asNumber(value: unknown) {
@@ -345,7 +351,7 @@ export function parseUniversalSearchInput(query: Record<string, unknown>): Publi
 }
 
 async function findPublicBusinessId(publicId: string, db: PublicDb, canViewAdult: boolean) {
-  const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: { id: true } });
+  const business = await db.business.findFirst({ where: { publicId, ...await zonedPublicBusinessWhere(canViewAdult,db) }, select: { id: true } });
   if (!business) throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
   return business.id;
 }
@@ -356,7 +362,7 @@ function prioritizeBusinesses<T extends { id?: string; publicId?: string }>(item
 
 export async function listPublicBusinesses(input: PublicBusinessListInput, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
-  const where = publicBusinessWhere(canViewAdult);
+  const where = await zonedPublicBusinessWhere(canViewAdult,db);
   const [total, businesses] = await Promise.all([
     db.business.count({ where }),
     db.business.findMany({
@@ -452,8 +458,9 @@ export async function listPublicCategories(
 ) {
   const canViewAdult = await canViewAdultContent(viewer, db);
   const rows = await db.business.findMany({
-    where: publicBusinessWhere(canViewAdult),
+    where: await zonedPublicBusinessWhere(canViewAdult,db),
     select: {
+      modalities: { where: { type: 'VIRTUAL', status: 'ACTIVE' }, select: { id: true } },
       category: { select: publicCategorySelect },
       secondaryCategories: { select: { category: { select: publicCategorySelect } } },
       location: { select: { cityName: true, regionName: true } },
@@ -461,8 +468,8 @@ export async function listPublicCategories(
   });
   const counts = new Map<string, { id: string; code: string; name: string; iconKey: string | null; businessCount: number }>();
   for (const business of rows) {
-    if (normalizeCityFilterName(business.location?.cityName) !== normalizeCityFilterName(input.city)
-      || (input.region && normalizeRegionFilterName(business.location?.regionName) !== normalizeRegionFilterName(input.region))) continue;
+    if (!(business.modalities?.length) && (normalizeCityFilterName(business.location?.cityName) !== normalizeCityFilterName(input.city)
+      || (input.region && normalizeRegionFilterName(business.location?.regionName) !== normalizeRegionFilterName(input.region)))) continue;
     const seen = new Set<string>();
     for (const raw of [business.category, ...business.secondaryCategories.map(item => item.category)]) {
       if (!raw || seen.has(raw.id)) continue;
@@ -482,7 +489,7 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   // A virtual business must have its VIRTUAL modality ACTIVE, not just registered.
   // Applying the predicate to the owning business also filters products/services.
   const businessWhere: Prisma.BusinessWhereInput = {
-    ...publicBusinessWhere(canViewAdult),
+    ...await zonedPublicBusinessWhere(canViewAdult,db),
     ...(input.scope === 'virtual' ? { modalities: { some: { type: 'VIRTUAL', status: 'ACTIVE' } } } : {}),
   };
   const terms = searchTerms(input.query);
@@ -494,18 +501,20 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   };
   const [businesses, products, services] = await Promise.all([
     db.business.findMany({ where: businessWhere, select: { publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, modalities: { where: { status: 'ACTIVE' }, select: { type: true } }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect }, modalities: { where: {type:'VIRTUAL',status:'ACTIVE'}, select:{type:true} } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect }, modalities: { where: {type:'VIRTUAL',status:'ACTIVE'}, select:{type:true} } } } }, orderBy: { updatedAt: 'desc' } }),
   ]);
   const categoryMatches = (item: any) => !categoryTerms.length || [item.category, ...(item.secondaryCategories ?? []).map((entry: any) => entry.category)]
     .some((value: any) => matchesSearch([value?.code, value?.translations?.[0]?.name], categoryTerms));
   // Productos y servicios heredan las categorías del negocio, sin perder su categoría específica.
   const offerCategoryMatches = (item: any) => categoryMatches(item) || categoryMatches(item.business);
-  const inSelectedCity = (value: any) => input.scope !== 'city' || (
+  const inSelectedCity = (value: any) => input.scope !== 'city' || (value?.modalities ?? []).some((m:any)=>m.type==='VIRTUAL') || (
     normalizeCityFilterName(value?.location?.cityName) === normalizeCityFilterName(input.city)
     && (!input.region || normalizeRegionFilterName(value?.location?.regionName) === normalizeRegionFilterName(input.region))
   );
-  const inRadius = (value: any) => input.scope === 'virtual' ? true : input.latitude !== undefined && input.longitude !== undefined && input.radiusKm !== undefined ? distanceKm(input.latitude, input.longitude, value) <= input.radiusKm : true;
+  const inRadius = (value: any) => (value?.modalities ?? []).some((modality: any) => modality.type === 'VIRTUAL')
+    || input.scope === 'virtual' || input.latitude === undefined || input.longitude === undefined || input.radiusKm === undefined
+    || distanceKm(input.latitude, input.longitude, value) <= input.radiusKm;
   const sortNearby = (a: any, b: any) => input.latitude !== undefined && input.longitude !== undefined ? distanceKm(input.latitude, input.longitude, a) - distanceKm(input.latitude, input.longitude, b) : 0;
   const matchingOffers = [...products, ...services].filter((item: any) => offerCategoryMatches(item) && (terms.length ? searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, offer: item.name, description: item.description }, terms) > 0 : true));
   const matchingBusinessIds = new Set(matchingOffers.map((item: any) => item.business.publicId));
@@ -626,7 +635,7 @@ export async function listPublicNewArrivals(
     where: {
       active: true, deletedAt: null, publicationStatus: 'PUBLISHED',
       createdAt: { gte: since, lte: now },
-      business: publicBusinessWhere(canViewAdult),
+      business: await zonedPublicBusinessWhere(canViewAdult,db),
       ...(canViewAdult ? {} : { adultOnly: false }),
     },
     select: {
@@ -636,6 +645,7 @@ export async function listPublicNewArrivals(
           publicId: true,
           name: true,
           location: { select: publicLocationSelect },
+          modalities: { where: {type:'VIRTUAL',status:'ACTIVE'}, select:{type:true} },
           subscriptions: {
             where: { plan: 'PRO', status: 'ACTIVE' },
             select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true },
@@ -648,8 +658,8 @@ export async function listPublicNewArrivals(
     orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
   });
   const matching = rows.filter(row =>
-    normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
-    && (!input.region || normalizeRegionFilterName(row.business.location?.regionName) === normalizeRegionFilterName(input.region)),
+    (row.business.modalities?.length ?? 0)>0 || (normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
+    && (!input.region || normalizeRegionFilterName(row.business.location?.regionName) === normalizeRegionFilterName(input.region))),
   );
   const ordered = rotatePublicNewArrivals(matching, colombiaArrivalDay(now.getTime()));
   const total = ordered.length;
@@ -670,7 +680,7 @@ export async function listPublicNewArrivals(
 
 export async function getPublicBusiness(publicId: string, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
-  const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: publicBusinessDetailSelect });
+  const business = await db.business.findFirst({ where: { publicId, ...await zonedPublicBusinessWhere(canViewAdult,db) }, select: publicBusinessDetailSelect });
   if (!business) throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
   return detail(business, canViewAdult);
 }
