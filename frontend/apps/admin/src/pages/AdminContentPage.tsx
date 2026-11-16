@@ -8,6 +8,7 @@ import { AdminContentPhoto } from './AdminContentPhoto';
 import { AdminContentAnalyticsPanel } from './AdminContentAnalyticsPanel';
 import { contentStatusLabel, displayDate, offerKindLabel, offerPrice } from './AdminContentLabels';
 import './AdminContentRefresh.css';
+import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
 
 const num=(value:number)=>new Intl.NumberFormat('es-CO').format(value);
 function Status({offer}:{offer:Pick<AdminOfferRecord,'publicationStatus'|'deletedAt'>}){
@@ -97,7 +98,7 @@ export function AdminContentPage(){
         <label>Categoría<select value={categoryId} onChange={e=>apply('categoryId',e.target.value)}><option value="">Todas las categorías</option>{insights?.filters.categories.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select></label>
       </div>
       <div className="ac-result-strip"><strong>{loading?'Consultando…':directory?num(directory.pagination.total)+(directory.pagination.total===1?' publicación':' publicaciones'):'Directorio'}</strong>
-        <span>Accede a cada ficha para ver fotografías, precios y relaciones.</span></div>
+        <span>{!loading && directory ? adminDirectoryPageSummary(directory.pagination, directory.offers.length, 'publicaciones') : 'Accede a cada ficha para ver fotografías, precios y relaciones.'}</span></div>
       {loading?<StatePanel kind="loading" title="Consultando contenido" message="Cargando productos y servicios registrados."/>:
         error?<StatePanel kind="error" title="No se pudo cargar el contenido" message={error} retry={()=>setRevision(v=>v+1)}/>:
         directory&&(directory.offers.length===0?<StatePanel kind="empty" title="Sin resultados" message="Prueba otros filtros o consulta otro período."/>:<>

@@ -9,7 +9,6 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/businesses', label: 'Negocios', icon: 'store', group: 'plataforma', description: 'Directorio y gestión administrativa de negocios.' },
     { path: '/users', label: 'Usuarios', icon: 'users', group: 'plataforma', description: 'Consulta de cuentas reales según permisos.' },
     { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Consulta de productos y servicios reales.' },
-    { path: '/reviews', label: 'Opiniones', icon: 'star', group: 'plataforma', description: 'Consulta de opiniones reales.' },
     { path: '/pioneers', label: 'Negocios Pioneros', icon: 'star', group: 'plataforma', description: 'Registro y asignaciones de pioneros.' },
     { path: '/zones', label: 'Zonas', icon: 'globe', group: 'plataforma', description: 'Configuración de zonas pendiente de API.', pending: true },
     { path: '/categories', label: 'Categorías', icon: 'grid', group: 'plataforma', description: 'Consulta del catálogo real.' },

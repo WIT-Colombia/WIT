@@ -63,6 +63,17 @@ describe('Sidebar aprobado de Admin', () => {
     expect(document.querySelector('.xa-profile-link > svg')).toBeNull();
   });
 
+  it('retira Opiniones del sidebar sin afectar los reportes de comentarios', () => {
+    show('/content');
+    expect(navigation.some(item => item.path === '/reviews')).toBe(false);
+    expect(sidebar().querySelector('a[href="/reviews"]')).toBeNull();
+    expect(within(group('soporte')).getByRole('link', { name: 'Reportes de comentarios' }))
+      .toHaveAttribute('href', '/reports');
+    expect(within(group('plataforma')).getByRole('link', { name: 'Usuarios' })).toHaveAttribute('href', '/users');
+    expect(within(group('plataforma')).getByRole('link', { name: 'Negocios' })).toHaveAttribute('href', '/businesses');
+    expect(within(group('plataforma')).getByRole('link', { name: 'Contenido' })).toHaveAttribute('href', '/content');
+  });
+
   it('agrupa Zonas y Categorías en Gestión de la plataforma, con las rutas intactas', () => {
     show('/zones');
     expect(group('plataforma')).toHaveAttribute('open');

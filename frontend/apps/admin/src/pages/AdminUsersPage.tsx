@@ -6,6 +6,7 @@ import { getSession } from '../services/adminService';
 import { getAdminUserOverview, listAdminUsers, type AdminUserPage, type AdminUserOverview, type AdminUserRecord } from '../services/adminApiClient';
 import { AdminUserAnalyticsPanel } from './AdminUserAnalyticsPanel';
 import './AdminUsersRefresh.css';
+import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
 
 const date = (value: string | null) => value
   ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value))
@@ -93,7 +94,7 @@ export function AdminUsersPage() {
         <button className="au-primary-button" type="submit"><Icon name="search" size={17}/> Buscar</button>
         <button className="au-outline-button" type="button" onClick={clear}><Icon name="refresh" size={16}/> Limpiar</button>
       </form>
-      <div className="au-result-count"><span>{loading?'Consultando registros…':data?number(data.pagination.total)+' '+(data.pagination.total===1?'usuario encontrado':'usuarios encontrados'):'Directorio'}</span><span>La exportación corresponde únicamente a la página visible.</span></div>
+      <div className="au-result-count"><span>{loading?'Consultando registros…':data?number(data.pagination.total)+' '+(data.pagination.total===1?'usuario encontrado':'usuarios encontrados'):'Directorio'}</span><span>{!loading && data ? adminDirectoryPageSummary(data.pagination, data.users.length, 'usuarios') + ' · Exportación: solo página visible' : 'La exportación corresponde únicamente a la página visible.'}</span></div>
       {loading?<StatePanel kind="loading" title="Consultando usuarios" message="Cargando registros reales de la plataforma."/>:
         error?<StatePanel kind="error" title="No se pudo cargar el directorio" message={error} retry={()=>setRevision(n=>n+1)}/>:
         data&& (data.users.length===0 ? <StatePanel kind="empty" title="No hay resultados" message="Modifica los filtros o prueba otra búsqueda."/>:
