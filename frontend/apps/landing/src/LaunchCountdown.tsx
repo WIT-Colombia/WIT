@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { apiBaseUrl } from './config/publicUrls';
 import { destinations } from './config/destinations';
 import './LaunchCountdown.css';
@@ -15,6 +15,24 @@ export function LaunchCountdown(){
   const [stamp,setStamp]=useState(Date.now());
   const [delta,setDelta]=useState(0);
   const [refresh,setRefresh]=useState(0);
+  const [email,setEmail]=useState('');
+  const [consent,setConsent]=useState(false);
+  const [submitState,setSubmitState]=useState<'ready'|'sending'|'success'|'error'>('ready');
+  const [formError,setFormError]=useState('');
+  const subscribe=async(event:FormEvent<HTMLFormElement>)=>{
+    event.preventDefault();
+    if(!next||!consent||submitState==='sending')return;
+    setSubmitState('sending');setFormError('');
+    try{
+      const response=await fetch(apiBaseUrl+'/public/zones/alerts',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({scope:next.scope,code:next.code,email,consent}),
+      });
+      if(!response.ok)throw new Error('No pudimos registrar el aviso. Revisa el correo e inténtalo nuevamente.');
+      setSubmitState('success');
+    }catch(e){setSubmitState('error');setFormError(e instanceof Error?e.message:'No pudimos registrar el aviso.');}
+  };
+  useEffect(()=>{setSubmitState('ready');setEmail('');setConsent(false);},[next?.code]);
   useEffect(()=>{
     const controller=new AbortController();
     const started=Date.now();
@@ -51,6 +69,22 @@ export function LaunchCountdown(){
       <div className="landing-launch__actions"><a className="landing-launch__main" href={destinations.businessRegister}>
         Registra tu negocio <span aria-hidden="true">→</span></a>
         <a className="landing-launch__secondary" href={destinations.explore}>Explora opciones virtuales</a></div>
+      <div className="landing-launch__alert">
+        {submitState==='success'?<p role="status">¡Listo! Revisa tu correo y confirma tu solicitud para que podamos avisarte.</p>:
+          <form onSubmit={subscribe}>
+            <h3>Avísame cuando XAMUKO llegue</h3>
+            <div className="landing-launch__alert-row"><label className="sr-only" htmlFor="launch-alert-email">Correo electrónico</label>
+              <input id="launch-alert-email" type="email" autoComplete="email" value={email} required maxLength={320}
+                onChange={e=>setEmail(e.target.value)} placeholder="Tu correo electrónico"/>
+              <button type="submit" disabled={!consent||submitState==='sending'}>
+                {submitState==='sending'?'Enviando…':'Avisarme'}</button></div>
+            <label className="landing-launch__consent"><input type="checkbox" checked={consent}
+              onChange={e=>setConsent(e.target.checked)} required/>
+              <span>Autorizo el uso de mi correo exclusivamente para recibir un aviso cuando se habilite esta zona. Consulta la <a href={destinations.privacy}>política de privacidad</a>.</span>
+            </label>
+            {formError&&<p className="landing-launch__alert-error" role="alert">{formError}</p>}
+          </form>}
+      </div>
     </div>
     <div className="landing-launch__timer" role="timer" aria-label={'Tiempo hasta la apertura de '+next.name}>
       <p>ESTAREMOS DISPONIBLES EN</p>
