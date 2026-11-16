@@ -264,6 +264,22 @@ export function NotificationsPage() {
             </button>
 </div></article>; })}
       {!visiblePersisted.length && !visible.length && !(showWelcome && (filter === "Todas" || (filter === "No leídas" ? !welcomeState.read : welcomeState.read))) && <div className="empty-state"><span>✓</span><h2>Todo al día</h2><p>No hay notificaciones para el filtro seleccionado.</p></div>}
+
     </section>
-  </>;
+    {deletePending && <div className="business-notification-confirm-backdrop" role="presentation"
+      onClick={() => { if (!busyDelete) { setConfirmingDelete(null); setConfirmingLocalDelete(null); } }}>
+      <div className="business-notification-confirm-dialog" role="alertdialog" aria-modal="true"
+        aria-labelledby="business-delete-title" aria-describedby="business-delete-description"
+        onClick={event => event.stopPropagation()}
+        onKeyDown={event => { if (event.key === 'Escape' && !busyDelete) { setConfirmingDelete(null); setConfirmingLocalDelete(null); } }}>
+        <span className="business-notification-confirm-symbol" aria-hidden="true">!</span>
+        <h2 id="business-delete-title">¿Eliminar notificación?</h2>
+        <p id="business-delete-description">Este aviso desaparecerá de la bandeja de {business.name}. Las solicitudes y tareas asociadas seguirán pendientes hasta que se resuelvan.</p>
+        <div className="business-notification-confirm-actions">
+          <button type="button" disabled={Boolean(busyDelete)} onClick={() => { setConfirmingDelete(null); setConfirmingLocalDelete(null); }}>Cancelar</button>
+          <button type="button" className="business-notification-confirm-danger" disabled={Boolean(busyDelete)} onClick={executeDelete}>{busyDelete ? "Eliminando…" : "Eliminar"}</button>
+        </div>
+      </div>
+    </div>}
+  </div>;
 }
