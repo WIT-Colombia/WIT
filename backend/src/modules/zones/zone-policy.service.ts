@@ -90,7 +90,7 @@ export async function publicZoneAvailability(city:string,department:string){
   const result=resolveLocalityPolicy({city,department},zones,now);
   return { city, department, status:result.status, opensAt:result.status==='SCHEDULED'?
     result.zone?.opensAt?.toISOString()??null:null,
-    coveredBy:result.zone?.level??null, virtualAvailable:true,serverTime:now.toISOString() };
+    coveredBy:result.zone?.level??null,zoneKey:result.zone?.key??null,virtualAvailable:true,serverTime:now.toISOString() };
 }
 export async function publicUpcomingZone(){
   const now=new Date(),zones=await readZonePolicy();
