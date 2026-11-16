@@ -199,7 +199,7 @@ export async function setPermissions(userId: string, id: string, values: string[
       const labels: Record<Permission, string> = { MANAGE_CATALOG: 'Productos y servicios', MANAGE_PROMOTIONS: 'Promociones', READ_ANALYTICS: 'Estadísticas', EDIT_BUSINESS: 'Información del negocio' };
       const permissionText = permissions.map(permission => labels[permission]).join(', ');
       await tx.businessNotification.create({ data: { userId: membership.userId, businessId: membership.businessId, membershipId: id, type: 'COLLABORATION_UPDATE', title: 'Permisos actualizados', message: `El propietario actualizó tus permisos en ${membership.business.name}: ${permissionText}.` } });
-      if (previousPermissions.some(previous => !permissions.includes(previous))) await notifyPlatformUser(tx, {
+      if (previousPermissions.some(previous => !(permissions as readonly string[]).includes(previous))) await notifyPlatformUser(tx, {
         userId: membership.userId, sourceType: 'COLLABORATION_PERMISSIONS', sourceId: membership.businessId,
         title: 'Tus permisos de colaboración cambiaron',
         message: `Algunos permisos que tenías en ${membership.business.name} fueron retirados. Revisa tus accesos actuales en XAMUKO Business.`,
