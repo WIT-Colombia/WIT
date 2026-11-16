@@ -8,7 +8,7 @@ export type PendingZoneAlert = { code: string; city: string; expiresAt: number }
 const path = (code: string) => '/api/v1/user/zones/alerts/' + encodeURIComponent(code);
 
 export function savePendingZoneAlert(code: string, city: string) {
-  if (!/^\\d{5}$/.test(code)) return;
+  if (!/^\d{5}$/.test(code)) return;
   try {
     window.localStorage.setItem(PENDING_KEY, JSON.stringify({
       code, city: city.slice(0, 160), expiresAt: Date.now() + INTENT_LIFETIME_MS,
@@ -23,7 +23,7 @@ export function readPendingZoneAlert(): PendingZoneAlert | null {
     const raw: unknown = JSON.parse(value);
     if (!raw || typeof raw !== 'object') return null;
     const item = raw as Partial<PendingZoneAlert>;
-    if (typeof item.code === 'string' && /^\\d{5}$/.test(item.code)
+    if (typeof item.code === 'string' && /^\d{5}$/.test(item.code)
       && typeof item.city === 'string' && item.city.length <= 160
       && typeof item.expiresAt === 'number' && item.expiresAt > Date.now()
       && item.expiresAt <= Date.now() + INTENT_LIFETIME_MS) {
