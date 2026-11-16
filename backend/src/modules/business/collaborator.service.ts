@@ -117,7 +117,7 @@ async function respond(actorId: string, membershipId: string, status: 'ACTIVE'|'
     if (result.count !== 1) throw new AppError(409, 'INVITATION_ALREADY_RESOLVED', 'La invitación ya fue procesada.');
     await tx.businessNotification.updateMany({ where: { membershipId: membership.id, userId: actorId, type: 'COLLABORATION_INVITATION', readAt: null }, data: { readAt: now } });
     await tx.platformNotification.updateMany({ where: { userId: actorId, sourceType: 'COLLABORATION_INVITED', sourceId: membership.businessId, readAt: null }, data: { readAt: now } });
-    await tx.businessNotification.create({ data: { userId: ownerUserId, businessId: membership.businessId, membershipId: membership.id, type: 'COLLABORATION_UPDATE', title: status === 'ACTIVE' ? 'Invitación aceptada' : 'Invitación rechazada', message: `${membership.user.displayName} ${status === 'ACTIVE' ? 'aceptó' : 'rechazó'} tu invitación para colaborar en ${membership.business.name}.` } });
+    await tx.businessNotification.create({ data: { userId: ownerUserId, actorUserId: actorId, businessId: membership.businessId, membershipId: membership.id, type: 'COLLABORATION_UPDATE', title: status === 'ACTIVE' ? 'Invitación aceptada' : 'Invitación rechazada', message: `${membership.user.displayName} ${status === 'ACTIVE' ? 'aceptó' : 'rechazó'} tu invitación para colaborar en ${membership.business.name}.` } });
     await tx.auditLog.create({ data: { actorUserId: actorId, entityType: 'MEMBERSHIP', entityId: membership.id, action: status === 'ACTIVE' ? 'INVITATION_ACCEPTED' : 'INVITATION_REJECTED', previousState: { status: 'INVITED' }, newState: { status, businessId: membership.businessId } } });
     return tx.businessMembership.findUniqueOrThrow({ where: { id: membership.id }, include: { permissions: true } });
   });
@@ -178,7 +178,7 @@ export async function leaveBusiness(userId: string, businessId: string) {
     if (changed.count !== 1) throw new AppError(409, 'MEMBERSHIP_STATE_INVALID', 'La membresía cambió de estado.');
     await tx.businessMembershipPermission.deleteMany({ where: { membershipId: membership.id } });
     const ownerUserId = membership.business.memberships[0]?.userId;
-    if (ownerUserId) await tx.businessNotification.create({ data: { userId: ownerUserId, businessId, membershipId: membership.id, type: 'COLLABORATION_UPDATE', title: 'Colaborador retirado', message: `${membership.user.displayName} decidió finalizar voluntariamente su colaboración con ${membership.business.name}. Sus permisos fueron retirados automáticamente.` } });
+    if (ownerUserId) await tx.businessNotification.create({ data: { userId: ownerUserId, actorUserId: userId, businessId, membershipId: membership.id, type: 'COLLABORATION_UPDATE', title: 'Colaborador retirado', message: `${membership.user.displayName} decidió finalizar voluntariamente su colaboración con ${membership.business.name}. Sus permisos fueron retirados automáticamente.` } });
     await tx.auditLog.create({ data: { actorUserId: userId, entityType: 'MEMBERSHIP', entityId: membership.id, action: 'COLLABORATOR_LEFT', previousState: { status: 'ACTIVE' }, newState: { status: 'REVOKED', businessId } } });
     return tx.businessMembership.findUniqueOrThrow({ where: { id: membership.id } });
   });
@@ -217,6 +217,7 @@ export async function listNotifications(userId: string, businessId?: string, inv
     include: {
       business: { select: { id: true, name: true, profilePhoto: { select: { id: true } }, memberships: { where: { role: 'OWNER', status: 'ACTIVE' }, select: { user: { select: { displayName: true } } }, take: 1 } } },
       membership: { select: { id: true, status: true, expiresAt: true, permissions: true, user: { select: { displayName: true, avatarUrl: true } } } },
+      actorUser: { select: { displayName: true, avatarUrl: true } },
     },
     orderBy: { createdAt: 'desc' },
     take: 100,
@@ -225,6 +226,7 @@ export async function listNotifications(userId: string, businessId?: string, inv
   return rows.map(row => ({
     ...row,
     membership: row.membership ? { ...row.membership, user: { displayName: row.membership.user.displayName, avatarUrl: publicAvatarUrl(row.membership.user.avatarUrl) } } : null,
+    actorUser: row.actorUser ? { displayName: row.actorUser.displayName, avatarUrl: publicAvatarUrl(row.actorUser.avatarUrl) } : null,
     business: { ...row.business, profilePhoto: row.business.profilePhoto ? { url: `/api/v1/businesses/${row.business.id}/photos/${row.business.profilePhoto.id}/content` } : null },
     ...(row.membership?.status === 'INVITED' && row.membership.expiresAt && row.membership.expiresAt <= now
       ? { membership: { ...row.membership, status: 'EXPIRED' as const } }
