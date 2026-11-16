@@ -2,7 +2,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { lazy, Suspense, type ReactNode } from "react";
 import { BusinessStoreProvider, useBusinessStore } from "./services/businessStore";
 import { BusinessAuthProvider, useBusinessAuth } from "./services/businessAuthContext";
-import { PageMetadata } from "@wit/ui";
+import { PageMetadata, NotFoundPage } from "@wit/ui";
 import { getAuthPageMetadata, getPrivateAuthPageMetadata, metadataTags } from "@wit/utils";
 const AppShell = lazy(() => import("./components/layout/AppShell").then(module => ({ default: module.AppShell })));
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then(module => ({ default: module.DashboardPage })));
@@ -107,7 +107,7 @@ export default function App() {
       <Route path="/ayuda" element={<HelpPage />} />
       <Route path="/soporte" element={<SupportPage />} />
       <Route path="/sugerencias" element={<SupportPage mode="suggestion" />} />
+      <Route path="*" element={<NotFoundPage variant="business" homeHref="/inicio" homeLabel="Ir a mi panel" />} />
     </Route>
-    <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></Suspense></BusinessStoreProvider></BusinessAuthProvider>;
 }
