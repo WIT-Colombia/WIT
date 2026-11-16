@@ -69,7 +69,7 @@ export function NotificationsPage() {
   const [confirmingLocalDelete, setConfirmingLocalDelete] = useState<string | null>(null);
   // Before the first business exists, the welcome belongs to the Business account.
   // Once a business is selected, its own welcome is isolated by business and account.
-  const hasSelectedBusiness = business.source === "real" && Boolean(selectedBusinessId);
+  const hasSelectedBusiness = business.source === "real" && Boolean(selectedBusinessId) && businesses.some(item => item.id === selectedBusinessId);
   const welcomeKey = accountId
     ? hasSelectedBusiness
       ? `xamuko-business-welcome:${accountId}:${selectedBusinessId}`
