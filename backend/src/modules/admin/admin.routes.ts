@@ -206,7 +206,7 @@ const contentEditSchema=z.object({
   changes:z.object({
     name:z.string().trim().min(2).max(180).optional(),
     description:z.string().max(5000).nullable().optional(),
-    priceAmount:z.string().regex(/^\\d{1,10}(\\.\\d{1,2})?$/).nullable().optional(),
+    priceAmount:z.string().regex(/^[0-9]{1,10}([.][0-9]{1,2})?$/).nullable().optional(),
     currency:z.string().regex(/^[A-Z]{3}$/).nullable().optional(),
     priceText:z.string().max(180).nullable().optional(),
     negotiable:z.boolean().optional(),
