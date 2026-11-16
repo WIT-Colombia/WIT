@@ -4,7 +4,7 @@ import { colombiaCatalog } from './colombia-catalog.js';
 import { zoneState } from './zones.service.js';
 
 function municipality(code: string) {
-  if (!/^\\d{5}$/.test(code)) {
+  if (!/^\d{5}$/.test(code)) {
     throw new AppError(400, 'ZONE_INVALID_CODE', 'Selecciona una ciudad válida.');
   }
   const city = colombiaCatalog.municipalities.find(item => item.id === code);
