@@ -1,4 +1,5 @@
 import { prisma } from '../../config/prisma.js';
+import { sweepCollaborationNotifications } from './collaboration-notifications.service.js';
 
 export const VISIBILITY_PERIOD_DAYS = 40;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -164,6 +165,8 @@ export function startVisibilityNotificationScheduler(): () => void {
     try {
       const result = await sweepBusinessVisibilityNotifications();
       if (result.sent || result.failed) console.info('[visibility-notices] Barrido', result);
+      const collaboration = await sweepCollaborationNotifications();
+      if (collaboration.sent || collaboration.failed) console.info('[collab-notices] Barrido', collaboration);
     } catch (error) {
       console.error('[visibility-notices] No se pudo ejecutar el barrido', error);
     } finally { running = false; }
