@@ -17,6 +17,7 @@ import {
 } from './public-business.controller.js';
 import { listReviewsController } from '../reviews/review.controller.js';
 import { nextPublicZoneLaunch, publicZoneStatus } from '../zones/zones.service.js';
+import { subscribeToZoneAlert, confirmZoneAlert, unsubscribeZoneAlert, zoneAlertHtml } from '../zones/zones-alerts.service.js';
 
 export const publicBusinessRouter = Router();
 const publicReadRateLimit = rateLimit({
@@ -31,6 +32,47 @@ const publicReadRateLimit = rateLimit({
 });
 publicBusinessRouter.use(publicReadRateLimit);
 publicBusinessRouter.use(optionalAuth);
+publicBusinessRouter.post('/zones/alerts',async(req,res,next)=>{
+  try{
+    const {scope,code,email,consent}=req.body??{};
+    if((scope!=='MUNICIPALITY'&&scope!=='DEPARTMENT')||typeof code!=='string'||
+      !/^\\d{2}(\\d{3})?$/.test(code)||typeof email!=='string'||typeof consent!=='boolean')
+      return res.status(400).json({error:{code:'ZONE_ALERT_INVALID_INPUT',message:'Revisa el correo y el consentimiento.'}});
+    res.setHeader('Cache-Control','no-store');
+    res.status(202).json(await subscribeToZoneAlert({scope,code,email,consent}));
+  }catch(error){next(error);}
+});
+const alertConfirmPath='/zones/alerts/confirm';
+const alertUnsubscribePath='/zones/alerts/unsubscribe';
+publicBusinessRouter.get(alertConfirmPath,(req,res)=>{
+  const token=String(req.query.token??'');
+  res.setHeader('Cache-Control','no-store');
+  if(!/^[a-f0-9]{64}$/.test(token))return res.status(400).type('html').send(zoneAlertHtml('Enlace no válido','Solicita un nuevo aviso desde XAMUKO.'));
+  res.type('html').send(zoneAlertHtml('Confirma tu correo','Pulsa el botón para autorizar el aviso de apertura territorial.',{
+    action:alertConfirmPath+'?token='+encodeURIComponent(token),label:'Confirmar aviso',
+  }));
+});
+publicBusinessRouter.post(alertConfirmPath,async(req,res)=>{
+  try{
+    await confirmZoneAlert(String(req.query.token??''));
+    res.setHeader('Cache-Control','no-store');
+    res.type('html').send(zoneAlertHtml('Aviso confirmado','Te avisaremos una sola vez cuando XAMUKO habilite esa zona.'));
+  }catch{res.status(400).type('html').send(zoneAlertHtml('Enlace no válido','El enlace ya se utilizó, venció o no existe.'));}
+});
+publicBusinessRouter.get(alertUnsubscribePath,(req,res)=>{
+  const id=String(req.query.id??''),token=String(req.query.token??'');
+  res.setHeader('Cache-Control','no-store');
+  if(!/^[a-f0-9]{64}$/.test(token)||id.length!==36)return res.status(400).type('html').send(zoneAlertHtml('Enlace no válido','No fue posible confirmar la solicitud.'));
+  res.type('html').send(zoneAlertHtml('Cancelar aviso','Dejarás de recibir notificaciones sobre esta apertura.',{
+    action:alertUnsubscribePath+'?id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token),label:'Cancelar suscripción',
+  }));
+});
+publicBusinessRouter.post(alertUnsubscribePath,async(req,res)=>{
+  try{
+    await unsubscribeZoneAlert(String(req.query.id??''),String(req.query.token??''));
+    res.type('html').send(zoneAlertHtml('Suscripción cancelada','No recibirás más avisos de esta apertura.'));
+  }catch{res.status(400).type('html').send(zoneAlertHtml('Enlace no válido','No se pudo cancelar la suscripción.'));}
+});
 publicBusinessRouter.get('/zones/next-launch',async(_req,res,next)=>{
   try{res.setHeader('Cache-Control','no-store');res.json({next:await nextPublicZoneLaunch(),serverTime:new Date().toISOString()});}
   catch(error){next(error);}
