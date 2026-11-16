@@ -75,11 +75,35 @@ adminRouter.post('/businesses/:id/delete', requireTrustedOrigin, requireAdmin('B
 adminRouter.get('/categories', requireAdmin('CATALOG_READ'), async (_req, res, next) => {
   try {
     res.setHeader('Cache-Control', 'no-store');
-    const categories = await prisma.category.findMany({
-      orderBy: [{ sortOrder: 'asc' }, { code: 'asc' }],
-      select: { id: true, code: true, active: true, sortOrder: true, translations: { select: { locale: true, name: true } }, _count: { select: { businesses: true, offers: true } } },
-    });
-    res.json({ categories });
+    const [categories, groupedOffers] = await Promise.all([
+      prisma.category.findMany({
+        orderBy: [{ sortOrder: 'asc' }, { code: 'asc' }],
+        select: { id: true, code: true, active: true, sortOrder: true,
+          translations: { select: { locale: true, name: true } },
+          _count: { select: { businesses: true } } },
+      }),
+      // Offer/category attribution is based on the business's PRIMARY category.
+      // A publication without its own category must not disappear from the counters.
+      prisma.$queryRaw<Array<{ categoryId: string; kind: 'PRODUCT' | 'SERVICE'; total: bigint }>>`
+        SELECT b.categoryId, o.kind, COUNT(*) AS total
+        FROM BusinessOffer AS o
+        INNER JOIN Business AS b ON b.id = o.businessId
+        WHERE o.deletedAt IS NULL
+        GROUP BY b.categoryId, o.kind
+      `,
+    ]);
+    const counts = new Map<string, { products: number; services: number }>();
+    for (const entry of groupedOffers) {
+      const current = counts.get(entry.categoryId) ?? { products: 0, services: 0 };
+      if (entry.kind === 'PRODUCT') current.products += Number(entry.total);
+      if (entry.kind === 'SERVICE') current.services += Number(entry.total);
+      counts.set(entry.categoryId, current);
+    }
+    res.json({ categories: categories.map(category => {
+      const { products, services } = counts.get(category.id) ?? { products: 0, services: 0 };
+      return { ...category, productCount: products, serviceCount: services,
+        _count: { ...category._count, offers: products + services } };
+    }) });
   } catch (error) { next(error); }
 });
 adminRouter.get('/users', requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
