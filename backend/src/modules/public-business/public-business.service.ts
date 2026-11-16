@@ -471,8 +471,9 @@ export async function listPublicCategories(
   const counts = new Map<string, { id: string; code: string; name: string; iconKey: string | null; businessCount: number }>();
   for (const business of rows) {
     if (zoneRows && !isBusinessInActiveZone(business, zoneRows)) continue;
-    if (normalizeCityFilterName(business.location?.cityName) !== normalizeCityFilterName(input.city)
-      || (input.region && normalizeRegionFilterName(business.location?.regionName) !== normalizeRegionFilterName(input.region))) continue;
+    const virtual = business.modalities?.some(m => m.type === 'VIRTUAL');
+    if (!virtual && (normalizeCityFilterName(business.location?.cityName) !== normalizeCityFilterName(input.city)
+      || (input.region && normalizeRegionFilterName(business.location?.regionName) !== normalizeRegionFilterName(input.region)))) continue;
     const seen = new Set<string>();
     for (const raw of [business.category, ...business.secondaryCategories.map(item => item.category)]) {
       if (!raw || seen.has(raw.id)) continue;
@@ -513,11 +514,14 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
     .some((value: any) => matchesSearch([value?.code, value?.translations?.[0]?.name], categoryTerms));
   // Productos y servicios heredan las categorías del negocio, sin perder su categoría específica.
   const offerCategoryMatches = (item: any) => categoryMatches(item) || categoryMatches(item.business);
-  const inSelectedCity = (value: any) => input.scope !== 'city' || (
+  const isVirtual = (value: any) => value?.modalities?.some((modality: any) => modality.type === 'VIRTUAL' && (modality.status === undefined || modality.status === 'ACTIVE'));
+  // Los negocios virtuales activos están disponibles en cualquier ciudad,
+  // incluso cuando esa ciudad todavía no está habilitada para comercio físico.
+  const inSelectedCity = (value: any) => isVirtual(value) || input.scope !== 'city' || (
     normalizeCityFilterName(value?.location?.cityName) === normalizeCityFilterName(input.city)
     && (!input.region || normalizeRegionFilterName(value?.location?.regionName) === normalizeRegionFilterName(input.region))
   );
-  const inRadius = (value: any) => input.scope === 'virtual' ? true : input.latitude !== undefined && input.longitude !== undefined && input.radiusKm !== undefined ? distanceKm(input.latitude, input.longitude, value) <= input.radiusKm : true;
+  const inRadius = (value: any) => input.scope === 'virtual' || isVirtual(value) ? true : input.latitude !== undefined && input.longitude !== undefined && input.radiusKm !== undefined ? distanceKm(input.latitude, input.longitude, value) <= input.radiusKm : true;
   const sortNearby = (a: any, b: any) => input.latitude !== undefined && input.longitude !== undefined ? distanceKm(input.latitude, input.longitude, a) - distanceKm(input.latitude, input.longitude, b) : 0;
   const matchingOffers = [...products, ...services].filter((item: any) => offerCategoryMatches(item) && (terms.length ? searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, offer: item.name, description: item.description }, terms) > 0 : true));
   const matchingBusinessIds = new Set(matchingOffers.map((item: any) => item.business.publicId));
@@ -662,8 +666,10 @@ export async function listPublicNewArrivals(
     orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
   });
   const matching = rows.filter(row =>
-    (!zoneRows || isBusinessInActiveZone(row.business,zoneRows)) && normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
-    && (!input.region || normalizeRegionFilterName(row.business.location?.regionName) === normalizeRegionFilterName(input.region)),
+    (!zoneRows || isBusinessInActiveZone(row.business,zoneRows)) &&
+    (row.business.modalities?.some(m=>m.type==='VIRTUAL') ||
+      (normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
+        && (!input.region || normalizeRegionFilterName(row.business.location?.regionName) === normalizeRegionFilterName(input.region)))),
   );
   const ordered = rotatePublicNewArrivals(matching, colombiaArrivalDay(now.getTime()));
   const total = ordered.length;
