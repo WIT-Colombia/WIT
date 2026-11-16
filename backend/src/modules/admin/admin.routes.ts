@@ -1,5 +1,6 @@
 import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
+import { AppError } from '../../shared/errors/app-error.js';
 import { getAdminDashboardStats } from './admin-dashboard.service.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController } from './admin.controller.js';
@@ -191,6 +192,11 @@ adminRouter.get('/content/:id', requireAdmin('CATALOG_READ'), async (req,res,nex
   try{res.setHeader('Cache-Control','no-store');res.json(await getAdminContentDetail(String(req.params.id)));}
   catch(error){next(error);}
 });
+function parseContent<T>(schema:z.ZodType<T>,value:unknown):T {
+  const result=schema.safeParse(value);
+  if(!result.success)throw new AppError(400,'ADMIN_CONTENT_INVALID_INPUT','Revisa los campos y la justificación.');
+  return result.data;
+}
 const contentActionSchema=z.object({
   action:z.enum(['HIDE','REVIEW','RELEASE','DELETE','RESTORE']),
   reason:z.string().trim().min(12).max(500),
@@ -219,15 +225,15 @@ adminRouter.get('/content/:id/history',requireAdmin('CATALOG_READ'),async(req,re
 });
 adminRouter.post('/content/moderate-bulk',requireTrustedOrigin,requireAdmin('CONTENT_MODERATE'),async(req,res,next)=>{
   try{
-    const input=z.object({ids:z.array(z.string().uuid()).min(1).max(25),
-      action:z.enum(['HIDE','REVIEW']),reason:z.string().trim().min(12).max(500)}).strict().parse(req.body);
+    const input=parseContent(z.object({ids:z.array(z.string().uuid()).min(1).max(25),
+      action:z.enum(['HIDE','REVIEW']),reason:z.string().trim().min(12).max(500)}).strict(),req.body);
     res.setHeader('Cache-Control','no-store');
     res.json(await controlAdminContentBulk(input.ids,adminFromRequest(req).userId,input.action,input.reason));
   }catch(error){next(error);}
 });
 adminRouter.patch('/content/:id',requireTrustedOrigin,requireAdmin('CONTENT_MODERATE'),async(req,res,next)=>{
   try{
-    const input=contentEditSchema.parse(req.body);
+    const input=parseContent(contentEditSchema,req.body);
     res.setHeader('Cache-Control','no-store');
     res.json(await editAdminContent(String(req.params.id),adminFromRequest(req).userId,input.changes,input.reason));
   }catch(error){next(error);}
@@ -236,14 +242,14 @@ adminRouter.delete('/content-photos/:photoId',requireTrustedOrigin,requireAdmin(
   try{
     const context=adminFromRequest(req);
     if(context.role!=='SUPER_ADMIN')return res.status(403).json({error:{code:'ADMIN_SUPER_ADMIN_REQUIRED',message:'Solo el administrador principal puede retirar fotografías.'}});
-    const input=z.object({reason:z.string().trim().min(12).max(500)}).strict().parse(req.body);
+    const input=parseContent(z.object({reason:z.string().trim().min(12).max(500)}).strict(),req.body);
     res.setHeader('Cache-Control','no-store');
     res.json(await removeAdminContentPhoto(String(req.params.photoId),context.userId,input.reason));
   }catch(error){next(error);}
 });
 adminRouter.post('/content/:id/moderate',requireTrustedOrigin,requireAdmin('CONTENT_MODERATE'),async(req,res,next)=>{
   try{
-    const input=contentActionSchema.parse(req.body);
+    const input=parseContent(contentActionSchema,req.body);
     const context=adminFromRequest(req);
     if(['DELETE','RESTORE'].includes(input.action)&&context.role!=='SUPER_ADMIN')
       return res.status(403).json({error:{code:'ADMIN_SUPER_ADMIN_REQUIRED',message:'Solo el administrador principal puede eliminar o recuperar publicaciones.'}});
