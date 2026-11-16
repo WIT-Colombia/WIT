@@ -149,6 +149,16 @@ test('Atención y soporte: siete formularios, Admin y sesiones completas (MySQL 
       const second = await prisma.businessNotification.create({ data: {
         businessId: otherBusinessId, userId, type: 'COLLABORATION_UPDATE', title: 'Aviso del segundo negocio', message: 'Solo visible en negocio dos',
       } });
+      // The account-level endpoint is only for pending access invitations,
+      // never for normal notices attached to any selected business.
+      const accountInvitations = await send('/notifications', { headers: user() });
+      assert.equal(accountInvitations.response.status, 200);
+      assert.ok(!accountInvitations.body.notifications.some((item: any) =>
+        item.id === first.id || item.id === second.id));
+      const legacyCrossBusinessRead = await post('/notifications/' + first.id + '/read', {}, user());
+      assert.equal(legacyCrossBusinessRead.response.status, 404);
+      const legacyCrossBusinessDismissal = await send('/notifications/' + first.id, { method: 'DELETE', headers: user() });
+      assert.equal(legacyCrossBusinessDismissal.response.status, 404);
       const firstInbox = await send('/businesses/' + businessId + '/notifications', { headers: user() });
       assert.equal(firstInbox.response.status, 200, JSON.stringify(firstInbox.body));
       assert.ok(firstInbox.body.notifications.some((item: any) => item.id === first.id));
