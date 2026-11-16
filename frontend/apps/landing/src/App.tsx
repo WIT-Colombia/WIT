@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { destinations } from "./config/destinations";
 import { Icon, type IconName } from "./Icons";
 import { faqs, type FaqAudience } from "@wit/utils";
+import { NotFoundPage } from "@wit/ui";
 
 const artwork = "/assets/definitiva/reference-art-4k.webp";
 const navigation = [["inicio", "Inicio"], ["como-funciona", "Cómo funciona"], ["usuarios", "Usuarios"], ["negocios", "Negocios"], ["planes", "Planes"], ["preguntas", "Preguntas"]] as const;
@@ -16,14 +17,18 @@ function Artwork({ viewBox, className = "" }: { viewBox: string; className?: str
     <image href={artwork} width="1169" height="1280" clipPath={isDevices ? "url(#devices-artwork-crop)" : undefined}/>
   </svg>;
 }
-function Brand({ footer = false }: { footer?: boolean }) {
-  return <a className={`brand${footer ? " brand-light" : ""}`} href="#inicio" aria-label="XAMUKO, inicio">
+function Brand({ footer = false, home = false }: { footer?: boolean; home?: boolean }) {
+  return <a className={`brand${footer ? " brand-light" : ""}`} href={home ? "/" : "#inicio"} aria-label="XAMUKO, inicio">
     <img className="brand-mark" src="/brand/xamuko-symbol.png" alt="" aria-hidden="true" style={{ objectFit: "contain" }} />
     <span><strong>XAMUKO</strong><small>Lo que necesitas, está más cerca.</small></span>
   </a>;
 }
 
 export function App() {
+  // The landing is a single-page site; any other pathname is an actual missing page.
+  // Use the standard root on the prerender server, which always renders /.
+  const isUnknownPath = typeof window !== "undefined" &&
+    !["/", "/index.html"].includes(window.location.pathname.replace(/\/+$/, "") || "/");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [faqAudience, setFaqAudience] = useState<FaqAudience>("usuarios");
   const [selector, setSelector] = useState<"login" | "register" | null>(null);
@@ -79,14 +84,16 @@ export function App() {
   return <>
     <a className="skip-link" href="#contenido">Saltar al contenido</a>
     <header className="site-header"><div className="header-inner">
-      <Brand/>
+      <Brand home={isUnknownPath}/>
       <button ref={mobileButton} className="mobile-toggle" aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={mobileOpen} aria-controls="header-navigation" onClick={() => { setMobileOpen(!mobileOpen); setSelector(null); }}><Icon name={mobileOpen ? "close" : "menu"}/></button>
       <div id="header-navigation" className={`header-navigation${mobileOpen ? " is-open" : ""}`}>
         <nav aria-label="Navegación principal">{navigation.map(([id, label]) => <a key={id} className={hash === `#${id}` ? "active" : ""} href={`#${id}`} onClick={event => navigate(event, id)}>{label}</a>)}</nav>
         <div className="header-actions">{accountSelector("login")}{accountSelector("register")}</div>
       </div>
     </div></header>
-    <main id="contenido" tabIndex={-1}>
+    {isUnknownPath
+      ? <main id="contenido" tabIndex={-1}><NotFoundPage variant="landing" homeHref="/" homeLabel="Ir al inicio" /></main>
+      : <main id="contenido" tabIndex={-1}>
       <section className="hero" id="inicio" aria-labelledby="hero-title">
         <div className="hero-city" aria-hidden="true"/><div className="hero-wave wave-back" aria-hidden="true"/><div className="hero-wave wave-front" aria-hidden="true"/>
         <div className="hero-inner"><div className="hero-copy">
@@ -116,7 +123,7 @@ export function App() {
 
         <section className="community-banner" aria-labelledby="community-title"><div className="banner-wave" aria-hidden="true"/><div><h2 id="community-title">Únete hoy a la comunidad XAMUKO</h2><p>Descubre, conecta y haz crecer tu ciudad.</p></div><div className="community-actions"><a className="button white" href={destinations.userRegister}><Icon name="users"/>Crear cuenta de usuario</a><a className="button white" href={destinations.businessRegister}><Icon name="shop"/>Registrar mi negocio</a></div></section>
       </div>
-    </main>
+    </main>}
     <footer className="site-footer"><div className="footer-inner"><div className="footer-top"><div className="footer-contact" id="contacto"><div className="footer-contact-heading"><h2>Contáctanos</h2></div><div className="footer-contact-details"><a href="mailto:soporte@xamuko.com">soporte@xamuko.com</a><a href="mailto:notificacionesjudiciales@xamuko.com">notificacionesjudiciales@xamuko.com</a></div></div>
       <nav aria-label="Explorar"><h2>Explorar</h2>{navigation.slice(0,4).map(([id,label]) => <a href={`#${id}`} key={id} onClick={event => navigate(event,id)}>{label}</a>)}</nav>
       <nav aria-label="Planes"><h2>Planes</h2><a href="#planes" onClick={event => navigate(event,"planes")}>Gratis</a><a href="#planes" onClick={event => navigate(event,"planes")}>PRO</a><a href="#beneficios">Beneficios</a></nav>
