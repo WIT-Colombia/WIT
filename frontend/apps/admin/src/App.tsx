@@ -18,6 +18,7 @@ import { ReviewReportsPage } from './pages/ReviewReportsPage';
 import { OperationalInboxPage } from './pages/OperationalInboxPage';
 import { ReviewsPage } from './pages/ReviewsPage';
 import { PioneersPage } from './pages/PioneersPage';
+import { AdminZonesPage } from './pages/AdminZonesPage';
 import { PioneersErrorBoundary } from './components/PioneersErrorBoundary';
 import { VerificationsPage } from './pages/VerificationsPage';
 import { getSession, restoreSession } from './services/adminService';
@@ -41,7 +42,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases'];
 
 export default function App() {
   return <Routes>
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="/suggestions" element={<OperationalInboxPage kind="suggestions" />} />
         <Route path="/reviews" element={<ReviewsPage />} />
         <Route path="/pioneers" element={<PioneersErrorBoundary><PioneersPage /></PioneersErrorBoundary>} />
+        <Route path="/zones" element={<AdminZonesPage />} />
         <Route path="/financial-reports" element={<FinancialExpensesPage />} />
         <Route path="/administrators" element={<AdministratorsPage />} />
         <Route path="/categories" element={<AdminCategoriesPage />} />
