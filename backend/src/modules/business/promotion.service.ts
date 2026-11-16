@@ -25,7 +25,7 @@ async function ensureRelatedOfferAvailable(db: Db, businessId: string, relatedOf
 
 async function findManagedBusiness(userId: string, identifier: string, db: Db) {
   const business = await db.business.findFirst({
-    where: { OR: [{ id: identifier }, { publicId: identifier }], memberships: { some: { userId, status: 'ACTIVE' } } },
+    where: { OR: [{ id: identifier }, { publicId: identifier }], deletionStatus: { not: 'DELETED' }, memberships: { some: { userId, status: 'ACTIVE' } } },
     select: { id: true, businessAccount: { select: { status: true } }, memberships: { where: { userId, status: 'ACTIVE' }, include: { permissions: true } } },
   });
   const membership = business?.memberships[0];
@@ -36,7 +36,7 @@ async function findManagedBusiness(userId: string, identifier: string, db: Db) {
 }
 
 async function findMemberBusiness(userId: string, businessId: string) {
-  const business = await prisma.business.findFirst({ where: { id: businessId, businessAccount: { status: 'ACTIVE' }, memberships: { some: { userId, status: 'ACTIVE' } } }, select: { id: true } });
+  const business = await prisma.business.findFirst({ where: { id: businessId, deletionStatus: { not: 'DELETED' }, businessAccount: { status: 'ACTIVE' }, memberships: { some: { userId, status: 'ACTIVE' } } }, select: { id: true } });
   if (!business) throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese negocio.');
   return business;
 }
