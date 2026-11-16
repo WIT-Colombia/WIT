@@ -1,4 +1,5 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { NotFoundPage } from '@wit/ui';
 import { useEffect, useState } from 'react';
 import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
@@ -75,7 +76,7 @@ export default function App() {
         <Route path="/user-needs" element={<OperationalInboxPage kind="needs" />} />
         {navigation.filter(item => !implementedPaths.includes(item.path)).map(item => <Route key={item.path} path={item.path} element={<PendingModulePage />} />)}
         {['reports', 'reviews', 'needs', 'zones', 'categories', 'notifications', 'audit', 'settings'].map(path => <Route key={path} path={`/${path}/:id`} element={<PendingModulePage />} />)}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<NotFoundPage variant="admin" homeHref="/dashboard" homeLabel="Volver al Dashboard" />} />
       </Route>
     </Route>
   </Routes>;
