@@ -11,7 +11,6 @@ export type ZoneRecord = {
 };
 type EffectiveState = 'CLOSED' | 'SCHEDULED' | 'OPEN' | 'PAUSED';
 const palmiraCode = '76520';
-const valCode = '76';
 const catalog = colombiaCatalog;
 const colombiaNow = () => new Date();
 export function normalizePlace(value: string | undefined | null): string {
