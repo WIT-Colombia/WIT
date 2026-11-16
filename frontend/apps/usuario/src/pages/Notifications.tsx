@@ -199,6 +199,7 @@ export default function Notifications() {
           const manageBusiness = item.sourceType === 'BUSINESS_VISIBILITY' || item.sourceType === 'BUSINESS_RECOVERY' ||
             item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'COLLABORATION_PERMISSIONS' ||
             item.sourceType === 'OWNERSHIP_TRANSFER' && /proponen|vence mañana|solicitud para transferir/i.test(item.title);
+          const ownAction = item.sourceType === 'REVIEW_RESPONSE' ? '/reviews' : item.sourceType === 'ACCOUNT_SECURITY' ? '/settings' : null;
           const title = item.title.toLocaleLowerCase('es-CO');
           const kind = welcome ? 'welcome' :
             item.sourceType?.startsWith('COLLABORATION') ? 'collaboration' :
@@ -207,7 +208,7 @@ export default function Notifications() {
             title.includes('opini') || title.includes('reseña') ? 'review' :
             title.includes('negocio') || title.includes('favorito') ? 'business' :
             title.includes('cuenta') || title.includes('seguridad') ? 'account' : 'general';
-          return <article className={'notification-item' + (item.read ? ' is-read' : ' is-unread') + (selectedId === item.id ? ' is-selected' : '') + (manageBusiness ? ' has-business-action' : '')} key={item.source + ':' + item.id}>
+          return <article className={'notification-item' + (item.read ? ' is-read' : ' is-unread') + (selectedId === item.id ? ' is-selected' : '') + (manageBusiness || ownAction ? ' has-business-action' : '')} key={item.source + ':' + item.id}>
             <button type="button" className="notification-main-action" disabled={busy} onClick={() => void select(item)}
               aria-label={item.title + '. ' + (item.read ? 'Leída' : 'Sin leer') + '. Abrir notificación'}>
               <PersonalNoticeImage notice={item} kind={kind}/>
@@ -217,7 +218,8 @@ export default function Notifications() {
                 <span className="notification-meta"><span>{kind === 'collaboration' || kind === 'transfer' || item.sourceType === 'REVIEW_RESPONSE' ? 'Actividad del negocio' : 'Equipo XAMUKO'}</span><time>{item.date}</time></span>
               </span>
             </button>
-            {manageBusiness && <a className="notification-business-action" href={item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'OWNERSHIP_TRANSFER' ? 'https://business.xamuko.com/notificaciones' : 'https://business.xamuko.com/mis-negocios'} target="_blank" rel="noopener noreferrer">{item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'OWNERSHIP_TRANSFER' ? 'Responder en XAMUKO Business' : 'Gestionar en XAMUKO Business'} <span aria-hidden="true">↗</span></a>}
+            {manageBusiness && <a className="notification-business-action" href="https://business.xamuko.com/mis-negocios" target="_blank" rel="noopener noreferrer">{item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'OWNERSHIP_TRANSFER' ? 'Responder en XAMUKO Business' : 'Gestionar en XAMUKO Business'} <span aria-hidden="true">↗</span></a>}
+            {ownAction && <Link className="notification-business-action" to={ownAction}>{item.sourceType === 'REVIEW_RESPONSE' ? 'Ver mi opinión' : 'Revisar seguridad de la cuenta'} <span aria-hidden="true">→</span></Link>}
             <button type="button" className="notification-delete" disabled={busy}
               title="Eliminar notificación" aria-label={'Eliminar ' + item.title}
               onClick={() => setPendingDeleteId(item.source + ':' + item.id)}>
