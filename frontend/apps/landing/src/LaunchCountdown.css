@@ -21,3 +21,16 @@
 @media(max-width:760px){.landing-launch{grid-template-columns:minmax(0,1fr);margin:20px 16px 0;padding:25px 20px;border-radius:17px}.landing-launch__copy h2{font-size:30px}.landing-launch__timer{width:100%}.landing-launch__digit strong{font-size:34px}}
 @media(max-width:420px){.landing-launch{padding:20px 14px;margin:16px 12px 0}.landing-launch__copy h2{font-size:26px}.landing-launch__copy p{font-size:12px}.landing-launch__actions{display:grid;grid-template-columns:1fr}.landing-launch__digits{gap:5px}.landing-launch__digit{padding:10px 2px}.landing-launch__digit strong{font-size:26px}.landing-launch__digit small{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.landing-launch *{animation:none!important;transition:none!important}}
+
+.landing-launch__alert{max-width:490px;margin-top:19px;padding:14px 15px;background:#fff;border:1px solid #e2ddf8;border-radius:12px}
+.landing-launch__alert h3{font-size:13px;color:#413874;margin:0 0 10px;font-weight:850}
+.landing-launch__alert-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.landing-launch__alert-row input{width:100%;min-width:0;border:1px solid #d2d8ef;background:#fff;border-radius:9px;padding:11px;font:inherit;font-size:12px;color:#283b64}
+.landing-launch__alert-row button{min-height:42px;border:0;padding:0 14px;background:#6944d5;color:#fff;border-radius:9px;font-size:12px;font-weight:850}
+.landing-launch__alert-row button:disabled{opacity:.5;cursor:not-allowed}
+.landing-launch__consent{display:flex;gap:9px;align-items:flex-start;margin-top:11px;font-size:10px;color:#62738d;line-height:1.65}
+.landing-launch__consent input{margin:3px 0 0;accent-color:#6d4ad4;flex:none}
+.landing-launch__consent a{color:#6044bb;text-decoration:underline}
+.landing-launch__alert>p{margin:0;font-size:12px;font-weight:700;color:#216f4b;line-height:1.6}
+.landing-launch__alert-error{color:#a33434!important;font-size:11px!important;margin-top:9px!important}
+@media(max-width:430px){.landing-launch__alert-row{grid-template-columns:1fr}.landing-launch__alert-row button{width:100%}}
