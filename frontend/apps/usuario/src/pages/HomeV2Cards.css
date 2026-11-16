@@ -1165,3 +1165,15 @@
     font-size: 10px;
   }
 }
+
+/* Reduce layout and paint work for sections outside the viewport. The browser
+   retains each section's last measured size after its first render. */
+@supports (content-visibility: auto) {
+  .home-page.home-v2 .home-featured-section,
+  .home-page.home-v2 .new-products,
+  .home-page.home-v2 .home-nearby-section,
+  .home-page.home-v2 .special-offers {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 420px;
+  }
+}
