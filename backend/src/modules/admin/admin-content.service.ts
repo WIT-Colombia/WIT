@@ -144,19 +144,19 @@ export async function getAdminContentInsights(filters:Filters,now=new Date()){
         SUM(CASE WHEN o.kind='SERVICE' THEN 1 ELSE 0 END) AS services
       FROM BusinessOffer o JOIN Business b ON b.id=o.businessId
       WHERE o.createdAt >= ${start} AND o.createdAt < ${end} AND ${conditions}
-      GROUP BY ${bucketSql} ORDER BY period
+      GROUP BY period ORDER BY period
     `),
     prisma.$queryRaw<Array<{period:string;quantity:bigint}>>(Prisma.sql`
       SELECT ${eventsSql} AS period,COUNT(*) AS quantity
       FROM BusinessAnalyticsEvent e JOIN BusinessOffer o ON o.id=e.offerId JOIN Business b ON b.id=o.businessId
       WHERE e.eventType='OFFER_VIEW' AND e.createdAt>=${start} AND e.createdAt<${end} AND ${conditions}
-      GROUP BY ${eventsSql} ORDER BY period
+      GROUP BY period ORDER BY period
     `),
     prisma.$queryRaw<Array<{period:string;quantity:bigint}>>(Prisma.sql`
       SELECT ${likesSql} AS period,COUNT(*) AS quantity
       FROM BusinessOfferLike l JOIN BusinessOffer o ON o.id=l.offerId JOIN Business b ON b.id=o.businessId
       WHERE l.createdAt>=${start} AND l.createdAt<${end} AND ${conditions}
-      GROUP BY ${likesSql} ORDER BY period
+      GROUP BY period ORDER BY period
     `),
     prisma.$queryRaw<Array<{categoryId:string|null;quantity:bigint}>>(Prisma.sql`
       SELECT COALESCE(o.categoryId,b.categoryId) AS categoryId,COUNT(*) AS quantity
