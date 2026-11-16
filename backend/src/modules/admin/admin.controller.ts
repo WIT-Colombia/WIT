@@ -15,7 +15,7 @@ export const assignRoleController: RequestHandler = async (req, res, next) => { 
 export const revokeRoleController: RequestHandler = async (req, res, next) => { try { const input = parse(z.object({ reason: z.string().trim().min(3).max(500) }).strict(), req.body); res.json({ assignment: await revokeRole(adminFromRequest(req), req.params.userId as string, req.params.role as 'ADMIN' | 'SUPER_ADMIN', input.reason) }); } catch (error) { next(error); } };
 export const permissionController: RequestHandler = async (req, res, next) => { try { const input = parse(permissionSchema, req.body); res.json({ permission: await setPermission(adminFromRequest(req), req.params.userId as string, input.permission, input.granted, input.reason) }); } catch (error) { next(error); } };
 
-export const pioneerRegistryController: RequestHandler = async (req, res, next) => { try { res.json(await listPioneerRegistry(adminFromRequest(req))); } catch (error) { next(error); } };
+export const pioneerRegistryController: RequestHandler = async (req, res, next) => { try { res.setHeader('Cache-Control', 'no-store'); res.json(await listPioneerRegistry(adminFromRequest(req))); } catch (error) { next(error); } };
 export const pioneerClaimController: RequestHandler = async (req, res, next) => { try { const input = parse(z.object({ approve: z.boolean(), reason: z.string().trim().min(12).max(500) }).strict(), req.body); res.json({ claim: await approveBrandClaim(adminFromRequest(req), String(req.params.claimId), input.approve, input.reason) }); } catch (error) { next(error); } };
 export const pioneerBrandReviewController: RequestHandler = async (req, res, next) => {
   try {
