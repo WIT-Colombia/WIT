@@ -42,16 +42,22 @@ function businessEligible(business: {
   return business.publicationStatus === 'PUBLISHED' && business.lifecycleStatus === 'ACTIVE' &&
     business.deletionStatus === 'NONE' && business.businessAccount.status === 'ACTIVE';
 }
-export async function getAdminContentHistory(id: string) {
+export async function getAdminContentHistory(id: string, requestedPage = 1) {
   const exists = await prisma.businessOffer.findUnique({ where: { id }, select: { id: true } });
   if (!exists) throw new AppError(404, 'ADMIN_OFFER_NOT_FOUND', 'No encontramos el contenido.');
-  const rows = await prisma.auditLog.findMany({
-    where: { entityType: 'OFFER', entityId: id },
-    take: 100, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    select: { id: true, action: true, reason: true, comment: true, createdAt: true, previousState: true,
-      newState: true, actor: { select: { displayName: true } } },
-  });
-  return { history: rows };
+  const page = Number.isFinite(requestedPage) ? Math.max(1, Math.min(100000, Math.floor(requestedPage))) : 1;
+  const pageSize = 10;
+  const where = { entityType: 'OFFER' as const, entityId: id };
+  const [total, rows] = await Promise.all([
+    prisma.auditLog.count({ where }),
+    prisma.auditLog.findMany({
+      where, skip: (page - 1) * pageSize, take: pageSize,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: { id: true, action: true, reason: true, comment: true, createdAt: true, previousState: true,
+        newState: true, actor: { select: { displayName: true } } },
+    }),
+  ]);
+  return { history: rows, page, total, totalPages: Math.ceil(total / pageSize) };
 }
 
 export async function controlAdminContent(id: string, actorId: string, action: ContentControlAction, note: string) {
