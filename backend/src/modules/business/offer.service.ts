@@ -3,6 +3,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import type { OfferCreateInput, OfferUpdateInput } from './offer.schemas.js';
 import { catalogLimits, limitForKind } from './recognition.service.js';
+import { notifyBusinessOwners } from '../notifications/platform-notifications.service.js';
 
 type Db = PrismaClient | Prisma.TransactionClient;
 type RequestMeta = { ipAddress?: string };
@@ -52,6 +53,10 @@ export async function createOffer(userId: string, businessIdentifier: string, in
     const internalCode = `${input.kind === 'PRODUCT' ? 'P' : 'S'}-${String(number).padStart(4, '0')}`;
     const offer = await tx.businessOffer.create({ data: { businessId: business.id, internalCode, kind: input.kind, name: input.name, description: input.description ?? null, priceAmount: amount(input.priceAmount), currency: input.currency ?? null, priceText: input.priceText ?? null, negotiable: input.negotiable, active: input.active, adultOnly: input.adultOnly, publicationStatus: input.publicationStatus }, include: offerInclude });
     await audit(tx, userId, offer.id, 'OFFER_CREATED', null, { adultOnly: offer.adultOnly, kind: offer.kind }, meta);
+    if (business.memberships[0]?.role !== 'OWNER') await notifyBusinessOwners(tx, business.id,
+      'Un colaborador agregó una publicación',
+      'Se agregó el ' + (offer.kind === 'PRODUCT' ? 'producto' : 'servicio') + ' «' + offer.name + '» al catálogo de tu negocio. Revisa sus detalles.',
+      userId, userId);
     return offer;
   });
   return serialize(created, business.id);
@@ -69,6 +74,17 @@ export async function updateOffer(userId: string, businessIdentifier: string, of
   const updated = await prisma.$transaction(async tx => {
     const offer = await tx.businessOffer.update({ where: { id: current.id }, data: { ...(input.kind !== undefined ? { kind: input.kind } : {}), ...(input.name !== undefined ? { name: input.name } : {}), ...(input.description !== undefined ? { description: input.description } : {}), ...(input.priceAmount !== undefined ? { priceAmount: amount(input.priceAmount) } : {}), ...(input.currency !== undefined ? { currency: input.currency } : {}), ...(input.priceText !== undefined ? { priceText: input.priceText } : {}), ...(input.negotiable !== undefined ? { negotiable: input.negotiable } : {}), ...(input.active !== undefined ? { active: input.active } : {}), ...(input.adultOnly !== undefined ? { adultOnly: input.adultOnly } : {}), ...(input.publicationStatus !== undefined ? { publicationStatus: input.publicationStatus } : {}) }, include: offerInclude });
     await audit(tx, userId, offer.id, input.adultOnly === undefined || input.adultOnly === current.adultOnly ? 'OFFER_UPDATED' : 'OFFER_ADULT_CLASSIFICATION_CHANGED', { adultOnly: current.adultOnly }, { adultOnly: offer.adultOnly }, meta);
+    if (business.memberships[0]?.role !== 'OWNER' && (
+      input.name !== undefined && input.name !== current.name ||
+      input.active !== undefined && input.active !== current.active ||
+      input.publicationStatus !== undefined && input.publicationStatus !== current.publicationStatus ||
+      input.adultOnly !== undefined && input.adultOnly !== current.adultOnly ||
+      input.priceAmount !== undefined &&
+        String(input.priceAmount ?? '') !== String(current.priceAmount ?? '')
+    )) await notifyBusinessOwners(tx, business.id,
+      'Un colaborador modificó tu catálogo',
+      'Se actualizaron datos importantes de «' + offer.name + '». Revisa la publicación y confirma que todo esté correcto.',
+      userId, userId);
     return offer;
   });
   return serialize(updated, business.id);
@@ -81,5 +97,9 @@ export async function deleteOffer(userId: string, businessIdentifier: string, of
   await prisma.$transaction(async tx => {
     await tx.businessOffer.update({ where: { id: current.id }, data: { deletedAt: new Date() } });
     await audit(tx, userId, current.id, 'OFFER_DELETED', { deletedAt: null }, { deletedAt: new Date().toISOString() }, meta);
+    if (business.memberships[0]?.role !== 'OWNER') await notifyBusinessOwners(tx, business.id,
+      'Un colaborador retiró una publicación',
+      'El ' + (current.kind === 'PRODUCT' ? 'producto' : 'servicio') + ' «' + current.name + '» fue retirado del catálogo de tu negocio.',
+      userId, userId);
   });
 }
