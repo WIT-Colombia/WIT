@@ -21,7 +21,7 @@ export async function notifyPlatformUser(tx: Transaction, notice: Notice) {
 }
 
 export async function notifyBusinessOwners(
-  tx: Transaction, businessId: string, title: string, message: string, excludeUserId?: string,
+  tx: Transaction, businessId: string, title: string, message: string, excludeUserId?: string, actorUserId?: string,
 ) {
   const owners = await tx.businessMembership.findMany({
     where: { businessId, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } },
@@ -31,7 +31,7 @@ export async function notifyBusinessOwners(
   if (!ids.length) return;
   await tx.businessNotification.createMany({
     data: ids.map(userId => ({
-      userId, businessId, type: 'COLLABORATION_UPDATE' as const,
+      userId, businessId, actorUserId, type: 'COLLABORATION_UPDATE' as const,
       title: title.slice(0, 180), message: message.slice(0, 500),
     })),
   });
