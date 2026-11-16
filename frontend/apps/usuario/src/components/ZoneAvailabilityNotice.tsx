@@ -84,7 +84,7 @@ export function ZoneAvailabilityNotice({ city, region }: { city: string; region?
   }, [clock, data, offset]);
 
   async function toggle() {
-    if (!data?.code || busy || subscription === 'checking' || subscription === 'unavailable' || status === 'loading') return;
+    if (!data?.code || busy || subscription === 'checking' || status === 'loading') return;
     if (!isAuthenticated) {
       savePendingZoneAlert(data.code, data.city);
       navigate('/register');
@@ -100,8 +100,8 @@ export function ZoneAvailabilityNotice({ city, region }: { city: string; region?
         setSubscription('on');
       }
     } catch (caught) {
-      // No presentar mensajes técnicos cuando el backend todavía no tiene la ruta.
-      // Una suscripción fallida nunca debe mostrarse como activada.
+      // Permitir reintentar manualmente aunque la ruta no esté desplegada.
+      // Solo una respuesta confirmada del backend muestra el estado verde.
       if (caught instanceof ApiError && (caught.status === 404 || caught.status === 503)) {
         setSubscription('unavailable');
       }
@@ -121,7 +121,7 @@ export function ZoneAvailabilityNotice({ city, region }: { city: string; region?
     <div className="zone-availability-card__divider" aria-hidden="true" />
     <strong className="zone-availability-card__question">¿Quieres que te avisemos cuando lleguemos?</strong>
     <button className="zone-availability-card__notify" type="button" onClick={() => { void toggle(); }}
-      disabled={busy || subscription === 'checking' || subscription === 'unavailable' || status === 'loading' || !data.code}
+      disabled={busy || subscription === 'checking' || status === 'loading' || !data.code}
       aria-pressed={active} title={active ? 'Pulsa para cancelar este aviso' : undefined}>
       <BellIcon active={active}/><span>{busy ? 'Actualizando…' : subscription === 'checking' ? 'Comprobando…' :
         active ? 'Notificación activada' : 'Notificarme cuando lleguen'}</span>
