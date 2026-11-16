@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getNextZoneOpening, remainingUntil, type NextZoneOpening } from '@wit/utils';
+import { getNextZoneOpening, remainingUntil, subscribeZoneOpening, type NextZoneOpening } from '@wit/utils';
 import { destinations } from './config/destinations';
 import './ExpansionCountdown.css';
 
@@ -8,6 +8,23 @@ export function ExpansionCountdown(){
   const [offset,setOffset]=useState(0);
   const [now,setNow]=useState(Date.now());
   const [revision,setRevision]=useState(0);
+  const [email,setEmail]=useState('');
+  const [consent,setConsent]=useState(false);
+  const [submitting,setSubmitting]=useState(false);
+  const [subscriptionMessage,setSubscriptionMessage]=useState('');
+  const [subscriptionError,setSubscriptionError]=useState('');
+  useEffect(()=>{setSubscriptionMessage('');setSubscriptionError('');setEmail('');setConsent(false);},[opening?.key]);
+  const subscribe=async(event:React.FormEvent<HTMLFormElement>)=>{
+    event.preventDefault();
+    if(!opening||!consent||submitting)return;
+    setSubmitting(true);setSubscriptionError('');
+    try{
+      const result=await subscribeZoneOpening({zoneKey:opening.key,email,consent:true});
+      setSubscriptionMessage(result.message);
+      setEmail('');setConsent(false);
+    }catch(error){setSubscriptionError(error instanceof Error?error.message:'No se pudo registrar el aviso.');}
+    finally{setSubmitting(false);}
+  };
   useEffect(()=>{
     const controller=new AbortController();
     getNextZoneOpening(controller.signal).then(result=>{
@@ -55,6 +72,23 @@ export function ExpansionCountdown(){
           <strong>{String(value).padStart(2,'0')}</strong><span>{unit}</span></div>)}
       </div>
       <p>Desde ya puedes registrarte y explorar negocios virtuales de toda Colombia.</p>
+      <form className="expansion-countdown__signup" onSubmit={subscribe}>
+        <label htmlFor="launch-alert-email">¿Quieres que te avisemos cuando abramos?</label>
+        <div className="expansion-countdown__email-row">
+          <input id="launch-alert-email" type="email" autoComplete="email" required maxLength={320}
+            value={email} onChange={e=>setEmail(e.target.value)}
+            placeholder="Tu correo electrónico" aria-label="Correo para recibir aviso de apertura"/>
+          <button type="submit" disabled={submitting||!consent||!email.trim()}>
+            {submitting?'Enviando…':'Avísame'}
+          </button>
+        </div>
+        <label className="expansion-countdown__consent">
+          <input type="checkbox" checked={consent} required onChange={e=>setConsent(e.target.checked)}/>
+          <span>Acepto recibir un correo de confirmación y un aviso sobre esta apertura. Consulta la <a href={destinations.privacy}>política de tratamiento de datos</a>. Podré cancelar el aviso.</span>
+        </label>
+        {subscriptionMessage&&<p className="expansion-countdown__signup-ok" role="status">{subscriptionMessage}</p>}
+        {subscriptionError&&<p className="expansion-countdown__signup-error" role="alert">{subscriptionError}</p>}
+      </form>
     </div>
   </section>;
 }
