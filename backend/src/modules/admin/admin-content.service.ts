@@ -2,6 +2,7 @@ import { prisma } from '../../config/prisma.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
+import { notifyBusinessOwners } from '../notifications/platform-notifications.service.js';
 
 type Filters={q?:string;kind?:string;status?:string;city?:string;categoryId?:string;period?:string;page?:number};
 type ModerationAction='HIDE'|'RESTORE';
@@ -175,6 +176,11 @@ export async function moderateAdminContent(id:string,actorId:string,action:Moder
     await tx.auditLog.create({data:{actorUserId:actorId,entityType:'OFFER',entityId:id,
       action:action==='HIDE'?'ADMIN_CONTENT_HIDDEN':'ADMIN_CONTENT_RESTORED',
       previousState:{publicationStatus:before.publicationStatus},newState:{publicationStatus},reason}});
+    await notifyBusinessOwners(tx, before.businessId,
+      action === 'HIDE' ? 'Publicación retirada por moderación' : 'Publicación restaurada por XAMUKO',
+      action === 'HIDE'
+        ? 'XAMUKO retiró de la vista pública «' + before.name + '». Consulta el estado de tu catálogo y solicita una revisión a soporte si es necesario.'
+        : 'La publicación «' + before.name + '» volvió a estar disponible tras una revisión de XAMUKO.');
     return {id,publicationStatus,message:action==='HIDE'?'La publicación quedó oculta y la decisión registrada.':'La publicación volvió a estar visible y la decisión registrada.'};
   });
 }
