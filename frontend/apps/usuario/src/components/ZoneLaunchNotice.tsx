@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getZoneAvailability, remainingUntil, type ZoneAvailability } from '@wit/utils';
+import { getZoneAvailability, remainingUntil, subscribeZoneOpening, type ZoneAvailability } from '@wit/utils';
 import './ZoneLaunchNotice.css';
 
 export function ZoneLaunchNotice({city,department}:{city:string|null|undefined;department?:string|null}){
@@ -8,6 +8,23 @@ export function ZoneLaunchNotice({city,department}:{city:string|null|undefined;d
   const [offset,setOffset]=useState(0);
   const [clock,setClock]=useState(Date.now());
   const [reload,setReload]=useState(0);
+  const [email,setEmail]=useState('');
+  const [consent,setConsent]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const [feedback,setFeedback]=useState('');
+  const [formError,setFormError]=useState('');
+  useEffect(()=>{setEmail('');setConsent(false);setFeedback('');setFormError('');},[city,department]);
+  async function subscribe(event:React.FormEvent<HTMLFormElement>){
+    event.preventDefault();
+    const zoneKey=result?.data.zoneKey;
+    if(!zoneKey||!consent||saving)return;
+    setSaving(true);setFormError('');
+    try{
+      const message=await subscribeZoneOpening({zoneKey,email,consent:true});
+      setFeedback(message.message);setEmail('');setConsent(false);
+    }catch(e){setFormError(e instanceof Error?e.message:'No fue posible guardar la suscripción.');}
+    finally{setSaving(false);}
+  }
   const key=(city||'').trim()+'|'+(department||'').trim();
   useEffect(()=>{
     if(!city){setResult(null);return;}
@@ -46,6 +63,17 @@ export function ZoneLaunchNotice({city,department}:{city:string|null|undefined;d
         </div>
         <small className="zone-launch-notice__date">Apertura: {new Date(availability.opensAt!).toLocaleString('es-CO',{dateStyle:'long',timeStyle:'short',timeZone:'America/Bogota'})} (Colombia)</small>
       </>}
+
+      {isScheduled&&availability.zoneKey&&<form className="zone-launch-notice__signup" onSubmit={subscribe}>
+        <label htmlFor="zone-alert-email">¿Te avisamos cuando abramos?</label>
+        <div><input id="zone-alert-email" type="email" required autoComplete="email" maxLength={320}
+          placeholder="Correo electrónico" value={email} onChange={e=>setEmail(e.target.value)}/>
+          <button type="submit" disabled={!consent||saving||!email.trim()}>{saving?'Enviando…':'Avísame'}</button></div>
+        <label className="zone-launch-notice__consent"><input type="checkbox" required checked={consent}
+          onChange={e=>setConsent(e.target.checked)}/><span>Quiero recibir un correo para confirmar y un aviso al abrir esta zona. Acepto la <Link to="/legal/privacy">política de privacidad</Link>. Podré cancelar cuando quiera.</span></label>
+        {feedback&&<p role="status" className="zone-launch-notice__ok">{feedback}</p>}
+        {formError&&<p role="alert" className="zone-launch-notice__form-error">{formError}</p>}
+      </form>}
       <div className="zone-launch-notice__actions">
         <Link to="/results?scope=virtual">Explorar negocios virtuales <span aria-hidden="true">→</span></Link>
         <Link to="/location">Elegir otra ciudad</Link>
