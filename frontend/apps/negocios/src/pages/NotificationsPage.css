@@ -73,3 +73,21 @@
     width:100%;min-width:0;white-space:normal;
   }
 }
+
+
+/* Recordatorios de vigencia: icono azul y enlace a renovación real. */
+.business-app .business-notifications-page .notification-artwork.visibility {
+  background:#dbeafe;color:#2563eb;
+}
+.business-app .business-notifications-page .notification-artwork.visibility .notification-artwork-glyph {
+  font-size:26px;font-weight:800;
+}
+.business-app .business-notifications-page .notification-row .notification-link {
+  display:inline-flex;align-items:center;width:fit-content;max-width:100%;
+  min-height:32px;margin-top:9px;padding:7px 12px;border-radius:9px;
+  border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;
+  font-size:11px;font-weight:800;line-height:1.35;text-decoration:none;
+}
+.business-app .business-notifications-page .notification-row .notification-link:hover {
+  background:#dbeafe;color:#1e40af;
+}
