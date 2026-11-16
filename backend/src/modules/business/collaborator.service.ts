@@ -186,9 +186,11 @@ export async function setPermissions(userId: string, id: string, values: string[
   });
   return { ok: true };
 }
-export async function listNotifications(userId: string, businessId?: string) {
+export async function listNotifications(userId: string, businessId?: string, invitationsOnly = false) {
   const rows = await prisma.businessNotification.findMany({
-    where: { userId, ...(businessId ? { businessId } : {}) },
+    where: { userId, ...(businessId ? { businessId } : {}),
+      ...(invitationsOnly ? { type: 'COLLABORATION_INVITATION' as const, membership: { status: 'INVITED' as const } } : {}),
+    },
     include: {
       business: { select: { id: true, name: true, profilePhoto: { select: { id: true } }, memberships: { where: { role: 'OWNER', status: 'ACTIVE' }, select: { user: { select: { displayName: true } } }, take: 1 } } },
       membership: { select: { id: true, status: true, expiresAt: true, permissions: true } },
