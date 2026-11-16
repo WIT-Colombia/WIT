@@ -2,17 +2,22 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ChartPointer
 import { Icon } from '../components/Icon';
 import type { AdminContentFilters, AdminContentInsights } from '../services/adminApiClient';
 const num = (n:number) => new Intl.NumberFormat('es-CO').format(n);
-const month = (m:string) => new Date(m+'-01T12:00:00Z').toLocaleDateString('es-CO',{month:'short',year:'2-digit',timeZone:'UTC'});
-type Series = 'total'|'products'|'services';
+const labelDate = (key:string,full=false) => {
+  const daily=key.length===10;
+  const date=new Date((daily?key:key+'-01')+'T12:00:00Z');
+  return Number.isNaN(date.getTime())?key:date.toLocaleDateString('es-CO',daily?{day:'2-digit',month:'short',...(full?{year:'numeric' as const}:{ }),timeZone:'UTC'}:{month:'short',year:full?'numeric':'2-digit',timeZone:'UTC'});
+};
+type Series = 'total'|'products'|'services'|'views'|'likes';
 type ChartMode='line'|'bars';
-type Entry={label:string;value:number};
-function Timeline({points,mode}:{points:Entry[];mode:ChartMode}){
+type Entry={label:string;fullLabel:string;value:number};
+function Timeline({points,mode,unit}:{points:Entry[];mode:ChartMode;unit:string}){
   const ref=useRef<HTMLDivElement>(null);
   const [width,setWidth]=useState(780);
   const [active,setActive]=useState<number|null>(null);
   useEffect(()=>{
     const node=ref.current;if(!node)return;
-    const resize=new ResizeObserver(entries=>{const v=Math.max(315,Math.round(entries[0]?.contentRect.width??780));setWidth(a=>a===v?a:v);});
+    if(typeof ResizeObserver==='undefined')return;
+    const resize=new ResizeObserver(entries=>{const v=Math.max(250,Math.round(entries[0]?.contentRect.width??780));setWidth(a=>a===v?a:v);});
     resize.observe(node);return()=>resize.disconnect();
   },[]);
   useEffect(()=>setActive(null),[points,mode]);
@@ -53,16 +58,20 @@ function Timeline({points,mode}:{points:Entry[];mode:ChartMode}){
         fill="url(#ac-timeline-bars)" tabIndex={0} aria-label={p.label+': '+num(p.value)} onFocus={()=>setActive(i)}/>)}
       {selected&&active!==null&&<>
         <line className="ac-chart-guide" x1={selX} x2={selX} y1={top} y2={baseline} pointerEvents="none"/>
+        <line className="ac-chart-guide ac-guide-horizontal" x1={left} x2={width-right} y1={y(selected.value)} y2={y(selected.value)} pointerEvents="none"/>
         <circle cx={selX} cy={y(selected.value)} r="6" fill="#fff" stroke="#225cf1" strokeWidth="2.6" pointerEvents="none"/>
-        {(()=>{const tx=Math.max(left,Math.min(width-right-80,selX-40)),ty=Math.max(2,y(selected.value)-44);return <g pointerEvents="none">
-          <rect x={tx} y={ty} width="80" height="33" rx="9" fill="#182e54"/>
-          <text x={tx+40} y={ty+22} textAnchor="middle" fill="#fff" fontWeight="800" fontSize="14">{num(selected.value)}</text>
+        {(()=>{const tx=Math.max(left,Math.min(width-right-120,selX-60)),ty=Math.max(2,y(selected.value)-62);return <g pointerEvents="none">
+          <rect x={tx} y={ty} width="120" height="48" rx="9" fill="#182e54"/>
+          <text x={tx+60} y={ty+18} textAnchor="middle" fill="#b9cef6" fontWeight="650" fontSize="11">{selected.fullLabel}</text>
+          <text x={tx+60} y={ty+37} textAnchor="middle" fill="#fff" fontWeight="800" fontSize="16">{num(selected.value)}</text>
         </g>;})()}
+        <rect x={Math.max(left,Math.min(width-right-65,selX-32))} y={height-38} width="65" height="22" rx="5" fill="#182e54" pointerEvents="none"/>
+        <text x={Math.max(left+32,Math.min(width-right-32,selX))} y={height-23} textAnchor="middle" fill="white" fontSize="10" pointerEvents="none">{selected.label}</text>
       </>}
       {points.map((p,i)=>(i%labelStep===0||i===points.length-1)&&<text key={i} className="ac-chart-axis"
         x={mode==='bars'?left+(i+.5)*w/points.length:x(i)} y={height-17} textAnchor="middle">{p.label}</text>)}
     </svg>
-    <p className="ac-chart-hint">{selected?<><strong>{num(selected.value)}</strong> registros</>:'Explora cada mes: el valor 0 indica que no hubo registros de ese tipo.'}</p>
+    <p className="ac-chart-hint" role="status">{selected?<><strong>{selected.fullLabel}</strong>: {num(selected.value)} {unit}</>:'Mueve el cursor o toca la gráfica para consultar una fecha. Los valores 0 se muestran expresamente.'}</p>
   </div>;
 }
 function exportCSV(points:Entry[],label:string){
@@ -82,37 +91,38 @@ export function AdminContentAnalyticsPanel({data,loading,error,period,onPeriod,f
   const [mode,setMode]=useState<ChartMode>('line');
   const [view,setView]=useState<'chart'|'table'>('chart');
   const chartRef=useRef<HTMLDivElement>(null);
-  const points=useMemo(()=>data?.series.map(m=>({label:month(m.month),value:m[series]}))??[],[data,series]);
+  const points=useMemo(()=>data?.series.map(m=>({label:labelDate(m.month),fullLabel:labelDate(m.month,true),value:m[series]}))??[],[data,series]);
+  const unit=series==='views'?'vistas':series==='likes'?'me gusta':'registros';
   const activeFilters=[filters.kind,filters.status,filters.city,filters.categoryId].filter(Boolean).length;
   const show=()=>{setOpen(false);window.requestAnimationFrame(()=>chartRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
   return <section className="ac-analytics" aria-labelledby="ac-analytics-title">
     <header className="ac-panel-head ac-analytics-heading"><div><span className="ac-eyebrow">INTELIGENCIA DE CONTENIDO</span><h2 id="ac-analytics-title">Evolución del catálogo</h2>
       <p>Compara productos y servicios por período, ciudad, categoría y estado de publicación.</p></div>
-      <button type="button" className="ac-secondary" disabled={!points.length} onClick={()=>exportCSV(points,series==='products'?'Productos':series==='services'?'Servicios':'Contenido total')}><Icon name="download" size={17}/> Exportar CSV</button>
+      <button type="button" className="ac-secondary" disabled={!points.length} onClick={()=>exportCSV(points,series==='products'?'Productos':series==='services'?'Servicios':series==='views'?'Vistas':series==='likes'?'Me gusta':'Contenido total')}><Icon name="download" size={17}/> Exportar CSV</button>
     </header>
-    <div className="ac-filter-entry"><div><strong>Filtros de evolución</strong><span>{activeFilters?activeFilters+' filtro(s) del directorio aplicado(s)':'Vista general del catálogo'} · {period==='all'?'Todo el histórico':period==='60m'?'5 años':period==='24m'?'24 meses':period==='6m'?'6 meses':'12 meses'}</span></div>
+    <div className="ac-filter-entry"><div><strong>Filtros de evolución</strong><span>{activeFilters?activeFilters+' filtro(s) del directorio aplicado(s)':'Vista general del catálogo'} · {period==='all'?'Todo el histórico':period==='60m'?'5 años':period==='24m'?'24 meses':period==='6m'?'6 meses':period==='7d'?'7 días':period==='30d'?'30 días':period==='90d'?'90 días':'12 meses'}</span></div>
       <button type="button" className="ac-secondary" aria-expanded={open} aria-controls="ac-analytics-filters" onClick={()=>setOpen(v=>!v)}><Icon name="settings" size={17}/>{open?'Ocultar filtros':'Mostrar filtros'} <Icon name="chevron" size={16}/></button>
     </div>
     <div className="ac-analytics-filters" id="ac-analytics-filters" hidden={!open}>
       <label>Ciudad <select value={filters.city??''} onChange={e=>onFilter('city',e.target.value)}><option value="">Todas las ciudades</option>{data?.filters.cities.map(v=><option key={v.value} value={v.value}>{v.label}</option>)}</select></label>
       <label>Categoría <select value={filters.categoryId??''} onChange={e=>onFilter('categoryId',e.target.value)}><option value="">Todas las categorías</option>{data?.filters.categories.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select></label>
       <label>Tipo <select value={filters.kind??''} onChange={e=>onFilter('kind',e.target.value)}><option value="">Productos y servicios</option><option value="PRODUCT">Productos</option><option value="SERVICE">Servicios</option></select></label>
-      <label>Publicación <select value={filters.status??''} onChange={e=>onFilter('status',e.target.value)}><option value="">Todos los vigentes</option><option value="PUBLISHED">Publicados</option><option value="REVIEW">En revisión</option><option value="UNPUBLISHED">No publicados</option><option value="DELETED">Eliminados</option></select></label>
-      <label>Temporalidad <select value={period} onChange={e=>onPeriod(e.target.value)}><option value="6m">6 meses</option><option value="12m">12 meses</option><option value="24m">24 meses</option><option value="60m">5 años</option><option value="all">Todo el histórico</option></select></label>
+      <label>Publicación <select value={filters.status??''} onChange={e=>onFilter('status',e.target.value)}><option value="">Todos los vigentes</option><option value="PUBLISHED">Publicados</option><option value="REVIEW">En revisión</option><option value="UNPUBLISHED">No publicados</option><option value="HIDDEN">Ocultos por Admin</option><option value="ADMIN_REVIEW">Revisión administrativa</option><option value="INACTIVE">Inactivos</option><option value="DELETED">Eliminados</option></select></label>
+      <label>Temporalidad <select value={period} onChange={e=>onPeriod(e.target.value)}><option value="7d">7 días</option><option value="30d">30 días</option><option value="90d">90 días</option><option value="6m">6 meses</option><option value="12m">12 meses</option><option value="24m">24 meses</option><option value="60m">5 años</option><option value="all">Todo el histórico</option></select></label>
       <button type="button" className="ac-primary" onClick={show}><Icon name="chart" size={17}/> Ver gráfica</button>
     </div>
     {loading?<div className="ac-analytics-state" role="status">Consultando las estadísticas del catálogo…</div>:
       error?<div className="ac-analytics-state" role="alert"><strong>No fue posible consultar la evolución.</strong><p>{error}</p><button type="button" className="ac-secondary" onClick={onRetry}>Reintentar</button></div>:
       data&&<>
         <div className="ac-chart-card" ref={chartRef}>
-          <div className="ac-chart-head"><div><h3>Comportamiento histórico</h3><p>Registros creados por mes · datos reales de MySQL</p></div>
+          <div className="ac-chart-head"><div><h3>Comportamiento histórico</h3><p>{series==='views'?'Visualizaciones reales de productos y servicios':series==='likes'?'Nuevos me gusta registrados':'Publicaciones creadas'} por {data.granularity==='day'?'día':'mes'} · fechas de Colombia</p></div>
             <div className="ac-chart-controls">
-              <div className="ac-segmented" role="group" aria-label="Indicador"><button className={series==='total'?'selected':''} aria-pressed={series==='total'} onClick={()=>setSeries('total')} type="button">Total</button><button className={series==='products'?'selected':''} aria-pressed={series==='products'} onClick={()=>setSeries('products')} type="button">Productos</button><button className={series==='services'?'selected':''} aria-pressed={series==='services'} onClick={()=>setSeries('services')} type="button">Servicios</button></div>
+              <div className="ac-segmented" role="group" aria-label="Indicador"><button className={series==='total'?'selected':''} aria-pressed={series==='total'} onClick={()=>setSeries('total')} type="button">Total</button><button className={series==='products'?'selected':''} aria-pressed={series==='products'} onClick={()=>setSeries('products')} type="button">Productos</button><button className={series==='services'?'selected':''} aria-pressed={series==='services'} onClick={()=>setSeries('services')} type="button">Servicios</button><button className={series==='views'?'selected':''} aria-pressed={series==='views'} onClick={()=>setSeries('views')} type="button">Vistas</button><button className={series==='likes'?'selected':''} aria-pressed={series==='likes'} onClick={()=>setSeries('likes')} type="button">Me gusta</button></div>
               <div className="ac-segmented" role="group" aria-label="Presentación"><button className={mode==='line'?'selected':''} aria-pressed={mode==='line'} onClick={()=>setMode('line')} type="button">Línea</button><button className={mode==='bars'?'selected':''} aria-pressed={mode==='bars'} onClick={()=>setMode('bars')} type="button">Barras</button></div>
               <div className="ac-segmented" role="group" aria-label="Ver datos"><button type="button" className={view==='chart'?'selected':''} aria-pressed={view==='chart'} onClick={()=>setView('chart')}>Gráfica</button><button type="button" className={view==='table'?'selected':''} aria-pressed={view==='table'} onClick={()=>setView('table')}>Tabla</button></div>
             </div>
           </div>
-          {view==='chart'?<Timeline points={points} mode={mode}/>:<div className="ac-chart-table-wrap"><table><thead><tr><th>Mes</th><th>Productos</th><th>Servicios</th><th>Total</th></tr></thead><tbody>{data.series.map(p=><tr key={p.month}><td>{month(p.month)}</td><td>{num(p.products)}</td><td>{num(p.services)}</td><td>{num(p.total)}</td></tr>)}</tbody></table></div>}
+          {view==='chart'?<Timeline points={points} mode={mode} unit={unit}/>:<div className="ac-chart-table-wrap"><table><thead><tr><th>Fecha</th><th>Productos</th><th>Servicios</th><th>Total</th><th>Vistas</th><th>Me gusta</th></tr></thead><tbody>{data.series.map(p=><tr key={p.month}><td>{labelDate(p.month)}</td><td>{num(p.products)}</td><td>{num(p.services)}</td><td>{num(p.total)}</td><td>{num(p.views)}</td><td>{num(p.likes)}</td></tr>)}</tbody></table></div>}
         </div>
         <div className="ac-chart-bottom"><div className="ac-status-card"><h3>Estado del catálogo</h3><div className="ac-status-bars">{[
           {label:'Publicados',value:data.totals.published,color:'blue'},
