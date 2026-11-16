@@ -136,7 +136,7 @@ function RoutePending() {
 
 export default function App() {
   const { pathname } = useLocation();
-  return <RouteErrorBoundary key={pathname}><InitialLocationGate><ZoneAlertResume /><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<RoutePending />}><Routes>
+  return <><ZoneAlertResume /><RouteErrorBoundary key={pathname}><InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<RoutePending />}><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Navigate to="/home" replace />} />
@@ -175,5 +175,5 @@ export default function App() {
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<NotFound />} />
-  </Routes></Suspense><StandaloneFooter /></InitialLocationGate></RouteErrorBoundary>;
+  </Routes></Suspense><StandaloneFooter /></InitialLocationGate></RouteErrorBoundary></>;
 }
