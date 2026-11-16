@@ -66,8 +66,14 @@ export function NotificationsPage() {
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [busyDelete, setBusyDelete] = useState<string | null>(null);
   const [confirmingLocalDelete, setConfirmingLocalDelete] = useState<string | null>(null);
-  // Each real business has its own one-time welcome. Dismissal is persisted per account/business.
-  const welcomeKey = accountId && selectedBusinessId ? `xamuko-business-welcome:${accountId}:${selectedBusinessId}` : "";
+  // Before the first business exists, the welcome belongs to the Business account.
+  // Once a business is selected, its own welcome is isolated by business and account.
+  const hasSelectedBusiness = business.source === "real" && Boolean(selectedBusinessId);
+  const welcomeKey = accountId
+    ? hasSelectedBusiness
+      ? `xamuko-business-welcome:${accountId}:${selectedBusinessId}`
+      : `xamuko-business-account-welcome:${accountId}`
+    : "";
   const [welcomeState, setWelcomeState] = useState<{ key: string; read: boolean; dismissed: boolean }>({ key: "", read: false, dismissed: false });
   useEffect(() => {
     if (!welcomeKey) { setWelcomeState({ key: "", read: false, dismissed: false }); return; }
@@ -83,7 +89,7 @@ export function NotificationsPage() {
     setWelcomeState(next);
     try { localStorage.setItem(welcomeKey, JSON.stringify({ read, dismissed })); } catch { /* Browser storage may be disabled. */ }
   };
-  const showWelcome = business.source === "real" && welcomeState.key === welcomeKey && !welcomeState.dismissed;
+  const showWelcome = Boolean(welcomeKey) && welcomeState.key === welcomeKey && !welcomeState.dismissed;
 
 
   const reloadPersisted = useCallback(async () => {
@@ -211,9 +217,9 @@ export function NotificationsPage() {
           <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
         </span>
         <div>
-          <span className="business-notifications-eyebrow">ACTIVIDAD DE TU NEGOCIO</span>
+          <span className="business-notifications-eyebrow">{hasSelectedBusiness ? "ACTIVIDAD DE TU NEGOCIO" : "TU ESPACIO EN XAMUKO BUSINESS"}</span>
           <h1>Notificaciones</h1>
-          <p>{business.name ? "Avisos y decisiones relacionados con " + business.name + "." : "Selecciona un negocio para consultar sus notificaciones."}</p>
+          <p>{hasSelectedBusiness ? "Avisos y decisiones relacionados con " + business.name + "." : "Aquí encontrarás tus novedades. Comienza registrando tu primer negocio."}</p>
           <span className="business-notifications-count" aria-live="polite">{totalUnread} {totalUnread === 1 ? "pendiente" : "pendientes"} por leer</span>
         </div>
       </div>
@@ -227,7 +233,7 @@ export function NotificationsPage() {
       <div className="notification-tabs" role="group" aria-label="Filtrar notificaciones"><button type="button" onClick={() => setFilter("Todas")} className={filter === "Todas" ? "active" : ""} aria-pressed={filter === "Todas"}>Todas</button><button type="button" onClick={() => setFilter("No leídas")} className={filter === "No leídas" ? "active" : ""} aria-pressed={filter === "No leídas"}>No leídas <span>{totalUnread}</span></button><button type="button" onClick={() => setFilter("Leídas")} className={filter === "Leídas" ? "active" : ""} aria-pressed={filter === "Leídas"}>Leídas</button></div>
       {showWelcome && (filter === "Todas" || (filter === "No leídas" ? !welcomeState.read : welcomeState.read)) && <article className={`notification-row notification-welcome-row ${welcomeState.read ? "" : "unread"}`} onClick={() => { if (!welcomeState.read) changeWelcome(true, false); }} aria-label="Bienvenida de XAMUKO">
         <span className="notification-icon wit notification-welcome-brand" aria-hidden="true"><img src="/brand/xamuko-symbol.jpg" alt=""/></span>
-        <div><div className="notification-title"><h2>¡Qué alegría que tu negocio esté en XAMUKO!</h2>{!welcomeState.read && <span aria-label="Sin leer"/>}</div><p>Sabemos cuánto esfuerzo e ilusión hay detrás de cada negocio. Nos alegra acompañarte para mostrar lo que haces, conectar con nuevas personas y seguir creciendo. ¡Gracias por confiar en XAMUKO!</p><small>Equipo XAMUKO · Mensaje de bienvenida</small></div>
+        <div><div className="notification-title"><h2>{hasSelectedBusiness ? "¡Qué alegría acompañar a tu negocio!" : "¡Qué alegría tenerte en XAMUKO Business!"}</h2>{!welcomeState.read && <span aria-label="Sin leer"/>}</div><p>{hasSelectedBusiness ? "Detrás de cada negocio hay esfuerzo, sueños e historias por compartir. Gracias por permitirnos acompañarte a darlo a conocer y conectar con más personas. ¡Cuenta con nosotros en este camino!" : "Nos encanta que estés aquí. Este es el comienzo: crea tu primer negocio, comparte lo que te hace especial y descubre nuevas oportunidades para conectar con más personas. ¡Estamos contigo en cada paso!"}</p><small>Equipo XAMUKO · Mensaje de bienvenida</small>{!hasSelectedBusiness && <Link className="business-notifications-start-cta" to="/mis-negocios/nuevo" onClick={event => event.stopPropagation()}>Crear mi primer negocio <span aria-hidden="true">→</span></Link>}</div>
 
         <div className="notification-actions" onClick={event => event.stopPropagation()}>
           <button type="button" className="notification-delete" title="Eliminar notificación" aria-label="Eliminar bienvenida" onClick={() => setConfirmingLocalDelete("business-welcome")}>
