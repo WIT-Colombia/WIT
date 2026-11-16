@@ -27,6 +27,7 @@ function UserAvatar({ user }: { user: Pick<AdminUserRecord,'displayName'> }) {
 }
 export function AdminUsersPage() {
   const allowed = getSession()?.permissions?.includes('settings:write') ?? false;
+  const canDelete = getSession()?.role === 'SUPER_ADMIN';
   const [params,setParams]=useSearchParams();
   const q=params.get('q')??'';
   const status=params.get('status')??'';
@@ -102,12 +103,12 @@ export function AdminUsersPage() {
               <td><span className={'au-status '+user.status.toLowerCase()}>{accountStatus[user.status]}</span>{user.isAdmin&&<span className="au-admin-mini">Administrador</span>}</td>
               <td><span className="au-link-count"><Icon name="store" size={15}/> {user.ownedBusinesses} propietario(s)</span><span className="au-link-count"><Icon name="users" size={15}/> {user.collaboratingBusinesses} colaboración(es)</span></td>
               <td>{date(user.createdAt)}</td><td>{date(user.lastLoginAt)}</td>
-              <td><Link className="au-detail-link" to={'/users/'+encodeURIComponent(user.id)}>Ver ficha <Icon name="arrow" size={16}/></Link></td></tr>)}</tbody>
+              <td><Link className="au-detail-link" to={'/users/'+encodeURIComponent(user.id)}>{canDelete && user.status !== "DELETED" ? "Gestionar / eliminar" : "Ver ficha"} <Icon name="arrow" size={16}/></Link></td></tr>)}</tbody>
           </table></div>
           <div className="au-mobile-users">{data.users.map(user=><article key={user.id} className="au-mobile-user-card"><div className="au-mobile-user-head"><UserAvatar user={user}/><div><strong>{user.displayName}</strong><small>{user.emailNormalized??'Sin correo registrado'}</small></div></div>
             <div className="au-mobile-tags"><span className={'au-status '+user.status.toLowerCase()}>{accountStatus[user.status]}</span>{user.isAdmin&&<span className="au-admin-mini">Administrador</span>}</div>
             <div className="au-mobile-user-facts"><span><Icon name="store" size={15}/> {user.ownedBusinesses} propietario(s)</span><span><Icon name="users" size={15}/> {user.collaboratingBusinesses} colaboración(es)</span><span><Icon name="calendar" size={15}/> Alta: {date(user.createdAt)}</span></div>
-            <Link to={'/users/'+encodeURIComponent(user.id)} className="au-detail-link">Explorar usuario <Icon name="arrow" size={17}/></Link></article>)}</div>
+            <Link to={'/users/'+encodeURIComponent(user.id)} className="au-detail-link">{canDelete && user.status !== "DELETED" ? "Gestionar / eliminar" : "Explorar usuario"} <Icon name="arrow" size={17}/></Link></article>)}</div>
         </>)}
       {data&&data.pagination.totalPages>1&&<nav className="au-pagination" aria-label="Paginación del directorio">
         <span>Página {page} de {data.pagination.totalPages}</span><div><button type="button" className="au-outline-button" disabled={page<=1} onClick={()=>goTo(page-1)}>Anterior</button>
