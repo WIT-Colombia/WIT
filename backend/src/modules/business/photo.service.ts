@@ -41,21 +41,34 @@ export async function uploadPhoto(userId: string, businessId: string, file: Uplo
   const count = offerId ? 0 : await db.photo.count({ where: { businessId, isGallery: true } });
   if (!offerId && count >= 10) throw new AppError(422, 'PHOTO_LIMIT_REACHED', 'Cada negocio puede tener máximo 10 fotografías.');
   const business = await db.business.findUniqueOrThrow({ where: { id: businessId }, select: { coverPhotoId: true, profilePhotoId: true } });
-  const previousOfferPhotos = offerId ? await db.photo.findMany({ where: { businessId, offerId }, select: { id: true, storageKey: true } }) : [];
-  for (const previous of previousOfferPhotos) await removePhoto(previous.storageKey).catch(() => undefined);
   const stored = await savePhoto(businessId, file.buffer, file.mimetype);
   try {
-    const photo = await db.$transaction(async tx => {
+    const result = await db.$transaction(async tx => {
+      let replaced: Array<{ storageKey: string }> = [];
+      if (offerId) {
+        await tx.$queryRaw`SELECT id FROM BusinessOffer WHERE id = ${offerId} FOR UPDATE`;
+        const offer = await tx.businessOffer.findFirst({
+          where: { id: offerId, businessId },
+          select: { administrativeStatus: true, deletedAt: true },
+        });
+        if (!offer || offer.deletedAt || offer.administrativeStatus !== 'NONE')
+          throw new AppError(409, 'OFFER_ADMIN_RESTRICTED', 'No se pueden modificar fotografías bajo una restricción administrativa.');
+        replaced = await tx.photo.findMany({ where: { businessId, offerId }, select: { storageKey: true } });
+        await tx.photo.deleteMany({ where: { businessId, offerId } });
+      }
       const shouldUseAsCover = !offerId && (requestedCover || !business.coverPhotoId);
       if (shouldUseAsCover) await tx.photo.updateMany({ where: { businessId, isCover: true }, data: { isCover: false } });
-      if (offerId && previousOfferPhotos.length) await tx.photo.deleteMany({ where: { id: { in: previousOfferPhotos.map(item => item.id) }, businessId, offerId } });
-      const photo = await tx.photo.create({ data: { businessId, offerId: offerId ?? null, storageKey: stored.storageKey, url: null, source: 'NEGOCIOS', sortOrder: count, isCover: shouldUseAsCover, isGallery: !offerId, uploadedById: userId } });
-      // Gallery uploads may become the cover, but never become the profile
-      // image implicitly. The profile photo is selected explicitly.
+      const photo = await tx.photo.create({ data: {
+        businessId, offerId: offerId ?? null, storageKey: stored.storageKey, url: null,
+        source: 'NEGOCIOS', sortOrder: count, isCover: shouldUseAsCover,
+        isGallery: !offerId, uploadedById: userId,
+      } });
       if (shouldUseAsCover) await tx.business.update({ where: { id: businessId }, data: { coverPhotoId: photo.id } });
-      return photo;
+      return { photo, replaced };
     });
-    return serializePhoto(businessId, photo);
+    // Keep prior originals until the replacement was committed successfully.
+    for (const previous of result.replaced) await removePhoto(previous.storageKey).catch(() => undefined);
+    return serializePhoto(businessId, result.photo);
   } catch (error) {
     await removePhoto(stored.storageKey).catch(() => undefined);
     throw error;
@@ -66,10 +79,22 @@ export async function deletePhoto(userId: string, businessId: string, photoId: s
   const access = await findBusinessForPhotoRead(userId, businessId);
   const photo = await db.photo.findFirst({ where: { id: photoId, businessId } });
   if (!photo) throw new AppError(404, 'PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
-  if (photo.offerId) { const offer = await db.businessOffer.findUnique({ where: { id: photo.offerId }, select: { administrativeStatus: true } }); if (offer?.administrativeStatus !== 'NONE') throw new AppError(409, 'OFFER_ADMIN_RESTRICTED', 'Esta publicación está restringida por Admin.'); }
   requireBusinessPhotoPermission(access, photo.offerId ? 'MANAGE_CATALOG' : 'EDIT_BUSINESS');
-  await removePhoto(photo.storageKey).catch(() => { throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo eliminar el archivo de fotografía.'); });
-  await db.$transaction(async tx => { await tx.photo.delete({ where: { id: photo.id } }); });
+  await db.$transaction(async tx => {
+    if (photo.offerId) {
+      await tx.$queryRaw`SELECT id FROM BusinessOffer WHERE id = ${photo.offerId} FOR UPDATE`;
+      const offer = await tx.businessOffer.findUnique({
+        where: { id: photo.offerId }, select: { administrativeStatus: true },
+      });
+      if (offer?.administrativeStatus !== 'NONE')
+        throw new AppError(409, 'OFFER_ADMIN_RESTRICTED', 'Esta publicación está restringida por Admin.');
+    }
+    await tx.photo.delete({ where: { id: photo.id } });
+  });
+  await removePhoto(photo.storageKey).catch(() => {
+    throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE',
+      'La fotografía ya fue retirada de la base de datos, pero el archivo requiere limpieza.');
+  });
 }
 
 export async function setPhotoCover(userId: string, businessId: string, photoId: string, positionX?: number, positionY?: number) {
