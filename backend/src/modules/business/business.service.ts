@@ -4,7 +4,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import type { BusinessCreateInput, BusinessUpdateInput } from './business.schemas.js';
 import { modalityRules } from './modality.service.js';
 import { ensureInitialVisibilityPeriod } from './visibility.service.js';
-import { notifyPlatformUser } from '../notifications/platform-notifications.service.js';
+import { notifyPlatformUser, notifyBusinessOwners } from '../notifications/platform-notifications.service.js';
 
 type Db = PrismaClient | Prisma.TransactionClient;
 type RequestMeta = { ipAddress?: string };
@@ -466,6 +466,21 @@ export async function updateBusiness(userId: string, identifier: string, input: 
       await tx.businessLocation.update({ where: { businessId: business.id }, data: { ...(input.countryCode !== undefined ? { countryCode: input.countryCode } : {}), ...(input.regionCode !== undefined ? { regionCode: input.regionCode ?? null } : {}), ...(input.regionName !== undefined ? { regionName: input.regionName ?? null } : {}), ...(input.cityName !== undefined && input.cityName !== null ? { cityName: input.cityName } : {}), ...(input.zoneName !== undefined ? { zoneName: input.zoneName ?? null } : {}), ...(input.address !== undefined && input.address !== null ? { address: input.address } : {}), ...(input.latitude !== undefined ? { latitude: input.latitude } : {}), ...(input.longitude !== undefined ? { longitude: input.longitude } : {}), ...(input.additionalAddressInfo !== undefined ? { additionalAddressInfo: input.additionalAddressInfo?.trim() || null } : {}), ...(input.postalCode !== undefined ? { postalCode: input.postalCode ?? null } : {}), ...(input.timezone !== undefined ? { timezone: input.timezone } : {}), visibility: visibilityForModalities(current.modalities.map((modality: any) => modality.type)) } });
     }
     await audit(tx, userId, business.id, 'BUSINESS_UPDATED', { name: current.name, description: current.description }, { name: business.name, description: business.description }, meta);
+    // Meaningful edits by collaborators are attributable, but ordinary owner edits
+    // and unchanged autosaves do not generate self-notifications.
+    if (membership.role !== 'OWNER' && (
+      input.name !== undefined && input.name !== current.name ||
+      input.adultOnly !== undefined && input.adultOnly !== current.adultOnly ||
+      category !== null && category.id !== current.categoryId ||
+      input.phone !== undefined && input.phone !== current.phone ||
+      input.whatsapp !== undefined && input.whatsapp !== current.whatsapp ||
+      input.email !== undefined && input.email !== current.email ||
+      input.latitude !== undefined || input.longitude !== undefined
+    )) {
+      await notifyBusinessOwners(tx, business.id, 'Un colaborador actualizó tu negocio',
+        'Se modificó información importante de ' + business.name + '. Revisa la ficha del negocio para verificar los cambios.',
+        userId, userId);
+    }
     if (input.adultOnly !== undefined && input.adultOnly !== current.adultOnly) {
       await audit(tx, userId, business.id, 'BUSINESS_ADULT_CLASSIFICATION_CHANGED', { adultOnly: current.adultOnly }, { adultOnly: business.adultOnly }, meta);
     }
