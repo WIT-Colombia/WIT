@@ -8,7 +8,7 @@ import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBus
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
 import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto, moderateAdminContent } from './admin-content.service.js';
-import { listAdminUsersExtended, getAdminUserOverview, getAdminUserProfile, deactivateAdminUser } from './admin-users.service.js';
+import { listAdminUsersExtended, getAdminUserOverview, getAdminUserAnalytics, getAdminUserHistory, getAdminUserProfile, deactivateAdminUser, setAdminUserStatus, revokeAdminUserSessions } from './admin-users.service.js';
 import { prisma } from '../../config/prisma.js';
 import { readOwnAvatar } from '../auth/avatar.service.js';
 import { adminDocumentsRouter } from './admin-documents.routes.js';
@@ -84,6 +84,11 @@ adminRouter.get('/users', requireAdmin('ADMINS_MANAGE'), async (req, res, next) 
     res.json(await listAdminUsersExtended({
       q: String(req.query.q ?? ''), status: String(req.query.status ?? ''),
       relation: String(req.query.relation ?? ''), page: Number(req.query.page) || 1,
+      provider: String(req.query.provider ?? ''), emailVerified: String(req.query.emailVerified ?? ''),
+      admin: String(req.query.admin ?? ''), activity: String(req.query.activity ?? ''),
+      registeredFrom: String(req.query.registeredFrom ?? ''), registeredTo: String(req.query.registeredTo ?? ''),
+      lastLoginFrom: String(req.query.lastLoginFrom ?? ''), lastLoginTo: String(req.query.lastLoginTo ?? ''),
+      order: String(req.query.order ?? ''),
     }));
   } catch (error) { next(error); }
 });
@@ -91,6 +96,41 @@ adminRouter.get('/users/overview', requireAdmin('ADMINS_MANAGE'), async (_req, r
   try {
     res.setHeader('Cache-Control', 'no-store');
     res.json(await getAdminUserOverview());
+  } catch (error) { next(error); }
+});
+adminRouter.get('/users/capabilities', requireAdmin('ADMINS_MANAGE'), (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const context = adminFromRequest(req);
+  res.json({ userManagement: true, canManageStatus: context.role === 'SUPER_ADMIN', analytics: true });
+});
+adminRouter.get('/users/analytics', requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminUserAnalytics(String(req.query.period ?? '12m'))); }
+  catch (error) { next(error); }
+});
+adminRouter.get('/users/:id/history', requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminUserHistory(String(req.params.id))); }
+  catch (error) { next(error); }
+});
+adminRouter.post('/users/:id/status', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
+  try {
+    const context = adminFromRequest(req);
+    if (context.role !== 'SUPER_ADMIN') {
+      res.status(403).json({ error: { code: 'ADMIN_SUPER_ADMIN_REQUIRED', message: 'Solo el administrador principal puede suspender o reactivar usuarios.' } });
+      return;
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await setAdminUserStatus(String(req.params.id), context.userId, String(req.body?.action ?? ''), String(req.body?.reason ?? '')));
+  } catch (error) { next(error); }
+});
+adminRouter.post('/users/:id/sessions/revoke', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {
+  try {
+    const context = adminFromRequest(req);
+    if (context.role !== 'SUPER_ADMIN') {
+      res.status(403).json({ error: { code: 'ADMIN_SUPER_ADMIN_REQUIRED', message: 'Solo el administrador principal puede cerrar las sesiones de otra cuenta.' } });
+      return;
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await revokeAdminUserSessions(String(req.params.id), context.userId, String(req.body?.reason ?? '')));
   } catch (error) { next(error); }
 });
 adminRouter.get('/users/:id/avatar', requireAdmin('ADMINS_MANAGE'), async (req, res, next) => {

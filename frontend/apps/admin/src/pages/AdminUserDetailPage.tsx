@@ -4,9 +4,13 @@ import { Link, useParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
 import { getSession } from '../services/adminService';
-import { deactivateAdminUser, fetchAdminUserAvatar, getAdminUserProfile, type AdminUserProfile, type AdminUserBusinessLink } from '../services/adminApiClient';
+import { deactivateAdminUser, fetchAdminUserAvatar, getAdminUserProfile, getAdminUserCapabilities,
+  type AdminUserProfile, type AdminUserBusinessLink, type AdminUserAdministrativeAction } from '../services/adminApiClient';
+import { AdminUserStatusDialog } from '../components/users/AdminUserStatusDialog';
+import { AdminUserAuditTimeline } from './AdminUserAuditTimeline';
 import { accountStatus } from './AdminUsersPage';
 import './AdminUsersRefresh.css';
+import './AdminUsersControl.css';
 
 const dateTime = (value: string | null) => value
   ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23' }).format(new Date(value))
@@ -95,6 +99,7 @@ export function AdminUserDetailPage() {
   const id=useParams().id??'';
   const allowed=getSession()?.permissions?.includes('settings:write')??false;
   const isSuperAdmin=getSession()?.role==='SUPER_ADMIN';
+  const selfId=getSession()?.id;
   const [profile,setProfile]=useState<AdminUserProfile|null>(null);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
@@ -102,6 +107,8 @@ export function AdminUserDetailPage() {
   const [deleteOpen,setDeleteOpen]=useState(false);
   const [avatarSrc,setAvatarSrc]=useState<string|null>(null);
   const [notice,setNotice]=useState('');
+  const [controlReady,setControlReady]=useState(false);
+  const [controlAction,setControlAction]=useState<AdminUserAdministrativeAction|null>(null);
   useEffect(()=>{
     if(!allowed||!id)return;
     let active=true;setLoading(true);setError('');setProfile(null);setAvatarSrc(null);
@@ -110,6 +117,13 @@ export function AdminUserDetailPage() {
       .finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
   },[allowed,id,retry]);
+  useEffect(()=>{
+    if(!allowed)return;
+    let active=true;
+    void getAdminUserCapabilities().then(value=>{if(active)setControlReady(value.canManageStatus===true);})
+      .catch(()=>{if(active)setControlReady(false);});
+    return()=>{active=false;};
+  },[allowed]);
   useEffect(()=>{
     if(!profile?.avatarUrl){setAvatarSrc(null);return;}
     let active=true;
@@ -123,11 +137,12 @@ export function AdminUserDetailPage() {
   },[profile?.id,profile?.avatarUrl]);
   const close=useCallback(()=>setDeleteOpen(false),[]);
   const completed=useCallback((message:string)=>{
-    setDeleteOpen(false);setNotice(message);setRetry(n=>n+1);
+    setDeleteOpen(false);setControlAction(null);setNotice(message);setRetry(n=>n+1);
   },[]);
   if(!allowed)return <StatePanel kind="error" title="Acceso restringido" message="No tienes permisos de gestión administrativa."/>;
   if(loading)return <StatePanel kind="loading" title="Consultando usuario" message="Cargando datos, vínculos y estado de la cuenta."/>;
   if(error||!profile)return <StatePanel kind="error" title="No se pudo abrir la ficha" message={error||'Usuario no disponible.'} retry={()=>setRetry(n=>n+1)}/>;
+  const canControl=controlReady&&isSuperAdmin&&profile.status!=='DELETED'&&profile.administrativeRoles.length===0&&profile.id!==selfId;
   const owner=profile.businesses.filter(item=>item.role==='OWNER'&&item.membershipStatus==='ACTIVE');
   const collab=profile.businesses.filter(item=>item.role==='COLLABORATOR'&&item.membershipStatus==='ACTIVE');
   const other=profile.businesses.filter(item=>!(item.membershipStatus==='ACTIVE'&&(item.role==='OWNER'||item.role==='COLLABORATOR')));
@@ -153,7 +168,19 @@ export function AdminUserDetailPage() {
       <div className="au-detail-heading"><span className="au-eyebrow">FICHA ADMINISTRATIVA · USUARIO</span><h1>{profile.displayName}</h1><p>{profile.emailNormalized??'Sin correo electrónico'}{profile.nickname?' · @'+profile.nickname:''}</p>
         <div className="au-profile-badges"><span className={'au-status '+profile.status.toLowerCase()}>{accountStatus[profile.status]}</span>
           {profile.administrativeRoles.map(role=><span className="au-admin-mini" key={role}>{adminRoleName(role)}</span>)}</div></div>
-      <div className="au-detail-hero-actions">{profile.status!=='DELETED'&&isSuperAdmin&&<button type="button" className="au-danger-outline-button" onClick={()=>setDeleteOpen(true)} disabled={!profile.deletion.allowed} title={!profile.deletion.allowed?'Existen dependencias que impiden la baja. Revisa el panel de seguridad.':'Registrar baja administrativa'}><Icon name="trash" size={17}/> Eliminar usuario</button>}</div>
+      <div className="au-detail-hero-actions au-control-detail-actions">
+        {canControl&&<button type="button" className={profile.status==='ACTIVE'?'au-control-suspend':'au-control-restore'}
+          onClick={()=>setControlAction(profile.status==='ACTIVE'?'SUSPEND':'RESTORE')}>
+          <Icon name={profile.status==='ACTIVE'?'lock':'check'} size={17}/>{profile.status==='ACTIVE'?'Suspender':'Reactivar'}
+        </button>}
+        {canControl&&profile.status==='ACTIVE'&&<button type="button" className="au-outline-button"
+          onClick={()=>setControlAction('REVOKE')}><Icon name="shield" size={17}/> Cerrar sesiones</button>}
+        {profile.status!=='DELETED'&&isSuperAdmin&&<button type="button" className="au-danger-outline-button"
+          onClick={()=>setDeleteOpen(true)} disabled={!profile.deletion.allowed}
+          title={!profile.deletion.allowed?'Primero deben resolverse las dependencias de la cuenta.':'Registrar baja administrativa'}>
+          <Icon name="trash" size={17}/> Eliminar usuario
+        </button>}
+      </div>
     </header>
     {notice&&<div className="au-success-notice" role="status"><Icon name="check" size={18}/>{notice}</div>}
     <div className="au-detail-facts">
@@ -185,12 +212,15 @@ export function AdminUserDetailPage() {
     <section className="au-info-card" aria-labelledby="au-activity-title"><header className="au-section-title"><span className="au-section-icon"><Icon name="chart" size={21}/></span><div><h2 id="au-activity-title">Actividad registrada</h2><p>Conteos actuales de interacciones vinculadas con esta cuenta.</p></div></header>
       <div className="au-activity-grid">{activity.map(item=><article key={item.label}><span className="au-icon"><Icon name={item.icon} size={20}/></span><strong>{number(item.value)}</strong><span>{item.label}</span></article>)}</div>
     </section>
+    {controlReady&&<AdminUserAuditTimeline userId={profile.id} revision={retry}/>}
     <section className="au-info-card au-risk-card" aria-labelledby="au-deletion-title"><header className="au-section-title"><span className="au-section-icon"><Icon name="lock" size={21}/></span><div><h2 id="au-deletion-title">Protección de la cuenta</h2><p>Controles previos a una baja administrativa.</p></div></header>
       {profile.status==='DELETED'?<p className="au-risk-success">Esta cuenta ya está marcada como eliminada. Los registros históricos se conservan.</p>:
         profile.deletion.blockers.length?<div className="au-blockers"><strong>No se permite eliminar esta cuenta mientras existan dependencias:</strong><ul>{profile.deletion.blockers.map(item=><li key={item}>{item}</li>)}</ul></div>:
         <p className="au-risk-success">No se identificaron bloqueos por propiedad de negocios o roles administrativos activos. La eliminación requiere confirmación y motivo escrito.</p>}
       <p className="au-deletion-policy">«Eliminar usuario» desactiva la misma cuenta en XAMUKO Usuarios y Business, revoca todas sus sesiones y cierra sus cuentas Business sin negocios activos. Los negocios vigentes requieren una decisión administrativa independiente. La baja conserva registros históricos y no equivale a la supresión de datos personales.</p>
     </section>
+    {controlAction&&<AdminUserStatusDialog user={profile} action={controlAction}
+      onClose={()=>setControlAction(null)} onSuccess={completed}/>}
     {deleteOpen&&<DeactivationDialog profile={profile} onClose={close} onComplete={completed}/>}
   </div>;
 }

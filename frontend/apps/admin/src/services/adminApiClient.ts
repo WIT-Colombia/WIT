@@ -92,6 +92,7 @@ export type AdminUserRecord = {
   emailNormalized: string | null; status: AdminUserStatus; avatarUrl: string | null;
   locale: string; createdAt: string; lastLoginAt: string | null;
   ownedBusinesses: number; collaboratingBusinesses: number; createdBusinesses: number; isAdmin: boolean;
+  emailVerified?: boolean; authProviders?: string[];
 };
 export type AdminUserPage = {
   users: AdminUserRecord[];
@@ -100,6 +101,7 @@ export type AdminUserPage = {
 export type AdminUserOverview = {
   generatedAt: string; total: number; active: number; suspended: number; deleted: number;
   owners: number; collaborators: number; adminCount: number;
+  active30?: number; dormant90?: number; neverLoggedIn?: number; emailVerified?: number; googleUsers?: number;
   series: Array<{ month: string; registrations: number }>; definition: string;
 };
 export type AdminUserBusinessLink = {
@@ -119,15 +121,52 @@ export type AdminUserProfile = {
   activity: { reviews: number; favorites: number; offerLikes: number; sessions: number; reports: number; pendingTransfers: number };
   deletion: { allowed: boolean; blockers: string[] };
 };
-export type AdminUserFilters = { q?: string; page?: number; status?: string; relation?: string };
+export type AdminUserFilters = {
+  q?: string; page?: number; status?: string; relation?: string;
+  provider?: string; emailVerified?: string; admin?: string; activity?: string;
+  registeredFrom?: string; registeredTo?: string; lastLoginFrom?: string; lastLoginTo?: string; order?: string;
+};
+export type AdminUserCapabilities = { userManagement: boolean; canManageStatus: boolean; analytics: boolean };
+export type AdminUserAnalytics = {
+  period: '6m' | '12m' | '24m' | '60m' | 'all'; timezone: string;
+  series: Array<{ month: string; registrations: number; cumulative: number }>;
+  definition: string;
+};
+export type AdminUserAuditEntry = {
+  id: string; action: string; reason: string | null; comment: string | null;
+  createdAt: string; actor: { displayName: string } | null;
+};
+export type AdminUserStatusAction = 'SUSPEND' | 'RESTORE';
+export type AdminUserAdministrativeAction = AdminUserStatusAction | 'REVOKE';
 export function listAdminUsers(filters: AdminUserFilters = {}) {
   const params = new URLSearchParams({ page: String(filters.page ?? 1) });
   if (filters.q) params.set('q', filters.q);
   if (filters.status) params.set('status', filters.status);
   if (filters.relation) params.set('relation', filters.relation);
+  for (const key of ['provider','emailVerified','admin','activity','registeredFrom','registeredTo','lastLoginFrom','lastLoginTo','order'] as const)
+    if (filters[key]) params.set(key, filters[key]!);
   return request<AdminUserPage>('/admin/users?' + params.toString());
 }
 export function getAdminUserOverview() { return request<AdminUserOverview>('/admin/users/overview'); }
+export function getAdminUserCapabilities() { return request<AdminUserCapabilities>('/admin/users/capabilities'); }
+export function getAdminUserAnalytics(period: AdminUserAnalytics['period'] = '12m') {
+  return request<AdminUserAnalytics>('/admin/users/analytics?period=' + encodeURIComponent(period));
+}
+export function revokeAdminUserSessions(id: string, reason: string) {
+  return request<{ id: string; sessionsRevoked: number; message: string }>(
+    '/admin/users/' + encodeURIComponent(id) + '/sessions/revoke',
+    { method: 'POST', body: JSON.stringify({ reason }) },
+  );
+}
+export function getAdminUserHistory(id: string) {
+  return request<{ history: AdminUserAuditEntry[] }>('/admin/users/' + encodeURIComponent(id) + '/history');
+}
+export function setAdminUserStatus(id: string, action: AdminUserStatusAction, reason: string) {
+  return request<{ id: string; status: 'ACTIVE' | 'SUSPENDED'; message: string }>(
+    '/admin/users/' + encodeURIComponent(id) + '/status',
+    { method: 'POST', body: JSON.stringify({ action, reason }) },
+  );
+}
 export async function getAdminUserProfile(id: string) {
   return (await request<{ user: AdminUserProfile }>('/admin/users/' + encodeURIComponent(id))).user;
 }

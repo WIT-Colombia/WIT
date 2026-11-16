@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { deactivateAdminUser, deletionBlockers } from './admin-users.service.js';
+import { deactivateAdminUser, deletionBlockers, validateAdminUserStatusAction, adminUsersWhere, getUserAnalyticsPeriod, setAdminUserStatus, validateAdminUserSessionReason, revokeAdminUserSessions } from './admin-users.service.js';
 
 test('la baja administrativa reconoce dependencias de propiedad y roles', () => {
   assert.deepEqual(deletionBlockers({ ownBusinesses: 0, createdBusinesses: 0, businessAccounts: 0, adminRoles: 0 }), []);
@@ -26,4 +26,41 @@ test('el administrador no puede eliminar su propia cuenta', async () => {
     assert.equal(error.statusCode, 403);
     return true;
   });
+});
+
+test('suspender/reactivar exige justificación y acciones válidas', async () => {
+  assert.equal(validateAdminUserStatusAction('SUSPEND', 'Se requiere una revisión adicional'), 'SUSPEND');
+  assert.equal(validateAdminUserStatusAction('RESTORE', 'Se comprobó el levantamiento de la medida'), 'RESTORE');
+  assert.throws(() => validateAdminUserStatusAction('SUSPEND', 'corto'), (error: any) => error.code === 'ADMIN_USER_REASON_REQUIRED');
+  assert.throws(() => validateAdminUserStatusAction('DELETE', 'Explicación administrativa suficiente'), (error: any) => error.code === 'ADMIN_USER_ACTION_INVALID');
+  await assert.rejects(() => setAdminUserStatus('admin', 'admin', 'SUSPEND', 'Motivo suficientemente detallado'), (error: any) => error.code === 'ADMIN_USER_SELF_MODIFICATION');
+});
+
+test('filtros combinados son seguros y diferencian acceso, proveedor y verificación', () => {
+  const where = adminUsersWhere({ status: 'ACTIVE', activity: 'never', provider: 'GOOGLE', admin: 'no', registeredFrom: '2026-01-01' });
+  assert.equal(where.status, 'ACTIVE');
+  assert.deepEqual(where.AND, [{ authIdentities: { some: { provider: 'GOOGLE' } } }, { lastLoginAt: null }]);
+  assert.deepEqual(where.adminRoleAssignments, { none: { active: true } });
+  assert.ok(where.createdAt);
+  assert.throws(() => adminUsersWhere({ registeredFrom: '2026-11-19', registeredTo: '2026-11-10' }), (error: any) => error.code === 'ADMIN_USER_DATE_RANGE_INVALID');
+  assert.throws(() => adminUsersWhere({ registeredFrom: '2026-02-30' }), (error: any) => error.code === 'ADMIN_USER_DATE_INVALID');
+});
+
+test('la temporalidad admite histórico sin perder ceros ni granularidad mensual', () => {
+  assert.equal(getUserAnalyticsPeriod('6m'), '6m');
+  assert.equal(getUserAnalyticsPeriod('24m'), '24m');
+  assert.equal(getUserAnalyticsPeriod('all'), 'all');
+  assert.equal(getUserAnalyticsPeriod('unknown'), '12m');
+});
+
+test('proveedor y verificación se combinan sin sobrescribirse', () => {
+  const where = adminUsersWhere({ provider: 'GOOGLE', emailVerified: 'yes', activity: 'recent30', lastLoginFrom: '2026-01-01' });
+  assert.equal(Array.isArray(where.AND), true);
+  assert.equal((where.AND as any[]).length, 4);
+});
+
+test('cerrar sesiones exige motivo, no cambia estado ni admite auto-revocación', async () => {
+  assert.equal(validateAdminUserSessionReason('Revisión de seguridad solicitada'), 'Revisión de seguridad solicitada');
+  assert.throws(() => validateAdminUserSessionReason('corto'), (error: any) => error.code === 'ADMIN_USER_REASON_REQUIRED');
+  await assert.rejects(() => revokeAdminUserSessions('admin', 'admin', 'Revisión de seguridad solicitada'), (error: any) => error.code === 'ADMIN_USER_SELF_MODIFICATION');
 });
