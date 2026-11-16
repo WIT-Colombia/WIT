@@ -80,7 +80,7 @@ export async function getAdminContentInsights(filters:Filters,now=new Date()){
   const where=whereFor(filters);
   const period=['7d','30d','90d','6m','12m','24m','60m','all'].includes(filters.period??'')?filters.period!:'30d';
   const daily=['7d','30d','90d'].includes(period);
-  const [total,products,services,published,inReview,unpublished,deleted,hidden,inactive,first,categories,cities]=await Promise.all([
+  const [total,products,services,published,inReview,unpublished,deleted,deletedOverall,hidden,inactive,first,categories,cities]=await Promise.all([
     prisma.businessOffer.count({where}),
     prisma.businessOffer.count({where:{AND:[where,{kind:'PRODUCT'}]}}),
     prisma.businessOffer.count({where:{AND:[where,{kind:'SERVICE'}]}}),
@@ -88,6 +88,7 @@ export async function getAdminContentInsights(filters:Filters,now=new Date()){
     prisma.businessOffer.count({where:{AND:[where,{publicationStatus:'REVIEW',deletedAt:null}]}}),
     prisma.businessOffer.count({where:{AND:[where,{publicationStatus:'UNPUBLISHED',deletedAt:null}]}}),
     prisma.businessOffer.count({where:{AND:[where,{deletedAt:{not:null}}]}}),
+    prisma.businessOffer.count({where:whereFor({...filters,status:'DELETED'})}),
     prisma.businessOffer.count({where:{AND:[where,{administrativeStatus:'HIDDEN',deletedAt:null}]}}),
     prisma.businessOffer.count({where:{AND:[where,{administrativeStatus:'NONE',active:false,deletedAt:null}]}}),
     prisma.businessOffer.findFirst({where,orderBy:{createdAt:'asc'},select:{createdAt:true}}),
@@ -175,7 +176,7 @@ export async function getAdminContentInsights(filters:Filters,now=new Date()){
   }
   const lookup=new Map(categories.map(c=>[c.id,nameOf(c)]));
   return {period,granularity:daily?'day':'month',timezone:'America/Bogota',
-    totals:{total,products,services,published,inReview,unpublished,deleted,hidden,inactive},
+    totals:{total,products,services,published,inReview,unpublished,deleted,deletedOverall,hidden,inactive},
     series,ranking:rankingRows.map(row=>({name:row.categoryId?lookup.get(row.categoryId)??'Categoría no disponible':'Sin categoría',count:Number(row.quantity)})),
     filters:{categories:categories.map(c=>({id:c.id,name:nameOf(c)})),
       cities:cities.map(c=>({value:c.countryCode+'|'+c.cityName,label:c.cityName+' · '+c.countryCode}))},
