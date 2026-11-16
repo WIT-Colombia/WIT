@@ -138,6 +138,7 @@ enum MembershipStatus {
   SUSPENDED
   REJECTED
   REVOKED
+  EXPIRED
 }
 
 enum BusinessNotificationType {
