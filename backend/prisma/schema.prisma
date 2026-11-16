@@ -182,6 +182,14 @@ enum OfferPublicationStatus {
   REVIEW
 }
 
+// Administrative restrictions override any subsequent business catalogue changes.
+enum OfferAdministrativeStatus {
+  NONE
+  HIDDEN
+  REVIEW
+  DELETED
+}
+
 enum BusinessPromotionType {
   OFFER
   PROMOTION
@@ -917,6 +925,8 @@ model BusinessOffer {
   negotiable        Boolean                @default(false)
   active            Boolean                @default(true)
   publicationStatus OfferPublicationStatus @default(UNPUBLISHED)
+  administrativeStatus OfferAdministrativeStatus @default(NONE)
+  adminRestrictedAt DateTime?
   deletedAt         DateTime?
   createdAt         DateTime               @default(now()) @db.DateTime(3)
   updatedAt         DateTime               @updatedAt @db.DateTime(3)
@@ -931,6 +941,7 @@ model BusinessOffer {
   @@index([businessId, kind, active])
   @@index([categoryId, kind])
   @@index([publicationStatus])
+  @@index([administrativeStatus, deletedAt])
   @@unique([businessId, internalCode])
 }
 
