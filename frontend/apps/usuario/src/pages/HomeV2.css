@@ -361,3 +361,11 @@
   }
   .home-page.home-v2 .category-tile__count { font-size: 9px; }
 }
+
+/* Firefox: preserve the header color without a costly sticky backdrop blur. */
+@supports (-moz-appearance: none) {
+  .home-page.home-v2 .home-topbar {
+    background: #f1f1f5;
+    backdrop-filter: none;
+  }
+}
