@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { destinations } from "./config/destinations";
+import { LaunchCountdown } from "./LaunchCountdown";
 import { Icon, type IconName } from "./Icons";
 import { faqs, type FaqAudience } from "@wit/utils";
 import { NotFoundPage } from "@wit/ui";
@@ -105,6 +106,7 @@ export function App() {
           <ul className="hero-trust"><li><Icon name="pin"/><span>Negocios locales<br/>de tu ciudad</span></li><li><Icon name="shield"/><span>Confiable<br/>y segura</span></li><li><Icon name="devices"/><span>Desde cualquier<br/>dispositivo</span></li></ul>
         </div><figure className="hero-visual"><Artwork viewBox="534 55 635 393"/><figcaption>Ilustración de las aplicaciones. Las cifras son ejemplos.</figcaption></figure></div>
       </section>
+      <LaunchCountdown />
       <div className="page-width">
         <div className="audience-grid">
           <section className="audience-card user-card" id="usuarios" aria-labelledby="users-title">
