@@ -84,7 +84,7 @@ export function deleteAdminBusiness(id: string, reason: string, confirmation: st
   );
 }
 
-export type AdminCategoryRecord = { id: string; code: string; active: boolean; sortOrder: number; translations: { locale: string; name: string }[]; productCount: number; serviceCount: number; _count: { businesses: number; offers: number } };
+export type AdminCategoryRecord = { id: string; code: string; active: boolean; sortOrder: number; translations: { locale: string; name: string }[]; productCount?: number; serviceCount?: number; _count: { businesses: number; offers: number } };
 export async function listAdminCategories() { return (await request<{ categories: AdminCategoryRecord[] }>('/admin/categories')).categories; }
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 export type AdminUserRecord = {
