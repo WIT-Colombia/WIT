@@ -198,7 +198,7 @@ export type AdminOfferPage = {
 };
 export type AdminContentInsights = {
   period:string;granularity:'day'|'month';timezone:string;
-  totals:{total:number;products:number;services:number;published:number;inReview:number;unpublished:number;deleted:number;hidden:number;inactive:number};
+  totals:{total:number;products:number;services:number;published:number;inReview:number;unpublished:number;deleted:number;deletedOverall:number;hidden:number;inactive:number};
   series:Array<{month:string;products:number;services:number;total:number;views:number;likes:number}>;
   ranking:Array<{name:string;count:number}>;
   filters:{cities:Array<{value:string;label:string}>;categories:Array<{id:string;name:string}>};
