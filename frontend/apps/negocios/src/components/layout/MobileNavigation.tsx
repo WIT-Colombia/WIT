@@ -1,4 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useBusinessAuth } from "../../services/businessAuthContext";
+import { useBusinessAccountWelcomeUnread } from "../../services/businessWelcomeStatus";
 import { useEffect, useRef, useState } from "react";
 import { BusinessProfileThumbnail, BusinessIndicatorRow, Sidebar, SidebarIcon, type SidebarIconName } from "./Sidebar";
 import { useBusinessStore } from "../../services/businessStore";
@@ -39,7 +41,9 @@ export function MobileNavigation() {
   }, [moreOpen]);
   const selectableBusinesses = businesses.map((item, index) => ({ item, index })).filter(({ item }) => item.deletionStatus !== "DELETED");
   const empty = selectableBusinesses.length === 0;
-  const unread = notifications.filter((item) => !item.read).length + persistentNotificationCount;
+  const auth = useBusinessAuth();
+  const accountWelcomeUnread = useBusinessAccountWelcomeUnread(auth.user?.id);
+  const unread = notifications.filter((item) => !item.read).length + persistentNotificationCount + (businesses.length === 0 && accountWelcomeUnread ? 1 : 0);
   const destination = (link: MobileLink) => link.label === "Mi cuenta" && empty ? "/perfil?empty=1" : link.to;
   const visiblePrimaryLinks = primaryLinks.filter(link => business.role === "Propietario" || (!link.ownerOnly && (!link.permission || business.permissions?.includes(link.permission))));
   useEffect(() => setMoreOpen(false), [location.pathname]);
