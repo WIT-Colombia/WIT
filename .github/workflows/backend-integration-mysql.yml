@@ -81,3 +81,5 @@ jobs:
         run: |
           npm run typecheck
           npm run build
+      - name: Verify deployed-migration readiness (read-only, isolated MySQL)
+        run: npm run preflight:production
