@@ -378,6 +378,7 @@ model User {
   notifications               BusinessNotification[]
   authoredBusinessNotifications BusinessNotification[] @relation("BusinessNotificationActor")
   platformNotifications       PlatformNotification[]
+  zoneLaunchUserAlerts        ZoneLaunchUserAlert[]
   requestedTransfers          OwnershipTransfer[]        @relation("TransferFromUser")
   receivedTransfers           OwnershipTransfer[]        @relation("TransferToUser")
   requestedVisibilityPeriods  BusinessVisibilityPeriod[] @relation("VisibilityRequester")
@@ -516,6 +517,20 @@ enum ZoneLaunchState {
   SCHEDULED
   OPEN
   PAUSED
+}
+
+// Aviso dentro de XAMUKO: ligado al usuario, sin correo ni consentimiento adicional.
+model ZoneLaunchUserAlert {
+  id         String    @id @default(uuid()) @db.Char(36)
+  userId     String    @db.Char(36)
+  code       String    @db.VarChar(5)
+  notifiedAt DateTime? @db.DateTime(3)
+  createdAt  DateTime  @default(now()) @db.DateTime(3)
+  updatedAt  DateTime  @updatedAt @db.DateTime(3)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code])
+  @@index([notifiedAt, code])
 }
 
 model ZoneLaunchAlert {

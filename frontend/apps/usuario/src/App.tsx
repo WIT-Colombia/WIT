@@ -5,6 +5,7 @@ import { useAuth } from "./context/AuthContext";
 import { useLocationContext } from "./context/LocationContext";
 import Register from "./pages/Register";
 import { RequireAccount } from "./components/RequireAccount";
+import { ZoneAlertResume } from "./components/ZoneAlertResume";
 import { SiteFooter } from "./components/SiteFooter";
 import { PageMetadata } from "@wit/ui";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
@@ -135,7 +136,7 @@ function RoutePending() {
 
 export default function App() {
   const { pathname } = useLocation();
-  return <RouteErrorBoundary key={pathname}><InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<RoutePending />}><Routes>
+  return <RouteErrorBoundary key={pathname}><InitialLocationGate><ZoneAlertResume /><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<RoutePending />}><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Navigate to="/home" replace />} />
