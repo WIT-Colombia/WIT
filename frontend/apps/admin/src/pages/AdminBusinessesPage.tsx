@@ -23,7 +23,6 @@ const categoryName = (category: AdminBusinessRecord['category']) =>
   category.translations[0]?.name ?? category.code ?? 'Sin categoría';
 const visibilityTone: Record<string, string> = { VISIBLE: 'status-visible', HIDDEN: 'status-hidden', EXPIRED: 'status-expired', REVIEW: 'status-review' };
 const verificationTone: Record<string, string> = { NONE: 'status-none', PENDING: 'status-pending', INFORMATION: 'status-information', APPROVED: 'status-approved', REJECTED: 'status-rejected' };
-const visibilityStatusLabels: Record<string, string> = { VISIBLE: 'Visible', HIDDEN: 'Oculto', EXPIRED: 'Visibilidad vencida', REVIEW: 'En revisión' };
 const verificationLabels: Record<string, string> = { NONE: 'Sin verificar', PENDING: 'Pendiente de verificación', INFORMATION: 'Información solicitada', APPROVED: 'Verificado', REJECTED: 'Rechazado' };
 const translatedStatus = (labels: Record<string, string>, value: string) => labels[value] ?? 'Estado no reconocido';
 
@@ -109,7 +108,7 @@ export function AdminBusinessesPage() {
     const fields = ['Negocio', 'Categoría', 'Visibilidad', 'Registro'];
     const rows = data?.businesses ?? [];
     const escape = (value: string) => `"${value.replaceAll('"', '""')}"`;
-    const csv = [fields, ...rows.map(item => [item.name, categoryName(item.category), translatedStatus(visibilityStatusLabels, item.visibilityStatus), date(item.createdAt)])]
+    const csv = [fields, ...rows.map(item => [item.name, categoryName(item.category), adminBusinessVisibilityLabel(item), date(item.createdAt)])]
       .map(row => row.map(value => escape(String(value))).join(',')).join('\n');
     const url = URL.createObjectURL(new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a'); link.href = url; link.download = 'negocios-xamuko.csv'; link.click();
@@ -169,7 +168,11 @@ export function AdminBusinessesPage() {
             return <tr key={item.id}><td className="business-number">#{String((page - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}</td><td><Link to={`/businesses/${item.id}`} className="business-cell"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{item.memberships?.[0]?.user?.displayName || item.createdBy.displayName || 'Sin propietario'}</small></div></Link></td><td><span className="business-category"><Icon name="grid" size={14} />{category}</span></td><td><span className={`badge ${tone}`}><span aria-hidden="true">●</span> {adminBusinessVisibilityLabel(item)}</span></td>
               <td><span className={item.isPro ? 'ad-ops-plan pro' : 'ad-ops-plan'}>{item.isPro ? 'PRO' : 'Básico'}</span></td>
               <td><span className="ad-ops-reports">{item._count?.reports ?? 0}</span></td><td className="business-date">{date(item.createdAt)}</td><td><div className="business-row-actions"><Link className="icon-button businesses-view" to={`/businesses/${item.id}`} aria-label={`Ver ${item.name}`}><Icon name="eye" size={18} /></Link>{canDelete && item.deletionStatus !== 'DELETED' && (item.administrativeRestriction
-              ? <button type="button" className="icon-button ad-ops-restore-button" title={'Levantar restricción de ' + item.name} aria-label={'Restituir ' + item.name} onClick={() => setVisibilityTarget({ business: item, action: 'RESTORE' })}><Icon name="check" size={18}/></button>
+              ? <>
+                {item.administrativeRestriction === 'HIDDEN' && <button type="button" className="icon-button ad-ops-suspend-button" title={'Suspender ' + item.name} aria-label={'Suspender ' + item.name} onClick={() => setVisibilityTarget({ business: item, action: 'SUSPEND' })}><Icon name="lock" size={18}/></button>}
+                {item.administrativeRestriction === 'SUSPENDED' && <button type="button" className="icon-button ad-ops-hide-button" title={'Cambiar a ocultamiento ' + item.name} aria-label={'Ocultar ' + item.name} onClick={() => setVisibilityTarget({ business: item, action: 'HIDE' })}><Icon name="eye-off" size={18}/></button>}
+                <button type="button" className="icon-button ad-ops-restore-button" title={'Levantar restricción de ' + item.name} aria-label={'Restituir ' + item.name} onClick={() => setVisibilityTarget({ business: item, action: 'RESTORE' })}><Icon name="check" size={18}/></button>
+              </>
               : <>
                 <button type="button" className="icon-button ad-ops-hide-button" title={'Ocultar ' + item.name} aria-label={'Ocultar ' + item.name} onClick={() => setVisibilityTarget({ business: item, action: 'HIDE' })}><Icon name="eye-off" size={18}/></button>
                 <button type="button" className="icon-button ad-ops-suspend-button" title={'Suspender ' + item.name} aria-label={'Suspender ' + item.name} onClick={() => setVisibilityTarget({ business: item, action: 'SUSPEND' })}><Icon name="lock" size={18}/></button>
@@ -177,7 +180,11 @@ export function AdminBusinessesPage() {
               {canDelete && item.deletionStatus !== 'DELETED' && <button type="button" className="icon-button businesses-delete" aria-label={`Eliminar ${item.name}`} title={`Eliminar ${item.name}`} onClick={() => setDeleteTarget(item)}><Icon name="trash" size={18}/></button>}</div></td></tr>;
           })}</tbody></table></div>
           <div className="business-mobile-list businesses-mobile-list">{rows.map(item => <article className="business-mobile-card" key={item.id}><Link to={`/businesses/${item.id}`} className="businesses-mobile-card-link"><div className="mobile-business-heading"><span className="business-avatar"><Icon name="store" size={18} /></span><div><strong>{item.name}</strong><small>{categoryName(item.category)} · {item.location?.cityName ?? 'Sin ubicación'}</small></div><Icon name="arrow" size={17} /></div><div className="mobile-business-badges"><span className={`badge ${item.administrativeRestriction === 'SUSPENDED' ? 'status-expired' : item.administrativeRestriction === 'HIDDEN' ? 'status-hidden' : visibilityTone[item.visibilityStatus] ?? 'status-review'}`}>{adminBusinessVisibilityLabel(item)}</span><span className={item.isPro ? 'ad-ops-plan pro' : 'ad-ops-plan'}>{item.isPro ? 'PRO' : 'Básico'}</span></div><small className="mobile-expiry">Registro: {date(item.createdAt)}</small></Link>{canDelete && item.deletionStatus !== 'DELETED' && <div className="ad-ops-mobile-actions">
-              {item.administrativeRestriction ? <button type="button" onClick={() => setVisibilityTarget({ business: item, action: 'RESTORE' })}><Icon name="check" size={16}/> Restituir</button>
+              {item.administrativeRestriction ? <>
+                  {item.administrativeRestriction === 'HIDDEN' && <button type="button" onClick={() => setVisibilityTarget({ business: item, action: 'SUSPEND' })}><Icon name="lock" size={16}/> Suspender</button>}
+                  {item.administrativeRestriction === 'SUSPENDED' && <button type="button" onClick={() => setVisibilityTarget({ business: item, action: 'HIDE' })}><Icon name="eye-off" size={16}/> Ocultar</button>}
+                  <button type="button" onClick={() => setVisibilityTarget({ business: item, action: 'RESTORE' })}><Icon name="check" size={16}/> Restituir</button>
+                </>
                 : <><button type="button" onClick={() => setVisibilityTarget({ business: item, action: 'HIDE' })}><Icon name="eye-off" size={16}/> Ocultar</button>
                    <button type="button" onClick={() => setVisibilityTarget({ business: item, action: 'SUSPEND' })}><Icon name="lock" size={16}/> Suspender</button></>}
             </div>}
@@ -223,7 +230,11 @@ export function AdminBusinessDetailPage() {
       <span className="ad-business-detail-icon"><Icon name="store" size={31} /></span>
       <div><span className="ad-business-detail-eyebrow">FICHA ADMINISTRATIVA</span><h1>{item.name}</h1><p>Registro de negocio · Actualizado el {date(item.updatedAt)}</p></div>
       {canDelete && item.deletionStatus !== 'DELETED' && <div className="ad-ops-detail-actions">
-        {item.administrativeRestriction ? <button type="button" className="ad-ops-restore-action" onClick={() => setVisibilityAction('RESTORE')}><Icon name="check" size={17}/> Levantar restricción</button>
+        {item.administrativeRestriction ? <>
+          {item.administrativeRestriction === 'HIDDEN' && <button type="button" className="ad-ops-suspend-action" onClick={() => setVisibilityAction('SUSPEND')}><Icon name="lock" size={17}/> Suspender</button>}
+          {item.administrativeRestriction === 'SUSPENDED' && <button type="button" onClick={() => setVisibilityAction('HIDE')}><Icon name="eye-off" size={17}/> Cambiar a ocultamiento</button>}
+          <button type="button" className="ad-ops-restore-action" onClick={() => setVisibilityAction('RESTORE')}><Icon name="check" size={17}/> Levantar restricción</button>
+        </>
           : <><button type="button" onClick={() => setVisibilityAction('HIDE')}><Icon name="eye-off" size={17}/> Ocultar</button>
             <button type="button" className="ad-ops-suspend-action" onClick={() => setVisibilityAction('SUSPEND')}><Icon name="lock" size={17}/> Suspender</button></>}
         <button type="button" className="ad-business-delete-trigger" onClick={() => setDeleteTarget(item)}><Icon name="trash" size={17}/> Eliminar negocio</button>
