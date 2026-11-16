@@ -182,11 +182,12 @@ export function deactivateAdminUser(id: string, reason: string, confirmation: st
     { method: 'POST', body: JSON.stringify({ reason, confirmation }) },
   );
 }
-export type AdminContentFilters = { q?:string; kind?:string; status?:string; city?:string; categoryId?:string; period?:string; page?:number };
+export type AdminContentFilters = { q?:string; kind?:string; status?:string; city?:string; categoryId?:string; businessId?:string; order?:string; period?:string; page?:number };
 export type AdminOfferRecord = {
   id:string;internalCode:string;kind:'PRODUCT'|'SERVICE';name:string;description:string|null;
   priceAmount:string|null;currency:string|null;priceText:string|null;negotiable:boolean;
   active:boolean;adultOnly:boolean;publicationStatus:'PUBLISHED'|'REVIEW'|'UNPUBLISHED';
+  administrativeStatus:'NONE'|'HIDDEN'|'REVIEW'|'DELETED';adminRestrictedAt:string|null;
   deletedAt:string|null;createdAt:string;updatedAt:string;
   category:string;photoId:string|null;photoAlt:string|null;likes:number;reports:number;
   business:{id:string;publicId:string;name:string;city:string|null;country:string|null;publicationStatus:string};
@@ -196,9 +197,9 @@ export type AdminOfferPage = {
   pagination:{page:number;pageSize:number;total:number;totalPages:number};
 };
 export type AdminContentInsights = {
-  period:string;
-  totals:{total:number;products:number;services:number;published:number;inReview:number;unpublished:number;deleted:number};
-  series:Array<{month:string;products:number;services:number;total:number}>;
+  period:string;granularity:'day'|'month';timezone:string;
+  totals:{total:number;products:number;services:number;published:number;inReview:number;unpublished:number;deleted:number;hidden:number;inactive:number};
+  series:Array<{month:string;products:number;services:number;total:number;views:number;likes:number}>;
   ranking:Array<{name:string;count:number}>;
   filters:{cities:Array<{value:string;label:string}>;categories:Array<{id:string;name:string}>};
   definition:string;
@@ -208,11 +209,12 @@ export type AdminContentReport = {
 };
 export type AdminContentDetail = AdminOfferRecord & {
   photos:Array<{id:string;altText:string|null}>;
-  reportsRecent:AdminContentReport[];canHide:boolean;canRestore:boolean;
+  reportsRecent:AdminContentReport[];views:number;
+  canHide:boolean;canReview:boolean;canRelease:boolean;canDelete:boolean;canRestore:boolean;
 };
 const contentQuery = (filters:AdminContentFilters) => {
   const params = new URLSearchParams();
-  for (const key of ['q','kind','status','city','categoryId','period'] as const)
+  for (const key of ['q','kind','status','city','categoryId','businessId','order','period'] as const)
     if (filters[key]) params.set(key,String(filters[key]));
   if (filters.page) params.set('page',String(filters.page));
   return params.toString();
@@ -232,9 +234,37 @@ export async function fetchAdminContentPhoto(photoId:string) {
   if(!response.ok)throw new AdminApiError(response.status,'ADMIN_CONTENT_PHOTO_UNAVAILABLE','La fotografía no está disponible.');
   return response.blob();
 }
-export function moderateAdminContent(id:string,action:'HIDE'|'RESTORE',reason:string) {
-  return request<{id:string;publicationStatus:string;message:string}>(
+export type AdminContentControlAction='HIDE'|'REVIEW'|'RELEASE'|'DELETE'|'RESTORE';
+export type AdminContentChanges = {
+  name?:string;description?:string|null;priceAmount?:string|null;
+  currency?:string|null;priceText?:string|null;negotiable?:boolean;
+  adultOnly?:boolean;categoryId?:string|null;
+};
+export type AdminContentHistoryRow = {
+  id:string;action:string;reason:string|null;comment:string|null;createdAt:string;
+  previousState:unknown;newState:unknown;actor:{displayName:string}|null;
+};
+export function getAdminContentCapabilities(){
+  return request<{canModerate:boolean;canDelete:boolean}>('/admin/content-capabilities');
+}
+export function getAdminContentHistory(id:string){
+  return request<{history:AdminContentHistoryRow[]}>('/admin/content/'+encodeURIComponent(id)+'/history');
+}
+export function updateAdminContent(id:string,changes:AdminContentChanges,reason:string){
+  return request<{id:string;message:string}>('/admin/content/'+encodeURIComponent(id),{
+    method:'PATCH',body:JSON.stringify({changes,reason})});
+}
+export function removeAdminContentPhoto(photoId:string,reason:string){
+  return request<{id:string;message:string}>('/admin/content-photos/'+encodeURIComponent(photoId),{
+    method:'DELETE',body:JSON.stringify({reason})});
+}
+export function moderateAdminContent(id:string,action:AdminContentControlAction,reason:string) {
+  return request<{id:string;administrativeStatus:string;publicationStatus:string;message:string}>(
     '/admin/content/'+encodeURIComponent(id)+'/moderate',{method:'POST',body:JSON.stringify({action,reason})});
+}
+export function moderateAdminContentBulk(ids:string[],action:'HIDE'|'REVIEW',reason:string){
+  return request<{results:Array<{id:string;ok:boolean;message:string}>;succeeded:number;failed:number}>(
+    '/admin/content/moderate-bulk',{method:'POST',body:JSON.stringify({ids,action,reason})});
 }
 export type AdminDashboardStats = {
   generatedAt: string;
