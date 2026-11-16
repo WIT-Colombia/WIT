@@ -247,8 +247,9 @@ export type AdminContentHistoryRow = {
 export function getAdminContentCapabilities(){
   return request<{canModerate:boolean;canDelete:boolean}>('/admin/content-capabilities');
 }
-export function getAdminContentHistory(id:string){
-  return request<{history:AdminContentHistoryRow[]}>('/admin/content/'+encodeURIComponent(id)+'/history');
+export function getAdminContentHistory(id:string,page=1){
+  return request<{history:AdminContentHistoryRow[];page:number;total:number;totalPages:number}>(
+    '/admin/content/'+encodeURIComponent(id)+'/history?page='+encodeURIComponent(page));
 }
 export function updateAdminContent(id:string,changes:AdminContentChanges,reason:string){
   return request<{id:string;message:string}>('/admin/content/'+encodeURIComponent(id),{
