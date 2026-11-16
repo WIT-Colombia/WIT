@@ -27,7 +27,7 @@
   letter-spacing: -.035em;
   text-wrap: balance;
 }
-.zone-availability-card > p:not(.zone-availability-card__error) {
+.zone-availability-card > p:not(.zone-availability-card__confirmed) {
   margin: 0;
   color: #67738f;
   font-size: clamp(15px, 2vw, 24px);
@@ -131,7 +131,7 @@
 @media (max-width: 768px) {
   .zone-availability-card { width: calc(100% - 32px); padding: clamp(22px, 5vw, 34px); }
   .zone-availability-card h2 { font-size: clamp(28px, 5vw, 42px); }
-  .zone-availability-card > p:not(.zone-availability-card__error) { font-size: clamp(15px, 2.7vw, 19px); }
+  .zone-availability-card > p:not(.zone-availability-card__confirmed) { font-size: clamp(15px, 2.7vw, 19px); }
 }
 @media (max-width: 480px) {
   .zone-availability-card { width: calc(100% - 24px); margin: 14px auto; padding: 23px 20px; border-radius: 25px; }
