@@ -73,7 +73,7 @@ function DeactivationDialog({ profile, onClose, onComplete }: {
       <div className="au-modal-header"><span className="au-modal-warning-icon"><Icon name="trash" size={26}/></span>
         <button className="au-modal-close" type="button" aria-label="Cerrar confirmación" onClick={onClose} disabled={busy}><Icon name="close" size={20}/></button></div>
       <h2 id="au-delete-title">Confirmar eliminación de usuario</h2>
-      <p id="au-delete-desc">Se realizará una <strong>baja administrativa de la cuenta</strong> de {profile.displayName}. Esta operación impide nuevos accesos, revoca sesiones y retira colaboraciones vigentes. No borra físicamente los registros ni sustituye un procedimiento de supresión de datos personales.</p>
+      <p id="au-delete-desc">Se dará de baja la <strong>identidad única</strong> de {profile.displayName} en <strong>XAMUKO Usuarios y Business</strong>. Se revocarán las sesiones de ambas aplicaciones, las colaboraciones y se cerrarán las cuentas Business sin negocios activos. Si administra negocios activos, primero deberán resolverse esas dependencias. Esta acción conserva registros históricos y no constituye una supresión definitiva de datos personales.</p>
       <div className="au-modal-person"><span className="au-avatar">{initials(profile.displayName)}</span><div><strong>{profile.displayName}</strong><small>{profile.emailNormalized??'Sin correo'}</small></div></div>
       <form onSubmit={submit} className="au-modal-form">
         <label htmlFor="au-delete-reason">Motivo obligatorio de la decisión (mínimo 12 caracteres)</label>
@@ -189,7 +189,7 @@ export function AdminUserDetailPage() {
       {profile.status==='DELETED'?<p className="au-risk-success">Esta cuenta ya está marcada como eliminada. Los registros históricos se conservan.</p>:
         profile.deletion.blockers.length?<div className="au-blockers"><strong>No se permite eliminar esta cuenta mientras existan dependencias:</strong><ul>{profile.deletion.blockers.map(item=><li key={item}>{item}</li>)}</ul></div>:
         <p className="au-risk-success">No se identificaron bloqueos por propiedad de negocios o roles administrativos activos. La eliminación requiere confirmación y motivo escrito.</p>}
-      <p className="au-deletion-policy">La acción «Eliminar usuario» realiza una baja lógica: impide el acceso y revoca sesiones y colaboraciones. No implica borrar físicamente los datos ni resolver solicitudes de supresión de datos personales, que requieren su procedimiento correspondiente.</p>
+      <p className="au-deletion-policy">«Eliminar usuario» desactiva la misma cuenta en XAMUKO Usuarios y Business, revoca todas sus sesiones y cierra sus cuentas Business sin negocios activos. Los negocios vigentes requieren una decisión administrativa independiente. La baja conserva registros históricos y no equivale a la supresión de datos personales.</p>
     </section>
     {deleteOpen&&<DeactivationDialog profile={profile} onClose={close} onComplete={completed}/>}
   </div>;
