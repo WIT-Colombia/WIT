@@ -3,8 +3,9 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 import { isSubscriptionEffective } from '../business/recognition.service.js';
+import { isBusinessInActiveZone, readZonePolicy } from '../zones/zone-policy.service.js';
 
-type PublicDb = Pick<PrismaClient, 'business' | 'businessOffer' | 'photo'> & { user?: PrismaClient['user'] };
+type PublicDb = Pick<PrismaClient, 'business' | 'businessOffer' | 'photo'> & { user?: PrismaClient['user']; expansionZone?: PrismaClient['expansionZone'] };
 type PublicOfferKind = 'PRODUCT' | 'SERVICE';
 export type PublicAccessContext = { userId?: string };
 
@@ -345,8 +346,10 @@ export function parseUniversalSearchInput(query: Record<string, unknown>): Publi
 }
 
 async function findPublicBusinessId(publicId: string, db: PublicDb, canViewAdult: boolean) {
-  const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: { id: true } });
-  if (!business) throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
+  const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: { id: true, location: { select: publicLocationSelect }, modalities: { where: { status: 'ACTIVE' }, select: { type: true } } } });
+  const zoneRows = db.expansionZone ? await readZonePolicy(db) : null;
+  if (!business || (zoneRows && !isBusinessInActiveZone(business, zoneRows)))
+    throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
   return business.id;
 }
 
@@ -356,6 +359,7 @@ function prioritizeBusinesses<T extends { id?: string; publicId?: string }>(item
 
 export async function listPublicBusinesses(input: PublicBusinessListInput, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
+  const zoneRows = db.expansionZone ? await readZonePolicy(db) : null;
   const where = publicBusinessWhere(canViewAdult);
   const [total, businesses] = await Promise.all([
     db.business.count({ where }),
@@ -380,8 +384,11 @@ export async function listPublicBusinesses(input: PublicBusinessListInput, db: P
     }),
   ]);
   return {
-    businesses: prioritizeBusinesses(businesses).map(summary).slice((input.page - 1) * input.pageSize, input.page * input.pageSize),
-    pagination: { page: input.page, pageSize: input.pageSize, total, totalPages: Math.ceil(total / input.pageSize) },
+    businesses: prioritizeBusinesses(zoneRows ? businesses.filter(item => isBusinessInActiveZone(item, zoneRows)) : businesses)
+      .map(summary).slice((input.page - 1) * input.pageSize, input.page * input.pageSize),
+    pagination: { page: input.page, pageSize: input.pageSize,
+      total: zoneRows ? businesses.filter(item => isBusinessInActiveZone(item, zoneRows)).length : total,
+      totalPages: Math.ceil((zoneRows ? businesses.filter(item => isBusinessInActiveZone(item, zoneRows)).length : total) / input.pageSize) },
   };
 }
 
@@ -451,16 +458,19 @@ export async function listPublicCategories(
   input: PublicCategoryListInput, db: PublicDb = prisma, viewer?: PublicAccessContext,
 ) {
   const canViewAdult = await canViewAdultContent(viewer, db);
+  const zoneRows = db.expansionZone ? await readZonePolicy(db) : null;
   const rows = await db.business.findMany({
     where: publicBusinessWhere(canViewAdult),
     select: {
       category: { select: publicCategorySelect },
       secondaryCategories: { select: { category: { select: publicCategorySelect } } },
-      location: { select: { cityName: true, regionName: true } },
+      location: { select: { cityName: true, regionName: true, regionCode: true, countryCode: true } },
+      modalities: { where: { status: 'ACTIVE' }, select: { type: true } },
     },
   });
   const counts = new Map<string, { id: string; code: string; name: string; iconKey: string | null; businessCount: number }>();
   for (const business of rows) {
+    if (zoneRows && !isBusinessInActiveZone(business, zoneRows)) continue;
     if (normalizeCityFilterName(business.location?.cityName) !== normalizeCityFilterName(input.city)
       || (input.region && normalizeRegionFilterName(business.location?.regionName) !== normalizeRegionFilterName(input.region))) continue;
     const seen = new Set<string>();
@@ -479,6 +489,8 @@ export async function listPublicCategories(
 
 export async function searchPublicUniversal(input: PublicUniversalSearchInput, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
+  const zoneRows = db.expansionZone ? await readZonePolicy(db) : null;
+  const zoneAllows = (item: any) => !zoneRows || isBusinessInActiveZone(item, zoneRows);
   // A virtual business must have its VIRTUAL modality ACTIVE, not just registered.
   // Applying the predicate to the owning business also filters products/services.
   const businessWhere: Prisma.BusinessWhereInput = {
@@ -494,8 +506,8 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   };
   const [businesses, products, services] = await Promise.all([
     db.business.findMany({ where: businessWhere, select: { publicId: true, createdAt: true, name: true, sede: true, adultOnly: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, modalities: { where: { status: 'ACTIVE' }, select: { type: true } }, subscriptions: { where: { plan: 'PRO', status: 'ACTIVE' }, select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true }, orderBy: { startsAt: 'desc' }, take: 3 }, location: { select: publicLocationSelect }, coverPhoto: { select: publicPhotoSelect }, profilePhoto: { select: publicPhotoSelect }, brand: { select: { pioneer: { select: { number: true } } } } }, orderBy: { updatedAt: 'desc' } }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
-    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'PRODUCT' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect }, modalities: { where: { status: 'ACTIVE' }, select: { type: true } } } } }, orderBy: { updatedAt: 'desc' } }),
+    db.businessOffer.findMany({ where: { ...offerWhere, kind: 'SERVICE' }, select: { ...publicOfferSelect(), business: { select: { publicId: true, name: true, description: true, category: { select: publicCategorySelect }, secondaryCategories: { select: { category: { select: publicCategorySelect } } }, location: { select: publicLocationSelect }, modalities: { where: { status: 'ACTIVE' }, select: { type: true } } } } }, orderBy: { updatedAt: 'desc' } }),
   ]);
   const categoryMatches = (item: any) => !categoryTerms.length || [item.category, ...(item.secondaryCategories ?? []).map((entry: any) => entry.category)]
     .some((value: any) => matchesSearch([value?.code, value?.translations?.[0]?.name], categoryTerms));
@@ -514,7 +526,7 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   // verificables quedan fuera (distanceKm devuelve Infinity). Sin radio, se
   // conserva el comportamiento actual y no se aplica ningún filtro geográfico.
   const filteredBusinesses = businessItems
-    .filter(({ item, rank }) => categoryMatches(item) && inSelectedCity(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId)))
+    .filter(({ item, rank }) => zoneAllows(item) && categoryMatches(item) && inSelectedCity(item) && inRadius(item) && (!terms.length || rank > 0 || matchingBusinessIds.has(item.publicId)))
     .sort((a, b) => input.scope === 'virtual'
       // In Virtual, ALL featured businesses go first irrespective of location or pioneer status.
       // Stable relevance/name/id tie-breakers keep server pagination deterministic.
@@ -533,11 +545,11 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   const sortVirtualPrice = (a: any, b: any) =>
     virtualPrice(a) - virtualPrice(b) || String(a.name).localeCompare(String(b.name), 'es') || String(a.id).localeCompare(String(b.id));
   const filteredProducts = products
-    .filter((item: any) => offerCategoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
+    .filter((item: any) => zoneAllows(item.business) && offerCategoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
     .sort((a: any, b: any) => input.scope === 'virtual' ? 0 : sortNearby(a.business, b.business))
     .map(mapOffer);
   const filteredServices = services
-    .filter((item: any) => offerCategoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
+    .filter((item: any) => zoneAllows(item.business) && offerCategoryMatches(item) && (!terms.length || matchingOffers.includes(item)) && inSelectedCity(item.business) && inRadius(item.business))
     .sort((a: any, b: any) => input.scope === 'virtual' ? 0 : sortNearby(a.business, b.business))
     .map(mapOffer);
   if (input.scope === 'virtual') {
@@ -620,6 +632,7 @@ export async function listPublicNewArrivals(
   input: PublicNewArrivalsInput, db: PublicDb = prisma, viewer?: PublicAccessContext,
 ) {
   const canViewAdult = await canViewAdultContent(viewer, db);
+  const zoneRows = db.expansionZone ? await readZonePolicy(db) : null;
   const now = new Date();
   const since = new Date(now.getTime() - 7 * 86_400_000);
   const rows = await db.businessOffer.findMany({
@@ -636,6 +649,7 @@ export async function listPublicNewArrivals(
           publicId: true,
           name: true,
           location: { select: publicLocationSelect },
+          modalities: { where: { status: 'ACTIVE' }, select: { type: true } },
           subscriptions: {
             where: { plan: 'PRO', status: 'ACTIVE' },
             select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true },
@@ -648,7 +662,7 @@ export async function listPublicNewArrivals(
     orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
   });
   const matching = rows.filter(row =>
-    normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
+    (!zoneRows || isBusinessInActiveZone(row.business,zoneRows)) && normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
     && (!input.region || normalizeRegionFilterName(row.business.location?.regionName) === normalizeRegionFilterName(input.region)),
   );
   const ordered = rotatePublicNewArrivals(matching, colombiaArrivalDay(now.getTime()));
@@ -671,7 +685,9 @@ export async function listPublicNewArrivals(
 export async function getPublicBusiness(publicId: string, db: PublicDb = prisma, viewer?: PublicAccessContext) {
   const canViewAdult = await canViewAdultContent(viewer, db);
   const business = await db.business.findFirst({ where: { publicId, ...publicBusinessWhere(canViewAdult) }, select: publicBusinessDetailSelect });
-  if (!business) throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
+  const zoneRows = db.expansionZone ? await readZonePolicy(db) : null;
+  if (!business || (zoneRows && !isBusinessInActiveZone(business, zoneRows)))
+    throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
   return detail(business, canViewAdult);
 }
 
