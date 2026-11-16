@@ -9,6 +9,7 @@ import { AdminContentAnalyticsPanel } from './AdminContentAnalyticsPanel';
 import { AdminContentBulkDialog } from './AdminContentBulkDialog';
 import { contentStatusLabel, displayDate, offerKindLabel, offerPrice } from './AdminContentLabels';
 import './AdminContentRefresh.css';
+import './AdminContentControl.css';
 import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
 
 const num=(value:number)=>new Intl.NumberFormat('es-CO').format(value);
