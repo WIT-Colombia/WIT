@@ -9,6 +9,7 @@ import { AdminContentControlPanel } from './AdminContentControlPanel';
 import { AdminContentHistoryPanel } from './AdminContentHistoryPanel';
 import { contentStatusLabel, displayDate, offerKindLabel, offerPrice, reportReasonLabel, reportStatusLabel, administrativeContentLabel } from './AdminContentLabels';
 import './AdminContentRefresh.css';
+import './AdminContentControl.css';
 const num=(n:number)=>new Intl.NumberFormat('es-CO').format(n);
 export function AdminContentDetailPage(){
   const id=useParams().id??'';
