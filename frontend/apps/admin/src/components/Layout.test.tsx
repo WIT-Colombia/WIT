@@ -63,6 +63,17 @@ describe('Sidebar aprobado de Admin', () => {
     expect(document.querySelector('.xa-profile-link > svg')).toBeNull();
   });
 
+  it('agrupa Zonas y Categorías en Gestión de la plataforma, con las rutas intactas', () => {
+    show('/zones');
+    expect(group('plataforma')).toHaveAttribute('open');
+    expect(within(group('plataforma')).getByRole('link', { name: /Zonas/ })).toHaveAttribute('href', '/zones');
+    expect(within(group('plataforma')).getByRole('link', { name: 'Categorías' })).toHaveAttribute('href', '/categories');
+    expect(group('configuracion').querySelector('a[href="/zones"]')).toBeNull();
+    expect(group('configuracion').querySelector('a[href="/categories"]')).toBeNull();
+    expect(navigation.find(item => item.path === '/zones')?.label).toBe('Zonas');
+    expect(navigation.find(item => item.path === '/zones')?.pending).toBe(true);
+  });
+
   it('no muestra header, búsqueda ni acceso al perfil y conserva la hamburguesa móvil', () => {
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
     show('/users');

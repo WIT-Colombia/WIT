@@ -11,6 +11,8 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/content', label: 'Contenido', icon: 'box', group: 'plataforma', description: 'Consulta de productos y servicios reales.' },
     { path: '/reviews', label: 'Opiniones', icon: 'star', group: 'plataforma', description: 'Consulta de opiniones reales.' },
     { path: '/pioneers', label: 'Negocios Pioneros', icon: 'star', group: 'plataforma', description: 'Registro y asignaciones de pioneros.' },
+    { path: '/zones', label: 'Zonas', icon: 'globe', group: 'plataforma', description: 'Configuración de zonas pendiente de API.', pending: true },
+    { path: '/categories', label: 'Categorías', icon: 'grid', group: 'plataforma', description: 'Consulta del catálogo real.' },
   ] },
   { id: 'crecimiento', label: 'Suscripciones y crecimiento', items: [
     { path: '/plans', label: 'Planes y suscripciones', icon: 'crown', group: 'crecimiento', description: 'Gestión de planes pendiente de API.', pending: true },
@@ -45,8 +47,6 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/legal-cases', label: 'Procesos judiciales', icon: 'shield', group: 'juridica', description: 'Archivo documental de procesos y expedientes judiciales.' },
   ] },
   { id: 'configuracion', label: 'Configuración y seguridad', items: [
-    { path: '/zones', label: 'Zonas y categorías', icon: 'globe', group: 'configuracion', description: 'Configuración de zonas pendiente de API.', pending: true },
-    { path: '/categories', label: 'Categorías', icon: 'grid', group: 'configuracion', description: 'Consulta del catálogo real.' },
     { path: '/parameters', label: 'Parámetros', icon: 'settings', group: 'configuracion', description: 'Parámetros pendientes de API.', pending: true },
     { path: '/administrators', label: 'Administradores y accesos', icon: 'users', group: 'configuracion', description: 'Consulta de cuentas y permisos administrativos.' },
     { path: '/audit', label: 'Auditoría', icon: 'shield', group: 'configuracion', description: 'Consulta de auditoría pendiente de API.', pending: true },
