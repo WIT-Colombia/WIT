@@ -189,7 +189,7 @@ async function resolveSecondaryCategories(input: { secondaryCategoryCodes?: stri
 }
 
 async function findBusiness(userId: string, identifier: string, db: Db) {
-  const business = await db.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }], memberships: { some: { userId, status: 'ACTIVE' } } }, include: businessInclude });
+  const business = await db.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }], deletionStatus: { not: 'DELETED' }, memberships: { some: { userId, status: 'ACTIVE' } } }, include: businessInclude });
   if (!business || business.businessAccount.status !== 'ACTIVE') throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese negocio.');
   return business;
 }
