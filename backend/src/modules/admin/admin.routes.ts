@@ -220,7 +220,7 @@ adminRouter.get('/content-capabilities',requireAdmin('CATALOG_READ'),(req,res)=>
     canDelete:context.role==='SUPER_ADMIN'&&context.permissions.includes('CONTENT_MODERATE')});
 });
 adminRouter.get('/content/:id/history',requireAdmin('CATALOG_READ'),async(req,res,next)=>{
-  try{res.setHeader('Cache-Control','no-store');res.json(await getAdminContentHistory(String(req.params.id)));}
+  try{res.setHeader('Cache-Control','no-store');res.json(await getAdminContentHistory(String(req.params.id),Number(req.query.page)||1));}
   catch(error){next(error);}
 });
 adminRouter.post('/content/moderate-bulk',requireTrustedOrigin,requireAdmin('CONTENT_MODERATE'),async(req,res,next)=>{
