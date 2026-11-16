@@ -37,7 +37,7 @@ export async function listPhotos(userId: string, businessId: string) {
 export async function uploadPhoto(userId: string, businessId: string, file: UploadedPhoto | undefined, requestedCover: boolean, offerId?: string) {
   ensureFile(file);
   await findBusinessForPhotoWrite(userId, businessId, offerId ? 'MANAGE_CATALOG' : 'EDIT_BUSINESS');
-  if (offerId) { const offer = await db.businessOffer.findFirst({ where: { id: offerId, businessId }, select: { id: true } }); if (!offer) throw new AppError(404, 'OFFER_NOT_FOUND', 'No encontramos ese producto.'); }
+  if (offerId) { const offer = await db.businessOffer.findFirst({ where: { id: offerId, businessId }, select: { id: true, administrativeStatus: true, deletedAt: true } }); if (!offer) throw new AppError(404, 'OFFER_NOT_FOUND', 'No encontramos ese producto.'); if (offer.administrativeStatus !== 'NONE' || offer.deletedAt) throw new AppError(409, 'OFFER_ADMIN_RESTRICTED', 'Esta publicación está restringida por Admin.'); }
   const count = offerId ? 0 : await db.photo.count({ where: { businessId, isGallery: true } });
   if (!offerId && count >= 10) throw new AppError(422, 'PHOTO_LIMIT_REACHED', 'Cada negocio puede tener máximo 10 fotografías.');
   const business = await db.business.findUniqueOrThrow({ where: { id: businessId }, select: { coverPhotoId: true, profilePhotoId: true } });
@@ -66,6 +66,7 @@ export async function deletePhoto(userId: string, businessId: string, photoId: s
   const access = await findBusinessForPhotoRead(userId, businessId);
   const photo = await db.photo.findFirst({ where: { id: photoId, businessId } });
   if (!photo) throw new AppError(404, 'PHOTO_NOT_FOUND', 'No encontramos esa fotografía.');
+  if (photo.offerId) { const offer = await db.businessOffer.findUnique({ where: { id: photo.offerId }, select: { administrativeStatus: true } }); if (offer?.administrativeStatus !== 'NONE') throw new AppError(409, 'OFFER_ADMIN_RESTRICTED', 'Esta publicación está restringida por Admin.'); }
   requireBusinessPhotoPermission(access, photo.offerId ? 'MANAGE_CATALOG' : 'EDIT_BUSINESS');
   await removePhoto(photo.storageKey).catch(() => { throw new AppError(503, 'PHOTO_STORAGE_UNAVAILABLE', 'No se pudo eliminar el archivo de fotografía.'); });
   await db.$transaction(async tx => { await tx.photo.delete({ where: { id: photo.id } }); });
