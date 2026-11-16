@@ -29,6 +29,7 @@ export function App() {
   // Use the standard root on the prerender server, which always renders /.
   const isUnknownPath = typeof window !== "undefined" &&
     !["/", "/index.html"].includes(window.location.pathname.replace(/\/+$/, "") || "/");
+  const sectionHref = (id: string) => isUnknownPath ? `/#${id}` : `#${id}`;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [faqAudience, setFaqAudience] = useState<FaqAudience>("usuarios");
   const [selector, setSelector] = useState<"login" | "register" | null>(null);
@@ -87,7 +88,7 @@ export function App() {
       <Brand home={isUnknownPath}/>
       <button ref={mobileButton} className="mobile-toggle" aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={mobileOpen} aria-controls="header-navigation" onClick={() => { setMobileOpen(!mobileOpen); setSelector(null); }}><Icon name={mobileOpen ? "close" : "menu"}/></button>
       <div id="header-navigation" className={`header-navigation${mobileOpen ? " is-open" : ""}`}>
-        <nav aria-label="Navegación principal">{navigation.map(([id, label]) => <a key={id} className={hash === `#${id}` ? "active" : ""} href={`#${id}`} onClick={event => navigate(event, id)}>{label}</a>)}</nav>
+        <nav aria-label="Navegación principal">{navigation.map(([id, label]) => <a key={id} className={hash === `#${id}` ? "active" : ""} href={sectionHref(id)} onClick={isUnknownPath ? undefined : event => navigate(event, id)}>{label}</a>)}</nav>
         <div className="header-actions">{accountSelector("login")}{accountSelector("register")}</div>
       </div>
     </div></header>
@@ -125,9 +126,9 @@ export function App() {
       </div>
     </main>}
     <footer className="site-footer"><div className="footer-inner"><div className="footer-top"><div className="footer-contact" id="contacto"><div className="footer-contact-heading"><h2>Contáctanos</h2></div><div className="footer-contact-details"><a href="mailto:soporte@xamuko.com">soporte@xamuko.com</a><a href="mailto:notificacionesjudiciales@xamuko.com">notificacionesjudiciales@xamuko.com</a></div></div>
-      <nav aria-label="Explorar"><h2>Explorar</h2>{navigation.slice(0,4).map(([id,label]) => <a href={`#${id}`} key={id} onClick={event => navigate(event,id)}>{label}</a>)}</nav>
-      <nav aria-label="Planes"><h2>Planes</h2><a href="#planes" onClick={event => navigate(event,"planes")}>Gratis</a><a href="#planes" onClick={event => navigate(event,"planes")}>PRO</a><a href="#beneficios">Beneficios</a></nav>
-      <nav aria-label="Soporte"><h2>Soporte</h2><a href="#preguntas" onClick={event => navigate(event,"preguntas")}>Preguntas frecuentes</a></nav>
+      <nav aria-label="Explorar"><h2>Explorar</h2>{navigation.slice(0,4).map(([id,label]) => <a href={sectionHref(id)} key={id} onClick={isUnknownPath ? undefined : event => navigate(event,id)}>{label}</a>)}</nav>
+      <nav aria-label="Planes"><h2>Planes</h2><a href={sectionHref("planes")} onClick={isUnknownPath ? undefined : event => navigate(event,"planes")}>Gratis</a><a href={sectionHref("planes")} onClick={isUnknownPath ? undefined : event => navigate(event,"planes")}>PRO</a><a href={sectionHref("beneficios")}>Beneficios</a></nav>
+      <nav aria-label="Soporte"><h2>Soporte</h2><a href={sectionHref("preguntas")} onClick={isUnknownPath ? undefined : event => navigate(event,"preguntas")}>Preguntas frecuentes</a></nav>
       <nav aria-label="Legal"><h2>Legal</h2><a href={destinations.terms}>Términos y condiciones</a><a href={destinations.privacy}>Política de privacidad</a></nav>
       <div className="footer-join"><h2>Sé parte de XAMUKO</h2><p>Descubre lo que tu ciudad tiene para ti.</p><a href={destinations.guestExplore}>Explorar negocios<Icon name="arrow"/></a></div>
     </div><div className="footer-bottom"><p>© {new Date().getFullYear()} XAMUKO. Todos los derechos reservados.</p><span className="country"><span className="colombia-flag" aria-hidden="true"/>Colombia<Icon name="chevron"/></span></div></div></footer>
