@@ -87,9 +87,11 @@ export function getMatchingReportCount(targetType: UserReport["targetType"], tar
 export type UserNotification = { id: string; title: string; body: string; date: string; read: boolean };
 /** Never reuse browser-wide notification data across different signed-in users. */
 const notificationKey = (userId: string) => `${NOTIFICATIONS_KEY}:${userId}`;
+const WELCOME_TITLE = "¡Qué alegría tenerte en XAMUKO!";
+const WELCOME_BODY = "Nos encanta que estés aquí. Descubre negocios cerca de ti, guarda tus lugares favoritos y comparte tus experiencias. Este espacio también es tuyo. ¡Bienvenido!";
 const welcomeNotification = (): UserNotification => ({
-  id: "welcome", title: "Te damos la bienvenida a XAMUKO",
-  body: "Empieza buscando eso que necesitas cerca de ti.",
+  id: "welcome", title: WELCOME_TITLE,
+  body: WELCOME_BODY,
   date: new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date()),
   read: false,
 });
@@ -110,7 +112,8 @@ export function getNotifications(userId?: string | null): UserNotification[] {
       typeof item.id === "string" && typeof item.title === "string" &&
       typeof item.body === "string" && typeof item.date === "string" &&
       typeof item.read === "boolean" &&
-      !item.id.startsWith("demo-") && item.id !== "saved-tip");
+      !item.id.startsWith("demo-") && item.id !== "saved-tip")
+      .map(item => item.id === "welcome" ? { ...item, title: WELCOME_TITLE, body: WELCOME_BODY } : item);
   } catch { return []; }
 }
 export function markNotificationRead(id: string, userId?: string | null): UserNotification[] {
