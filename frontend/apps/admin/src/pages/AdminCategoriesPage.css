@@ -328,3 +328,5 @@
   .admin-refresh .cat-metric { transition: none; }
   .admin-refresh .cat-metric:hover { transform: none; }
 }
+
+.admin-refresh .cat-warning--info { background: #f2f5ff; border-color: #dbe4f7; color: #4d628b; }
