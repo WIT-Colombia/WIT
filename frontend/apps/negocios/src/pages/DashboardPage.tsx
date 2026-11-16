@@ -374,7 +374,7 @@ export function DashboardPage() {
       )}
     </div>
 
-    {showEmptyAccount ? <section className="business-home-no-business"><span aria-hidden="true">⌂</span><h2>Selecciona o crea tu negocio</h2><p>Cuando elijas un establecimiento, aquí encontrarás su actividad y accesos de gestión.</p><Link className="business-home-primary" to="/mis-negocios">Ir a mis negocios <span aria-hidden="true">→</span></Link></section> : <>
+    {showEmptyAccount ? <section className="business-home-no-business"><span aria-hidden="true">✦</span><h2>¡Qué alegría tenerte en XAMUKO Business!</h2><p>{businesses.length === 0 ? "Nos encanta que estés aquí. Da el primer paso: registra tu negocio, muestra lo que te hace especial y empieza a conectar con más personas." : "Selecciona uno de tus negocios para consultar su actividad y administrarlo."}</p><Link className="business-home-primary" to={businesses.length === 0 ? "/mis-negocios/nuevo" : "/mis-negocios"}>{businesses.length === 0 ? "Crear mi primer negocio" : "Ver mis negocios"} <span aria-hidden="true">→</span></Link><Link to="/notificaciones" style={{ display: "inline-block", marginTop: 15, color: "#2563eb", fontSize: 12, fontWeight: 750 }}>Ver mis notificaciones</Link></section> : <>
       <section className="business-home-hero" aria-label={`Perfil de ${business.name}`}>
         <BusinessImage src={business.coverImage} name={business.name} className="business-home-cover" alt={`Portada de ${business.name}`} isPreview={isPreview} objectPosition={business.coverImagePosition ? `${business.coverImagePosition.x}% ${business.coverImagePosition.y}%` : undefined} />
         <div className="business-home-hero-shade" />
