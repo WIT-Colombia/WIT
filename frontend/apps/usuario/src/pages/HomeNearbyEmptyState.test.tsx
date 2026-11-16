@@ -14,6 +14,8 @@ vi.mock("../components/SiteHeader", () => ({ SiteHeader: () => null }));
 vi.mock("../components/SiteFooter", () => ({ SiteFooter: () => null }));
 vi.mock("../components/BottomNavigation", () => ({ BottomNavigation: () => null }));
 vi.mock("../components/LocationStarter", () => ({ LocationStarter: () => null }));
+// Los ensayos de Home aíslan el aviso territorial: se prueba por separado con autenticación.
+vi.mock("../components/ZoneAvailabilityNotice", () => ({ ZoneAvailabilityNotice: () => null }));
 vi.mock("../components/NewProductsBanner", () => ({ NewProductsBanner: (props: unknown) => { api.banner(props); return null; } }));
 vi.mock("../components/AdMobBanner", () => ({ AdMobBanner: () => null }));
 vi.mock("../components/EntityCards", () => ({ BusinessCard: ({ business }: { business: { name: string } }) => <article>{business.name}</article> }));
