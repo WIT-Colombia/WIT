@@ -67,8 +67,8 @@ export async function readCollaboratorAvatar(actorId: string, businessId: string
 async function findCollaboratorRecipient(actorId: string, businessId: string, identifier: string) {
   await owner(actorId, businessId);
   const nickname = normalizeNickname(identifier);
-  const recipient = await prisma.user.findUnique({ where: { nickname }, select: { id: true, publicId: true, displayName: true, nickname: true, avatarUrl: true } });
-  if (!recipient) throw new AppError(404, 'USER_NOT_FOUND', 'Usuario no encontrado.');
+  const recipient = await prisma.user.findUnique({ where: { nickname }, select: { id: true, publicId: true, displayName: true, nickname: true, avatarUrl: true, status: true } });
+  if (!recipient || recipient.status !== 'ACTIVE') throw new AppError(404, 'USER_NOT_FOUND', 'Usuario no encontrado.');
   if (recipient.id === actorId) throw new AppError(400, 'SELF_INVITATION', 'No puedes invitarte a ti mismo.');
   const existing = await prisma.businessMembership.findUnique({ where: { businessId_userId: { businessId, userId: recipient.id } } });
   if (existing?.status === 'ACTIVE' || existing?.status === 'SUSPENDED') throw new AppError(409, 'ALREADY_MEMBER', 'Esta persona ya tiene acceso.');
@@ -76,7 +76,7 @@ async function findCollaboratorRecipient(actorId: string, businessId: string, id
   return recipient;
 }
 export async function resolveCollaboratorRecipient(actorId: string, businessId: string, identifier: string) {
-  const { id: _id, ...publicRecipient } = await findCollaboratorRecipient(actorId, businessId, identifier);
+  const { id: _id, status: _status, ...publicRecipient } = await findCollaboratorRecipient(actorId, businessId, identifier);
   return publicRecipient;
 }
 export async function inviteCollaborator(actorId: string, businessId: string, identifier: string, requestedPermissions: string[]) {
