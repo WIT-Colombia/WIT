@@ -13,6 +13,7 @@ import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAd
 import { controlAdminContent, controlAdminContentBulk, editAdminContent, getAdminContentHistory, removeAdminContentPhoto, type ContentControlAction } from './admin-content-control.service.js';
 import { listAdminUsersExtended, getAdminUserOverview, getAdminUserAnalytics, getAdminUserHistory, getAdminUserProfile, deactivateAdminUser, setAdminUserStatus, revokeAdminUserSessions } from './admin-users.service.js';
 import { prisma } from '../../config/prisma.js';
+import { adminZoneRegistry, decideZone } from '../zones/zones.service.js';
 import { readOwnAvatar } from '../auth/avatar.service.js';
 import { adminDocumentsRouter } from './admin-documents.routes.js';
 
@@ -267,6 +268,26 @@ adminRouter.get('/administrators', requireAdmin('ADMINS_MANAGE'), administrators
 adminRouter.post('/administrators/:userId/roles', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), assignRoleController);
 adminRouter.post('/administrators/:userId/roles/:role/revoke', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), revokeRoleController);
 adminRouter.put('/administrators/:userId/permissions', requireTrustedOrigin, requireAdmin('ADMINS_MANAGE'), permissionController);
+
+const zoneDecisionSchema = z.object({
+  scope: z.enum(['MUNICIPALITY','DEPARTMENT']),
+  code: z.string().regex(/^\\d{2}(?:\\d{3})?$/),
+  state: z.enum(['CLOSED','SCHEDULED','OPEN','PAUSED']),
+  opensAt: z.string().datetime({offset:true}).nullable().optional(),
+  reason: z.string().trim().min(12).max(500),
+}).strict();
+adminRouter.get('/zones', requireAdmin(), async (req,res,next)=>{
+  try{res.setHeader('Cache-Control','no-store');res.json(await adminZoneRegistry(adminFromRequest(req)));}
+  catch(error){next(error);}
+});
+adminRouter.put('/zones', requireTrustedOrigin, requireAdmin(), async(req,res,next)=>{
+  try{
+    const result=zoneDecisionSchema.safeParse(req.body);
+    if(!result.success)throw new AppError(400,'INVALID_ZONE','Revisa la zona, la programación y el motivo.');
+    res.setHeader('Cache-Control','no-store');
+    res.json({zone:await decideZone(adminFromRequest(req),result.data)});
+  }catch(error){next(error);}
+});
 
 adminRouter.get('/pioneers', requireAdmin('PIONEER_MANAGE'), pioneerRegistryController);
 adminRouter.post('/pioneers/claims/:claimId/review', requireTrustedOrigin, requireAdmin('PIONEER_MANAGE'), pioneerClaimController);
