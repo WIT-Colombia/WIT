@@ -1,0 +1,56 @@
+/* XAMUKO Business notifications: approved blue-first design. */
+.business-app .business-notifications-page{--notice-blue:#2563eb;--notice-violet:#7b3ffb;--notice-ink:#0f172a;--notice-muted:#64748b;width:100%;max-width:100%;min-width:0;padding:22px 0 28px;color:var(--notice-ink)}
+.business-app .business-notifications-page *,.business-app .business-notifications-page *::before,.business-app .business-notifications-page *::after{box-sizing:border-box}
+.business-app .business-notifications-heading{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px;margin:0 0 24px;min-width:0}
+.business-app .business-notifications-heading-main{display:flex;align-items:center;gap:16px;min-width:0;max-width:100%}
+.business-app .business-notifications-heading-main>div{min-width:0}
+.business-app .business-notifications-heading-icon{display:grid;place-items:center;flex:0 0 64px;width:64px;height:64px;border-radius:18px;border:1px solid #ccdcff;background:linear-gradient(140deg,#e7edff,#e8f7ff);color:var(--notice-blue)}
+.business-app .business-notifications-eyebrow{display:block;margin:0 0 6px;color:#245bdc;font-size:10px;font-weight:800;letter-spacing:.12em}
+.business-app .business-notifications-heading h1{margin:0 0 6px;color:#0f172a;font-size:clamp(28px,3vw,36px);font-weight:800;line-height:1.15;letter-spacing:-.8px}
+.business-app .business-notifications-heading p{margin:0 0 6px;max-width:630px;color:#52647d;font-size:13px;line-height:1.55;overflow-wrap:anywhere}
+.business-app .business-notifications-count{display:block;color:#285bd2;font-size:12px;font-weight:700}
+.business-app .business-notifications-mark-all{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:9px 16px;border:1px solid #2563eb;border-radius:11px;background:#2563eb;color:#fff;font:inherit;font-size:12px;font-weight:750;cursor:pointer;box-shadow:0 6px 18px #2563eb1b}
+.business-app .business-notifications-mark-all:hover{background:#1d4ed8}
+.business-app .business-notifications-mark-all:disabled{opacity:.55;cursor:not-allowed}
+.business-app .business-notifications-page .notifications-card{width:100%;min-width:0;max-width:100%;padding:0 0 10px;overflow:visible;border:1px solid #e0e7f2;border-radius:18px;background:#fff;box-shadow:0 9px 28px #0f172a0a}
+.business-app .business-notifications-page .notification-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:17px 18px;border-bottom:1px solid #e8edf5;background:#fff;border-radius:18px 18px 0 0}
+.business-app .business-notifications-page .notification-tabs button{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;margin:0;padding:0 17px;border:1px solid #dde5f2;border-radius:999px;background:#fff;color:#172a49;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.business-app .business-notifications-page .notification-tabs button.active{border-color:#2563eb;background:#2563eb;color:#fff}
+.business-app .business-notifications-page .notification-tabs button.active::after{display:none}
+.business-app .business-notifications-page .notification-tabs button span{display:grid;place-items:center;min-width:20px;height:20px;padding:0 4px;margin:0;border-radius:999px;background:#e5eeff;color:#245bdc;font-size:10px}
+.business-app .business-notifications-page .notification-row{display:grid;position:relative;grid-template-columns:46px minmax(0,1fr) auto;align-items:center;gap:15px;min-height:94px;margin:10px 16px;padding:17px 18px;border:1px solid #e0e7f2;border-radius:15px;background:#fff;box-shadow:0 4px 14px #0f172a09;transition:border-color .16s,background .16s}
+.business-app .business-notifications-page .notification-row.unread{border:1px solid #bed4ff;border-left:3px solid #2563eb;padding-left:16px;background:linear-gradient(110deg,#fff 50%,#f7faff 100%)}
+.business-app .business-notifications-page .notification-row:hover{border-color:#a9c4fb;box-shadow:0 8px 20px #2563eb12}
+.business-app .business-notifications-page .notification-row>div{min-width:0}
+.business-app .business-notifications-page .notification-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;min-width:0}
+.business-app .business-notifications-page .notification-title h2{margin:0;color:#0f172a;font-size:14px;font-weight:800;line-height:1.4;letter-spacing:-.2px;overflow-wrap:anywhere}
+.business-app .business-notifications-page .notification-title>span[aria-label="Sin leer"]{display:block;flex:0 0 8px;width:8px;height:8px;border:0;border-radius:50%;background:#2563eb;box-shadow:0 0 0 4px #eaf1ff}
+.business-app .business-notifications-page .notification-row p{margin:6px 0;color:#475569;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+.business-app .business-notifications-page .notification-row small{display:block;color:#64748b;font-size:10px;line-height:1.55;overflow-wrap:anywhere}
+.business-app .business-notifications-page .notification-icon,.business-app .business-notifications-page .notification-artwork{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border-radius:13px;background:#e6eeff;color:#2563eb}
+.business-app .business-notifications-page .notification-welcome-brand{overflow:hidden;background:#eff0ff}
+.business-app .business-notifications-page .notification-welcome-brand img{display:block;width:100%;height:100%;object-fit:contain;background:#fff}
+.business-app .business-notifications-page .notification-icon.offer,.business-app .business-notifications-page .notification-icon.interest{background:#e2f9ff;color:#0891b2}
+.business-app .business-notifications-page .notification-icon.profile{background:#f1eaff;color:#7b3ffb}
+.business-app .business-notifications-page .notification-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;min-width:0;max-width:100%}
+.business-app .business-notifications-page .notification-delete{display:grid;place-items:center;min-width:35px;width:35px;height:35px;min-height:35px;margin:0;padding:0;border:0;border-radius:10px;background:#f1f5f9;color:#475569;font-size:0;cursor:pointer;text-decoration:none}
+.business-app .business-notifications-page .notification-delete:hover{background:#fff0f1;color:#b42335}
+.business-app .business-notifications-page .notification-invitation-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px;min-width:0}
+.business-app .business-notifications-page .notification-invitation-actions button{min-height:36px;font-size:11px}
+.business-app .business-notifications-page .notification-inline-confirm{display:flex;flex-wrap:wrap;gap:9px;min-width:0;max-width:100%}
+.business-app .business-notifications-page .notification-inline-confirm>span{min-width:0;overflow-wrap:anywhere}
+.business-app .business-notifications-page .notification-row .notification-link{display:inline-block;margin-top:7px;color:#2563eb;font-size:11px;font-weight:750;text-decoration:none}
+.business-app .business-notifications-page .notification-row .transfer-state{font-size:10px}
+.business-app .business-notifications-page :is(button,a):focus-visible{outline:3px solid #93b4ff;outline-offset:3px}
+.business-app .business-notifications-page .notification-page-alert{margin-bottom:14px}
+.business-app .business-notifications-page .empty-state{padding:38px 16px;color:#475569}
+.business-notification-confirm-backdrop{display:grid;position:fixed;z-index:9999;inset:0;place-items:center;padding:20px;background:#0f172a80;backdrop-filter:blur(3px)}
+.business-notification-confirm-dialog{width:min(100%,420px);max-height:calc(100dvh - 40px);overflow:auto;padding:24px;border:1px solid #e2e8f0;border-radius:19px;background:#fff;box-shadow:0 22px 70px #0f172a42;color:#0f172a}
+.business-notification-confirm-symbol{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff1f2;color:#be123c;font-size:20px;font-weight:900}
+.business-notification-confirm-dialog h2{margin:15px 0 8px;color:#0f172a;font-size:20px;line-height:1.3}
+.business-notification-confirm-dialog p{margin:0;color:#475569;font-size:13px;line-height:1.6}
+.business-notification-confirm-actions{display:flex;flex-wrap:wrap;gap:9px;justify-content:flex-end;margin-top:24px}
+.business-notification-confirm-actions button{min-height:41px;padding:9px 16px;border:1px solid #d8dfe9;border-radius:10px;background:#fff;color:#334155;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.business-notification-confirm-actions .business-notification-confirm-danger{border-color:#be123c;background:#be123c;color:#fff}
+@media(max-width:900px){.business-app .business-notifications-page .notification-row{grid-template-columns:44px minmax(0,1fr);align-items:start}.business-app .business-notifications-page .notification-actions{grid-column:2;justify-content:flex-start}.business-app .business-notifications-heading{align-items:start}.business-app .business-notifications-mark-all{margin-left:auto}}
+@media(max-width:600px){.business-app .business-notifications-page{padding-top:18px}.business-app .business-notifications-heading-main{gap:11px}.business-app .business-notifications-heading-icon{flex-basis:46px;width:46px;height:46px;border-radius:13px}.business-app .business-notifications-heading-icon svg{width:23px;height:23px}.business-app .business-notifications-heading h1{font-size:29px}.business-app .business-notifications-heading p{font-size:12px}.business-app .business-notifications-mark-all{width:100%;margin:0}.business-app .business-notifications-page .notification-tabs{gap:6px;padding:11px 9px}.business-app .business-notifications-page .notification-tabs button{min-height:35px;padding:0 11px;font-size:11px}.business-app .business-notifications-page .notification-row{grid-template-columns:37px minmax(0,1fr);gap:10px;margin:8px;padding:13px 11px}.business-app .business-notifications-page .notification-row.unread{padding-left:9px}.business-app .business-notifications-page .notification-icon,.business-app .business-notifications-page .notification-artwork{width:36px;height:36px}.business-app .business-notifications-page .notification-title h2{font-size:12px}.business-app .business-notifications-page .notification-row p{font-size:11px}.business-app .business-notifications-page .notification-actions{grid-column:2;justify-content:flex-start}.business-app .business-notifications-page .notification-invitation-actions{grid-column:1/-1}.business-app .business-notifications-page .notification-invitation-actions button{white-space:normal}}
