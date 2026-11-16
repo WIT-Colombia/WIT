@@ -11,7 +11,7 @@ import { PageLayout } from '../components/PageLayout';
 import './Notifications.css';
 
 type DisplayNotice = {
-  id: string; title: string; body: string; date: string; read: boolean; source: 'local' | 'server';
+  id: string; title: string; body: string; date: string; read: boolean; source: 'local' | 'server'; sourceType?: string;
 };
 const notifyCount = (userId: string, count: number) =>
   window.dispatchEvent(new CustomEvent('xamuko-user-notifications-updated', { detail: { userId, count } }));
@@ -71,7 +71,7 @@ export default function Notifications() {
   const notices = useMemo<DisplayNotice[]>(() => [
     ...visibleRemote.map(item => ({
       id: item.id, title: item.title, body: item.message,
-      date: readableDate(item.createdAt), read: Boolean(item.readAt), source: 'server' as const,
+      date: readableDate(item.createdAt), read: Boolean(item.readAt), source: 'server' as const, sourceType: item.sourceType,
     })),
     ...visibleLocal.map(item => ({ id: item.id, title: item.title, body: item.body, date: item.date, read: item.read, source: 'local' as const })),
   ].sort((a, b) => Number(b.source === "local" && b.id === "welcome") - Number(a.source === "local" && a.id === "welcome")), [visibleLocal, visibleRemote]);
@@ -158,10 +158,11 @@ export default function Notifications() {
       <section className="notification-list" aria-label="Tus notificaciones">
         {filteredNotices.slice(0, visibleCount).map(item => {
           const welcome = item.source === 'local' && item.id === 'welcome';
+          const manageBusiness = item.sourceType === 'BUSINESS_VISIBILITY' || item.sourceType === 'BUSINESS_RECOVERY';
           const title = item.title.toLocaleLowerCase('es-CO');
           const kind = welcome ? 'welcome' : title.includes('opini') || title.includes('reseña') ? 'review' :
             title.includes('negocio') || title.includes('favorito') ? 'business' : title.includes('cuenta') || title.includes('seguridad') ? 'account' : 'general';
-          return <article className={'notification-item' + (item.read ? ' is-read' : ' is-unread') + (selectedId === item.id ? ' is-selected' : '')} key={item.source + ':' + item.id}>
+          return <article className={'notification-item' + (item.read ? ' is-read' : ' is-unread') + (selectedId === item.id ? ' is-selected' : '') + (manageBusiness ? ' has-business-action' : '')} key={item.source + ':' + item.id}>
             <button type="button" className="notification-main-action" disabled={busy} onClick={() => void select(item)}
               aria-label={item.title + '. ' + (item.read ? 'Leída' : 'Sin leer') + '. Abrir notificación'}>
               <span className={'notification-icon notification-icon-' + kind} aria-hidden="true">
@@ -177,6 +178,7 @@ export default function Notifications() {
                 <span className="notification-meta"><span>Equipo XAMUKO</span><time>{item.date}</time></span>
               </span>
             </button>
+            {manageBusiness && <a className="notification-business-action" href="https://business.xamuko.com/mis-negocios" target="_blank" rel="noopener noreferrer">Gestionar en XAMUKO Business <span aria-hidden="true">↗</span></a>}
             <button type="button" className="notification-delete" disabled={busy}
               title="Eliminar notificación" aria-label={'Eliminar ' + item.title}
               onClick={() => setPendingDeleteId(item.source + ':' + item.id)}>
