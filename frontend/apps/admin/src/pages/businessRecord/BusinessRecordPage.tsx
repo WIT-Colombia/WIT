@@ -83,7 +83,7 @@ function BusinessRecord({ id }: { id: string }) {
           onClick={() => setVisibilityOpen(open => !open)}>
           <span className="bd-indicator-icon"><Icon name="eye" size={25}/></span>
           <span className="bd-indicator-content"><span className="bd-indicator-title">Visibilidad</span>
-            <Badge tone={business.deletionStatus === 'DELETED' ? 'red' : business.administrativeRestriction ? 'amber' : record?.effectiveVisibility === 'VISIBLE' ? 'green' : 'neutral'}>
+            <Badge tone={business.deletionStatus === 'DELETED' ? 'red' : business.administrativeRestriction ? 'amber' : (record?.effectiveVisibility ?? business.visibilityStatus) === 'VISIBLE' ? 'visible' : 'neutral'}>
               {business.administrativeRestriction === 'SUSPENDED' ? 'Suspendida' : business.deletionStatus === 'DELETED' ? 'Eliminado' : visibility(business)}
             </Badge></span>
           {canChangeVisibility && <Icon name="chevron" size={16}/>}
@@ -99,9 +99,9 @@ function BusinessRecord({ id }: { id: string }) {
         {canChangeVerification && <Icon name="chevron" size={16}/>}</button></article>
       <article className="bd-interactive-indicator">
         <button className="bd-indicator-trigger" type="button"
-          aria-label="Consultar información general y completitud del negocio" onClick={() => openSection('information')}>
+          aria-label="Consultar información general y progreso de la ficha del negocio" onClick={() => openSection('information')}>
           <span className="bd-completeness"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="17" fill="none" stroke="#DCFCE7" strokeWidth="5"/><circle cx="22" cy="22" r="17" fill="none" stroke="#22C55E" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${Math.max(0, Math.min(100, business.completeness)) / 100 * 106.82} 106.82`} transform="rotate(-90 22 22)"/></svg></span>
-          <span className="bd-indicator-content"><span className="bd-indicator-title">Completitud</span><strong className="bd-completeness-value">{business.completeness}%</strong></span>
+          <span className="bd-indicator-content"><span className="bd-indicator-title">Progreso de la ficha</span><strong className="bd-completeness-value">{business.completeness}%</strong></span>
           <Icon name="arrow" size={16}/>
         </button>
       </article>

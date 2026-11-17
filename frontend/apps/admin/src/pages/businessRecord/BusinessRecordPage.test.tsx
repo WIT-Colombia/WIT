@@ -137,6 +137,37 @@ describe('Ficha administrativa del negocio', () => {
     fireEvent.click(history);
     expect(screen.getByRole('tab', { name: 'Historial administrativo' })).toHaveAttribute('aria-selected', 'true');
   });
+  it('muestra Visible en publicación solamente cuando la ficha está realmente visible', async () => {
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('tab', { name: 'Información general' }));
+    const panel = screen.getByRole('tabpanel', { name: 'Información general' });
+    const publication = within(panel).getByText('Estado de publicación').closest('.bd-info-field') as HTMLElement;
+    expect(within(publication).getByText('Visible')).toBeInTheDocument();
+    expect(within(publication).queryByText('Publicado')).not.toBeInTheDocument();
+  });
+  it('no confunde una ficha publicada pero oculta con una ficha visible', async () => {
+    api.getRecordBusiness.mockResolvedValue({
+      ...business, visibilityStatus: 'HIDDEN',
+      record: { ...business.record!, effectiveVisibility: 'HIDDEN' }
+    });
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('tab', { name: 'Información general' }));
+    const panel = screen.getByRole('tabpanel', { name: 'Información general' });
+    const publication = within(panel).getByText('Estado de publicación').closest('.bd-info-field') as HTMLElement;
+    expect(within(publication).getByText('Publicado (no visible)')).toBeInTheDocument();
+    expect(within(publication).queryByText('Visible')).not.toBeInTheDocument();
+  });
+  it('renombra Completitud a Progreso de la ficha sin modificar el porcentaje y destaca el verde de Visible', async () => {
+    setup(); await ready();
+    const cards = screen.getByRole('region', { name: 'Indicadores principales' });
+    expect(within(cards).getByText('Progreso de la ficha')).toBeInTheDocument();
+    expect(within(cards).getByText('85%')).toBeInTheDocument();
+    expect(within(cards).queryByText('Completitud')).not.toBeInTheDocument();
+    const visibility = within(cards).getByRole('button', { name: 'Cambiar visibilidad del negocio' });
+    expect(visibility.querySelector('.bd-badge--visible')).toHaveTextContent('Visible');
+    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar información general y progreso de la ficha del negocio' }));
+    expect(screen.getByRole('tab', { name: 'Información general' })).toHaveAttribute('aria-selected', 'true');
+  });
   it('cambiar pestañas conserva la ficha y la consulta del catálogo', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); await screen.findByRole('heading', { name: offer.name }); fireEvent.click(screen.getByRole('tab', { name: 'Información general' })); expect(screen.getByRole('tabpanel', { name: 'Información general' })).toHaveTextContent('Cuenta registradora'); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(api.getRecordBusiness).toHaveBeenCalledTimes(1); expect(api.getRecordCatalog).toHaveBeenCalledTimes(1); expect(screen.getByRole('heading', { name: offer.name })).toBeInTheDocument(); });
   it('el catálogo permite consultar sin modificar la información comercial', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' })); const dialog = await screen.findByRole('dialog', { name: offer.name }); expect(within(dialog).queryByRole('button', { name: /Guardar|Eliminar|Editar/ })).not.toBeInTheDocument(); expect(within(dialog).getByText('Información comercial registrada')).toBeInTheDocument(); expect(offerPrice(offer)).toMatch(/COP.*0/); expect(offerPrice({ ...offer, negotiable: true })).toBe('Precio a convenir'); });
   it('respeta los permisos separados de catálogo y opiniones', async () => { permissions = ['business:write']; role = 'ADMIN'; setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(screen.getByRole('heading', { name: 'Catálogo de acceso restringido' })).toBeInTheDocument(); fireEvent.click(screen.getByRole('tab', { name: 'Opiniones' })); expect(screen.getByRole('heading', { name: 'Opiniones de acceso restringido' })).toBeInTheDocument(); expect(api.getRecordCatalog).not.toHaveBeenCalled(); expect(api.getRecordReviews).not.toHaveBeenCalled(); expect(screen.queryByRole('button', { name: 'Ocultar negocio' })).not.toBeInTheDocument(); });
@@ -332,7 +363,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toBeDisabled();
     expect(screen.queryByRole('dialog', { name: 'Cambiar visibilidad' })).not.toBeInTheDocument();
   });
-  it('centra las cinco tarjetas y permite consultar la completitud desde toda su superficie', async () => {
+  it('centra las cinco tarjetas y permite consultar el progreso de la ficha desde toda su superficie', async () => {
     setup(); await ready();
     const cards = screen.getByRole('region', { name: 'Indicadores principales' });
     expect(within(cards).getAllByRole('button')).toHaveLength(5);
@@ -340,7 +371,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(cards).getByRole('button', { name: 'Cambiar verificación del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Cambiar suscripción del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Consultar reportes de este negocio' })).toHaveClass('bd-indicator-trigger');
-    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar información general y completitud del negocio' }));
+    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar información general y progreso de la ficha del negocio' }));
     expect(screen.getByRole('tab', { name: 'Información general' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tabpanel', { name: 'Información general' })).toHaveTextContent('Cuenta registradora');
   });

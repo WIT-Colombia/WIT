@@ -1662,3 +1662,20 @@
     font-size:14px;
   }
 }
+
+
+/* Visibilidad: a richer green than the publication badge, only when the
+   effective visibility state is VISIBLE. Other badges preserve their tones. */
+.bd-record .bd-indicators .bd-indicator-trigger .bd-badge--visible{
+  background:#BBF7D0;
+  color:#14532D;
+  border:1px solid #86E6AA;
+  box-shadow:0 1px 4px rgba(22,101,52,.08);
+}
+
+/* The percentage label reads naturally at iPad and phone widths. */
+.bd-record .bd-indicators .bd-indicator-trigger .bd-indicator-title{
+  overflow-wrap:normal;
+  word-break:normal;
+  hyphens:none;
+}

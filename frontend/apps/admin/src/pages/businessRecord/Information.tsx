@@ -29,6 +29,14 @@ function InfoGroup({ icon, title, caption, tone, children }: {
 }
 
 export function Information({ business, compact = false }: { business: RecordBusiness; compact?: boolean }) {
+  const effectiveVisibility = business.record?.effectiveVisibility ?? business.visibilityStatus;
+  const isPubliclyVisible = business.publicationStatus === 'PUBLISHED'
+    && business.deletionStatus !== 'DELETED'
+    && !business.administrativeRestriction
+    && effectiveVisibility === 'VISIBLE';
+  const publicationLabel = isPubliclyVisible ? 'Visible'
+    : business.publicationStatus === 'PUBLISHED' ? 'Publicado (no visible)'
+      : label(business.publicationStatus);
   return <section className="bd-info-details" aria-labelledby="bd-info-details-title">
     <header className="bd-info-overview-heading">
       <span className="bd-info-overview-icon"><Icon name="file" size={24}/></span>
@@ -59,8 +67,8 @@ export function Information({ business, compact = false }: { business: RecordBus
         {!compact && fact('Registrado por', business.createdBy.displayName)}
         {fact('ID público', <span className="bd-public-id">{business.publicId}</span>)}
         {fact('Estado de publicación',
-          <Badge tone={business.publicationStatus === 'PUBLISHED' ? 'green' : 'neutral'}>
-            {label(business.publicationStatus)}
+          <Badge tone={isPubliclyVisible ? 'green' : 'neutral'}>
+            {publicationLabel}
           </Badge>)}
         {!compact && <>{fact('Fecha de registro', date(business.createdAt))}
           {fact('Última actualización', date(business.updatedAt))}</>}
