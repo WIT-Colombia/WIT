@@ -1954,3 +1954,100 @@
   .bd-record .bd-catalog-offer .bd-price{font-size:25px}
   .bd-record .bd-catalog-action{font-size:12px;min-height:45px}
 }
+
+
+/* Acceso desde Admin a la ficha pública real de Usuario.
+   The URL uses Business.publicId, not its internal database UUID. */
+.bd-record .bd-public-business-link{
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  flex:0 0 auto;
+  gap:7px;
+  min-height:42px;
+  padding:9px 13px;
+  border:1px solid #BCA4ED;
+  border-radius:10px;
+  background:#FBF8FF;
+  color:#6528BD;
+  font:inherit;
+  font-size:12px;
+  font-weight:760;
+  white-space:nowrap;
+  text-decoration:none;
+  cursor:pointer;
+  transition:background-color .15s ease,border-color .15s ease;
+}
+.bd-record .bd-public-business-link svg{flex:none}
+.bd-record .bd-public-business-link:hover{
+  color:#5521AA;
+  background:#F0E8FF;
+  border-color:#986DDD;
+}
+.bd-record .bd-public-business-link:focus-visible{
+  outline:3px solid #8B5CF6;
+  outline-offset:3px;
+}
+.bd-record .bd-referrals-count{
+  color:#28164B;
+  font-variant-numeric:tabular-nums;
+}
+.bd-record .bd-referrals-detail{
+  display:grid;
+  grid-template-columns:52px minmax(0,1fr);
+  align-items:center;
+  gap:14px;
+  padding:22px 23px 26px;
+}
+.bd-record .bd-referrals-detail-icon{
+  display:grid;
+  place-items:center;
+  width:52px;
+  height:52px;
+  border-radius:14px;
+  background:#EEE5FF;
+  color:#7135D6;
+}
+.bd-record .bd-referrals-detail>div{
+  display:grid;
+  gap:3px;
+  min-width:0;
+}
+.bd-record .bd-referrals-detail>div span{font-size:12px;color:#75668D}
+.bd-record .bd-referrals-detail>div strong{
+  font-size:25px;
+  line-height:1.2;
+  font-weight:800;
+  color:#24143F;
+  font-variant-numeric:tabular-nums;
+}
+.bd-record .bd-referrals-detail p{
+  grid-column:1/-1;
+  margin:0;
+  font-size:12px;
+  line-height:1.65;
+  color:#514760;
+}
+@media(max-width:1250px){
+  .bd-record .bd-topbar{flex-wrap:wrap}
+  .bd-record .bd-public-business-link{margin-left:auto}
+}
+@media(max-width:700px){
+  .bd-record .bd-topbar{display:grid;grid-template-columns:minmax(0,1fr) auto}
+  .bd-record .bd-public-business-link{
+    grid-column:2;
+    grid-row:1;
+    justify-self:end;
+    margin:0;
+    min-height:40px;
+    padding:8px 9px;
+    font-size:11px;
+    gap:5px;
+  }
+  .bd-record .bd-public-business-link-context{display:none}
+  .bd-record .bd-referrals-detail{padding:16px;gap:10px}
+}
+@media(max-width:350px){
+  .bd-record .bd-public-business-link{padding:8px 7px;gap:4px}
+  .bd-record .bd-public-business-link>svg:last-child{display:none}
+}

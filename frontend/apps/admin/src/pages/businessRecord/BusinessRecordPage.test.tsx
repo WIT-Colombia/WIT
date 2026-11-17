@@ -14,7 +14,7 @@ vi.mock('../../components/businesses/BusinessRecordPhoto', () => ({ BusinessReco
 let role = 'SUPER_ADMIN', permissions = ['business:write', 'catalog:read', 'content:moderate', 'content:moderate:write', 'settings:write'];
 vi.mock('../../services/adminService', () => ({ getSession: () => ({ name: 'Administración de prueba', role, permissions }) }));
 const pagination = { page: 1, pageSize: 6, total: 1, totalPages: 1 };
-const business: RecordBusiness = { id: 'business-1', publicId: 'B-REAL-1', name: 'Establecimiento registrado', description: 'Descripción registrada', coverPhotoId: null, profilePhotoId: null, email: 'contacto@example.invalid', phone: '000', lifecycleStatus: 'ACTIVE', publicationStatus: 'PUBLISHED', visibilityStatus: 'VISIBLE', verificationStatus: 'PENDING', deletionStatus: 'NONE', administrativeRestriction: null, administrativePreviousVisibility: null, administrativeRestrictedAt: null, administrativeRestrictionReason: null, isPro: true, completeness: 85, createdAt: '2026-11-01T12:00:00Z', updatedAt: '2026-11-17T12:00:00Z', createdBy: { displayName: 'Cuenta registradora', emailNormalized: null }, memberships: [{ user: { displayName: 'Propietaria registrada', nickname: null } }], _count: { offers: 1, reviews: 1, memberships: 1, reports: 2 }, location: { cityName: 'Palmira', regionName: 'Valle del Cauca', countryCode: 'CO', address: 'Dirección registrada', zoneName: null }, category: { id: 'cat', code: 'tools', translations: [{ locale: 'es', name: 'Ferretería' }] }, record: { version: 1, members: [{ id: 'member-1', role: 'OWNER', status: 'ACTIVE', createdAt: '2026-11-01T12:00:00Z', user: { displayName: 'Propietaria registrada', nickname: null } }], effectiveVisibility: 'VISIBLE', rating: { value: 4, count: 1 }, products: 1, services: 0, businessPhotos: 0, catalogPhotos: 0, accountStatus: 'ACTIVE', coverPosition: { x: 50, y: 50 }, profilePosition: { x: 50, y: 50 } } };
+const business: RecordBusiness = { id: 'business-1', publicId: 'B-REAL-1', name: 'Establecimiento registrado', description: 'Descripción registrada', coverPhotoId: null, profilePhotoId: null, email: 'contacto@example.invalid', phone: '000', lifecycleStatus: 'ACTIVE', publicationStatus: 'PUBLISHED', visibilityStatus: 'VISIBLE', verificationStatus: 'PENDING', deletionStatus: 'NONE', administrativeRestriction: null, administrativePreviousVisibility: null, administrativeRestrictedAt: null, administrativeRestrictionReason: null, isPro: true, completeness: 85, createdAt: '2026-11-01T12:00:00Z', updatedAt: '2026-11-17T12:00:00Z', createdBy: { displayName: 'Cuenta registradora', emailNormalized: null }, memberships: [{ user: { displayName: 'Propietaria registrada', nickname: null } }], _count: { offers: 1, reviews: 1, memberships: 1, reports: 2 }, location: { cityName: 'Palmira', regionName: 'Valle del Cauca', countryCode: 'CO', address: 'Dirección registrada', zoneName: null }, category: { id: 'cat', code: 'tools', translations: [{ locale: 'es', name: 'Ferretería' }] }, record: { version: 1, members: [{ id: 'member-1', role: 'OWNER', status: 'ACTIVE', createdAt: '2026-11-01T12:00:00Z', user: { displayName: 'Propietaria registrada', nickname: null } }], effectiveVisibility: 'VISIBLE', rating: { value: 4, count: 1 }, products: 1, services: 0, referrals: 7, businessPhotos: 0, catalogPhotos: 0, accountStatus: 'ACTIVE', coverPosition: { x: 50, y: 50 }, profilePosition: { x: 50, y: 50 } } };
 const offer: RecordOffer = { id: 'offer-1', internalCode: 'P000001', kind: 'PRODUCT', name: 'Producto registrado', description: 'Información comercial registrada', priceAmount: '0', currency: 'COP', priceText: null, negotiable: false, publicationStatus: 'PUBLISHED', administrativeStatus: 'NONE', active: true, deletedAt: null, createdAt: business.createdAt, updatedAt: business.updatedAt, category: business.category, photos: [] };
 function setup() { render(<MemoryRouter initialEntries={['/businesses/business-1']}><Routes><Route path="/businesses/:id" element={<BusinessRecordPage/>}/></Routes></MemoryRouter>); }
 async function ready() { await screen.findByRole('heading', { name: 'Ficha administrativa del negocio' }); }
@@ -31,7 +31,7 @@ describe('Ficha administrativa del negocio', () => {
   afterEach(cleanup);
   it('no atribuye una actuación a un administrador ficticio cuando falta su identidad', () => { render(<HistoryTimeline entries={[{ id: 'audit-1', action: 'BUSINESS_UPDATED', reason: 'Motivo registrado', comment: null, actor: null, createdAt: business.updatedAt, previousState: null, newState: null }]}/>); expect(screen.getByText('Responsable no disponible')).toBeInTheDocument(); expect(screen.queryByText('Sistema', { exact: true })).not.toBeInTheDocument(); });
   it('impide consultar la ficha sin permiso de negocios', () => { permissions = []; setup(); expect(screen.getByRole('heading', { name: 'Acceso restringido' })).toBeInTheDocument(); expect(api.getRecordBusiness).not.toHaveBeenCalled(); });
-  it('presenta identidad e indicadores procedentes de la respuesta', async () => { setup(); await ready(); expect(screen.getByRole('heading', { name: business.name })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('85%'); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Business PRO'); expect(screen.getAllByText('Propietaria registrada').length).toBeGreaterThan(0); expect(screen.getAllByRole('tab')).toHaveLength(8); });
+  it('presenta identidad e indicadores procedentes de la respuesta', async () => { setup(); await ready(); expect(screen.getByRole('heading', { name: business.name })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Referidos'); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Business PRO'); expect(screen.getAllByText('Propietaria registrada').length).toBeGreaterThan(0); expect(screen.getAllByRole('tab')).toHaveLength(8); });
   it('muestra el Resumen premium con datos reales y sin el aviso Sobre este resumen', async () => {
     setup(); await ready();
     expect(screen.getByRole('heading', { name: 'Rendimiento en Xamuko' })).toBeInTheDocument();
@@ -157,16 +157,36 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(publication).getByText('Publicado (no visible)')).toBeInTheDocument();
     expect(within(publication).queryByText('Visible')).not.toBeInTheDocument();
   });
-  it('renombra Completitud a Progreso de la ficha sin modificar el porcentaje y destaca el verde de Visible', async () => {
+  it('muestra el número real de referidos y conserva el verde del estado Visible', async () => {
     setup(); await ready();
     const cards = screen.getByRole('region', { name: 'Indicadores principales' });
-    expect(within(cards).getByText('Progreso de la ficha')).toBeInTheDocument();
-    expect(within(cards).getByText('85%')).toBeInTheDocument();
-    expect(within(cards).queryByText('Completitud')).not.toBeInTheDocument();
+    expect(within(cards).getByText('Referidos')).toBeInTheDocument();
+    expect(within(cards).getByText('7')).toBeInTheDocument();
+    expect(within(cards).queryByText('Progreso de la ficha')).not.toBeInTheDocument();
+    expect(within(cards).queryByText('85%')).not.toBeInTheDocument();
     const visibility = within(cards).getByRole('button', { name: 'Cambiar visibilidad del negocio' });
     expect(visibility.querySelector('.bd-badge--visible')).toHaveTextContent('Visible');
-    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar información general y progreso de la ficha del negocio' }));
-    expect(screen.getByRole('tab', { name: 'Información general' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar referidos del negocio' }));
+    expect(screen.getByRole('dialog', { name: 'Referidos del negocio' })).toHaveTextContent('Usuarios referidos válidos');
+    expect(screen.getByRole('dialog', { name: 'Referidos del negocio' })).toHaveTextContent('7');
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cerrar ventana' }));
+    expect(screen.queryByRole('dialog', { name: 'Referidos del negocio' })).not.toBeInTheDocument();
+  });
+  it('abre la ficha pública del negocio usando publicId y no su identificador interno', async () => {
+    setup(); await ready();
+    const link = screen.getByRole('link', { name: 'Ver ficha pública de Establecimiento registrado en Xamuko' });
+    expect(link).toHaveAttribute('href', 'https://user.xamuko.com/business/B-REAL-1');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(link.getAttribute('href')).not.toContain('/business/business-1');
+  });
+  it('evita mostrar cero como si fuera un dato real cuando el API ampliado aún no responde', async () => {
+    api.getRecordBusiness.mockResolvedValue({ ...business, record: undefined });
+    setup(); await ready();
+    const cards = screen.getByRole('region', { name: 'Indicadores principales' });
+    expect(within(cards).getByText('Referidos').parentElement).toHaveTextContent('—');
+    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar referidos del negocio' }));
+    expect(screen.getByRole('dialog', { name: 'Referidos del negocio' })).toHaveTextContent('No disponible');
   });
   it('cambiar pestañas conserva la ficha y la consulta del catálogo', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); await screen.findByRole('heading', { name: offer.name }); fireEvent.click(screen.getByRole('tab', { name: 'Información general' })); expect(screen.getByRole('tabpanel', { name: 'Información general' })).toHaveTextContent('Cuenta registradora'); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(api.getRecordBusiness).toHaveBeenCalledTimes(1); expect(api.getRecordCatalog).toHaveBeenCalledTimes(1); expect(screen.getByRole('heading', { name: offer.name })).toBeInTheDocument(); });
   it('el catálogo permite consultar sin modificar la información comercial', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' })); const dialog = await screen.findByRole('dialog', { name: offer.name }); expect(within(dialog).queryByRole('button', { name: /Guardar|Eliminar|Editar/ })).not.toBeInTheDocument(); expect(within(dialog).getByText('Información comercial registrada')).toBeInTheDocument(); expect(offerPrice(offer)).toMatch(/COP.*0/); expect(offerPrice({ ...offer, negotiable: true })).toBe('Precio a convenir'); });
@@ -403,7 +423,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toBeDisabled();
     expect(screen.queryByRole('dialog', { name: 'Cambiar visibilidad' })).not.toBeInTheDocument();
   });
-  it('centra las cinco tarjetas y permite consultar el progreso de la ficha desde toda su superficie', async () => {
+  it('centra las cinco tarjetas y permite consultar los referidos desde toda su superficie', async () => {
     setup(); await ready();
     const cards = screen.getByRole('region', { name: 'Indicadores principales' });
     expect(within(cards).getAllByRole('button')).toHaveLength(5);
@@ -411,9 +431,8 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(cards).getByRole('button', { name: 'Cambiar verificación del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Cambiar suscripción del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Consultar reportes de este negocio' })).toHaveClass('bd-indicator-trigger');
-    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar información general y progreso de la ficha del negocio' }));
-    expect(screen.getByRole('tab', { name: 'Información general' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tabpanel', { name: 'Información general' })).toHaveTextContent('Cuenta registradora');
+    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar referidos del negocio' }));
+    expect(screen.getByRole('dialog', { name: 'Referidos del negocio' })).toHaveTextContent('7');
   });
   it('permite cerrar el selector de visibilidad con Escape sin cambiar el negocio', async () => {
     setup(); await ready();

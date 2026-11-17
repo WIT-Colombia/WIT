@@ -4,7 +4,7 @@ export type Pagination = { page: number; pageSize: number; total: number; totalP
 export type Category = AdminBusinessRecord['category'];
 export type RecordBusiness = AdminBusinessRecord & { record?: {
   version: number; members: Array<{ id: string; role: string; status: string; createdAt: string; user: { displayName: string; nickname: string | null } }>;
-  rating: { value: number | null; count: number }; products: number; services: number;
+  rating: { value: number | null; count: number }; products: number; services: number; referrals: number;
   businessPhotos: number; catalogPhotos: number; accountStatus: string; effectiveVisibility: string;
   coverPosition: { x: number; y: number }; profilePosition: { x: number; y: number };
 } };

@@ -125,18 +125,19 @@ export async function getAdminBusiness(id: string) {
     visibilityPeriods: { take: 1, orderBy: { expiresAt: 'desc' }, select: { startsAt: true, expiresAt: true } },
   } });
   if (!value) return null;
-  const [members, rating, catalog, businessPhotos, catalogPhotos] = await Promise.all([
+  const [members, rating, catalog, businessPhotos, catalogPhotos, referralCounter] = await Promise.all([
     prisma.businessMembership.findMany({ where: { businessId: value.id }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], select: { id: true, role: true, status: true, createdAt: true, user: { select: { displayName: true, nickname: true } } } }),
     prisma.businessReview.aggregate({ where: { businessId: value.id, status: 'PUBLISHED' }, _avg: { rating: true }, _count: { _all: true } }),
     prisma.businessOffer.groupBy({ by: ['kind'], where: { businessId: value.id }, _count: { _all: true } }),
     prisma.photo.count({ where: { offerId: null, OR: [{ businessId: value.id }, { coverForBusiness: { id: value.id } }, { profileForBusiness: { id: value.id } }] } }),
     prisma.photo.count({ where: { offer: { businessId: value.id } } }),
+    prisma.businessReferralCounter.findUnique({ where: { businessId: value.id }, select: { validReferralCount: true } }),
   ]);
   const now = new Date(), period = value.visibilityPeriods[0];
   const effectiveVisibility = value.visibilityStatus === 'VISIBLE' && period ? period.expiresAt <= now ? 'EXPIRED' : period.startsAt > now ? 'NOT_STARTED' : value.visibilityStatus : value.visibilityStatus;
   return { ...compact(value, now)!, record: { version: 1, members, effectiveVisibility, rating: { value: rating._avg.rating, count: rating._count._all },
     products: catalog.find(row => row.kind === 'PRODUCT')?._count._all ?? 0, services: catalog.find(row => row.kind === 'SERVICE')?._count._all ?? 0,
-    businessPhotos, catalogPhotos, accountStatus: value.businessAccount.status,
+    businessPhotos, catalogPhotos, referrals: referralCounter?.validReferralCount ?? 0, accountStatus: value.businessAccount.status,
     coverPosition: { x: value.coverImagePositionX, y: value.coverImagePositionY }, profilePosition: { x: value.profileImagePositionX, y: value.profileImagePositionY } } };
 }
 

@@ -35,6 +35,12 @@ test('Ficha administrativa: consultas, fotografías privadas y decisiones audita
     await t.test('ficha real, propietario, plan y datos complementarios sin secretos', async () => {
       const response = await request(`/businesses/${fixture.business.publicId}`); assert.equal(response.status, 200);
       const { business } = await response.json() as any;
+      assert.equal(business.record.referrals, 0, 'Sin referidos válidos debe mostrar cero real');
+      await prisma.businessReferralCounter.create({ data: { businessId: id, validReferralCount: 7 } });
+      const withReferrals = await (await request(`/businesses/${fixture.business.publicId}`)).json() as any;
+      assert.equal(withReferrals.business.record.referrals, 7, 'Debe usar el contador de referidos validado de este negocio');
+      const unrelated = await (await request(`/businesses/${fixture.other.publicId}`)).json() as any;
+      assert.equal(unrelated.business.record.referrals, 0, 'No puede mezclar referidos entre negocios');
       assert.equal(business.record.products, 13); assert.equal(business.record.services, 7); assert.equal(business.record.members.length, 2); assert.equal(business.record.rating.count, 13);
       assert.equal(business.record.businessPhotos, 12); assert.equal(business.record.catalogPhotos, 6); assert.equal(business.isPro, true); assert.equal(business.record.effectiveVisibility, 'VISIBLE');
       assert.ok(!JSON.stringify(business).includes('passwordHash')); assert.ok(!JSON.stringify(business).includes('storageKey'));
