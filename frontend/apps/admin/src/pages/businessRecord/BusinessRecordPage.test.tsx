@@ -52,7 +52,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByText('Me gusta')).toBeInTheDocument();
     expect(screen.getByText('Favoritos')).toBeInTheDocument();
     expect(screen.getByText('13')).toBeInTheDocument();
-    expect(screen.getByText('7')).toBeInTheDocument();
+    expect(within(screen.getByRole('tabpanel', { name: 'Resumen' })).getByText('7')).toBeInTheDocument();
     expect(screen.getByText('Fotos')).toBeInTheDocument();
     expect(screen.queryByText('Interacciones')).not.toBeInTheDocument();
     expect(screen.queryByText('Miembros', { exact: true })).not.toBeInTheDocument();
