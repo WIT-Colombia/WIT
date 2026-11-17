@@ -125,14 +125,20 @@ export function AdminBusinessesPage() {
     setParams(next);
   }
   function exportCurrentPage() {
-    const safe = (value: string) => '"' + (/^[=+\\-@\\t\\r\\n]/.test(value) ? "'" : '') + value.replaceAll('"','""') + '"';
-    const fields = ['Negocio','ID público','Ciudad','Categoría','Estado de verificación','Fecha de registro'];
-    const content = [fields, ...rows.map(item => [item.name,item.publicId,item.location?.cityName ?? '',
-      categoryName(item.category),statusOf(item.verificationStatus).label,shortDate(item.createdAt)])]
-      .map(record => record.map(safe).join(';')).join('\\r\\n');
-    const url = URL.createObjectURL(new Blob(['\\ufeff',content],{type:'text/csv;charset=utf-8'}));
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'xamuko-negocios-pagina.csv';
-    anchor.click(); window.setTimeout(() => URL.revokeObjectURL(url),1000);
+    // Protect spreadsheet users from formula injection while retaining original values.
+    const safe = (value: string) => {
+      const first = value.charCodeAt(0);
+      const formula = [61, 43, 45, 64, 9, 10, 13].includes(first);
+      return '"' + (formula ? "'" : '') + value.replaceAll('"', '""') + '"';
+    };
+    const fields = ['Negocio', 'ID público', 'Ciudad', 'Categoría', 'Estado de verificación', 'Fecha de registro'];
+    const csv = [fields, ...rows.map(item => [item.name, item.publicId, item.location?.cityName ?? '',
+      categoryName(item.category), statusOf(item.verificationStatus).label, shortDate(item.createdAt)])]
+      .map(record => record.map(safe).join(';')).join(String.fromCharCode(13, 10));
+    const url = URL.createObjectURL(new Blob([String.fromCharCode(0xfeff), csv], { type: 'text/csv;charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url; anchor.download = 'xamuko-negocios-pagina.csv'; anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
