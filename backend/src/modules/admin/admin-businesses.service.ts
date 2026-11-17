@@ -3,6 +3,7 @@ import { Prisma, type BusinessVisibilityStatus } from '../../generated/prisma/cl
 import { AppError } from '../../shared/errors/app-error.js';
 import { notifyPlatformUser } from '../notifications/platform-notifications.service.js';
 import { isSubscriptionEffective } from '../business/recognition.service.js';
+import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 
 export type AdminVisibilityAction = 'HIDE' | 'SUSPEND' | 'RESTORE';
 export function restoredAdminBusinessVisibility(
@@ -114,6 +115,22 @@ export async function listAdminBusinesses(query: AdminBusinessesFilters) {
 export async function getAdminBusiness(id: string) {
   const value = await prisma.business.findFirst({ where: { OR: [{ id }, { publicId: id }] }, select: businessSelect });
   return compact(value, new Date());
+}
+
+/** Read the original gallery cover under Admin permissions, regardless of publication state. */
+export async function getAdminBusinessCoverPhoto(photoId: string) {
+  const photo = await prisma.photo.findFirst({
+    where: { id: photoId, isGallery: true, business: { coverPhotoId: photoId } },
+    select: { storageKey: true },
+  });
+  if (!photo) throw new AppError(404, 'ADMIN_BUSINESS_PHOTO_NOT_FOUND', 'No encontramos la portada del negocio.');
+  try {
+    return { buffer: await readPhoto(photo.storageKey), mimeType: photoMimeType(photo.storageKey) };
+  } catch (error) {
+    if (isPhotoMissingError(error) || (error instanceof Error && (error as NodeJS.ErrnoException).code === 'ENOENT'))
+      throw new AppError(404, 'ADMIN_BUSINESS_PHOTO_MISSING', 'La portada ya no está disponible.');
+    throw new AppError(503, 'ADMIN_BUSINESS_PHOTO_UNAVAILABLE', 'No pudimos cargar la portada en este momento.');
+  }
 }
 
 export async function getAdminBusinessesFilters() {
