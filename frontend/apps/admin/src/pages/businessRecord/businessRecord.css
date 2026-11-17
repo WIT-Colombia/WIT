@@ -780,3 +780,6 @@
 .bd-subscription-picker .bd-subscription-choice--basic .bd-visibility-picker-choice-icon{background:#edf2f8;color:#475569}
 .bd-subscription-picker .bd-subscription-choice--pro .bd-visibility-picker-choice-icon{background:#eee4ff;color:#7335df}
 .bd-decision-form .bd-decision-selected-plan{margin:0;color:#281b42;font-weight:650}
+
+/* Administrative sidebar removed: all business record panels use the available width on desktop, iPad and mobile. */
+.bd-record .bd-body{grid-template-columns:minmax(0,1fr)}

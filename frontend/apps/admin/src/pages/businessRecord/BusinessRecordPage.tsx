@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Icon } from '../../components/Icon';
 import { StatePanel } from '../../components/common';
-import { AdminBusinessDeleteDialog } from '../../components/businesses/AdminBusinessDeleteDialog';
 import { AdminBusinessVisibilityDialog } from '../../components/businesses/AdminBusinessVisibilityDialog';
 import { AdminBusinessVisibilityPicker } from './AdminBusinessVisibilityPicker';
 import { AdminBusinessVerificationPicker } from './AdminBusinessVerificationPicker';
@@ -31,14 +30,6 @@ const tabs = [
 ] as const;
 type Tab = typeof tabs[number]['key'];
 const visibility = (business: RecordBusiness) => business.record?.effectiveVisibility === 'NOT_STARTED' && !business.administrativeRestriction ? 'Vigencia no iniciada' : adminBusinessVisibilityLabel({ ...business, visibilityStatus: business.record?.effectiveVisibility || business.visibilityStatus });
-function businessState(business: RecordBusiness) {
-  if (business.deletionStatus === 'DELETED') return { title: 'Eliminado administrativamente', tone: 'red', text: 'El establecimiento fue retirado. Se conserva su información y trazabilidad para consulta.' };
-  if (business.administrativeRestriction === 'SUSPENDED') return { title: 'Suspensión vigente', tone: 'amber', text: 'La medida administrativa impide renovar, activar o volver a publicar el establecimiento.' };
-  if (business.administrativeRestriction === 'HIDDEN') return { title: 'Ocultamiento administrativo', tone: 'amber', text: 'El establecimiento no aparece públicamente. Solo Admin puede levantar esta restricción.' };
-  if (business.visibilityStatus === 'HIDDEN' && !business.administrativeRestriction) return { title: 'Oculto (reversible)', tone: 'neutral', text: 'El negocio no aparece en la plataforma. El propietario puede volver a hacerlo visible desde Business con vigencia válida.' };
-  if (business.publicationStatus === 'PUBLISHED' && business.record?.effectiveVisibility === 'VISIBLE' && business.lifecycleStatus === 'ACTIVE' && business.record?.accountStatus === 'ACTIVE') return { title: 'Publicado y visible', tone: 'green', text: 'El registro está publicado y su estado de visibilidad es visible, sin restricciones administrativas.' };
-  return { title: label(business.publicationStatus), tone: 'neutral', text: `Visibilidad: ${visibility(business)}. Ciclo del negocio: ${label(business.lifecycleStatus)}. Cuenta del negocio: ${label(business.record?.accountStatus)}.` };
-}
 export function BusinessRecordPage() { const { id = '' } = useParams(); return <BusinessRecord key={id} id={id}/>; }
 function BusinessRecord({ id }: { id: string }) {
   const session = getSession(), allowed = Boolean(session?.permissions?.includes('business:write'));
@@ -50,7 +41,7 @@ function BusinessRecord({ id }: { id: string }) {
   useEffect(() => { if (history.data?.pagination?.page === 1) setLatest(history.data.history.slice(0, 3)); }, [history.data]);
   useEffect(() => { if (source.data) setOperationPending(false); }, [source.data]);
   const [tab, setTab] = useState<Tab>('summary'), [visited, setVisited] = useState<Set<Tab>>(new Set(['summary']));
-  const [visibilityAction, setVisibilityAction] = useState<AdminVisibilityAction | null>(null), [deleting, setDeleting] = useState(false);
+  const [visibilityAction, setVisibilityAction] = useState<AdminVisibilityAction | null>(null);
   const [visibilityOpen, setVisibilityOpen] = useState(false);
   const [verificationOpen, setVerificationOpen] = useState(false);
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
@@ -62,17 +53,16 @@ function BusinessRecord({ id }: { id: string }) {
     choose(value);
     nav.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   };
-  const changed = (message: string) => { setDeleting(false); setVisibilityAction(null); setVisibilityOpen(false); setVerificationOpen(false); setSubscriptionOpen(false); setSelectedPlan(null); setDecision(null); setNotice(message); setOperationPending(true); setHistoryPage(1); setRevision(value => value + 1); };
+  const changed = (message: string) => { setVisibilityAction(null); setVisibilityOpen(false); setVerificationOpen(false); setSubscriptionOpen(false); setSelectedPlan(null); setDecision(null); setNotice(message); setOperationPending(true); setHistoryPage(1); setRevision(value => value + 1); };
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso de consulta de negocios para abrir la ficha."/>;
   if (!source.data) return source.error ? <StatePanel kind="error" title="No pudimos abrir la ficha" message={source.error} retry={source.retry}/> : <StatePanel kind="loading" title="Cargando ficha administrativa" message="Consultando el establecimiento y su información registrada."/>;
-  const business = source.data, record = business.record, state = businessState(business);
+  const business = source.data, record = business.record;
   // Visibility is available from the basic business record, even when the
   // extended administrative detail endpoint has not been deployed yet.
   // Mutations remain SUPER_ADMIN-only and are authorized again by the backend.
   const canChangeVisibility = session?.role === 'SUPER_ADMIN' && business.deletionStatus !== 'DELETED';
   const canChangeVerification = canChangeVisibility;
   const canChangeSubscription = canChangeVisibility;
-  const canAct = canChangeVisibility && Boolean(record);
   const actionDisabled = source.loading || Boolean(source.error) || operationPending;
   const photoCount = record ? record.businessPhotos + (catalogAllowed ? record.catalogPhotos : 0) : 0;
   return <BusinessRecordPhotos businessId={business.id}><div className="bd-record">
@@ -141,19 +131,7 @@ function BusinessRecord({ id }: { id: string }) {
         : item.key === 'activity' ? <Activity id={business.id}/>
         : item.key === 'reports' ? <Reports businessId={business.id} businessName={business.name}/>
         : <Card title="Historial administrativo" icon="clock"><p className="bd-card-caption">Actuaciones conservadas en la auditoría. Fechas en hora de Bogotá.</p><Loading {...history}/>{!history.loading && !history.error && history.data && <>{history.data.history.length ? <HistoryTimeline entries={history.data.history}/> : <Empty icon="clock" title="Sin actuaciones registradas" message="No se encontraron registros de auditoría para este establecimiento."/>}{history.data.pagination && <Pager pagination={history.data.pagination} onPage={setHistoryPage}/>}</>}</Card>)}
-    </section>)}</div><aside className="bd-administration">
-      <Card title="Estado administrativo" icon="layers"><div className={`bd-current-state bd-current-state--${state.tone}`}><Icon name={state.tone === 'green' ? 'check' : state.tone === 'red' ? 'trash' : 'shield'} size={22}/><div><h3>{state.title}</h3><p>{state.text}</p></div></div>{business.administrativeRestriction && <div className="bd-restriction"><strong>Motivo registrado</strong><p>{business.administrativeRestrictionReason || 'Sin motivo disponible.'}</p>{business.administrativeRestrictedAt && <small>Desde {date(business.administrativeRestrictedAt)}</small>}</div>}</Card>
-      <Card title="Acciones administrativas" icon="settings"><p className="bd-action-hint"><Icon name="info" size={17}/>Las acciones disponibles dependen del estado del negocio y los permisos de tu cuenta.</p>
-        {canAct ? <div className="bd-action-list">{business.administrativeRestriction === 'SUSPENDED' ? <button disabled={actionDisabled} className="bd-action bd-action--hide" onClick={() => setVisibilityAction('SET_HIDDEN')}><Icon name="eye-off" size={18}/>Cambiar a ocultamiento reversible</button>
-          : business.visibilityStatus === 'HIDDEN' && !business.administrativeRestriction ? <button disabled={actionDisabled} className="bd-action bd-action--restore" onClick={() => setVisibilityAction('SET_VISIBLE')}><Icon name="eye" size={18}/>Hacer visible</button>
-          : <button disabled={actionDisabled} className="bd-action bd-action--hide" onClick={() => setVisibilityAction('SET_HIDDEN')}><Icon name="eye-off" size={18}/>Ocultar negocio</button>}
-          {business.administrativeRestriction !== 'SUSPENDED' && <button disabled={actionDisabled} className="bd-action bd-action--suspend" onClick={() => setVisibilityAction('SUSPEND')}><Icon name="lock" size={18}/>Suspender negocio</button>}
-          {business.administrativeRestriction && <button disabled={actionDisabled} className="bd-action bd-action--restore" onClick={() => setVisibilityAction('RESTORE')}><Icon name="check" size={18}/>Levantar restricción</button>}
-          <div className="bd-danger-zone"><button disabled={actionDisabled} className="bd-action bd-action--delete" onClick={() => setDeleting(true)}><Icon name="trash" size={18}/>Eliminar administrativamente</button></div>
-        </div> : <p className="bd-note">{business.deletionStatus === 'DELETED' ? 'El negocio está eliminado. Su información e historial permanecen disponibles para consulta.' : !record ? 'Actualiza el backend para confirmar las acciones disponibles.' : 'Estas medidas están reservadas al administrador principal.'}</p>}
-        <details className="bd-action-help"><summary><Icon name="info" size={18}/>¿Qué hace cada acción?</summary><p><strong>Ocultar:</strong> retira la visibilidad pública; el propietario puede reactivarla desde Business con vigencia válida.</p><p><strong>Suspender:</strong> también impide renovar o activar el establecimiento.</p><p><strong>Levantar restricción:</strong> conserva la vigencia y el ocultamiento voluntario; no concede nuevos días.</p><p><strong>Eliminar:</strong> retira el negocio, cancela transferencias pendientes y revoca sus planes. Conserva la cuenta del propietario y la auditoría.</p></details>
-      </Card><p className="bd-security-note"><Icon name="shield" size={15}/>Cada medida requiere confirmación y motivo. Las decisiones se conservan en el historial.</p><button className="bd-button bd-refresh" disabled={source.loading} onClick={() => { setHistoryPage(1); setRevision(value => value + 1); }}><Icon name="refresh" size={16}/>Actualizar ficha</button>
-    </aside></div>
+    </section>)}</div></div>
     {visibilityOpen && canChangeVisibility && <AdminBusinessVisibilityPicker businessName={business.name}
       visibilityStatus={business.visibilityStatus} administrativeRestriction={business.administrativeRestriction}
       onClose={() => setVisibilityOpen(false)}
@@ -167,7 +145,6 @@ function BusinessRecord({ id }: { id: string }) {
       onClose={() => setSubscriptionOpen(false)}
       onChoose={plan => { setSubscriptionOpen(false); setSelectedPlan(plan); setDecision('plan'); }}/>}
     {visibilityAction && <AdminBusinessVisibilityDialog business={business} action={visibilityAction} onClose={() => setVisibilityAction(null)} onSuccess={changed}/>}
-    {deleting && <AdminBusinessDeleteDialog business={business} onClose={() => setDeleting(false)} onSuccess={changed}/>}
     {decision && <BusinessDecisionDialog business={business} decision={decision} selectedPlan={selectedPlan ?? undefined}
       onClose={() => { setDecision(null); setSelectedPlan(null); }} onSuccess={changed}/>}
   </div></BusinessRecordPhotos>;

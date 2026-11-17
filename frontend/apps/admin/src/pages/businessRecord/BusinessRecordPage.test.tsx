@@ -24,6 +24,21 @@ describe('Ficha administrativa del negocio', () => {
   it('no atribuye una actuación a un administrador ficticio cuando falta su identidad', () => { render(<HistoryTimeline entries={[{ id: 'audit-1', action: 'BUSINESS_UPDATED', reason: 'Motivo registrado', comment: null, actor: null, createdAt: business.updatedAt, previousState: null, newState: null }]}/>); expect(screen.getByText('Responsable no disponible')).toBeInTheDocument(); expect(screen.queryByText('Sistema', { exact: true })).not.toBeInTheDocument(); });
   it('impide consultar la ficha sin permiso de negocios', () => { permissions = []; setup(); expect(screen.getByRole('heading', { name: 'Acceso restringido' })).toBeInTheDocument(); expect(api.getRecordBusiness).not.toHaveBeenCalled(); });
   it('presenta identidad e indicadores procedentes de la respuesta', async () => { setup(); await ready(); expect(screen.getByRole('heading', { name: business.name })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('85%'); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Business PRO'); expect(screen.getAllByText('Propietaria registrada').length).toBeGreaterThan(0); expect(screen.getAllByRole('tab')).toHaveLength(8); });
+  it('oculta los paneles administrativos redundantes y deja el contenido de la pestaña a ancho completo', async () => {
+    setup(); await ready();
+    expect(screen.queryByText('Estado administrativo')).not.toBeInTheDocument();
+    expect(screen.queryByText('Acciones administrativas')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Actualizar ficha' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Eliminar administrativamente' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(screen.getByRole('tabpanel', { name: 'Resumen' })).toBeInTheDocument();
+    const cards = screen.getByRole('region', { name: 'Indicadores principales' });
+    expect(within(cards).getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toBeEnabled();
+    expect(within(cards).getByRole('button', { name: 'Cambiar verificación del negocio' })).toBeEnabled();
+    expect(within(cards).getByRole('button', { name: 'Cambiar suscripción del negocio' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('tab', { name: 'Historial administrativo' }));
+    expect(screen.getByRole('tabpanel', { name: 'Historial administrativo' })).toBeInTheDocument();
+  });
   it('muestra únicamente la imagen de perfil en la cabecera sin cartel de fotografía faltante', async () => {
     setup(); await ready();
     const identity = screen.getByRole('region', { name: 'Identificación del establecimiento' });
