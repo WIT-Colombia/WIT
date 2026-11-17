@@ -50,7 +50,7 @@ export function AdminBusinessSubscriptionPicker({ businessName, currentPlan, onC
     <section className="bd-visibility-picker bd-subscription-picker" ref={dialogRef} role="dialog" aria-modal="true"
       aria-labelledby="bd-subscription-picker-title" aria-describedby="bd-subscription-picker-description">
       <header className="bd-visibility-picker-header">
-        <span className="bd-visibility-picker-head-icon"><Icon name="shield" size={24}/></span>
+        <span className="bd-visibility-picker-head-icon"><Icon name="crown" size={24}/></span>
         <div>
           <span className="bd-visibility-picker-eyebrow">XAMUKO ADMIN · ESTADO DEL NEGOCIO</span>
           <h2 id="bd-subscription-picker-title">Cambiar suscripción</h2>
