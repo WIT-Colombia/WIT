@@ -548,3 +548,26 @@
   .admin-refresh .businesses-page.abv1 .ad-business-growth-plot{min-width:0}
   .admin-refresh .businesses-page.abv1 .ad-business-growth-canvas svg{max-height:none}
 }
+
+
+/* New daily and weekly selectors: keep all five intervals legible on tablets
+   and phones without horizontal scrolling or splitting labels. */
+@media(max-width:1050px){
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-interval{
+    flex-wrap:wrap;max-width:100%;justify-content:flex-start;
+  }
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-interval button{
+    min-width:0;flex:0 1 auto;
+  }
+}
+@media(max-width:650px){
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-interval{
+    display:flex;width:100%;gap:4px;
+  }
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-interval>span{
+    flex:0 0 100%;margin:0 0 3px;
+  }
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-interval button{
+    flex:1 1 27%;min-width:0;padding-inline:4px;font-size:10px;
+  }
+}
