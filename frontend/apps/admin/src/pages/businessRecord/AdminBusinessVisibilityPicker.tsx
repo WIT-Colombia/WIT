@@ -112,6 +112,7 @@ export function AdminBusinessVisibilityPicker({
               const active = option.action === current;
               return <button type="button" key={option.action}
                 className={`bd-visibility-picker-choice bd-visibility-picker-choice--${option.tone}${active ? ' is-current' : ''}`}
+                aria-label={option.label}
                 disabled={active}
                 onClick={() => onChoose(option.action)}>
                 <span className="bd-visibility-picker-choice-icon"><Icon name={option.icon} size={23}/></span>
