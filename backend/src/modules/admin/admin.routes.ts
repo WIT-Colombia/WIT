@@ -6,7 +6,7 @@ import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-or
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController, pioneerBrandReviewController } from './admin.controller.js';
 import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
-import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility } from './admin-businesses.service.js';
+import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility, setAdminBusinessVerification, setAdminBusinessPlan } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { recordActivity, recordCatalog, recordPhoto, recordPhotos, recordReviews } from './admin-business-record.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
@@ -67,6 +67,55 @@ adminRouter.post('/businesses/:id/visibility', requireTrustedOrigin, requireAdmi
     res.json(await setAdminBusinessVisibility(String(req.params.id), context.userId, String(req.body?.action ?? ''), String(req.body?.reason ?? '')));
   } catch (error) { next(error); }
 });
+
+adminRouter.post('/businesses/:id/verify', requireTrustedOrigin, requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try {
+    const context = adminFromRequest(req);
+    if (context.role !== 'SUPER_ADMIN') throw new AppError(403, 'ADMIN_SUPER_ADMIN_REQUIRED', 'Solo el administrador principal puede verificar manualmente un negocio.');
+    if (req.body?.confirmation !== 'VERIFICAR') throw new AppError(400, 'ADMIN_VERIFICATION_CONFIRMATION_REQUIRED', 'Confirma la revisión documental escribiendo VERIFICAR.');
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await setAdminBusinessVerification(String(req.params.id), context.userId, String(req.body?.reason ?? '')));
+  } catch (error) { next(error); }
+});
+adminRouter.post('/businesses/:id/plan', requireTrustedOrigin, requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try {
+    const context = adminFromRequest(req);
+    if (context.role !== 'SUPER_ADMIN') throw new AppError(403, 'ADMIN_SUPER_ADMIN_REQUIRED', 'Solo el administrador principal puede asignar planes.');
+    if (req.body?.confirmation !== String(req.body?.plan ?? '')) throw new AppError(400, 'ADMIN_PLAN_CONFIRMATION_REQUIRED', 'Confirma el plan que deseas asignar.');
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await setAdminBusinessPlan(String(req.params.id), context.userId, String(req.body?.plan ?? ''), String(req.body?.reason ?? '')));
+  } catch (error) { next(error); }
+});
+adminRouter.get('/businesses/:id/reports', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try {
+    if (!adminFromRequest(req).permissions.includes('REPORTS_REVIEW'))
+      throw new AppError(403, 'ADMIN_PERMISSION_DENIED', 'Necesitas permiso para consultar reportes.');
+    const identifier = String(req.params.id);
+    const business = await prisma.business.findFirst({
+      where: { OR: [{ id: identifier }, { publicId: identifier }] }, select: { id: true },
+    });
+    if (!business) throw new AppError(404, 'ADMIN_BUSINESS_NOT_FOUND', 'Negocio no encontrado.');
+    const page = Math.max(1, Math.min(100000, Math.trunc(Number(req.query.page) || 1)));
+    const pageSize = 12;
+    const status = String(req.query.status ?? '');
+    const allowedStatuses = ['PENDING', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED'] as const;
+    if (status && !allowedStatuses.includes(status as typeof allowedStatuses[number]))
+      throw new AppError(400, 'ADMIN_REPORT_STATUS_INVALID', 'Estado de reporte inválido.');
+    const where = { businessId: business.id,
+      ...(status ? { status: status as typeof allowedStatuses[number] } : {}) };
+    const [reports, total] = await prisma.$transaction([
+      prisma.businessReport.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: pageSize, skip: (page - 1) * pageSize,
+        select: { id: true, reason: true, description: true, status: true,
+          decisionNote: true, createdAt: true, updatedAt: true,
+          reporter: { select: { displayName: true } } } }),
+      prisma.businessReport.count({ where }),
+    ]);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json({ reports, pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } });
+  } catch (error) { next(error); }
+});
+
 // Prefer an unambiguous endpoint that cannot match /businesses/:id.
 // Keep /businesses/analytics as a compatibility alias for existing clients.
 const businessAnalyticsHandler: RequestHandler = async (req, res, next) => {
