@@ -2015,3 +2015,75 @@ body>.catalog-delete-backdrop>.catalog-delete-dialog .catalog-delete-actions>but
     transition:none;
   }
 }
+
+/* iPadOS only: prevent native select text from overlapping the catalog filter icon. */
+@supports (-webkit-touch-callout: none) {
+  @media (min-width: 701px) and (max-width: 1366px) and (any-pointer: coarse) {
+    .catalog-products-design .catalog-toolbar .filter-box {
+      display: grid;
+      grid-template-columns: 20px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 10px;
+      min-height: 45px;
+      padding: 0 14px;
+      border: 1px solid #d4dff1;
+      border-radius: 14px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .catalog-products-design .catalog-toolbar .catalog-filter-icon {
+      position: static;
+      grid-column: 1;
+      grid-row: 1;
+      z-index: auto;
+      justify-self: center;
+      align-self: center;
+      display: block;
+      width: 19px;
+      height: 19px;
+      margin: 0;
+      transform: none;
+      pointer-events: none;
+    }
+    .catalog-products-design .catalog-toolbar .filter-box select {
+      grid-column: 2;
+      grid-row: 1;
+      display: block;
+      width: 100%;
+      min-width: 0;
+      height: 43px;
+      min-height: 43px;
+      margin: 0;
+      padding: 0 22px 0 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: #172748;
+      -webkit-appearance: none;
+      appearance: none;
+      box-shadow: none;
+      text-overflow: ellipsis;
+    }
+    .catalog-products-design .catalog-toolbar .filter-box::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 16px;
+      width: 7px;
+      height: 7px;
+      border-right: 1.5px solid #66738f;
+      border-bottom: 1.5px solid #66738f;
+      transform: translateY(-70%) rotate(45deg);
+      pointer-events: none;
+    }
+    .catalog-products-design .catalog-toolbar .filter-box:focus-within {
+      border-color: #6c94ff;
+      outline: 3px solid #dce8ff;
+      outline-offset: 1px;
+    }
+    .catalog-products-design .catalog-toolbar .filter-box select:focus-visible {
+      border: 0;
+      outline: none;
+    }
+  }
+}
