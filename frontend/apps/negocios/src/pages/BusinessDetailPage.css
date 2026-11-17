@@ -3675,7 +3675,7 @@ body>.business-delete-overlay .business-delete-dialog-close:focus-visible{
 
 /* iPadOS: do not split a city or department name inside the Mi negocio header. */
 @supports (-webkit-touch-callout: none) {
-  @media (min-width: 701px) and (max-width: 1366px) and (any-pointer: coarse) {
+  @media (min-width: 701px) and (max-width: 1400px) and (min-height: 600px) and (any-pointer: coarse) {
     .business-detail-page .business-detail-place {
       min-width: 0;
       max-width: 100%;
