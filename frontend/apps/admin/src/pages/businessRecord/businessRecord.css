@@ -449,17 +449,33 @@
   line-height:1.45;
 }
 .bd-visibility-picker-close{
-  display:grid;
-  place-items:center;
-  flex:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 37px;
   width:37px;
   height:37px;
+  padding:0;
   align-self:flex-start;
   border:1px solid #e7e1f1;
   border-radius:10px;
   background:#fff;
   color:#685d77;
+  line-height:0;
+  -webkit-appearance:none;
+  appearance:none;
   cursor:pointer;
+}
+
+/* Keep the close glyph optically centered on iPad Safari and other screens. */
+.bd-visibility-picker-close>svg{
+  display:block;
+  flex:none;
+  width:19px;
+  height:19px;
+  margin:0;
+  transform:none;
+  -webkit-transform:none;
 }
 .bd-visibility-picker-close:hover{background:#f5f0ff;color:#6932c5}
 .bd-visibility-picker-body{display:grid;gap:14px;padding:19px 24px 14px}
