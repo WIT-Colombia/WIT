@@ -3,7 +3,11 @@ import type { RecordHistory, RecordState } from '../../services/adminBusinessRec
 import { date, label } from './shared';
 
 export function actionName(action: string) { return ({
-  ADMIN_BUSINESS_HIDE: 'Ocultamiento administrativo', ADMIN_BUSINESS_SUSPEND: 'Suspensión administrativa', ADMIN_BUSINESS_RESTORE: 'Restricción levantada', ADMIN_BUSINESS_DELETED: 'Eliminación administrativa',
+  ADMIN_BUSINESS_HIDE: 'Ocultamiento administrativo anterior', ADMIN_BUSINESS_SET_HIDDEN: 'Negocio ocultado por Admin',
+  ADMIN_BUSINESS_SET_VISIBLE: 'Visibilidad activada por Admin', ADMIN_BUSINESS_SUSPEND: 'Suspensión administrativa',
+  ADMIN_BUSINESS_RESTORE: 'Restricción levantada', ADMIN_BUSINESS_DELETED: 'Eliminación administrativa',
+  BUSINESS_VISIBILITY_SET_VISIBLE: 'Negocio reactivado desde Business',
+  BUSINESS_VISIBILITY_SET_HIDDEN: 'Negocio ocultado desde Business',
   BUSINESS_CREATED: 'Registro del negocio', BUSINESS_UPDATED: 'Información actualizada', BUSINESS_PUBLISHED: 'Publicación del negocio', BUSINESS_VISIBILITY_EXPIRED: 'Vigencia vencida',
   BUSINESS_VERIFICATION_REQUESTED: 'Verificación solicitada', BUSINESS_VERIFICATION_APPROVED: 'Verificación aprobada', BUSINESS_VERIFICATION_REJECTED: 'Verificación rechazada', BUSINESS_VISIBILITY_RENEWED: 'Visibilidad renovada', BUSINESS_VISIBILITY_RESTORED: 'Visibilidad restituida', BUSINESS_OWNERSHIP_TRANSFERRED: 'Cambio de propietario', BUSINESS_ADULT_CLASSIFICATION_CHANGED: 'Clasificación de edad actualizada',
 } as Record<string, string>)[action] ?? 'Actuación registrada'; }
