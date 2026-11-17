@@ -14,7 +14,8 @@ import { Activity } from './Activity';
 import { Catalog } from './Catalog';
 import { Gallery } from './Gallery';
 import { HistoryTimeline } from './History';
-import { Information, Members, Overview, owners } from './Information';
+import { Information, Members, owners } from './Information';
+import { Overview } from './Overview';
 import { Reviews } from './Reviews';
 import { Reports } from './Reports';
 import { BusinessDecisionDialog, type BusinessDecision } from './BusinessDecisionDialog';
@@ -123,7 +124,7 @@ function BusinessRecord({ id }: { id: string }) {
       choose(tabs[index].key); const target = nav.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[index]; target?.focus({ preventScroll: true }); target?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }}>{tabs.map(item => <button role="tab" aria-selected={tab === item.key} aria-controls={`bd-panel-${item.key}`} id={`bd-tab-${item.key}`} tabIndex={tab === item.key ? 0 : -1} key={item.key} onClick={() => choose(item.key)}><Icon name={item.icon} size={17}/>{item.title}</button>)}</div>
     <div className="bd-body"><div className="bd-tab-content">{tabs.map(item => <section className="bd-tab-panel" role="tabpanel" id={`bd-panel-${item.key}`} aria-labelledby={`bd-tab-${item.key}`} hidden={tab !== item.key} key={item.key} tabIndex={0}>
-      {visited.has(item.key) && (item.key === 'summary' ? <Overview business={business} latest={latest} historyStatus={history.loading || history.error ? <Loading {...history}/> : null} onActivity={() => choose('activity')} onHistory={() => choose('history')}/>
+      {visited.has(item.key) && (item.key === 'summary' ? <Overview business={business} latest={latest} historyStatus={history.loading || history.error ? <Loading {...history}/> : null} onActivity={() => choose('activity')} onHistory={() => choose('history')} catalogAllowed={catalogAllowed}/>
         : item.key === 'information' ? <div className="bd-information"><Information business={business}/><Members business={business}/></div>
         : item.key === 'catalog' ? <Catalog id={business.id} allowed={catalogAllowed} canModerate={catalogAllowed && Boolean(session?.permissions?.includes('content:moderate:write'))}/>
         : item.key === 'reviews' ? <Reviews business={business} allowed={reviewsAllowed}/>
