@@ -41,7 +41,7 @@ export type AdminBusinessFilterOptions = {
 };
 export type AdminBusinessAuditEntry = { id: string; action: string; reason: string | null; comment: string | null;
   createdAt: string; actor: { displayName: string } | null };
-export type AdminVisibilityAction = 'HIDE' | 'SUSPEND' | 'RESTORE';
+export type AdminVisibilityAction = 'HIDE' | 'SUSPEND' | 'RESTORE' | 'SET_VISIBLE' | 'SET_HIDDEN';
 export type AdminBusinessPage = { businesses: AdminBusinessRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
 export type AdminBusinessAnalytics = {
   period: '6m' | '12m' | '24m' | '60m' | 'all';
@@ -84,6 +84,26 @@ export function adminBusinessVisibilityLabel(business: Pick<AdminBusinessRecord,
   if (business.administrativeRestriction === 'HIDDEN') return 'Oculto por Admin';
   return ({ VISIBLE: 'Visible', HIDDEN: 'Oculto por propietario', EXPIRED: 'Vencido', REVIEW: 'En revisión' } as Record<string, string>)[business.visibilityStatus]
     ?? 'Estado desconocido';
+}
+export function verifyAdminBusiness(id: string, reason: string, confirmation: string) {
+  return request<{ verificationStatus: string; message: string }>(
+    '/admin/businesses/' + encodeURIComponent(id) + '/verify',
+    { method: 'POST', body: JSON.stringify({ reason, confirmation }) });
+}
+export function changeAdminBusinessPlan(id: string, plan: 'BASIC' | 'PRO', reason: string, confirmation: string) {
+  return request<{ plan: string; message: string }>(
+    '/admin/businesses/' + encodeURIComponent(id) + '/plan',
+    { method: 'POST', body: JSON.stringify({ plan, reason, confirmation }) });
+}
+export type AdminRecordBusinessReport = {
+  id: string; reason: string; description: string; status: string; decisionNote: string | null;
+  createdAt: string; updatedAt: string; reporter: { displayName: string } | null;
+};
+export function listRecordBusinessReports(id: string, page = 1, status = '') {
+  const query = new URLSearchParams({ page: String(page), status });
+  return request<{ reports: AdminRecordBusinessReport[];
+    pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
+    '/admin/businesses/' + encodeURIComponent(id) + '/reports?' + query);
 }
 export async function getAdminBusiness(id: string) { return (await request<{ business: AdminBusinessRecord }>(`/admin/businesses/${encodeURIComponent(id)}`)).business; }
 export function deleteAdminBusiness(id: string, reason: string, confirmation: string) {
