@@ -3734,3 +3734,33 @@ body>.business-delete-overlay .business-delete-dialog-close:focus-visible{
     }
   }
 }
+
+
+/* Owner-facing status mirrors decisions taken in XAMUKO Admin.
+   No administrative override is exposed in Business. */
+.business-detail-page .business-detail-identity-badges .business-admin-state-badge,
+.business-detail-page .business-detail-identity-badges .business-admin-plan-badge{
+  display:inline-flex;align-items:center;gap:6px;max-width:100%;
+  padding:6px 11px;border-radius:99px;border:1px solid #e3def1;
+  background:#f8f7fc;color:#605775;font-size:11px;font-weight:750;
+  line-height:1.45;text-align:left;white-space:normal;overflow-wrap:normal;
+  word-break:normal;hyphens:none;
+}
+.business-detail-page .business-detail-identity-badges .business-admin-state-badge.is-visible{
+  border-color:#c9ead7;background:#effaf3;color:#187645;
+}
+.business-detail-page .business-detail-identity-badges .business-admin-state-badge.is-hidden{
+  border-color:#f1dfae;background:#fff9e9;color:#8f6014;
+}
+.business-detail-page .business-detail-identity-badges .business-admin-state-badge.is-suspended{
+  border-color:#fac3c9;background:#fff1f2;color:#aa283e;
+}
+.business-detail-page .business-detail-identity-badges .business-admin-plan-badge.is-pro{
+  border-color:#d8c6ff;background:#f5efff;color:#6629bf;
+}
+@media(max-width:700px){
+  .business-detail-page .business-detail-identity-badges .business-admin-state-badge,
+  .business-detail-page .business-detail-identity-badges .business-admin-plan-badge{
+    padding:6px 9px;font-size:10px;
+  }
+}
