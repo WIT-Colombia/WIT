@@ -43,7 +43,21 @@ export async function renewVisibility(userId: string, identifier: string) {
   const startsAt = new Date();
   const period = await prisma.$transaction(async tx => {
     const next = await tx.businessVisibilityPeriod.create({ data: { businessId: business.id, kind: 'MANUAL_EXTENSION', startsAt, expiresAt: expiresAtFrom(startsAt), requestedById: userId, reason: 'Renovación manual' } });
-    await tx.business.update({ where: { id: business.id, administrativeRestriction: null }, data: { visibilityStatus: 'VISIBLE' } });
+    // Log this owner action in the same transaction as the visibility change,
+    // so both Admin histories show exactly one durable event.
+    const changed = await tx.business.updateMany({
+      where: { id: business.id, administrativeRestriction: null },
+      data: { visibilityStatus: 'VISIBLE' },
+    });
+    if (!changed.count)
+      throw new AppError(409, 'BUSINESS_ADMIN_RESTRICTION', 'El negocio fue restringido por Administración. Actualiza e inténtalo de nuevo.');
+    await tx.auditLog.create({ data: {
+      actorUserId: userId, entityType: 'BUSINESS', entityId: business.id,
+      action: 'BUSINESS_VISIBILITY_RENEWED',
+      previousState: { visibilityStatus: business.visibilityStatus, administrativeRestriction: business.administrativeRestriction },
+      newState: { visibilityStatus: 'VISIBLE', administrativeRestriction: null },
+      reason: 'Renovación voluntaria de visibilidad por 40 días desde Business',
+    } });
     // A fresh forty-day period supersedes unanswered reminders from the old period.
     // Keep the history but stop showing expired warnings as unread.
     await tx.businessNotification.updateMany({
@@ -68,7 +82,22 @@ export async function setVisibility(userId: string, identifier: string, visible:
   const period = await currentPeriod(business.id);
   const activePeriod = period && period.startsAt <= new Date() && period.expiresAt > new Date();
   const visibilityStatus = visible ? (activePeriod ? 'VISIBLE' : 'EXPIRED') : 'HIDDEN';
-  await prisma.business.update({ where: { id: business.id, administrativeRestriction: null }, data: { visibilityStatus } });
+  await prisma.$transaction(async tx => {
+    const updated = await tx.business.updateMany({
+      where: { id: business.id, administrativeRestriction: null },
+      data: { visibilityStatus },
+    });
+    if (!updated.count) throw new AppError(409, 'BUSINESS_ADMIN_RESTRICTION', 'El negocio fue restringido por Administración. Actualiza e inténtalo de nuevo.');
+    if (business.visibilityStatus !== visibilityStatus) {
+      await tx.auditLog.create({ data: {
+        actorUserId: userId, entityType: 'BUSINESS', entityId: business.id,
+        action: visible ? 'BUSINESS_VISIBILITY_SET_VISIBLE' : 'BUSINESS_VISIBILITY_SET_HIDDEN',
+        previousState: { visibilityStatus: business.visibilityStatus, administrativeRestriction: null },
+        newState: { visibilityStatus, administrativeRestriction: null },
+        reason: visible ? 'El negocio fue reactivado voluntariamente desde Business' : 'El negocio fue ocultado voluntariamente desde Business',
+      } });
+    }
+  });
   return { businessId: business.id, publicId: business.publicId, createdAt: business.createdAt,
     visibilityStatus, administrativeRestriction: null,
     publicationStatus: business.publicationStatus, isWithinPeriod: Boolean(activePeriod), period };
