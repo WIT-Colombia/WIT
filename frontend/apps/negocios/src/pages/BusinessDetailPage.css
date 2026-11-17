@@ -3716,5 +3716,21 @@ body>.business-delete-overlay .business-delete-dialog-close:focus-visible{
       word-break: normal;
       hyphens: none;
     }
+    /* Safari may auto-detect location text as an Apple Maps link after load.
+       Keep injected links inline so they cannot create spacing between letters. */
+    .business-detail-page .business-detail-place > .business-detail-location a[x-apple-data-detectors],
+    .business-detail-page .business-detail-place > .business-detail-location a[href^="x-apple-data-detectors"] {
+      display: inline !important;
+      color: inherit !important;
+      font: inherit !important;
+      text-decoration: none !important;
+      border: 0 !important;
+      letter-spacing: inherit !important;
+      white-space: inherit !important;
+    }
+    .business-detail-page .business-detail-place > .business-detail-location .business-detail-location-text {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
   }
 }
