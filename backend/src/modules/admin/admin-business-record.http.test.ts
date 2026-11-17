@@ -52,6 +52,46 @@ test('Ficha administrativa: consultas, fotografías privadas y decisiones audita
       assert.equal((await request(`/businesses/${id}/catalog?page=-1`)).status, 400);
       const other = await (await request(`/businesses/${fixture.other.id}/catalog`)).json() as any; assert.equal(other.pagination.total, 0);
     });
+    await t.test('un único filtro de estado incluye Todos, Activos, Desactivados y Eliminados', async () => {
+      for (const state of ['ALL', 'ACTIVE', 'INACTIVE', 'DELETED']) {
+        const response = await request('/businesses/' + id + '/catalog?kind=PRODUCT&state=' + state);
+        assert.equal(response.status, 200);
+        const data = await response.json() as any;
+        assert.ok(data.offers.every((row: any) => state === 'DELETED' ? row.deletedAt
+          : state === 'ACTIVE' ? !row.deletedAt && row.active
+            : state === 'INACTIVE' ? !row.deletedAt && !row.active : true));
+      }
+      assert.equal((await request('/businesses/' + id + '/catalog?state=OTHER')).status, 400);
+    });
+    await t.test('acciones del catálogo exigen CSRF, motivo y guardan auditoría e historial', async () => {
+      const first = fixture.offers[0], second = fixture.offers[1], third = fixture.offers[2];
+      const endpoint = (offerId: string) => '/businesses/' + id + '/catalog/' + offerId + '/state';
+      const payload = (action: string) => JSON.stringify({ action, reason: 'Justificación administrativa suficiente para prueba.' });
+      const missingCsrf = await fetch(base + endpoint(first.id), {
+        method: 'POST', headers: { Cookie: cookie, Origin: origin, 'Content-Type': 'application/json' },
+        body: payload('ACTIVATE') });
+      assert.equal(missingCsrf.status, 403);
+      assert.equal((await request(endpoint(first.id), { method: 'POST', body: payload('UNKNOWN') })).status, 400);
+      assert.equal((await request(endpoint(first.id), { method: 'POST', body: JSON.stringify({ action: 'ACTIVATE', reason: 'muy corto' }) })).status, 400);
+      assert.equal((await request(endpoint(fixture.other.id), { method: 'POST', body: payload('ACTIVATE') })).status, 404);
+      assert.equal((await request(endpoint(first.id), { method: 'POST', body: payload('ACTIVATE') })).status, 200);
+      assert.equal((await prisma.businessOffer.findUniqueOrThrow({ where: { id: first.id } })).active, true);
+      assert.equal((await request(endpoint(first.id), { method: 'POST', body: payload('ACTIVATE') })).status, 409);
+      assert.equal((await request(endpoint(second.id), { method: 'POST', body: payload('DEACTIVATE') })).status, 200);
+      assert.equal((await prisma.businessOffer.findUniqueOrThrow({ where: { id: second.id } })).active, false);
+      assert.equal((await request(endpoint(third.id), { method: 'POST', body: payload('DELETE') })).status, 200);
+      const removed = await prisma.businessOffer.findUniqueOrThrow({ where: { id: third.id } });
+      assert.ok(removed.deletedAt); assert.equal(removed.active, false);
+      const removedPage = await (await request('/businesses/' + id + '/catalog?state=DELETED')).json() as any;
+      assert.ok(removedPage.offers.some((entry: any) => entry.id === third.id));
+      assert.equal((await request(endpoint(third.id), { method: 'POST', body: payload('ACTIVATE') })).status, 409);
+      const history = await (await request('/businesses/' + id + '/history')).json() as any;
+      assert.ok(history.history.some((entry: any) => entry.action === 'ADMIN_OFFER_ACTIVATED'));
+      assert.ok(history.history.some((entry: any) => entry.action === 'ADMIN_OFFER_DEACTIVATED'));
+      assert.ok(history.history.some((entry: any) => entry.action === 'ADMIN_OFFER_DELETED'));
+      assert.equal((await prisma.auditLog.count({ where: { entityType: 'OFFER', entityId: first.id, action: 'ADMIN_OFFER_ACTIVATED' } })), 1);
+      assert.ok((await prisma.businessNotification.count({ where: { businessId: id } })) >= 3);
+    });
     await t.test('opiniones, puntuación, fechas, reportes y privacidad del autor', async () => {
       const rows = await (await request(`/businesses/${id}/reviews`)).json() as any; assert.equal(rows.pagination.total, 14); assert.equal(rows.reviews.length, 6);
       const filtered = await (await request(`/businesses/${id}/reviews?rating=1`)).json() as any; assert.ok(filtered.reviews.every((row: any) => row.rating === 1)); assert.ok(filtered.reviews.some((row: any) => row._count.reports === 1));

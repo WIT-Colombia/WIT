@@ -9,7 +9,7 @@ import { decisionVerificationController, listVerificationController, verificatio
 import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility, setAdminBusinessVerification, setAdminBusinessVerificationStatus, setAdminBusinessPlan } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { listAdminVisibilityAudit } from './admin-visibility-audit.service.js';
-import { recordActivity, recordCatalog, recordPhoto, recordPhotos, recordReviews } from './admin-business-record.service.js';
+import { recordActivity, recordCatalog, recordPhoto, recordPhotos, recordReviews, setAdminRecordOfferState } from './admin-business-record.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
 import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto } from './admin-content.service.js';
 import { controlAdminContent, controlAdminContentBulk, editAdminContent, getAdminContentHistory, removeAdminContentPhoto, type ContentControlAction } from './admin-content-control.service.js';
@@ -58,6 +58,25 @@ const recordRead: RequestHandler = (_req, res, next) => { res.setHeader('Cache-C
 adminRouter.get('/businesses/:id/catalog', requireAdmin('BUSINESSES_READ'), recordRead, async (req, res, next) => {
   try { if (!adminFromRequest(req).permissions.includes('CATALOG_READ')) throw new AppError(403, 'ADMIN_PERMISSION_DENIED', 'Necesitas permiso de catálogo.'); res.json(await recordCatalog(String(req.params.id), req.query)); } catch (error) { next(error); }
 });
+// State transitions are protected independently from read-only catalog access.
+adminRouter.post('/businesses/:id/catalog/:offerId/state',
+  requireTrustedOrigin, requireAdmin('CONTENT_MODERATE'), async (req, res, next) => {
+    try {
+      const context = adminFromRequest(req);
+      const input = z.object({
+        action: z.enum(['ACTIVATE', 'DEACTIVATE', 'DELETE']),
+        reason: z.string().trim().min(12).max(500),
+      }).strict().safeParse(req.body);
+      if (!input.success) throw new AppError(400, 'ADMIN_OFFER_INVALID_INPUT', 'Selecciona una acción e indica un motivo de 12 a 500 caracteres.');
+      if (input.data.action === 'DELETE' && context.role !== 'SUPER_ADMIN')
+        throw new AppError(403, 'ADMIN_SUPER_ADMIN_REQUIRED', 'Solo el administrador principal puede eliminar publicaciones.');
+      if (!context.permissions.includes('CATALOG_READ'))
+        throw new AppError(403, 'ADMIN_PERMISSION_DENIED', 'Necesitas acceso al catálogo.');
+      res.setHeader('Cache-Control', 'no-store');
+      res.json(await setAdminRecordOfferState(String(req.params.id), String(req.params.offerId),
+        context.userId, input.data.action, input.data.reason));
+    } catch (error) { next(error); }
+  });
 adminRouter.get('/businesses/:id/reviews', requireAdmin('BUSINESSES_READ'), recordRead, async (req, res, next) => {
   try { if (!adminFromRequest(req).permissions.includes('REPORTS_REVIEW')) throw new AppError(403, 'ADMIN_PERMISSION_DENIED', 'Necesitas permiso para consultar opiniones.'); res.json(await recordReviews(String(req.params.id), req.query)); } catch (error) { next(error); }
 });

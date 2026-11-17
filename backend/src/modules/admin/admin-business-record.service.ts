@@ -3,6 +3,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { completeCountTrend, statisticsWindow, type StatisticsPeriod } from '../analytics/statistics.service.js';
 import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
+import { notifyBusinessOwners } from '../notifications/platform-notifications.service.js';
 
 const category = { id: true, code: true, translations: { select: { locale: true, name: true } } } as const;
 type Query = Record<string, unknown>;
@@ -29,12 +30,13 @@ const pagination = (page: number, total: number, pageSize: number) => ({ page, p
 
 export async function recordCatalog(identifier: string, query: Query) {
   const businessId = await recordBusiness(identifier), page = pageOf(query.page), pageSize = 6;
-  const kind = text(query.kind) || 'PRODUCT', status = text(query.status), activation = text(query.activation), q = text(query.q);
-  if (!['PRODUCT', 'SERVICE'].includes(kind) || !['', 'PUBLISHED', 'REVIEW', 'UNPUBLISHED', 'DELETED'].includes(status) || !['', 'ACTIVE', 'INACTIVE'].includes(activation)) throw new AppError(400, 'INVALID_CATALOG_FILTER', 'Revisa los filtros del catálogo.');
+  const kind = text(query.kind) || 'PRODUCT', status = text(query.status), activation = text(query.activation), state = text(query.state) || 'ALL', q = text(query.q);
+  if (!['PRODUCT', 'SERVICE'].includes(kind) || !['', 'PUBLISHED', 'REVIEW', 'UNPUBLISHED', 'DELETED'].includes(status) || !['', 'ACTIVE', 'INACTIVE'].includes(activation) || !['ALL', 'ACTIVE', 'INACTIVE', 'DELETED'].includes(state)) throw new AppError(400, 'INVALID_CATALOG_FILTER', 'Revisa los filtros del catálogo.');
   const where: Prisma.BusinessOfferWhereInput = { businessId, kind: kind as 'PRODUCT' | 'SERVICE',
     ...(q ? { OR: [{ name: { contains: q } }, { internalCode: { contains: q } }] } : {}),
     ...(status === 'DELETED' ? { deletedAt: { not: null } } : status ? { publicationStatus: status as 'PUBLISHED' | 'REVIEW' | 'UNPUBLISHED', deletedAt: null } : {}),
     ...(activation ? { active: activation === 'ACTIVE' } : {}),
+    ...(state === 'DELETED' ? { deletedAt: { not: null } } : state === 'ACTIVE' ? { deletedAt: null, active: true } : state === 'INACTIVE' ? { deletedAt: null, active: false } : {}),
   };
   const [total, offers] = await prisma.$transaction([
     prisma.businessOffer.count({ where }),
@@ -46,6 +48,70 @@ export async function recordCatalog(identifier: string, query: Query) {
     }),
   ]);
   return { offers: offers.map(({ business, ...offer }) => ({ ...offer, category: offer.category ?? business.category })), pagination: pagination(page, total, pageSize) };
+}
+
+export type AdminOfferAction = 'ACTIVATE' | 'DEACTIVATE' | 'DELETE';
+
+/** Uses Business active/soft-delete semantics and does not override moderation restrictions. */
+export async function setAdminRecordOfferState(identifier: string, offerId: string, actorUserId: string,
+  action: AdminOfferAction, note: string) {
+  if (!['ACTIVATE', 'DEACTIVATE', 'DELETE'].includes(action))
+    throw new AppError(400, 'ADMIN_OFFER_ACTION_INVALID', 'Selecciona una acción válida.');
+  const reason = note.trim();
+  if (reason.length < 12 || reason.length > 500)
+    throw new AppError(400, 'ADMIN_OFFER_REASON_REQUIRED', 'Explica el motivo con entre 12 y 500 caracteres.');
+  return prisma.$transaction(async tx => {
+    const business = await tx.business.findFirst({
+      where: { OR: [{ id: identifier }, { publicId: identifier }] },
+      select: { id: true, deletionStatus: true },
+    });
+    if (!business) throw new AppError(404, 'ADMIN_BUSINESS_NOT_FOUND', 'No encontramos este negocio.');
+    if (business.deletionStatus === 'DELETED')
+      throw new AppError(409, 'ADMIN_BUSINESS_DELETED', 'No se puede modificar el catálogo de un negocio eliminado.');
+    const current = await tx.businessOffer.findFirst({ where: { id: offerId, businessId: business.id } });
+    if (!current) throw new AppError(404, 'ADMIN_OFFER_NOT_FOUND', 'El producto o servicio no pertenece a este negocio.');
+    if (current.deletedAt)
+      throw new AppError(409, 'ADMIN_OFFER_DELETED', 'La publicación fue eliminada. Consulta la moderación para su recuperación.');
+    if (current.administrativeStatus !== 'NONE')
+      throw new AppError(409, 'ADMIN_OFFER_RESTRICTED', 'La publicación tiene una medida administrativa. Resuélvela desde moderación.');
+    if (action === 'ACTIVATE' && current.active)
+      throw new AppError(409, 'ADMIN_OFFER_UNCHANGED', 'La publicación ya está activa.');
+    if (action === 'DEACTIVATE' && !current.active)
+      throw new AppError(409, 'ADMIN_OFFER_UNCHANGED', 'La publicación ya está desactivada.');
+    if (action === 'ACTIVATE' && current.publicationStatus === 'REVIEW')
+      throw new AppError(409, 'ADMIN_OFFER_UNDER_REVIEW', 'La publicación está en revisión y no puede activarse todavía.');
+    const now = new Date();
+    const changed = await tx.businessOffer.updateMany({
+      where: { id: current.id, businessId: business.id, deletedAt: null,
+        administrativeStatus: 'NONE', active: current.active, publicationStatus: current.publicationStatus },
+      data: action === 'DELETE'
+        ? { deletedAt: now, active: false, publicationStatus: 'UNPUBLISHED', administrativeStatus: 'DELETED', adminRestrictedAt: now }
+        : action === 'ACTIVATE'
+          ? { active: true, ...(current.publicationStatus === 'UNPUBLISHED' ? { publicationStatus: 'PUBLISHED' as const } : {}) }
+          : { active: false },
+    });
+    if (!changed.count)
+      throw new AppError(409, 'ADMIN_OFFER_CONCURRENT_CHANGE', 'El estado cambió mientras se procesaba. Actualiza la ficha.');
+    const updated = await tx.businessOffer.findUniqueOrThrow({ where: { id: offerId } });
+    const previous = { active: current.active, publicationStatus: current.publicationStatus,
+      deletedAt: current.deletedAt?.toISOString() ?? null, administrativeStatus: current.administrativeStatus };
+    const next = { active: updated.active, publicationStatus: updated.publicationStatus,
+      deletedAt: updated.deletedAt?.toISOString() ?? null, administrativeStatus: updated.administrativeStatus };
+    const actionName = action === 'ACTIVATE' ? 'ADMIN_OFFER_ACTIVATED'
+      : action === 'DEACTIVATE' ? 'ADMIN_OFFER_DEACTIVATED' : 'ADMIN_OFFER_DELETED';
+    const offerState = (value: typeof current) => value.deletedAt ? 'DELETED' : value.active ? 'ACTIVE' : 'INACTIVE';
+    await tx.auditLog.create({ data: { actorUserId, entityType: 'OFFER', entityId: offerId,
+      action: actionName, previousState: previous, newState: next, reason } });
+    await tx.auditLog.create({ data: { actorUserId, entityType: 'BUSINESS', entityId: business.id,
+      action: actionName, reason, comment: current.name + ' · ' + current.internalCode,
+      previousState: { offerName: current.name, offerCode: current.internalCode, offerState: offerState(current) },
+      newState: { offerName: current.name, offerCode: current.internalCode, offerState: offerState(updated) } } });
+    const actionLabel = action === 'ACTIVATE' ? 'activado' : action === 'DEACTIVATE' ? 'desactivado' : 'eliminado';
+    await notifyBusinessOwners(tx, business.id, 'Actualización administrativa del catálogo',
+      'XAMUKO ha ' + actionLabel + ' el ' + (current.kind === 'PRODUCT' ? 'producto' : 'servicio') +
+      ' «' + current.name + '» (' + current.internalCode + '). Puedes consultar el cambio en tu catálogo.');
+    return { id: offerId, state: offerState(updated), message: 'Publicación ' + actionLabel + '. Cambio registrado en auditoría.' };
+  });
 }
 
 export async function recordReviews(identifier: string, query: Query) {
