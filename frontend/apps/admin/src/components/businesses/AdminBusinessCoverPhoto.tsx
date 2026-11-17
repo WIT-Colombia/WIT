@@ -48,9 +48,10 @@ export function AdminBusinessCoverPhoto({ photoId, name }: { photoId: string | n
     if (!photoId || !visible) { setSource(null); return; }
     let active = true;
     let url: string | null = null;
-    void fetchAdminBusinessCoverPhoto(photoId).then(image => {
+    void fetchAdminBusinessCoverPhoto(photoId).then(async image => {
+      const thumbnail = await previewThumbnail(image);
       if (!active) return;
-      url = URL.createObjectURL(await previewThumbnail(image));
+      url = URL.createObjectURL(thumbnail);
       setSource(url);
     }).catch(() => { if (active) setSource(null); });
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
