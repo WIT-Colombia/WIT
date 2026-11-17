@@ -36,11 +36,10 @@ function actionDescription(entry: RecordHistory): string {
   return entry.reason || entry.comment || 'Actuación registrada';
 }
 
-export function Overview({ business, latest, historyStatus, onActivity, onHistory, catalogAllowed }: {
+export function Overview({ business, latest, historyStatus, onHistory, catalogAllowed }: {
   business: RecordBusiness;
   latest: RecordHistory[];
   historyStatus: ReactNode;
-  onActivity: () => void;
   onHistory: () => void;
   catalogAllowed: boolean;
 }) {
@@ -101,9 +100,6 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
         {activity.loading || activity.error ? <Loading {...activity}/> : activity.data?.series.length
           ? <ActivityChart data={activity.data} metric="views" variant="overview"/>
           : <Empty icon="chart" title="Sin datos para graficar" message="No hay intervalos disponibles en el período seleccionado."/>}
-        <div className="bd-summary-chart-footer">
-          <button type="button" className="bd-summary-outline-action bd-summary-text-link" onClick={onActivity}>Explorar actividad <Icon name="arrow" size={15}/></button>
-        </div>
       </div>
     </section>
 

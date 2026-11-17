@@ -31,7 +31,7 @@ describe('Ficha administrativa del negocio', () => {
   afterEach(cleanup);
   it('no atribuye una actuación a un administrador ficticio cuando falta su identidad', () => { render(<HistoryTimeline entries={[{ id: 'audit-1', action: 'BUSINESS_UPDATED', reason: 'Motivo registrado', comment: null, actor: null, createdAt: business.updatedAt, previousState: null, newState: null }]}/>); expect(screen.getByText('Responsable no disponible')).toBeInTheDocument(); expect(screen.queryByText('Sistema', { exact: true })).not.toBeInTheDocument(); });
   it('impide consultar la ficha sin permiso de negocios', () => { permissions = []; setup(); expect(screen.getByRole('heading', { name: 'Acceso restringido' })).toBeInTheDocument(); expect(api.getRecordBusiness).not.toHaveBeenCalled(); });
-  it('presenta identidad e indicadores procedentes de la respuesta', async () => { setup(); await ready(); expect(screen.getByRole('heading', { name: business.name })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Referidos'); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Business PRO'); expect(screen.getAllByText('Propietaria registrada').length).toBeGreaterThan(0); expect(screen.getAllByRole('tab')).toHaveLength(8); });
+  it('presenta identidad e indicadores procedentes de la respuesta', async () => { setup(); await ready(); expect(screen.getByRole('heading', { name: business.name })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Referidos'); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Business PRO'); expect(screen.getAllByText('Propietaria registrada').length).toBeGreaterThan(0); expect(screen.getAllByRole('tab')).toHaveLength(5); });
   it('muestra el Resumen premium con datos reales y sin el aviso Sobre este resumen', async () => {
     setup(); await ready();
     expect(screen.getByRole('heading', { name: 'Rendimiento en Xamuko' })).toBeInTheDocument();
@@ -40,10 +40,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.queryByText('Sobre este resumen')).not.toBeInTheDocument();
     expect(screen.queryByText(/Los días sin registros aparecen/)).not.toBeInTheDocument();
     expect(screen.queryByText('Origen e interpretación de los indicadores')).not.toBeInTheDocument();
-    const exploreActivity = screen.getByRole('button', { name: /Explorar actividad/ });
-    expect(exploreActivity).toHaveClass('bd-summary-text-link');
-    expect(exploreActivity.closest('.bd-summary-plot')).not.toBeNull();
-    expect(exploreActivity).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Explorar actividad/ })).not.toBeInTheDocument();
     expect(screen.getByText('Todo el historial', { selector: '.bd-summary-period-caption' })).toBeInTheDocument();
     await waitFor(() => expect(api.getRecordActivity).toHaveBeenCalledWith(business.id, 'all'));
     expect(screen.getByRole('combobox', { name: 'Período del resumen' })).toHaveValue('all');
@@ -74,8 +71,7 @@ describe('Ficha administrativa del negocio', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Período del resumen' }), { target: { value: 'week' } });
     await waitFor(() => expect(api.getRecordActivity).toHaveBeenCalledWith(business.id, 'week'));
     expect(screen.queryByText(/12 %|18 %/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Explorar actividad/ }));
-    expect(screen.getByRole('tab', { name: 'Actividad del negocio' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Resumen' })).toHaveAttribute('aria-selected', 'true');
   });
   it('oculta los paneles administrativos redundantes y deja el contenido de la pestaña a ancho completo', async () => {
     setup(); await ready();
@@ -124,16 +120,13 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(panel).getByText('Vinculado:', { exact: false })).toBeInTheDocument();
     expect(within(panel).getByText('Activo')).toBeInTheDocument();
   });
-  it('usa el mismo estilo para Explorar actividad y Ver historial completo', async () => {
+  it('conserva el acceso al historial sin enlaces a pestañas eliminadas', async () => {
     setup(); await ready();
-    const explore = screen.getByRole('button', { name: /Explorar actividad/ });
     const history = screen.getByRole('button', { name: /Ver historial completo/ });
-    expect(explore).toHaveClass('bd-summary-outline-action');
     expect(history).toHaveClass('bd-summary-outline-action');
-    expect(explore.closest('.bd-summary')).toBe(history.closest('.bd-summary'));
-    expect(screen.getByRole('heading', { name: 'Últimas actuaciones administrativas' }).closest('header')?.querySelector('button')).toBeNull();
     expect(history.closest('.bd-summary-history-footer')).not.toBeNull();
-    expect(explore.closest('.bd-summary-chart-footer')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: /Explorar actividad/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ver galería/ })).not.toBeInTheDocument();
     fireEvent.click(history);
     expect(screen.getByRole('tab', { name: 'Historial administrativo' })).toHaveAttribute('aria-selected', 'true');
   });
@@ -230,7 +223,20 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByRole('button', { name: 'Eliminar ' + offer.name })).toBeDisabled();
     expect(api.setRecordOfferState).not.toHaveBeenCalled();
   });
-  it('respeta los permisos separados de catálogo y opiniones', async () => { permissions = ['business:write']; role = 'ADMIN'; setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(screen.getByRole('heading', { name: 'Catálogo de acceso restringido' })).toBeInTheDocument(); fireEvent.click(screen.getByRole('tab', { name: 'Opiniones' })); expect(screen.getByRole('heading', { name: 'Opiniones de acceso restringido' })).toBeInTheDocument(); expect(api.getRecordCatalog).not.toHaveBeenCalled(); expect(api.getRecordReviews).not.toHaveBeenCalled(); expect(screen.queryByRole('button', { name: 'Ocultar negocio' })).not.toBeInTheDocument(); });
+  it('mantiene solo las cinco pestañas y conserva los permisos del catálogo', async () => {
+    permissions = ['business:write']; role = 'ADMIN'; setup(); await ready();
+    const names = screen.getAllByRole('tab').map(tab => tab.textContent?.trim());
+    expect(names).toEqual(['Resumen', 'Información general', 'Productos y servicios', 'Historial administrativo', 'Reportes']);
+    expect(screen.queryByRole('tab', { name: 'Opiniones' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Fotografías' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Actividad del negocio' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' }));
+    expect(screen.getByRole('heading', { name: 'Catálogo de acceso restringido' })).toBeInTheDocument();
+    expect(api.getRecordCatalog).not.toHaveBeenCalled();
+    expect(api.getRecordReviews).not.toHaveBeenCalled();
+    expect(api.getRecordPhotos).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Ocultar negocio' })).not.toBeInTheDocument();
+  });
   it('cancelar una medida desde Visibilidad no escribe y confirmar actualiza el historial', async () => {
     setup(); await ready();
     const openHide = () => {

@@ -11,13 +11,10 @@ import { BusinessRecordPhoto, BusinessRecordPhotos } from '../../components/busi
 import { adminBusinessVisibilityLabel, type AdminVisibilityAction } from '../../services/adminApiClient';
 import { getSession } from '../../services/adminService';
 import { getRecordBusiness, getRecordHistory, type RecordBusiness, type RecordHistory } from '../../services/adminBusinessRecord';
-import { Activity } from './Activity';
 import { Catalog } from './Catalog';
-import { Gallery } from './Gallery';
 import { HistoryTimeline } from './History';
 import { Information, Members, owners } from './Information';
 import { Overview } from './Overview';
-import { Reviews } from './Reviews';
 import { Reports } from './Reports';
 import { BusinessDecisionDialog, type BusinessDecision } from './BusinessDecisionDialog';
 import { Badge, Card, Empty, Loading, Pager, categoryName, date, label, number, useResource } from './shared';
@@ -25,8 +22,7 @@ import './businessRecord.css';
 
 const tabs = [
   { key: 'summary', title: 'Resumen', icon: 'home' }, { key: 'information', title: 'Información general', icon: 'file' },
-  { key: 'catalog', title: 'Productos y servicios', icon: 'box' }, { key: 'reviews', title: 'Opiniones', icon: 'star' },
-  { key: 'photos', title: 'Fotografías', icon: 'image' }, { key: 'activity', title: 'Actividad del negocio', icon: 'chart' },
+  { key: 'catalog', title: 'Productos y servicios', icon: 'box' },
   { key: 'history', title: 'Historial administrativo', icon: 'clock' },
   { key: 'reports', title: 'Reportes', icon: 'flag' },
 ] as const;
@@ -35,7 +31,7 @@ const visibility = (business: RecordBusiness) => business.record?.effectiveVisib
 export function BusinessRecordPage() { const { id = '' } = useParams(); return <BusinessRecord key={id} id={id}/>; }
 function BusinessRecord({ id }: { id: string }) {
   const session = getSession(), allowed = Boolean(session?.permissions?.includes('business:write'));
-  const catalogAllowed = Boolean(session?.permissions?.includes('catalog:read')), reviewsAllowed = Boolean(session?.permissions?.includes('content:moderate'));
+  const catalogAllowed = Boolean(session?.permissions?.includes('catalog:read'));
   const [revision, setRevision] = useState(0), [historyPage, setHistoryPage] = useState(1), [notice, setNotice] = useState(''), [operationPending, setOperationPending] = useState(false);
   const source = useResource(() => getRecordBusiness(id), [id, revision], allowed);
   const history = useResource(() => getRecordHistory(id, historyPage), [id, revision, historyPage], allowed && Boolean(source.data));
@@ -67,7 +63,6 @@ function BusinessRecord({ id }: { id: string }) {
   const canChangeVerification = canChangeVisibility;
   const canChangeSubscription = canChangeVisibility;
   const actionDisabled = source.loading || Boolean(source.error) || operationPending;
-  const photoCount = record ? record.businessPhotos + (catalogAllowed ? record.catalogPhotos : 0) : 0;
   const referralCount = record?.referrals;
   const publicBusinessUrl = 'https://user.xamuko.com/business/' + encodeURIComponent(business.publicId);
   return <BusinessRecordPhotos businessId={business.id}><div className="bd-record">
@@ -81,7 +76,7 @@ function BusinessRecord({ id }: { id: string }) {
     {!record && <div className="bd-error" role="status">La información administrativa ampliada todavía no está disponible. Puedes gestionar la visibilidad desde su tarjeta si tienes autorización; algunas otras funciones requieren la actualización del backend.</div>}
     <section className="bd-identity" aria-label="Identificación del establecimiento"><div className="bd-cover">
       <div className="bd-identity-content"><BusinessRecordPhoto id={business.profilePhotoId} alt={`Perfil de ${business.name}`} size={320} eager position={record?.profilePosition} className="bd-business-logo" fallbackLetter={business.name}/><div className="bd-identity-copy"><h2>{business.name}</h2><span className="bd-category"><Icon name="store" size={14}/>{categoryName(business.category)}</span><p className="bd-location-text"><Icon name="pin" size={16}/><span>{business.location ? [business.location.cityName, business.location.regionName].filter(Boolean).join(', ') : 'Ubicación no registrada'}</span></p></div></div>
-      {photoCount > 0 && <button className="bd-gallery-shortcut" onClick={() => choose('photos')}><Icon name="image" size={17}/>Ver galería ({number(photoCount)})</button>}</div>
+      </div>
       <aside className="bd-owner-card"><div><span><Icon name="users"/></span><section><small>Propietario actual</small><strong>{record ? owners(business) : 'Pendiente de consulta'}</strong></section></div><div><span><Icon name="calendar"/></span><section><small>Fecha de registro</small><time dateTime={business.createdAt}>{date(business.createdAt)}</time></section></div><div><span><Icon name="calendar"/></span><section><small>Última actualización</small><time dateTime={business.updatedAt}>{date(business.updatedAt)}</time></section></div></aside>
     </section>
     <section className="bd-indicators" aria-label="Indicadores principales">
@@ -133,13 +128,10 @@ function BusinessRecord({ id }: { id: string }) {
       choose(tabs[index].key); const target = nav.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[index]; target?.focus({ preventScroll: true }); target?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }}>{tabs.map(item => <button role="tab" aria-selected={tab === item.key} aria-controls={`bd-panel-${item.key}`} id={`bd-tab-${item.key}`} tabIndex={tab === item.key ? 0 : -1} key={item.key} onClick={() => choose(item.key)}><Icon name={item.icon} size={17}/>{item.title}</button>)}</div>
     <div className="bd-body"><div className="bd-tab-content">{tabs.map(item => <section className="bd-tab-panel" role="tabpanel" id={`bd-panel-${item.key}`} aria-labelledby={`bd-tab-${item.key}`} hidden={tab !== item.key} key={item.key} tabIndex={0}>
-      {visited.has(item.key) && (item.key === 'summary' ? <Overview business={business} latest={latest} historyStatus={history.loading || history.error ? <Loading {...history}/> : null} onActivity={() => choose('activity')} onHistory={() => choose('history')} catalogAllowed={catalogAllowed}/>
+      {visited.has(item.key) && (item.key === 'summary' ? <Overview business={business} latest={latest} historyStatus={history.loading || history.error ? <Loading {...history}/> : null} onHistory={() => choose('history')} catalogAllowed={catalogAllowed}/>
         : item.key === 'information' ? <div className="bd-information"><Information business={business}/><Members business={business}/></div>
         : item.key === 'catalog' ? <Catalog id={business.id} allowed={catalogAllowed} canModerate={catalogAllowed && Boolean(session?.permissions?.includes('content:moderate:write'))}
             canDelete={session?.role === 'SUPER_ADMIN'} onChanged={changed}/>
-        : item.key === 'reviews' ? <Reviews business={business} allowed={reviewsAllowed}/>
-        : item.key === 'photos' ? <Gallery id={business.id} catalogAllowed={catalogAllowed}/>
-        : item.key === 'activity' ? <Activity id={business.id}/>
         : item.key === 'reports' ? <Reports businessId={business.id} businessName={business.name}/>
         : <Card title="Historial administrativo" icon="clock"><p className="bd-card-caption">Actuaciones conservadas en la auditoría. Fechas en hora de Bogotá.</p><Loading {...history}/>{!history.loading && !history.error && history.data && <>{history.data.history.length ? <HistoryTimeline entries={history.data.history}/> : <Empty icon="clock" title="Sin actuaciones registradas" message="No se encontraron registros de auditoría para este establecimiento."/>}{history.data.pagination && <Pager pagination={history.data.pagination} onPage={setHistoryPage}/>}</>}</Card>)}
     </section>)}</div></div>
