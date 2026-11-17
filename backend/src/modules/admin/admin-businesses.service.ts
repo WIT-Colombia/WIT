@@ -1,11 +1,11 @@
 import { prisma } from '../../config/prisma.js';
 import { Prisma, type BusinessVisibilityStatus } from '../../generated/prisma/client.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { notifyPlatformUser } from '../notifications/platform-notifications.service.js';
+import { notifyBusinessOwners, notifyPlatformUser } from '../notifications/platform-notifications.service.js';
 import { isSubscriptionEffective } from '../business/recognition.service.js';
 import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 
-export type AdminVisibilityAction = 'HIDE' | 'SUSPEND' | 'RESTORE';
+export type AdminVisibilityAction = 'HIDE' | 'SUSPEND' | 'RESTORE' | 'SET_VISIBLE' | 'SET_HIDDEN';
 export function restoredAdminBusinessVisibility(
   previous: BusinessVisibilityStatus | null,
   period: { startsAt: Date; expiresAt: Date } | null,
@@ -16,7 +16,7 @@ export function restoredAdminBusinessVisibility(
 }
 
 export function validateAdminVisibilityAction(action: string, reason: string): AdminVisibilityAction {
-  if (action !== 'HIDE' && action !== 'SUSPEND' && action !== 'RESTORE')
+  if (!['HIDE', 'SUSPEND', 'RESTORE', 'SET_VISIBLE', 'SET_HIDDEN'].includes(action))
     throw new AppError(400, 'ADMIN_VISIBILITY_ACTION_INVALID', 'Acción administrativa no válida.');
   if (reason.trim().length < 12 || reason.trim().length > 500)
     throw new AppError(400, 'ADMIN_BUSINESS_REASON_REQUIRED', 'Explica el motivo de la decisión (12 a 500 caracteres).');
@@ -238,6 +238,40 @@ export async function setAdminBusinessVisibility(identifier: string, actorUserId
     });
     if (!business) throw new AppError(404, 'ADMIN_BUSINESS_NOT_FOUND', 'No encontramos este negocio.');
     if (business.deletionStatus === 'DELETED') throw new AppError(409, 'ADMIN_BUSINESS_DELETED', 'No puede modificar un negocio eliminado.');
+    if (action === 'SET_VISIBLE' || action === 'SET_HIDDEN') {
+      const period = await tx.businessVisibilityPeriod.findFirst({
+        where: { businessId: business.id }, orderBy: { expiresAt: 'desc' },
+        select: { startsAt: true, expiresAt: true },
+      });
+      const now = new Date();
+      const valid = Boolean(period && period.startsAt <= now && period.expiresAt > now);
+      const nextVisibility: BusinessVisibilityStatus = action === 'SET_HIDDEN' ? 'HIDDEN' : valid ? 'VISIBLE' : 'EXPIRED';
+      if (business.visibilityStatus === nextVisibility && !business.administrativeRestriction)
+        throw new AppError(409, 'ADMIN_BUSINESS_STATE_UNCHANGED', 'El negocio ya tiene este estado.');
+      const result = await tx.business.updateMany({
+        where: { id: business.id, administrativeRestriction: business.administrativeRestriction },
+        data: { visibilityStatus: nextVisibility, administrativeRestriction: null,
+          administrativePreviousVisibility: null, administrativeRestrictedAt: null, administrativeRestrictionReason: null },
+      });
+      if (!result.count) throw new AppError(409, 'ADMIN_BUSINESS_CONCURRENT_CHANGE', 'El negocio cambió durante la operación. Actualiza la ficha.');
+      const title = action === 'SET_HIDDEN' ? 'Tu negocio fue ocultado' : 'Estado de visibilidad actualizado';
+      const message = action === 'SET_HIDDEN'
+        ? business.name + ' fue ocultado en XAMUKO. Puedes volver a activarlo desde Business cuando cumpla las condiciones de publicación y vigencia.'
+        : nextVisibility === 'VISIBLE'
+          ? business.name + ' ya puede mostrarse públicamente en XAMUKO si cumple las demás condiciones de publicación.'
+          : business.name + ' no tiene visibilidad vigente. La restricción administrativa fue retirada, pero necesitas renovar la vigencia desde Business.';
+      await notifyBusinessOwners(tx, business.id, title, message);
+      const owners = await tx.businessMembership.findMany({ where: { businessId: business.id, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } }, select: { userId: true } });
+      for (const userId of new Set(owners.map(owner => owner.userId)))
+        await notifyPlatformUser(tx, { userId, sourceType: 'BUSINESS_ADMIN_ACTION', sourceId: business.id, title, message });
+      await tx.auditLog.create({ data: {
+        actorUserId, entityType: 'BUSINESS', entityId: business.id, action: action === 'SET_HIDDEN' ? 'ADMIN_BUSINESS_SET_HIDDEN' : 'ADMIN_BUSINESS_SET_VISIBLE',
+        previousState: { visibilityStatus: business.visibilityStatus, administrativeRestriction: business.administrativeRestriction },
+        newState: { visibilityStatus: nextVisibility, administrativeRestriction: null }, reason,
+      } });
+      return { id: business.id, action, visibilityStatus: nextVisibility, administrativeRestriction: null, message };
+    }
+
     if (action === 'RESTORE' && !business.administrativeRestriction)
       throw new AppError(409, 'ADMIN_BUSINESS_NOT_RESTRICTED', 'El negocio no tiene una restricción administrativa vigente.');
     if (action !== 'RESTORE' && business.administrativeRestriction === (action === 'HIDE' ? 'HIDDEN' : 'SUSPENDED'))
@@ -268,6 +302,7 @@ export async function setAdminBusinessVisibility(identifier: string, actorUserId
     const owners = await tx.businessMembership.findMany({ where: { businessId: business.id, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } }, select: { userId: true } });
     for (const userId of new Set(owners.map(owner => owner.userId)))
       await notifyPlatformUser(tx, { userId, sourceType: 'BUSINESS_ADMIN_ACTION', sourceId: business.id, title, message });
+    await notifyBusinessOwners(tx, business.id, title, message);
     await tx.auditLog.create({
       data: {
         actorUserId, entityType: 'BUSINESS', entityId: business.id, action: 'ADMIN_BUSINESS_' + action,
