@@ -556,6 +556,10 @@
       overflow-wrap: anywhere;
       text-align: center;
     }
+    .business-detail-page .business-header-links > :only-child,
+    .business-detail-page .business-detail-actions > :last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
     .business-detail-page .business-header-utilities,
     .business-detail-page .business-header-hours {
       width: 100%;
