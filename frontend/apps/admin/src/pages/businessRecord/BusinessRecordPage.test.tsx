@@ -32,6 +32,10 @@ describe('Ficha administrativa del negocio', () => {
     expect(pictures[0]).toHaveTextContent('Perfil de ' + business.name);
     expect(within(identity).queryByText('Sin fotografía registrada')).not.toBeInTheDocument();
     expect(within(identity).queryByText('Portada de ' + business.name)).not.toBeInTheDocument();
+    expect(within(identity).queryByText('ID público:', { exact: false })).not.toBeInTheDocument();
+    expect(within(identity).queryByRole('button', { name: 'Copiar ID público' })).not.toBeInTheDocument();
+    expect(within(identity).getByRole('heading', { name: business.name })).toBeInTheDocument();
+    expect(within(identity).getByText('Palmira, Valle del Cauca')).toBeInTheDocument();
   });
 
   it('cambiar pestañas conserva la ficha y la consulta del catálogo', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); await screen.findByRole('heading', { name: offer.name }); fireEvent.click(screen.getByRole('tab', { name: 'Información general' })); expect(screen.getByRole('tabpanel', { name: 'Información general' })).toHaveTextContent('Cuenta registradora'); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(api.getRecordBusiness).toHaveBeenCalledTimes(1); expect(api.getRecordCatalog).toHaveBeenCalledTimes(1); expect(screen.getByRole('heading', { name: offer.name })).toBeInTheDocument(); });
