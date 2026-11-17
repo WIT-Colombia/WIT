@@ -19,11 +19,46 @@ const offer: RecordOffer = { id: 'offer-1', internalCode: 'P000001', kind: 'PROD
 function setup() { render(<MemoryRouter initialEntries={['/businesses/business-1']}><Routes><Route path="/businesses/:id" element={<BusinessRecordPage/>}/></Routes></MemoryRouter>); }
 async function ready() { await screen.findByRole('heading', { name: 'Ficha administrativa del negocio' }); }
 describe('Ficha administrativa del negocio', () => {
-  beforeEach(() => { vi.clearAllMocks(); role = 'SUPER_ADMIN'; permissions = ['business:write', 'catalog:read', 'content:moderate', 'content:moderate:write', 'settings:write']; api.getRecordBusiness.mockResolvedValue(business); api.getRecordHistory.mockResolvedValue({ history: [], pagination: { ...pagination, total: 0, totalPages: 0 } }); api.getRecordCatalog.mockResolvedValue({ offers: [offer], pagination }); api.getRecordReviews.mockResolvedValue({ reviews: [], pagination: { ...pagination, total: 0 } }); api.getRecordPhotos.mockResolvedValue({ photos: [], pagination: { ...pagination, total: 0 } }); api.listRecordBusinessReports.mockResolvedValue({ reports: [], pagination: { ...pagination, total: 0, totalPages: 0 } }); });
+  beforeEach(() => { vi.clearAllMocks(); role = 'SUPER_ADMIN'; permissions = ['business:write', 'catalog:read', 'content:moderate', 'content:moderate:write', 'settings:write']; api.getRecordBusiness.mockResolvedValue(business); api.getRecordHistory.mockResolvedValue({ history: [], pagination: { ...pagination, total: 0, totalPages: 0 } }); api.getRecordCatalog.mockResolvedValue({ offers: [offer], pagination }); api.getRecordReviews.mockResolvedValue({ reviews: [], pagination: { ...pagination, total: 0 } }); api.getRecordPhotos.mockResolvedValue({ photos: [], pagination: { ...pagination, total: 0 } }); api.getRecordActivity.mockResolvedValue({ period: 'last30', timezone: 'America/Bogota',
+    start: '2026-10-19T05:00:00Z', end: '2026-11-17T12:00:00Z',
+    totals: { views: 8, interactions: 3, offerViews: 0, reviews: 0, products: 0, services: 0 },
+    series: [
+      { label: '2026-11-16', views: 0, interactions: 0, offerViews: 0, reviews: 0, products: 0, services: 0 },
+      { label: '2026-11-17', views: 8, interactions: 3, offerViews: 0, reviews: 0, products: 0, services: 0 }
+    ],
+    definition: 'Eventos reales por fecha de Bogotá, con cero para días sin eventos.' }); api.listRecordBusinessReports.mockResolvedValue({ reports: [], pagination: { ...pagination, total: 0, totalPages: 0 } }); });
   afterEach(cleanup);
   it('no atribuye una actuación a un administrador ficticio cuando falta su identidad', () => { render(<HistoryTimeline entries={[{ id: 'audit-1', action: 'BUSINESS_UPDATED', reason: 'Motivo registrado', comment: null, actor: null, createdAt: business.updatedAt, previousState: null, newState: null }]}/>); expect(screen.getByText('Responsable no disponible')).toBeInTheDocument(); expect(screen.queryByText('Sistema', { exact: true })).not.toBeInTheDocument(); });
   it('impide consultar la ficha sin permiso de negocios', () => { permissions = []; setup(); expect(screen.getByRole('heading', { name: 'Acceso restringido' })).toBeInTheDocument(); expect(api.getRecordBusiness).not.toHaveBeenCalled(); });
   it('presenta identidad e indicadores procedentes de la respuesta', async () => { setup(); await ready(); expect(screen.getByRole('heading', { name: business.name })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('85%'); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Business PRO'); expect(screen.getAllByText('Propietaria registrada').length).toBeGreaterThan(0); expect(screen.getAllByRole('tab')).toHaveLength(8); });
+  it('muestra el Resumen premium con datos reales y sin el aviso Sobre este resumen', async () => {
+    setup(); await ready();
+    expect(screen.getByRole('heading', { name: 'Rendimiento en Xamuko' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Contenido registrado' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Últimas actuaciones administrativas' })).toBeInTheDocument();
+    expect(screen.queryByText('Sobre este resumen')).not.toBeInTheDocument();
+    await waitFor(() => expect(api.getRecordActivity).toHaveBeenCalledWith(business.id, 'last30'));
+    expect(screen.getByRole('combobox', { name: 'Período del resumen' })).toHaveValue('last30');
+    expect(screen.getByText('Calificación promedio')).toBeInTheDocument();
+    expect(screen.getByText('4,0')).toBeInTheDocument();
+    expect(screen.getByText('Miembros')).toBeInTheDocument();
+    expect(screen.getByText('Fotos')).toBeInTheDocument();
+    expect(screen.getByText('0 · visualizaciones de la ficha')).not.toBeInTheDocument();
+    const chart = screen.getByRole('group', { name: /Visualizaciones de la ficha/ });
+    fireEvent.focus(chart);
+    expect(screen.getByTestId('activity-guide')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('0 · visualizaciones de la ficha');
+    fireEvent.keyDown(chart, { key: 'ArrowRight' });
+    expect(screen.getByRole('status')).toHaveTextContent('8 · visualizaciones de la ficha');
+  });
+  it('el resumen cambia la temporalidad sin fabricar aumentos ni datos no disponibles', async () => {
+    setup(); await ready();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Período del resumen' }), { target: { value: 'week' } });
+    await waitFor(() => expect(api.getRecordActivity).toHaveBeenCalledWith(business.id, 'week'));
+    expect(screen.queryByText(/12 %|18 %/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Explorar actividad/ }));
+    expect(screen.getByRole('tab', { name: 'Actividad del negocio' })).toHaveAttribute('aria-selected', 'true');
+  });
   it('oculta los paneles administrativos redundantes y deja el contenido de la pestaña a ancho completo', async () => {
     setup(); await ready();
     expect(screen.queryByText('Estado administrativo')).not.toBeInTheDocument();
