@@ -12,10 +12,10 @@ import {
   type AdminBusinessFilterOptions,
 } from '../services/adminApiClient';
 import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
-import { businessDirectoryPages } from '../utils/adminBusinessDirectoryPagination';
+import { businessDirectoryPages, ADMIN_BUSINESS_DIRECTORY_PAGE_SIZE } from '../utils/adminBusinessDirectoryPagination';
 import './AdminBusinessesDirectoryPage.css';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = ADMIN_BUSINESS_DIRECTORY_PAGE_SIZE;
 const number = (value: number) => value.toLocaleString('es-CO');
 const shortDate = (value: string) => new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
 const categoryName = (value: AdminBusinessRecord['category']) =>
