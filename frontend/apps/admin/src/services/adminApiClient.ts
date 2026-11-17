@@ -6,7 +6,7 @@ export type AdministratorRecord = { id: string; displayName: string; emailNormal
 export async function listAdministrators() { return (await request<{ administrators: AdministratorRecord[] }>('/admin/administrators')).administrators; }
 export type AdminBusinessRecord = {
   id: string; publicId: string; name: string; description: string | null;
-  coverPhotoId: string | null;
+  coverPhotoId: string | null; profilePhotoId: string | null;
   email: string | null; phone: string | null;
   lifecycleStatus: string; publicationStatus: string; visibilityStatus: string; verificationStatus: string; deletionStatus: string;
   administrativeRestriction: 'HIDDEN' | 'SUSPENDED' | null;
