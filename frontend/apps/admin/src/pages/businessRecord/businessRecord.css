@@ -600,3 +600,125 @@
 @media(max-width:700px){
   .bd-record .bd-identity .bd-profile-monogram{font-size:32px}
 }
+
+
+/* Administrative business identity — phones: center the entire identity block.
+   Keep tablet and desktop side-by-side presentation unchanged. */
+@media (max-width:700px){
+  .bd-record .bd-identity .bd-cover{
+    min-height:0;
+  }
+  .bd-record .bd-identity .bd-identity-content{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:15px;
+    min-height:0;
+    padding:26px 18px 24px;
+    text-align:center;
+  }
+  .bd-record .bd-identity .bd-business-logo{
+    flex:0 0 auto;
+    width:96px;
+    height:96px;
+    margin:0 auto;
+  }
+  .bd-record .bd-identity .bd-identity-copy{
+    display:flex;
+    flex:0 1 auto;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-width:0;
+    padding:0;
+    text-align:center;
+  }
+  .bd-record .bd-identity .bd-identity-copy h2{
+    width:100%;
+    margin:0 0 12px;
+    font-size:clamp(22px,6vw,29px);
+    line-height:1.2;
+    text-align:center;
+    overflow-wrap:anywhere;
+  }
+  .bd-record .bd-identity .bd-category{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    max-width:100%;
+    padding:8px 12px;
+    text-align:center;
+    white-space:normal;
+    line-height:1.45;
+  }
+  .bd-record .bd-identity .bd-identity-copy>p{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    width:100%;
+    gap:7px;
+    margin-top:15px;
+    text-align:center;
+    line-height:1.45;
+  }
+  .bd-record .bd-identity .bd-identity-copy>p svg{
+    flex:none;
+    margin:0;
+  }
+  .bd-record .bd-identity .bd-location-text>span{
+    max-width:100%;
+    text-align:center;
+    white-space:normal;
+  }
+  .bd-record .bd-identity .bd-id-row{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    width:100%;
+    min-width:0;
+    margin-top:14px;
+    font-size:11px;
+    line-height:1.55;
+    text-align:center;
+  }
+  .bd-record .bd-identity .bd-id-row>span{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    text-align:center;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+  .bd-record .bd-identity .bd-id-row button{
+    display:grid;
+    place-items:center;
+    flex:none;
+    width:38px;
+    height:38px;
+    margin:0 auto;
+    border:1px solid rgba(255,255,255,.38);
+    border-radius:10px;
+    background:rgba(255,255,255,.09);
+    color:#fff;
+  }
+  .bd-record .bd-identity .bd-id-row button:active{
+    background:rgba(255,255,255,.2);
+  }
+  .bd-record .bd-identity .bd-gallery-shortcut{
+    left:50%;
+    right:auto;
+    bottom:12px;
+    max-width:calc(100% - 24px);
+    transform:translateX(-50%);
+    justify-content:center;
+    white-space:nowrap;
+  }
+  .bd-record .bd-identity .bd-cover:has(.bd-gallery-shortcut) .bd-identity-content{
+    padding-bottom:65px;
+  }
+}
