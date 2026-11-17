@@ -1,0 +1,72 @@
+/* XAMUKO Admin | Auditoría de visibilidad. Read-only, responsive and keyboard accessible. */
+.admin-refresh .xa-audit-workspace{--audit-ink:#23193b;--audit-muted:#70687d;--audit-violet:#6c34dc;--audit-line:#e9e3f3;display:grid;gap:20px;width:100%;max-width:1540px;min-width:0;margin:0 auto;padding:20px 0 42px;color:var(--audit-ink)}
+.admin-refresh .xa-audit-workspace *{box-sizing:border-box}
+.admin-refresh .xa-audit-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:22px;flex-wrap:wrap}
+.admin-refresh .xa-audit-heading>div{flex:1;min-width:0}
+.admin-refresh .xa-audit-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--audit-violet);font-weight:800;letter-spacing:.095em;font-size:10px}
+.admin-refresh .xa-audit-heading h1{font-weight:850;font-size:clamp(26px,3vw,37px);letter-spacing:-.04em;margin:7px 0 8px}
+.admin-refresh .xa-audit-heading p{color:var(--audit-muted);font-size:13px;line-height:1.65;margin:0;max-width:830px}
+.admin-refresh .xa-audit-workspace button,.admin-refresh .xa-audit-workspace input,.admin-refresh .xa-audit-workspace select{font:inherit}
+.admin-refresh .xa-audit-workspace button:focus-visible,.admin-refresh .xa-audit-workspace input:focus-visible,.admin-refresh .xa-audit-workspace select:focus-visible,.admin-refresh .xa-audit-workspace summary:focus-visible,.admin-refresh .xa-audit-workspace a:focus-visible{outline:3px solid #ae90ec;outline-offset:2px}
+.admin-refresh .xa-audit-refresh{display:inline-flex;gap:8px;align-items:center;justify-content:center;min-height:42px;padding:10px 15px;border:1px solid #dcccfc;border-radius:10px;background:#fff;color:#642acc;font-size:12px;font-weight:800;cursor:pointer}
+.admin-refresh .xa-audit-refresh:hover{background:#f6f0ff}
+.admin-refresh .xa-audit-toolbar{display:flex;align-items:end;gap:14px;flex-wrap:wrap;padding:17px;border:1px solid var(--audit-line);border-radius:17px;background:#fff;box-shadow:0 4px 18px #30204d0c}
+.admin-refresh .xa-audit-toolbar form{flex:1 1 360px;min-width:0}
+.admin-refresh .xa-audit-toolbar label{display:grid;gap:7px;font-size:12px;font-weight:750;color:#4b4262}
+.admin-refresh .xa-audit-toolbar form>label{margin-bottom:7px}
+.admin-refresh .xa-audit-toolbar form>div{display:flex;gap:9px}
+.admin-refresh .xa-audit-toolbar input,.admin-refresh .xa-audit-toolbar select{min-height:42px;width:100%;min-width:0;padding:10px 12px;border:1px solid #d9d4e4;border-radius:10px;background:#fff;color:var(--audit-ink);font-size:12px}
+.admin-refresh .xa-audit-toolbar form input{flex:1}
+.admin-refresh .xa-audit-toolbar form button{display:inline-flex;gap:7px;align-items:center;justify-content:center;padding:9px 16px;min-height:42px;border:0;border-radius:10px;background:linear-gradient(105deg,#7335e9,#5424c3);color:#fff;font-size:12px;font-weight:750;cursor:pointer}
+.admin-refresh .xa-audit-kind{flex:0 1 245px;min-width:185px}
+.admin-refresh .xa-audit-clear{min-height:42px;padding:9px 13px;border:1px solid #ded6e9;border-radius:10px;background:#fff;color:#5c2cb5;font-size:11px;font-weight:750;cursor:pointer}
+.admin-refresh .xa-audit-feed{min-width:0;border:1px solid var(--audit-line);border-radius:17px;background:#fff;overflow:hidden;box-shadow:0 6px 23px #30204d0a}
+.admin-refresh .xa-audit-feed-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:19px 22px;border-bottom:1px solid var(--audit-line)}
+.admin-refresh .xa-audit-feed-heading h2{display:flex;align-items:center;gap:10px;font-size:17px;color:#221832;margin:0;font-weight:830}
+.admin-refresh .xa-audit-feed-heading h2 svg{color:#6d34d8}
+.admin-refresh .xa-audit-feed-heading>span{padding:6px 10px;border-radius:99px;color:#6e43bc;background:#f2edff;font-size:11px;font-weight:750}
+.admin-refresh .xa-audit-list{display:grid;gap:0}
+.admin-refresh .xa-audit-event{display:flex;align-items:flex-start;gap:16px;min-width:0;padding:21px 22px;border-bottom:1px solid #eee9f5}
+.admin-refresh .xa-audit-event:last-child{border-bottom:0}
+.admin-refresh .xa-audit-event-symbol{flex:0 0 44px;display:grid;place-items:center;height:44px;border:1px solid #d2e9da;border-radius:12px;background:#ecf8f0;color:#247747}
+.admin-refresh .xa-audit-event-symbol--hidden{border-color:#f3deb5;background:#fff7e9;color:#a66a20}
+.admin-refresh .xa-audit-event-symbol--suspended{border-color:#f1c0c7;background:#fff0f1;color:#b52c44}
+.admin-refresh .xa-audit-event-content{flex:1;min-width:0}
+.admin-refresh .xa-audit-event-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap}
+.admin-refresh .xa-audit-event-header>div{min-width:0}
+.admin-refresh .xa-audit-event-kind{font-size:9px;color:#7450c2;font-weight:850;letter-spacing:.07em}
+.admin-refresh .xa-audit-event-header h2{margin:4px 0 8px;font-size:16px;line-height:1.4;font-weight:830;color:#2b1d43}
+.admin-refresh .xa-audit-business{display:inline-flex;align-items:center;gap:6px;color:#6732c0;font-size:12px;font-weight:760;text-decoration:none;max-width:100%;overflow-wrap:anywhere}
+.admin-refresh .xa-audit-business:hover{text-decoration:underline}
+.admin-refresh .xa-audit-event-header time{display:inline-flex;align-items:center;gap:6px;color:#736d82;font-size:11px;font-weight:650;white-space:nowrap}
+.admin-refresh .xa-audit-event-details{display:flex;gap:12px 28px;flex-wrap:wrap;margin:15px 0}
+.admin-refresh .xa-audit-event-details>div{display:grid;gap:5px;min-width:0}
+.admin-refresh .xa-audit-event-details strong,.admin-refresh .xa-audit-reason strong{color:#756d86;font-size:10px;font-weight:750}
+.admin-refresh .xa-audit-event-details span{font-size:12px;color:#302744;font-weight:700;overflow-wrap:anywhere}
+.admin-refresh .xa-audit-reason{padding:12px 14px;border:1px solid #f0eafa;border-radius:10px;background:#fcfaff}
+.admin-refresh .xa-audit-reason p{margin:5px 0 0;color:#4b4360;font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.admin-refresh .xa-audit-expand{margin-top:12px}
+.admin-refresh .xa-audit-expand summary{display:inline-flex;align-items:center;gap:7px;color:#5e2bba;font-size:11px;font-weight:770;cursor:pointer;padding:7px 0}
+.admin-refresh .xa-audit-diff{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:7px}
+.admin-refresh .xa-audit-diff>section{padding:14px;border:1px solid #ece4f6;border-radius:11px;background:#fff;min-width:0}
+.admin-refresh .xa-audit-diff h3{margin:0 0 10px;font-size:12px;font-weight:800;color:#33234f}
+.admin-refresh .xa-audit-state-list{display:grid;gap:8px;margin:0}
+.admin-refresh .xa-audit-state-list>div{display:flex;justify-content:space-between;align-items:flex-start;gap:9px}
+.admin-refresh .xa-audit-state-list dt{color:#716882;font-size:11px}
+.admin-refresh .xa-audit-state-list dd{margin:0;color:#382754;font-size:11px;font-weight:760;text-align:right}
+.admin-refresh .xa-audit-state-empty{font-size:11px;color:#857c92;margin:0}
+.admin-refresh .xa-audit-loading,.admin-refresh .xa-audit-empty,.admin-refresh .xa-audit-error{padding:42px 24px;text-align:center}
+.admin-refresh .xa-audit-empty svg{color:#9c81ce}
+.admin-refresh .xa-audit-empty h3,.admin-refresh .xa-audit-error h1,.admin-refresh .xa-audit-error h3{font-size:17px;font-weight:800;color:#34234f;margin:10px 0}
+.admin-refresh .xa-audit-empty p,.admin-refresh .xa-audit-error p,.admin-refresh .xa-audit-loading{font-size:12px;color:#6f677d;line-height:1.6}
+.admin-refresh .xa-audit-error button{border:1px solid #d5c5f0;background:#f5eeff;border-radius:8px;color:#6530bf;padding:10px 15px;cursor:pointer}
+.admin-refresh .xa-audit-pages{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;padding:16px 20px;border-top:1px solid var(--audit-line)}
+.admin-refresh .xa-audit-pages>span{font-size:11px;color:#625972;font-weight:700}
+.admin-refresh .xa-audit-pages>div{display:flex;gap:9px}
+.admin-refresh .xa-audit-pages button{border:1px solid #ddd4ef;border-radius:9px;background:#fff;color:#5d2eba;padding:8px 14px;font-size:11px;font-weight:750;cursor:pointer}
+.admin-refresh .xa-audit-pages button:disabled,.admin-refresh .xa-audit-workspace button:disabled{opacity:.47;cursor:not-allowed}
+.admin-refresh .xa-audit-footnote{display:flex;align-items:flex-start;gap:9px;min-width:0;color:#706980;font-size:11px;line-height:1.6}
+.admin-refresh .xa-audit-footnote svg{flex:none;color:#7144ce;margin-top:2px}
+@media(max-width:900px){.admin-refresh .xa-audit-workspace{gap:15px;padding:12px 0 30px}.admin-refresh .xa-audit-event{padding:16px;gap:12px}.admin-refresh .xa-audit-feed-heading{padding:16px}.admin-refresh .xa-audit-kind{flex:1 1 190px}}
+@media(max-width:600px){.admin-refresh .xa-audit-heading h1{font-size:26px}.admin-refresh .xa-audit-toolbar{padding:13px;gap:12px}.admin-refresh .xa-audit-toolbar form{flex-basis:100%}.admin-refresh .xa-audit-toolbar form>div{gap:6px}.admin-refresh .xa-audit-toolbar form button{padding:9px 11px}.admin-refresh .xa-audit-kind{flex:1 1 100%}.admin-refresh .xa-audit-event{padding:15px 12px;gap:9px}.admin-refresh .xa-audit-event-symbol{width:35px;height:35px;flex-basis:35px}.admin-refresh .xa-audit-event-header h2{font-size:14px}.admin-refresh .xa-audit-event-header time{white-space:normal;font-size:10px}.admin-refresh .xa-audit-diff{grid-template-columns:1fr}.admin-refresh .xa-audit-reason{padding:10px}.admin-refresh .xa-audit-feed-heading h2{font-size:14px}.admin-refresh .xa-audit-event-details{gap:10px}}
+@media(prefers-reduced-motion:reduce){.admin-refresh .xa-audit-workspace *{scroll-behavior:auto}}
