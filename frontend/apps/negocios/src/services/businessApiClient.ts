@@ -233,6 +233,8 @@ export type RealBusiness = {
   lifecycleStatus: string;
   publicationStatus: string;
   visibilityStatus: string;
+  administrativeRestriction?: 'HIDDEN' | 'SUSPENDED' | null;
+  isPro?: boolean;
   verificationStatus: string;
   deletionStatus: string;
   publicationReadiness?: { ready: boolean; blockers: string[] };
