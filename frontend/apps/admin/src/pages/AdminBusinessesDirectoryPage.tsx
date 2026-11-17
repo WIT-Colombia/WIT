@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
 import { AdminBusinessCoverPhoto } from '../components/businesses/AdminBusinessCoverPhoto';
+import { AdminBusinessGrowthPanel } from './AdminBusinessGrowthPanel';
 import { getSession } from '../services/adminService';
 import {
   getAdminBusinessesOverview, getAdminBusinessesFilterOptions, getAdminDashboardStats,
@@ -55,6 +56,7 @@ export function AdminBusinessesPage() {
   const [overviewLoading, setOverviewLoading] = useState(allowed);
   const [filterOptions, setFilterOptions] = useState<AdminBusinessFilterOptions>({ cities: [], categories: [] });
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const advanced: AdminBusinessesFilters = {
     city: params.get('city') ?? '',
     categoryId: params.get('categoryId') ?? '',
@@ -121,6 +123,16 @@ export function AdminBusinessesPage() {
     const next = new URLSearchParams(params);
     if (nextPage <= 1) next.delete('page'); else next.set('page', String(nextPage));
     setParams(next);
+  }
+  function exportCurrentPage() {
+    const safe = (value: string) => '"' + (/^[=+\\-@\\t\\r\\n]/.test(value) ? "'" : '') + value.replaceAll('"','""') + '"';
+    const fields = ['Negocio','ID público','Ciudad','Categoría','Estado de verificación','Fecha de registro'];
+    const content = [fields, ...rows.map(item => [item.name,item.publicId,item.location?.cityName ?? '',
+      categoryName(item.category),statusOf(item.verificationStatus).label,shortDate(item.createdAt)])]
+      .map(record => record.map(safe).join(';')).join('\\r\\n');
+    const url = URL.createObjectURL(new Blob(['\\ufeff',content],{type:'text/csv;charset=utf-8'}));
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'xamuko-negocios-pagina.csv';
+    anchor.click(); window.setTimeout(() => URL.revokeObjectURL(url),1000);
   }
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -207,6 +219,12 @@ export function AdminBusinessesPage() {
           <option value="">Más recientes</option><option value="oldest">Más antiguos</option><option value="name">Nombre A–Z</option>
           <option value="city">Ciudad A–Z</option><option value="category">Categoría A–Z</option><option value="verification">Estado de verificación</option>
         </select></label>
+        <button type="button" className="abv1-advanced-tool" disabled={!rows.length} onClick={exportCurrentPage}>
+          <Icon name="download" size={16}/> Exportar página
+        </button>
+        <button type="button" className="abv1-advanced-tool" onClick={() => setAnalyticsOpen(open => !open)} aria-expanded={analyticsOpen}>
+          <Icon name="chart" size={16}/> {analyticsOpen ? "Ocultar estadísticas" : "Ver estadísticas detalladas"}
+        </button>
         <button type="button" className="abv1-clear" disabled={!filtersActive} onClick={clearFilters}>
           <Icon name="refresh" size={16}/> Limpiar filtros
         </button>
@@ -263,5 +281,6 @@ export function AdminBusinessesPage() {
         </div>
       </nav>}
     </section>
+    {analyticsOpen && <div className="abv1-extra-stats"><AdminBusinessGrowthPanel /></div>}
   </div>;
 }
