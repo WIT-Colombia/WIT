@@ -61,14 +61,18 @@ function BusinessRecord({ id }: { id: string }) {
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso de consulta de negocios para abrir la ficha."/>;
   if (!source.data) return source.error ? <StatePanel kind="error" title="No pudimos abrir la ficha" message={source.error} retry={source.retry}/> : <StatePanel kind="loading" title="Cargando ficha administrativa" message="Consultando el establecimiento y su información registrada."/>;
   const business = source.data, record = business.record, state = businessState(business);
-  const canAct = session?.role === 'SUPER_ADMIN' && Boolean(record) && business.deletionStatus !== 'DELETED';
+  // Visibility is available from the basic business record, even when the
+  // extended administrative detail endpoint has not been deployed yet.
+  // Mutations remain SUPER_ADMIN-only and are authorized again by the backend.
+  const canChangeVisibility = session?.role === 'SUPER_ADMIN' && business.deletionStatus !== 'DELETED';
+  const canAct = canChangeVisibility && Boolean(record);
   const actionDisabled = source.loading || Boolean(source.error) || operationPending;
   const photoCount = record ? record.businessPhotos + (catalogAllowed ? record.catalogPhotos : 0) : 0;
   return <BusinessRecordPhotos businessId={business.id}><div className="bd-record">
     <header className="bd-topbar"><Link className="bd-back" to="/businesses"><Icon name="arrow" size={18}/><span>Volver a negocios</span></Link><div className="bd-page-title"><h1>Ficha administrativa del negocio</h1><p>{business.name}</p></div></header>
     {notice && <p className="bd-notice" role="status"><Icon name="check" size={17}/>{notice}<button aria-label="Cerrar aviso" onClick={() => setNotice('')}><Icon name="close" size={16}/></button></p>}
     {source.error && <Loading error={source.error} loading={false} retry={source.retry}/>}
-    {!record && <div className="bd-error" role="alert">La ficha completa requiere la actualización del backend. Las acciones se habilitarán cuando esté disponible su información administrativa.</div>}
+    {!record && <div className="bd-error" role="status">La información administrativa ampliada todavía no está disponible. Puedes gestionar la visibilidad desde su tarjeta si tienes autorización; algunas otras funciones requieren la actualización del backend.</div>}
     <section className="bd-identity" aria-label="Identificación del establecimiento"><div className="bd-cover">
       <div className="bd-identity-content"><BusinessRecordPhoto id={business.profilePhotoId} alt={`Perfil de ${business.name}`} size={320} eager position={record?.profilePosition} className="bd-business-logo" fallbackLetter={business.name}/><div className="bd-identity-copy"><h2>{business.name}</h2><span className="bd-category"><Icon name="store" size={14}/>{categoryName(business.category)}</span><p className="bd-location-text"><Icon name="pin" size={16}/><span>{business.location ? [business.location.cityName, business.location.regionName].filter(Boolean).join(', ') : 'Ubicación no registrada'}</span></p></div></div>
       {photoCount > 0 && <button className="bd-gallery-shortcut" onClick={() => choose('photos')}><Icon name="image" size={17}/>Ver galería ({number(photoCount)})</button>}</div>
@@ -76,7 +80,7 @@ function BusinessRecord({ id }: { id: string }) {
     </section>
     <section className="bd-indicators" aria-label="Indicadores principales">
       <article className="bd-interactive-indicator">
-        <button className="bd-indicator-trigger" type="button" disabled={!canAct || actionDisabled}
+        <button className="bd-indicator-trigger" type="button" disabled={!canChangeVisibility || actionDisabled}
           aria-expanded={visibilityOpen} aria-haspopup="dialog" aria-label="Cambiar visibilidad del negocio"
           onClick={() => setVisibilityOpen(open => !open)}>
           <span className="bd-indicator-icon"><Icon name="eye" size={25}/></span>
@@ -84,7 +88,7 @@ function BusinessRecord({ id }: { id: string }) {
             <Badge tone={business.deletionStatus === 'DELETED' ? 'red' : business.administrativeRestriction ? 'amber' : record?.effectiveVisibility === 'VISIBLE' ? 'green' : 'neutral'}>
               {business.administrativeRestriction === 'SUSPENDED' ? 'Suspendida' : business.deletionStatus === 'DELETED' ? 'Eliminado' : visibility(business)}
             </Badge></span>
-          {canAct && <Icon name="chevron" size={16}/>}
+          {canChangeVisibility && <Icon name="chevron" size={16}/>}
         </button>
       </article>
       <article className="bd-interactive-indicator"><button className="bd-indicator-trigger" type="button"
@@ -141,7 +145,7 @@ function BusinessRecord({ id }: { id: string }) {
         <details className="bd-action-help"><summary><Icon name="info" size={18}/>¿Qué hace cada acción?</summary><p><strong>Ocultar:</strong> retira la visibilidad pública; el propietario puede reactivarla desde Business con vigencia válida.</p><p><strong>Suspender:</strong> también impide renovar o activar el establecimiento.</p><p><strong>Levantar restricción:</strong> conserva la vigencia y el ocultamiento voluntario; no concede nuevos días.</p><p><strong>Eliminar:</strong> retira el negocio, cancela transferencias pendientes y revoca sus planes. Conserva la cuenta del propietario y la auditoría.</p></details>
       </Card><p className="bd-security-note"><Icon name="shield" size={15}/>Cada medida requiere confirmación y motivo. Las decisiones se conservan en el historial.</p><button className="bd-button bd-refresh" disabled={source.loading} onClick={() => { setHistoryPage(1); setRevision(value => value + 1); }}><Icon name="refresh" size={16}/>Actualizar ficha</button>
     </aside></div>
-    {visibilityOpen && canAct && <AdminBusinessVisibilityPicker businessName={business.name}
+    {visibilityOpen && canChangeVisibility && <AdminBusinessVisibilityPicker businessName={business.name}
       visibilityStatus={business.visibilityStatus} administrativeRestriction={business.administrativeRestriction}
       onClose={() => setVisibilityOpen(false)}
       onChoose={action => { setVisibilityOpen(false); setVisibilityAction(action); }}/>}
