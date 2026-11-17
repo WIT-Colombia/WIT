@@ -32,7 +32,7 @@ export function AdminBusinessCoverPhoto({ photoId, name }: { photoId: string | n
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
   }, [photoId, visible]);
 
-  return <span ref={holder} className="business-directory-cover" aria-hidden="true">
+  return <span ref={holder} className="business-directory-cover" title={"Portada de " + name} aria-hidden="true">
     {source ? <img src={source} alt="" loading="lazy" decoding="async" /> : <Icon name="store" size={21} />}
   </span>;
 }
