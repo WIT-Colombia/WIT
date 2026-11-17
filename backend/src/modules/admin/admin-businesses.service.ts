@@ -370,38 +370,68 @@ export async function deleteAdminBusiness(identifier: string, actorUserId: strin
 
 
 /** Explicit SUPER_ADMIN manual approval; pending documentary requests must use their own review workflow. */
-export async function setAdminBusinessVerification(identifier: string, actorUserId: string, reasonText: string) {
+export type AdminVerificationAction = 'VERIFY' | 'UNVERIFY';
+
+export function validateAdminVerificationAction(actionText: string, reasonText: string): AdminVerificationAction {
+  if (actionText !== 'VERIFY' && actionText !== 'UNVERIFY')
+    throw new AppError(400, 'ADMIN_VERIFICATION_ACTION_INVALID', 'Selecciona Verificado o Sin verificar.');
   const reason = reasonText.trim();
   if (reason.length < 12 || reason.length > 500)
-    throw new AppError(400, 'ADMIN_VERIFICATION_REASON_REQUIRED', 'Justifica la verificación (12 a 500 caracteres).');
+    throw new AppError(400, 'ADMIN_VERIFICATION_REASON_REQUIRED', 'Explica el motivo de la decisión (12 a 500 caracteres).');
+  return actionText;
+}
+
+/** Reversible Super Admin verification; preserves documentary history and records each decision. */
+export async function setAdminBusinessVerificationStatus(identifier: string, actorUserId: string, actionText: string, reasonText: string) {
+  const action = validateAdminVerificationAction(actionText, reasonText);
+  const reason = reasonText.trim();
   return prisma.$transaction(async tx => {
     const business = await tx.business.findFirst({
       where: { OR: [{ id: identifier }, { publicId: identifier }] },
       select: { id: true, name: true, deletionStatus: true, verificationStatus: true },
     });
     if (!business) throw new AppError(404, 'ADMIN_BUSINESS_NOT_FOUND', 'Negocio no encontrado.');
-    if (business.deletionStatus === 'DELETED') throw new AppError(409, 'ADMIN_BUSINESS_DELETED', 'No puedes verificar un negocio eliminado.');
-    if (business.verificationStatus === 'APPROVED') throw new AppError(409, 'ADMIN_BUSINESS_VERIFIED', 'El negocio ya está verificado.');
+    if (business.deletionStatus === 'DELETED')
+      throw new AppError(409, 'ADMIN_BUSINESS_DELETED', 'No puedes modificar un negocio eliminado.');
+    const verificationStatus = action === 'VERIFY' ? 'APPROVED' : 'NONE';
+    if (business.verificationStatus === verificationStatus)
+      throw new AppError(409, 'ADMIN_BUSINESS_VERIFICATION_UNCHANGED', 'El negocio ya tiene este estado de verificación.');
     const openRequest = await tx.businessVerificationRequest.findFirst({
       where: { businessId: business.id, activeKey: { not: null } }, select: { id: true },
     });
-    if (openRequest) throw new AppError(409, 'ADMIN_VERIFICATION_PENDING_DOCUMENT', 'Existe una solicitud documental abierta. Resuélvela desde Verificaciones para conservar el expediente.');
-    const result = await tx.business.updateMany({
+    if (openRequest)
+      throw new AppError(409, 'ADMIN_VERIFICATION_PENDING_DOCUMENT', 'Existe una solicitud documental abierta. Resuélvela desde Verificaciones para conservar el expediente.');
+    const updated = await tx.business.updateMany({
       where: { id: business.id, verificationStatus: business.verificationStatus, deletionStatus: { not: 'DELETED' } },
-      data: { verificationStatus: 'APPROVED' },
+      data: { verificationStatus },
     });
-    if (!result.count) throw new AppError(409, 'ADMIN_BUSINESS_CONCURRENT_CHANGE', 'El estado de verificación cambió. Actualiza la ficha.');
-    await tx.auditLog.create({ data: { actorUserId, entityType: 'BUSINESS', entityId: business.id,
-      action: 'ADMIN_BUSINESS_VERIFIED_MANUALLY', previousState: { verificationStatus: business.verificationStatus },
-      newState: { verificationStatus: 'APPROVED' }, reason } });
-    const title = 'Tu negocio ha sido verificado';
-    const message = business.name + ' fue verificado mediante una decisión administrativa de XAMUKO. Consulta el estado actualizado en Business.';
+    if (!updated.count)
+      throw new AppError(409, 'ADMIN_BUSINESS_CONCURRENT_CHANGE', 'El estado de verificación cambió. Actualiza la ficha.');
+    await tx.auditLog.create({ data: {
+      actorUserId, entityType: 'BUSINESS', entityId: business.id,
+      action: action === 'VERIFY' ? 'ADMIN_BUSINESS_VERIFIED_MANUALLY' : 'ADMIN_BUSINESS_UNVERIFIED_MANUALLY',
+      previousState: { verificationStatus: business.verificationStatus },
+      newState: { verificationStatus }, reason,
+    } });
+    const title = action === 'VERIFY' ? 'Tu negocio ha sido verificado' : 'Se retiró la verificación de tu negocio';
+    const message = action === 'VERIFY'
+      ? business.name + ' fue verificado mediante una decisión administrativa de XAMUKO. Consulta el estado actualizado en Business.'
+      : 'XAMUKO Admin retiró el estado de verificado de ' + business.name + '. Consulta el motivo en el historial y contacta con soporte si necesitas una revisión. Esto no modifica la visibilidad del negocio.';
     await notifyBusinessOwners(tx, business.id, title, message);
-    const owners = await tx.businessMembership.findMany({ where: { businessId: business.id, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } }, select: { userId: true } });
+    const owners = await tx.businessMembership.findMany({
+      where: { businessId: business.id, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } },
+      select: { userId: true },
+    });
     for (const userId of new Set(owners.map(owner => owner.userId)))
       await notifyPlatformUser(tx, { userId, sourceType: 'BUSINESS_ADMIN_ACTION', sourceId: business.id, title, message });
-    return { id: business.id, verificationStatus: 'APPROVED', message: 'Negocio verificado y propietarios notificados.' };
+    return { id: business.id, verificationStatus,
+      message: action === 'VERIFY' ? 'Negocio verificado y propietarios notificados.' : 'Verificación retirada y propietarios notificados.' };
   });
+}
+
+/** Compatible with older manual-approval clients. */
+export function setAdminBusinessVerification(identifier: string, actorUserId: string, reasonText: string) {
+  return setAdminBusinessVerificationStatus(identifier, actorUserId, 'VERIFY', reasonText);
 }
 
 /** Administrative subscription override does not create a charge or recurring payment. */

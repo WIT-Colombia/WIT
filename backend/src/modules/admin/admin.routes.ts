@@ -6,7 +6,7 @@ import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-or
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController, pioneerBrandReviewController } from './admin.controller.js';
 import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
-import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility, setAdminBusinessVerification, setAdminBusinessPlan } from './admin-businesses.service.js';
+import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility, setAdminBusinessVerification, setAdminBusinessVerificationStatus, setAdminBusinessPlan } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { listAdminVisibilityAudit } from './admin-visibility-audit.service.js';
 import { recordActivity, recordCatalog, recordPhoto, recordPhotos, recordReviews } from './admin-business-record.service.js';
@@ -77,6 +77,20 @@ adminRouter.post('/businesses/:id/visibility', requireTrustedOrigin, requireAdmi
       return res.status(403).json({ error: { code: 'ADMIN_SUPER_ADMIN_REQUIRED', message: 'Solo el administrador principal puede imponer o levantar medidas administrativas.' } });
     res.setHeader('Cache-Control', 'no-store');
     res.json(await setAdminBusinessVisibility(String(req.params.id), context.userId, String(req.body?.action ?? ''), String(req.body?.reason ?? '')));
+  } catch (error) { next(error); }
+});
+
+adminRouter.post('/businesses/:id/verification-status', requireTrustedOrigin, requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try {
+    const context = adminFromRequest(req);
+    if (context.role !== 'SUPER_ADMIN')
+      throw new AppError(403, 'ADMIN_SUPER_ADMIN_REQUIRED', 'Solo el administrador principal puede cambiar la verificación de un negocio.');
+    const action = String(req.body?.action ?? '');
+    const expected = action === 'VERIFY' ? 'VERIFICAR' : action === 'UNVERIFY' ? 'SIN VERIFICAR' : '';
+    if (!expected || req.body?.confirmation !== expected)
+      throw new AppError(400, 'ADMIN_VERIFICATION_CONFIRMATION_REQUIRED', 'Confirma la decisión escribiendo ' + (expected || 'la opción correspondiente') + '.');
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await setAdminBusinessVerificationStatus(String(req.params.id), context.userId, action, String(req.body?.reason ?? '')));
   } catch (error) { next(error); }
 });
 

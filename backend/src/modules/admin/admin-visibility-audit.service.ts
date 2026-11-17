@@ -10,12 +10,15 @@ const actionsByKind = {
     'ADMIN_BUSINESS_SUSPEND', 'ADMIN_BUSINESS_HIDE', 'ADMIN_BUSINESS_RESTORE',
     'BUSINESS_VISIBILITY_SET_VISIBLE', 'BUSINESS_VISIBILITY_SET_HIDDEN',
     'BUSINESS_VISIBILITY_RENEWED', 'BUSINESS_VISIBILITY_RESTORED',
+    'ADMIN_BUSINESS_VERIFIED_MANUALLY', 'ADMIN_BUSINESS_UNVERIFIED_MANUALLY',
   ],
   VISIBLE: ['ADMIN_BUSINESS_SET_VISIBLE', 'BUSINESS_VISIBILITY_SET_VISIBLE', 'BUSINESS_VISIBILITY_RESTORED'],
   HIDDEN: ['ADMIN_BUSINESS_SET_HIDDEN', 'ADMIN_BUSINESS_HIDE', 'BUSINESS_VISIBILITY_SET_HIDDEN'],
   SUSPENDED: ['ADMIN_BUSINESS_SUSPEND'],
   RESTORED: ['ADMIN_BUSINESS_RESTORE'],
   RENEWED: ['BUSINESS_VISIBILITY_RENEWED'],
+  VERIFIED: ['ADMIN_BUSINESS_VERIFIED_MANUALLY'],
+  UNVERIFIED: ['ADMIN_BUSINESS_UNVERIFIED_MANUALLY'],
 } as const;
 
 export type VisibilityAuditKind = keyof typeof actionsByKind;
@@ -24,7 +27,7 @@ function safeState(value: Prisma.JsonValue) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return Object.fromEntries(Object.entries(value)
     .filter(([key, entry]) =>
-      ['visibilityStatus', 'administrativeRestriction'].includes(key) &&
+      ['visibilityStatus', 'administrativeRestriction', 'verificationStatus'].includes(key) &&
       (entry === null || typeof entry === 'string'))) as Record<string, string | null>;
 }
 

@@ -770,3 +770,8 @@
     margin-bottom:14px;
   }
 }
+
+
+/* Verification shares visibility's responsive modal styling on desktop, iPad and mobile. */
+.bd-verification-picker .bd-verification-choice--verified .bd-visibility-picker-choice-icon{background:#e8f7ee;color:#16814a}
+.bd-verification-picker .bd-verification-choice--unverified .bd-visibility-picker-choice-icon{background:#fff2dc;color:#ad6912}

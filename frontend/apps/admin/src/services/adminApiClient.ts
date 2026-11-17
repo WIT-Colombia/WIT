@@ -101,6 +101,13 @@ export function adminBusinessVisibilityLabel(business: Pick<AdminBusinessRecord,
   return ({ VISIBLE: 'Visible', HIDDEN: 'Oculta (reversible)', EXPIRED: 'Vencido', REVIEW: 'En revisión' } as Record<string, string>)[business.visibilityStatus]
     ?? 'Estado desconocido';
 }
+export type AdminVerificationAction = 'VERIFY' | 'UNVERIFY';
+export function changeAdminBusinessVerification(id: string, action: AdminVerificationAction, reason: string, confirmation: string) {
+  return request<{ verificationStatus: string; message: string }>(
+    '/admin/businesses/' + encodeURIComponent(id) + '/verification-status',
+    { method: 'POST', body: JSON.stringify({ action, reason, confirmation }) });
+}
+/** Legacy manual approval remains available for clients using /verify. */
 export function verifyAdminBusiness(id: string, reason: string, confirmation: string) {
   return request<{ verificationStatus: string; message: string }>(
     '/admin/businesses/' + encodeURIComponent(id) + '/verify',

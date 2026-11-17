@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { deleteAdminBusiness, validateAdminVisibilityAction, adminBusinessWhere, restoredAdminBusinessVisibility } from './admin-businesses.service.js';
+import { deleteAdminBusiness, validateAdminVisibilityAction, validateAdminVerificationAction, adminBusinessWhere, restoredAdminBusinessVisibility } from './admin-businesses.service.js';
 
 test('la eliminación administrativa del negocio requiere un motivo suficiente', async () => {
   await assert.rejects(
@@ -46,4 +46,12 @@ test('la restitución conserva el ocultamiento voluntario y nunca crea días de 
   assert.equal(restoredAdminBusinessVisibility('REVIEW', period, now), 'REVIEW');
   assert.equal(restoredAdminBusinessVisibility('VISIBLE', period, now), 'EXPIRED');
   assert.equal(restoredAdminBusinessVisibility('VISIBLE', { ...period, expiresAt: new Date('2026-12-01T10:00:00.000Z') }, now), 'VISIBLE');
+});
+
+test('las decisiones de verificación manual son reversibles y exigen motivo suficiente', () => {
+  assert.equal(validateAdminVerificationAction('VERIFY', 'Identidad y nombre revisados'), 'VERIFY');
+  assert.equal(validateAdminVerificationAction('UNVERIFY', 'Inconsistencia documental comprobada'), 'UNVERIFY');
+  assert.throws(() => validateAdminVerificationAction('REJECT', 'Inconsistencia documental comprobada'), (error: any) => error.code === 'ADMIN_VERIFICATION_ACTION_INVALID');
+  assert.throws(() => validateAdminVerificationAction('UNVERIFY', 'corto'), (error: any) => error.code === 'ADMIN_VERIFICATION_REASON_REQUIRED');
+  assert.throws(() => validateAdminVerificationAction('VERIFY', 'a'.repeat(501)), (error: any) => error.code === 'ADMIN_VERIFICATION_REASON_REQUIRED');
 });

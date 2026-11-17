@@ -7,9 +7,9 @@ import { offerPrice } from './Catalog';
 import { HistoryTimeline } from './History';
 import type { RecordBusiness, RecordOffer } from '../../services/adminBusinessRecord';
 
-const api = vi.hoisted(() => ({ getRecordBusiness: vi.fn(), getRecordHistory: vi.fn(), getRecordCatalog: vi.fn(), getRecordReviews: vi.fn(), getRecordPhotos: vi.fn(), getRecordActivity: vi.fn(), changeAdminBusinessVisibility: vi.fn(), deleteAdminBusiness: vi.fn(), verifyAdminBusiness: vi.fn(), changeAdminBusinessPlan: vi.fn(), listRecordBusinessReports: vi.fn() }));
+const api = vi.hoisted(() => ({ getRecordBusiness: vi.fn(), getRecordHistory: vi.fn(), getRecordCatalog: vi.fn(), getRecordReviews: vi.fn(), getRecordPhotos: vi.fn(), getRecordActivity: vi.fn(), changeAdminBusinessVisibility: vi.fn(), deleteAdminBusiness: vi.fn(), changeAdminBusinessVerification: vi.fn(), changeAdminBusinessPlan: vi.fn(), listRecordBusinessReports: vi.fn() }));
 vi.mock('../../services/adminBusinessRecord', () => api);
-vi.mock('../../services/adminApiClient', async original => ({ ...await original<typeof import('../../services/adminApiClient')>(), changeAdminBusinessVisibility: api.changeAdminBusinessVisibility, deleteAdminBusiness: api.deleteAdminBusiness, verifyAdminBusiness: api.verifyAdminBusiness, changeAdminBusinessPlan: api.changeAdminBusinessPlan, listRecordBusinessReports: api.listRecordBusinessReports }));
+vi.mock('../../services/adminApiClient', async original => ({ ...await original<typeof import('../../services/adminApiClient')>(), changeAdminBusinessVisibility: api.changeAdminBusinessVisibility, deleteAdminBusiness: api.deleteAdminBusiness, changeAdminBusinessVerification: api.changeAdminBusinessVerification, changeAdminBusinessPlan: api.changeAdminBusinessPlan, listRecordBusinessReports: api.listRecordBusinessReports }));
 vi.mock('../../components/businesses/BusinessRecordPhoto', () => ({ BusinessRecordPhotos: ({ children }: { children: React.ReactNode }) => children, BusinessRecordPhoto: ({ alt }: { alt: string }) => <span data-testid="record-photo">{alt}</span> }));
 let role = 'SUPER_ADMIN', permissions = ['business:write', 'catalog:read', 'content:moderate', 'content:moderate:write', 'settings:write'];
 vi.mock('../../services/adminService', () => ({ getSession: () => ({ name: 'Administración de prueba', role, permissions }) }));
@@ -56,17 +56,46 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByText('Denunciante registrada')).toBeInTheDocument();
     expect(api.listRecordBusinessReports).toHaveBeenCalledWith(business.id, 1, '');
   });
-  it('abre una confirmación auditable al verificar un negocio', async () => {
-    api.verifyAdminBusiness.mockResolvedValue({ verificationStatus: 'APPROVED', message: 'Negocio verificado' });
-    api.getRecordBusiness.mockResolvedValueOnce(business).mockResolvedValueOnce({ ...business, verificationStatus: 'APPROVED' });
+  it('abre las dos opciones y exige un motivo antes de marcar Verificado', async () => {
+    api.changeAdminBusinessVerification.mockResolvedValue({ verificationStatus: 'APPROVED', message: 'Negocio verificado' });
+    api.getRecordBusiness.mockResolvedValueOnce({ ...business, verificationStatus: 'NONE' }).mockResolvedValueOnce({ ...business, verificationStatus: 'APPROVED' });
     setup(); await ready();
-    fireEvent.click(screen.getByRole('button', { name: 'Verificar administrativamente el negocio' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar verificación del negocio' }));
+    const picker = screen.getByRole('dialog', { name: 'Cambiar verificación' });
+    expect(within(picker).getByRole('button', { name: 'Sin verificar' })).toBeDisabled();
+    fireEvent.click(within(picker).getByRole('button', { name: 'Verificado' }));
     const dialog = screen.getByRole('dialog', { name: 'Verificar negocio' });
+    expect(within(dialog).getByRole('button', { name: 'Confirmar verificación' })).toBeDisabled();
     fireEvent.change(within(dialog).getByLabelText(/Motivo de la decisión/), { target: { value: 'Documentación revisada y nombre confirmado' } });
     fireEvent.change(within(dialog).getByLabelText(/Escribe VERIFICAR/), { target: { value: 'VERIFICAR' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Confirmar verificación' }));
-    await waitFor(() => expect(api.verifyAdminBusiness).toHaveBeenCalledWith(business.id, 'Documentación revisada y nombre confirmado', 'VERIFICAR'));
+    await waitFor(() => expect(api.changeAdminBusinessVerification).toHaveBeenCalledWith(business.id, 'VERIFY', 'Documentación revisada y nombre confirmado', 'VERIFICAR'));
     await waitFor(() => expect(api.getRecordBusiness).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(api.getRecordHistory).toHaveBeenCalledTimes(2));
+  });
+  it('permite retirar la verificación con motivo sin modificar la visibilidad', async () => {
+    api.changeAdminBusinessVerification.mockResolvedValue({ verificationStatus: 'NONE', message: 'Verificación retirada' });
+    api.getRecordBusiness.mockResolvedValueOnce({ ...business, verificationStatus: 'APPROVED' }).mockResolvedValueOnce({ ...business, verificationStatus: 'NONE' });
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar verificación del negocio' }));
+    const picker = screen.getByRole('dialog', { name: 'Cambiar verificación' });
+    expect(within(picker).getByRole('button', { name: 'Verificado' })).toBeDisabled();
+    fireEvent.click(within(picker).getByRole('button', { name: 'Sin verificar' }));
+    const dialog = screen.getByRole('dialog', { name: 'Retirar verificación' });
+    expect(within(dialog).getByRole('button', { name: 'Confirmar sin verificar' })).toBeDisabled();
+    fireEvent.change(within(dialog).getByLabelText(/Motivo de la decisión/), { target: { value: 'Inconsistencia comprobada en la información registrada' } });
+    fireEvent.change(within(dialog).getByLabelText(/Escribe SIN VERIFICAR/), { target: { value: 'SIN VERIFICAR' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirmar sin verificar' }));
+    await waitFor(() => expect(api.changeAdminBusinessVerification).toHaveBeenCalledWith(business.id, 'UNVERIFY', 'Inconsistencia comprobada en la información registrada', 'SIN VERIFICAR'));
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Sin verificar'));
+    expect(api.changeAdminBusinessVisibility).not.toHaveBeenCalled();
+  });
+  it('cancelar la verificación no escribe un cambio administrativo', async () => {
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar verificación del negocio' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Cambiar verificación' })).getByRole('button', { name: 'Verificado' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Verificar negocio' })).getByRole('button', { name: 'Cancelar' }));
+    expect(api.changeAdminBusinessVerification).not.toHaveBeenCalled();
   });
   it('solicita confirmación al cambiar el plan del negocio', async () => {
     api.changeAdminBusinessPlan.mockResolvedValue({ plan: 'BASIC', message: 'Plan actualizado' });
@@ -160,7 +189,7 @@ describe('Ficha administrativa del negocio', () => {
     const cards = screen.getByRole('region', { name: 'Indicadores principales' });
     expect(within(cards).getAllByRole('button')).toHaveLength(5);
     expect(within(cards).getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toHaveClass('bd-indicator-trigger');
-    expect(within(cards).getByRole('button', { name: 'Verificar administrativamente el negocio' })).toHaveClass('bd-indicator-trigger');
+    expect(within(cards).getByRole('button', { name: 'Cambiar verificación del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Cambiar el plan del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Consultar reportes de este negocio' })).toHaveClass('bd-indicator-trigger');
     fireEvent.click(within(cards).getByRole('button', { name: 'Consultar información general y completitud del negocio' }));
