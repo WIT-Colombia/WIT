@@ -8,6 +8,7 @@ import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility, setAdminBusinessVerification, setAdminBusinessPlan } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
+import { listAdminVisibilityAudit } from './admin-visibility-audit.service.js';
 import { recordActivity, recordCatalog, recordPhoto, recordPhotos, recordReviews } from './admin-business-record.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
 import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto } from './admin-content.service.js';
@@ -21,6 +22,17 @@ import { adminDocumentsRouter } from './admin-documents.routes.js';
 export const adminRouter = Router();
 adminRouter.use('/documents', adminDocumentsRouter);
 adminRouter.get('/me', requireAdmin(), adminMeController);
+// Platform-wide business visibility audit. Restricted independently from business details.
+adminRouter.get('/audit/visibility', requireAdmin('AUDIT_READ'), async (req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await listAdminVisibilityAudit({
+      page: Number(req.query.page ?? 1),
+      kind: String(req.query.kind ?? 'ALL'),
+      search: String(req.query.search ?? ''),
+    }));
+  } catch (error) { next(error); }
+});
 adminRouter.get('/businesses', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
   try { res.setHeader('Cache-Control', 'no-store'); res.json(await listAdminBusinesses({ q: String(req.query.q ?? ''), page: Number(req.query.page) || 1, pageSize: Number(req.query.pageSize) || 20, status: String(req.query.status ?? ''), city: String(req.query.city ?? ''), categoryId: String(req.query.categoryId ?? ''), visibility: String(req.query.visibility ?? ''), verification: String(req.query.verification ?? ''), plan: String(req.query.plan ?? ''), restriction: String(req.query.restriction ?? ''), from: String(req.query.from ?? ''), to: String(req.query.to ?? ''), order: String(req.query.order ?? '') })); }
   catch (error) { next(error); }
