@@ -66,12 +66,45 @@ describe('Ficha administrativa del negocio', () => {
     await waitFor(() => expect(api.changeAdminBusinessPlan).toHaveBeenCalledWith(business.id, 'BASIC', 'Se acordó regresar al plan básico', 'BASIC'));
     await waitFor(() => expect(api.getRecordBusiness).toHaveBeenCalledTimes(2));
   });
-  it('muestra visible, oculta y suspendida como opciones diferenciadas', async () => {
+  it('abre sobre la ficha las tres opciones diferenciadas, sin aplicar cambios automáticamente', async () => {
+    setup(); await ready();
+    const card = screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' });
+    expect(card).toHaveAttribute('aria-haspopup', 'dialog');
+    fireEvent.click(card);
+    expect(card).toHaveAttribute('aria-expanded', 'true');
+    const picker = screen.getByRole('dialog', { name: 'Cambiar visibilidad' });
+    expect(within(picker).getByRole('button', { name: 'Visible' })).toBeDisabled();
+    expect(within(picker).getByRole('button', { name: 'Oculta' })).toBeEnabled();
+    expect(within(picker).getByRole('button', { name: 'Suspendida' })).toBeEnabled();
+    expect(within(picker).getByText(/propietario puede volver a mostrarlo/)).toBeInTheDocument();
+    expect(within(picker).getByText(/Solo XAMUKO Admin/i)).toBeInTheDocument();
+    expect(api.changeAdminBusinessVisibility).not.toHaveBeenCalled();
+  });
+  it('seleccionar Oculta abre un segundo paso de confirmación y no cambia el estado hasta justificarlo', async () => {
     setup(); await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' }));
-    expect(screen.getByRole('button', { name: 'Visible' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Oculta.*El propietario puede reactivarla/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Suspendida.*Solo Admin puede levantarla/ })).toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Cambiar visibilidad' }))
+      .getByRole('button', { name: 'Oculta' }));
+    expect(screen.queryByRole('dialog', { name: 'Cambiar visibilidad' })).not.toBeInTheDocument();
+    const confirmation = screen.getByRole('dialog', { name: 'Ocultar negocio' });
+    expect(within(confirmation).getByRole('button', { name: 'Confirmar ocultamiento' })).toBeDisabled();
+    fireEvent.click(within(confirmation).getByRole('button', { name: 'Cancelar' }));
+    expect(api.changeAdminBusinessVisibility).not.toHaveBeenCalled();
+  });
+  it('seleccionar Suspendida abre la confirmación exclusiva de Admin', async () => {
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Cambiar visibilidad' }))
+      .getByRole('button', { name: 'Suspendida' }));
+    expect(screen.getByRole('dialog', { name: 'Suspender negocio' })).toBeInTheDocument();
+    expect(screen.getByText(/no podrá renovar, activar ni volver a publicar/)).toBeInTheDocument();
+    expect(api.changeAdminBusinessVisibility).not.toHaveBeenCalled();
+  });
+  it('las cuentas sin autorización administrativa no pueden abrir ni modificar la visibilidad', async () => {
+    role = 'ADMIN';
+    setup(); await ready();
+    expect(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toBeDisabled();
+    expect(screen.queryByRole('dialog', { name: 'Cambiar visibilidad' })).not.toBeInTheDocument();
   });
   it('centra las cinco tarjetas y permite consultar la completitud desde toda su superficie', async () => {
     setup(); await ready();
@@ -88,9 +121,10 @@ describe('Ficha administrativa del negocio', () => {
   it('permite cerrar el selector de visibilidad con Escape sin cambiar el negocio', async () => {
     setup(); await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' }));
-    expect(screen.getByRole('group', { name: 'Elegir estado de visibilidad' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Cambiar visibilidad' })).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(screen.queryByRole('group', { name: 'Elegir estado de visibilidad' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Cambiar visibilidad' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toHaveAttribute('aria-expanded', 'false');
     expect(api.changeAdminBusinessVisibility).not.toHaveBeenCalled();
   });
   it('un fallo del backend no presenta una ficha ficticia', async () => { api.getRecordBusiness.mockRejectedValue(new Error('No disponible temporalmente')); setup(); expect(await screen.findByRole('heading', { name: 'No pudimos abrir la ficha' })).toBeInTheDocument(); expect(screen.queryByText('85%')).not.toBeInTheDocument(); expect(screen.getByText('No disponible temporalmente')).toBeInTheDocument(); });
