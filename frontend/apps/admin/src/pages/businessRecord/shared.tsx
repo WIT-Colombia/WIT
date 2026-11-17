@@ -6,7 +6,7 @@ export const number = (value: number) => value.toLocaleString('es-CO');
 export const date = (value: string) => new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' }).format(new Date(value));
 export const categoryName = (value: Category | null) => value?.translations.find(row => row.locale === 'es-CO')?.name ?? value?.translations.find(row => row.locale === 'es')?.name ?? value?.translations[0]?.name ?? value?.code ?? 'Sin categoría registrada';
 export const labels: Record<string, string> = {
-  PUBLISHED: 'Publicado', UNPUBLISHED: 'Sin publicar', REVIEW: 'En revisión', ACTIVE: 'Activo', DRAFT: 'Borrador',
+  PUBLISHED: 'Publicado', UNPUBLISHED: 'Sin publicar', REVIEW: 'En revisión', ACTIVE: 'Activo', INACTIVE: 'Desactivado', DRAFT: 'Borrador',
   HIDDEN: 'Oculto', SUSPENDED: 'Suspendido', VISIBLE: 'Visible', EXPIRED: 'Vencido', DELETED: 'Eliminado',
   NONE: 'Sin restricción', PENDING: 'Pendiente', APPROVED: 'Verificado', INFORMATION: 'Información solicitada', REJECTED: 'Rechazado',
   REMOVED: 'Retirada por moderación', REMOVED_BY_AUTHOR: 'Retirada por su autor', OWNER: 'Propietario', COLLABORATOR: 'Colaborador',

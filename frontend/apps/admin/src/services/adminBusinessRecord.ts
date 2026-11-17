@@ -26,6 +26,11 @@ const query = (filters: Record<string, string | number>) => new URLSearchParams(
 export const getRecordBusiness = async (id: string) => (await adminBusinessRecordRequest<{ business: RecordBusiness }>(path(id))).business;
 export const getRecordHistory = (id: string, page = 1) => adminBusinessRecordRequest<HistoryResult>(path(id, `/history?page=${page}&pageSize=12`));
 export const getRecordCatalog = (id: string, filters: Record<string, string | number>) => adminBusinessRecordRequest<{ offers: RecordOffer[]; pagination: Pagination }>(path(id, `/catalog?${query(filters)}`));
+export type AdminOfferAction = 'ACTIVATE' | 'DEACTIVATE' | 'DELETE';
+export const setRecordOfferState = (id: string, offerId: string, action: AdminOfferAction, reason: string) =>
+  adminBusinessRecordRequest<{ id: string; state: string; message: string }>(
+    path(id, `/catalog/${encodeURIComponent(offerId)}/state`),
+    { method: 'POST', body: JSON.stringify({ action, reason }) });
 export const getRecordReviews = (id: string, filters: Record<string, string | number>) => adminBusinessRecordRequest<{ reviews: RecordReview[]; pagination: Pagination }>(path(id, `/reviews?${query(filters)}`));
 export const getRecordPhotos = (id: string, page: number, scope: string) => adminBusinessRecordRequest<{ photos: RecordPhoto[]; pagination: Pagination }>(path(id, `/photos?${query({ page, scope })}`));
 export const getRecordActivity = (id: string, period: string) => adminBusinessRecordRequest<RecordActivity>(path(id, `/activity?${query({ period })}`));

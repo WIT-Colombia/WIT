@@ -7,7 +7,7 @@ import { offerPrice } from './Catalog';
 import { HistoryTimeline } from './History';
 import type { RecordBusiness, RecordOffer } from '../../services/adminBusinessRecord';
 
-const api = vi.hoisted(() => ({ getRecordBusiness: vi.fn(), getRecordHistory: vi.fn(), getRecordCatalog: vi.fn(), getRecordReviews: vi.fn(), getRecordPhotos: vi.fn(), getRecordActivity: vi.fn(), changeAdminBusinessVisibility: vi.fn(), deleteAdminBusiness: vi.fn(), changeAdminBusinessVerification: vi.fn(), changeAdminBusinessPlan: vi.fn(), listRecordBusinessReports: vi.fn() }));
+const api = vi.hoisted(() => ({ getRecordBusiness: vi.fn(), getRecordHistory: vi.fn(), getRecordCatalog: vi.fn(), setRecordOfferState: vi.fn(), getRecordReviews: vi.fn(), getRecordPhotos: vi.fn(), getRecordActivity: vi.fn(), changeAdminBusinessVisibility: vi.fn(), deleteAdminBusiness: vi.fn(), changeAdminBusinessVerification: vi.fn(), changeAdminBusinessPlan: vi.fn(), listRecordBusinessReports: vi.fn() }));
 vi.mock('../../services/adminBusinessRecord', () => api);
 vi.mock('../../services/adminApiClient', async original => ({ ...await original<typeof import('../../services/adminApiClient')>(), changeAdminBusinessVisibility: api.changeAdminBusinessVisibility, deleteAdminBusiness: api.deleteAdminBusiness, changeAdminBusinessVerification: api.changeAdminBusinessVerification, changeAdminBusinessPlan: api.changeAdminBusinessPlan, listRecordBusinessReports: api.listRecordBusinessReports }));
 vi.mock('../../components/businesses/BusinessRecordPhoto', () => ({ BusinessRecordPhotos: ({ children }: { children: React.ReactNode }) => children, BusinessRecordPhoto: ({ alt }: { alt: string }) => <span data-testid="record-photo">{alt}</span> }));
@@ -19,7 +19,7 @@ const offer: RecordOffer = { id: 'offer-1', internalCode: 'P000001', kind: 'PROD
 function setup() { render(<MemoryRouter initialEntries={['/businesses/business-1']}><Routes><Route path="/businesses/:id" element={<BusinessRecordPage/>}/></Routes></MemoryRouter>); }
 async function ready() { await screen.findByRole('heading', { name: 'Ficha administrativa del negocio' }); }
 describe('Ficha administrativa del negocio', () => {
-  beforeEach(() => { vi.clearAllMocks(); role = 'SUPER_ADMIN'; permissions = ['business:write', 'catalog:read', 'content:moderate', 'content:moderate:write', 'settings:write']; api.getRecordBusiness.mockResolvedValue(business); api.getRecordHistory.mockResolvedValue({ history: [], pagination: { ...pagination, total: 0, totalPages: 0 } }); api.getRecordCatalog.mockResolvedValue({ offers: [offer], pagination }); api.getRecordReviews.mockResolvedValue({ reviews: [], pagination: { ...pagination, total: 0 } }); api.getRecordPhotos.mockResolvedValue({ photos: [], pagination: { ...pagination, total: 0 } }); api.getRecordActivity.mockResolvedValue({ period: 'last30', timezone: 'America/Bogota',
+  beforeEach(() => { vi.clearAllMocks(); role = 'SUPER_ADMIN'; permissions = ['business:write', 'catalog:read', 'content:moderate', 'content:moderate:write', 'settings:write']; api.getRecordBusiness.mockResolvedValue(business); api.getRecordHistory.mockResolvedValue({ history: [], pagination: { ...pagination, total: 0, totalPages: 0 } }); api.getRecordCatalog.mockResolvedValue({ offers: [offer], pagination }); api.setRecordOfferState.mockResolvedValue({ id: offer.id, state: 'INACTIVE', message: 'Cambio registrado en auditoría.' }); api.getRecordReviews.mockResolvedValue({ reviews: [], pagination: { ...pagination, total: 0 } }); api.getRecordPhotos.mockResolvedValue({ photos: [], pagination: { ...pagination, total: 0 } }); api.getRecordActivity.mockResolvedValue({ period: 'last30', timezone: 'America/Bogota',
     start: '2026-10-19T05:00:00Z', end: '2026-11-17T12:00:00Z',
     totals: { views: 8, interactions: 3, offerViews: 0, reviews: 0, products: 0, services: 0 },
     current: { favorites: 7, offerLikes: 13 },
@@ -170,6 +170,46 @@ describe('Ficha administrativa del negocio', () => {
   });
   it('cambiar pestañas conserva la ficha y la consulta del catálogo', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); await screen.findByRole('heading', { name: offer.name }); fireEvent.click(screen.getByRole('tab', { name: 'Información general' })); expect(screen.getByRole('tabpanel', { name: 'Información general' })).toHaveTextContent('Cuenta registradora'); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(api.getRecordBusiness).toHaveBeenCalledTimes(1); expect(api.getRecordCatalog).toHaveBeenCalledTimes(1); expect(screen.getByRole('heading', { name: offer.name })).toBeInTheDocument(); });
   it('el catálogo permite consultar sin modificar la información comercial', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' })); const dialog = await screen.findByRole('dialog', { name: offer.name }); expect(within(dialog).queryByRole('button', { name: /Guardar|Eliminar|Editar/ })).not.toBeInTheDocument(); expect(within(dialog).getByText('Información comercial registrada')).toBeInTheDocument(); expect(offerPrice(offer)).toMatch(/COP.*0/); expect(offerPrice({ ...offer, negotiable: true })).toBe('Precio a convenir'); });
+  it('el catálogo utiliza un único filtro Todos, Activos, Desactivados, Eliminados', async () => {
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' }));
+    expect(await screen.findByRole('heading', { name: offer.name })).toBeInTheDocument();
+    const filter = screen.getByRole('combobox', { name: 'Estado del catálogo' });
+    expect(filter).toHaveValue('ALL');
+    expect(within(filter).getAllByRole('option')).toHaveLength(4);
+    expect(screen.queryByRole('combobox', { name: 'Activación del catálogo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Publicación del catálogo' })).not.toBeInTheDocument();
+    fireEvent.change(filter, { target: { value: 'DELETED' } });
+    await waitFor(() => expect(api.getRecordCatalog).toHaveBeenCalledWith(business.id,
+      expect.objectContaining({ kind: 'PRODUCT', state: 'DELETED', page: 1 })));
+  });
+  it('tres acciones por producto piden motivo, confirman y refrescan el historial', async () => {
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' }));
+    await screen.findByRole('heading', { name: offer.name });
+    expect(screen.getByRole('button', { name: 'Activar ' + offer.name })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Desactivar ' + offer.name })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Eliminar ' + offer.name })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Desactivar ' + offer.name }));
+    const dialog = screen.getByRole('dialog', { name: 'Desactivar publicación' });
+    const confirm = within(dialog).getByRole('button', { name: 'Confirmar desactivación' });
+    expect(confirm).toBeDisabled();
+    fireEvent.change(within(dialog).getByLabelText(/Motivo de la decisión/), { target: { value: 'Decisión administrativa debidamente sustentada.' } });
+    expect(confirm).toBeEnabled();
+    fireEvent.click(confirm);
+    await waitFor(() => expect(api.setRecordOfferState).toHaveBeenCalledWith(business.id,
+      offer.id, 'DEACTIVATE', 'Decisión administrativa debidamente sustentada.'));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Desactivar publicación' })).not.toBeInTheDocument());
+    expect(api.getRecordCatalog.mock.calls.length).toBeGreaterThan(1);
+    expect(api.getRecordHistory.mock.calls.length).toBeGreaterThan(1);
+  });
+  it('eliminar requiere confirmación y nunca se ofrece al administrador no principal', async () => {
+    role = 'ADMIN'; setup(); await ready();
+    fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' }));
+    await screen.findByRole('heading', { name: offer.name });
+    expect(screen.getByRole('button', { name: 'Eliminar ' + offer.name })).toBeDisabled();
+    expect(api.setRecordOfferState).not.toHaveBeenCalled();
+  });
   it('respeta los permisos separados de catálogo y opiniones', async () => { permissions = ['business:write']; role = 'ADMIN'; setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(screen.getByRole('heading', { name: 'Catálogo de acceso restringido' })).toBeInTheDocument(); fireEvent.click(screen.getByRole('tab', { name: 'Opiniones' })); expect(screen.getByRole('heading', { name: 'Opiniones de acceso restringido' })).toBeInTheDocument(); expect(api.getRecordCatalog).not.toHaveBeenCalled(); expect(api.getRecordReviews).not.toHaveBeenCalled(); expect(screen.queryByRole('button', { name: 'Ocultar negocio' })).not.toBeInTheDocument(); });
   it('cancelar una medida desde Visibilidad no escribe y confirmar actualiza el historial', async () => {
     setup(); await ready();

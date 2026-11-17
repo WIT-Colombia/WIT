@@ -126,7 +126,8 @@ function BusinessRecord({ id }: { id: string }) {
     <div className="bd-body"><div className="bd-tab-content">{tabs.map(item => <section className="bd-tab-panel" role="tabpanel" id={`bd-panel-${item.key}`} aria-labelledby={`bd-tab-${item.key}`} hidden={tab !== item.key} key={item.key} tabIndex={0}>
       {visited.has(item.key) && (item.key === 'summary' ? <Overview business={business} latest={latest} historyStatus={history.loading || history.error ? <Loading {...history}/> : null} onActivity={() => choose('activity')} onHistory={() => choose('history')} catalogAllowed={catalogAllowed}/>
         : item.key === 'information' ? <div className="bd-information"><Information business={business}/><Members business={business}/></div>
-        : item.key === 'catalog' ? <Catalog id={business.id} allowed={catalogAllowed} canModerate={catalogAllowed && Boolean(session?.permissions?.includes('content:moderate:write'))}/>
+        : item.key === 'catalog' ? <Catalog id={business.id} allowed={catalogAllowed} canModerate={catalogAllowed && Boolean(session?.permissions?.includes('content:moderate:write'))}
+            canDelete={session?.role === 'SUPER_ADMIN'} onChanged={changed}/>
         : item.key === 'reviews' ? <Reviews business={business} allowed={reviewsAllowed}/>
         : item.key === 'photos' ? <Gallery id={business.id} catalogAllowed={catalogAllowed}/>
         : item.key === 'activity' ? <Activity id={business.id}/>
