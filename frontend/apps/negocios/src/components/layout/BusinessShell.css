@@ -143,6 +143,30 @@
 .business-app .business-mobile-drawer .sidebar-nav .nav-link{min-height:45px;font-size:13px}
 .business-app .business-mobile-drawer .sidebar-pro-card{margin-top:20px}
 .business-app .business-mobile-drawer .sidebar-account-link{margin-top:0}
+
+/* The tablet portrait drawer must also scroll on its own, including its profile.
+   Keep the body locked behind the drawer and respect the visible Safari viewport. */
+.business-mobile-menu-layer{
+  bottom:auto;
+  height:calc(100vh - 72px);
+  height:calc(100dvh - 72px);
+}
+.business-mobile-drawer{
+  height:100%;
+  min-height:0;
+  max-height:100%;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+  padding-bottom:max(18px,env(safe-area-inset-bottom));
+}
+.business-app .business-mobile-drawer .sidebar > :is(
+  .sidebar-brand,.sidebar-nav,.sidebar-pro-card,.sidebar-support,.sidebar-account-link
+){flex-shrink:0}
+.business-app .business-mobile-drawer .sidebar-account-link{margin-bottom:0}
+
 }
 @media(max-width:600px){
 .business-institutional-footer{gap:10px;margin-inline:18px;padding-bottom:95px}
