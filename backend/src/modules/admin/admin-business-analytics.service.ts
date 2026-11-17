@@ -3,7 +3,7 @@ import { Prisma } from '../../generated/prisma/client.js';
 
 type Period = '6m' | '12m' | '24m' | '60m' | 'all';
 type Status = 'all' | 'active' | 'review' | 'inactive';
-type Query = { period?: string; city?: string; categoryId?: string; status?: string };
+type Query = { period?: string; city?: string; categoryId?: string; status?: string; interval?: string };
 const publicationStatuses: Record<Exclude<Status, 'all'>, 'PUBLISHED' | 'REVIEW' | 'UNPUBLISHED'> = {
   active: 'PUBLISHED', review: 'REVIEW', inactive: 'UNPUBLISHED',
 };
@@ -13,6 +13,7 @@ const getStatus = (s?: string): Status => s === 'active' || s === 'review' || s 
 export async function getAdminBusinessAnalytics(query: Query, now = new Date()) {
   const period = getPeriod(query.period);
   const status = getStatus(query.status);
+  const withDailySeries = query.interval === 'day' || query.interval === 'week';
   const categoryId = (query.categoryId ?? '').trim().slice(0, 36);
   const cityKey = (query.city ?? '').trim().slice(0, 220);
   const divider = cityKey.indexOf('|');
@@ -110,8 +111,30 @@ export async function getAdminBusinessAnalytics(query: Query, now = new Date()) 
     userCumulative += users;
     series.push({ month, registrations, cumulative, reviews, reviewCumulative, users, userCumulative });
   }
+  // Daily buckets are queried only when requested. Weekly totals are calculated
+  // from these actual UTC days, never reconstructed from monthly aggregates.
+  const dailySeries: Array<{ date: string; registrations: number; cumulative: number }> = [];
+  if (withDailySeries) {
+    const tomorrowUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const days = await prisma.$queryRaw<Array<{ date: string; quantity: bigint }>>(Prisma.sql`
+      SELECT DATE_FORMAT(b.createdAt, '%Y-%m-%d') AS date, COUNT(*) AS quantity
+      FROM Business b
+      WHERE ${Prisma.join([...conditions, Prisma.sql`b.createdAt < ${tomorrowUTC}`], ' AND ')}
+      GROUP BY DATE_FORMAT(b.createdAt, '%Y-%m-%d')
+      ORDER BY date ASC
+    `);
+    const dayCounts = new Map(days.map(item => [item.date, Number(item.quantity)]));
+    let running = total - [...dayCounts.values()].reduce((sum, value) => sum + value, 0);
+    for (let cursor = new Date(start); cursor < tomorrowUTC; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+      const date = cursor.toISOString().slice(0, 10);
+      const registrations = dayCounts.get(date) ?? 0;
+      running += registrations;
+      dailySeries.push({ date, registrations, cumulative: running });
+    }
+  }
   return {
     period, status, timezone: 'UTC', total, totalUsers, totalReviews,
+    ...(withDailySeries ? { dailySeries } : {}),
     filters: {
       cities: locations.map(loc => ({ value: loc.countryCode + '|' + loc.cityName, label: loc.cityName + ' · ' + loc.countryCode })),
       categories: categories.map(category => ({
