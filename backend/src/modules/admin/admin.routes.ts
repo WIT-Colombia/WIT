@@ -6,7 +6,7 @@ import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-or
 import { adminMeController, administratorsController, assignRoleController, permissionController, revokeRoleController, pioneerRegistryController, pioneerClaimController, pioneerAssignController, pioneerBrandReviewController } from './admin.controller.js';
 import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
-import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, setAdminBusinessVisibility } from './admin-businesses.service.js';
+import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
 import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto } from './admin-content.service.js';
@@ -26,6 +26,14 @@ adminRouter.get('/businesses', requireAdmin('BUSINESSES_READ'), async (req, res,
 });
 adminRouter.get('/businesses/overview', requireAdmin('BUSINESSES_READ'), async (_req, res, next) => {
   try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessesOverview()); } catch (error) { next(error); }
+});
+adminRouter.get('/business-photos/:photoId', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try {
+    const photo = await getAdminBusinessCoverPhoto(String(req.params.photoId));
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.type(photo.mimeType).send(photo.buffer);
+  } catch (error) { next(error); }
 });
 adminRouter.get('/businesses/filters', requireAdmin('BUSINESSES_READ'), async (_req, res, next) => {
   try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessesFilters()); } catch (error) { next(error); }
