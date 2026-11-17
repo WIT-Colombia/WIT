@@ -5,11 +5,11 @@ import { changeAdminBusinessPlan, changeAdminBusinessVerification } from '../../
 
 export type BusinessDecision = 'verification' | 'unverification' | 'plan';
 
-export function BusinessDecisionDialog({ business, decision, onClose, onSuccess }: {
+export function BusinessDecisionDialog({ business, decision, selectedPlan, onClose, onSuccess }: {
   business: { id: string; name: string; isPro: boolean };
-  decision: BusinessDecision; onClose: () => void; onSuccess: (message: string) => void;
+  decision: BusinessDecision; selectedPlan?: 'BASIC' | 'PRO'; onClose: () => void; onSuccess: (message: string) => void;
 }) {
-  const [plan, setPlan] = useState<'BASIC' | 'PRO'>(business.isPro ? 'BASIC' : 'PRO');
+  const plan = selectedPlan ?? (business.isPro ? 'BASIC' : 'PRO');
   const [reason, setReason] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [busy, setBusy] = useState(false);
@@ -40,10 +40,7 @@ export function BusinessDecisionDialog({ business, decision, onClose, onSuccess 
         : 'Retirar la verificación elimina la insignia de verificado, sin ocultar ni suspender el negocio. La decisión podrá revertirse.'}
         {' '}Si existe una solicitud documental pendiente, debes resolverla desde <strong>Verificaciones</strong> para conservar el expediente.</p>
         : <>
-          <label>Plan que deseas asignar
-            <select value={plan} disabled={busy} onChange={event => { setPlan(event.target.value as 'BASIC' | 'PRO'); setConfirmation(''); }}>
-              <option value="BASIC">Básico</option><option value="PRO">Business PRO</option>
-            </select></label>
+          <p className="bd-decision-selected-plan"><strong>Plan seleccionado:</strong> {plan === 'PRO' ? 'Business PRO' : 'Básico'}</p>
           <p>{plan === 'PRO' ? 'La asignación administrativa activa Business PRO sin generar un cobro ni renovación automática y estará vigente hasta una revocación administrativa.'
             : 'El cambio a Básico revocará el acceso PRO vigente, incluso si procedía de una suscripción de pago. Revisa previamente las obligaciones comerciales correspondientes.'}</p>
         </>}

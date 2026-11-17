@@ -775,3 +775,8 @@
 /* Verification shares visibility's responsive modal styling on desktop, iPad and mobile. */
 .bd-verification-picker .bd-verification-choice--verified .bd-visibility-picker-choice-icon{background:#e8f7ee;color:#16814a}
 .bd-verification-picker .bd-verification-choice--unverified .bd-visibility-picker-choice-icon{background:#fff2dc;color:#ad6912}
+
+/* Subscription shares the responsive picker and correctly centered iPad close icon. */
+.bd-subscription-picker .bd-subscription-choice--basic .bd-visibility-picker-choice-icon{background:#edf2f8;color:#475569}
+.bd-subscription-picker .bd-subscription-choice--pro .bd-visibility-picker-choice-icon{background:#eee4ff;color:#7335df}
+.bd-decision-form .bd-decision-selected-plan{margin:0;color:#281b42;font-weight:650}

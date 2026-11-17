@@ -6,6 +6,7 @@ import { AdminBusinessDeleteDialog } from '../../components/businesses/AdminBusi
 import { AdminBusinessVisibilityDialog } from '../../components/businesses/AdminBusinessVisibilityDialog';
 import { AdminBusinessVisibilityPicker } from './AdminBusinessVisibilityPicker';
 import { AdminBusinessVerificationPicker } from './AdminBusinessVerificationPicker';
+import { AdminBusinessSubscriptionPicker } from './AdminBusinessSubscriptionPicker';
 import { BusinessRecordPhoto, BusinessRecordPhotos } from '../../components/businesses/BusinessRecordPhoto';
 import { adminBusinessVisibilityLabel, type AdminVisibilityAction } from '../../services/adminApiClient';
 import { getSession } from '../../services/adminService';
@@ -52,6 +53,8 @@ function BusinessRecord({ id }: { id: string }) {
   const [visibilityAction, setVisibilityAction] = useState<AdminVisibilityAction | null>(null), [deleting, setDeleting] = useState(false);
   const [visibilityOpen, setVisibilityOpen] = useState(false);
   const [verificationOpen, setVerificationOpen] = useState(false);
+  const [subscriptionOpen, setSubscriptionOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'BASIC' | 'PRO' | null>(null);
   const [decision, setDecision] = useState<BusinessDecision | null>(null);
   const nav = useRef<HTMLDivElement>(null);
   const choose = (value: Tab) => { setVisited(old => new Set([...old, value])); setTab(value); };
@@ -59,7 +62,7 @@ function BusinessRecord({ id }: { id: string }) {
     choose(value);
     nav.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   };
-  const changed = (message: string) => { setDeleting(false); setVisibilityAction(null); setVisibilityOpen(false); setVerificationOpen(false); setDecision(null); setNotice(message); setOperationPending(true); setHistoryPage(1); setRevision(value => value + 1); };
+  const changed = (message: string) => { setDeleting(false); setVisibilityAction(null); setVisibilityOpen(false); setVerificationOpen(false); setSubscriptionOpen(false); setSelectedPlan(null); setDecision(null); setNotice(message); setOperationPending(true); setHistoryPage(1); setRevision(value => value + 1); };
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso de consulta de negocios para abrir la ficha."/>;
   if (!source.data) return source.error ? <StatePanel kind="error" title="No pudimos abrir la ficha" message={source.error} retry={source.retry}/> : <StatePanel kind="loading" title="Cargando ficha administrativa" message="Consultando el establecimiento y su información registrada."/>;
   const business = source.data, record = business.record, state = businessState(business);
@@ -68,6 +71,7 @@ function BusinessRecord({ id }: { id: string }) {
   // Mutations remain SUPER_ADMIN-only and are authorized again by the backend.
   const canChangeVisibility = session?.role === 'SUPER_ADMIN' && business.deletionStatus !== 'DELETED';
   const canChangeVerification = canChangeVisibility;
+  const canChangeSubscription = canChangeVisibility;
   const canAct = canChangeVisibility && Boolean(record);
   const actionDisabled = source.loading || Boolean(source.error) || operationPending;
   const photoCount = record ? record.businessPhotos + (catalogAllowed ? record.catalogPhotos : 0) : 0;
@@ -111,11 +115,12 @@ function BusinessRecord({ id }: { id: string }) {
         </button>
       </article>
       <article className="bd-interactive-indicator"><button className="bd-indicator-trigger" type="button"
-        disabled={!canAct || actionDisabled} onClick={() => setDecision('plan')} aria-label="Cambiar el plan del negocio">
+        disabled={!canChangeSubscription || actionDisabled} aria-expanded={subscriptionOpen} aria-haspopup="dialog"
+        onClick={() => setSubscriptionOpen(open => !open)} aria-label="Cambiar suscripción del negocio">
         <span className="bd-indicator-icon bd-icon--violet"><Icon name="crown" size={25}/></span>
         <span className="bd-indicator-content"><span className="bd-indicator-title">Suscripción</span><Badge tone={business.isPro ? 'violet' : 'neutral'}>
           {business.isPro === true ? 'Business PRO' : business.isPro === false ? 'Básico' : 'No disponible'}</Badge></span>
-        {canAct && <Icon name="chevron" size={16}/>}</button></article>
+        {canChangeSubscription && <Icon name="chevron" size={16}/>}</button></article>
       <article className="bd-interactive-indicator"><button className="bd-indicator-trigger" type="button"
         onClick={() => openSection('reports')} aria-label="Consultar reportes de este negocio">
         <span className="bd-indicator-icon bd-icon--red"><Icon name="flag" size={25}/></span>
@@ -157,9 +162,13 @@ function BusinessRecord({ id }: { id: string }) {
       businessName={business.name} verificationStatus={business.verificationStatus}
       onClose={() => setVerificationOpen(false)}
       onChoose={action => { setVerificationOpen(false); setDecision(action === 'VERIFY' ? 'verification' : 'unverification'); }}/>}
+    {subscriptionOpen && canChangeSubscription && <AdminBusinessSubscriptionPicker
+      businessName={business.name} currentPlan={business.isPro ? 'PRO' : 'BASIC'}
+      onClose={() => setSubscriptionOpen(false)}
+      onChoose={plan => { setSubscriptionOpen(false); setSelectedPlan(plan); setDecision('plan'); }}/>}
     {visibilityAction && <AdminBusinessVisibilityDialog business={business} action={visibilityAction} onClose={() => setVisibilityAction(null)} onSuccess={changed}/>}
     {deleting && <AdminBusinessDeleteDialog business={business} onClose={() => setDeleting(false)} onSuccess={changed}/>}
-    {decision && <BusinessDecisionDialog business={business} decision={decision}
-      onClose={() => setDecision(null)} onSuccess={changed}/>}
+    {decision && <BusinessDecisionDialog business={business} decision={decision} selectedPlan={selectedPlan ?? undefined}
+      onClose={() => { setDecision(null); setSelectedPlan(null); }} onSuccess={changed}/>}
   </div></BusinessRecordPhotos>;
 }
