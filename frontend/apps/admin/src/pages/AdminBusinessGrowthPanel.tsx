@@ -7,7 +7,7 @@ type Range = '6m' | '12m' | '24m' | '60m' | 'all';
 type Interval = 'day' | 'week' | 'month' | 'quarter' | 'year';
 type Measure = 'registrations' | 'cumulative';
 type Shape = 'area' | 'bars';
-type Datum = { label: string; registrations: number; cumulative: number };
+type Datum = { label: string; axisLabel: string; registrations: number; cumulative: number };
 const number = (value: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(value);
 
 type BusinessBucket = { date: string; registrations: number; cumulative: number };
@@ -29,7 +29,11 @@ function groupSeries(series: BusinessBucket[], interval: Interval): Datum[] {
         : interval === 'year' ? String(year)
           : interval === 'quarter' ? 'T' + (Math.floor(month / 3) + 1) + ' ' + year
             : dateLabel(day, { month: 'short', year: '2-digit' });
-    const record = records.get(label) ?? { label, registrations: 0, cumulative: 0 };
+    // A short, unambiguous MM/YY label is used for the iPad's narrow X-axis.
+    const axisLabel = interval === 'month'
+      ? String(month + 1).padStart(2, '0') + '/' + String(year).slice(-2)
+      : label;
+    const record = records.get(label) ?? { label, axisLabel, registrations: 0, cumulative: 0 };
     record.registrations += item.registrations;
     // End-of-period cumulative, not the sum of already accumulated values.
     record.cumulative = item.cumulative;
@@ -135,7 +139,10 @@ function GrowthCanvas({ points, measure, shape }: { points: Datum[]; measure: Me
       </>}
       {points.map((item, index) => (index % labelsStep === 0 || index === points.length - 1) &&
         <text key={item.label} x={shape === 'bars' ? left + (index + .5) * plotW / points.length : xx(index)} y={h - 17}
-          textAnchor="middle" className="ad-business-growth-axis">{item.label}</text>)}
+          textAnchor="middle" className="ad-business-growth-axis">
+          <tspan className="ad-business-growth-axis-full">{item.label}</tspan>
+          <tspan className="ad-business-growth-axis-compact">{item.axisLabel}</tspan>
+        </text>)}
     </svg>
     <div className="ad-business-growth-canvas-caption" aria-live="polite">{selected
       ? <><strong>{number(selected[measure])}</strong><span>{selected.label}</span></>
