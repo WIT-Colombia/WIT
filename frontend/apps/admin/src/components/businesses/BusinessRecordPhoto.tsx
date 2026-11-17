@@ -32,8 +32,8 @@ export function BusinessRecordPhotos({ businessId, children }: { businessId: str
   useEffect(() => { alive.current = true; return () => { alive.current = false; urls.current.forEach(url => URL.revokeObjectURL(url)); urls.current.clear(); sources.current.clear(); }; }, []);
   return <PhotoContext.Provider value={loader.current}>{children}</PhotoContext.Provider>;
 }
-export function BusinessRecordPhoto({ id, alt, size = 640, className = '', position, eager = false }: {
-  id: string | null; alt: string; size?: number; className?: string; position?: { x: number; y: number }; eager?: boolean;
+export function BusinessRecordPhoto({ id, alt, size = 640, className = '', position, eager = false, fallbackLetter }: {
+  id: string | null; alt: string; size?: number; className?: string; position?: { x: number; y: number }; eager?: boolean; fallbackLetter?: string;
 }) {
   const load = useContext(PhotoContext), ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(eager), [url, setUrl] = useState(''), [failed, setFailed] = useState(false);
@@ -50,6 +50,7 @@ export function BusinessRecordPhoto({ id, alt, size = 640, className = '', posit
   }, [id, visible, load, size]);
   return <div ref={ref} className={`bd-photo ${className}`}>
     {url ? <img src={url} alt={alt} decoding="async" loading={eager ? 'eager' : 'lazy'} style={position ? { objectPosition: `${position.x}% ${position.y}%` } : undefined} onError={() => { setUrl(''); setFailed(true); }}/>
-      : <span className="bd-photo-placeholder"><Icon name="image" size={28}/><span>{id ? failed ? 'Imagen no disponible' : 'Cargando fotografía…' : 'Sin fotografía registrada'}</span></span>}
+      : fallbackLetter ? <span className="bd-profile-monogram" aria-hidden="true">{fallbackLetter.trim().charAt(0).toLocaleUpperCase('es-CO') || 'X'}</span>
+        : <span className="bd-photo-placeholder"><Icon name="image" size={28}/><span>{id ? failed ? 'Imagen no disponible' : 'Cargando fotografía…' : 'Sin fotografía registrada'}</span></span>}
   </div>;
 }
