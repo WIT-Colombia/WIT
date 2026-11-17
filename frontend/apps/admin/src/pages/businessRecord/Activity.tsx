@@ -25,14 +25,25 @@ export function ActivityChart({ data, metric, variant = 'standard' }: { data: Re
     observer.observe(holder.current); return () => observer.disconnect();
   }, []);
   useEffect(() => setSelected(null), [data, metric]);
-  const left = 46, right = 28, top = 24, height = 285, w = width - left - right, h = height - top - 48;
+  const height = variant === 'overview' ? Math.min(520, Math.max(300, Math.round(width * 0.5))) : 285;
+  const left = 46, right = 28, top = variant === 'overview' ? 86 : 24;
+  const w = width - left - right, h = height - top - 48;
   const points = data.series, maximum = Math.max(1, ...points.map(row => row[metric])), step = Math.max(1, Math.ceil(maximum / 4)), ceiling = step * 4;
   const x = (index: number) => left + (points.length < 2 ? w / 2 : index * w / (points.length - 1));
   const y = (value: number) => top + h * (1 - value / ceiling);
   const active = selected === null ? null : points[selected];
   const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(w / 85))));
-  const tooltipX = selected === null ? left : Math.max(left, Math.min(width - right - 145, x(selected) - 72));
-  const tooltipY = selected === null ? top : Math.max(top + 6, y(points[selected][metric]) - 68);
+  const tooltipWidth = 178;
+  const tooltipX = selected === null ? left : Math.max(4, Math.min(width - tooltipWidth - 4, x(selected) - tooltipWidth / 2));
+  const tooltipY = selected === null ? 8 : Math.max(8, y(points[selected][metric]) - 78);
+  // Control points stay inside each segment's value range, passing through every actual data point.
+  const overviewLine = points.map((row, index) => {
+    const endX = x(index), endY = y(row[metric]);
+    if (!index) return `M ${endX} ${endY}`;
+    const startX = x(index - 1), startY = y(points[index - 1][metric]);
+    const curve = (endX - startX) * 0.38;
+    return `C ${startX + curve} ${startY}, ${endX - curve} ${endY}, ${endX} ${endY}`;
+  }).join(' ');
   const move = (event: PointerEvent<SVGSVGElement>) => { const rect = event.currentTarget.getBoundingClientRect(); const position = (event.clientX - rect.left) / rect.width * width; setSelected(Math.max(0, Math.min(points.length - 1, Math.round((position - left) / w * (points.length - 1))))); };
   return <div className={'bd-chart' + (variant === 'overview' ? ' bd-chart--overview' : '')} ref={holder}><svg viewBox={`0 0 ${width} ${height}`} role="group" tabIndex={0} aria-label={`${metrics[metric].title}. Usa las flechas izquierda y derecha para consultar cada fecha.`}
     onPointerMove={move} onPointerDown={move} onPointerLeave={() => setSelected(null)} onFocus={() => setSelected(value => value ?? 0)}
@@ -44,17 +55,23 @@ export function ActivityChart({ data, metric, variant = 'standard' }: { data: Re
     {[0, 1, 2, 3, 4].map(tick => <g key={tick}><line className="bd-grid-line" x1={left} x2={width - right} y1={top + tick * h / 4} y2={top + tick * h / 4}/><text className="bd-axis" x={left - 10} y={top + tick * h / 4 + 4} textAnchor="end">{number(ceiling - tick * step)}</text></g>)}
     <rect x={left} y={top} width={w} height={h} fill="transparent"/>
     {variant === 'overview' && points.length > 0 && <path
-      d={'M ' + x(0) + ' ' + (top + h) + ' L ' + points.map((row, index) => x(index) + ' ' + y(row[metric])).join(' L ') + ' L ' + x(points.length - 1) + ' ' + (top + h) + ' Z'}
+      d={overviewLine + ' L ' + x(points.length - 1) + ' ' + (top + h) + ' L ' + x(0) + ' ' + (top + h) + ' Z'}
       fill={'url(#' + gradientId + ')'} stroke="none" pointerEvents="none"/>}
-    <polyline points={points.map((row, index) => `${x(index)},${y(row[metric])}`).join(' ')} className="bd-trend-line" fill="none" pointerEvents="none"/>
+    {variant === 'overview'
+      ? <path d={overviewLine} className="bd-trend-line" fill="none" pointerEvents="none"/>
+      : <polyline points={points.map((row, index) => `${x(index)},${y(row[metric])}`).join(' ')} className="bd-trend-line" fill="none" pointerEvents="none"/>}
     {points.map((row, index) => <circle key={row.label} cx={x(index)} cy={y(row[metric])} r={selected === index ? 4.5 : 2.5} className="bd-trend-dot" pointerEvents="none"/>)}
     {active && selected !== null && <><line data-testid="activity-guide" className="bd-chart-guide" x1={x(selected)} x2={x(selected)} y1={top} y2={top + h}/><circle cx={x(selected)} cy={y(active[metric])} r="5" fill="#fff" stroke="#7B3FFB" strokeWidth="3"/></>}
     {variant === 'overview' && active && selected !== null && <g className="bd-summary-svg-tooltip" pointerEvents="none">
-      <rect x={tooltipX} y={tooltipY} width="145" height="53" rx="9" fill="#6825DB"/>
-      <text x={tooltipX + 72.5} y={tooltipY + 22} textAnchor="middle" fill="#fff" fontSize="17" fontWeight="750">{number(active[metric])}</text>
-      <text x={tooltipX + 72.5} y={tooltipY + 39} textAnchor="middle" fill="#fff" fontSize="11">{metrics[metric].title}</text>
+      <rect className="bd-overview-tooltip-box" x={tooltipX} y={tooltipY} width={tooltipWidth} height="62" rx="12"/>
+      <path className="bd-overview-tooltip-arrow" d={`M ${x(selected) - 7} ${tooltipY + 62} L ${x(selected)} ${tooltipY + 70} L ${x(selected) + 7} ${tooltipY + 62}`}/>
+      <text className="bd-overview-tooltip-date" x={tooltipX + 14} y={tooltipY + 24}>{dateLabel(active.label, true)}</text>
+      <text x={tooltipX + 14} y={tooltipY + 46}>
+        <tspan className="bd-overview-tooltip-value">{number(active[metric])} </tspan>
+        <tspan className="bd-overview-tooltip-unit">visualizaciones</tspan>
+      </text>
     </g>}
-    {points.map((row, index) => ((index % labelEvery === 0 && (index === 0 || index < points.length - 1 - labelEvery / 2)) || index === points.length - 1) && <text key={row.label} className="bd-axis" x={x(index)} y={height - 18} textAnchor="middle">{dateLabel(row.label)}</text>)}
+    {points.map((row, index) => ((index % labelEvery === 0 && (index === 0 || index < points.length - 1 - labelEvery / 2)) || index === points.length - 1) && <text key={row.label} className="bd-axis" x={x(index)} y={height - 18} textAnchor="middle">{variant === 'overview' && width > 550 ? dateLabel(row.label, true) : dateLabel(row.label)}</text>)}
   </svg><div className="bd-chart-value" role="status">{active ? <><strong>{dateLabel(active.label, true)}</strong><span>{number(active[metric])} · {metrics[metric].title.toLocaleLowerCase('es')}</span></> : <><Icon name="chart" size={16}/><span>Mueve el cursor, toca la gráfica o utiliza las flechas para consultar una fecha.</span></>}</div></div>;
 }
 export function Activity({ id }: { id: string }) {

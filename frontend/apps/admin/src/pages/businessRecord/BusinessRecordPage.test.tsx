@@ -40,7 +40,10 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.queryByText('Sobre este resumen')).not.toBeInTheDocument();
     expect(screen.queryByText(/Los días sin registros aparecen/)).not.toBeInTheDocument();
     expect(screen.queryByText('Origen e interpretación de los indicadores')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Explorar actividad/ })).toBeInTheDocument();
+    const exploreActivity = screen.getByRole('button', { name: /Explorar actividad/ });
+    expect(exploreActivity).toHaveClass('bd-summary-text-link');
+    expect(exploreActivity.closest('.bd-summary-plot')).not.toBeNull();
+    expect(exploreActivity).toBeInTheDocument();
     expect(screen.getByText('Todo el historial', { selector: '.bd-summary-period-caption' })).toBeInTheDocument();
     await waitFor(() => expect(api.getRecordActivity).toHaveBeenCalledWith(business.id, 'all'));
     expect(screen.getByRole('combobox', { name: 'Período del resumen' })).toHaveValue('all');
@@ -59,6 +62,9 @@ describe('Ficha administrativa del negocio', () => {
     fireEvent.focus(chart);
     fireEvent.keyDown(chart, { key: 'Home' });
     await waitFor(() => expect(screen.getByTestId('activity-guide')).toBeInTheDocument());
+    expect(chart.querySelector('.bd-overview-tooltip-box')).not.toBeNull();
+    expect(chart.querySelector('.bd-overview-tooltip-date')).toHaveTextContent(/nov/i);
+    expect(chart.querySelector('path.bd-trend-line')).not.toBeNull();
     expect(screen.getByRole('status')).toHaveTextContent('0 · visualizaciones de la ficha');
     fireEvent.keyDown(chart, { key: 'ArrowRight' });
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('8 · visualizaciones de la ficha'));
