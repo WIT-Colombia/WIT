@@ -51,7 +51,30 @@ function BusinessRecord({ id }: { id: string }) {
   const [visibilityOpen, setVisibilityOpen] = useState(false);
   const [decision, setDecision] = useState<BusinessDecision | null>(null);
   const nav = useRef<HTMLDivElement>(null);
+  const visibilityMenuRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!visibilityOpen) return;
+    const onOutside = (event: PointerEvent) => {
+      if (!visibilityMenuRef.current?.contains(event.target as Node)) setVisibilityOpen(false);
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setVisibilityOpen(false);
+        visibilityMenuRef.current?.querySelector<HTMLButtonElement>('.bd-indicator-trigger')?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', onOutside);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('pointerdown', onOutside);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [visibilityOpen]);
   const choose = (value: Tab) => { setVisited(old => new Set([...old, value])); setTab(value); };
+  const openSection = (value: Tab) => {
+    choose(value);
+    nav.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  };
   const changed = (message: string) => { setDeleting(false); setVisibilityAction(null); setVisibilityOpen(false); setDecision(null); setNotice(message); setOperationPending(true); setHistoryPage(1); setRevision(value => value + 1); };
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso de consulta de negocios para abrir la ficha."/>;
   if (!source.data) return source.error ? <StatePanel kind="error" title="No pudimos abrir la ficha" message={source.error} retry={source.retry}/> : <StatePanel kind="loading" title="Cargando ficha administrativa" message="Consultando el establecimiento y su información registrada."/>;
@@ -76,12 +99,12 @@ function BusinessRecord({ id }: { id: string }) {
       <aside className="bd-owner-card"><div><span><Icon name="users"/></span><section><small>Propietario actual</small><strong>{record ? owners(business) : 'Pendiente de consulta'}</strong></section></div><div><span><Icon name="calendar"/></span><section><small>Fecha de registro</small><time dateTime={business.createdAt}>{date(business.createdAt)}</time></section></div><div><span><Icon name="calendar"/></span><section><small>Última actualización</small><time dateTime={business.updatedAt}>{date(business.updatedAt)}</time></section></div></aside>
     </section>
     <section className="bd-indicators" aria-label="Indicadores principales">
-      <article className="bd-interactive-indicator">
+      <article className="bd-interactive-indicator" ref={visibilityMenuRef}>
         <button className="bd-indicator-trigger" type="button" disabled={!canAct || actionDisabled}
           aria-expanded={visibilityOpen} aria-label="Cambiar visibilidad del negocio"
           onClick={() => setVisibilityOpen(open => !open)}>
           <span className="bd-indicator-icon"><Icon name="eye" size={25}/></span>
-          <span><span className="bd-indicator-title">Visibilidad</span>
+          <span className="bd-indicator-content"><span className="bd-indicator-title">Visibilidad</span>
             <Badge tone={business.deletionStatus === 'DELETED' ? 'red' : business.administrativeRestriction ? 'amber' : record?.effectiveVisibility === 'VISIBLE' ? 'green' : 'neutral'}>
               {business.administrativeRestriction === 'SUSPENDED' ? 'Suspendida' : business.deletionStatus === 'DELETED' ? 'Eliminado' : visibility(business)}
             </Badge></span>
@@ -97,20 +120,27 @@ function BusinessRecord({ id }: { id: string }) {
         disabled={!canAct || actionDisabled || business.verificationStatus === 'APPROVED'}
         onClick={() => setDecision('verification')} aria-label="Verificar administrativamente el negocio">
         <span className="bd-indicator-icon bd-icon--violet"><Icon name="shield" size={25}/></span>
-        <span><span className="bd-indicator-title">Verificación</span><Badge tone={business.verificationStatus === 'APPROVED' ? 'green' : 'amber'}>
+        <span className="bd-indicator-content"><span className="bd-indicator-title">Verificación</span><Badge tone={business.verificationStatus === 'APPROVED' ? 'green' : 'amber'}>
           {business.verificationStatus === 'NONE' ? 'Sin verificar' : label(business.verificationStatus)}</Badge></span>
         {canAct && business.verificationStatus !== 'APPROVED' && <Icon name="chevron" size={16}/>}</button></article>
-      <article><span className="bd-completeness"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="17" fill="none" stroke="#DCFCE7" strokeWidth="5"/><circle cx="22" cy="22" r="17" fill="none" stroke="#22C55E" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${Math.max(0, Math.min(100, business.completeness)) / 100 * 106.82} 106.82`} transform="rotate(-90 22 22)"/></svg></span><div><h3>Completitud</h3><strong>{business.completeness}%</strong></div></article>
+      <article className="bd-interactive-indicator">
+        <button className="bd-indicator-trigger" type="button"
+          aria-label="Consultar información general y completitud del negocio" onClick={() => openSection('information')}>
+          <span className="bd-completeness"><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="17" fill="none" stroke="#DCFCE7" strokeWidth="5"/><circle cx="22" cy="22" r="17" fill="none" stroke="#22C55E" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${Math.max(0, Math.min(100, business.completeness)) / 100 * 106.82} 106.82`} transform="rotate(-90 22 22)"/></svg></span>
+          <span className="bd-indicator-content"><span className="bd-indicator-title">Completitud</span><strong className="bd-completeness-value">{business.completeness}%</strong></span>
+          <Icon name="arrow" size={16}/>
+        </button>
+      </article>
       <article className="bd-interactive-indicator"><button className="bd-indicator-trigger" type="button"
         disabled={!canAct || actionDisabled} onClick={() => setDecision('plan')} aria-label="Cambiar el plan del negocio">
         <span className="bd-indicator-icon bd-icon--violet"><Icon name="crown" size={25}/></span>
-        <span><span className="bd-indicator-title">Suscripción</span><Badge tone={business.isPro ? 'violet' : 'neutral'}>
+        <span className="bd-indicator-content"><span className="bd-indicator-title">Suscripción</span><Badge tone={business.isPro ? 'violet' : 'neutral'}>
           {business.isPro === true ? 'Business PRO' : business.isPro === false ? 'Básico' : 'No disponible'}</Badge></span>
         {canAct && <Icon name="chevron" size={16}/>}</button></article>
       <article className="bd-interactive-indicator"><button className="bd-indicator-trigger" type="button"
-        onClick={() => choose('reports')} aria-label="Consultar reportes de este negocio">
+        onClick={() => openSection('reports')} aria-label="Consultar reportes de este negocio">
         <span className="bd-indicator-icon bd-icon--red"><Icon name="flag" size={25}/></span>
-        <span><span className="bd-indicator-title">Reportes</span><strong className={business._count?.reports ? 'bd-report-count' : ''}>
+        <span className="bd-indicator-content"><span className="bd-indicator-title">Reportes</span><strong className={business._count?.reports ? 'bd-report-count' : ''}>
           {business._count?.reports ?? '—'}</strong></span><Icon name="arrow" size={16}/></button></article>
     </section>
     <div ref={nav} className="bd-tabs" role="tablist" aria-label="Secciones de la ficha administrativa" onKeyDown={event => {
