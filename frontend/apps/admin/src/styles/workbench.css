@@ -99,6 +99,33 @@
 .ad-dialog-backdrop { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:24px; background:#0F172A80; backdrop-filter:blur(3px); }
 .ad-dialog { width:min(100%,560px); max-height:calc(100dvh - 48px); overflow:auto; border:1px solid #E2E8F0; border-radius:18px; background:#FFF; color:#0F172A; box-shadow:0 24px 80px #0F172A40; outline:none; }
 .ad-dialog>header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:24px 26px 19px; border-bottom:1px solid #F1F5F9; }.ad-dialog>header h2 { font-size:21px; letter-spacing:-.03em; line-height:1.4; overflow-wrap:anywhere; }
+/* Normalize the shared close control across Safari on iPad and other browsers. */
+.ad-dialog>header>.ad-icon-button {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  flex:0 0 36px;
+  width:36px;
+  height:36px;
+  min-width:36px;
+  min-height:36px;
+  padding:0;
+  margin:0;
+  line-height:0;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.ad-dialog>header>.ad-icon-button>svg {
+  display:block;
+  flex:none;
+  width:20px;
+  height:20px;
+  margin:0;
+  transform:none;
+  -webkit-transform:none;
+}
+
 .ad-document-form { display:grid; gap:18px; padding:24px 26px; }.ad-document-form>p { margin:0; color:#64748B; font-size:12px; line-height:1.7; }.ad-document-form label { display:grid; gap:7px; color:#334155; font-size:12px; font-weight:600; }.ad-document-form label small { color:#94A3B8; font-weight:400; }
 .ad-document-form :is(input:not([type=file]),textarea) { box-sizing:border-box; width:100%; padding:11px 12px; border:1px solid #DCE3ED; border-radius:9px; background:#FFF; color:#0F172A; font:inherit; font-size:12px; }.ad-document-form textarea { resize:vertical; }
 .ad-document-form .ad-file-picker { display:grid; justify-items:center; position:relative; padding:25px 16px; overflow:hidden; border:1px dashed #C4B5FD; border-radius:12px; background:#FAF8FF; color:#7B3FFB; text-align:center; }
