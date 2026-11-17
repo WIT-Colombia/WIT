@@ -52,12 +52,13 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.queryByText('Miembros', { exact: true })).not.toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Período del resumen' })).toHaveValue('all');
     expect(screen.queryByText('0 · visualizaciones de la ficha')).not.toBeInTheDocument();
-    const chart = screen.getByRole('group', { name: /Visualizaciones de la ficha/ });
+    const chart = await screen.findByRole('group', { name: /Visualizaciones de la ficha/ });
+    fireEvent.focus(chart);
     fireEvent.keyDown(chart, { key: 'Home' });
-    expect(screen.getByTestId('activity-guide')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('activity-guide')).toBeInTheDocument());
     expect(screen.getByRole('status')).toHaveTextContent('0 · visualizaciones de la ficha');
     fireEvent.keyDown(chart, { key: 'ArrowRight' });
-    expect(screen.getByRole('status')).toHaveTextContent('8 · visualizaciones de la ficha');
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('8 · visualizaciones de la ficha'));
   });
   it('el resumen cambia la temporalidad sin fabricar aumentos ni datos no disponibles', async () => {
     setup(); await ready();
