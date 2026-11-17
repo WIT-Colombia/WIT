@@ -80,6 +80,41 @@ describe('Ficha administrativa del negocio', () => {
     await waitFor(() => expect(api.changeAdminBusinessPlan).toHaveBeenCalledWith(business.id, 'BASIC', 'Se acordó regresar al plan básico', 'BASIC'));
     await waitFor(() => expect(api.getRecordBusiness).toHaveBeenCalledTimes(2));
   });
+  it('abre las opciones de la tarjeta aunque el backend no incluya la ficha ampliada', async () => {
+    api.getRecordBusiness.mockResolvedValue({ ...business, record: undefined });
+    setup(); await ready();
+    expect(screen.getByText(/información administrativa ampliada todavía no está disponible/)).toBeInTheDocument();
+    const card = screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' });
+    expect(card).toBeEnabled();
+    fireEvent.click(card);
+    const modal = screen.getByRole('dialog', { name: 'Cambiar visibilidad' });
+    expect(within(modal).getByRole('button', { name: 'Visible' })).toBeDisabled();
+    expect(within(modal).getByRole('button', { name: 'Oculta' })).toBeEnabled();
+    expect(within(modal).getByRole('button', { name: 'Suspendida' })).toBeEnabled();
+  });
+  it('requiere confirmar un cambio de visibilidad incluso cuando falta la información ampliada', async () => {
+    api.getRecordBusiness.mockResolvedValue({ ...business, record: undefined });
+    api.changeAdminBusinessVisibility.mockResolvedValue({ message: 'Negocio ocultado', visibilityStatus: 'HIDDEN', administrativeRestriction: null });
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Cambiar visibilidad' })).getByRole('button', { name: 'Oculta' }));
+    const confirmation = screen.getByRole('dialog', { name: 'Ocultar negocio' });
+    expect(api.changeAdminBusinessVisibility).not.toHaveBeenCalled();
+    fireEvent.change(within(confirmation).getByLabelText(/Motivo administrativo/), {
+      target: { value: 'Ocultamiento administrativo solicitado con revisión previa' },
+    });
+    fireEvent.click(within(confirmation).getByRole('button', { name: 'Confirmar ocultamiento' }));
+    await waitFor(() => expect(api.changeAdminBusinessVisibility).toHaveBeenCalledWith(
+      business.id, 'SET_HIDDEN', 'Ocultamiento administrativo solicitado con revisión previa',
+    ));
+    expect(await screen.findByText('Negocio ocultado')).toBeInTheDocument();
+  });
+  it('no habilita la tarjeta si la cuenta no es SUPER_ADMIN, aunque falte la información ampliada', async () => {
+    role = 'ADMIN';
+    api.getRecordBusiness.mockResolvedValue({ ...business, record: undefined });
+    setup(); await ready();
+    expect(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toBeDisabled();
+  });
   it('abre sobre la ficha las tres opciones diferenciadas, sin aplicar cambios automáticamente', async () => {
     setup(); await ready();
     const card = screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' });
