@@ -310,3 +310,13 @@
 @media(prefers-reduced-motion:reduce) {
   .admin-refresh .businesses-page.abv1 * { transition:none!important; animation:none!important; }
 }
+
+/* Secondary capabilities remain reachable without changing the approved closed view. */
+.admin-refresh .businesses-page.abv1 .abv1-advanced-tool {
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  min-height:42px; align-self:end; padding:10px 14px; cursor:pointer;
+  border:1px solid #d7caf8; border-radius:10px; background:#fff;
+  color:#5d28c9; font-size:12px; font-weight:700;
+}
+.admin-refresh .businesses-page.abv1 .abv1-advanced-tool:disabled { cursor:not-allowed; opacity:.4; }
+.admin-refresh .businesses-page.abv1 .abv1-extra-stats { margin-top:24px; }
