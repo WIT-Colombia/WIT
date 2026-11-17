@@ -4,21 +4,34 @@ import { AdminApiError, getAdminBusinessAnalytics, type AdminBusinessAnalytics }
 import './AdminBusinessGrowthPanel.css';
 
 type Range = '6m' | '12m' | '24m' | '60m' | 'all';
-type Interval = 'month' | 'quarter' | 'year';
+type Interval = 'day' | 'week' | 'month' | 'quarter' | 'year';
 type Measure = 'registrations' | 'cumulative';
 type Shape = 'area' | 'bars';
 type Datum = { label: string; registrations: number; cumulative: number };
 const number = (value: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(value);
 
-function groupSeries(series: Array<{ month: string; registrations: number; cumulative: number }>, interval: Interval): Datum[] {
+type BusinessBucket = { date: string; registrations: number; cumulative: number };
+function groupSeries(series: BusinessBucket[], interval: Interval): Datum[] {
   const records = new Map<string, Datum>();
+  const dateLabel = (date: Date, options: Intl.DateTimeFormatOptions) =>
+    date.toLocaleDateString('es-CO', { timeZone: 'UTC', ...options });
   for (const item of series) {
-    const [year, month] = item.month.split('-').map(Number);
-    const label = interval === 'year' ? String(year) : interval === 'quarter'
-      ? 'T' + Math.ceil(month / 3) + ' ' + year
-      : new Date(Date.UTC(year, month - 1, 12)).toLocaleDateString('es-CO', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+    // Backend daily buckets are real UTC calendar dates; monthly buckets use YYYY-MM.
+    const day = new Date(item.date + (item.date.length === 7 ? '-01' : '') + 'T00:00:00.000Z');
+    const year = day.getUTCFullYear();
+    const month = day.getUTCMonth();
+    const weekStart = new Date(day);
+    weekStart.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));
+    const label = interval === 'day'
+      ? dateLabel(day, { day: '2-digit', month: 'short', year: '2-digit' })
+      : interval === 'week'
+        ? 'Sem. ' + dateLabel(weekStart, { day: '2-digit', month: 'short', year: '2-digit' })
+        : interval === 'year' ? String(year)
+          : interval === 'quarter' ? 'T' + (Math.floor(month / 3) + 1) + ' ' + year
+            : dateLabel(day, { month: 'short', year: '2-digit' });
     const record = records.get(label) ?? { label, registrations: 0, cumulative: 0 };
     record.registrations += item.registrations;
+    // End-of-period cumulative, not the sum of already accumulated values.
     record.cumulative = item.cumulative;
     records.set(label, record);
   }
@@ -149,7 +162,7 @@ export function AdminBusinessGrowthPanel() {
     let active = true;
     setLoading(true);
     setError('');
-    getAdminBusinessAnalytics({ period, city, categoryId, status }).then(result => {
+    getAdminBusinessAnalytics({ period, city, categoryId, status, interval }).then(result => {
       if (!active) return;
       setData(result);
       setAvailableFilters(result.filters);
@@ -163,13 +176,14 @@ export function AdminBusinessGrowthPanel() {
         : cause instanceof Error ? cause.message : 'No se pudo consultar la evolución.');
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [period, city, categoryId, status, attempt]);
+  }, [period, city, categoryId, status, interval, attempt]);
 
-  const raw = useMemo(() => (data?.series ?? []).map(item => ({
-    month: item.month,
-    registrations: item.registrations,
-    cumulative: item.cumulative,
-  })), [data]);
+  const raw = useMemo((): BusinessBucket[] => {
+    if (interval === 'day' || interval === 'week') {
+      return (data?.dailySeries ?? []).map(item => ({ date: item.date, registrations: item.registrations, cumulative: item.cumulative }));
+    }
+    return (data?.series ?? []).map(item => ({ date: item.month, registrations: item.registrations, cumulative: item.cumulative }));
+  }, [data, interval]);
   const grouped = useMemo(() => groupSeries(raw, interval), [raw, interval]);
   const newRegistrations = grouped.reduce((total, item) => total + item.registrations, 0);
   const average = grouped.length ? newRegistrations / grouped.length : 0;
@@ -181,7 +195,8 @@ export function AdminBusinessGrowthPanel() {
     '6m': 'últimos 6 meses', '12m': 'últimos 12 meses',
     '24m': 'últimos 24 meses', '60m': 'últimos 5 años', all: 'todo el histórico',
   };
-  const intervalText: Record<Interval, string> = { month: 'mes', quarter: 'trimestre', year: 'año' };
+  const intervalText: Record<Interval, string> = { day: 'día', week: 'semana', month: 'mes', quarter: 'trimestre', year: 'año' };
+  const intervalName: Record<Interval, string> = { day: 'Día', week: 'Semana', month: 'Mes', quarter: 'Trimestre', year: 'Año' };
   const decimal = (value: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(value);
   const reset = () => { setPeriod('12m'); setCity(''); setCategoryId(''); setStatus('all'); setInterval('month'); setMeasure('registrations'); setShape('area'); };
   const selectedFilters = [
@@ -240,7 +255,7 @@ export function AdminBusinessGrowthPanel() {
       </div>
       <div className="ad-business-growth-interval" role="group" aria-label="Agrupar registros">
         <span>Agrupar:</span>
-        {([['month', 'Mensual'], ['quarter', 'Trimestral'], ['year', 'Anual']] as const).map(([value, label]) =>
+        {([['day', 'Diario'], ['week', 'Semanal'], ['month', 'Mensual'], ['quarter', 'Trimestral'], ['year', 'Anual']] as const).map(([value, label]) =>
           <button key={value} type="button" className={interval === value ? 'selected' : ''}
             aria-pressed={interval === value} onClick={() => setInterval(value)}>{label}</button>)}
       </div>
@@ -283,8 +298,8 @@ export function AdminBusinessGrowthPanel() {
           <dl>
             <div><dt>Total de nuevos negocios</dt><dd>{number(newRegistrations)}</dd></div>
             <div><dt>Promedio por {intervalText[interval]}</dt><dd>{decimal(average)}</dd></div>
-            <div><dt>{interval === 'month' ? 'Mes' : interval === 'quarter' ? 'Trimestre' : 'Año'} con más registros</dt><dd>{peak ? peak.label + ' (' + number(peak.registrations) + ')' : '—'}</dd></div>
-            <div><dt>{interval === 'month' ? 'Mes' : interval === 'quarter' ? 'Trimestre' : 'Año'} con menos registros</dt><dd>{quiet ? quiet.label + ' (' + number(quiet.registrations) + ')' : '—'}</dd></div>
+            <div><dt>{intervalName[interval]} con más registros</dt><dd>{peak ? peak.label + ' (' + number(peak.registrations) + ')' : '—'}</dd></div>
+            <div><dt>{intervalName[interval]} con menos registros</dt><dd>{quiet ? quiet.label + ' (' + number(quiet.registrations) + ')' : '—'}</dd></div>
           </dl>
           <div className="ad-business-growth-current-total"><span>Negocios actuales según filtros</span>
             <strong>{number(data.total)}</strong>
