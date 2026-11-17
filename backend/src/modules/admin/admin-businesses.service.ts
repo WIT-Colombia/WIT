@@ -102,9 +102,15 @@ export async function listAdminBusinesses(query: AdminBusinessesFilters) {
   const pageSize = Number.isFinite(query.pageSize) ? Math.min(100, Math.max(1, Math.floor(query.pageSize!))) : 20;
   const now = new Date();
   const where = adminBusinessWhere(query, now);
-  const orderBy: Prisma.BusinessOrderByWithRelationInput =
-    query.order === 'oldest' ? { createdAt: 'asc' } : query.order === 'name' ? { name: 'asc' }
-    : { createdAt: 'desc' };
+  const orderBy: Prisma.BusinessOrderByWithRelationInput[] = [
+    query.order === 'oldest' ? { createdAt: 'asc' }
+      : query.order === 'name' ? { name: 'asc' }
+      : query.order === 'city' ? { location: { cityName: 'asc' } }
+      : query.order === 'category' ? { category: { code: 'asc' } }
+      : query.order === 'verification' ? { verificationStatus: 'asc' }
+      : { createdAt: 'desc' },
+    { id: 'asc' },
+  ];
   const [total, businesses] = await Promise.all([
     prisma.business.count({ where }),
     prisma.business.findMany({ where, select: businessSelect, orderBy, skip: (page - 1) * pageSize, take: pageSize }),
