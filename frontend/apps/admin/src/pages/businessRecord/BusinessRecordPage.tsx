@@ -138,7 +138,7 @@ function BusinessRecord({ id }: { id: string }) {
       </Card><p className="bd-security-note"><Icon name="shield" size={15}/>Cada medida requiere confirmación y motivo. Las decisiones se conservan en el historial.</p><button className="bd-button bd-refresh" disabled={source.loading} onClick={() => { setHistoryPage(1); setRevision(value => value + 1); }}><Icon name="refresh" size={16}/>Actualizar ficha</button>
     </aside></div>
     {visibilityAction && <AdminBusinessVisibilityDialog business={business} action={visibilityAction} onClose={() => setVisibilityAction(null)} onSuccess={changed}/>}
-    {deleting && <AdminBusinessDeleteDialog business={business} onClose={() => setDeleting(false)} onSuccess={changed}/>
+    {deleting && <AdminBusinessDeleteDialog business={business} onClose={() => setDeleting(false)} onSuccess={changed}/>}
     {decision && <BusinessDecisionDialog business={business} decision={decision}
       onClose={() => setDecision(null)} onSuccess={changed}/>}
   </div></BusinessRecordPhotos>;
