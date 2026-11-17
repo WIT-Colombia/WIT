@@ -1,0 +1,139 @@
+import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { Icon } from '../../components/Icon';
+import type { AdminVisibilityAction } from '../../services/adminApiClient';
+
+type VisibilityChoice = 'SET_VISIBLE' | 'SET_HIDDEN' | 'SUSPEND';
+
+const choices: Array<{
+  action: VisibilityChoice;
+  label: string;
+  description: string;
+  icon: string;
+  tone: string;
+}> = [
+  {
+    action: 'SET_VISIBLE',
+    label: 'Visible',
+    description: 'El negocio puede aparecer públicamente si cumple la publicación y la vigencia. No se amplían los 40 días.',
+    icon: 'eye',
+    tone: 'visible',
+  },
+  {
+    action: 'SET_HIDDEN',
+    label: 'Oculta',
+    description: 'No aparece públicamente. Su propietario puede volver a mostrarlo desde Business.',
+    icon: 'eye-off',
+    tone: 'hidden',
+  },
+  {
+    action: 'SUSPEND',
+    label: 'Suspendida',
+    description: 'No aparece públicamente. El propietario no puede levantar la suspensión; solo XAMUKO Admin.',
+    icon: 'lock',
+    tone: 'suspended',
+  },
+];
+
+export function AdminBusinessVisibilityPicker({
+  businessName, visibilityStatus, administrativeRestriction, onClose, onChoose,
+}: {
+  businessName: string;
+  visibilityStatus: string;
+  administrativeRestriction: 'HIDDEN' | 'SUSPENDED' | null;
+  onClose: () => void;
+  onChoose: (action: AdminVisibilityAction) => void;
+}) {
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeRef.current?.focus({ preventScroll: true });
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? []);
+      if (focusable.length === 0) return;
+      if (event.shiftKey && document.activeElement === focusable[0]) {
+        event.preventDefault();
+        focusable.at(-1)?.focus();
+      } else if (!event.shiftKey && document.activeElement === focusable.at(-1)) {
+        event.preventDefault();
+        focusable[0]?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus({ preventScroll: true });
+    };
+  }, [onClose]);
+
+  const current: VisibilityChoice | null = administrativeRestriction === 'SUSPENDED' ? 'SUSPEND'
+    : administrativeRestriction === 'HIDDEN' ? null // Historical, admin-only restriction.
+      : visibilityStatus === 'HIDDEN' ? 'SET_HIDDEN'
+        : visibilityStatus === 'VISIBLE' ? 'SET_VISIBLE'
+          : null;
+  const currentLabel = administrativeRestriction === 'SUSPENDED' ? 'Suspendida'
+    : administrativeRestriction === 'HIDDEN' ? 'Oculta (restricción anterior)'
+      : visibilityStatus === 'HIDDEN' ? 'Oculta'
+        : visibilityStatus === 'VISIBLE' ? 'Visible'
+          : visibilityStatus === 'EXPIRED' ? 'Vigencia vencida'
+            : 'Sin visibilidad activa';
+
+  return createPortal(
+    <div className="bd-visibility-picker-overlay" role="presentation"
+      onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="bd-visibility-picker" ref={dialogRef} role="dialog" aria-modal="true"
+        aria-labelledby="bd-visibility-picker-title" aria-describedby="bd-visibility-picker-description">
+        <header className="bd-visibility-picker-header">
+          <span className="bd-visibility-picker-head-icon"><Icon name="eye" size={24}/></span>
+          <div>
+            <span className="bd-visibility-picker-eyebrow">XAMUKO ADMIN · ESTADO DEL NEGOCIO</span>
+            <h2 id="bd-visibility-picker-title">Cambiar visibilidad</h2>
+            <p className="bd-visibility-picker-business">{businessName}</p>
+          </div>
+          <button type="button" ref={closeRef} className="bd-visibility-picker-close"
+            aria-label="Cerrar opciones de visibilidad" onClick={onClose}><Icon name="close" size={19}/></button>
+        </header>
+        <div className="bd-visibility-picker-body">
+          <p id="bd-visibility-picker-description">
+            Estado actual: <strong>{currentLabel}</strong>. Selecciona cómo debe mostrarse este negocio.
+          </p>
+          <div className="bd-visibility-picker-choices" role="group" aria-label="Estados disponibles de visibilidad">
+            {choices.map(option => {
+              const active = option.action === current;
+              return <button type="button" key={option.action}
+                className={`bd-visibility-picker-choice bd-visibility-picker-choice--${option.tone}${active ? ' is-current' : ''}`}
+                disabled={active}
+                onClick={() => onChoose(option.action)}>
+                <span className="bd-visibility-picker-choice-icon"><Icon name={option.icon} size={23}/></span>
+                <span className="bd-visibility-picker-choice-copy">
+                  <strong>{option.label}</strong>
+                  <small>{option.description}</small>
+                </span>
+                {active
+                  ? <span className="bd-visibility-picker-current">Estado actual</span>
+                  : <Icon name="chevron" size={18}/>}
+              </button>;
+            })}
+          </div>
+          <p className="bd-visibility-picker-notice"><Icon name="shield" size={17}/>
+            Ningún cambio se aplicará hasta confirmar la decisión con un motivo administrativo.
+            Quedará registrado en el historial y se notificará al propietario.
+          </p>
+        </div>
+        <footer className="bd-visibility-picker-footer">
+          <button type="button" onClick={onClose}>Cancelar</button>
+        </footer>
+      </section>
+    </div>, document.body,
+  );
+}
