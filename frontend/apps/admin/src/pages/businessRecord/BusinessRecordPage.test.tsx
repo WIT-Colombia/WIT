@@ -45,7 +45,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByText('Fotos')).toBeInTheDocument();
     expect(screen.queryByText('0 · visualizaciones de la ficha')).not.toBeInTheDocument();
     const chart = screen.getByRole('group', { name: /Visualizaciones de la ficha/ });
-    fireEvent.focus(chart);
+    fireEvent.keyDown(chart, { key: 'Home' });
     expect(screen.getByTestId('activity-guide')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('0 · visualizaciones de la ficha');
     fireEvent.keyDown(chart, { key: 'ArrowRight' });
