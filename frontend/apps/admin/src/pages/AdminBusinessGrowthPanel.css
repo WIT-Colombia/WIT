@@ -333,3 +333,218 @@
 @media(prefers-reduced-motion:reduce){
   .admin-refresh .ad-business-growth-chevron{transition:none!important}
 }
+
+
+/* Negocios 10/10: always-on business-only chart, keeping the existing SVG graph and table. */
+.admin-refresh .businesses-page.abv1 .ad-business-growth-panel{
+  --ad-growth-ink:#1b1741;--ad-growth-muted:#656984;
+  display:grid;gap:15px;min-width:0;margin:0;padding:20px 22px 17px;
+  border:1px solid #daceff;border-radius:19px;background:#fff;
+  box-shadow:0 6px 24px #34206a0b;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-title{gap:13px}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-heading-icon{
+  flex:0 0 45px;width:45px;height:45px;border:0;border-radius:12px;
+  color:#6d21df;background:linear-gradient(135deg,#ede4ff,#e6d9ff);
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-heading-icon svg{width:25px;height:25px}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-eyebrow{
+  margin:0 0 3px;color:#735cbb;font-size:9px;letter-spacing:.07em;font-weight:800;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-title h2{
+  margin:0 0 2px;font-size:clamp(18px,1.55vw,24px);color:#191533;font-weight:850;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-title p{
+  color:#666c89;font-size:12px;line-height:1.4;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-utilities{
+  display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;min-width:0;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-utilities :is(.ad-business-growth-export,.ad-business-growth-filter-trigger){
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:36px;padding:7px 11px;border:1px solid #e4d9ff;border-radius:10px;
+  background:#fff;color:#5c2bcb;box-shadow:none;font-size:11px;font-weight:750;
+  cursor:pointer;white-space:nowrap;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-utilities :is(.ad-business-growth-export,.ad-business-growth-filter-trigger):hover:not(:disabled){
+  border-color:#ad8fff;background:#f8f4ff;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-utilities .ad-business-growth-export:disabled{opacity:.45;cursor:not-allowed}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-filter-count{
+  display:grid;place-items:center;min-width:17px;height:17px;padding-inline:3px;
+  border-radius:50%;background:#eee4ff;color:#6c35cc;font-size:10px;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-filters{
+  grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;margin:0;
+  padding:12px 13px;border:1px solid #ece5fd;border-radius:13px;background:#faf8ff;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-filters select{min-height:37px;border-color:#e4ddf6}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-active-filters{margin:0}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-active-filters>span{
+  background:#f2eaff;color:#6128c8;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-chart-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px 16px;
+  min-width:0;margin:0;padding:10px 0 11px;border-top:1px solid #f2edfa;
+  border-bottom:1px solid #f2edfa;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-chart-mode,
+.admin-refresh .businesses-page.abv1 .ad-business-growth-interval,
+.admin-refresh .businesses-page.abv1 .ad-business-growth-toggle{
+  display:inline-flex;align-items:center;gap:3px;flex-shrink:0;
+  padding:3px;border:1px solid #e7def8;border-radius:11px;background:#f8f5ff;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-chart-mode button,
+.admin-refresh .businesses-page.abv1 .ad-business-growth-interval button,
+.admin-refresh .businesses-page.abv1 .ad-business-growth-toggle button{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:32px;padding:6px 12px;border:0;border-radius:8px;
+  background:transparent;color:#373451;font:inherit;font-size:11px;
+  font-weight:740;line-height:1.2;white-space:nowrap;cursor:pointer;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-chart-mode button.selected,
+.admin-refresh .businesses-page.abv1 .ad-business-growth-interval button.selected,
+.admin-refresh .businesses-page.abv1 .ad-business-growth-toggle button.selected{
+  background:linear-gradient(120deg,#7130f5,#4f0cdb);color:#fff;
+  box-shadow:0 3px 9px #6221d12c;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-interval{
+  background:transparent;border:0;padding:0;gap:4px;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-interval>span{
+  margin-right:8px;color:#4a456b;font-size:11px;font-weight:750;white-space:nowrap;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-interval button{border-radius:8px}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-view-controls{margin-left:auto}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-content{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(215px,27%);
+  gap:18px;align-items:stretch;min-width:0;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-plot{
+  display:flex;flex-direction:column;min-width:0;min-height:0;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-canvas svg{
+  display:block;width:100%;height:auto;max-height:330px;overflow:hidden;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-line{stroke:#7030eb;stroke-width:3.2}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-grid{stroke:#e4dcf5;stroke-dasharray:3 4}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-guide{stroke:#8245ee;stroke-dasharray:3 4}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-point{stroke:#7335ed}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-axis{fill:#666287;font-weight:550}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-canvas-caption{
+  min-height:18px;justify-content:flex-start;margin-top:2px;
+  color:#615d81;font-size:10px;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-canvas-caption strong{color:#5e1ce5}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-plot-footer{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  flex-wrap:wrap;margin-top:auto;padding:6px 1px 0;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-legend{
+  display:inline-flex;align-items:center;gap:8px;min-width:0;
+  color:#4b426c;font-size:11px;font-weight:700;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-legend>span{
+  flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:#6e2af0;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-shape{
+  display:inline-flex;gap:4px;border-radius:9px;background:#faf8ff;
+  padding:3px;border:1px solid #eee8fa;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-shape button{
+  min-height:28px;padding:4px 8px;border:0;border-radius:7px;
+  background:transparent;color:#746991;font-size:10px;font-weight:730;cursor:pointer;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-shape button.selected{
+  background:#ede5ff;color:#5b22cc;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-summary{
+  display:flex;flex-direction:column;min-width:0;padding:15px 14px 12px;
+  border:1px solid #e4ddf2;border-radius:15px;background:#fcfbff;
+  color:#292143;box-shadow:0 2px 8px #29165308;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-summary h3{
+  display:flex;align-items:center;gap:8px;margin:0 0 2px;
+  color:#201839;font-size:14px;font-weight:810;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-summary h3 svg{color:#6a25df;flex:none}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-summary>p{
+  margin:0 0 11px 27px;color:#77708c;font-size:10px;line-height:1.4;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-summary dl{margin:0;display:grid}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-summary dl>div{
+  display:flex;align-items:center;justify-content:space-between;gap:11px;
+  min-height:45px;padding:7px 0;border-top:1px solid #ebe6f4;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-summary dt{
+  min-width:0;color:#383051;font-size:11px;font-weight:650;line-height:1.4;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-summary dd{
+  margin:0;flex:none;color:#191334;font-size:12px;font-weight:850;
+  text-align:right;font-variant-numeric:tabular-nums;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-current-total{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:10px 0 0;margin-top:auto;border-top:1px solid #ebe6f4;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-current-total span{
+  color:#555071;font-size:10px;font-weight:650;line-height:1.35;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-current-total strong{
+  color:#5d20db;font-size:19px;font-weight:850;font-variant-numeric:tabular-nums;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-table-wrap{
+  min-height:300px;max-height:330px;border-color:#ede6fa;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-table-wrap thead th{
+  background:#f2edff;color:#4e22ac;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-definition{
+  margin:0;padding:10px 12px;background:#faf9ff;border-color:#eee8f8;
+  color:#777187;font-size:10px;line-height:1.55;
+}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-definition svg{color:#7130d9}
+.admin-refresh .businesses-page.abv1 .ad-business-growth-definition>span{min-width:0}
+
+@media(max-width:1320px){
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-heading{align-items:flex-start}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-content{grid-template-columns:minmax(0,1fr) 240px}
+}
+@media(max-width:1050px){
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-panel{padding:17px}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-heading{flex-wrap:wrap}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-utilities{justify-content:flex-start}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-chart-toolbar{justify-content:flex-start}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-view-controls{margin-left:0}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-content{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-summary{max-width:none}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-summary dl{
+    grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;
+  }
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-panel{padding:12px;gap:12px;border-radius:14px}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-title h2{font-size:19px}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-title p{font-size:10px}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-utilities{width:100%}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-utilities button{flex:1}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-chart-toolbar{gap:8px;padding:9px 0}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-chart-mode,
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-interval,
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-view-controls{width:100%}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-chart-mode button,
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-interval button,
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-toggle button{flex:1;padding-inline:7px}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-interval>span{margin-right:6px}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-toggle{width:100%}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-summary dl{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-summary{padding:12px}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-filters{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-chart-toolbar button{min-height:35px}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-plot{min-width:0}
+  .admin-refresh .businesses-page.abv1 .ad-business-growth-canvas svg{max-height:none}
+}
