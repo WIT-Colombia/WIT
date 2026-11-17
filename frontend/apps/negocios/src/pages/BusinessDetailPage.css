@@ -3672,3 +3672,28 @@ body>.business-delete-overlay .business-delete-dialog-close:focus-visible{
     padding-bottom:12px;
   }
 }
+
+/* iPadOS: do not split a city or department name inside the Mi negocio header. */
+@supports (-webkit-touch-callout: none) {
+  @media (min-width: 701px) and (max-width: 1366px) and (any-pointer: coarse) {
+    .business-detail-page .business-detail-place {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .business-detail-page .business-detail-place > .business-detail-location {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 1 auto;
+      gap: 7px;
+      max-width: 100%;
+      min-width: 0;
+      white-space: normal;
+      overflow-wrap: normal;
+      word-break: normal;
+      hyphens: none;
+    }
+    .business-detail-page .business-detail-place > .business-detail-location svg {
+      flex: 0 0 18px;
+    }
+  }
+}
