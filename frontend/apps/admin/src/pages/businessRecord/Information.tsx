@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { Icon } from '../../components/Icon';
 import type { RecordBusiness } from '../../services/adminBusinessRecord';
 import { Badge, Card, Empty, categoryName, date, label } from './shared';
 
