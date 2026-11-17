@@ -1,7 +1,7 @@
 /*
  * XAMUKO Admin · Tipografía institucional
- * Fuente: la escala original de Resumen ejecutivo, aprobada para todas
- * las pestañas (escritorio, iPad y móvil).
+ * Referencia única: pestaña INICIO / Resumen ejecutivo.
+ * Su escala se replica en todos los módulos (escritorio, iPad y móvil).
  *
  * Título de página:       22–30px / 23px móvil
  * Título de panel:        14px      / 14px móvil
@@ -255,5 +255,140 @@
     --xa-type-subtitle:10px;
     --xa-type-body:12px;
     --xa-type-control:12px;
+  }
+}
+
+
+/*
+ * Módulos añadidos a la escala de Inicio.
+ * Negocios (nuevo directorio abv1), Usuarios, Contenido y analíticas
+ * tenían reglas locales más grandes que la escala institucional.
+ * No se cambian posiciones, tamaños de contenedores ni dimensiones
+ * de controles; solo texto de la misma función visual.
+ */
+
+/* 1 · Encabezados de paneles y gráficos, igual que Inicio. */
+.admin-refresh .admin-main .workspace :is(
+  .ad-business-growth-title h2,
+  .ad-business-growth-summary h3,
+  .ad-business-growth-chart-toolbar h3,
+  .au-control-distribution-card h3,
+  .au-control-chart-summary h3,
+  .au-control-overview .au-panel-heading h2,
+  .ac-analytics .ac-panel-head h2,
+  .ac-analytics .ac-chart-head h3,
+  .abv1 .abv1-empty h2
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-panel) !important;
+  font-weight: 750;
+  line-height: 1.35;
+  letter-spacing: -.02em;
+}
+
+/* 2 · Etiquetas de las tarjetas de indicadores.
+   No aplicar a controles con texto visible ni a nombres de negocios. */
+.admin-refresh .admin-main .workspace :is(
+  .abv1-kpi > div > span,
+  .ad-business-growth-metrics > div > span,
+  .au-control-kpi-heading,
+  .ad-business-growth-current-total > span,
+  .au-control-chart-summary small,
+  .ad-business-growth-summary dt
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-indicator-label) !important;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+/* 3 · Cifras de indicadores con la misma dimensión que Inicio.
+   Incluye el directorio real de Negocios de la captura. */
+.admin-refresh .admin-main .workspace :is(
+  .abv1-kpi strong,
+  .ad-business-growth-metrics strong,
+  .ad-business-growth-current-total strong,
+  .au-control-kpi strong,
+  .au-control-chart-summary strong
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-indicator-value) !important;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* 4 · Descripciones de secciones, en la banda auxiliar de Inicio. */
+.admin-refresh .admin-main .workspace :is(
+  .abv1-heading p,
+  .au-hero-title p,
+  .au-detail-heading p,
+  .ac-hero p,
+  .ac-detail-hero p,
+  .ad-business-growth-title p,
+  .ad-business-growth-chart-toolbar p,
+  .ad-business-detail-hero p,
+  .ad-business-growth-summary > p,
+  .ad-ops-section-heading p,
+  .au-control-distribution-card header p
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-subtitle) !important;
+  line-height: 1.5;
+}
+
+/* 5 · Ayudas breves de estadísticas: tamaño auxiliar de Inicio. */
+.admin-refresh .admin-main .workspace :is(
+  .ad-business-growth-metrics small,
+  .au-control-kpi small,
+  .ad-business-growth-canvas-caption,
+  .ad-business-growth-definition,
+  .au-control-chart-caption
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-caption) !important;
+  line-height: 1.45;
+}
+
+/* 6 · Unificar tipografía de controles sin alterar el área pulsable
+   ni los diseños existentes de filtros, pestañas o botones. */
+.admin-refresh .admin-main .workspace :is(
+  .abv1-more-filters,
+  .abv1-advanced-tool,
+  .abv1-clear,
+  .abv1-select select,
+  .ad-business-growth-filter-trigger,
+  .ad-business-growth-export,
+  .ad-business-growth-chart-mode button,
+  .ad-business-growth-interval button,
+  .ad-business-growth-toggle button,
+  .au-primary-button,
+  .au-outline-button,
+  .ac-primary,
+  .ac-secondary,
+  .ac-filter-link
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-control) !important;
+}
+
+/* 7 · Mantener la etiqueta y cifra coherentes también en el iPad
+   que utiliza la navegación de escritorio. */
+@media (max-width:700px) {
+  .admin-refresh .admin-main .workspace :is(
+    .abv1-kpi > div > span,
+    .ad-business-growth-metrics > div > span,
+    .au-control-kpi-heading
+  ) {
+    font-size: 8px !important;
+  }
+  .admin-refresh .admin-main .workspace :is(
+    .abv1-kpi strong,
+    .ad-business-growth-metrics strong,
+    .au-control-kpi strong
+  ) {
+    font-size: clamp(11px, 3vw, 13px) !important;
   }
 }
