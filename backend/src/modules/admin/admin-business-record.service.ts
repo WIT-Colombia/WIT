@@ -94,7 +94,7 @@ export async function setAdminRecordOfferState(identifier: string, offerId: stri
       throw new AppError(409, 'ADMIN_OFFER_CONCURRENT_CHANGE', 'El estado cambió mientras se procesaba. Actualiza la ficha.');
     const updated = await tx.businessOffer.findUniqueOrThrow({ where: { id: offerId } });
     const previous = { active: current.active, publicationStatus: current.publicationStatus,
-      deletedAt: current.deletedAt?.toISOString() ?? null, administrativeStatus: current.administrativeStatus };
+      deletedAt: null, administrativeStatus: current.administrativeStatus };
     const next = { active: updated.active, publicationStatus: updated.publicationStatus,
       deletedAt: updated.deletedAt?.toISOString() ?? null, administrativeStatus: updated.administrativeStatus };
     const actionName = action === 'ACTIVATE' ? 'ADMIN_OFFER_ACTIVATED'
