@@ -82,7 +82,7 @@ export function changeAdminBusinessVisibility(id: string, action: AdminVisibilit
 export function adminBusinessVisibilityLabel(business: Pick<AdminBusinessRecord, 'visibilityStatus' | 'administrativeRestriction'>): string {
   if (business.administrativeRestriction === 'SUSPENDED') return 'Suspendido por Admin';
   if (business.administrativeRestriction === 'HIDDEN') return 'Oculto por Admin';
-  return ({ VISIBLE: 'Visible', HIDDEN: 'Oculto por propietario', EXPIRED: 'Vencido', REVIEW: 'En revisión' } as Record<string, string>)[business.visibilityStatus]
+  return ({ VISIBLE: 'Visible', HIDDEN: 'Oculta (reversible)', EXPIRED: 'Vencido', REVIEW: 'En revisión' } as Record<string, string>)[business.visibilityStatus]
     ?? 'Estado desconocido';
 }
 export function verifyAdminBusiness(id: string, reason: string, confirmation: string) {
