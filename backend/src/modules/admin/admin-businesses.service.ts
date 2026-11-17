@@ -367,3 +367,84 @@ export async function deleteAdminBusiness(identifier: string, actorUserId: strin
       message: 'Negocio retirado de XAMUKO. La cuenta del propietario permanece activa y el historial se conserva.' };
   });
 }
+
+
+/** Explicit SUPER_ADMIN manual approval; pending documentary requests must use their own review workflow. */
+export async function setAdminBusinessVerification(identifier: string, actorUserId: string, reasonText: string) {
+  const reason = reasonText.trim();
+  if (reason.length < 12 || reason.length > 500)
+    throw new AppError(400, 'ADMIN_VERIFICATION_REASON_REQUIRED', 'Justifica la verificación (12 a 500 caracteres).');
+  return prisma.$transaction(async tx => {
+    const business = await tx.business.findFirst({
+      where: { OR: [{ id: identifier }, { publicId: identifier }] },
+      select: { id: true, name: true, deletionStatus: true, verificationStatus: true },
+    });
+    if (!business) throw new AppError(404, 'ADMIN_BUSINESS_NOT_FOUND', 'Negocio no encontrado.');
+    if (business.deletionStatus === 'DELETED') throw new AppError(409, 'ADMIN_BUSINESS_DELETED', 'No puedes verificar un negocio eliminado.');
+    if (business.verificationStatus === 'APPROVED') throw new AppError(409, 'ADMIN_BUSINESS_VERIFIED', 'El negocio ya está verificado.');
+    const openRequest = await tx.businessVerificationRequest.findFirst({
+      where: { businessId: business.id, activeKey: { not: null } }, select: { id: true },
+    });
+    if (openRequest) throw new AppError(409, 'ADMIN_VERIFICATION_PENDING_DOCUMENT', 'Existe una solicitud documental abierta. Resuélvela desde Verificaciones para conservar el expediente.');
+    const result = await tx.business.updateMany({
+      where: { id: business.id, verificationStatus: business.verificationStatus, deletionStatus: { not: 'DELETED' } },
+      data: { verificationStatus: 'APPROVED' },
+    });
+    if (!result.count) throw new AppError(409, 'ADMIN_BUSINESS_CONCURRENT_CHANGE', 'El estado de verificación cambió. Actualiza la ficha.');
+    await tx.auditLog.create({ data: { actorUserId, entityType: 'BUSINESS', entityId: business.id,
+      action: 'ADMIN_BUSINESS_VERIFIED_MANUALLY', previousState: { verificationStatus: business.verificationStatus },
+      newState: { verificationStatus: 'APPROVED' }, reason } });
+    const title = 'Tu negocio ha sido verificado';
+    const message = business.name + ' fue verificado mediante una decisión administrativa de XAMUKO. Consulta el estado actualizado en Business.';
+    await notifyBusinessOwners(tx, business.id, title, message);
+    const owners = await tx.businessMembership.findMany({ where: { businessId: business.id, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } }, select: { userId: true } });
+    for (const userId of new Set(owners.map(owner => owner.userId)))
+      await notifyPlatformUser(tx, { userId, sourceType: 'BUSINESS_ADMIN_ACTION', sourceId: business.id, title, message });
+    return { id: business.id, verificationStatus: 'APPROVED', message: 'Negocio verificado y propietarios notificados.' };
+  });
+}
+
+/** Administrative subscription override does not create a charge or recurring payment. */
+export async function setAdminBusinessPlan(identifier: string, actorUserId: string, plan: string, reasonText: string) {
+  const reason = reasonText.trim();
+  if (!['BASIC', 'PRO'].includes(plan))
+    throw new AppError(400, 'ADMIN_PLAN_INVALID', 'Selecciona Básico o Business PRO.');
+  if (reason.length < 12 || reason.length > 500)
+    throw new AppError(400, 'ADMIN_PLAN_REASON_REQUIRED', 'Explica el cambio de plan (12 a 500 caracteres).');
+  return prisma.$transaction(async tx => {
+    const business = await tx.business.findFirst({
+      where: { OR: [{ id: identifier }, { publicId: identifier }] },
+      select: { id: true, name: true, deletionStatus: true },
+    });
+    if (!business) throw new AppError(404, 'ADMIN_BUSINESS_NOT_FOUND', 'Negocio no encontrado.');
+    if (business.deletionStatus === 'DELETED') throw new AppError(409, 'ADMIN_BUSINESS_DELETED', 'No puedes cambiar el plan de un negocio eliminado.');
+    const now = new Date();
+    const active = await tx.businessSubscription.findMany({
+      where: { businessId: business.id, plan: 'PRO', status: 'ACTIVE', revokedAt: null,
+        startsAt: { lte: now }, OR: [{ expiresAt: { gt: now } }, { expiresAt: null, specialActivation: true }] },
+      select: { id: true },
+    });
+    const before = active.length ? 'PRO' : 'BASIC';
+    if (before === plan) throw new AppError(409, 'ADMIN_PLAN_UNCHANGED', 'El negocio ya tiene ese plan.');
+    if (plan === 'PRO') {
+      await tx.businessSubscription.create({ data: {
+        businessId: business.id, plan: 'PRO', status: 'ACTIVE', startsAt: now,
+        expiresAt: null, specialActivation: true, autoRenew: false,
+      } });
+    } else {
+      await tx.businessSubscription.updateMany({
+        where: { id: { in: active.map(item => item.id) }, status: 'ACTIVE', revokedAt: null },
+        data: { status: 'REVOKED', revokedAt: now, revocationReason: ('Cambio administrativo: ' + reason).slice(0, 255), autoRenew: false },
+      });
+    }
+    await tx.auditLog.create({ data: { actorUserId, entityType: 'BUSINESS', entityId: business.id,
+      action: 'ADMIN_BUSINESS_PLAN_CHANGED', previousState: { plan: before }, newState: { plan }, reason } });
+    const title = 'Actualización de tu plan Business';
+    const message = business.name + ' ahora tiene el plan ' + (plan === 'PRO' ? 'Business PRO' : 'Básico') + ' por decisión administrativa. Consulta tu suscripción en Business.';
+    await notifyBusinessOwners(tx, business.id, title, message);
+    const owners = await tx.businessMembership.findMany({ where: { businessId: business.id, role: 'OWNER', status: 'ACTIVE', user: { status: 'ACTIVE' } }, select: { userId: true } });
+    for (const userId of new Set(owners.map(owner => owner.userId)))
+      await notifyPlatformUser(tx, { userId, sourceType: 'BUSINESS_ADMIN_ACTION', sourceId: business.id, title, message });
+    return { id: business.id, plan, message: 'Plan actualizado y propietarios notificados.' };
+  });
+}
