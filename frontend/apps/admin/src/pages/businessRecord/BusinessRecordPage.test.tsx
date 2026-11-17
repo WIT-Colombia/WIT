@@ -119,7 +119,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(panel).getByText('contacto@example.invalid')).toBeInTheDocument();
     expect(within(panel).getByText('B-REAL-1')).toBeInTheDocument();
     expect(within(panel).getByText('Cuenta registradora')).toBeInTheDocument();
-    expect(within(panel).getByText('Propietaria registrada')).toBeInTheDocument();
+    expect(within(panel).getAllByText('Propietaria registrada')).toHaveLength(2);
     expect(within(panel).getByRole('heading', { name: 'Miembros vinculados' })).toBeInTheDocument();
     expect(within(panel).getByText('Vinculado:', { exact: false })).toBeInTheDocument();
     expect(within(panel).getByText('Activo')).toBeInTheDocument();
