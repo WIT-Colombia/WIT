@@ -1379,3 +1379,197 @@
     font-size:16px;
   }
 }
+
+
+/* Información general: four coherent read-only administrative panels.
+   Preserves original record fields, top identity card and permissions. */
+.bd-record .bd-information{display:grid;gap:21px;min-width:0}
+.bd-record .bd-info-details,.bd-record .bd-info-members{min-width:0}
+.bd-record .bd-info-overview-heading,
+.bd-record .bd-info-members-header{
+  display:flex;align-items:center;gap:13px;
+  min-width:0;
+  margin:0 0 17px;
+}
+.bd-record .bd-info-overview-icon{
+  flex:0 0 46px;display:grid;place-items:center;
+  width:46px;height:46px;border-radius:14px;
+  background:#F1E8FD;color:#7430D4;
+}
+.bd-record .bd-info-overview-heading>div,
+.bd-record .bd-info-members-header>div{min-width:0;flex:1}
+.bd-record .bd-info-overview-heading h2,
+.bd-record .bd-info-members-header h2{
+  margin:0;color:#1E1837;font-size:clamp(18px,1.3vw,23px);
+  font-weight:790;letter-spacing:-.032em;line-height:1.3;
+}
+.bd-record .bd-info-overview-heading p,
+.bd-record .bd-info-members-header p{
+  margin:5px 0 0;color:#736B82;font-size:12px;line-height:1.5;
+}
+.bd-record .bd-info-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;gap:17px;min-width:0;
+}
+.bd-record .bd-info-group{
+  display:flex;flex-direction:column;min-width:0;
+  overflow:hidden;
+  border:1px solid #E6E0F0;
+  border-radius:17px;background:#fff;
+  box-shadow:0 4px 17px rgba(47,25,87,.045);
+}
+.bd-record .bd-info-group-header{
+  display:flex;align-items:center;gap:13px;
+  padding:21px 23px 18px;
+  border-bottom:1px solid #F0EDF6;
+}
+.bd-record .bd-info-group-icon{
+  display:grid;place-items:center;flex:0 0 43px;
+  width:43px;height:43px;border-radius:12px;
+  background:#EFE4FD;color:#7433CF;
+}
+.bd-record .bd-info-group--blue .bd-info-group-icon{background:#EAF2FF;color:#3265BD}
+.bd-record .bd-info-group--green .bd-info-group-icon{background:#E8F8EE;color:#19874D}
+.bd-record .bd-info-group--amber .bd-info-group-icon{background:#FFF3DF;color:#AB6E11}
+.bd-record .bd-info-group-title{display:grid;gap:4px;min-width:0}
+.bd-record .bd-info-group-title h3{
+  margin:0;color:#241A41;font-size:16px;line-height:1.3;
+  font-weight:760;letter-spacing:-.02em;
+}
+.bd-record .bd-info-group-title p{margin:0;color:#787087;font-size:11px;line-height:1.4}
+.bd-record .bd-info-fields{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px 17px;align-content:start;
+  margin:0;padding:19px 23px 24px;
+}
+.bd-record .bd-info-field{
+  min-width:0;display:flex;flex-direction:column;gap:6px;
+  padding:0 0 12px;border-bottom:1px solid #F2EEF7;
+}
+.bd-record .bd-info-field--wide{grid-column:1/-1}
+.bd-record .bd-info-field dt{
+  color:#7C738F;font-size:11px;font-weight:640;line-height:1.4;
+}
+.bd-record .bd-info-field dd{
+  margin:0;min-width:0;overflow-wrap:anywhere;
+  color:#251E3D;font-size:13px;font-weight:670;line-height:1.6;
+  white-space:pre-wrap;
+}
+.bd-record .bd-info-field dd .bd-badge{font-size:11px;white-space:normal}
+.bd-record .bd-info-members{
+  overflow:hidden;border:1px solid #E6E0F0;border-radius:17px;
+  background:#fff;box-shadow:0 4px 17px rgba(47,25,87,.045);
+}
+.bd-record .bd-info-members-header{
+  margin:0;padding:20px 23px;border-bottom:1px solid #F0EDF6;
+}
+.bd-record .bd-info-members-count{
+  display:grid;place-items:center;flex:none;
+  min-width:37px;height:33px;padding:0 10px;
+  border-radius:999px;background:#F1E8FD;
+  color:#6525BD;font-size:13px;font-weight:780;
+  font-variant-numeric:tabular-nums;
+}
+.bd-record .bd-info-members-list{display:grid;gap:0;list-style:none;margin:0;padding:7px 23px 14px}
+.bd-record .bd-info-member{
+  display:flex;align-items:center;gap:13px;
+  min-width:0;padding:15px 0;
+}
+.bd-record .bd-info-member+.bd-info-member{border-top:1px solid #F0EDF6}
+.bd-record .bd-info-member-avatar{
+  display:grid;place-items:center;flex:0 0 43px;
+  width:43px;height:43px;border-radius:50%;
+  background:#F0EBFA;color:#7441C7;
+}
+.bd-record .bd-info-member-identity{display:grid;gap:4px;flex:1;min-width:0}
+.bd-record .bd-info-member-identity strong{
+  color:#261E41;font-size:13px;line-height:1.4;overflow-wrap:anywhere;
+}
+.bd-record .bd-info-member-identity small,
+.bd-record .bd-info-member-date{
+  color:#777085;font-size:11px;line-height:1.45;
+}
+.bd-record .bd-info-member-meta{
+  display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;
+  gap:10px;min-width:0;
+}
+.bd-record .bd-info-member-role{
+  color:#645A7C;font-size:11px;font-weight:720;
+}
+
+/* Both summary actions use exactly one shared geometry and border.
+   Scoped to this page so other admin buttons remain unchanged. */
+.bd-record .bd-summary .bd-summary-outline-action,
+.bd-record .bd-summary-plot .bd-summary-outline-action{
+  display:inline-flex;
+  align-items:center;justify-content:center;gap:11px;
+  flex:0 1 auto;
+  box-sizing:border-box;
+  width:260px;min-width:0;max-width:100%;
+  height:50px;min-height:50px;max-height:50px;
+  margin:0;padding:0 16px;
+  border:1.5px solid #A887F5;border-radius:12px;
+  background:#fff;
+  box-shadow:0 2px 6px rgba(98,46,174,.04);
+  color:#6D28D9;
+  font-family:inherit;font-size:14px;font-weight:800;line-height:1.25;
+  text-align:center;white-space:nowrap;
+  cursor:pointer;
+}
+.bd-record .bd-summary .bd-summary-outline-action:hover{
+  border-color:#8355DC;background:#FAF7FF;color:#571FB7;
+}
+.bd-record .bd-summary .bd-summary-outline-action:focus-visible{
+  outline:2px solid #6D28D9;outline-offset:3px;
+}
+.bd-record .bd-summary .bd-summary-outline-action>svg{
+  flex:none;width:18px;height:18px;
+}
+@media(max-width:1050px){
+  .bd-record .bd-info-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:700px){
+  .bd-record .bd-information{gap:13px}
+  .bd-record .bd-info-grid{gap:12px}
+  .bd-record .bd-info-overview-heading{padding:0 4px;margin-bottom:14px}
+  .bd-record .bd-info-overview-icon{width:40px;height:40px;flex-basis:40px}
+  .bd-record .bd-info-overview-heading h2,
+  .bd-record .bd-info-members-header h2{font-size:17px}
+  .bd-record .bd-info-overview-heading p,
+  .bd-record .bd-info-members-header p{font-size:10px}
+  .bd-record .bd-info-group{border-radius:13px}
+  .bd-record .bd-info-group-header{padding:15px;gap:10px}
+  .bd-record .bd-info-group-icon{width:38px;height:38px;flex-basis:38px}
+  .bd-record .bd-info-group-title h3{font-size:14px}
+  .bd-record .bd-info-group-title p{font-size:10px}
+  .bd-record .bd-info-fields{grid-template-columns:minmax(0,1fr);padding:15px;gap:9px}
+  .bd-record .bd-info-field{padding-bottom:10px}
+  .bd-record .bd-info-field dt{font-size:10px}
+  .bd-record .bd-info-field dd{font-size:12px}
+  .bd-record .bd-info-members{border-radius:13px}
+  .bd-record .bd-info-members-header{padding:14px;gap:9px}
+  .bd-record .bd-info-members-list{padding:3px 14px 10px}
+  .bd-record .bd-info-member{gap:9px;flex-wrap:wrap;padding:13px 0}
+  .bd-record .bd-info-member-avatar{width:37px;height:37px;flex-basis:37px}
+  .bd-record .bd-info-member-identity{flex-basis:calc(100% - 48px)}
+  .bd-record .bd-info-member-meta{margin-left:46px;justify-content:flex-start}
+  .bd-record .bd-summary .bd-summary-outline-action{
+    width:100%;min-height:46px;height:46px;max-height:46px;
+    font-size:12px;padding:0 13px;
+  }
+  .bd-record .bd-summary .bd-summary-history-link{
+    width:100%;margin-top:7px;
+  }
+}
+@media(min-width:2000px){
+  .bd-record .bd-info-grid{gap:23px}
+  .bd-record .bd-info-group-header{padding:28px 30px 24px}
+  .bd-record .bd-info-fields{padding:24px 30px 31px;gap:17px 23px}
+  .bd-record .bd-info-field dt{font-size:13px}
+  .bd-record .bd-info-field dd{font-size:16px}
+  .bd-record .bd-info-group-title h3{font-size:20px}
+  .bd-record .bd-info-member-identity strong{font-size:16px}
+  .bd-record .bd-summary .bd-summary-outline-action{
+    width:300px;min-height:56px;height:56px;max-height:56px;font-size:16px;
+  }
+}

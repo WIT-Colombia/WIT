@@ -106,6 +106,34 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(identity).getByText('Palmira, Valle del Cauca')).toBeInTheDocument();
   });
 
+  it('presenta Información general en cuatro bloques y mantiene los datos administrativos y miembros', async () => {
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('tab', { name: 'Información general' }));
+    const panel = screen.getByRole('tabpanel', { name: 'Información general' });
+    expect(within(panel).getByRole('heading', { name: 'Información comercial' })).toBeInTheDocument();
+    expect(within(panel).getByRole('heading', { name: 'Ubicación' })).toBeInTheDocument();
+    expect(within(panel).getByRole('heading', { name: 'Contacto' })).toBeInTheDocument();
+    expect(within(panel).getByRole('heading', { name: 'Datos administrativos' })).toBeInTheDocument();
+    expect(within(panel).getByText('Descripción registrada')).toBeInTheDocument();
+    expect(within(panel).getByText('Dirección registrada')).toBeInTheDocument();
+    expect(within(panel).getByText('contacto@example.invalid')).toBeInTheDocument();
+    expect(within(panel).getByText('B-REAL-1')).toBeInTheDocument();
+    expect(within(panel).getByText('Cuenta registradora')).toBeInTheDocument();
+    expect(within(panel).getByText('Propietaria registrada')).toBeInTheDocument();
+    expect(within(panel).getByRole('heading', { name: 'Miembros vinculados' })).toBeInTheDocument();
+    expect(within(panel).getByText('Vinculado:', { exact: false })).toBeInTheDocument();
+    expect(within(panel).getByText('Activo')).toBeInTheDocument();
+  });
+  it('usa el mismo estilo para Explorar actividad y Ver historial completo', async () => {
+    setup(); await ready();
+    const explore = screen.getByRole('button', { name: /Explorar actividad/ });
+    const history = screen.getByRole('button', { name: /Ver historial completo/ });
+    expect(explore).toHaveClass('bd-summary-outline-action');
+    expect(history).toHaveClass('bd-summary-outline-action');
+    expect(explore.closest('.bd-summary')).toBe(history.closest('.bd-summary'));
+    fireEvent.click(history);
+    expect(screen.getByRole('tab', { name: 'Historial administrativo' })).toHaveAttribute('aria-selected', 'true');
+  });
   it('cambiar pestañas conserva la ficha y la consulta del catálogo', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); await screen.findByRole('heading', { name: offer.name }); fireEvent.click(screen.getByRole('tab', { name: 'Información general' })); expect(screen.getByRole('tabpanel', { name: 'Información general' })).toHaveTextContent('Cuenta registradora'); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(api.getRecordBusiness).toHaveBeenCalledTimes(1); expect(api.getRecordCatalog).toHaveBeenCalledTimes(1); expect(screen.getByRole('heading', { name: offer.name })).toBeInTheDocument(); });
   it('el catálogo permite consultar sin modificar la información comercial', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' })); const dialog = await screen.findByRole('dialog', { name: offer.name }); expect(within(dialog).queryByRole('button', { name: /Guardar|Eliminar|Editar/ })).not.toBeInTheDocument(); expect(within(dialog).getByText('Información comercial registrada')).toBeInTheDocument(); expect(offerPrice(offer)).toMatch(/COP.*0/); expect(offerPrice({ ...offer, negotiable: true })).toBe('Precio a convenir'); });
   it('respeta los permisos separados de catálogo y opiniones', async () => { permissions = ['business:write']; role = 'ADMIN'; setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(screen.getByRole('heading', { name: 'Catálogo de acceso restringido' })).toBeInTheDocument(); fireEvent.click(screen.getByRole('tab', { name: 'Opiniones' })); expect(screen.getByRole('heading', { name: 'Opiniones de acceso restringido' })).toBeInTheDocument(); expect(api.getRecordCatalog).not.toHaveBeenCalled(); expect(api.getRecordReviews).not.toHaveBeenCalled(); expect(screen.queryByRole('button', { name: 'Ocultar negocio' })).not.toBeInTheDocument(); });

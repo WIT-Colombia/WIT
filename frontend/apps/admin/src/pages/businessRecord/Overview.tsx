@@ -102,7 +102,7 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
           ? <ActivityChart data={activity.data} metric="views" variant="overview"/>
           : <Empty icon="chart" title="Sin datos para graficar" message="No hay intervalos disponibles en el período seleccionado."/>}
         <div className="bd-summary-chart-footer">
-          <button type="button" className="bd-summary-text-link" onClick={onActivity}>Explorar actividad <Icon name="arrow" size={15}/></button>
+          <button type="button" className="bd-summary-outline-action bd-summary-text-link" onClick={onActivity}>Explorar actividad <Icon name="arrow" size={15}/></button>
         </div>
       </div>
     </section>
@@ -129,7 +129,7 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
           <h2 id="bd-summary-history-title">Últimas actuaciones administrativas</h2>
           <p>Registros más recientes sobre este negocio</p>
         </div>
-        <button type="button" className="bd-summary-history-link" onClick={onHistory}>
+        <button type="button" className="bd-summary-outline-action bd-summary-history-link" onClick={onHistory}>
           Ver historial completo <Icon name="arrow" size={16}/>
         </button>
       </header>
