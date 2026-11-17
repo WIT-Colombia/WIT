@@ -25,7 +25,7 @@ export function validateAdminVisibilityAction(action: string, reason: string): A
 
 const businessSelect = {
   id: true, publicId: true, name: true, description: true, email: true, phone: true,
-  coverPhotoId: true,
+  coverPhotoId: true, profilePhotoId: true,
   lifecycleStatus: true, publicationStatus: true, visibilityStatus: true,
   administrativeRestriction: true, administrativePreviousVisibility: true,
   administrativeRestrictedAt: true, administrativeRestrictionReason: true,
@@ -126,7 +126,7 @@ export async function getAdminBusiness(id: string) {
 /** Read the original gallery cover under Admin permissions, regardless of publication state. */
 export async function getAdminBusinessCoverPhoto(photoId: string) {
   const photo = await prisma.photo.findFirst({
-    where: { id: photoId, business: { coverPhotoId: photoId } },
+    where: { id: photoId, business: { OR: [{ coverPhotoId: photoId }, { profilePhotoId: photoId }] } },
     select: { storageKey: true },
   });
   if (!photo) throw new AppError(404, 'ADMIN_BUSINESS_PHOTO_NOT_FOUND', 'No encontramos la portada del negocio.');
