@@ -57,6 +57,8 @@ export function toBusinessDetails(value: RealBusiness): BusinessDetails {
     lifecycleStatus: value.lifecycleStatus,
     publicationStatus: value.publicationStatus,
     visibilityStatus: value.visibilityStatus,
+    administrativeRestriction: value.administrativeRestriction ?? null,
+    isPro: value.isPro,
     publicationReadiness: value.publicationReadiness,
   };
 }
