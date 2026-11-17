@@ -397,7 +397,7 @@ export function DashboardPage() {
     <div className="business-home-heading">
       <div><span className="business-home-eyebrow">CENTRO DE CONTROL</span><h1>Inicio</h1><p>{currentDate.charAt(0).toLocaleUpperCase("es-CO") + currentDate.slice(1)} · Un resumen de tu negocio en XAMUKO.</p></div>
       {business.name && realBusiness && !isPreview && business.role === "Propietario" && (
-        <div className="business-home-visibility-action">
+        <div className={`business-home-visibility-action is-${visibilityBadgeVariant}`}>
           <div className="business-home-visibility-info" aria-live="polite">
             <div className="business-home-visibility-label">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.2 12s3.5-6.3 9.8-6.3 9.8 6.3 9.8 6.3-3.5 6.3-9.8 6.3S2.2 12 2.2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -422,7 +422,7 @@ export function DashboardPage() {
           {visibility && !visibilityView.blockedByAdmin && !visibilityView.hiddenByOwner && visibility.publicationStatus !== "UNPUBLISHED" && (
             <button type="button" onClick={() => void renewBusinessVisibility()} disabled={visibilityBusy}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.9 4.4"/><path d="M20 4v7h-7"/></svg>
-              <span>{visibilityBusy ? "Renovando…" : `Mantener visible ${BUSINESS_VISIBILITY_DAYS} días`}</span>
+              <span>{visibilityBusy ? "Renovando…" : visibilityBadgeVariant === "expired" ? `Renovar visibilidad ${BUSINESS_VISIBILITY_DAYS} días` : `Mantener visible ${BUSINESS_VISIBILITY_DAYS} días`}</span>
             </button>
           )}
           {visibilityError && <small className="business-home-visibility-error" role="alert">{visibilityError}</small>}
