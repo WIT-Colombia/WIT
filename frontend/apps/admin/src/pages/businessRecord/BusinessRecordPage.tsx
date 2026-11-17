@@ -64,19 +64,13 @@ function BusinessRecord({ id }: { id: string }) {
   const canAct = session?.role === 'SUPER_ADMIN' && Boolean(record) && business.deletionStatus !== 'DELETED';
   const actionDisabled = source.loading || Boolean(source.error) || operationPending;
   const photoCount = record ? record.businessPhotos + (catalogAllowed ? record.catalogPhotos : 0) : 0;
-  const copyId = async () => {
-    try { if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(business.publicId);
-      else { const input = document.createElement('textarea'); input.value = business.publicId; input.style.position = 'fixed'; input.style.left = '-10000px'; document.body.appendChild(input); input.select(); const success = document.execCommand('copy'); input.remove(); if (!success) throw new Error(); }
-      setNotice('ID público copiado.');
-    } catch { setNotice('No se pudo copiar automáticamente. Puedes seleccionar el ID público en la ficha.'); }
-  };
   return <BusinessRecordPhotos businessId={business.id}><div className="bd-record">
     <header className="bd-topbar"><Link className="bd-back" to="/businesses"><Icon name="arrow" size={18}/><span>Volver a negocios</span></Link><div className="bd-page-title"><h1>Ficha administrativa del negocio</h1><p>{business.name}</p></div></header>
     {notice && <p className="bd-notice" role="status"><Icon name="check" size={17}/>{notice}<button aria-label="Cerrar aviso" onClick={() => setNotice('')}><Icon name="close" size={16}/></button></p>}
     {source.error && <Loading error={source.error} loading={false} retry={source.retry}/>}
     {!record && <div className="bd-error" role="alert">La ficha completa requiere la actualización del backend. Las acciones se habilitarán cuando esté disponible su información administrativa.</div>}
     <section className="bd-identity" aria-label="Identificación del establecimiento"><div className="bd-cover">
-      <div className="bd-identity-content"><BusinessRecordPhoto id={business.profilePhotoId} alt={`Perfil de ${business.name}`} size={320} eager position={record?.profilePosition} className="bd-business-logo" fallbackLetter={business.name}/><div className="bd-identity-copy"><h2>{business.name}</h2><span className="bd-category"><Icon name="store" size={14}/>{categoryName(business.category)}</span><p className="bd-location-text"><Icon name="pin" size={16}/><span>{business.location ? [business.location.cityName, business.location.regionName].filter(Boolean).join(', ') : 'Ubicación no registrada'}</span></p><div className="bd-id-row"><span>ID público: <strong>{business.publicId}</strong></span><button aria-label="Copiar ID público" title="Copiar ID público" onClick={() => void copyId()}><Icon name="copy" size={16}/></button></div></div></div>
+      <div className="bd-identity-content"><BusinessRecordPhoto id={business.profilePhotoId} alt={`Perfil de ${business.name}`} size={320} eager position={record?.profilePosition} className="bd-business-logo" fallbackLetter={business.name}/><div className="bd-identity-copy"><h2>{business.name}</h2><span className="bd-category"><Icon name="store" size={14}/>{categoryName(business.category)}</span><p className="bd-location-text"><Icon name="pin" size={16}/><span>{business.location ? [business.location.cityName, business.location.regionName].filter(Boolean).join(', ') : 'Ubicación no registrada'}</span></p></div></div>
       {photoCount > 0 && <button className="bd-gallery-shortcut" onClick={() => choose('photos')}><Icon name="image" size={17}/>Ver galería ({number(photoCount)})</button>}</div>
       <aside className="bd-owner-card"><div><span><Icon name="users"/></span><section><small>Propietario actual</small><strong>{record ? owners(business) : 'Pendiente de consulta'}</strong></section></div><div><span><Icon name="calendar"/></span><section><small>Fecha de registro</small><time dateTime={business.createdAt}>{date(business.createdAt)}</time></section></div><div><span><Icon name="calendar"/></span><section><small>Última actualización</small><time dateTime={business.updatedAt}>{date(business.updatedAt)}</time></section></div></aside>
     </section>
