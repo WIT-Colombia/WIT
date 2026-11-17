@@ -82,7 +82,7 @@ function BusinessRecord({ id }: { id: string }) {
           <span className="bd-indicator-icon"><Icon name="eye" size={25}/></span>
           <span><span className="bd-indicator-title">Visibilidad</span>
             <Badge tone={business.deletionStatus === 'DELETED' ? 'red' : business.administrativeRestriction ? 'amber' : record?.effectiveVisibility === 'VISIBLE' ? 'green' : 'neutral'}>
-              {business.administrativeRestriction === 'SUSPENDED' ? 'Suspendida' : business.deletionStatus === 'DELETED' ? 'Eliminada' : visibility(business)}
+              {business.administrativeRestriction === 'SUSPENDED' ? 'Suspendida' : business.deletionStatus === 'DELETED' ? 'Eliminado' : visibility(business)}
             </Badge></span>
           {canAct && <Icon name="chevron" size={16}/>}
         </button>
