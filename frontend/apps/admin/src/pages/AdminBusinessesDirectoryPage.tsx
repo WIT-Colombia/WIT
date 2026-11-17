@@ -11,6 +11,7 @@ import {
   type AdminBusinessFilterOptions,
 } from '../services/adminApiClient';
 import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
+import { businessDirectoryPages } from '../utils/adminBusinessDirectoryPagination';
 import './AdminBusinessesDirectoryPage.css';
 
 const PAGE_SIZE = 10;
@@ -30,19 +31,6 @@ const verificationState: Record<string, { label: string; className: string; icon
 };
 const statusOf = (value: string) => verificationState[value] ??
   { label: 'Estado desconocido', className: 'none', icon: 'shield' };
-
-/** Compact numbered pagination with current-page neighbours and accurate ellipses. */
-export function businessDirectoryPages(current: number, total: number): Array<number | '…'> {
-  const last = Math.max(1, total);
-  const near = Array.from({ length: 5 }, (_, index) => Math.max(2, Math.min(last - 4, current - 2)) + index);
-  const items = [...new Set([1, last, ...near.filter(n => n > 1 && n < last)])].sort((a,b) => a-b);
-  const result: Array<number | '…'> = [];
-  items.forEach((value, index) => {
-    if (index > 0 && value > items[index - 1] + 1) result.push('…');
-    result.push(value);
-  });
-  return result;
-}
 
 function VerificationBadge({ value }: { value: string }) {
   const status = statusOf(value);
