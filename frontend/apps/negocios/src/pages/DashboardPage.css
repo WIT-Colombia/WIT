@@ -2069,3 +2069,61 @@
 .business-home .business-home-performance .business-home-chart-clarification{
   margin:5px 0 0;color:#7588a5;font-size:10px;line-height:1.55;text-align:center;
 }
+
+
+/* Inicio Business: state controlled by Admin, never inferred from 40-day expiry. */
+.business-home .business-home-visibility-action.is-hidden{
+  border-color:#f5dbad;
+  background:linear-gradient(115deg,#fffcf3,#fff);
+  box-shadow:0 5px 15px #b88a2713;
+}
+.business-home .business-home-visibility-action.is-suspended{
+  border-color:#f4c1c8;
+  background:linear-gradient(115deg,#fff6f7,#fff);
+  box-shadow:0 5px 15px #b53e5011;
+}
+.business-home .business-home-visibility-badge.hidden{
+  background:#fff0d4;
+  color:#8a520c;
+}
+.business-home .business-home-visibility-badge.suspended{
+  background:#fde5e9;
+  color:#aa2540;
+}
+.business-home .business-home-visibility-badge.unknown{
+  background:#edf2f9;
+  color:#52647b;
+}
+.business-home .business-home-visibility-action .business-home-visibility-note{
+  display:block;
+  margin-top:5px;
+  max-width:560px;
+  color:#625c71;
+  font-size:11px;
+  font-weight:600;
+  line-height:1.5;
+  overflow-wrap:break-word;
+  word-break:normal;
+}
+.business-home .business-home-visibility-action .business-home-visibility-note.hidden{
+  color:#895d12;
+}
+.business-home .business-home-visibility-action .business-home-visibility-note.suspended{
+  color:#a02b43;
+}
+.business-home .business-home-visibility-action .business-home-visibility-note.expired{
+  color:#a22f3e;
+}
+.business-home .business-home-visibility-action.is-suspended .business-home-visibility-label>svg,
+.business-home .business-home-visibility-action.is-suspended .business-home-visibility-remaining>svg{
+  color:#b22c44;
+}
+.business-home .business-home-visibility-action.is-hidden .business-home-visibility-label>svg{
+  color:#b4781a;
+}
+@container business-home-panels (max-width: 520px){
+  .business-home .business-home-visibility-action .business-home-visibility-note{
+    max-width:none;
+    font-size:11px;
+  }
+}
