@@ -126,7 +126,7 @@ export async function getAdminBusiness(id: string) {
 /** Read the original gallery cover under Admin permissions, regardless of publication state. */
 export async function getAdminBusinessCoverPhoto(photoId: string) {
   const photo = await prisma.photo.findFirst({
-    where: { id: photoId, isGallery: true, business: { coverPhotoId: photoId } },
+    where: { id: photoId, business: { coverPhotoId: photoId } },
     select: { storageKey: true },
   });
   if (!photo) throw new AppError(404, 'ADMIN_BUSINESS_PHOTO_NOT_FOUND', 'No encontramos la portada del negocio.');
