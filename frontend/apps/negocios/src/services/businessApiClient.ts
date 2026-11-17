@@ -256,7 +256,16 @@ export type ModalityStatus = "CONFIGURING" | "ACTIVE" | "PAUSED";
 export type ModalityContact = { email: string | null; website: string | null; phone: string | null; whatsapp: string | null; instagram?: string | null };
 export type ModalityHour = { dayOfWeek: number; isClosed: boolean; opensAt: string | null; closesAt: string | null; timezone: string };
 export type RealModality = { id: string; businessId: string; type: ModalityType; status: ModalityStatus; contact: ModalityContact | null; effectiveContact?: ModalityContact; blockers?: string[]; hours: ModalityHour[] };
-export type BusinessVisibility = { businessId: string; publicId: string; visibilityStatus: string; createdAt: string; isWithinPeriod: boolean; period: { id: string; kind: string; startsAt: string; expiresAt: string; requestedAt: string } | null };
+export type BusinessVisibility = {
+  businessId: string;
+  publicId?: string;
+  visibilityStatus: string;
+  administrativeRestriction?: 'HIDDEN' | 'SUSPENDED' | null;
+  publicationStatus?: string;
+  createdAt?: string;
+  isWithinPeriod: boolean;
+  period: { id: string; kind: string; startsAt: string; expiresAt: string; requestedAt: string } | null;
+};
 
 export const businessApi = {
   listCollaborators: (businessId:string) => requestJson<{memberships:BusinessMembership[]}>(`/businesses/${encodeURIComponent(businessId)}/collaborators`),
