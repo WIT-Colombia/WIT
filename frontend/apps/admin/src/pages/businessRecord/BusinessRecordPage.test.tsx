@@ -30,7 +30,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.queryByText('Acciones administrativas')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Actualizar ficha' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Eliminar administrativamente' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(document.querySelector('.bd-administration')).not.toBeInTheDocument();
     expect(screen.getByRole('tabpanel', { name: 'Resumen' })).toBeInTheDocument();
     const cards = screen.getByRole('region', { name: 'Indicadores principales' });
     expect(within(cards).getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toBeEnabled();
