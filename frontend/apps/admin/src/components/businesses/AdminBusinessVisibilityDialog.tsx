@@ -4,6 +4,8 @@ import { Icon } from '../Icon';
 import { changeAdminBusinessVisibility, type AdminVisibilityAction } from '../../services/adminApiClient';
 
 const labels = {
+  SET_VISIBLE: { title: 'Establecer como visible', verb: 'Confirmar estado visible', icon: 'eye', description: 'El administrador retirará cualquier suspensión o restricción. El negocio solo aparecerá al público si cumple la vigencia y las demás condiciones de publicación; no se conceden días adicionales.' },
+  SET_HIDDEN: { title: 'Ocultar negocio', verb: 'Confirmar ocultamiento', icon: 'eye-off', description: 'El negocio dejará de aparecer públicamente. El propietario podrá volver a hacerlo visible desde Business, si cumple los requisitos de publicación y vigencia.' },
   HIDE: { title: 'Ocultar negocio', verb: 'Confirmar ocultamiento', icon: 'eye-off', description: 'El negocio dejará de aparecer públicamente. Su propietario no podrá reactivar la visibilidad hasta que Admin levante esta medida.' },
   SUSPEND: { title: 'Suspender negocio', verb: 'Confirmar suspensión', icon: 'lock', description: 'El negocio quedará oculto del directorio público y su propietario no podrá renovar, activar ni volver a publicar mientras se mantenga la suspensión.' },
   RESTORE: { title: 'Levantar restricción', verb: 'Confirmar restitución', icon: 'check', description: 'Se retirará la medida administrativa. No se renovará automáticamente la vigencia ni se publicará un establecimiento que estuviera oculto por su propietario.' },
