@@ -11,7 +11,7 @@ function expiresAtFrom(start: Date) {
 async function authorizedBusiness(userId: string, identifier: string) {
   const business = await prisma.business.findFirst({
     where: { OR: [{ id: identifier }, { publicId: identifier }], deletionStatus: { not: 'DELETED' }, memberships: { some: { userId, status: 'ACTIVE' } } },
-    select: { id: true, publicId: true, createdAt: true, visibilityStatus: true, administrativeRestriction: true, memberships: { where: { userId, status: 'ACTIVE' }, select: { role: true, permissions: { where: { allowed: true }, select: { permission: true } } } } },
+    select: { id: true, publicId: true, createdAt: true, visibilityStatus: true, publicationStatus: true, administrativeRestriction: true, memberships: { where: { userId, status: 'ACTIVE' }, select: { role: true, permissions: { where: { allowed: true }, select: { permission: true } } } } },
   });
   if (!business) throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos el negocio.');
   const membership = business.memberships[0];
@@ -27,7 +27,10 @@ async function currentPeriod(businessId: string) {
 export async function getVisibility(userId: string, identifier: string) {
   const business = await authorizedBusiness(userId, identifier);
   const period = await currentPeriod(business.id);
-  return { businessId: business.id, publicId: business.publicId, visibilityStatus: business.visibilityStatus, createdAt: business.createdAt, period, isWithinPeriod: Boolean(period && period.startsAt <= new Date() && period.expiresAt > new Date()) };
+  return { businessId: business.id, publicId: business.publicId,
+    visibilityStatus: business.visibilityStatus, administrativeRestriction: business.administrativeRestriction,
+    publicationStatus: business.publicationStatus, createdAt: business.createdAt,
+    period, isWithinPeriod: Boolean(period && period.startsAt <= new Date() && period.expiresAt > new Date()) };
 }
 
 export async function ensureInitialVisibilityPeriod(tx: any, businessId: string, createdAt: Date) {
@@ -53,7 +56,9 @@ export async function renewVisibility(userId: string, identifier: string) {
     });
     return next;
   });
-  return { businessId: business.id, visibilityStatus: 'VISIBLE', isWithinPeriod: true, period: { id: period.id, kind: period.kind, startsAt: period.startsAt, expiresAt: period.expiresAt, requestedAt: period.requestedAt } };
+  return { businessId: business.id, visibilityStatus: 'VISIBLE', administrativeRestriction: null,
+    publicationStatus: business.publicationStatus, isWithinPeriod: true,
+    period: { id: period.id, kind: period.kind, startsAt: period.startsAt, expiresAt: period.expiresAt, requestedAt: period.requestedAt } };
 }
 
 export async function setVisibility(userId: string, identifier: string, visible: boolean) {
@@ -63,5 +68,6 @@ export async function setVisibility(userId: string, identifier: string, visible:
   const activePeriod = period && period.startsAt <= new Date() && period.expiresAt > new Date();
   const visibilityStatus = visible ? (activePeriod ? 'VISIBLE' : 'EXPIRED') : 'HIDDEN';
   await prisma.business.update({ where: { id: business.id, administrativeRestriction: null }, data: { visibilityStatus } });
-  return { businessId: business.id, visibilityStatus, period };
+  return { businessId: business.id, visibilityStatus, administrativeRestriction: null,
+    publicationStatus: business.publicationStatus, isWithinPeriod: Boolean(activePeriod), period };
 }
