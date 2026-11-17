@@ -602,123 +602,155 @@
 }
 
 
-/* Administrative business identity — phones: center the entire identity block.
-   Keep tablet and desktop side-by-side presentation unchanged. */
-@media (max-width:700px){
-  .bd-record .bd-identity .bd-cover{
-    min-height:0;
-  }
+/* Consistent identity card across desktop, iPad and mobile:
+   profile portrait -> name -> category -> city, always centered.
+   Keep the backend public ID for internal references, not in this visual card. */
+.bd-record .bd-identity .bd-cover{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-width:0;
+  min-height:0;
+  background:linear-gradient(120deg,#141e43 0%,#241f64 57%,#3e3086 100%);
+}
+.bd-record .bd-identity .bd-identity-content{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  min-width:0;
+  min-height:0;
+  padding:clamp(24px,3vw,40px) clamp(16px,3vw,35px) 27px;
+  color:#fff;
+  text-align:center;
+}
+.bd-record .bd-identity .bd-business-logo{
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:clamp(88px,9vw,124px);
+  height:clamp(88px,9vw,124px);
+  margin:0 auto;
+  border:4px solid #fff;
+  border-radius:20px;
+  background:#f4f0ff;
+}
+.bd-record .bd-identity .bd-identity-copy{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  flex:0 1 auto;
+  gap:0;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  padding:0;
+  text-align:center;
+}
+.bd-record .bd-identity .bd-identity-copy h2{
+  width:100%;
+  max-width:100%;
+  margin:0 0 12px;
+  font-size:clamp(22px,2.5vw,32px);
+  line-height:1.18;
+  text-align:center;
+  text-wrap:balance;
+  overflow-wrap:anywhere;
+}
+.bd-record .bd-identity .bd-category{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  max-width:100%;
+  padding:8px 13px;
+  border-radius:9px;
+  font-size:clamp(11px,1.05vw,13px);
+  line-height:1.45;
+  text-align:center;
+  white-space:normal;
+}
+.bd-record .bd-identity .bd-category svg{
+  flex:none;
+}
+.bd-record .bd-identity .bd-identity-copy > p{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:8px;
+  width:100%;
+  max-width:100%;
+  margin:15px 0 0;
+  font-size:clamp(11px,1.05vw,14px);
+  line-height:1.5;
+  text-align:center;
+}
+.bd-record .bd-identity .bd-identity-copy > p svg{
+  flex:none;
+  margin:0;
+}
+.bd-record .bd-identity .bd-location-text > span{
+  min-width:0;
+  max-width:100%;
+  text-align:center;
+  white-space:normal;
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+.bd-record .bd-identity .bd-gallery-shortcut{
+  position:static;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  align-self:center;
+  width:max-content;
+  max-width:calc(100% - 32px);
+  min-height:36px;
+  margin:0 auto 19px;
+  transform:none;
+  white-space:normal;
+  text-align:center;
+}
+/* The same center-first composition is preserved on smaller iPads. */
+@media (max-width:1050px){
   .bd-record .bd-identity .bd-identity-content{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:15px;
-    min-height:0;
-    padding:26px 18px 24px;
-    text-align:center;
+    padding:28px 18px 26px;
+    gap:12px;
   }
   .bd-record .bd-identity .bd-business-logo{
-    flex:0 0 auto;
-    width:96px;
-    height:96px;
-    margin:0 auto;
-  }
-  .bd-record .bd-identity .bd-identity-copy{
-    display:flex;
-    flex:0 1 auto;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    width:100%;
-    min-width:0;
-    padding:0;
-    text-align:center;
+    width:94px;
+    height:94px;
+    border-radius:17px;
   }
   .bd-record .bd-identity .bd-identity-copy h2{
-    width:100%;
-    margin:0 0 12px;
+    font-size:clamp(21px,2.75vw,28px);
+  }
+}
+@media (max-width:700px){
+  .bd-record .bd-identity .bd-identity-content{
+    padding:25px 15px 24px;
+    gap:13px;
+  }
+  .bd-record .bd-identity .bd-business-logo{
+    width:96px;
+    height:96px;
+    border-width:3px;
+    border-radius:16px;
+  }
+  .bd-record .bd-identity .bd-identity-copy h2{
     font-size:clamp(22px,6vw,29px);
-    line-height:1.2;
-    text-align:center;
-    overflow-wrap:anywhere;
   }
   .bd-record .bd-identity .bd-category{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    max-width:100%;
     padding:8px 12px;
-    text-align:center;
-    white-space:normal;
-    line-height:1.45;
-  }
-  .bd-record .bd-identity .bd-identity-copy>p{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-wrap:wrap;
-    width:100%;
-    gap:7px;
-    margin-top:15px;
-    text-align:center;
-    line-height:1.45;
-  }
-  .bd-record .bd-identity .bd-identity-copy>p svg{
-    flex:none;
-    margin:0;
-  }
-  .bd-record .bd-identity .bd-location-text>span{
-    max-width:100%;
-    text-align:center;
-    white-space:normal;
-  }
-  .bd-record .bd-identity .bd-id-row{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:9px;
-    width:100%;
-    min-width:0;
-    margin-top:14px;
     font-size:11px;
-    line-height:1.55;
-    text-align:center;
   }
-  .bd-record .bd-identity .bd-id-row>span{
-    width:100%;
-    max-width:100%;
-    min-width:0;
-    text-align:center;
-    overflow-wrap:anywhere;
-    word-break:break-word;
-  }
-  .bd-record .bd-identity .bd-id-row button{
-    display:grid;
-    place-items:center;
-    flex:none;
-    width:38px;
-    height:38px;
-    margin:0 auto;
-    border:1px solid rgba(255,255,255,.38);
-    border-radius:10px;
-    background:rgba(255,255,255,.09);
-    color:#fff;
-  }
-  .bd-record .bd-identity .bd-id-row button:active{
-    background:rgba(255,255,255,.2);
+  .bd-record .bd-identity .bd-identity-copy > p{
+    font-size:12px;
   }
   .bd-record .bd-identity .bd-gallery-shortcut{
-    left:50%;
-    right:auto;
-    bottom:12px;
-    max-width:calc(100% - 24px);
-    transform:translateX(-50%);
-    justify-content:center;
-    white-space:nowrap;
-  }
-  .bd-record .bd-identity .bd-cover:has(.bd-gallery-shortcut) .bd-identity-content{
-    padding-bottom:65px;
+    margin-bottom:14px;
   }
 }
