@@ -258,11 +258,11 @@ export type ModalityHour = { dayOfWeek: number; isClosed: boolean; opensAt: stri
 export type RealModality = { id: string; businessId: string; type: ModalityType; status: ModalityStatus; contact: ModalityContact | null; effectiveContact?: ModalityContact; blockers?: string[]; hours: ModalityHour[] };
 export type BusinessVisibility = {
   businessId: string;
-  publicId?: string;
+  publicId: string;
   visibilityStatus: string;
   administrativeRestriction?: 'HIDDEN' | 'SUSPENDED' | null;
   publicationStatus?: string;
-  createdAt?: string;
+  createdAt: string;
   isWithinPeriod: boolean;
   period: { id: string; kind: string; startsAt: string; expiresAt: string; requestedAt: string } | null;
 };
