@@ -20,7 +20,7 @@ export function validateAdminVisibilityAction(action: string, reason: string): A
     throw new AppError(400, 'ADMIN_VISIBILITY_ACTION_INVALID', 'Acción administrativa no válida.');
   if (reason.trim().length < 12 || reason.trim().length > 500)
     throw new AppError(400, 'ADMIN_BUSINESS_REASON_REQUIRED', 'Explica el motivo de la decisión (12 a 500 caracteres).');
-  return action;
+  return action as AdminVisibilityAction;
 }
 
 const businessSelect = {
