@@ -7,7 +7,6 @@ type Range = '6m' | '12m' | '24m' | '60m' | 'all';
 type Interval = 'month' | 'quarter' | 'year';
 type Measure = 'registrations' | 'cumulative';
 type Shape = 'area' | 'bars';
-type Indicator = 'businesses' | 'reviews' | 'users';
 type Datum = { label: string; registrations: number; cumulative: number };
 const number = (value: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(value);
 
@@ -26,9 +25,8 @@ function groupSeries(series: Array<{ month: string; registrations: number; cumul
   return [...records.values()];
 }
 
-function downloadSeries(series: Datum[], measure: Measure, indicator: Indicator) {
-  const event = indicator === 'users' ? 'Usuarios registrados' : indicator === 'reviews' ? 'Opiniones publicadas' : 'Negocios registrados';
-  const heading = ['Período', event + ' (nuevos)', event + ' (acumulado)'];
+function downloadSeries(series: Datum[], measure: Measure) {
+  const heading = ['Período', 'Negocios nuevos', 'Negocios acumulados'];
   const csv = [heading.join(';'), ...series.map(item => [item.label, item.registrations, item.cumulative].join(';'))].join('\r\n');
   const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
   const anchor = document.createElement('a');
@@ -46,7 +44,7 @@ function GrowthCanvas({ points, measure, shape }: { points: Datum[]; measure: Me
     const node = canvas.current;
     if (!node) return;
     const resize = new ResizeObserver(records => {
-      const next = Math.max(310, Math.round(records[0]?.contentRect.width ?? 920));
+      const next = Math.max(245, Math.round(records[0]?.contentRect.width ?? 920));
       setWidth(current => current === next ? current : next);
     });
     resize.observe(node);
@@ -88,8 +86,8 @@ function GrowthCanvas({ points, measure, shape }: { points: Datum[]; measure: Me
     <svg viewBox={'0 0 ' + width + ' ' + h} role="group" aria-label={'Evolución de negocios por período: ' + points.map(item => item.label + ': ' + number(item[measure])).join('; ')}
       onPointerMove={hover} onPointerDown={hover} onPointerLeave={() => setActive(null)}>
       <defs>
-        <linearGradient id="ad-business-growth-area-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#2563eb" stopOpacity=".22" /><stop offset="100%" stopColor="#2563eb" stopOpacity=".015" /></linearGradient>
-        <linearGradient id="ad-business-growth-bar-gradient" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stopColor="#245cf2" /><stop offset="100%" stopColor="#8359ef" /></linearGradient>
+        <linearGradient id="ad-business-growth-area-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6931f7" stopOpacity=".28" /><stop offset="100%" stopColor="#6931f7" stopOpacity=".015" /></linearGradient>
+        <linearGradient id="ad-business-growth-bar-gradient" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stopColor="#7738ed" /><stop offset="100%" stopColor="#4e16d2" /></linearGradient>
       </defs>
       {[0, 1, 2, 3, 4].map(index => {
         const y = top + index * plotH / 4;
@@ -134,7 +132,6 @@ function GrowthCanvas({ points, measure, shape }: { points: Datum[]; measure: Me
 
 export function AdminBusinessGrowthPanel() {
   const [period, setPeriod] = useState<Range>('12m');
-  const [indicator, setIndicator] = useState<Indicator>('businesses');
   const [city, setCity] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [status, setStatus] = useState('all');
@@ -143,16 +140,11 @@ export function AdminBusinessGrowthPanel() {
   const [shape, setShape] = useState<Shape>('area');
   const [display, setDisplay] = useState<'chart' | 'table'>('chart');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const chartRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<AdminBusinessAnalytics | null>(null);
   const [availableFilters, setAvailableFilters] = useState<AdminBusinessAnalytics['filters'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
-  // User registrations are global: city/category/status filters cannot be applied.
-  useEffect(() => {
-    if (indicator === 'users' && (city || categoryId || status !== 'all')) setIndicator('businesses');
-  }, [city, categoryId, status, indicator]);
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -173,54 +165,54 @@ export function AdminBusinessGrowthPanel() {
     return () => { active = false; };
   }, [period, city, categoryId, status, attempt]);
 
-  const globalUsersAvailable = !city && !categoryId && status === 'all';
-  const label = indicator === 'users' ? 'Usuarios' : indicator === 'reviews' ? 'Opiniones' : 'Negocios';
   const raw = useMemo(() => (data?.series ?? []).map(item => ({
     month: item.month,
-    registrations: indicator === 'users' ? item.users : indicator === 'reviews' ? item.reviews : item.registrations,
-    cumulative: indicator === 'users' ? item.userCumulative : indicator === 'reviews' ? item.reviewCumulative : item.cumulative,
-  })), [data, indicator]);
+    registrations: item.registrations,
+    cumulative: item.cumulative,
+  })), [data]);
   const grouped = useMemo(() => groupSeries(raw, interval), [raw, interval]);
   const newRegistrations = grouped.reduce((total, item) => total + item.registrations, 0);
   const average = grouped.length ? newRegistrations / grouped.length : 0;
-  const peak = grouped.reduce<Datum | null>((best, item) => !best || item.registrations > best.registrations ? item : best, null);
-  const totalCurrent = indicator === 'users' ? data?.totalUsers ?? 0 : indicator === 'reviews' ? data?.totalReviews ?? 0 : data?.total ?? 0;
-  const reset = () => { setPeriod('12m'); setCity(''); setCategoryId(''); setStatus('all'); setIndicator('businesses'); setInterval('month'); setMeasure('registrations'); setShape('area'); };
+  const peak = grouped.reduce<Datum | null>((best, item) =>
+    !best || item.registrations > best.registrations ? item : best, null);
+  const quiet = grouped.reduce<Datum | null>((best, item) =>
+    !best || item.registrations < best.registrations ? item : best, null);
+  const periodText: Record<Range, string> = {
+    '6m': 'últimos 6 meses', '12m': 'últimos 12 meses',
+    '24m': 'últimos 24 meses', '60m': 'últimos 5 años', all: 'todo el histórico',
+  };
+  const intervalText: Record<Interval, string> = { month: 'mes', quarter: 'trimestre', year: 'año' };
+  const decimal = (value: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(value);
+  const reset = () => { setPeriod('12m'); setCity(''); setCategoryId(''); setStatus('all'); setInterval('month'); setMeasure('registrations'); setShape('area'); };
   const selectedFilters = [
     city ? availableFilters?.cities.find(item => item.value === city)?.label ?? 'Ciudad seleccionada' : '',
     categoryId ? availableFilters?.categories.find(item => item.id === categoryId)?.name ?? 'Categoría seleccionada' : '',
-    period !== '12m' ? (period === 'all' ? 'Todo el histórico' : period === '60m' ? '5 años' : period === '24m' ? '24 meses' : '6 meses') : '',
+    period !== '12m' ? periodText[period] : '',
     status !== 'all' ? (status === 'active' ? 'Publicados' : status === 'review' ? 'En revisión' : 'No publicados') : '',
   ].filter(Boolean);
-  const showGraph = () => {
-    setFiltersOpen(false);
-    window.requestAnimationFrame(() => {
-      const target = chartRef.current ?? document.getElementById('ad-business-growth-data-anchor');
-      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  };
   return <section className="ad-business-growth-panel" aria-labelledby="ad-business-growth-title">
     <header className="ad-business-growth-heading">
-      <div className="ad-business-growth-title"><span className="ad-business-growth-heading-icon"><Icon name="chart" size={27} /></span>
-        <div><span className="ad-business-growth-eyebrow">INTELIGENCIA DE NEGOCIOS</span><h2 id="ad-business-growth-title">Evolución de XAMUKO</h2>
-          <p>Analiza el crecimiento de los negocios, las opiniones y los usuarios con datos históricos reales.</p></div></div>
-      <button type="button" className="ad-business-growth-export" disabled={loading || !!error || !grouped.length}
-        onClick={() => downloadSeries(grouped, measure, indicator)}><Icon name="download" size={17} /> Exportar CSV</button>
-    </header>
-    <div className="ad-business-growth-filter-access">
-      <div className="ad-business-growth-filter-info">
-        <strong>Filtros de análisis</strong>
-        <span>{selectedFilters.length ? selectedFilters.length + (selectedFilters.length === 1 ? ' filtro aplicado' : ' filtros aplicados') : 'Vista general · últimos 12 meses'}</span>
-        {!!selectedFilters.length && <div className="ad-business-growth-active-filters" aria-label="Filtros activos">
-          {selectedFilters.map(value => <span key={value}>{value}</span>)}
-        </div>}
+      <div className="ad-business-growth-title">
+        <span className="ad-business-growth-heading-icon"><Icon name="chart" size={25}/></span>
+        <div><span className="ad-business-growth-eyebrow">EVOLUCIÓN DE XAMUKO</span>
+          <h2 id="ad-business-growth-title">Inteligencia de negocios</h2>
+          <p>Crecimiento histórico de los negocios registrados en Xamuko.</p>
+        </div>
       </div>
-      <button type="button" className="ad-business-growth-filter-trigger" aria-expanded={filtersOpen}
-        aria-controls="ad-business-growth-filters" onClick={() => setFiltersOpen(open => !open)}>
-        <Icon name="settings" size={18} /> {filtersOpen ? 'Ocultar filtros' : 'Mostrar filtros'}
-        <span className={filtersOpen ? 'ad-business-growth-chevron expanded' : 'ad-business-growth-chevron'}><Icon name="chevron" size={18} /></span>
-      </button>
-    </div>
+      <div className="ad-business-growth-utilities">
+        <button type="button" className="ad-business-growth-filter-trigger"
+          aria-expanded={filtersOpen} aria-controls="ad-business-growth-filters"
+          onClick={() => setFiltersOpen(open => !open)}>
+          <Icon name="filter" size={16}/> Filtros del análisis
+          {selectedFilters.length > 0 && <span className="ad-business-growth-filter-count">{selectedFilters.length}</span>}
+          <Icon name="chevron" size={15}/>
+        </button>
+        <button type="button" className="ad-business-growth-export" disabled={loading || !!error || !grouped.length}
+          onClick={() => downloadSeries(grouped, measure)}>
+          <Icon name="download" size={16}/> Exportar CSV
+        </button>
+      </div>
+    </header>
     <div className="ad-business-growth-filters" id="ad-business-growth-filters" hidden={!filtersOpen}>
       <label><span>Ciudad</span><select value={city} onChange={e => setCity(e.target.value)}><option value="">Todas las ciudades</option>
         {(availableFilters?.cities ?? []).map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
@@ -229,42 +221,80 @@ export function AdminBusinessGrowthPanel() {
       <label><span>Período</span><select value={period} onChange={e => setPeriod(e.target.value as Range)}>
         <option value="6m">Últimos 6 meses</option><option value="12m">Últimos 12 meses</option><option value="24m">Últimos 24 meses</option>
         <option value="60m">Últimos 5 años</option><option value="all">Todo el histórico</option></select></label>
-      <label><span>Estado actual</span><select value={status} onChange={e => setStatus(e.target.value)}>
+      <label><span>Estado de publicación</span><select value={status} onChange={e => setStatus(e.target.value)}>
         <option value="all">Todos los estados</option><option value="active">Publicados</option>
         <option value="review">En revisión</option><option value="inactive">No publicados</option></select></label>
-      <button type="button" onClick={reset} className="ad-business-growth-reset" title="Restablecer los filtros"><Icon name="refresh" size={16} /> Limpiar</button>
-      <button type="button" className="ad-business-growth-apply" onClick={showGraph}><Icon name="chart" size={17} /> Ver gráfica <Icon name="arrow" size={16} /></button>
+      <button type="button" onClick={reset} className="ad-business-growth-reset">
+        <Icon name="refresh" size={16}/> Limpiar filtros
+      </button>
     </div>
-    <span className="ad-business-growth-data-anchor" id="ad-business-growth-data-anchor" aria-hidden="true" />
+    {selectedFilters.length > 0 && <div className="ad-business-growth-active-filters" aria-label="Filtros del análisis activos">
+      {selectedFilters.map(value => <span key={value}>{value}</span>)}
+    </div>}
+    <div className="ad-business-growth-chart-toolbar">
+      <div className="ad-business-growth-chart-mode" role="group" aria-label="Tipo de dato">
+        <button type="button" className={measure === 'registrations' ? 'selected' : ''} aria-pressed={measure === 'registrations'}
+          onClick={() => setMeasure('registrations')}>Nuevos</button>
+        <button type="button" className={measure === 'cumulative' ? 'selected' : ''} aria-pressed={measure === 'cumulative'}
+          onClick={() => setMeasure('cumulative')}>Acumulados</button>
+      </div>
+      <div className="ad-business-growth-interval" role="group" aria-label="Agrupar registros">
+        <span>Agrupar:</span>
+        {([['month', 'Mensual'], ['quarter', 'Trimestral'], ['year', 'Anual']] as const).map(([value, label]) =>
+          <button key={value} type="button" className={interval === value ? 'selected' : ''}
+            aria-pressed={interval === value} onClick={() => setInterval(value)}>{label}</button>)}
+      </div>
+      <div className="ad-business-growth-view-controls">
+        <div className="ad-business-growth-toggle" role="group" aria-label="Presentación de datos">
+          <button type="button" className={display === 'chart' ? 'selected' : ''} aria-pressed={display === 'chart'}
+            onClick={() => setDisplay('chart')}><Icon name="chart" size={15}/> Gráfica</button>
+          <button type="button" className={display === 'table' ? 'selected' : ''} aria-pressed={display === 'table'}
+            onClick={() => setDisplay('table')}><Icon name="grid" size={15}/> Tabla</button>
+        </div>
+      </div>
+    </div>
     {error ? <div className="ad-business-growth-state" role="alert"><strong>No fue posible consultar la evolución</strong><p>{error}</p>
       <button type="button" onClick={() => setAttempt(i => i + 1)}>Reintentar</button></div>
-    : loading ? <div className="ad-business-growth-state" role="status">Consultando la evolución del directorio…</div>
+    : loading ? <div className="ad-business-growth-state" role="status">Consultando el crecimiento de los negocios…</div>
     : data && <>
-      <div className="ad-business-growth-chart-wrap" ref={chartRef}>
-        <div className="ad-business-growth-chart-toolbar">
-          <div><h3>Comportamiento histórico</h3><p>{measure === 'registrations' ? 'Actividad por período: ' + label.toLowerCase() : 'Evolución acumulada: ' + label.toLowerCase()}</p></div>
-          <div className="ad-business-growth-view-controls">
-            <label className="ad-business-growth-resolution">Indicador <select aria-label="Indicador de evolución" value={indicator} onChange={e => setIndicator(e.target.value as Indicator)}>
-              <option value="businesses">Negocios</option><option value="reviews">Opiniones publicadas</option>
-              <option value="users" disabled={!globalUsersAvailable}>Usuarios (global)</option>
-            </select></label>
-            <div className="ad-business-growth-toggle" role="group" aria-label="Tipo de dato"><button type="button" className={measure === 'registrations' ? 'selected' : ''} aria-pressed={measure === 'registrations'} onClick={() => setMeasure('registrations')}>Nuevos</button><button type="button" className={measure === 'cumulative' ? 'selected' : ''} aria-pressed={measure === 'cumulative'} onClick={() => setMeasure('cumulative')}>Acumulado</button></div>
-            <label className="ad-business-growth-resolution">Agrupar <select value={interval} onChange={e => setInterval(e.target.value as Interval)}><option value="month">Mes</option><option value="quarter">Trimestre</option><option value="year">Año</option></select></label>
-            <div className="ad-business-growth-toggle" role="group" aria-label="Estilo de gráfica"><button type="button" aria-label="Gráfica de línea" title="Línea" aria-pressed={shape === 'area'} className={shape === 'area' ? 'selected' : ''} onClick={() => setShape('area')}><Icon name="up" size={16} /></button><button type="button" aria-label="Gráfica de barras" title="Barras" aria-pressed={shape === 'bars'} className={shape === 'bars' ? 'selected' : ''} onClick={() => setShape('bars')}><Icon name="chart" size={16} /></button></div>
-            <div className="ad-business-growth-toggle" role="group" aria-label="Presentación de datos"><button type="button" className={display === 'chart' ? 'selected' : ''} aria-pressed={display === 'chart'} onClick={() => setDisplay('chart')}>Gráfica</button><button type="button" className={display === 'table' ? 'selected' : ''} aria-pressed={display === 'table'} onClick={() => setDisplay('table')}>Tabla</button></div>
+      <div className="ad-business-growth-content">
+        <div className="ad-business-growth-plot">
+          {display === 'chart' ? <GrowthCanvas points={grouped} measure={measure} shape={shape}/> :
+            <div className="ad-business-growth-table-wrap">
+              <table><thead><tr><th scope="col">Período</th><th scope="col">Nuevos</th><th scope="col">Acumulados</th></tr></thead>
+                <tbody>{grouped.map(item => <tr key={item.label}>
+                  <th scope="row">{item.label}</th><td>{number(item.registrations)}</td><td>{number(item.cumulative)}</td>
+                </tr>)}</tbody>
+              </table>
+            </div>}
+          <div className="ad-business-growth-plot-footer">
+            <span className="ad-business-growth-legend"><span aria-hidden="true"/> {measure === 'registrations' ? 'Nuevos negocios' : 'Negocios acumulados'}</span>
+            {display === 'chart' && <div className="ad-business-growth-shape" role="group" aria-label="Estilo de gráfica">
+              <button type="button" className={shape === 'area' ? 'selected' : ''} aria-pressed={shape === 'area'}
+                onClick={() => setShape('area')}>Línea</button>
+              <button type="button" className={shape === 'bars' ? 'selected' : ''} aria-pressed={shape === 'bars'}
+                onClick={() => setShape('bars')}>Barras</button>
+            </div>}
           </div>
         </div>
-        {display === 'chart' ? <GrowthCanvas points={grouped} measure={measure} shape={shape} /> :
-          <div className="ad-business-growth-table-wrap"><table><thead><tr><th scope="col">Período</th><th scope="col">Nuevos</th><th scope="col">Acumulado</th></tr></thead>
-            <tbody>{grouped.map(item => <tr key={item.label}><th scope="row">{item.label}</th><td>{number(item.registrations)}</td><td>{number(item.cumulative)}</td></tr>)}</tbody></table></div>}
+        <aside className="ad-business-growth-summary" aria-label="Resumen del período">
+          <h3><Icon name="calendar" size={18}/> Resumen del período</h3>
+          <p>Negocios nuevos · {periodText[period]}</p>
+          <dl>
+            <div><dt>Total de nuevos negocios</dt><dd>{number(newRegistrations)}</dd></div>
+            <div><dt>Promedio por {intervalText[interval]}</dt><dd>{decimal(average)}</dd></div>
+            <div><dt>{interval === 'month' ? 'Mes' : interval === 'quarter' ? 'Trimestre' : 'Año'} con más registros</dt><dd>{peak ? peak.label + ' (' + number(peak.registrations) + ')' : '—'}</dd></div>
+            <div><dt>{interval === 'month' ? 'Mes' : interval === 'quarter' ? 'Trimestre' : 'Año'} con menos registros</dt><dd>{quiet ? quiet.label + ' (' + number(quiet.registrations) + ')' : '—'}</dd></div>
+          </dl>
+          <div className="ad-business-growth-current-total"><span>Negocios actuales según filtros</span>
+            <strong>{number(data.total)}</strong>
+          </div>
+        </aside>
       </div>
-      <div className="ad-business-growth-metrics" aria-label="Resumen de evolución">
-        <div><span><Icon name={indicator === 'users' ? 'users' : indicator === 'reviews' ? 'star' : 'store'} size={17} /> {label} totales</span><strong>{number(totalCurrent)}</strong><small>{indicator === 'users' ? 'Total global actual' : 'Total actual según los filtros'}</small></div>
-        <div><span><Icon name="up" size={17} /> {indicator === 'reviews' ? 'Opiniones publicadas' : 'Nuevos registros'}</span><strong>{number(newRegistrations)}</strong><small>Dentro del período seleccionado</small></div>
-        <div><span><Icon name="chart" size={17} /> Promedio por {interval === 'month' ? 'mes' : interval === 'quarter' ? 'trimestre' : 'año'}</span><strong>{number(Math.round(average))}</strong><small>Eventos por intervalo</small></div>
-        <div><span><Icon name="award" size={17} /> Período destacado</span><strong>{peak && peak.registrations > 0 ? peak.label : '—'}</strong><small>{peak && peak.registrations > 0 ? number(peak.registrations) + ' eventos' : 'Sin registros nuevos'}</small></div>
-      </div>
-      <p className="ad-business-growth-definition"><Icon name="shield" size={17} />{data.definition} La serie utiliza meses UTC. {indicator === 'users' ? 'Los usuarios se muestran únicamente a nivel global.' : 'Los filtros de ciudad, categoría y estado corresponden a los negocios del directorio.'}</p>
+      <p className="ad-business-growth-definition"><Icon name="shield" size={17}/>
+        <span>{data.definition} La serie histórica utiliza meses UTC y conserva los períodos sin registros con valor cero.
+          Los filtros de este análisis son independientes de los filtros del directorio.</span>
+      </p>
     </>}
   </section>;
 }
