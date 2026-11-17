@@ -76,7 +76,7 @@ export function Catalog({ id, allowed, canModerate, canDelete, onChanged }: {
           <button type="submit" className="bd-catalog-search-button" aria-label="Buscar productos o servicios"><Icon name="search" size={17}/>Buscar</button>
         </label>
         <label className="bd-catalog-state-filter">
-          <Icon name="sliders" size={17}/>
+          <Icon name="filter" size={17}/>
           <span>Estado</span>
           <select aria-label="Estado del catálogo" value={state} onChange={event => { setState(event.target.value as CatalogState); setPage(1); }}>
             <option value="ALL">Todos</option>
