@@ -27,7 +27,7 @@ async function previewThumbnail(source: Blob): Promise<Blob> {
 }
 
 /** Lazy authenticated image, with no stored URL leakage and a stable fallback. */
-export function AdminBusinessCoverPhoto({ photoId, name }: { photoId: string | null; name: string }) {
+export function AdminBusinessCoverPhoto({ photoId, name, variant = 'cover' }: { photoId: string | null; name: string; variant?: 'cover' | 'profile' }) {
   const holder = useRef<HTMLSpanElement>(null);
   const [visible, setVisible] = useState(false);
   const [source, setSource] = useState<string | null>(null);
@@ -57,7 +57,8 @@ export function AdminBusinessCoverPhoto({ photoId, name }: { photoId: string | n
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
   }, [photoId, visible]);
 
-  return <span ref={holder} className="business-directory-cover" title={"Portada de " + name} aria-hidden="true">
+  return <span ref={holder} className={'business-directory-cover' + (variant === 'profile' ? ' business-directory-profile' : '')}
+    title={(variant === 'profile' ? 'Foto de perfil de ' : 'Portada de ') + name} aria-hidden="true">
     {source ? <img src={source} alt="" loading="lazy" decoding="async" /> : <Icon name="store" size={21} />}
   </span>;
 }
