@@ -99,12 +99,16 @@ export async function recordPhoto(identifier: string, photoId: string, catalogAl
 export async function recordActivity(identifier: string, periodText: string, now = new Date()) {
   const businessId = await recordBusiness(identifier);
   const period = periodText || 'month';
-  if (!['day', 'week', 'month', 'year', 'all'].includes(period)) throw new AppError(400, 'INVALID_PERIOD', 'El período solicitado no es válido.');
-  const window = statisticsWindow(period as StatisticsPeriod, now);
+  if (!['day', 'week', 'month', 'last30', 'year', 'all'].includes(period)) throw new AppError(400, 'INVALID_PERIOD', 'El período solicitado no es válido.');
+  const timelinePeriod: StatisticsPeriod = period === 'last30' ? 'month' : period as StatisticsPeriod;
+  const window = statisticsWindow(timelinePeriod, now);
   const localNow = new Date(now.getTime() - 5 * 3600000);
-  const start = window.start ?? new Date(Date.UTC(localNow.getUTCFullYear() - 2, localNow.getUTCMonth() + 1, 1, 5));
+  // Rolling 30 calendar days in Bogotá, including today, with a zero for every empty date.
+  const start = period === 'last30'
+    ? new Date(Date.UTC(localNow.getUTCFullYear(), localNow.getUTCMonth(), localNow.getUTCDate() - 29, 5))
+    : window.start ?? new Date(Date.UTC(localNow.getUTCFullYear() - 2, localNow.getUTCMonth() + 1, 1, 5));
   const format = period === 'day' ? '%Y-%m-%d %H:00' : period === 'year' || period === 'all' ? '%Y-%m' : '%Y-%m-%d';
-  const date = { ...(window.start ? { gte: window.start } : {}), lt: now };
+  const date = { ...(window.start || period === 'last30' ? { gte: start } : {}), lt: now };
   const [events, totals, offers, reviews, reviewCount, offerCounts] = await Promise.all([
     prisma.$queryRaw<Array<{ label: string; eventType: string; quantity: bigint }>>(Prisma.sql`SELECT DATE_FORMAT(DATE_SUB(createdAt, INTERVAL 5 HOUR), ${format}) AS label, eventType, COUNT(*) AS quantity FROM BusinessAnalyticsEvent WHERE businessId=${businessId} AND createdAt>=${start} AND createdAt<${now} GROUP BY label,eventType ORDER BY label`),
     prisma.businessAnalyticsEvent.groupBy({ by: ['eventType'], where: { businessId, createdAt: date }, _count: { _all: true } }),
@@ -114,7 +118,7 @@ export async function recordActivity(identifier: string, periodText: string, now
     prisma.businessOffer.groupBy({ by: ['kind'], where: { businessId, createdAt: date }, _count: { _all: true } }),
   ]);
   const count = (type: string) => totals.find(row => row.eventType === type)?._count._all ?? 0;
-  const grid = completeCountTrend([], period as StatisticsPeriod, start, now);
+  const grid = completeCountTrend([], timelinePeriod, start, now);
   const series = grid.map(({ label }) => {
     const rows = events.filter(row => row.label === label);
     const sum = (...types: string[]) => rows.filter(row => types.includes(row.eventType)).reduce((n, row) => n + Number(row.quantity), 0);
