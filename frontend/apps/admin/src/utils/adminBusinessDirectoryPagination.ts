@@ -1,3 +1,6 @@
+/** Admin Negocios alone uses 10 records; Users and Content keep their shared page size. */
+export const ADMIN_BUSINESS_DIRECTORY_PAGE_SIZE = 10;
+
 /** Compact numbered pagination for the 10-record Admin Negocios directory. */
 export function businessDirectoryPages(current: number, total: number): Array<number | '…'> {
   const last = Math.max(1, total);
