@@ -71,6 +71,8 @@ export interface BusinessDetails {
   lifecycleStatus?: string;
   publicationStatus?: string;
   visibilityStatus?: string;
+  administrativeRestriction?: 'HIDDEN' | 'SUSPENDED' | null;
+  isPro?: boolean;
   publicationReadiness?: { ready: boolean; blockers: string[] };
   status: "Verificado" | "Pendiente" | "Requiere confirmación" | "Información incompleta" | "Eliminado";
   deletedAt?: string;
