@@ -113,6 +113,29 @@ describe('Ficha administrativa del negocio', () => {
     await waitFor(() => expect(api.changeAdminBusinessPlan).toHaveBeenCalledWith(business.id, 'BASIC', 'Se acordó regresar al plan básico', 'BASIC'));
     await waitFor(() => expect(api.getRecordBusiness).toHaveBeenCalledTimes(2));
   });
+  it('asigna Business PRO desde Básico y actualiza el indicador', async () => {
+    api.changeAdminBusinessPlan.mockResolvedValue({ plan: 'PRO', message: 'Plan actualizado' });
+    api.getRecordBusiness.mockResolvedValueOnce({ ...business, isPro: false }).mockResolvedValueOnce({ ...business, isPro: true });
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar suscripción del negocio' }));
+    const picker = screen.getByRole('dialog', { name: 'Cambiar suscripción' });
+    expect(within(picker).getByRole('button', { name: 'Básico' })).toBeDisabled();
+    fireEvent.click(within(picker).getByRole('button', { name: 'Business PRO' }));
+    const dialog = screen.getByRole('dialog', { name: 'Administrar suscripción' });
+    expect(within(dialog).getByText(/activa Business PRO sin generar un cobro/i)).toBeInTheDocument();
+    fireEvent.change(within(dialog).getByLabelText(/Motivo de la decisión/), { target: { value: 'Asignación administrativa por evaluación registrada' } });
+    fireEvent.change(within(dialog).getByLabelText(/Escribe PRO/), { target: { value: 'PRO' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirmar cambio de plan' }));
+    await waitFor(() => expect(api.changeAdminBusinessPlan).toHaveBeenCalledWith(business.id, 'PRO', 'Asignación administrativa por evaluación registrada', 'PRO'));
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Business PRO'));
+  });
+  it('cancelar un cambio de suscripción no modifica el plan', async () => {
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar suscripción del negocio' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Cambiar suscripción' })).getByRole('button', { name: 'Básico' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Administrar suscripción' })).getByRole('button', { name: 'Cancelar' }));
+    expect(api.changeAdminBusinessPlan).not.toHaveBeenCalled();
+  });
   it('abre las opciones de la tarjeta aunque el backend no incluya la ficha ampliada', async () => {
     api.getRecordBusiness.mockResolvedValue({ ...business, record: undefined });
     setup(); await ready();
