@@ -1048,7 +1048,24 @@ export function BusinessDetailPage() {
               <p className="business-detail-place">{sedeLabel && <span><DetailSectionIcon title="Nombre y sede" />{sedeLabel}</span>}{business.city && <span className="business-detail-location"><DetailSectionIcon title="Ubicación y dirección" /><bdi className="business-detail-location-text">{Array.from(new Set([business.city, business.regionName].filter(Boolean))).map((part, index, parts) => <bdi className="business-detail-location-part" key={part}>{index > 0 ? " " : ""}{part}{index < parts.length - 1 ? "," : ""}</bdi>)}</bdi></span>}</p>
               <div className="business-detail-reputation"><BusinessRatingSummary average={reviewSummary.average} count={reviewSummary.count} /><span className={`business-opening-state ${openingState.isOpen === true ? "is-open" : openingState.isOpen === false ? "is-closed" : "is-unknown"}`}>{openingState.label}</span>{verificationStatusLabel(business) !== "Verificado" && <span className="business-verification-status business-verification-status-pending">Verificación: {verificationStatusLabel(business)}</span>}</div>
               <div className="business-detail-category-chips" aria-label="Categoría principal">{primaryCategory && <span className="business-detail-primary-category"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 10v10h16V10M3 10l2-6h14l2 6-2 2-3-2-4 2-4-2-3 2-2-2ZM9 20v-6h6v6"/></svg>{primaryCategory}</span>}{business.adultOnly && <span className="adult-only-badge">+18</span>}</div>
-              <div className="business-detail-identity-badges">{business.deletionStatus === "RECOVERY" && <span className="business-deletion-status">Eliminación pendiente</span>}{business.deletionStatus === "DELETED" && <span className="business-deletion-status">Eliminado</span>}</div>
+              <div className="business-detail-identity-badges">
+                {business.deletionStatus === "RECOVERY" && <span className="business-deletion-status">Eliminación pendiente</span>}
+                {business.deletionStatus === "DELETED" && <span className="business-deletion-status">Eliminado</span>}
+                {business.deletionStatus === "NONE" && business.administrativeRestriction === "SUSPENDED" &&
+                  <span className="business-admin-state-badge is-suspended" role="status">Suspendido por XAMUKO · Solo Administración puede levantar la medida</span>}
+                {business.deletionStatus === "NONE" && business.administrativeRestriction === "HIDDEN" &&
+                  <span className="business-admin-state-badge is-hidden" role="status">Oculto por Administración · Solicita revisión</span>}
+                {business.deletionStatus === "NONE" && !business.administrativeRestriction && business.visibilityStatus === "HIDDEN" &&
+                  <span className="business-admin-state-badge is-hidden" role="status">Oculto · Puedes reactivarlo desde Business</span>}
+                {business.deletionStatus === "NONE" && !business.administrativeRestriction && business.visibilityStatus === "VISIBLE" && business.publicationStatus === "PUBLISHED" &&
+                  <span className="business-admin-state-badge is-visible">Visible</span>}
+                {business.deletionStatus === "NONE" && business.visibilityStatus === "EXPIRED" &&
+                  <span className="business-admin-state-badge is-hidden">Vigencia vencida</span>}
+                {business.deletionStatus === "NONE" && business.isPro === true &&
+                  <span className="business-admin-plan-badge is-pro">Business PRO</span>}
+                {business.deletionStatus === "NONE" && business.isPro === false &&
+                  <span className="business-admin-plan-badge">Plan Básico</span>}
+              </div>
             </div>
             <div className="business-detail-hero-actions">{business.publicId ? <Link className="outline-button" to={`/mi-negocio/preview/${encodeURIComponent(business.publicId)}?preview=business&returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M4.5 20c0-4.3 3.1-6.7 7.5-6.7s7.5 2.4 7.5 6.7"/></svg>Ver perfil</Link> : <button type="button" className="outline-button" disabled title="Este negocio todavía no tiene un identificador público"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M4.5 20c0-4.3 3.1-6.7 7.5-6.7s7.5 2.4 7.5 6.7"/></svg>Ver perfil</button>}<button type="button" className="outline-button" disabled={!shareUrl || sharing} onClick={() => void shareBusiness()} title={shareUrl ? "Compartir el enlace público" : "Este negocio todavía no tiene un identificador público"}><DetailSectionIcon title="Compartir" />{sharing ? "Compartiendo…" : "Compartir"}</button></div>
           </div>
