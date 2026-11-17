@@ -101,8 +101,12 @@ describe('Ficha administrativa del negocio', () => {
     api.changeAdminBusinessPlan.mockResolvedValue({ plan: 'BASIC', message: 'Plan actualizado' });
     api.getRecordBusiness.mockResolvedValueOnce(business).mockResolvedValueOnce({ ...business, isPro: false });
     setup(); await ready();
-    fireEvent.click(screen.getByRole('button', { name: 'Cambiar el plan del negocio' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar suscripción del negocio' }));
+    const picker = screen.getByRole('dialog', { name: 'Cambiar suscripción' });
+    expect(within(picker).getByRole('button', { name: 'Business PRO' })).toBeDisabled();
+    fireEvent.click(within(picker).getByRole('button', { name: 'Básico' }));
     const dialog = screen.getByRole('dialog', { name: 'Administrar suscripción' });
+    expect(within(dialog).getByText(/revocará el acceso PRO/i)).toBeInTheDocument();
     fireEvent.change(within(dialog).getByLabelText(/Motivo de la decisión/), { target: { value: 'Se acordó regresar al plan básico' } });
     fireEvent.change(within(dialog).getByLabelText(/Escribe BASIC/), { target: { value: 'BASIC' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Confirmar cambio de plan' }));
@@ -190,7 +194,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(cards).getAllByRole('button')).toHaveLength(5);
     expect(within(cards).getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Cambiar verificación del negocio' })).toHaveClass('bd-indicator-trigger');
-    expect(within(cards).getByRole('button', { name: 'Cambiar el plan del negocio' })).toHaveClass('bd-indicator-trigger');
+    expect(within(cards).getByRole('button', { name: 'Cambiar suscripción del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Consultar reportes de este negocio' })).toHaveClass('bd-indicator-trigger');
     fireEvent.click(within(cards).getByRole('button', { name: 'Consultar información general y completitud del negocio' }));
     expect(screen.getByRole('tab', { name: 'Información general' })).toHaveAttribute('aria-selected', 'true');
