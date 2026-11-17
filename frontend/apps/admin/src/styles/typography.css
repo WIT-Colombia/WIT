@@ -1,0 +1,182 @@
+/*
+ * XAMUKO ADMIN · Shared typography system
+ * Derived from the Executive Summary hierarchy.
+ * All authenticated Admin workspaces use Inter and identical semantic sizes.
+ * Avoid touching charts, avatar artwork, status icons and modal titles.
+ */
+.admin-refresh .admin-main .workspace {
+  --xa-type-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --xa-type-page: clamp(22px, 2.2vw, 30px);
+  --xa-type-section: 16px;
+  --xa-type-card: 14px;
+  --xa-type-body: 13px;
+  --xa-type-subtitle: 12px;
+  --xa-type-label: 12px;
+  --xa-type-caption: 11px;
+  --xa-type-figure: 22px;
+  --xa-type-control: 12px;
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-body);
+}
+.admin-refresh .admin-main .workspace :is(button,input,select,textarea){
+  font-family:inherit;
+}
+/* Consistent top-of-page heading in Dashboard, operational modules, and
+   business detail. Does not resize a business's identity/name or modal titles. */
+.admin-refresh .admin-main .workspace :is(
+  .admin-section-heading h1,
+  .page-heading h1,
+  .ad-page-heading h1,
+  .bd-page-title h1
+){
+  font-family:var(--xa-type-family);
+  font-size:var(--xa-type-page);
+  font-weight:800;
+  letter-spacing:-.035em;
+  line-height:1.2;
+}
+/* Every actual section title follows one hierarchy. */
+.admin-refresh .admin-main .workspace :is(
+  .xa-panel-head h2,
+  .ad-panel-heading h2,
+  .panel-heading h2,
+  .bd-summary-title-copy h2,
+  .bd-info-overview-heading h2,
+  .bd-info-members-header h2,
+  .bd-catalog-header h2,
+  .bd-card-head > h2,
+  .bd-summary-plot-heading h3
+){
+  font-family:var(--xa-type-family);
+  font-size:var(--xa-type-section);
+  font-weight:760;
+  letter-spacing:-.025em;
+  line-height:1.35;
+}
+/* Subsections, including informational panels and catalog card titles. */
+.admin-refresh .admin-main .workspace :is(
+  .bd-info-group-title h3,
+  .bd-catalog-offer h3,
+  .ad-document-copy h3,
+  .bd-review h3
+){
+  font-family:var(--xa-type-family);
+  font-size:var(--xa-type-card);
+  font-weight:730;
+  line-height:1.4;
+  letter-spacing:-.012em;
+}
+/* Explanatory copy under a heading uses exactly the same size everywhere. */
+.admin-refresh .admin-main .workspace :is(
+  .admin-section-heading p,
+  .page-heading p:not(.eyebrow),
+  .ad-page-heading p,
+  .ad-panel-heading p,
+  .panel-heading p,
+  .bd-page-title p,
+  .bd-summary-title-copy p,
+  .bd-summary-plot-heading p,
+  .bd-info-overview-heading p,
+  .bd-info-members-header p,
+  .bd-info-group-title p,
+  .bd-catalog-header p
+){
+  font-family:var(--xa-type-family);
+  font-size:var(--xa-type-subtitle);
+  font-weight:450;
+  line-height:1.5;
+}
+/* Content/body text in administrative records and cards. */
+.admin-refresh .admin-main .workspace :is(
+  .bd-info-field dd,
+  .bd-info-member-identity strong,
+  .bd-catalog-offer .bd-clamp,
+  .bd-summary-content-list li,
+  .ad-document-copy p,
+  .xa-priorities li a,
+  .xa-action-list a
+){
+  font-family:var(--xa-type-family);
+  font-size:var(--xa-type-body);
+  line-height:1.5;
+}
+/* Indicator and field labels, not tiny 8-9px text. */
+.admin-refresh .admin-main .workspace :is(
+  .xa-metric div > span,
+  .bd-summary-metric-name,
+  .bd-info-field dt,
+  .bd-catalog-state-filter > span,
+  .ad-summary-grid small
+){
+  font-family:var(--xa-type-family);
+  font-size:var(--xa-type-label);
+  font-weight:650;
+  line-height:1.4;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+}
+.admin-refresh .admin-main .workspace :is(
+  .xa-metric small,
+  .bd-summary-metric small,
+  .bd-info-field small,
+  .bd-info-group-title p,
+  .bd-catalog-result-caption small,
+  .ad-document-copy small,
+  .bd-info-member-date,
+  .bd-info-member-identity small,
+  .xa-growth-controls small
+){
+  font-family:var(--xa-type-family);
+  font-size:var(--xa-type-caption);
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+/* Numeric values have their own shared hierarchy and tabular spacing. */
+.admin-refresh .admin-main .workspace :is(
+  .xa-metric strong,
+  .bd-summary-metric strong,
+  .ad-summary-grid strong,
+  .bd-overview-metrics strong
+){
+  font-family:var(--xa-type-family);
+  font-size:var(--xa-type-figure);
+  font-weight:800;
+  line-height:1.2;
+  letter-spacing:-.035em;
+  font-variant-numeric:tabular-nums;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+/* Action button text sizes are aligned without changing their dimensions. */
+.admin-refresh .admin-main .workspace :is(
+  .bd-summary-outline-action,
+  .bd-catalog-detail-button,
+  .bd-catalog-action,
+  .ad-button
+){
+  font-family:var(--xa-type-family);
+  font-size:var(--xa-type-control);
+  font-weight:700;
+}
+@media(max-width:900px){
+  .admin-refresh .admin-main .workspace{
+    --xa-type-page:25px;
+    --xa-type-section:16px;
+    --xa-type-card:14px;
+    --xa-type-figure:21px;
+  }
+}
+@media(max-width:580px){
+  .admin-refresh .admin-main .workspace{
+    --xa-type-page:23px;
+    --xa-type-section:16px;
+    --xa-type-card:14px;
+    --xa-type-body:12px;
+    --xa-type-subtitle:11px;
+    --xa-type-label:11px;
+    --xa-type-caption:10px;
+    --xa-type-figure:20px;
+    --xa-type-control:12px;
+  }
+}
