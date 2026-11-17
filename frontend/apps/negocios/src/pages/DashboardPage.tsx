@@ -319,7 +319,6 @@ export function DashboardPage() {
   const remainingMs = expiryTime === null ? null : expiryTime - visibilityNow;
   const remainingDays = expiryTime === null ? null : Math.max(0, colombiaCalendarDay(expiryTime) - colombiaCalendarDay(visibilityNow));
   const withinVisibilityPeriod = visibility?.isWithinPeriod === true && remainingMs !== null && remainingMs > 0;
-  const visibilityExpiring = withinVisibilityPeriod && remainingDays !== null && remainingDays <= 10;
   const visibilityExpired = remainingMs !== null && remainingMs <= 0;
   const visibilityView = homeVisibilityState(visibility, withinVisibilityPeriod);
   const visibilityBadge = visibility === null ? (visibilityError ? "No disponible" : "Consultando") : visibilityView.label;
