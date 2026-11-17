@@ -75,7 +75,7 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
         <span className="bd-summary-heading-icon"><Icon name="up" size={24}/></span>
         <div className="bd-summary-title-copy">
           <h2 id="bd-summary-performance-title">Rendimiento en Xamuko</h2>
-          <p>Actividad de {periods.find(item => item.value === period)?.label.toLowerCase()}</p>
+          <p>{period === 'last30' ? 'Actividad de los últimos 30 días' : 'Actividad: ' + (periods.find(item => item.value === period)?.label.toLowerCase() ?? '')}</p>
         </div>
         <label className="bd-summary-period">
           <Icon name="calendar" size={17}/>
