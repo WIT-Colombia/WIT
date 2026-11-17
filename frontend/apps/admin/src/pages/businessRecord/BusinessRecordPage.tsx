@@ -4,6 +4,7 @@ import { Icon } from '../../components/Icon';
 import { StatePanel } from '../../components/common';
 import { AdminBusinessDeleteDialog } from '../../components/businesses/AdminBusinessDeleteDialog';
 import { AdminBusinessVisibilityDialog } from '../../components/businesses/AdminBusinessVisibilityDialog';
+import { AdminBusinessVisibilityPicker } from './AdminBusinessVisibilityPicker';
 import { BusinessRecordPhoto, BusinessRecordPhotos } from '../../components/businesses/BusinessRecordPhoto';
 import { adminBusinessVisibilityLabel, type AdminVisibilityAction } from '../../services/adminApiClient';
 import { getSession } from '../../services/adminService';
@@ -51,25 +52,6 @@ function BusinessRecord({ id }: { id: string }) {
   const [visibilityOpen, setVisibilityOpen] = useState(false);
   const [decision, setDecision] = useState<BusinessDecision | null>(null);
   const nav = useRef<HTMLDivElement>(null);
-  const visibilityMenuRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (!visibilityOpen) return;
-    const onOutside = (event: PointerEvent) => {
-      if (!visibilityMenuRef.current?.contains(event.target as Node)) setVisibilityOpen(false);
-    };
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setVisibilityOpen(false);
-        visibilityMenuRef.current?.querySelector<HTMLButtonElement>('.bd-indicator-trigger')?.focus();
-      }
-    };
-    document.addEventListener('pointerdown', onOutside);
-    document.addEventListener('keydown', onEscape);
-    return () => {
-      document.removeEventListener('pointerdown', onOutside);
-      document.removeEventListener('keydown', onEscape);
-    };
-  }, [visibilityOpen]);
   const choose = (value: Tab) => { setVisited(old => new Set([...old, value])); setTab(value); };
   const openSection = (value: Tab) => {
     choose(value);
@@ -99,9 +81,9 @@ function BusinessRecord({ id }: { id: string }) {
       <aside className="bd-owner-card"><div><span><Icon name="users"/></span><section><small>Propietario actual</small><strong>{record ? owners(business) : 'Pendiente de consulta'}</strong></section></div><div><span><Icon name="calendar"/></span><section><small>Fecha de registro</small><time dateTime={business.createdAt}>{date(business.createdAt)}</time></section></div><div><span><Icon name="calendar"/></span><section><small>Última actualización</small><time dateTime={business.updatedAt}>{date(business.updatedAt)}</time></section></div></aside>
     </section>
     <section className="bd-indicators" aria-label="Indicadores principales">
-      <article className="bd-interactive-indicator" ref={visibilityMenuRef}>
+      <article className="bd-interactive-indicator">
         <button className="bd-indicator-trigger" type="button" disabled={!canAct || actionDisabled}
-          aria-expanded={visibilityOpen} aria-label="Cambiar visibilidad del negocio"
+          aria-expanded={visibilityOpen} aria-haspopup="dialog" aria-label="Cambiar visibilidad del negocio"
           onClick={() => setVisibilityOpen(open => !open)}>
           <span className="bd-indicator-icon"><Icon name="eye" size={25}/></span>
           <span className="bd-indicator-content"><span className="bd-indicator-title">Visibilidad</span>
@@ -110,11 +92,6 @@ function BusinessRecord({ id }: { id: string }) {
             </Badge></span>
           {canAct && <Icon name="chevron" size={16}/>}
         </button>
-        {visibilityOpen && canAct && <div className="bd-visibility-options" role="group" aria-label="Elegir estado de visibilidad">
-          <button type="button" onClick={() => { setVisibilityOpen(false); setVisibilityAction('SET_VISIBLE'); }}><Icon name="eye" size={17}/> Visible</button>
-          <button type="button" onClick={() => { setVisibilityOpen(false); setVisibilityAction('SET_HIDDEN'); }}><Icon name="eye-off" size={17}/> Oculta <small>El propietario puede reactivarla</small></button>
-          <button type="button" onClick={() => { setVisibilityOpen(false); setVisibilityAction('SUSPEND'); }}><Icon name="lock" size={17}/> Suspendida <small>Solo Admin puede levantarla</small></button>
-        </div>}
       </article>
       <article className="bd-interactive-indicator"><button className="bd-indicator-trigger" type="button"
         disabled={!canAct || actionDisabled || business.verificationStatus === 'APPROVED'}
@@ -170,6 +147,10 @@ function BusinessRecord({ id }: { id: string }) {
         <details className="bd-action-help"><summary><Icon name="info" size={18}/>¿Qué hace cada acción?</summary><p><strong>Ocultar:</strong> retira la visibilidad pública; el propietario puede reactivarla desde Business con vigencia válida.</p><p><strong>Suspender:</strong> también impide renovar o activar el establecimiento.</p><p><strong>Levantar restricción:</strong> conserva la vigencia y el ocultamiento voluntario; no concede nuevos días.</p><p><strong>Eliminar:</strong> retira el negocio, cancela transferencias pendientes y revoca sus planes. Conserva la cuenta del propietario y la auditoría.</p></details>
       </Card><p className="bd-security-note"><Icon name="shield" size={15}/>Cada medida requiere confirmación y motivo. Las decisiones se conservan en el historial.</p><button className="bd-button bd-refresh" disabled={source.loading} onClick={() => { setHistoryPage(1); setRevision(value => value + 1); }}><Icon name="refresh" size={16}/>Actualizar ficha</button>
     </aside></div>
+    {visibilityOpen && canAct && <AdminBusinessVisibilityPicker businessName={business.name}
+      visibilityStatus={business.visibilityStatus} administrativeRestriction={business.administrativeRestriction}
+      onClose={() => setVisibilityOpen(false)}
+      onChoose={action => { setVisibilityOpen(false); setVisibilityAction(action); }}/>}
     {visibilityAction && <AdminBusinessVisibilityDialog business={business} action={visibilityAction} onClose={() => setVisibilityAction(null)} onSuccess={changed}/>}
     {deleting && <AdminBusinessDeleteDialog business={business} onClose={() => setDeleting(false)} onSuccess={changed}/>}
     {decision && <BusinessDecisionDialog business={business} decision={decision}
