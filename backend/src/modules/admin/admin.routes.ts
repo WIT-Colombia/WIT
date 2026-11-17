@@ -60,6 +60,7 @@ const businessAnalyticsHandler: RequestHandler = async (req, res, next) => {
       city: String(req.query.city ?? ''),
       categoryId: String(req.query.categoryId ?? ''),
       status: String(req.query.status ?? ''),
+      interval: String(req.query.interval ?? ''),
     }));
   } catch (error) { next(error); }
 };
