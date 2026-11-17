@@ -24,6 +24,7 @@ export function validateAdminVisibilityAction(action: string, reason: string): A
 
 const businessSelect = {
   id: true, publicId: true, name: true, description: true, email: true, phone: true,
+  coverPhotoId: true,
   lifecycleStatus: true, publicationStatus: true, visibilityStatus: true,
   administrativeRestriction: true, administrativePreviousVisibility: true,
   administrativeRestrictedAt: true, administrativeRestrictionReason: true,
@@ -73,6 +74,7 @@ export function adminBusinessWhere(filters: AdminBusinessesFilters = {}, now = n
     ...(q ? { OR: [
       { name: { contains: q } },
       { publicId: { contains: q } },
+      { location: { is: { cityName: { contains: q } } } },
       { createdBy: { is: { displayName: { contains: q } } } },
       { createdBy: { is: { emailNormalized: { contains: q } } } },
       { memberships: { some: { role: 'OWNER', user: { displayName: { contains: q } } } } },
@@ -134,7 +136,7 @@ export async function getAdminBusinessesFilters() {
 export async function getAdminBusinessesOverview(now = new Date()) {
   const live = { deletionStatus: { not: 'DELETED' as const } };
   const soon = new Date(now.getTime() + 7 * 86400000);
-  const [total, visible, hidden, expired, adminHidden, suspended, verified, pro, reported, review, deleted, expiring] = await Promise.all([
+  const [total, visible, hidden, expired, adminHidden, suspended, verified, pendingVerification, rejectedVerification, pro, reported, review, deleted, expiring] = await Promise.all([
     prisma.business.count({ where: live }),
     prisma.business.count({ where: {
       deletionStatus: 'NONE', businessAccount: { status: 'ACTIVE' }, lifecycleStatus: 'ACTIVE',
@@ -146,6 +148,8 @@ export async function getAdminBusinessesOverview(now = new Date()) {
     prisma.business.count({ where: { ...live, administrativeRestriction: 'HIDDEN' } }),
     prisma.business.count({ where: { ...live, administrativeRestriction: 'SUSPENDED' } }),
     prisma.business.count({ where: { ...live, verificationStatus: 'APPROVED' } }),
+    prisma.business.count({ where: { ...live, verificationStatus: { in: ['PENDING', 'INFORMATION'] } } }),
+    prisma.business.count({ where: { ...live, verificationStatus: 'REJECTED' } }),
     prisma.business.count({ where: { ...live, subscriptions: { some: activePro(now) } } }),
     prisma.business.count({ where: { ...live, reports: { some: {} } } }),
     prisma.business.count({ where: { ...live, publicationStatus: 'REVIEW' } }),
@@ -161,7 +165,7 @@ export async function getAdminBusinessesOverview(now = new Date()) {
         AND p.latestExpiry > ${now} AND p.latestExpiry <= ${soon}
     `),
   ]);
-  return { generatedAt: now.toISOString(), total, visible, hidden, expired, adminHidden, suspended, verified, pro, reported, review, deleted, expiring: Number(expiring[0]?.quantity ?? 0) };
+  return { generatedAt: now.toISOString(), total, visible, hidden, expired, adminHidden, suspended, verified, pendingVerification, rejectedVerification, pro, reported, review, deleted, expiring: Number(expiring[0]?.quantity ?? 0) };
 }
 
 export async function getAdminBusinessHistory(identifier: string) {
