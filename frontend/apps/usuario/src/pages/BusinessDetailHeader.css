@@ -462,3 +462,123 @@
     padding-bottom: 28px !important;
   }
 }
+
+/* iPad-only responsive business profile: prevent gallery/content overlap. */
+/* iPadOS Safari in portrait and landscape; leaves desktop and phone layouts intact. */
+@supports (-webkit-touch-callout: none) {
+  @media (min-width: 701px) and (max-width: 1366px) and (any-pointer: coarse) {
+    .business-detail-page .business-detail-hero {
+      grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+      align-items: start;
+      gap: clamp(16px, 2.2vw, 26px);
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .business-detail-page .business-detail-gallery,
+    .business-detail-page .business-detail-intro {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .business-detail-page .business-detail-photo {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      min-height: 0;
+      flex: 0 0 auto;
+      aspect-ratio: 4 / 3;
+      box-sizing: border-box;
+    }
+    .business-detail-page .business-detail-photo-trigger {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+    }
+    .business-detail-page .business-detail-photo-trigger img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .business-detail-page .business-detail-gallery-strip {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      overflow-x: auto;
+      box-sizing: border-box;
+    }
+    .business-detail-page .business-detail-gallery-strip button:not(.business-header-more) {
+      flex: 0 0 clamp(62px, 22%, 100px);
+      min-width: 0;
+      height: 62px;
+    }
+    .business-detail-page .business-detail-intro {
+      justify-content: flex-start;
+      gap: 12px;
+      padding: 4px 0 0;
+    }
+    .business-detail-page .business-header-identity {
+      align-items: flex-start;
+      gap: 12px;
+      min-width: 0;
+    }
+    .business-detail-page .business-header-logo {
+      width: 62px;
+      height: 62px;
+      flex-basis: 62px;
+    }
+    .business-detail-page .business-detail-intro h1 {
+      font-size: clamp(26px, 3.2vw, 38px);
+      overflow-wrap: anywhere;
+    }
+    .business-detail-page .business-detail-actions,
+    .business-detail-page .business-header-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      min-width: 0;
+      width: 100%;
+    }
+    .business-detail-page .business-detail-actions > a,
+    .business-detail-page .business-detail-actions > button,
+    .business-detail-page .business-header-links > a,
+    .business-detail-page .business-header-links > button {
+      min-width: 0;
+      min-height: 48px;
+      height: auto;
+      box-sizing: border-box;
+      padding: 10px 8px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      text-align: center;
+    }
+    .business-detail-page .business-header-utilities,
+    .business-detail-page .business-header-hours {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .business-detail-page .business-header-hours-summary {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+  /* iPad portrait: show the complete gallery above the business details. */
+  @media (min-width: 701px) and (max-width: 1366px) and (any-pointer: coarse) and (orientation: portrait) {
+    .business-detail-page .business-detail-hero {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+    .business-detail-page .business-detail-photo {
+      aspect-ratio: 16 / 9;
+      max-height: 440px;
+    }
+    .business-detail-page .business-detail-intro {
+      padding: 4px 2px 8px;
+    }
+  }
+}
