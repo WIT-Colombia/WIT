@@ -159,10 +159,10 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(cards).queryByText('85%')).not.toBeInTheDocument();
     const visibility = within(cards).getByRole('button', { name: 'Cambiar visibilidad del negocio' });
     expect(visibility.querySelector('.bd-badge--visible')).toHaveTextContent('Visible');
-    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar referidos del negocio' }));
-    expect(screen.getByRole('dialog', { name: 'Referidos del negocio' })).toHaveTextContent('Usuarios referidos válidos');
-    expect(screen.getByRole('dialog', { name: 'Referidos del negocio' })).toHaveTextContent('7');
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cerrar ventana' }));
+    const referrals = within(cards).getByRole('article', { name: 'Referidos del negocio' });
+    expect(referrals).toHaveTextContent('Referidos');
+    expect(referrals).toHaveTextContent('7');
+    expect(within(cards).queryByRole('button', { name: 'Consultar referidos del negocio' })).not.toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'Referidos del negocio' })).not.toBeInTheDocument();
   });
   it('abre la ficha pública del negocio usando publicId y no su identificador interno', async () => {
@@ -177,9 +177,10 @@ describe('Ficha administrativa del negocio', () => {
     api.getRecordBusiness.mockResolvedValue({ ...business, record: undefined });
     setup(); await ready();
     const cards = screen.getByRole('region', { name: 'Indicadores principales' });
-    expect(within(cards).getByText('Referidos').parentElement).toHaveTextContent('—');
-    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar referidos del negocio' }));
-    expect(screen.getByRole('dialog', { name: 'Referidos del negocio' })).toHaveTextContent('No disponible');
+    expect(within(cards).getByRole('article', { name: 'Referidos del negocio' })).toHaveTextContent('—');
+    expect(within(cards).queryByRole('button', { name: 'Consultar referidos del negocio' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Referidos del negocio' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/La información administrativa ampliada todavía no está disponible/)).not.toBeInTheDocument();
   });
   it('cambiar pestañas conserva la ficha y la consulta del catálogo', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); await screen.findByRole('heading', { name: offer.name }); fireEvent.click(screen.getByRole('tab', { name: 'Información general' })); expect(screen.getByRole('tabpanel', { name: 'Información general' })).toHaveTextContent('Cuenta registradora'); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); expect(api.getRecordBusiness).toHaveBeenCalledTimes(1); expect(api.getRecordCatalog).toHaveBeenCalledTimes(1); expect(screen.getByRole('heading', { name: offer.name })).toBeInTheDocument(); });
   it('el catálogo permite consultar sin modificar la información comercial', async () => { setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Productos y servicios' })); fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' })); const dialog = await screen.findByRole('dialog', { name: offer.name }); expect(within(dialog).queryByRole('button', { name: /Guardar|Eliminar|Editar/ })).not.toBeInTheDocument(); expect(within(dialog).getByText('Información comercial registrada')).toBeInTheDocument(); expect(offerPrice(offer)).toMatch(/COP.*0/); expect(offerPrice({ ...offer, negotiable: true })).toBe('Precio a convenir'); });
@@ -357,7 +358,7 @@ describe('Ficha administrativa del negocio', () => {
   it('abre las opciones de la tarjeta aunque el backend no incluya la ficha ampliada', async () => {
     api.getRecordBusiness.mockResolvedValue({ ...business, record: undefined });
     setup(); await ready();
-    expect(screen.getByText(/información administrativa ampliada todavía no está disponible/)).toBeInTheDocument();
+    expect(screen.queryByText(/información administrativa ampliada todavía no está disponible/)).not.toBeInTheDocument();
     const card = screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' });
     expect(card).toBeEnabled();
     fireEvent.click(card);
@@ -429,16 +430,16 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toBeDisabled();
     expect(screen.queryByRole('dialog', { name: 'Cambiar visibilidad' })).not.toBeInTheDocument();
   });
-  it('centra las cinco tarjetas y permite consultar los referidos desde toda su superficie', async () => {
+  it('centra los indicadores y presenta Referidos como cifra sin botón', async () => {
     setup(); await ready();
     const cards = screen.getByRole('region', { name: 'Indicadores principales' });
-    expect(within(cards).getAllByRole('button')).toHaveLength(5);
+    expect(within(cards).getAllByRole('button')).toHaveLength(4);
     expect(within(cards).getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Cambiar verificación del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Cambiar suscripción del negocio' })).toHaveClass('bd-indicator-trigger');
     expect(within(cards).getByRole('button', { name: 'Consultar reportes de este negocio' })).toHaveClass('bd-indicator-trigger');
-    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar referidos del negocio' }));
-    expect(screen.getByRole('dialog', { name: 'Referidos del negocio' })).toHaveTextContent('7');
+    expect(within(cards).getByRole('article', { name: 'Referidos del negocio' })).toHaveTextContent('7');
+    expect(within(cards).queryByRole('button', { name: 'Consultar referidos del negocio' })).not.toBeInTheDocument();
   });
   it('permite cerrar el selector de visibilidad con Escape sin cambiar el negocio', async () => {
     setup(); await ready();

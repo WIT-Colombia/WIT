@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Icon } from '../../components/Icon';
-import { AdminDialog } from '../../components/AdminDialog';
 import { StatePanel } from '../../components/common';
 import { AdminBusinessVisibilityDialog } from '../../components/businesses/AdminBusinessVisibilityDialog';
 import { AdminBusinessVisibilityPicker } from './AdminBusinessVisibilityPicker';
@@ -43,7 +42,6 @@ function BusinessRecord({ id }: { id: string }) {
   const [visibilityOpen, setVisibilityOpen] = useState(false);
   const [verificationOpen, setVerificationOpen] = useState(false);
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
-  const [referralsOpen, setReferralsOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'BASIC' | 'PRO' | null>(null);
   const [decision, setDecision] = useState<BusinessDecision | null>(null);
   const nav = useRef<HTMLDivElement>(null);
@@ -73,7 +71,6 @@ function BusinessRecord({ id }: { id: string }) {
       </a></header>
     {notice && <p className="bd-notice" role="status"><Icon name="check" size={17}/>{notice}<button aria-label="Cerrar aviso" onClick={() => setNotice('')}><Icon name="close" size={16}/></button></p>}
     {source.error && <Loading error={source.error} loading={false} retry={source.retry}/>}
-    {!record && <div className="bd-error" role="status">La información administrativa ampliada todavía no está disponible. Puedes gestionar la visibilidad desde su tarjeta si tienes autorización; algunas otras funciones requieren la actualización del backend.</div>}
     <section className="bd-identity" aria-label="Identificación del establecimiento"><div className="bd-cover">
       <div className="bd-identity-content"><BusinessRecordPhoto id={business.profilePhotoId} alt={`Perfil de ${business.name}`} size={320} eager position={record?.profilePosition} className="bd-business-logo" fallbackLetter={business.name}/><div className="bd-identity-copy"><h2>{business.name}</h2><span className="bd-category"><Icon name="store" size={14}/>{categoryName(business.category)}</span><p className="bd-location-text"><Icon name="pin" size={16}/><span>{business.location ? [business.location.cityName, business.location.regionName].filter(Boolean).join(', ') : 'Ubicación no registrada'}</span></p></div></div>
       </div>
@@ -100,14 +97,12 @@ function BusinessRecord({ id }: { id: string }) {
         <span className="bd-indicator-content"><span className="bd-indicator-title">Verificación</span><Badge tone={business.verificationStatus === 'APPROVED' ? 'green' : business.verificationStatus === 'NONE' ? 'neutral' : 'amber'}>
           {business.verificationStatus === 'APPROVED' ? 'Verificado' : business.verificationStatus === 'NONE' ? 'Sin verificar' : label(business.verificationStatus)}</Badge></span>
         {canChangeVerification && <Icon name="chevron" size={16}/>}</button></article>
-      <article className="bd-interactive-indicator">
-        <button className="bd-indicator-trigger" type="button" aria-label="Consultar referidos del negocio"
-          aria-haspopup="dialog" aria-expanded={referralsOpen} onClick={() => setReferralsOpen(true)}>
-          <span className="bd-indicator-icon bd-icon--violet"><Icon name="users" size={25}/></span>
-          <span className="bd-indicator-content"><span className="bd-indicator-title">Referidos</span>
-            <strong className="bd-referrals-count">{referralCount === undefined ? '—' : number(referralCount)}</strong></span>
-          <Icon name="arrow" size={16}/>
-        </button>
+      <article className="bd-referrals-indicator" aria-label="Referidos del negocio">
+        <span className="bd-indicator-icon bd-icon--violet" aria-hidden="true"><Icon name="users" size={25}/></span>
+        <div className="bd-indicator-content">
+          <span className="bd-indicator-title">Referidos</span>
+          <strong className="bd-referrals-count">{referralCount === undefined ? '—' : number(referralCount)}</strong>
+        </div>
       </article>
       <article className="bd-interactive-indicator"><button className="bd-indicator-trigger" type="button"
         disabled={!canChangeSubscription || actionDisabled} aria-expanded={subscriptionOpen} aria-haspopup="dialog"
@@ -135,14 +130,6 @@ function BusinessRecord({ id }: { id: string }) {
         : item.key === 'reports' ? <Reports businessId={business.id} businessName={business.name}/>
         : <Card title="Historial administrativo" icon="clock"><p className="bd-card-caption">Actuaciones conservadas en la auditoría. Fechas en hora de Bogotá.</p><Loading {...history}/>{!history.loading && !history.error && history.data && <>{history.data.history.length ? <HistoryTimeline entries={history.data.history}/> : <Empty icon="clock" title="Sin actuaciones registradas" message="No se encontraron registros de auditoría para este establecimiento."/>}{history.data.pagination && <Pager pagination={history.data.pagination} onPage={setHistoryPage}/>}</>}</Card>)}
     </section>)}</div></div>
-    {referralsOpen && <AdminDialog title="Referidos del negocio" contextLabel="XAMUKO ADMIN · INDICADOR DE REFERIDOS"
-      onClose={() => setReferralsOpen(false)}>
-      <div className="bd-referrals-detail">
-        <span className="bd-referrals-detail-icon"><Icon name="users" size={25}/></span>
-        <div><span>Usuarios referidos válidos</span><strong>{referralCount === undefined ? 'No disponible' : number(referralCount)}</strong></div>
-        <p>Este indicador contabiliza las cuentas nuevas registradas mediante el código de referidos de este negocio. Solo incluye referidos validados; no invitaciones pendientes.</p>
-      </div>
-    </AdminDialog>}
     {visibilityOpen && canChangeVisibility && <AdminBusinessVisibilityPicker businessName={business.name}
       visibilityStatus={business.visibilityStatus} administrativeRestriction={business.administrativeRestriction}
       onClose={() => setVisibilityOpen(false)}
