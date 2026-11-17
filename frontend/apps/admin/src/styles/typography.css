@@ -1,72 +1,144 @@
 /*
- * XAMUKO ADMIN · Shared typography system
- * Derived from the Executive Summary hierarchy.
- * All authenticated Admin workspaces use Inter and identical semantic sizes.
- * Avoid touching charts, avatar artwork, status icons and modal titles.
+ * XAMUKO Admin · Tipografía institucional
+ * Fuente: la escala original de Resumen ejecutivo, aprobada para todas
+ * las pestañas (escritorio, iPad y móvil).
+ *
+ * Título de página:       22–30px / 23px móvil
+ * Título de panel:        14px      / 14px móvil
+ * Etiqueta de indicador:   9px      /  8px móvil
+ * Valor de indicador:     16px      / 11–13px móvil
+ * Texto auxiliar:       8–11px    / 7–10px móvil
+ *
+ * El tamaño físico de los botones, iconos, tablas y gráficos no se altera.
  */
 .admin-refresh .admin-main .workspace {
   --xa-type-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --xa-type-page: clamp(22px, 2.2vw, 30px);
-  --xa-type-section: 16px;
-  --xa-type-card: 14px;
-  --xa-type-body: 13px;
-  --xa-type-subtitle: 12px;
-  --xa-type-label: 12px;
-  --xa-type-caption: 11px;
-  --xa-type-figure: 22px;
+  --xa-type-panel: 14px;
+  --xa-type-indicator-label: 9px;
+  --xa-type-indicator-value: 16px;
+  --xa-type-caption: 10px;
+  --xa-type-caption-small: 8px;
+  --xa-type-subtitle: 11px;
+  --xa-type-body: 12px;
   --xa-type-control: 12px;
   font-family: var(--xa-type-family);
   font-size: var(--xa-type-body);
 }
-.admin-refresh .admin-main .workspace :is(button,input,select,textarea){
-  font-family:inherit;
+.admin-refresh .admin-main .workspace :is(button,input,select,textarea) {
+  font-family: inherit;
 }
-/* Consistent top-of-page heading in Dashboard, operational modules, and
-   business detail. Does not resize a business's identity/name or modal titles. */
-.admin-refresh .admin-main .workspace :is(
-  .admin-section-heading h1,
-  .page-heading h1,
-  .ad-page-heading h1,
-  .bd-page-title h1
-){
-  font-family:var(--xa-type-family);
-  font-size:var(--xa-type-page);
-  font-weight:800;
-  letter-spacing:-.035em;
-  line-height:1.2;
+
+/* One page-title rule across dashboard, directories, operational screens,
+   detail pages, records, financial and pending modules. */
+.admin-refresh .admin-main .workspace h1 {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-page) !important;
+  font-weight: 800;
+  letter-spacing: -.035em;
+  line-height: 1.2;
 }
-/* Every actual section title follows one hierarchy. */
+
+/* Section and panel headings only; business identity names and dialogs retain
+   their own meaning and layout. The h2 of a business identity is not a panel. */
 .admin-refresh .admin-main .workspace :is(
   .xa-panel-head h2,
   .ad-panel-heading h2,
   .panel-heading h2,
+  .panel-heading h3,
+  .finance-panel-heading h2,
   .bd-summary-title-copy h2,
+  .bd-summary-plot-heading h3,
   .bd-info-overview-heading h2,
   .bd-info-members-header h2,
-  .bd-catalog-header h2,
-  .bd-card-head > h2,
-  .bd-summary-plot-heading h3
-){
-  font-family:var(--xa-type-family);
-  font-size:var(--xa-type-section);
-  font-weight:760;
-  letter-spacing:-.025em;
-  line-height:1.35;
-}
-/* Subsections, including informational panels and catalog card titles. */
-.admin-refresh .admin-main .workspace :is(
   .bd-info-group-title h3,
+  .bd-catalog-header h2,
   .bd-catalog-offer h3,
+  .bd-card-head > h2,
+  .bd-administration .bd-card-head h2,
+  .bd-chart-head h3,
+  .bd-history-details h3,
+  .bd-reports-intro h3,
+  .bd-current-state h3,
+  .ad-module-overview h2,
+  .ad-workflow-grid h2,
+  .ad-connections h2,
+  .ad-related > h2,
   .ad-document-copy h3,
-  .bd-review h3
-){
-  font-family:var(--xa-type-family);
-  font-size:var(--xa-type-card);
-  font-weight:730;
-  line-height:1.4;
-  letter-spacing:-.012em;
+  .ad-ops-section-heading h2,
+  .ad-ops-distribution h3,
+  .ac-panel-head h2,
+  .ac-section-head h2,
+  .ac-chart-head h3,
+  .ac-status-card h3,
+  .au-panel-heading h2,
+  .au-chart-title h3,
+  .au-section-title h2,
+  .au-business-group h3,
+  .au-accounts h3,
+  .businesses-directory-heading h2,
+  .ad-business-detail-section-heading h2,
+  .admin-business-information h2,
+  .verification-detail h2,
+  .pioneers-heading h2
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-panel) !important;
+  font-weight: 750;
+  letter-spacing: -.02em;
+  line-height: 1.35;
 }
-/* Explanatory copy under a heading uses exactly the same size everywhere. */
+
+/* Executive-summary indicator labels, reused in every Admin KPI card. */
+.admin-refresh .admin-main .workspace :is(
+  .xa-metric div > span,
+  .bd-summary-metric-name,
+  .bd-indicators h3,
+  .bd-activity-metrics span,
+  .bd-overview-metrics small,
+  .ad-summary-grid small,
+  .ad-ops-kpi-heading,
+  .ac-kpi > div > span,
+  .au-kpi > div > span,
+  .businesses-stat > div > span,
+  .metric-label,
+  .metric-top,
+  .ac-detail-highlights article > span,
+  .ad-business-detail-highlights article > span
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-indicator-label) !important;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+/* Indicator values stay at 16px on desktop and iPad, 11–13px on mobile. */
+.admin-refresh .admin-main .workspace :is(
+  .xa-metric strong,
+  .bd-summary-metric strong,
+  .bd-indicators article > div > strong,
+  .bd-activity-metrics strong,
+  .bd-overview-metrics strong,
+  .ad-summary-grid strong,
+  .ad-ops-kpi > strong,
+  .ac-kpi strong,
+  .au-kpi strong,
+  .businesses-stat strong,
+  .metric-value,
+  .ac-detail-highlights article strong,
+  .ad-business-detail-highlights article > strong,
+  .bd-reports-total strong
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-indicator-value) !important;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* Subtitles and secondary explanations: inside the approved 8–11px range. */
 .admin-refresh .admin-main .workspace :is(
   .admin-section-heading p,
   .page-heading p:not(.eyebrow),
@@ -79,14 +151,63 @@
   .bd-info-overview-heading p,
   .bd-info-members-header p,
   .bd-info-group-title p,
-  .bd-catalog-header p
-){
-  font-family:var(--xa-type-family);
-  font-size:var(--xa-type-subtitle);
-  font-weight:450;
-  line-height:1.5;
+  .bd-catalog-header p,
+  .ac-panel-head p,
+  .ac-section-head p,
+  .au-panel-heading p,
+  .au-section-title p,
+  .businesses-directory-heading p,
+  .businesses-hero-heading p,
+  .ad-business-detail-section-heading p,
+  .bd-card-caption,
+  .bd-reports-footer
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-subtitle) !important;
+  line-height: 1.5;
 }
-/* Content/body text in administrative records and cards. */
+.admin-refresh .admin-main .workspace :is(
+  .xa-metric small,
+  .bd-summary-metric small,
+  .bd-activity-metrics small,
+  .ad-ops-kpi > small,
+  .au-kpi small,
+  .ac-kpi small,
+  .businesses-stat > small,
+  .metric-card p,
+  .bd-info-field dt,
+  .bd-info-field small,
+  .bd-info-member-date,
+  .bd-info-member-identity small,
+  .bd-catalog-result-caption small,
+  .bd-summary-history-copy small,
+  .bd-summary-history-list time,
+  .bd-info-group-title p,
+  .ad-document-copy small,
+  .ac-chart-hint,
+  .ac-chart-head p,
+  .au-chart-title p
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-caption) !important;
+  line-height: 1.45;
+}
+.admin-refresh .admin-main .workspace :is(
+  .xa-growth-controls small,
+  .xa-activity-copy small,
+  .xa-activity time,
+  .xa-roles li small,
+  .xa-chart-empty p,
+  .bd-overview-metrics .bd-note,
+  .ad-workspace-context .ad-context-status
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-caption-small) !important;
+  line-height: 1.4;
+}
+
+/* Business records and directory body copy follow one common type family,
+   while retaining a separate scale from tiny KPI annotations. */
 .admin-refresh .admin-main .workspace :is(
   .bd-info-field dd,
   .bd-info-member-identity strong,
@@ -95,88 +216,44 @@
   .ad-document-copy p,
   .xa-priorities li a,
   .xa-action-list a
-){
-  font-family:var(--xa-type-family);
-  font-size:var(--xa-type-body);
-  line-height:1.5;
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-body);
+  line-height: 1.5;
 }
-/* Indicator and field labels, not tiny 8-9px text. */
-.admin-refresh .admin-main .workspace :is(
-  .xa-metric div > span,
-  .bd-summary-metric-name,
-  .bd-info-field dt,
-  .bd-catalog-state-filter > span,
-  .ad-summary-grid small
-){
-  font-family:var(--xa-type-family);
-  font-size:var(--xa-type-label);
-  font-weight:650;
-  line-height:1.4;
-  white-space:normal;
-  overflow:visible;
-  text-overflow:clip;
-}
-.admin-refresh .admin-main .workspace :is(
-  .xa-metric small,
-  .bd-summary-metric small,
-  .bd-info-field small,
-  .bd-info-group-title p,
-  .bd-catalog-result-caption small,
-  .ad-document-copy small,
-  .bd-info-member-date,
-  .bd-info-member-identity small,
-  .xa-growth-controls small
-){
-  font-family:var(--xa-type-family);
-  font-size:var(--xa-type-caption);
-  line-height:1.45;
-  overflow-wrap:anywhere;
-}
-/* Numeric values have their own shared hierarchy and tabular spacing. */
-.admin-refresh .admin-main .workspace :is(
-  .xa-metric strong,
-  .bd-summary-metric strong,
-  .ad-summary-grid strong,
-  .bd-overview-metrics strong
-){
-  font-family:var(--xa-type-family);
-  font-size:var(--xa-type-figure);
-  font-weight:800;
-  line-height:1.2;
-  letter-spacing:-.035em;
-  font-variant-numeric:tabular-nums;
-  white-space:normal;
-  overflow-wrap:anywhere;
-}
-/* Action button text sizes are aligned without changing their dimensions. */
+
+/* Button text remains aligned, but button heights, widths, borders, padding,
+   focus states and hit areas are deliberately untouched. */
 .admin-refresh .admin-main .workspace :is(
   .bd-summary-outline-action,
   .bd-catalog-detail-button,
   .bd-catalog-action,
-  .ad-button
-){
-  font-family:var(--xa-type-family);
-  font-size:var(--xa-type-control);
-  font-weight:700;
+  .ad-button,
+  .ac-primary,
+  .ac-secondary
+) {
+  font-family: var(--xa-type-family);
+  font-size: var(--xa-type-control);
 }
-@media(max-width:900px){
-  .admin-refresh .admin-main .workspace{
+
+/* Tablet retains the original Executive Summary page title (25px). */
+@media (min-width:701px) and (max-width:1024px) {
+  .admin-refresh .admin-main .workspace {
     --xa-type-page:25px;
-    --xa-type-section:16px;
-    --xa-type-card:14px;
-    --xa-type-figure:21px;
   }
 }
-@media(max-width:580px){
-  .admin-refresh .admin-main .workspace{
+
+/* Mobile follows the exact observed Executive Summary measurements. */
+@media (max-width:700px) {
+  .admin-refresh .admin-main .workspace {
     --xa-type-page:23px;
-    --xa-type-section:16px;
-    --xa-type-card:14px;
+    --xa-type-panel:14px;
+    --xa-type-indicator-label:8px;
+    --xa-type-indicator-value:clamp(11px,3vw,13px);
+    --xa-type-caption:9px;
+    --xa-type-caption-small:7px;
+    --xa-type-subtitle:10px;
     --xa-type-body:12px;
-    --xa-type-subtitle:11px;
-    --xa-type-label:11px;
-    --xa-type-caption:10px;
-    --xa-type-figure:20px;
     --xa-type-control:12px;
   }
 }
