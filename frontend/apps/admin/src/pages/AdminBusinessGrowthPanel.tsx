@@ -156,7 +156,7 @@ export function AdminBusinessGrowthPanel() {
   const [categoryId, setCategoryId] = useState('');
   const [status, setStatus] = useState('all');
   const [interval, setInterval] = useState<Interval>('month');
-  const [measure, setMeasure] = useState<Measure>('registrations');
+  const [measure, setMeasure] = useState<Measure>('cumulative');
   const [shape, setShape] = useState<Shape>('area');
   const [display, setDisplay] = useState<'chart' | 'table'>('chart');
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -205,7 +205,7 @@ export function AdminBusinessGrowthPanel() {
   const intervalText: Record<Interval, string> = { day: 'día', week: 'semana', month: 'mes', quarter: 'trimestre', year: 'año' };
   const intervalName: Record<Interval, string> = { day: 'Día', week: 'Semana', month: 'Mes', quarter: 'Trimestre', year: 'Año' };
   const decimal = (value: number) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(value);
-  const reset = () => { setPeriod('12m'); setCity(''); setCategoryId(''); setStatus('all'); setInterval('month'); setMeasure('registrations'); setShape('area'); };
+  const reset = () => { setPeriod('12m'); setCity(''); setCategoryId(''); setStatus('all'); setInterval('month'); setMeasure('cumulative'); setShape('area'); };
   const selectedFilters = [
     city ? availableFilters?.cities.find(item => item.value === city)?.label ?? 'Ciudad seleccionada' : '',
     categoryId ? availableFilters?.categories.find(item => item.id === categoryId)?.name ?? 'Categoría seleccionada' : '',

@@ -14,6 +14,8 @@ export async function createBusinessRecordFixture(image: Buffer) {
   const cleanup = async () => {
     await prisma.auditLog.deleteMany({ where: { actorUserId: { in: users } } });
     await prisma.businessAnalyticsEvent.deleteMany({ where: { businessId: { in: businesses } } });
+    await prisma.businessFavorite.deleteMany({ where: { businessId: { in: businesses } } });
+    await prisma.businessOfferLike.deleteMany({ where: { offer: { is: { businessId: { in: businesses } } } } });
     await prisma.businessSubscription.deleteMany({ where: { businessId: { in: businesses } } });
     await prisma.businessVisibilityPeriod.deleteMany({ where: { businessId: { in: businesses } } });
     await prisma.business.deleteMany({ where: { id: { in: businesses } } });

@@ -70,7 +70,15 @@ test('Ficha administrativa: consultas, fotografías privadas y decisiones audita
     });
     await t.test('estadísticas de fuentes reales, ceros y fechas de Bogotá', async () => {
       const date = new Date(fixture.registered); date.setUTCDate(17); date.setUTCHours(18);
+      await prisma.businessFavorite.create({ data: { businessId: id, userId: fixture.member.id } });
+      await prisma.businessOfferLike.create({ data: { offerId: fixture.offers[0].id, userId: fixture.member.id } });
+      await prisma.businessOfferLike.create({ data: { offerId: fixture.offers[1].id, userId: fixture.member.id } });
       const activity = await recordActivity(id, 'month', date);
+      assert.equal(activity.current.favorites, 1);
+      assert.equal(activity.current.offerLikes, 2);
+      const allHistory = await recordActivity(id, 'all', date);
+      assert.equal(allHistory.current.favorites, 1);
+      assert.equal(allHistory.current.offerLikes, 2);
       assert.equal(activity.totals.views, 2); assert.equal(activity.totals.interactions, 1); assert.equal(activity.totals.offerViews, 1);
       assert.equal(activity.series.length, 17); assert.equal(activity.series[0].views, 2); assert.equal(activity.series[1].views, 0);
       assert.equal(activity.timezone, 'America/Bogota');

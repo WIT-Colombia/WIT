@@ -44,10 +44,9 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
   onHistory: () => void;
   catalogAllowed: boolean;
 }) {
-  const [period, setPeriod] = useState('last30');
+  const [period, setPeriod] = useState('all');
   const activity = useResource(() => getRecordActivity(business.id, period), [business.id, period]);
   const rating = business.record?.rating;
-  const memberCount = business.record?.members.filter(member => member.status === 'ACTIVE').length;
   const photoCount = business.record
     ? business.record.businessPhotos + (catalogAllowed ? business.record.catalogPhotos : 0)
     : undefined;
@@ -58,9 +57,9 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
   const total = (value: number | undefined) => value === undefined ? '—' : number(value);
   const metricCards = [
     { label: 'Visualizaciones', value: activity.data ? total(activity.data.totals.views) : '—', icon: 'eye', tone: 'purple', hint: 'En el período' },
-    { label: 'Interacciones', value: activity.data ? total(activity.data.totals.interactions) : '—', icon: 'message', tone: 'blue', hint: 'En el período' },
+    { label: 'Me gusta', value: activity.data?.current ? total(activity.data.current.offerLikes) : '—', icon: 'thumbs-up', tone: 'blue', hint: 'En productos y servicios' },
     { label: 'Calificación promedio', value: ratingText, icon: 'star', tone: 'gold', hint: ratingLabel },
-    { label: 'Miembros', value: total(memberCount), icon: 'users', tone: 'green', hint: 'Activos actualmente' },
+    { label: 'Favoritos', value: activity.data?.current ? total(activity.data.current.favorites) : '—', icon: 'heart', tone: 'green', hint: 'Personas que lo guardaron' },
   ];
   const contentRows = [
     { label: 'Productos', value: business.record?.products, icon: 'box' },
@@ -75,11 +74,11 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
         <span className="bd-summary-heading-icon"><Icon name="up" size={24}/></span>
         <div className="bd-summary-title-copy">
           <h2 id="bd-summary-performance-title">Rendimiento en Xamuko</h2>
-          <p>{period === 'last30' ? 'Actividad de los últimos 30 días' : 'Actividad: ' + (periods.find(item => item.value === period)?.label.toLowerCase() ?? '')}</p>
+          <p>{period === 'all' ? 'Actividad de todo el historial' : period === 'last30' ? 'Actividad de los últimos 30 días' : 'Actividad: ' + (periods.find(item => item.value === period)?.label.toLowerCase() ?? '')}</p>
         </div>
         <label className="bd-summary-period">
           <Icon name="calendar" size={17}/>
-          <span className="bd-sr-only">Período del resumen</span>
+          <span className="bd-summary-period-caption" aria-hidden="true">{periods.find(item => item.value === period)?.label}</span>
           <select aria-label="Período del resumen" value={period} onChange={event => setPeriod(event.target.value)}>
             {periods.map(item => <option value={item.value} key={item.value}>{item.label}</option>)}
           </select>
@@ -108,7 +107,7 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
         </div>
         <details className="bd-summary-source">
           <summary>Origen e interpretación de los indicadores</summary>
-          <p>{activity.data?.definition ?? 'Visualizaciones: aperturas registradas de la ficha. Interacciones: clics en WhatsApp, teléfono e indicaciones.'} La calificación media procede de las opiniones registradas y los miembros reflejan las cuentas activas actualmente; estos dos indicadores no dependen del filtro temporal. No se estiman cifras ausentes.</p>
+          <p>{activity.data?.definition ?? 'Visualizaciones: aperturas registradas de la ficha. Interacciones: clics en WhatsApp, teléfono e indicaciones.'} La calificación media procede de las opiniones registradas; Me gusta suma los likes vigentes de los productos y servicios no eliminados y Favoritos cuenta las personas que actualmente guardan el negocio. Estos tres indicadores son acumulados vigentes y no cambian con el filtro temporal. No se estiman cifras ausentes.</p>
         </details>
       </div>
     </section>

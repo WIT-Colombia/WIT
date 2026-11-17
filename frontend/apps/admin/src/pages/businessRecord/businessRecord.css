@@ -1107,3 +1107,70 @@
 @media(prefers-reduced-motion:reduce){
   .bd-summary :is(button,select){scroll-behavior:auto}
 }
+
+/* Single-surface period control: the native accessible select is a transparent hit target.
+   On iPad Safari this avoids the nested native select bezel / double outline. */
+.bd-record .bd-summary-period{
+  position:relative;
+  isolation:isolate;
+  box-sizing:border-box;
+  flex:0 1 auto;
+  min-width:176px;
+  padding:0 13px;
+  gap:10px;
+  border:1px solid #DDD4ED;
+  border-radius:12px;
+  background:linear-gradient(180deg,#FFF 0%,#FAF7FF 100%);
+  box-shadow:0 2px 7px #3B22500D;
+  cursor:pointer;
+}
+.bd-record .bd-summary-period:focus-within{
+  outline:2px solid #8B5CF6;
+  outline-offset:3px;
+  border-color:#B09AF2;
+}
+.bd-record .bd-summary-period-caption{
+  flex:1;
+  min-width:0;
+  color:#33274F;
+  white-space:nowrap;
+  font-size:12px;
+  font-weight:720;
+  line-height:1.35;
+  letter-spacing:-.01em;
+  pointer-events:none;
+}
+.bd-record .bd-summary-period select{
+  position:absolute !important;
+  inset:0 !important;
+  display:block !important;
+  box-sizing:border-box !important;
+  width:100% !important;
+  height:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  opacity:0 !important;
+  -webkit-appearance:none !important;
+  appearance:none !important;
+  cursor:pointer !important;
+  z-index:2;
+}
+.bd-record .bd-summary-period>svg:last-child{
+  transform:none;
+  -webkit-transform:none;
+  width:15px;
+  height:15px;
+  color:#7250A1;
+}
+@media(max-width:700px){
+  .bd-record .bd-summary-period{
+    flex:1 1 100%;
+    justify-content:flex-start;
+    margin-top:7px;
+    min-height:45px;
+  }
+}

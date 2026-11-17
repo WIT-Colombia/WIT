@@ -22,6 +22,7 @@ describe('Ficha administrativa del negocio', () => {
   beforeEach(() => { vi.clearAllMocks(); role = 'SUPER_ADMIN'; permissions = ['business:write', 'catalog:read', 'content:moderate', 'content:moderate:write', 'settings:write']; api.getRecordBusiness.mockResolvedValue(business); api.getRecordHistory.mockResolvedValue({ history: [], pagination: { ...pagination, total: 0, totalPages: 0 } }); api.getRecordCatalog.mockResolvedValue({ offers: [offer], pagination }); api.getRecordReviews.mockResolvedValue({ reviews: [], pagination: { ...pagination, total: 0 } }); api.getRecordPhotos.mockResolvedValue({ photos: [], pagination: { ...pagination, total: 0 } }); api.getRecordActivity.mockResolvedValue({ period: 'last30', timezone: 'America/Bogota',
     start: '2026-10-19T05:00:00Z', end: '2026-11-17T12:00:00Z',
     totals: { views: 8, interactions: 3, offerViews: 0, reviews: 0, products: 0, services: 0 },
+    current: { favorites: 7, offerLikes: 13 },
     series: [
       { label: '2026-11-16', views: 0, interactions: 0, offerViews: 0, reviews: 0, products: 0, services: 0 },
       { label: '2026-11-17', views: 8, interactions: 3, offerViews: 0, reviews: 0, products: 0, services: 0 }
@@ -37,12 +38,19 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByRole('heading', { name: 'Contenido registrado' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Últimas actuaciones administrativas' })).toBeInTheDocument();
     expect(screen.queryByText('Sobre este resumen')).not.toBeInTheDocument();
-    await waitFor(() => expect(api.getRecordActivity).toHaveBeenCalledWith(business.id, 'last30'));
-    expect(screen.getByRole('combobox', { name: 'Período del resumen' })).toHaveValue('last30');
+    expect(screen.getByText('Todo el historial')).toBeInTheDocument();
+    await waitFor(() => expect(api.getRecordActivity).toHaveBeenCalledWith(business.id, 'all'));
+    expect(screen.getByRole('combobox', { name: 'Período del resumen' })).toHaveValue('all');
     expect(screen.getByText('Calificación promedio')).toBeInTheDocument();
     expect(screen.getByText('4,0')).toBeInTheDocument();
-    expect(screen.getByText('Miembros')).toBeInTheDocument();
+    expect(screen.getByText('Me gusta')).toBeInTheDocument();
+    expect(screen.getByText('Favoritos')).toBeInTheDocument();
+    expect(screen.getByText('13')).toBeInTheDocument();
+    expect(screen.getByText('7')).toBeInTheDocument();
     expect(screen.getByText('Fotos')).toBeInTheDocument();
+    expect(screen.queryByText('Interacciones')).not.toBeInTheDocument();
+    expect(screen.queryByText('Miembros', { exact: true })).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Período del resumen' })).toHaveValue('all');
     expect(screen.queryByText('0 · visualizaciones de la ficha')).not.toBeInTheDocument();
     const chart = screen.getByRole('group', { name: /Visualizaciones de la ficha/ });
     fireEvent.keyDown(chart, { key: 'Home' });

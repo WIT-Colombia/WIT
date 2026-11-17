@@ -109,13 +109,16 @@ export async function recordActivity(identifier: string, periodText: string, now
     : window.start ?? new Date(Date.UTC(localNow.getUTCFullYear() - 2, localNow.getUTCMonth() + 1, 1, 5));
   const format = period === 'day' ? '%Y-%m-%d %H:00' : period === 'year' || period === 'all' ? '%Y-%m' : '%Y-%m-%d';
   const date = { ...(window.start || period === 'last30' ? { gte: start } : {}), lt: now };
-  const [events, totals, offers, reviews, reviewCount, offerCounts] = await Promise.all([
+  const [events, totals, offers, reviews, reviewCount, offerCounts, favorites, offerLikes] = await Promise.all([
     prisma.$queryRaw<Array<{ label: string; eventType: string; quantity: bigint }>>(Prisma.sql`SELECT DATE_FORMAT(DATE_SUB(createdAt, INTERVAL 5 HOUR), ${format}) AS label, eventType, COUNT(*) AS quantity FROM BusinessAnalyticsEvent WHERE businessId=${businessId} AND createdAt>=${start} AND createdAt<${now} GROUP BY label,eventType ORDER BY label`),
     prisma.businessAnalyticsEvent.groupBy({ by: ['eventType'], where: { businessId, createdAt: date }, _count: { _all: true } }),
     prisma.$queryRaw<Array<{ label: string; kind: string; quantity: bigint }>>(Prisma.sql`SELECT DATE_FORMAT(DATE_SUB(createdAt, INTERVAL 5 HOUR), ${format}) AS label,kind,COUNT(*) AS quantity FROM BusinessOffer WHERE businessId=${businessId} AND createdAt>=${start} AND createdAt<${now} GROUP BY label,kind`),
     prisma.$queryRaw<Array<{ label: string; quantity: bigint }>>(Prisma.sql`SELECT DATE_FORMAT(DATE_SUB(createdAt, INTERVAL 5 HOUR), ${format}) AS label,COUNT(*) AS quantity FROM BusinessReview WHERE businessId=${businessId} AND createdAt>=${start} AND createdAt<${now} GROUP BY label`),
     prisma.businessReview.count({ where: { businessId, createdAt: date } }),
     prisma.businessOffer.groupBy({ by: ['kind'], where: { businessId, createdAt: date }, _count: { _all: true } }),
+    prisma.businessFavorite.count({ where: { businessId } }),
+    // Mirror the Business owner statistics: likes on offers not marked as deleted.
+    prisma.businessOfferLike.count({ where: { offer: { is: { businessId, deletedAt: null } } } }),
   ]);
   const count = (type: string) => totals.find(row => row.eventType === type)?._count._all ?? 0;
   const grid = completeCountTrend([], timelinePeriod, start, now);
@@ -128,7 +131,8 @@ export async function recordActivity(identifier: string, periodText: string, now
       services: Number(offers.find(row => row.label === label && row.kind === 'SERVICE')?.quantity ?? 0) };
   });
   return { period, timezone: 'America/Bogota', start: start.toISOString(), end: now.toISOString(),
+    current: { favorites, offerLikes },
     totals: { views: count('BUSINESS_VIEW'), interactions: count('WHATSAPP_CLICK') + count('PHONE_CLICK') + count('DIRECTIONS_CLICK'), offerViews: count('OFFER_VIEW'), reviews: reviewCount,
       products: offerCounts.find(row => row.kind === 'PRODUCT')?._count._all ?? 0, services: offerCounts.find(row => row.kind === 'SERVICE')?._count._all ?? 0 }, series,
-    definition: 'Vistas: aperturas registradas de la ficha. Interacciones: clics registrados en WhatsApp, teléfono e indicaciones; no representan personas únicas. Las vistas del catálogo son eventos de productos y servicios. Altas de catálogo y opiniones: registros por fecha de creación, incluidos los retirados después. Fechas de Bogotá; los intervalos transcurridos sin eventos se representan con cero. En Todo el historial, los totales abarcan todos los registros y la gráfica solo los últimos 24 meses.' };
+    definition: 'Vistas: aperturas registradas de la ficha. Interacciones: clics registrados en WhatsApp, teléfono e indicaciones; no representan personas únicas. Las vistas del catálogo son eventos de productos y servicios. Altas de catálogo y opiniones: registros por fecha de creación, incluidos los retirados después. Fechas de Bogotá; los intervalos transcurridos sin eventos se representan con cero. Favoritos: personas que tienen el negocio guardado actualmente. Me gusta: likes vigentes de productos y servicios no eliminados. Estos totales actuales no dependen del período seleccionado. En Todo el historial, los totales de eventos abarcan todos los registros y la gráfica solo los últimos 24 meses.' };
 }

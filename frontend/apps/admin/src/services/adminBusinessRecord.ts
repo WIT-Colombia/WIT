@@ -20,7 +20,7 @@ export type RecordHistory = AdminBusinessAuditEntry & { previousState: RecordSta
 export type HistoryResult = { history: RecordHistory[]; pagination: Pagination };
 export type ActivityMetric = 'views' | 'interactions' | 'offerViews' | 'reviews' | 'products' | 'services';
 export type RecordActivity = { period: string; timezone: string; start: string; end: string; totals: Record<ActivityMetric, number>;
-  series: Array<{ label: string } & Record<ActivityMetric, number>>; definition: string };
+  series: Array<{ label: string } & Record<ActivityMetric, number>>; current?: { favorites: number; offerLikes: number }; definition: string };
 const path = (id: string, suffix = '') => encodeURIComponent(id) + suffix;
 const query = (filters: Record<string, string | number>) => new URLSearchParams(Object.entries(filters).map(([key, value]) => [key, String(value)]));
 export const getRecordBusiness = async (id: string) => (await adminBusinessRecordRequest<{ business: RecordBusiness }>(path(id))).business;
