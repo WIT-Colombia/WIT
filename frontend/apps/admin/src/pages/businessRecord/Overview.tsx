@@ -129,9 +129,6 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
           <h2 id="bd-summary-history-title">Últimas actuaciones administrativas</h2>
           <p>Registros más recientes sobre este negocio</p>
         </div>
-        <button type="button" className="bd-summary-outline-action bd-summary-history-link" onClick={onHistory}>
-          Ver historial completo <Icon name="arrow" size={16}/>
-        </button>
       </header>
       {historyStatus || (latest.length ? <ol className="bd-summary-history-list">
         {latest.map(entry => <li key={entry.id}><button type="button" onClick={onHistory}
@@ -142,6 +139,11 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
           <Icon name="arrow" size={17}/>
         </button></li>)}
       </ol> : <Empty icon="clock" title="Sin actuaciones registradas" message="Los cambios y decisiones del negocio aparecerán aquí cuando se registren."/>)}
+      <div className="bd-summary-history-footer">
+        <button type="button" className="bd-summary-outline-action bd-summary-history-link" onClick={onHistory}>
+          Ver historial completo <Icon name="arrow" size={16}/>
+        </button>
+      </div>
     </section>
   </div>;
 }

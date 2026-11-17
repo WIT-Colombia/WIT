@@ -131,6 +131,9 @@ describe('Ficha administrativa del negocio', () => {
     expect(explore).toHaveClass('bd-summary-outline-action');
     expect(history).toHaveClass('bd-summary-outline-action');
     expect(explore.closest('.bd-summary')).toBe(history.closest('.bd-summary'));
+    expect(screen.getByRole('heading', { name: 'Últimas actuaciones administrativas' }).closest('header')?.querySelector('button')).toBeNull();
+    expect(history.closest('.bd-summary-history-footer')).not.toBeNull();
+    expect(explore.closest('.bd-summary-chart-footer')).not.toBeNull();
     fireEvent.click(history);
     expect(screen.getByRole('tab', { name: 'Historial administrativo' })).toHaveAttribute('aria-selected', 'true');
   });
