@@ -38,6 +38,9 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByRole('heading', { name: 'Contenido registrado' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Últimas actuaciones administrativas' })).toBeInTheDocument();
     expect(screen.queryByText('Sobre este resumen')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Los días sin registros aparecen/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Origen e interpretación de los indicadores')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Explorar actividad/ })).toBeInTheDocument();
     expect(screen.getByText('Todo el historial', { selector: '.bd-summary-period-caption' })).toBeInTheDocument();
     await waitFor(() => expect(api.getRecordActivity).toHaveBeenCalledWith(business.id, 'all'));
     expect(screen.getByRole('combobox', { name: 'Período del resumen' })).toHaveValue('all');

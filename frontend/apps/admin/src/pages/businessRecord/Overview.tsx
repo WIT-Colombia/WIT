@@ -102,13 +102,8 @@ export function Overview({ business, latest, historyStatus, onActivity, onHistor
           ? <ActivityChart data={activity.data} metric="views" variant="overview"/>
           : <Empty icon="chart" title="Sin datos para graficar" message="No hay intervalos disponibles en el período seleccionado."/>}
         <div className="bd-summary-chart-footer">
-          <p><Icon name="info" size={16}/>Los días sin registros aparecen con valor cero; los datos son eventos, no personas únicas.</p>
           <button type="button" className="bd-summary-text-link" onClick={onActivity}>Explorar actividad <Icon name="arrow" size={15}/></button>
         </div>
-        <details className="bd-summary-source">
-          <summary>Origen e interpretación de los indicadores</summary>
-          <p>{activity.data?.definition ?? 'Visualizaciones: aperturas registradas de la ficha. Interacciones: clics en WhatsApp, teléfono e indicaciones.'} La calificación media procede de las opiniones registradas; Me gusta suma los likes vigentes de los productos y servicios no eliminados y Favoritos cuenta las personas que actualmente guardan el negocio. Estos tres indicadores son acumulados vigentes y no cambian con el filtro temporal. No se estiman cifras ausentes.</p>
-        </details>
       </div>
     </section>
 
