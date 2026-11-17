@@ -6,6 +6,7 @@ export type AdministratorRecord = { id: string; displayName: string; emailNormal
 export async function listAdministrators() { return (await request<{ administrators: AdministratorRecord[] }>('/admin/administrators')).administrators; }
 export type AdminBusinessRecord = {
   id: string; publicId: string; name: string; description: string | null;
+  coverPhotoId: string | null;
   email: string | null; phone: string | null;
   lifecycleStatus: string; publicationStatus: string; visibilityStatus: string; verificationStatus: string; deletionStatus: string;
   administrativeRestriction: 'HIDDEN' | 'SUSPENDED' | null;
@@ -25,7 +26,7 @@ export type AdminBusinessesFilters = {
 };
 export type AdminBusinessOverview = {
   generatedAt: string; total: number; visible: number; hidden: number; expired: number;
-  adminHidden: number; suspended: number; verified: number; pro: number; reported: number;
+  adminHidden: number; suspended: number; verified: number; pendingVerification?: number; rejectedVerification?: number; pro: number; reported: number;
   review: number; deleted: number; expiring: number;
 };
 export type AdminBusinessFilterOptions = {
@@ -283,6 +284,12 @@ let accessToken: string | null = null;
 // The API cookie belongs to api.xamuko.com and cannot be read by the Admin UI.
 // Recover its CSRF counterpart through credentialed, CORS-protected API responses.
 let adminCsrfToken = '';
+/** Original business cover from the Admin-only endpoint; cookies and bearer auth match other Admin reads. */
+export async function fetchAdminBusinessCoverPhoto(photoId: string): Promise<Blob> {
+  const response = await fetch(buildApiUrl('/admin/business-photos/' + encodeURIComponent(photoId)), headers({ headers: { Accept: 'image/*' } }));
+  if (!response.ok) throw new Error('No pudimos cargar la foto de portada.');
+  return response.blob();
+}
 export async function fetchOwnAvatar(path = `${API_BASE}/auth/me/avatar`): Promise<Blob> {
   // Regular user avatars require a Bearer token. Admin has a separate,
   // HttpOnly cookie scoped to /api/v1/admin, so use its protected endpoint.
