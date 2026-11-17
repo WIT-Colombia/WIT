@@ -4,6 +4,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import type { BusinessCreateInput, BusinessUpdateInput } from './business.schemas.js';
 import { modalityRules } from './modality.service.js';
 import { ensureInitialVisibilityPeriod } from './visibility.service.js';
+import { isSubscriptionEffective } from './recognition.service.js';
 import { notifyPlatformUser, notifyBusinessOwners } from '../notifications/platform-notifications.service.js';
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -41,6 +42,8 @@ const businessInclude = {
   photos: { where: { isGallery: true }, orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] as any },
   coverPhoto: true,
   profilePhoto: true,
+  subscriptions: { where: { plan: 'PRO' as const, status: 'ACTIVE' as const, revokedAt: null },
+    select: { plan: true, status: true, startsAt: true, expiresAt: true, specialActivation: true, revokedAt: true } },
   memberships: { where: { status: 'ACTIVE' as const }, include: { permissions: true } },
   modalities: { include: { contact: true, hours: { orderBy: { dayOfWeek: 'asc' as const } } }, orderBy: { createdAt: 'asc' as const } },
 } as const;
@@ -229,6 +232,8 @@ function serialize(business: any, userId?: string) {
     lifecycleStatus: business.lifecycleStatus,
     publicationStatus: business.publicationStatus,
     visibilityStatus: business.visibilityStatus,
+    administrativeRestriction: business.administrativeRestriction ?? null,
+    isPro: (business.subscriptions ?? []).some((row: any) => isSubscriptionEffective(row)),
     verificationStatus: business.verificationStatus,
     deletionStatus: business.deletionStatus,
     publicationReadiness: publicationReadiness(business),
