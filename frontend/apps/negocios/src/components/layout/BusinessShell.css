@@ -74,6 +74,38 @@
 .business-mobile-menu-layer{display:none}
 @media(min-width:821px){
 .business-app .body-layout>.sidebar{display:flex;width:220px;padding:20px 13px 16px;border:0;background:#172b50;color:#fff}
+
+/* The iPad/desktop sidebar owns its scroll range, irrespective of the
+   current page's height. iOS Safari's dynamic viewport is not 100vh. */
+.business-app .body-layout > .sidebar.business-shell-sidebar{
+  position:fixed;
+  top:0;
+  right:auto;
+  bottom:auto;
+  left:0;
+  width:220px;
+  height:100vh; /* Older browser fallback. */
+  height:100dvh;
+  min-height:0;
+  max-height:100vh;
+  max-height:100dvh;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+  scroll-padding-bottom:24px;
+  padding-bottom:max(18px,env(safe-area-inset-bottom));
+}
+.business-app .body-layout > .sidebar.business-shell-sidebar > :is(
+  .sidebar-brand,.sidebar-nav,.sidebar-pro-card,.sidebar-support,.sidebar-account-link
+){
+  flex-shrink:0;
+}
+.business-app .body-layout > .sidebar.business-shell-sidebar > .sidebar-account-link{
+  margin-bottom:0;
+}
+
 .business-app .app-content{width:calc(100% - 220px);margin-left:220px}
 .business-app .page-content{width:100%;max-width:1600px;min-width:0;margin:0 auto;padding:0 28px 36px}
 .business-app .business-shell-workspace>.page-content>.page-header:first-child{padding-top:14px}
