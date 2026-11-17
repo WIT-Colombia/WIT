@@ -291,10 +291,6 @@ export function AdminBusinessGrowthPanel() {
           </div>
         </aside>
       </div>
-      <p className="ad-business-growth-definition"><Icon name="shield" size={17}/>
-        <span>{data.definition} La serie histórica utiliza meses UTC y conserva los períodos sin registros con valor cero.
-          Los filtros de este análisis son independientes de los filtros del directorio.</span>
-      </p>
     </>}
   </section>;
 }
