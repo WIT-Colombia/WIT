@@ -19,15 +19,17 @@ const kinds: Array<{ value: AdminVisibilityAuditKind; text: string }> = [
   { value: 'RENEWED', text: 'Vigencia renovada' },
   { value: 'VERIFIED', text: 'Verificado' },
   { value: 'UNVERIFIED', text: 'Sin verificar' },
+  { value: 'SUBSCRIPTION', text: 'Suscripción' },
 ];
 const auditDate = (createdAt: string) => new Intl.DateTimeFormat('es-CO', {
   dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota',
 }).format(new Date(createdAt));
 const stateNames: Record<string, string> = {
-  visibilityStatus: 'Visibilidad', administrativeRestriction: 'Restricción administrativa', verificationStatus: 'Verificación',
+  visibilityStatus: 'Visibilidad', administrativeRestriction: 'Restricción administrativa', verificationStatus: 'Verificación', plan: 'Suscripción',
 };
 function stateText(value: string | null, key: string) {
   return value === null ? key === 'administrativeRestriction' ? 'Sin restricción' : 'No registrado'
+    : key === 'plan' ? value === 'PRO' ? 'Business PRO' : 'Básico'
     : key === 'verificationStatus' && value === 'APPROVED' ? 'Verificado' : key === 'verificationStatus' && value === 'NONE' ? 'Sin verificar' : label(value);
 }
 function AuditState({ state, emptyText }: { state: Record<string, string | null> | null; emptyText: string }) {
@@ -38,16 +40,17 @@ function AuditState({ state, emptyText }: { state: Record<string, string | null>
 }
 function AuditEntry({ entry }: { entry: AdminVisibilityAuditEntry }) {
   const isVerification = entry.action === 'ADMIN_BUSINESS_VERIFIED_MANUALLY' || entry.action === 'ADMIN_BUSINESS_UNVERIFIED_MANUALLY';
+  const isSubscription = entry.action === 'ADMIN_BUSINESS_PLAN_CHANGED';
   const isSuspension = entry.action.includes('SUSPEND');
   const isHidden = entry.action.includes('HIDDEN') || entry.action.includes('HIDE') || entry.action === 'ADMIN_BUSINESS_UNVERIFIED_MANUALLY';
   const tone = isSuspension ? 'suspended' : isHidden ? 'hidden' : 'visible';
   return <article className="xa-audit-event" aria-label={actionName(entry.action)}>
     <div className={`xa-audit-event-symbol xa-audit-event-symbol--${tone}`}>
-      <Icon name={isVerification ? 'shield' : isSuspension ? 'lock' : isHidden ? 'eye-off' : 'eye'} size={22}/>
+      <Icon name={isSubscription ? 'crown' : isVerification ? 'shield' : isSuspension ? 'lock' : isHidden ? 'eye-off' : 'eye'} size={22}/>
     </div>
     <div className="xa-audit-event-content">
       <header className="xa-audit-event-header">
-        <div><span className="xa-audit-event-kind">{isVerification ? "CAMBIO DE VERIFICACIÓN" : "CAMBIO DE VISIBILIDAD"}</span>
+        <div><span className="xa-audit-event-kind">{isSubscription ? "CAMBIO DE SUSCRIPCIÓN" : isVerification ? "CAMBIO DE VERIFICACIÓN" : "CAMBIO DE VISIBILIDAD"}</span>
           <h2>{actionName(entry.action)}</h2>
           {entry.business
             ? <Link className="xa-audit-business" to={`/businesses/${encodeURIComponent(entry.business.id)}`}>
@@ -97,7 +100,7 @@ export function AdminAuditPage() {
     <header className="xa-audit-heading">
       <div><span className="xa-audit-eyebrow"><Icon name="shield" size={16}/> CONFIGURACIÓN Y SEGURIDAD</span>
         <h1>Auditoría</h1>
-        <p>Consulta las decisiones de visibilidad y verificación de los negocios, con sus responsables, motivos y estados anterior y nuevo.</p>
+        <p>Consulta las decisiones de visibilidad, verificación y suscripción de los negocios, con sus responsables, motivos y estados anterior y nuevo.</p>
       </div>
       <button className="xa-audit-refresh" type="button" onClick={result.retry} disabled={result.loading}>
         <Icon name="refresh" size={17}/> Actualizar
@@ -120,7 +123,7 @@ export function AdminAuditPage() {
       }}>Limpiar filtros</button>}
     </div>
     <div className="xa-audit-feed">
-      <div className="xa-audit-feed-heading"><h2><Icon name="clock" size={20}/> Historial de visibilidad y verificación</h2>
+      <div className="xa-audit-feed-heading"><h2><Icon name="clock" size={20}/> Historial de visibilidad, verificación y suscripción</h2>
         <span>{result.data ? `${result.data.pagination.total.toLocaleString('es-CO')} registros` : 'Consulta protegida'}</span>
       </div>
       {result.loading && <p className="xa-audit-loading" role="status">Consultando actuaciones registradas…</p>}
@@ -130,7 +133,7 @@ export function AdminAuditPage() {
         (result.data.entries.length ? <div className="xa-audit-list">{result.data.entries.map(item =>
           <AuditEntry key={item.id} entry={item}/>)}</div> :
           <div className="xa-audit-empty"><Icon name="shield" size={29}/><h3>Sin actuaciones para esta consulta</h3>
-            <p>No se encontraron cambios de visibilidad con los filtros seleccionados.</p></div>)}
+            <p>No se encontraron actuaciones con los filtros seleccionados.</p></div>)}
       {result.data && result.data.pagination.totalPages > 1 && <nav className="xa-audit-pages" aria-label="Páginas de auditoría">
         <span>Página {result.data.pagination.page} de {result.data.pagination.totalPages}</span>
         <div><button type="button" disabled={result.loading || page <= 1}
@@ -141,7 +144,7 @@ export function AdminAuditPage() {
     </div>
     <footer className="xa-audit-footnote"><Icon name="shield" size={16}/>
       Los registros provienen de la misma auditoría conservada en la ficha administrativa de cada negocio.
-      No se duplican actuaciones. Las fechas se muestran en hora de Bogotá. Esta vista presenta cambios de visibilidad y verificación.
+      No se duplican actuaciones. Las fechas se muestran en hora de Bogotá. Esta vista presenta cambios de visibilidad, verificación y suscripción.
     </footer>
   </main>;
 }
