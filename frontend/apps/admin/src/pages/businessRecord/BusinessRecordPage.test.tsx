@@ -73,6 +73,26 @@ describe('Ficha administrativa del negocio', () => {
     expect(screen.getByRole('button', { name: /Oculta.*El propietario puede reactivarla/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Suspendida.*Solo Admin puede levantarla/ })).toBeInTheDocument();
   });
+  it('centra las cinco tarjetas y permite consultar la completitud desde toda su superficie', async () => {
+    setup(); await ready();
+    const cards = screen.getByRole('region', { name: 'Indicadores principales' });
+    expect(within(cards).getAllByRole('button')).toHaveLength(5);
+    expect(within(cards).getByRole('button', { name: 'Cambiar visibilidad del negocio' })).toHaveClass('bd-indicator-trigger');
+    expect(within(cards).getByRole('button', { name: 'Verificar administrativamente el negocio' })).toHaveClass('bd-indicator-trigger');
+    expect(within(cards).getByRole('button', { name: 'Cambiar el plan del negocio' })).toHaveClass('bd-indicator-trigger');
+    expect(within(cards).getByRole('button', { name: 'Consultar reportes de este negocio' })).toHaveClass('bd-indicator-trigger');
+    fireEvent.click(within(cards).getByRole('button', { name: 'Consultar información general y completitud del negocio' }));
+    expect(screen.getByRole('tab', { name: 'Información general' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tabpanel', { name: 'Información general' })).toHaveTextContent('Cuenta registradora');
+  });
+  it('permite cerrar el selector de visibilidad con Escape sin cambiar el negocio', async () => {
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar visibilidad del negocio' }));
+    expect(screen.getByRole('group', { name: 'Elegir estado de visibilidad' })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('group', { name: 'Elegir estado de visibilidad' })).not.toBeInTheDocument();
+    expect(api.changeAdminBusinessVisibility).not.toHaveBeenCalled();
+  });
   it('un fallo del backend no presenta una ficha ficticia', async () => { api.getRecordBusiness.mockRejectedValue(new Error('No disponible temporalmente')); setup(); expect(await screen.findByRole('heading', { name: 'No pudimos abrir la ficha' })).toBeInTheDocument(); expect(screen.queryByText('85%')).not.toBeInTheDocument(); expect(screen.getByText('No disponible temporalmente')).toBeInTheDocument(); });
   it('la gráfica permite consultar un intervalo con cero mediante teclado', () => { const row = { views: 2, interactions: 0, offerViews: 0, reviews: 0, products: 0, services: 0 }; render(<ActivityChart metric="views" data={{ period: 'month', timezone: 'America/Bogota', start: business.createdAt, end: business.updatedAt, totals: row, definition: 'Eventos registrados', series: [{ label: '2026-11-01', ...row }, { label: '2026-11-02', ...row, views: 0 }] }}/>); const chart = screen.getByRole('group', { name: /Visualizaciones de la ficha/ }); fireEvent.focus(chart); fireEvent.keyDown(chart, { key: 'ArrowRight' }); expect(screen.getByTestId('activity-guide')).toBeInTheDocument(); expect(screen.getByRole('status')).toHaveTextContent('0 · visualizaciones de la ficha'); });
 });
