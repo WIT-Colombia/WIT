@@ -571,3 +571,14 @@
     flex:1 1 27%;min-width:0;padding-inline:4px;font-size:10px;
   }
 }
+
+
+/* iPad Safari: month numbers are legible where long Spanish month labels collide.
+   Full dates stay available through chart interaction and table/CSV views. */
+.admin-refresh .businesses-page.abv1 .ad-business-growth-axis-compact{display:none}
+@supports (-webkit-touch-callout: none){
+  @media (min-width:701px) and (max-width:1400px) and (any-pointer:coarse){
+    .admin-refresh .businesses-page.abv1 .ad-business-growth-axis-full{display:none}
+    .admin-refresh .businesses-page.abv1 .ad-business-growth-axis-compact{display:inline}
+  }
+}
