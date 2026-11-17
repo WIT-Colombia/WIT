@@ -45,9 +45,10 @@ export type AdminBusinessAnalytics = {
   totalReviews: number;
   filters: { cities: Array<{ value: string; label: string }>; categories: Array<{ id: string; name: string }> };
   series: Array<{ month: string; registrations: number; cumulative: number; reviews: number; reviewCumulative: number; users: number; userCumulative: number }>;
+  dailySeries?: Array<{ date: string; registrations: number; cumulative: number }>;
   definition: string;
 };
-export function getAdminBusinessAnalytics(filters: { period: string; city: string; categoryId: string; status: string }) {
+export function getAdminBusinessAnalytics(filters: { period: string; city: string; categoryId: string; status: string; interval: string }) {
   const query = new URLSearchParams(filters);
   return request<AdminBusinessAnalytics>('/admin/business-analytics?' + query.toString());
 }
