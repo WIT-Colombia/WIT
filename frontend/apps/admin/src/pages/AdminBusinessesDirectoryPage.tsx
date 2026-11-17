@@ -56,7 +56,6 @@ export function AdminBusinessesPage() {
   const [overviewLoading, setOverviewLoading] = useState(allowed);
   const [filterOptions, setFilterOptions] = useState<AdminBusinessFilterOptions>({ cities: [], categories: [] });
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const advanced: AdminBusinessesFilters = {
     city: params.get('city') ?? '',
     categoryId: params.get('categoryId') ?? '',
@@ -228,13 +227,14 @@ export function AdminBusinessesPage() {
         <button type="button" className="abv1-advanced-tool" disabled={!rows.length} onClick={exportCurrentPage}>
           <Icon name="download" size={16}/> Exportar página
         </button>
-        <button type="button" className="abv1-advanced-tool" onClick={() => setAnalyticsOpen(open => !open)} aria-expanded={analyticsOpen}>
-          <Icon name="chart" size={16}/> {analyticsOpen ? "Ocultar estadísticas" : "Ver estadísticas detalladas"}
-        </button>
         <button type="button" className="abv1-clear" disabled={!filtersActive} onClick={clearFilters}>
           <Icon name="refresh" size={16}/> Limpiar filtros
         </button>
       </div>}
+
+      <section className="abv1-analytics-section" aria-label="Inteligencia de negocios">
+        <AdminBusinessGrowthPanel />
+      </section>
 
       {loading ? <StatePanel kind="loading" title="Cargando negocios" message="Consultando los registros reales de Xamuko."/> :
         error ? <StatePanel kind="error" title="No pudimos cargar los negocios" message={error} retry={() => setRevision(n => n + 1)}/> :
@@ -251,7 +251,10 @@ export function AdminBusinessesPage() {
           </tr></thead>
           <tbody>{rows.map(item => <tr key={item.id}>
             <td><Link to={'/businesses/' + encodeURIComponent(item.id)} className="abv1-business">
-              <AdminBusinessCoverPhoto photoId={item.profilePhotoId ?? item.coverPhotoId} name={item.name}/>
+              <span className="abv1-business-photos">
+                <AdminBusinessCoverPhoto photoId={item.coverPhotoId} name={item.name}/>
+                <AdminBusinessCoverPhoto photoId={item.profilePhotoId} name={item.name} variant="profile"/>
+              </span>
               <span><strong>{item.name}</strong><small>ID: {item.publicId}</small></span>
             </Link></td>
             <td><span className="abv1-city"><Icon name="pin" size={16}/>{item.location?.cityName ?? 'Sin ciudad'}</span></td>
@@ -266,7 +269,10 @@ export function AdminBusinessesPage() {
         </table></div>
         <div className="abv1-mobile-list">{rows.map(item => <article className="abv1-mobile-card" key={item.id}>
           <div className="abv1-mobile-card-top"><Link to={'/businesses/' + encodeURIComponent(item.id)} className="abv1-business">
-            <AdminBusinessCoverPhoto photoId={item.profilePhotoId ?? item.coverPhotoId} name={item.name}/>
+            <span className="abv1-business-photos">
+                <AdminBusinessCoverPhoto photoId={item.coverPhotoId} name={item.name}/>
+                <AdminBusinessCoverPhoto photoId={item.profilePhotoId} name={item.name} variant="profile"/>
+              </span>
             <span><strong>{item.name}</strong><small>ID: {item.publicId}</small></span>
           </Link><Link className="abv1-view" to={'/businesses/' + encodeURIComponent(item.id)}
             aria-label={'Ver detalles de ' + item.name} title="Ver detalles"><Icon name="eye" size={20}/></Link></div>
@@ -287,6 +293,5 @@ export function AdminBusinessesPage() {
         </div>
       </nav>}
     </section>
-    {analyticsOpen && <div className="abv1-extra-stats"><AdminBusinessGrowthPanel /></div>}
   </div>;
 }
