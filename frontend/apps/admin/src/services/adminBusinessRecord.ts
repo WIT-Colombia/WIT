@@ -1,0 +1,31 @@
+import { adminBusinessRecordRequest, type AdminBusinessAuditEntry, type AdminBusinessRecord } from './adminApiClient';
+
+export type Pagination = { page: number; pageSize: number; total: number; totalPages: number };
+export type Category = AdminBusinessRecord['category'];
+export type RecordBusiness = AdminBusinessRecord & { record?: {
+  version: number; members: Array<{ id: string; role: string; status: string; createdAt: string; user: { displayName: string; nickname: string | null } }>;
+  rating: { value: number | null; count: number }; products: number; services: number;
+  businessPhotos: number; catalogPhotos: number; accountStatus: string; effectiveVisibility: string;
+  coverPosition: { x: number; y: number }; profilePosition: { x: number; y: number };
+} };
+export type RecordOffer = { id: string; internalCode: string; kind: 'PRODUCT' | 'SERVICE'; name: string; description: string | null;
+  priceAmount: string | number | null; currency: string | null; priceText: string | null; negotiable: boolean;
+  publicationStatus: string; administrativeStatus: string; active: boolean; deletedAt: string | null; createdAt: string; updatedAt: string;
+  category: Category | null; photos: Array<{ id: string; altText: string | null }> };
+export type RecordReview = { id: string; rating: number; comment: string; status: string; createdAt: string; updatedAt: string;
+  user: { displayName: string; nickname: string | null }; _count: { reports: number }; reports: Array<{ id: string; reason: string; status: string; createdAt: string }> };
+export type RecordPhoto = { id: string; altText: string | null; createdAt: string; isCover: boolean; isProfile: boolean; offer: { id: string; name: string; kind: string } | null };
+export type RecordState = Record<string, string | number | boolean | null> | null;
+export type RecordHistory = AdminBusinessAuditEntry & { previousState: RecordState; newState: RecordState };
+export type HistoryResult = { history: RecordHistory[]; pagination: Pagination };
+export type ActivityMetric = 'views' | 'interactions' | 'offerViews' | 'reviews' | 'products' | 'services';
+export type RecordActivity = { period: string; timezone: string; start: string; end: string; totals: Record<ActivityMetric, number>;
+  series: Array<{ label: string } & Record<ActivityMetric, number>>; definition: string };
+const path = (id: string, suffix = '') => encodeURIComponent(id) + suffix;
+const query = (filters: Record<string, string | number>) => new URLSearchParams(Object.entries(filters).map(([key, value]) => [key, String(value)]));
+export const getRecordBusiness = async (id: string) => (await adminBusinessRecordRequest<{ business: RecordBusiness }>(path(id))).business;
+export const getRecordHistory = (id: string, page = 1) => adminBusinessRecordRequest<HistoryResult>(path(id, `/history?page=${page}&pageSize=12`));
+export const getRecordCatalog = (id: string, filters: Record<string, string | number>) => adminBusinessRecordRequest<{ offers: RecordOffer[]; pagination: Pagination }>(path(id, `/catalog?${query(filters)}`));
+export const getRecordReviews = (id: string, filters: Record<string, string | number>) => adminBusinessRecordRequest<{ reviews: RecordReview[]; pagination: Pagination }>(path(id, `/reviews?${query(filters)}`));
+export const getRecordPhotos = (id: string, page: number, scope: string) => adminBusinessRecordRequest<{ photos: RecordPhoto[]; pagination: Pagination }>(path(id, `/photos?${query({ page, scope })}`));
+export const getRecordActivity = (id: string, period: string) => adminBusinessRecordRequest<RecordActivity>(path(id, `/activity?${query({ period })}`));

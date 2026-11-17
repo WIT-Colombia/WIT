@@ -8,6 +8,7 @@ import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
+import { recordActivity, recordCatalog, recordPhoto, recordPhotos, recordReviews } from './admin-business-record.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
 import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto } from './admin-content.service.js';
 import { controlAdminContent, controlAdminContentBulk, editAdminContent, getAdminContentHistory, removeAdminContentPhoto, type ContentControlAction } from './admin-content-control.service.js';
@@ -39,7 +40,23 @@ adminRouter.get('/businesses/filters', requireAdmin('BUSINESSES_READ'), async (_
   try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessesFilters()); } catch (error) { next(error); }
 });
 adminRouter.get('/businesses/:id/history', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
-  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessHistory(String(req.params.id))); } catch (error) { next(error); }
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessHistory(String(req.params.id), Number(req.query.page ?? 1), Number(req.query.pageSize ?? 60))); } catch (error) { next(error); }
+});
+const recordRead: RequestHandler = (_req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); };
+adminRouter.get('/businesses/:id/catalog', requireAdmin('BUSINESSES_READ'), recordRead, async (req, res, next) => {
+  try { if (!adminFromRequest(req).permissions.includes('CATALOG_READ')) throw new AppError(403, 'ADMIN_PERMISSION_DENIED', 'Necesitas permiso de catálogo.'); res.json(await recordCatalog(String(req.params.id), req.query)); } catch (error) { next(error); }
+});
+adminRouter.get('/businesses/:id/reviews', requireAdmin('BUSINESSES_READ'), recordRead, async (req, res, next) => {
+  try { if (!adminFromRequest(req).permissions.includes('REPORTS_REVIEW')) throw new AppError(403, 'ADMIN_PERMISSION_DENIED', 'Necesitas permiso para consultar opiniones.'); res.json(await recordReviews(String(req.params.id), req.query)); } catch (error) { next(error); }
+});
+adminRouter.get('/businesses/:id/photos', requireAdmin('BUSINESSES_READ'), recordRead, async (req, res, next) => {
+  try { res.json(await recordPhotos(String(req.params.id), req.query, adminFromRequest(req).permissions.includes('CATALOG_READ'))); } catch (error) { next(error); }
+});
+adminRouter.get('/businesses/:id/photos/:photoId/content', requireAdmin('BUSINESSES_READ'), recordRead, async (req, res, next) => {
+  try { const photo = await recordPhoto(String(req.params.id), String(req.params.photoId), adminFromRequest(req).permissions.includes('CATALOG_READ')); res.setHeader('X-Content-Type-Options', 'nosniff'); res.type(photo.mimeType).send(photo.buffer); } catch (error) { next(error); }
+});
+adminRouter.get('/businesses/:id/activity', requireAdmin('BUSINESSES_READ'), recordRead, async (req, res, next) => {
+  try { res.json(await recordActivity(String(req.params.id), String(req.query.period ?? 'month'))); } catch (error) { next(error); }
 });
 adminRouter.post('/businesses/:id/visibility', requireTrustedOrigin, requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
   try {

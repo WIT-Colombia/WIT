@@ -119,8 +119,25 @@ export async function listAdminBusinesses(query: AdminBusinessesFilters) {
 }
 
 export async function getAdminBusiness(id: string) {
-  const value = await prisma.business.findFirst({ where: { OR: [{ id }, { publicId: id }] }, select: businessSelect });
-  return compact(value, new Date());
+  const value = await prisma.business.findFirst({ where: { OR: [{ id }, { publicId: id }] }, select: {
+    ...businessSelect, businessAccount: { select: { status: true } },
+    coverImagePositionX: true, coverImagePositionY: true, profileImagePositionX: true, profileImagePositionY: true,
+    visibilityPeriods: { take: 1, orderBy: { expiresAt: 'desc' }, select: { startsAt: true, expiresAt: true } },
+  } });
+  if (!value) return null;
+  const [members, rating, catalog, businessPhotos, catalogPhotos] = await Promise.all([
+    prisma.businessMembership.findMany({ where: { businessId: value.id }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], select: { id: true, role: true, status: true, createdAt: true, user: { select: { displayName: true, nickname: true } } } }),
+    prisma.businessReview.aggregate({ where: { businessId: value.id, status: 'PUBLISHED' }, _avg: { rating: true }, _count: { _all: true } }),
+    prisma.businessOffer.groupBy({ by: ['kind'], where: { businessId: value.id }, _count: { _all: true } }),
+    prisma.photo.count({ where: { offerId: null, OR: [{ businessId: value.id }, { coverForBusiness: { id: value.id } }, { profileForBusiness: { id: value.id } }] } }),
+    prisma.photo.count({ where: { offer: { businessId: value.id } } }),
+  ]);
+  const now = new Date(), period = value.visibilityPeriods[0];
+  const effectiveVisibility = value.visibilityStatus === 'VISIBLE' && period ? period.expiresAt <= now ? 'EXPIRED' : period.startsAt > now ? 'NOT_STARTED' : value.visibilityStatus : value.visibilityStatus;
+  return { ...compact(value, now)!, record: { version: 1, members, effectiveVisibility, rating: { value: rating._avg.rating, count: rating._count._all },
+    products: catalog.find(row => row.kind === 'PRODUCT')?._count._all ?? 0, services: catalog.find(row => row.kind === 'SERVICE')?._count._all ?? 0,
+    businessPhotos, catalogPhotos, accountStatus: value.businessAccount.status,
+    coverPosition: { x: value.coverImagePositionX, y: value.coverImagePositionY }, profilePosition: { x: value.profileImagePositionX, y: value.profileImagePositionY } } };
 }
 
 /** Read the original gallery cover under Admin permissions, regardless of publication state. */
@@ -191,14 +208,20 @@ export async function getAdminBusinessesOverview(now = new Date()) {
   return { generatedAt: now.toISOString(), total, visible, hidden, expired, adminHidden, suspended, verified, pendingVerification, rejectedVerification, pro, reported, review, deleted, expiring: Number(expiring[0]?.quantity ?? 0) };
 }
 
-export async function getAdminBusinessHistory(identifier: string) {
+export async function getAdminBusinessHistory(identifier: string, page = 1, pageSize = 60) {
   const business = await prisma.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }] }, select: { id: true } });
   if (!business) throw new AppError(404, 'ADMIN_BUSINESS_NOT_FOUND', 'No encontramos este negocio.');
-  const history = await prisma.auditLog.findMany({
-    where: { entityType: 'BUSINESS', entityId: business.id }, take: 60, orderBy: { createdAt: 'desc' },
-    select: { id: true, action: true, reason: true, comment: true, createdAt: true, actor: { select: { displayName: true } } },
-  });
-  return { history };
+  const currentPage = Number.isInteger(page) ? Math.max(1, Math.min(100000, page)) : 1;
+  const size = Number.isInteger(pageSize) ? Math.max(1, Math.min(60, pageSize)) : 60;
+  const where = { entityType: 'BUSINESS' as const, entityId: business.id };
+  const [history, total] = await prisma.$transaction([prisma.auditLog.findMany({
+    where, take: size, skip: (currentPage - 1) * size, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    select: { id: true, action: true, reason: true, comment: true, createdAt: true, previousState: true, newState: true, actor: { select: { displayName: true } } },
+  }), prisma.auditLog.count({ where })]);
+  const state = (input: Prisma.JsonValue) => input && typeof input === 'object' && !Array.isArray(input)
+    ? Object.fromEntries(Object.entries(input).filter(([key, value]) => ['name', 'visibilityStatus', 'publicationStatus', 'lifecycleStatus', 'deletionStatus', 'verificationStatus', 'administrativeRestriction', 'completeness'].includes(key) && (value === null || ['string', 'number', 'boolean'].includes(typeof value)))) : null;
+  return { history: history.map(row => ({ ...row, previousState: state(row.previousState), newState: state(row.newState) })),
+    pagination: { page: currentPage, pageSize: size, total, totalPages: Math.ceil(total / size) } };
 }
 
 /** A restriction belongs to Admin, not the business owner. Never restores an expired 40-day period. */

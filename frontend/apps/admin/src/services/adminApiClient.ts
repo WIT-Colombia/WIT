@@ -1,5 +1,12 @@
 import { API_BASE_URL as API_BASE, buildApiUrl } from '@wit/utils';
 export class AdminApiError extends Error { readonly status:number; readonly code:string; constructor(status:number,code:string,message:string){super(message);this.name='AdminApiError';this.status=status;this.code=code;} }
+export function adminBusinessRecordRequest<T>(path: string, init: RequestInit = {}) { return request<T>(`/admin/businesses/${path}`, init); }
+export async function fetchAdminBusinessRecordPhoto(businessId: string, photoId: string) {
+  const response = await fetch(buildApiUrl(`/admin/businesses/${encodeURIComponent(businessId)}/photos/${encodeURIComponent(photoId)}/content`), headers({ headers: { Accept: 'image/*' } }));
+  if (!response.ok) { const body = await response.json().catch(() => null); throw new AdminApiError(response.status, body?.error?.code ?? 'PHOTO_UNAVAILABLE', body?.error?.message ?? 'No se pudo cargar la fotografía.'); }
+  if (!response.headers.get('content-type')?.startsWith('image/')) throw new Error('La respuesta no contiene una imagen.');
+  return response.blob();
+}
 export type AdminPermission = 'BUSINESSES_READ' | 'CATALOG_READ' | 'REPORTS_REVIEW' | 'CONTENT_MODERATE' | 'AUDIT_READ' | 'ADMINS_MANAGE' | 'PIONEER_MANAGE' | 'FINANCE_READ' | 'FINANCE_MANAGE';
 export type RealAdmin = { user: { id: string; publicId: string; displayName: string; emailNormalized: string | null; avatarUrl: string | null; locale: string }; role: 'ADMIN' | 'SUPER_ADMIN'; permissions: AdminPermission[] };
 export type AdministratorRecord = { id: string; displayName: string; emailNormalized: string | null; status: string; adminRoleAssignments: { role: string; active: boolean }[]; adminPermissionGrants: { permission: string; granted: boolean }[] };

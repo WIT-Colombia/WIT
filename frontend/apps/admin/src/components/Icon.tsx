@@ -1,4 +1,6 @@
 const paths: Record<string, string> = {
+  info: 'M12 8h.01 M12 11v6 M21 12a9 9 0 1 0-18 0 9 9 0 0 0 18 0',
+  copy: 'M9 9h12v12H9V9 M15 9V3H3v12h6',
 // Professional, consistent category pictograms.
   'utensils': 'M4 3v7a3 3 0 0 0 6 0V3 M7 3v19 M15 3c3 0 5 2.5 5 7v12 M15 3v9h5',
   'pill': 'M10.5 20.5a5 5 0 0 1-7-7l10-10a5 5 0 0 1 7 7l-10 10Z M8.5 8.5l7 7',
