@@ -251,7 +251,7 @@ export function AdminBusinessesPage() {
           </tr></thead>
           <tbody>{rows.map(item => <tr key={item.id}>
             <td><Link to={'/businesses/' + encodeURIComponent(item.id)} className="abv1-business">
-              <AdminBusinessCoverPhoto photoId={item.coverPhotoId} name={item.name}/>
+              <AdminBusinessCoverPhoto photoId={item.profilePhotoId ?? item.coverPhotoId} name={item.name}/>
               <span><strong>{item.name}</strong><small>ID: {item.publicId}</small></span>
             </Link></td>
             <td><span className="abv1-city"><Icon name="pin" size={16}/>{item.location?.cityName ?? 'Sin ciudad'}</span></td>
@@ -266,7 +266,7 @@ export function AdminBusinessesPage() {
         </table></div>
         <div className="abv1-mobile-list">{rows.map(item => <article className="abv1-mobile-card" key={item.id}>
           <div className="abv1-mobile-card-top"><Link to={'/businesses/' + encodeURIComponent(item.id)} className="abv1-business">
-            <AdminBusinessCoverPhoto photoId={item.coverPhotoId} name={item.name}/>
+            <AdminBusinessCoverPhoto photoId={item.profilePhotoId ?? item.coverPhotoId} name={item.name}/>
             <span><strong>{item.name}</strong><small>ID: {item.publicId}</small></span>
           </Link><Link className="abv1-view" to={'/businesses/' + encodeURIComponent(item.id)}
             aria-label={'Ver detalles de ' + item.name} title="Ver detalles"><Icon name="eye" size={20}/></Link></div>
