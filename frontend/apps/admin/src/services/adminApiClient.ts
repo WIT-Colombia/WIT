@@ -41,6 +41,22 @@ export type AdminBusinessFilterOptions = {
 };
 export type AdminBusinessAuditEntry = { id: string; action: string; reason: string | null; comment: string | null;
   createdAt: string; actor: { displayName: string } | null };
+export type AdminVisibilityAuditKind = 'ALL' | 'VISIBLE' | 'HIDDEN' | 'SUSPENDED' | 'RESTORED' | 'RENEWED';
+export type AdminVisibilityAuditEntry = {
+  id: string; entityId: string; action: string; createdAt: string;
+  actor: { displayName: string } | null; reason: string | null; comment: string | null;
+  previousState: Record<string, string | null> | null;
+  newState: Record<string, string | null> | null;
+  business: { id: string; name: string; publicId: string } | null;
+};
+export type AdminVisibilityAuditResult = {
+  entries: AdminVisibilityAuditEntry[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+};
+export function getAdminVisibilityAudit(filters: { page: number; kind: AdminVisibilityAuditKind; search: string }) {
+  const params = new URLSearchParams({ page: String(filters.page), kind: filters.kind, search: filters.search });
+  return request<AdminVisibilityAuditResult>('/admin/audit/visibility?' + params.toString());
+}
 export type AdminVisibilityAction = 'HIDE' | 'SUSPEND' | 'RESTORE' | 'SET_VISIBLE' | 'SET_HIDDEN';
 export type AdminBusinessPage = { businesses: AdminBusinessRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
 export type AdminBusinessAnalytics = {
