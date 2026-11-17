@@ -176,6 +176,10 @@ export function AdminBusinessesPage() {
     </section>
 
     <section className="abv1-directory" aria-labelledby="businesses-page-title">
+      <section className="abv1-analytics-section" aria-label="Inteligencia de negocios">
+        <AdminBusinessGrowthPanel />
+      </section>
+
       <form className="abv1-toolbar" onSubmit={submitSearch} role="search">
         <label className="abv1-search"><Icon name="search" size={20}/>
           <input aria-label="Buscar negocio por nombre, ID, propietario o ciudad"
@@ -231,10 +235,6 @@ export function AdminBusinessesPage() {
           <Icon name="refresh" size={16}/> Limpiar filtros
         </button>
       </div>}
-
-      <section className="abv1-analytics-section" aria-label="Inteligencia de negocios">
-        <AdminBusinessGrowthPanel />
-      </section>
 
       {loading ? <StatePanel kind="loading" title="Cargando negocios" message="Consultando los registros reales de Xamuko."/> :
         error ? <StatePanel kind="error" title="No pudimos cargar los negocios" message={error} retry={() => setRevision(n => n + 1)}/> :
