@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ChartPointerEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { getSession, can } from '../services/adminService';
 import { loadDashboardSnapshot, type DashboardSnapshot } from '../services/dashboardService';
@@ -113,8 +113,6 @@ function formatActivityDate(value: string) {
 }
 
 export function DashboardPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const month = searchParams.get('month');
   const admin = getSession();
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,7 +134,7 @@ export function DashboardPage() {
   const activity = [
     ...(snapshot?.recentReviews ?? []).map(item => ({ id: `review-${item.id}`, title: 'Opinión publicada', user: item.user.displayName, context: item.business.name, date: item.createdAt, href: '/reviews', icon: 'star' })),
     ...(snapshot?.recentReports ?? []).map(item => ({ id: `report-${item.id}`, title: 'Reporte de opinión recibido', user: item.reporter.displayName, context: item.review.business.name, date: item.createdAt, href: '/reports', icon: 'flag' })),
-  ].filter(item => !month || item.date.slice(0, 7) === month).sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 6);
+  ].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 6);
 
   const metricValues: Array<number | null> = [stats?.totals.businesses ?? null, stats?.userStatuses.active ?? null, snapshot?.pendingVerifications ?? null, stats?.revenue ?? null];
   const hasError = Boolean(snapshot?.statsError || snapshot?.reviewError || snapshot?.verificationError);
@@ -150,10 +148,6 @@ export function DashboardPage() {
   return <div className="xa-dashboard">
     <header className="admin-section-heading">
       <h1>Resumen ejecutivo</h1>
-      <div className="admin-section-controls">
-        <label className="xa-dashboard-month-filter"><span>Mes</span><input type="month" aria-label="Filtrar actividad por mes" value={month ?? ''} onChange={event => { const next = new URLSearchParams(searchParams); if (event.target.value) next.set('month', event.target.value); else next.delete('month'); setSearchParams(next); }} /></label>
-        {month && <button type="button" className="xa-dashboard-month-clear" onClick={() => { const next = new URLSearchParams(searchParams); next.delete('month'); setSearchParams(next); }}>Quitar filtro</button>}
-      </div>
     </header>
     <section className="xa-metrics" aria-label="Indicadores principales">{cards.map((card, index) => {
       const value = metricValues[index];
@@ -169,7 +163,7 @@ export function DashboardPage() {
       <Panel title="Pendientes prioritarios" icon="flag" className="xa-priorities">{loading ? <p className="xa-panel-state">Consultando API…</p> : priorities.length === 0 ? <p className="xa-panel-state">No hay fuentes disponibles para tu perfil.</p> : <ul>{priorities.map(item => <li key={item.href}><Link to={item.href}><span className="xa-priority-icon"><Icon name={item.icon} size={18} /></span><span>{item.label}</span><strong>{item.count === null ? '—' : item.count.toLocaleString('es-CO')}</strong><Icon name="arrow" size={16} /></Link></li>)}</ul>}</Panel>
     </div>
     <div className="xa-bottom-grid">
-      <Panel title="Actividad reciente" icon="chart" className="xa-activity">{loading ? <p className="xa-panel-state">Consultando actividad real…</p> : activity.length ? <div className="xa-activity-table"><div className="xa-activity-table-head"><span>Fecha y hora</span><span>Actividad</span><span>Usuario</span><span>Detalle</span></div><ul>{activity.slice(0, 4).map(item => <li key={item.id}><Link to={item.href}><time dateTime={item.date}>{formatActivityDate(item.date)}</time><span className="xa-activity-title"><Icon name={item.icon} size={16} />{item.title}</span><span className="xa-activity-user">{item.user}</span><span className="xa-activity-detail">{item.context}</span></Link></li>)}</ul>{can(admin, 'content:moderate') && <Link className="xa-activity-more" to="/reviews">Ver actividad disponible <Icon name="arrow" size={14} /></Link>}</div> : <p className="xa-panel-state">{hasError ? 'No se pudo cargar la actividad disponible.' : `Sin actividad disponible${month ? ' en el periodo seleccionado' : ''}.`}</p>}</Panel>
+      <Panel title="Actividad reciente" icon="chart" className="xa-activity">{loading ? <p className="xa-panel-state">Consultando actividad real…</p> : activity.length ? <div className="xa-activity-table"><div className="xa-activity-table-head"><span>Fecha y hora</span><span>Actividad</span><span>Usuario</span><span>Detalle</span></div><ul>{activity.slice(0, 4).map(item => <li key={item.id}><Link to={item.href}><time dateTime={item.date}>{formatActivityDate(item.date)}</time><span className="xa-activity-title"><Icon name={item.icon} size={16} />{item.title}</span><span className="xa-activity-user">{item.user}</span><span className="xa-activity-detail">{item.context}</span></Link></li>)}</ul>{can(admin, 'content:moderate') && <Link className="xa-activity-more" to="/reviews">Ver actividad disponible <Icon name="arrow" size={14} /></Link>}</div> : <p className="xa-panel-state">{hasError ? 'No se pudo cargar la actividad disponible.' : 'Sin actividad disponible.'}</p>}</Panel>
       <Panel title="Acciones rápidas" icon="up" className="xa-actions"><div className="xa-action-list">{can(admin, 'verification:write') && <Link to="/verifications"><Icon name="shield" />Revisar verificaciones <Icon name="arrow" size={16} /></Link>}{can(admin, 'content:moderate') && <Link to="/reviews"><Icon name="star" />Consultar opiniones <Icon name="arrow" size={16} /></Link>}{can(admin, 'content:moderate') && <Link to="/reports"><Icon name="flag" />Revisar reportes <Icon name="arrow" size={16} /></Link>}{!can(admin, 'verification:write') && !can(admin, 'content:moderate') && <p className="xa-panel-state">No hay acciones disponibles para tu perfil.</p>}</div></Panel>
       <Panel title="Roles y accesos" icon="users" className="xa-roles"><p>Perfiles previstos para una etapa futura. Los permisos actuales se conservan.</p><ul>{['Superadministrador', 'Soporte', 'Abogado', 'Contador', 'Marketing'].map(role => <li key={role}><span>{role}</span><small>Planeado</small></li>)}</ul></Panel>
     </div>

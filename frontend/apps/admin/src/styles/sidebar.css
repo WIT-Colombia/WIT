@@ -273,3 +273,67 @@
 .admin-refresh .xa-navigation .nav-item.active .nav-attention{
   border-color:#ffffff55;background:#ffffff24;color:#fff;
 }
+
+
+/* iPad: make the logout glyph a consistently visible, non-shrinking action.
+   The existing confirmation and authenticated sign-out behavior are unchanged. */
+.admin-refresh .sidebar-footer .sidebar-profile-copy {
+  flex:1 1 0%;
+  min-width:0;
+  overflow:hidden;
+}
+.admin-refresh .sidebar-footer .sidebar-logout-button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 40px;
+  width:40px;
+  min-width:40px;
+  height:40px;
+  min-height:40px;
+  margin-left:auto;
+  padding:0;
+  border:1px solid #52627C;
+  border-radius:10px;
+  background:#243249;
+  color:#FFFFFF;
+  opacity:1;
+}
+.admin-refresh .sidebar-footer .sidebar-logout-button svg {
+  display:block;
+  flex:none;
+  width:22px;
+  height:22px;
+  stroke:currentColor;
+  stroke-width:2;
+  opacity:1;
+}
+.admin-refresh .sidebar-footer .sidebar-logout-button:hover {
+  background:#344561;
+  border-color:#A8B8D0;
+}
+.admin-refresh .sidebar-footer .sidebar-logout-button:focus-visible {
+  outline:2px solid #C4B5FD;
+  outline-offset:2px;
+}
+@media(min-width:701px) and (max-width:1199px) {
+  .admin-refresh .sidebar-footer {
+    gap:9px;
+  }
+  .admin-refresh .sidebar-footer .sidebar-logout-button {
+    flex-basis:44px;
+    width:44px;
+    min-width:44px;
+    height:44px;
+    min-height:44px;
+  }
+}
+@media(max-width:700px) {
+  .admin-refresh .sidebar-footer .sidebar-logout-button {
+    flex-basis:44px;
+    width:44px;
+    min-width:44px;
+    height:44px;
+    min-height:44px;
+  }
+}

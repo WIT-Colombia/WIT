@@ -255,7 +255,7 @@ export function AdminBusinessesPage() {
                 <AdminBusinessCoverPhoto photoId={item.coverPhotoId} name={item.name}/>
                 <AdminBusinessCoverPhoto photoId={item.profilePhotoId} name={item.name} variant="profile"/>
               </span>
-              <span><strong>{item.name}</strong><small>ID: {item.publicId}</small></span>
+              <span><strong>{item.name}</strong></span>
             </Link></td>
             <td><span className="abv1-city"><Icon name="pin" size={16}/>{item.location?.cityName ?? 'Sin ciudad'}</span></td>
             <td><span className="abv1-category">{categoryName(item.category)}</span></td>
@@ -273,7 +273,7 @@ export function AdminBusinessesPage() {
                 <AdminBusinessCoverPhoto photoId={item.coverPhotoId} name={item.name}/>
                 <AdminBusinessCoverPhoto photoId={item.profilePhotoId} name={item.name} variant="profile"/>
               </span>
-            <span><strong>{item.name}</strong><small>ID: {item.publicId}</small></span>
+            <span><strong>{item.name}</strong></span>
           </Link><Link className="abv1-view" to={'/businesses/' + encodeURIComponent(item.id)}
             aria-label={'Ver detalles de ' + item.name} title="Ver detalles"><Icon name="eye" size={20}/></Link></div>
           <div className="abv1-mobile-card-info"><span className="abv1-city"><Icon name="pin" size={16}/>{item.location?.cityName ?? 'Sin ciudad'}</span>

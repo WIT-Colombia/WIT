@@ -101,6 +101,20 @@ describe('Sidebar aprobado de Admin', () => {
     expect(sidebar()).toHaveClass('is-open');
   });
 
+  it('mantiene el icono de salir visible y la confirmación de cierre en iPad', () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+    show('/dashboard');
+    const trigger = within(sidebar()).getByRole('button', { name: 'Cerrar sesión' });
+    expect(trigger).toHaveClass('sidebar-logout-button');
+    expect(trigger).toHaveAttribute('title', 'Salir de Xamuko Admin');
+    const icon = trigger.querySelector('svg path');
+    expect(icon).toHaveAttribute('d', 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4 M16 17l5-5-5-5 M21 12H9');
+    fireEvent.click(trigger);
+    expect(screen.getByRole('dialog', { name: 'Confirmar cierre de sesión' })).toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancelar' }));
+    expect(getSession()).not.toBeNull();
+  });
+
   it('expande un solo grupo y permite contraerlo', () => {
     show();
     expect(group('plataforma')).toHaveAttribute('open');
