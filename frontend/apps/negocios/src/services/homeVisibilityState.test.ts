@@ -3,7 +3,8 @@ import { homeVisibilityState } from './homeVisibilityState';
 import type { BusinessVisibility } from './businessApiClient';
 
 const fixture: BusinessVisibility = {
-  businessId: 'business-real', visibilityStatus: 'VISIBLE', administrativeRestriction: null,
+  businessId: 'business-real', publicId: 'B-REAL-1', createdAt: '2026-11-01T00:00:00Z',
+  visibilityStatus: 'VISIBLE', administrativeRestriction: null,
   publicationStatus: 'PUBLISHED', isWithinPeriod: true,
   period: { id: 'period-1', kind: 'INITIAL', startsAt: '2026-11-01T00:00:00Z',
     expiresAt: '2026-12-11T00:00:00Z', requestedAt: '2026-11-01T00:00:00Z' },
