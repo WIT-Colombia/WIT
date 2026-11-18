@@ -2517,3 +2517,21 @@
   .bd-record .bd-report-entry-title h3{font-size:12px}
   .bd-record .bd-report-case-info{grid-template-columns:minmax(0,1fr)}
 }
+
+
+/* Business-report statuses use the same semantic colors as moderation.
+   The legacy styles targeted .bd-business-reports only. */
+.bd-record .bd-report-entry .bd-report-state {
+  display:inline-flex;align-items:center;justify-content:center;flex:none;
+  max-width:100%;min-height:25px;padding:5px 9px;border-radius:99px;
+  background:#f0e9ff;color:#6233b7;font-size:10px;font-weight:750;
+  line-height:1.3;text-align:center;white-space:normal;
+}
+.bd-record .bd-report-entry .bd-report-state--pending{background:#fff0ca;color:#916111}
+.bd-record .bd-report-entry .bd-report-state--under_review{background:#e5edff;color:#3356b3}
+.bd-record .bd-report-entry .bd-report-state--resolved{background:#dcf5e6;color:#197342}
+.bd-record .bd-report-entry .bd-report-state--rejected{background:#ffebed;color:#b12f45}
+@media(max-width:380px){
+  .bd-record .bd-report-entry>header{flex-wrap:wrap}
+  .bd-record .bd-report-entry .bd-report-state{margin-left:46px}
+}
