@@ -105,8 +105,8 @@ describe('Ficha administrativa del negocio', () => {
     const panel = screen.getByRole('tabpanel', { name: 'Historial administrativo' });
     expect(within(panel).getByText('Producto o servicio desactivado por Admin')).toBeInTheDocument();
     expect(within(panel).getByText('Administradora de prueba')).toBeInTheDocument();
-    expect(within(panel).getByText('Activo')).toBeInTheDocument();
-    expect(within(panel).getByText('Desactivado')).toBeInTheDocument();
+    expect(within(panel).getByText('Activo', { selector: '.bd-history-state-pill' })).toBeInTheDocument();
+    expect(within(panel).getByText('Desactivado', { selector: '.bd-history-state-pill' })).toBeInTheDocument();
     const filter = within(panel).getByRole('button', { name: 'Productos y servicios' });
     fireEvent.click(filter);
     await waitFor(() => expect(api.getRecordHistory).toHaveBeenCalledWith(business.id, 1, { kind: 'OFFER', search: '' }));
