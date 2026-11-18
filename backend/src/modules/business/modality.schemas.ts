@@ -17,9 +17,14 @@ export const modalityDayOfWeek = {
 const optionalText = (max: number) => z.string().trim().max(max).nullable().optional();
 
 export const createModalitySchema = z.object({ type: modalityTypeSchema }).strict();
+const safeWebsite = z.string().trim().url().max(2048).refine(value => {
+  try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) && !url.username && !url.password; }
+  catch { return false; }
+}, 'Utiliza una dirección web HTTP o HTTPS válida.');
+
 export const contactSchema = z.object({
   email: z.string().trim().email().max(320).nullable().optional(),
-  website: z.string().trim().url().max(2048).nullable().optional(),
+  website: safeWebsite.nullable().optional(),
   phone: optionalText(32),
   whatsapp: optionalText(32),
 }).strict();
