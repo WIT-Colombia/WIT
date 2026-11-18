@@ -146,3 +146,12 @@
   .admin-refresh .au-showcase-recent>header h2{font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){.admin-refresh .au-showcase-extra>summary svg{transition:none}}
+
+/* Real, private user portraits: never expose the storage key as an image URL. */
+.admin-refresh .au-page .au-avatar{border-radius:50%;overflow:hidden}
+.admin-refresh .au-page .au-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+/* Native details expands inside the table instead of escaping a scroll container
+   (critical for the last row and narrow iPad layouts). */
+.admin-refresh .au-showcase-table .au-control-actions{flex-wrap:wrap}
+.admin-refresh .au-showcase-more[open]{flex-basis:100%}
+.admin-refresh .au-showcase-more>div{position:static;width:min(100%,250px);margin-top:7px;box-shadow:0 5px 15px #14184016}
