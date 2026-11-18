@@ -89,10 +89,11 @@
   line-height: 1.35;
 }
 
-/* Executive-summary indicator labels, reused in every Admin KPI card. */
+/* Executive-summary indicator labels, reused in most Admin KPI cards.
+ * Business-record Summary metrics are intentionally excluded: their scoped
+ * rules in businessRecord.css must match the Business Reports tab typography. */
 .admin-refresh .admin-main .workspace :is(
   .xa-metric div > span,
-  .bd-summary-metric-name,
   .bd-indicators h3,
   .bd-activity-metrics span,
   .bd-overview-metrics small,
@@ -112,10 +113,10 @@
   line-height: 1.4;
 }
 
-/* Indicator values stay at 16px on desktop and iPad, 11–13px on mobile. */
+/* Shared indicator values stay at 16px on desktop/iPad and 11–13px on mobile.
+ * Business-record Summary values retain their own responsive scale. */
 .admin-refresh .admin-main .workspace :is(
   .xa-metric strong,
-  .bd-summary-metric strong,
   .bd-indicators article > div > strong,
   .bd-activity-metrics strong,
   .bd-overview-metrics strong,
@@ -138,7 +139,8 @@
   overflow-wrap: anywhere;
 }
 
-/* Subtitles and secondary explanations: inside the approved 8–11px range. */
+/* Subtitles and secondary explanations: inside the approved 8–11px range.
+ * Business-record Summary hints use their scoped readable sizing instead. */
 .admin-refresh .admin-main .workspace :is(
   .admin-section-heading p,
   .page-heading p:not(.eyebrow),
@@ -168,7 +170,6 @@
 }
 .admin-refresh .admin-main .workspace :is(
   .xa-metric small,
-  .bd-summary-metric small,
   .bd-activity-metrics small,
   .ad-ops-kpi > small,
   .au-kpi small,
