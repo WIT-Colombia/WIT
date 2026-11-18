@@ -194,7 +194,18 @@ export async function uploadPromotionPhoto(userId: string, identifier: string, p
   if (count >= access.maxPhotos) throw new AppError(422, 'PROMOTION_PHOTO_LIMIT_REACHED', `Tu plan permite hasta ${access.maxPhotos} fotografía${access.maxPhotos === 1 ? '' : 's'} por publicación.`);
   const stored = await savePhoto(business.id, file.buffer, file.mimetype);
   try {
-    const photo = await prisma.businessPromotionPhoto.create({ data: { businessId: business.id, promotionId, storageKey: stored.storageKey, sortOrder: count, uploadedById: userId } });
+    const photo = await prisma.$transaction(async tx => {
+      // Bloquear la promoción antes de volver a contar: dos cargas paralelas
+      // no deben consumir el mismo último cupo.
+      await tx.$queryRaw`SELECT id FROM BusinessPromotion WHERE id = ${promotionId} FOR UPDATE`;
+      const current = await tx.businessPromotion.findFirst({ where: { id: promotionId, businessId: business.id, deletedAt: null }, select: { id: true } });
+      if (!current) throw new AppError(404, 'PROMOTION_NOT_FOUND', 'No encontramos esta publicación.');
+      const currentCount = await tx.businessPromotionPhoto.count({ where: { promotionId } });
+      if (currentCount >= access.maxPhotos) throw new AppError(422, 'PROMOTION_PHOTO_LIMIT_REACHED', `Tu plan permite hasta ${access.maxPhotos} fotografía${access.maxPhotos === 1 ? '' : 's'} por publicación.`);
+      return tx.businessPromotionPhoto.create({
+        data: { businessId: business.id, promotionId, storageKey: stored.storageKey, sortOrder: currentCount, uploadedById: userId },
+      });
+    });
     return { id: photo.id, url: `/businesses/${business.id}/promotions/${promotionId}/photos/${photo.id}/content`, sortOrder: photo.sortOrder };
   } catch (error) { await removePhoto(stored.storageKey).catch(() => undefined); throw error; }
 }
