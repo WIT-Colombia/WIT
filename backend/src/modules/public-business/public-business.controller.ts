@@ -50,6 +50,8 @@ export const listPublicOffersController: RequestHandler = async (req, res, next)
 export const publicPhotoContentController: RequestHandler = async (req, res, next) => {
   try {
     const content = await getPublicPhotoContent(req.params.publicId as string, req.params.photoId as string, undefined, viewer(req));
-    res.set('Cache-Control', 'public, max-age=3600').type(content.mimeType).send(content.content);
+    // La foto puede depender de las preferencias y autorización del visitante.
+    // Nunca compartirla ni persistirla en una caché intermedia.
+    res.set('Cache-Control', 'private, no-store').type(content.mimeType).send(content.content);
   } catch (error) { next(error); }
 };
