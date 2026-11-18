@@ -5,7 +5,7 @@ import { StatePanel } from '../components/common';
 import { getSession } from '../services/adminService';
 import { getAdminUserOverview, getAdminUserCapabilities, getAdminUserAnalytics, fetchAdminUserAvatar, listAdminUsers,
   type AdminUserPage, type AdminUserOverview, type AdminUserRecord, type AdminUserAnalytics,
-  type AdminUserFilters, type AdminUserStatusAction } from '../services/adminApiClient';
+  type AdminUserFilters, type AdminUserAdministrativeAction } from '../services/adminApiClient';
 import { AdminUserStatusDialog } from '../components/users/AdminUserStatusDialog';
 import { AdminUserOperationsOverview } from './AdminUserOperationsOverview';
 import { AdminUserHistoricalAnalytics } from './AdminUserHistoricalAnalytics';
@@ -83,7 +83,7 @@ export function AdminUsersPage() {
   const [capabilityChecked, setCapabilityChecked] = useState(false);
   const [canManageStatus, setCanManageStatus] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [statusTarget, setStatusTarget] = useState<{ user: AdminUserRecord; action: AdminUserStatusAction } | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{ user: AdminUserRecord; action: AdminUserAdministrativeAction } | null>(null);
   const [notice, setNotice] = useState('');
   const advanced: AdminUserFilters = {
     provider: params.get('provider') ?? '', emailVerified: params.get('emailVerified') ?? '',
@@ -150,11 +150,17 @@ export function AdminUsersPage() {
   const successful = (message: string) => {
     setStatusTarget(null); setNotice(message); setRevision(value=>value+1);
   };
+  const canRevoke = (user: AdminUserRecord) => canManageStatus && !user.isAdmin &&
+    user.id !== currentId && user.status !== 'DELETED';
+  const revoke = (user: AdminUserRecord) => {
+    if (canRevoke(user)) setStatusTarget({user, action: 'REVOKE'});
+  };
   const setShortcut = (nextStatus: string, nextRelation: string) => {
-    const next = new URLSearchParams(params);
-    if (nextStatus) next.set('status', nextStatus); else next.delete('status');
-    if (nextRelation) next.set('relation', nextRelation); else next.delete('relation');
-    next.delete('page');
+    // Quick chips represent global totals; avoid preserving hidden filters.
+    const next = new URLSearchParams();
+    if (nextStatus) next.set('status', nextStatus);
+    if (nextRelation) next.set('relation', nextRelation);
+    setInput('');
     setParams(next, { replace: true });
   };
   // Activity here is derived exclusively from the users on this page;
@@ -184,7 +190,7 @@ export function AdminUsersPage() {
           <option value="">Todos los estados</option><option value="ACTIVE">Activos</option><option value="SUSPENDED">Suspendidos</option><option value="DELETED">Eliminados</option>
         </select></label>
         <label className="au-select-field"><span>Tipo de cuenta</span><select aria-label="Filtrar por tipo de cuenta" value={relation} onChange={e=>apply('relation',e.target.value)}>
-          <option value="">Todos</option><option value="ANY">Con negocio</option><option value="OWNER">Propietarios</option><option value="COLLABORATOR">Colaboradores</option><option value="NONE">Sin negocio vinculado</option>
+          <option value="">Todos</option><option value="ANY" disabled={overview?.withBusiness === undefined}>Con negocio</option><option value="OWNER">Propietarios</option><option value="COLLABORATOR">Colaboradores</option><option value="NONE">Sin negocio vinculado</option>
         </select></label>
         <label className="au-select-field"><span>Ciudad</span><select aria-label="Filtrar por ciudad preferida" value={city} onChange={e=>apply('city',e.target.value)}
           disabled={!overview?.cities} title={!overview?.cities ? 'Disponible cuando se actualice el backend' : 'Filtra por la ciudad preferida indicada por cada usuario'}>
@@ -230,9 +236,11 @@ export function AdminUsersPage() {
         <button type="button" className={status==='SUSPENDED' && !relation ? 'selected' : ''} aria-pressed={status==='SUSPENDED' && !relation}
           onClick={()=>setShortcut('SUSPENDED','')}><Icon name="lock" size={15}/> Suspendidos {overview ? '('+number(overview.suspended)+')' : ''}</button>
         <button type="button" className={!status && relation==='ANY' ? 'selected' : ''} aria-pressed={!status && relation==='ANY'}
+          disabled={overview?.withBusiness === undefined}
+          title={overview?.withBusiness === undefined ? 'Disponible cuando actualicemos el backend' : undefined}
           onClick={()=>setShortcut('','ANY')}><Icon name="store" size={15}/> Con negocio {overview?.withBusiness !== undefined ? '('+number(overview.withBusiness)+')' : ''}</button>
         <button type="button" className={!status && relation==='NONE' ? 'selected' : ''} aria-pressed={!status && relation==='NONE'}
-          onClick={()=>setShortcut('','NONE')}><Icon name="users" size={15}/> Sin negocio</button>
+          onClick={()=>setShortcut('','NONE')}><Icon name="users" size={15}/> Sin negocio {overview?.withBusiness !== undefined ? '('+number(Math.max(0,overview.total-overview.withBusiness))+')' : ''}</button>
       </div>
       <div className="au-showcase-directory-grid">
         <div className="au-showcase-list">
@@ -271,6 +279,9 @@ export function AdminUsersPage() {
                   <div><span><b>Registro:</b> {date(user.createdAt)}</span>
                     <span><b>Identidad:</b> {user.authProviders?.join(', ') || 'Sin información'}</span>
                     <Link to={'/users/'+encodeURIComponent(user.id)}>Ver ficha completa</Link>
+                    {canRevoke(user) && <button type="button" onClick={()=>revoke(user)}>
+                      <Icon name="shield" size={15}/> Cerrar sesiones
+                    </button>}
                   </div>
                 </details>
               </div></td>
@@ -286,13 +297,16 @@ export function AdminUsersPage() {
             <div className="au-control-mobile-actions"><Link to={'/users/'+encodeURIComponent(user.id)} className="au-detail-link">Ver ficha <Icon name="arrow" size={17}/></Link>
               {actionFor(user)&&<button type="button" className={user.status==='ACTIVE'?'au-control-suspend':'au-control-restore'}
                 onClick={()=>manage(user)}><Icon name={user.status==='ACTIVE'?'lock':'check'} size={15}/>{user.status==='ACTIVE'?'Suspender':'Reactivar'}</button>}
+              {canRevoke(user)&&<button type="button" className="au-outline-button" onClick={()=>revoke(user)}>
+                <Icon name="shield" size={15}/> Cerrar sesiones
+              </button>}
             </div>
           </article>)}</div>
         </>)}
       {data&&data.pagination.totalPages>1&&<nav className="au-pagination" aria-label="Paginación del directorio">
         <span>Página {page} de {data.pagination.totalPages}</span><div>
-          <button type="button" className="au-outline-button" disabled={page<=1} onClick={()=>changePage(page-1)}>Anterior</button>
-          <button type="button" className="au-primary-button" disabled={page>=data.pagination.totalPages} onClick={()=>changePage(page+1)}>Siguiente <Icon name="arrow" size={16}/></button>
+          <button type="button" className="au-outline-button" disabled={loading || page<=1} onClick={()=>changePage(page-1)}>Anterior</button>
+          <button type="button" className="au-primary-button" disabled={loading || page>=data.pagination.totalPages} onClick={()=>changePage(page+1)}>Siguiente <Icon name="arrow" size={16}/></button>
         </div>
       </nav>}
         </div>
@@ -300,6 +314,7 @@ export function AdminUsersPage() {
           <header><Icon name="up" size={21}/><h2 id="au-showcase-recent-title">Actividad reciente</h2></header>
           <p className="au-showcase-recent-description">Registros y accesos de los usuarios visibles en esta página.</p>
           {loading ? <p className="au-showcase-recent-empty">Consultando actividad…</p> :
+            error ? <p className="au-showcase-recent-empty">No se pudo consultar la actividad. Inténtalo nuevamente.</p> :
             recentActivity.length ? <ol>{recentActivity.map(item=><li key={item.key}>
               <span className={'au-showcase-recent-icon '+item.kind}><Icon name={item.kind==='login'?'check':'users'} size={18}/></span>
               <div><strong>{item.kind==='login'?'Último acceso registrado':'Cuenta registrada'}</strong>
