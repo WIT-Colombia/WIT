@@ -42,13 +42,14 @@ export function adminUsersWhere(filters: Filters, now = new Date()): Prisma.User
   const relationCondition: Prisma.UserWhereInput =
     relation === 'OWNER' ? { memberships: { some: { role: 'OWNER', status: 'ACTIVE', business: activeBusiness } } } :
     relation === 'COLLABORATOR' ? { memberships: { some: { role: 'COLLABORATOR', status: 'ACTIVE', business: activeBusiness } } } :
-    relation === 'ANY' ? { OR: [
-      { memberships: { some: { status: 'ACTIVE', business: activeBusiness } } },
-      { createdBusinesses: { some: activeBusiness } },
-    ] } :
     relation === 'NONE' ? { memberships: { none: { status: 'ACTIVE', business: activeBusiness } }, createdBusinesses: { none: activeBusiness } } : {};
   const provider = ['EMAIL','GOOGLE','APPLE'].includes(filters.provider ?? '') ? filters.provider as 'EMAIL' | 'GOOGLE' | 'APPLE' : undefined;
   const additional: Prisma.UserWhereInput[] = [];
+  // Compose the ANY quick filter with free-text search; do not overwrite its OR.
+  if (relation === 'ANY') additional.push({ OR: [
+    { memberships: { some: { status: 'ACTIVE', business: activeBusiness } } },
+    { createdBusinesses: { some: activeBusiness } },
+  ] });
   if (provider) additional.push({ authIdentities: { some: { provider } } });
   if (filters.emailVerified === 'yes') additional.push({ authIdentities: { some: { provider: 'EMAIL', verifiedAt: { not: null } } } });
   if (filters.emailVerified === 'no') additional.push({ authIdentities: { none: { provider: 'EMAIL', verifiedAt: { not: null } } } });
