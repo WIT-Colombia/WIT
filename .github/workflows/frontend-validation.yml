@@ -90,6 +90,9 @@ jobs:
       - name: Check Admin Contenido on mobile, iPad and desktop with older API fields
         run: node scripts/check-admin-content-mobile.mjs
 
+      - name: Check Admin Usuarios filters, permissions and operations on mobile, iPad and desktop
+        run: node scripts/check-admin-users-responsive.mjs
+
       - name: Check Admin Negocios Pioneros on mobile, iPad and desktop
         run: node scripts/check-admin-pioneers-responsive.mjs
 
@@ -126,6 +129,15 @@ jobs:
         with:
           name: xamuko-admin-sidebar-${{ github.run_id }}
           path: frontend/test-results/admin-sidebar/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save Admin Usuarios responsive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-admin-users-${{ github.run_id }}
+          path: frontend/test-results/admin-users/
           if-no-files-found: ignore
           retention-days: 7
 
