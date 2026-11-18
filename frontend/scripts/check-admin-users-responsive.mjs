@@ -116,6 +116,21 @@ try {
       await page.getByRole('heading', { name: 'Usuarios', exact: true }).waitFor({ state: 'visible', timeout: 15000 });
       await page.getByText('3 usuarios encontrados').waitFor({ state: 'visible', timeout: 15000 });
       const isMobileLayout = viewport.width <= 900;
+      const layout = await page.evaluate(() => {
+        const styles = selector => {
+          const node = document.querySelector(selector);
+          if (!node) return { found: false };
+          const css = window.getComputedStyle(node);
+          return { found: true, display: css.display, visibility: css.visibility,
+            count: node.children.length, offsetWidth: node.getBoundingClientRect().width,
+            offsetHeight: node.getBoundingClientRect().height };
+        };
+        return { viewport: window.innerWidth, shell: Boolean(document.querySelector('.admin-refresh')),
+          mobile: styles('.au-mobile-users'), table: styles('.au-table-scroll'),
+          cards: document.querySelectorAll('.au-mobile-user-card').length,
+          links: document.querySelectorAll('.au-user-cell').length };
+      });
+      console.log('Admin Usuarios layout ' + device + ': ' + JSON.stringify(layout));
       assert.equal(await page.locator('.au-mobile-users').isVisible(), isMobileLayout, device + ': tarjetas móviles');
       assert.equal(await page.locator('.au-table-scroll').isVisible(), !isMobileLayout, device + ': tabla escritorio');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
