@@ -2363,8 +2363,8 @@
 .bd-record .bd-report-stat--blue .bd-report-stat-icon{background:#e8efff;color:#3655b4}
 .bd-record .bd-report-stat--green .bd-report-stat-icon{background:#e2f7e9;color:#218149}
 .bd-record .bd-report-stat-body{display:grid;gap:4px;min-width:0}
-.bd-record .bd-report-stat-body>span{font-size:9px;line-height:1.35;font-weight:700;color:#55506a}
-.bd-record .bd-report-stat-body>strong{font-size:16px;font-weight:800;line-height:1.1;color:#21183a;font-variant-numeric:tabular-nums}
+.bd-record .bd-report-stat-body>span{font-size:11px;line-height:1.35;font-weight:700;color:#55506a}
+.bd-record .bd-report-stat-body>strong{font-size:20px;font-weight:800;line-height:1.1;color:#21183a;font-variant-numeric:tabular-nums}
 .bd-record .bd-report-stat>button{
   margin-left:auto;display:grid;place-items:center;flex:none;width:28px;height:28px;
   padding:0;border:1px solid #ebe5f6;border-radius:8px;background:#faf8ff;color:#6932cb;cursor:pointer;
