@@ -45,6 +45,23 @@ test('Ficha administrativa: consultas, fotografías privadas y decisiones audita
       assert.equal(business.record.businessPhotos, 12); assert.equal(business.record.catalogPhotos, 6); assert.equal(business.isPro, true); assert.equal(business.record.effectiveVisibility, 'VISIBLE');
       assert.ok(!JSON.stringify(business).includes('passwordHash')); assert.ok(!JSON.stringify(business).includes('storageKey'));
     });
+    await t.test('historial conserva descripciones existentes sin exponer campos privados', async () => {
+      await prisma.auditLog.create({ data: {
+        actorUserId: fixture.user.id, entityType: 'BUSINESS', entityId: id,
+        action: 'BUSINESS_UPDATED',
+        previousState: { name: 'Negocio real', description: 'Texto anterior', phone: '+57-private-number' },
+        newState: { name: 'Negocio real', description: 'Texto actualizado', changedFields: 'Descripción, Teléfono', phone: '+57-private-number-2' },
+      } });
+      const response = await request('/businesses/' + id + '/history?search=BUSINESS_UPDATED');
+      assert.equal(response.status, 200);
+      const body = await response.json() as any;
+      const event = body.history.find((entry: any) => entry.newState?.description === 'Texto actualizado');
+      assert.ok(event, 'Debe conservar la descripción del cambio histórico');
+      assert.equal(event.previousState.description, 'Texto anterior');
+      assert.equal(event.newState.changedFields, 'Descripción, Teléfono');
+      assert.ok(!('phone' in event.previousState) && !('phone' in event.newState), 'No revelar el teléfono privado de la auditoría');
+    });
+
     await t.test('catálogo separado, filtros y paginación no mezclan negocios', async () => {
       const first = await (await request(`/businesses/${id}/catalog?kind=PRODUCT&page=1`)).json() as any;
       assert.equal(first.pagination.total, 13); assert.equal(first.offers.length, 6);

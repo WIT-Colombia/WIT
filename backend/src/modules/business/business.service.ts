@@ -467,11 +467,63 @@ export async function updateBusiness(userId: string, identifier: string, input: 
       await tx.businessSecondaryCategory.deleteMany({ where: { businessId: business.id } });
       if (secondaryCategories.length) await tx.businessSecondaryCategory.createMany({ data: secondaryCategories.map(item => ({ businessId: business.id, categoryId: item.id })) });
     }
+    let updatedLocation = business.location;
     if (input.cityName !== undefined || input.address !== undefined || input.latitude !== undefined || input.longitude !== undefined || input.additionalAddressInfo !== undefined || input.countryCode !== undefined || input.regionCode !== undefined || input.regionName !== undefined || input.zoneName !== undefined || input.postalCode !== undefined || input.timezone !== undefined) {
       if (!business.location) throw new AppError(409, 'BUSINESS_LOCATION_MISSING', 'El negocio no tiene una ubicación configurada.');
-      await tx.businessLocation.update({ where: { businessId: business.id }, data: { ...(input.countryCode !== undefined ? { countryCode: input.countryCode } : {}), ...(input.regionCode !== undefined ? { regionCode: input.regionCode ?? null } : {}), ...(input.regionName !== undefined ? { regionName: input.regionName ?? null } : {}), ...(input.cityName !== undefined && input.cityName !== null ? { cityName: input.cityName } : {}), ...(input.zoneName !== undefined ? { zoneName: input.zoneName ?? null } : {}), ...(input.address !== undefined && input.address !== null ? { address: input.address } : {}), ...(input.latitude !== undefined ? { latitude: input.latitude } : {}), ...(input.longitude !== undefined ? { longitude: input.longitude } : {}), ...(input.additionalAddressInfo !== undefined ? { additionalAddressInfo: input.additionalAddressInfo?.trim() || null } : {}), ...(input.postalCode !== undefined ? { postalCode: input.postalCode ?? null } : {}), ...(input.timezone !== undefined ? { timezone: input.timezone } : {}), visibility: visibilityForModalities(current.modalities.map((modality: any) => modality.type)) } });
+      updatedLocation = await tx.businessLocation.update({ where: { businessId: business.id }, data: { ...(input.countryCode !== undefined ? { countryCode: input.countryCode } : {}), ...(input.regionCode !== undefined ? { regionCode: input.regionCode ?? null } : {}), ...(input.regionName !== undefined ? { regionName: input.regionName ?? null } : {}), ...(input.cityName !== undefined && input.cityName !== null ? { cityName: input.cityName } : {}), ...(input.zoneName !== undefined ? { zoneName: input.zoneName ?? null } : {}), ...(input.address !== undefined && input.address !== null ? { address: input.address } : {}), ...(input.latitude !== undefined ? { latitude: input.latitude } : {}), ...(input.longitude !== undefined ? { longitude: input.longitude } : {}), ...(input.additionalAddressInfo !== undefined ? { additionalAddressInfo: input.additionalAddressInfo?.trim() || null } : {}), ...(input.postalCode !== undefined ? { postalCode: input.postalCode ?? null } : {}), ...(input.timezone !== undefined ? { timezone: input.timezone } : {}), visibility: visibilityForModalities(current.modalities.map((modality: any) => modality.type)) } });
     }
-    await audit(tx, userId, business.id, 'BUSINESS_UPDATED', { name: current.name, description: current.description }, { name: business.name, description: business.description }, meta);
+    // Record the actual change, not identical snapshots from autosave. Private
+    // contact values are never included in the audit; only their field names.
+    const beforeAudit: Record<string, string | number | boolean | null> = {};
+    const afterAudit: Record<string, string | number | boolean | null> = {};
+    const changedFields: string[] = [];
+    const safe = (key: string, title: string, before: string | number | boolean | null, after: string | number | boolean | null) => {
+      if (before === after) return;
+      changedFields.push(title);
+      beforeAudit[key] = before;
+      afterAudit[key] = after;
+    };
+    const privateField = (title: string, before: unknown, after: unknown) => {
+      if (before !== after) changedFields.push(title);
+    };
+    safe('name', 'Nombre', current.name, business.name);
+    safe('description', 'Descripción', current.description, business.description);
+    safe('sede', 'Sede', current.sede, business.sede);
+    if (current.location && updatedLocation) {
+      safe('cityName', 'Ciudad', current.location.cityName, updatedLocation.cityName);
+      safe('regionName', 'Región', current.location.regionName, updatedLocation.regionName);
+      privateField('Dirección', current.location.address, updatedLocation.address);
+      privateField('Información adicional de dirección', current.location.additionalAddressInfo, updatedLocation.additionalAddressInfo);
+      privateField('Latitud', String(current.location.latitude), String(updatedLocation.latitude));
+      privateField('Longitud', String(current.location.longitude), String(updatedLocation.longitude));
+      privateField('Código postal', current.location.postalCode, updatedLocation.postalCode);
+      privateField('Zona', current.location.zoneName, updatedLocation.zoneName);
+      privateField('País', current.location.countryCode, updatedLocation.countryCode);
+      privateField('Código de región', current.location.regionCode, updatedLocation.regionCode);
+      privateField('Zona horaria', current.location.timezone, updatedLocation.timezone);
+    }
+    privateField('Categoría', current.categoryId, business.categoryId);
+    privateField('Correo de contacto', current.email, business.email);
+    privateField('Sitio web', current.website, business.website);
+    privateField('Instagram', current.instagram, business.instagram);
+    privateField('Facebook', current.facebookUrl, business.facebookUrl);
+    privateField('X', current.xUrl, business.xUrl);
+    privateField('TikTok', current.tiktokUrl, business.tiktokUrl);
+    privateField('Teléfono', current.phone, business.phone);
+    privateField('WhatsApp', current.whatsapp, business.whatsapp);
+    safe('phonePublic', 'Visibilidad del teléfono', current.phonePublic, business.phonePublic);
+    safe('whatsappPublic', 'Visibilidad de WhatsApp', current.whatsappPublic, business.whatsappPublic);
+    safe('emailPublic', 'Visibilidad del correo', current.emailPublic, business.emailPublic);
+    if (secondaryCategories) {
+      const original = current.secondaryCategories.map(item => item.categoryId).sort().join(',');
+      const next = secondaryCategories.map(item => item.id).sort().join(',');
+      privateField('Categorías secundarias', original, next);
+    }
+    // Age classification has its own dedicated event immediately below.
+    if (changedFields.length) {
+      afterAudit.changedFields = changedFields.join(', ').slice(0, 600);
+      await audit(tx, userId, business.id, 'BUSINESS_UPDATED', beforeAudit, afterAudit, meta);
+    }
     // Meaningful edits by collaborators are attributable, but ordinary owner edits
     // and unchanged autosaves do not generate self-notifications.
     if (membership.role !== 'OWNER' && (

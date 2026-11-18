@@ -274,8 +274,12 @@ export async function getAdminBusinessHistory(
   const state = (input: Prisma.JsonValue) => input && typeof input === 'object' && !Array.isArray(input)
     ? Object.fromEntries(Object.entries(input).filter(([key, value]) =>
       ['name', 'visibilityStatus', 'publicationStatus', 'lifecycleStatus', 'deletionStatus', 'verificationStatus',
-        'administrativeRestriction', 'completeness', 'plan', 'offerName', 'offerCode', 'offerState'].includes(key)
-      && (value === null || ['string', 'number', 'boolean'].includes(typeof value)))) : null;
+        'administrativeRestriction', 'completeness', 'plan', 'offerName', 'offerCode', 'offerState',
+        'description', 'sede', 'cityName', 'regionName', 'adultOnly', 'changedFields',
+        'status', 'type', 'phonePublic', 'whatsappPublic', 'emailPublic'].includes(key)
+      && (value === null || ['string', 'number', 'boolean'].includes(typeof value))))
+        .map(([key, value]) => [key, typeof value === 'string' && value.length > 600
+          ? value.slice(0, 600) + '…' : value])) : null;
   return {
     history: history.map(row => ({ ...row, previousState: state(row.previousState), newState: state(row.newState) })),
     pagination: { page: currentPage, pageSize: size, total, totalPages: Math.ceil(total / size) },
