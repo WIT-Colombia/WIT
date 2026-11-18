@@ -29,7 +29,7 @@ function validDate(value: string | undefined, endOfDay = false): Date | undefine
 export function adminUsersWhere(filters: Filters, now = new Date()): Prisma.UserWhereInput {
   const q = compact(filters.q);
   const status = allowedStatuses.includes(filters.status ?? '') ? filters.status as UserStatus : undefined;
-  const relation = filters.relation === 'OWNER' || filters.relation === 'COLLABORATOR' || filters.relation === 'NONE' ? filters.relation : undefined;
+  const relation = filters.relation === 'OWNER' || filters.relation === 'COLLABORATOR' || filters.relation === 'ANY' || filters.relation === 'NONE' ? filters.relation : undefined;
   const city = filters.city?.trim();
   if (city && (city.length > 160 || /[\\u0000-\\u001f]/.test(city)))
     throw new AppError(400, 'ADMIN_USER_CITY_INVALID', 'Selecciona una ciudad válida.');
@@ -42,6 +42,10 @@ export function adminUsersWhere(filters: Filters, now = new Date()): Prisma.User
   const relationCondition: Prisma.UserWhereInput =
     relation === 'OWNER' ? { memberships: { some: { role: 'OWNER', status: 'ACTIVE', business: activeBusiness } } } :
     relation === 'COLLABORATOR' ? { memberships: { some: { role: 'COLLABORATOR', status: 'ACTIVE', business: activeBusiness } } } :
+    relation === 'ANY' ? { OR: [
+      { memberships: { some: { status: 'ACTIVE', business: activeBusiness } } },
+      { createdBusinesses: { some: activeBusiness } },
+    ] } :
     relation === 'NONE' ? { memberships: { none: { status: 'ACTIVE', business: activeBusiness } }, createdBusinesses: { none: activeBusiness } } : {};
   const provider = ['EMAIL','GOOGLE','APPLE'].includes(filters.provider ?? '') ? filters.provider as 'EMAIL' | 'GOOGLE' | 'APPLE' : undefined;
   const additional: Prisma.UserWhereInput[] = [];
@@ -154,7 +158,7 @@ export async function listAdminUsersExtended(filters: Filters) {
 
 export async function getAdminUserOverview(now = new Date()) {
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
-  const [total, active, suspended, deleted, owners, collaborators, adminCount, active30, dormant90, neverLoggedIn, emailVerified, googleUsers, linkedBusinesses, locations, monthly] = await Promise.all([
+  const [total, active, suspended, deleted, owners, collaborators, adminCount, active30, dormant90, neverLoggedIn, emailVerified, googleUsers, linkedBusinesses, withBusiness, locations, monthly] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { status: 'ACTIVE' } }),
     prisma.user.count({ where: { status: 'SUSPENDED' } }),
@@ -169,6 +173,10 @@ export async function getAdminUserOverview(now = new Date()) {
     prisma.user.count({ where: { authIdentities: { some: { provider: 'GOOGLE' } } } }),
     // Count distinct businesses, not memberships: a business can have several owners.
     prisma.business.count({ where: { ...activeBusiness, memberships: { some: { status: 'ACTIVE', user: { status: 'ACTIVE' } } } } }),
+    prisma.user.count({ where: { OR: [
+      { memberships: { some: { status: 'ACTIVE', business: activeBusiness } } },
+      { createdBusinesses: { some: activeBusiness } },
+    ] } }),
     prisma.user.findMany({
       where: { preferredLocationCity: { not: null }, status: { not: 'DELETED' } },
       select: { preferredLocationCity: true },
@@ -189,7 +197,7 @@ export async function getAdminUserOverview(now = new Date()) {
   });
   return {
     generatedAt: now.toISOString(), total, active, suspended, deleted, owners, collaborators, adminCount, active30, dormant90, neverLoggedIn, emailVerified, googleUsers,
-    linkedBusinesses, cities: locations.map(row => row.preferredLocationCity).filter((value): value is string => Boolean(value?.trim())), series,
+    linkedBusinesses, withBusiness, cities: locations.map(row => row.preferredLocationCity).filter((value): value is string => Boolean(value?.trim())), series,
     definition: 'Altas agrupadas por fecha de creación en UTC, incluyendo meses con valor cero. Estados, verificación y relaciones representan la situación actual, no su historia. Propietarios y colaboradores pueden coincidir. Negocios vinculados cuenta negocios únicos con al menos un vínculo activo a un usuario activo. Ciudades se basan en ubicación preferida declarada por los usuarios.',
   };
 }
