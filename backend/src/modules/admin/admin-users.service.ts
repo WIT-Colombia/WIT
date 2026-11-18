@@ -3,7 +3,7 @@ import { Prisma } from '../../generated/prisma/client.js';
 import { AppError } from '../../shared/errors/app-error.js';
 
 export type AdminUserFilters = {
-  q?: string; page?: number; status?: string; relation?: string;
+  q?: string; page?: number; status?: string; relation?: string; city?: string;
   provider?: string; emailVerified?: string; admin?: string; activity?: string;
   registeredFrom?: string; registeredTo?: string; lastLoginFrom?: string; lastLoginTo?: string;
   order?: string;
@@ -30,6 +30,9 @@ export function adminUsersWhere(filters: Filters, now = new Date()): Prisma.User
   const q = compact(filters.q);
   const status = allowedStatuses.includes(filters.status ?? '') ? filters.status as UserStatus : undefined;
   const relation = filters.relation === 'OWNER' || filters.relation === 'COLLABORATOR' || filters.relation === 'NONE' ? filters.relation : undefined;
+  const city = filters.city?.trim();
+  if (city && (city.length > 160 || /[\\u0000-\\u001f]/.test(city)))
+    throw new AppError(400, 'ADMIN_USER_CITY_INVALID', 'Selecciona una ciudad válida.');
   const registeredFrom = validDate(filters.registeredFrom), registeredTo = validDate(filters.registeredTo, true);
   const lastLoginFrom = validDate(filters.lastLoginFrom), lastLoginTo = validDate(filters.lastLoginTo, true);
   if ((registeredFrom && registeredTo && registeredFrom > registeredTo) || (lastLoginFrom && lastLoginTo && lastLoginFrom > lastLoginTo))
@@ -51,6 +54,7 @@ export function adminUsersWhere(filters: Filters, now = new Date()): Prisma.User
   if (lastLoginFrom || lastLoginTo) additional.push({ lastLoginAt: { ...(lastLoginFrom ? { gte: lastLoginFrom } : {}), ...(lastLoginTo ? { lte: lastLoginTo } : {}) } });
   return {
     ...(status ? { status } : {}),
+    ...(city ? { preferredLocationCity: city } : {}),
     ...(q ? { OR: [
       { displayName: { contains: q } }, { emailNormalized: { contains: q } }, { nickname: { contains: q } },
       { publicId: { contains: q } },
@@ -150,7 +154,7 @@ export async function listAdminUsersExtended(filters: Filters) {
 
 export async function getAdminUserOverview(now = new Date()) {
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
-  const [total, active, suspended, deleted, owners, collaborators, adminCount, active30, dormant90, neverLoggedIn, emailVerified, googleUsers, monthly] = await Promise.all([
+  const [total, active, suspended, deleted, owners, collaborators, adminCount, active30, dormant90, neverLoggedIn, emailVerified, googleUsers, linkedBusinesses, locations, monthly] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { status: 'ACTIVE' } }),
     prisma.user.count({ where: { status: 'SUSPENDED' } }),
@@ -163,6 +167,15 @@ export async function getAdminUserOverview(now = new Date()) {
     prisma.user.count({ where: { status: 'ACTIVE', lastLoginAt: null } }),
     prisma.user.count({ where: { authIdentities: { some: { provider: 'EMAIL', verifiedAt: { not: null } } } } }),
     prisma.user.count({ where: { authIdentities: { some: { provider: 'GOOGLE' } } } }),
+    // Count distinct businesses, not memberships: a business can have several owners.
+    prisma.business.count({ where: { ...activeBusiness, memberships: { some: { status: 'ACTIVE', user: { status: 'ACTIVE' } } } } }),
+    prisma.user.findMany({
+      where: { preferredLocationCity: { not: null }, status: { not: 'DELETED' } },
+      select: { preferredLocationCity: true },
+      distinct: ['preferredLocationCity'],
+      orderBy: { preferredLocationCity: 'asc' },
+      take: 200,
+    }),
     prisma.$queryRaw<Array<{ month: string; quantity: bigint }>>(Prisma.sql`
       SELECT DATE_FORMAT(u.createdAt, '%Y-%m') AS month, COUNT(*) AS quantity
       FROM \`User\` u WHERE u.createdAt >= ${start} AND u.createdAt < ${new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))}
@@ -175,8 +188,9 @@ export async function getAdminUserOverview(now = new Date()) {
     return { month: d.toISOString().slice(0, 7), registrations: grouped.get(d.toISOString().slice(0, 7)) ?? 0 };
   });
   return {
-    generatedAt: now.toISOString(), total, active, suspended, deleted, owners, collaborators, adminCount, active30, dormant90, neverLoggedIn, emailVerified, googleUsers, series,
-    definition: 'Altas agrupadas por fecha de creación en UTC, incluyendo meses con valor cero. Estados, verificación y relaciones representan la situación actual, no su historia. Propietarios y colaboradores pueden coincidir.',
+    generatedAt: now.toISOString(), total, active, suspended, deleted, owners, collaborators, adminCount, active30, dormant90, neverLoggedIn, emailVerified, googleUsers,
+    linkedBusinesses, cities: locations.map(row => row.preferredLocationCity).filter((value): value is string => Boolean(value?.trim())), series,
+    definition: 'Altas agrupadas por fecha de creación en UTC, incluyendo meses con valor cero. Estados, verificación y relaciones representan la situación actual, no su historia. Propietarios y colaboradores pueden coincidir. Negocios vinculados cuenta negocios únicos con al menos un vínculo activo a un usuario activo. Ciudades se basan en ubicación preferida declarada por los usuarios.',
   };
 }
 
