@@ -15,6 +15,7 @@ import { AdminUserAnalyticsPanel } from './AdminUserAnalyticsPanel';
 import './AdminUsersRefresh.css';
 import './AdminUsersControl.css';
 import './AdminUsersShowcase.css';
+import './AdminUsersPolish.css';
 import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
 
 const date = (value: string | null) => value
@@ -172,7 +173,7 @@ export function AdminUsersPage() {
     ...(user.lastLoginAt ? [{ key: 'login-' + user.id, kind: 'login' as const, at: user.lastLoginAt, user }] : []),
   ]).sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 4);
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permisos de gestión administrativa para consultar usuarios."/>;
-  return <div className="admin-users-page au-page">
+  return <div className="admin-users-page au-page au-polished">
     <AdminPageHeading icon="users" id="au-title" title="Usuarios" description="Esta sección centraliza la gestión de usuarios, la seguridad, la actividad y los estados de las cuentas." />
     {notice && <div className="au-success-notice" role="status"><Icon name="check" size={18}/>{notice}</div>}
     <AdminUserOperationsOverview data={overview} loading={overviewLoading} error={overviewError} retry={()=>setRevision(value=>value+1)}/>
@@ -193,8 +194,10 @@ export function AdminUsersPage() {
           disabled={!overview?.cities} title={!overview?.cities ? 'Disponible cuando se actualice el backend' : 'Filtra por la ciudad preferida indicada por cada usuario'}>
           <option value="">Todas</option>{overview?.cities?.map(cityName=><option value={cityName} key={cityName}>{cityName}</option>)}
         </select></label>
-        <button className="au-outline-button au-showcase-clear" type="button" onClick={clear}><Icon name="refresh" size={16}/> Limpiar filtros</button>
-        <button className="au-primary-button au-showcase-search" type="submit"><Icon name="search" size={17}/> Buscar</button>
+        <div className="au-showcase-filter-actions">
+          <button className="au-outline-button au-showcase-clear" type="button" onClick={clear}><Icon name="refresh" size={16}/> Limpiar filtros</button>
+          <button className="au-primary-button au-showcase-search" type="submit"><Icon name="search" size={17}/> Buscar</button>
+        </div>
       </form>
       <div className="au-control-filter-bar">
         <span><Icon name="search" size={16}/>{activeFilters ? activeFilters + ' filtro(s) activo(s)' : 'Todos los usuarios de la plataforma'}</span>
