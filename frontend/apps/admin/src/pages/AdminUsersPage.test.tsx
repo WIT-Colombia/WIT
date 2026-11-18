@@ -77,6 +77,7 @@ describe('Admin → Usuarios: controles reales', () => {
     fireEvent.change(screen.getByLabelText('Buscar usuarios'), { target: { value: 'Ana' } });
     fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
     await waitFor(() => expect(mocks.listAdminUsers).toHaveBeenCalledWith(expect.objectContaining({ q: 'Ana', relation: 'ANY' })));
+    expect(screen.getByRole('button', { name: /Todos \(/ })).toHaveAttribute('aria-pressed', 'false');
 
     fireEvent.click(screen.getByRole('button', { name: /Todos \(/ }));
     await waitFor(() => expect(mocks.listAdminUsers).toHaveBeenCalledWith(expect.objectContaining({ q: '', relation: '', status: '' })));
@@ -105,6 +106,7 @@ describe('Admin → Usuarios: controles reales', () => {
     show();
     await screen.findAllByText('Ana Torres');
     expect(screen.getByRole('button', { name: /Con negocio/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Sin negocio/ })).toBeDisabled();
     expect(screen.getByRole('combobox', { name: 'Filtrar por ciudad preferida' })).toBeDisabled();
     await waitFor(() => expect(screen.getByRole('button', { name: /Filtros avanzados/ })).toBeDisabled());
     expect(mocks.listAdminUsers).toHaveBeenCalled();
