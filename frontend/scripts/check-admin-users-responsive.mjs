@@ -46,6 +46,7 @@ try {
   for (const [device, viewport] of [
     ['mobile', { width: 390, height: 844 }],
     ['ipad', { width: 768, height: 1024 }],
+    ['ipad-landscape', { width: 1024, height: 768 }],
     ['desktop', { width: 1440, height: 900 }],
   ]) {
     const users = structuredClone(originalUsers);
@@ -76,6 +77,29 @@ try {
         period: '12m', timezone: 'UTC', definition: 'Prueba local sin datos de usuarios reales.',
         series: [{ month: '2026-11', registrations: 3, cumulative: 3 }],
       });
+      if (url.pathname.endsWith('/admin/users/fixture-ana') && request.method() === 'GET') {
+        return reply(200, { user: {
+          ...users[0], updatedAt: at, preferredLocationCity: 'Cali',
+          preferredLocationRegion: 'Valle del Cauca', preferredLocationCountry: 'Colombia',
+          nickname: 'ana-torres', authProviders: [{ provider: 'EMAIL', verifiedAt: at, createdAt: at }],
+          businesses: [{
+            id: 'fixture-business', publicId: 'NEG-0001', name: 'Negocio Sol de prueba',
+            category: 'Comercio local', city: 'Cali', publicationStatus: 'PUBLISHED',
+            visibilityStatus: 'VISIBLE', role: 'OWNER', membershipStatus: 'ACTIVE',
+            acceptedAt: at, createdAt: at,
+          }],
+          businessAccounts: [{ id: 'fixture-account', name: 'Cuenta Sol', status: 'ACTIVE' }],
+          administrativeRoles: [],
+          activity: { reviews: 5, favorites: 3, offerLikes: 4, sessions: 1,
+            reports: 2, pendingTransfers: 0 },
+          deletion: { allowed: false, blockers: ['Un negocio activo requiere resolver la propiedad.'] },
+        } });
+      }
+      if (url.pathname.endsWith('/admin/users/fixture-ana/history')) {
+        return reply(200, { history: [{ id: 'fixture-action', action: 'ADMIN_USER_RESTORED',
+          reason: 'Motivo registrado exclusivamente para la prueba.', comment: null,
+          createdAt: at, actor: { displayName: 'Admin de pruebas' } }] });
+      }
       if (url.pathname.endsWith('/admin/users/fixture-ana/status') && request.method() === 'POST') {
         const input = JSON.parse(request.postData() || '{}');
         calls.push({ action: input.action, reason: input.reason });
@@ -122,7 +146,7 @@ try {
       assert.ok(userHeading.iconRight < userHeading.titleLeft,
         device + ': Usuarios title must sit immediately to the right of the icon');
       await page.getByText('3 usuarios encontrados').waitFor({ state: 'visible', timeout: 15000 });
-      const isMobileLayout = viewport.width <= 900;
+      const isMobileLayout = viewport.width <= 1100;
       const layout = await page.evaluate(() => {
         const styles = selector => {
           const node = document.querySelector(selector);
@@ -145,6 +169,42 @@ try {
       assert.equal(await page.locator('.au-table-scroll').isVisible(), !isMobileLayout, device + ': tabla escritorio');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
         true, device + ': sin desbordamiento horizontal de la página');
+      const formFields = await page.evaluate(() => {
+        const form = document.querySelector('.au-showcase-filters .au-search-form');
+        const bounds = form.getBoundingClientRect();
+        const children = Array.from(form.children).map(el => {
+          const rect = el.getBoundingClientRect();
+          return { left: rect.left, top: rect.top, right: rect.right,
+            bottom: rect.bottom, width: rect.width, height: rect.height };
+        });
+        const inputs = Array.from(form.querySelectorAll('input,select')).map(el => {
+          const bounds = el.getBoundingClientRect();
+          return { height: bounds.height, fontSize: parseFloat(getComputedStyle(el).fontSize) };
+        });
+        return { form: { left: bounds.left, right: bounds.right }, children, inputs };
+      });
+      assert.equal(formFields.children.length, 5, device + ': búsqueda, 3 filtros y grupo de acciones');
+      assert.ok(formFields.children.every(rect => rect.width >= 100 &&
+        rect.left >= formFields.form.left - 2 && rect.right <= formFields.form.right + 2),
+      device + ': controles bien alineados en el formulario');
+      assert.ok(formFields.inputs.every(input => input.height >= 46 && input.fontSize >= 14),
+        device + ': campos de búsqueda y selectores legibles');
+      for (let i = 0; i < formFields.children.length; i++) {
+        for (let j = i+1; j < formFields.children.length; j++) {
+          const a = formFields.children[i], b = formFields.children[j];
+          const overlap = Math.min(a.right,b.right)-Math.max(a.left,b.left) > 2 &&
+            Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top) > 2;
+          assert.equal(overlap, false, device + ': sin solapamiento entre filtros ' + i + '/' + j);
+        }
+      }
+      await page.getByRole('button', { name: 'Filtros avanzados' }).click();
+      const advancedReadable = await page.locator('.au-control-filters input, .au-control-filters select')
+        .evaluateAll(elements => elements.every(el => {
+          const style = getComputedStyle(el), rect = el.getBoundingClientRect();
+          return rect.height >= 46 && parseFloat(style.fontSize) >= 14;
+        }));
+      assert.equal(advancedReadable, true, device + ': filtros avanzados legibles');
+      await page.getByRole('button', { name: 'Ocultar filtros avanzados' }).click();
       await page.getByRole('button', { name: /Con negocio/ }).click();
       await page.getByText('2 usuarios encontrados').waitFor({ state: 'visible' });
       await page.getByRole('button', { name: /Sin negocio/ }).click();
@@ -183,7 +243,52 @@ try {
       assert.equal(calls.every(call => call.reason.length >= 12), true, device + ': todas las operaciones llevan motivo');
       assert.equal(errors.length, 0, device + ': sin excepciones JS: ' + errors.join(' | '));
       await page.screenshot({ path: resolve(screenshots, device + '.png'), fullPage: true });
-      console.log('Admin Usuarios: filtros, acciones y responsive OK - ' + device);
+      await page.goto(origin + '/users/fixture-ana', { waitUntil: 'domcontentloaded' });
+      await page.getByRole('heading', { name: 'Ana Torres', exact: true })
+        .waitFor({ state: 'visible', timeout: 15000 });
+      for (const section of ['Información de la cuenta','Acceso y seguridad',
+        'Negocios vinculados','Actividad registrada','Protección de la cuenta']) {
+        assert.equal(await page.getByRole('heading', { name: section }).isVisible(), true,
+          device + ': ficha presenta ' + section);
+      }
+      await page.getByText('Negocio Sol de prueba').waitFor({ state: 'visible' });
+      await page.getByRole('heading', { name: 'Historial de actuaciones' })
+        .waitFor({ state: 'visible' });
+      const profileGeometry = await page.evaluate(() => {
+        const cards = Array.from(document.querySelectorAll('.au-info-grid > div'));
+        const values = cards.map(card => {
+          const outer = card.getBoundingClientRect(), value = card.querySelector('dd');
+          const inner = value.getBoundingClientRect();
+          return { width: outer.width, valueWidth: inner.width,
+            fontSize: parseFloat(getComputedStyle(value).fontSize),
+            left: inner.left-outer.left, right: outer.right-inner.right,
+            overflow: value.scrollWidth-value.clientWidth };
+        });
+        return { values, scrollWidth: document.documentElement.scrollWidth,
+          viewport: innerWidth };
+      });
+      assert.ok(profileGeometry.values.length >= 8, device + ': campos reales en ficha');
+      assert.ok(profileGeometry.values.every(v => v.width >= 155 && v.valueWidth >= 115 &&
+        v.fontSize >= 14 && v.left >= 0 && v.right >= 0 && v.overflow <= 2),
+      device + ': cuadros de información legibles sin texto desbordado: ' +
+        JSON.stringify(profileGeometry.values));
+      assert.ok(profileGeometry.scrollWidth <= profileGeometry.viewport+2,
+        device + ': ficha sin desplazamiento horizontal');
+      assert.equal(await page.getByRole('button', { name: 'Eliminar usuario' }).isDisabled(),
+        true, device + ': eliminación bloqueada por negocio activo');
+      await page.getByRole('button', { name: 'Suspender' }).click();
+      const detailDialog = page.getByRole('dialog', { name: 'Suspender cuenta' });
+      const detailTextarea = await detailDialog.locator('textarea').evaluate(el => ({
+        size: parseFloat(getComputedStyle(el).fontSize),
+        width: el.getBoundingClientRect().width,
+        height: el.getBoundingClientRect().height,
+      }));
+      assert.ok(detailTextarea.size >= 14 && detailTextarea.width >= 235 && detailTextarea.height >= 110,
+        device + ': motivo administrativo usable en diálogo');
+      await detailDialog.getByRole('button', { name: 'Cancelar' }).click();
+      await page.screenshot({ path: resolve(screenshots, device + '-ficha.png'), fullPage: true });
+      assert.equal(errors.length, 0, device + ': ficha sin excepciones JS: ' + errors.join(' | '));
+      console.log('Admin Usuarios y ficha: filtros, controles y responsive OK - ' + device);
     } finally { await context.close(); }
   }
 } finally {
