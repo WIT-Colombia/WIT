@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit';
+import type { Request, Response } from 'express';
 import { env } from '../../config/env.js';
 import type { AuthenticatedRequest } from '../auth/auth-request.js';
 
@@ -10,11 +11,11 @@ import type { AuthenticatedRequest } from '../auth/auth-request.js';
  */
 const windowMs = 15 * 60 * 1000;
 const standard = { windowMs, standardHeaders: 'draft-8' as const, legacyHeaders: false };
-const blocked = (_request: Parameters<NonNullable<Parameters<typeof rateLimit>[0]['handler']>>[0], response: Parameters<NonNullable<Parameters<typeof rateLimit>[0]['handler']>>[1]) => {
+const blocked = (_request: Request, response: Response) => {
   response.setHeader('Retry-After', String(windowMs / 1000));
   response.status(429).json({ error: { code: 'WRITE_RATE_LIMITED', message: 'Demasiadas acciones en poco tiempo. Intenta de nuevo más tarde.' } });
 };
-const userKey = (request: Parameters<NonNullable<Parameters<typeof rateLimit>[0]['keyGenerator']>>[0]) =>
+const userKey = (request: Request) =>
   'user:' + (request as AuthenticatedRequest).auth.userId;
 
 // Cada límite se mide por IP y cuenta, y se aplica a las rutas de escritura.
