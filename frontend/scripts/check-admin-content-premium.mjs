@@ -121,11 +121,12 @@ try{
       assert.equal(await page.getByText('Crear contenido').count(),0,name+': no fake create action');
       await page.screenshot({path:resolve(screenshots,name+'.png'),fullPage:true});
 
-      await page.getByRole('button',{name:'Servicios',exact:true}).click();
+      const typeTabs=page.getByRole('group',{name:'Filtrar contenido por tipo'});
+      await typeTabs.getByRole('button',{name:'Servicios',exact:true}).click();
       await page.getByText('1 publicación').first().waitFor({state:'visible'});
-      assert.equal(await page.getByRole('button',{name:'Servicios',exact:true}).getAttribute('aria-pressed'),
+      assert.equal(await typeTabs.getByRole('button',{name:'Servicios',exact:true}).getAttribute('aria-pressed'),
         'true',name+': services filter');
-      await page.getByRole('button',{name:'Todos',exact:true}).click();
+      await typeTabs.getByRole('button',{name:'Todos',exact:true}).click();
       await page.getByText('2 publicaciones').first().waitFor({state:'visible'});
       await page.getByPlaceholder('Buscar publicación, código o negocio').fill('Zapatillas');
       await page.getByRole('button',{name:'Buscar',exact:true}).click();
