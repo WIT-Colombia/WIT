@@ -78,6 +78,8 @@ test('Ficha administrativa: consultas, fotografías privadas y decisiones audita
       assert.equal(reasonFiltered.pagination.total, 1);
       const searched = await (await request('/businesses/' + id + '/reports?q=evidencia')).json() as any;
       assert.equal(searched.pagination.total, 1);
+      const spanishReasonSearch = await (await request('/businesses/' + id + '/reports?q=suplantaci%C3%B3n')).json() as any;
+      assert.equal(spanishReasonSearch.pagination.total, 1, 'Buscar por motivo en español debe encontrar el reporte');
       assert.equal((await (await request('/businesses/' + fixture.other.id + '/reports')).json() as any).summary.total, 0);
       // Query by the full local date range, not the UTC day: Bogotá is UTC-5.
       assert.equal((await (await request('/businesses/' + id + '/reports?from=2020-01-01&to=2099-12-31')).json() as any).pagination.total, 3);

@@ -177,10 +177,18 @@ adminRouter.get('/businesses/:id/reports', requireAdmin('BUSINESSES_READ'), asyn
       } } : {}),
     };
     if (search) {
+      const titles: Record<typeof allowedReasons[number], string> = {
+        IMPERSONATION: 'Suplantación de identidad', FALSE_INFORMATION: 'Información falsa',
+        SUSPECTED_FRAUD: 'Posible fraude', INAPPROPRIATE_CONTENT: 'Contenido inapropiado',
+        OTHER: 'Otro motivo',
+      };
+      const normalized = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/_/g, ' ');
+      const term = normalized(search);
       where.OR = [
         { description: { contains: search } },
         { reporter: { is: { displayName: { contains: search } } } },
-        ...allowedReasons.filter(value => value.includes(search.toUpperCase().replace(/\s+/g, '_')))
+        ...allowedReasons.filter(value => normalized(value).includes(term) || normalized(titles[value]).includes(term))
           .map(value => ({ reason: value })),
       ];
     }
