@@ -88,6 +88,61 @@ describe('Ficha administrativa del negocio', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Historial administrativo' }));
     expect(screen.getByRole('tabpanel', { name: 'Historial administrativo' })).toBeInTheDocument();
   });
+  it('historial administrativo: filtra por categoría y busca en todo el historial del backend', async () => {
+    const event = {
+      id: 'entry-1', action: 'ADMIN_OFFER_DEACTIVATED', createdAt: business.updatedAt,
+      reason: 'Publicación incumple lineamientos', comment: null,
+      actor: { displayName: 'Administradora de prueba' },
+      previousState: { offerState: 'ACTIVE' }, newState: { offerState: 'INACTIVE' },
+    };
+    api.getRecordHistory.mockImplementation(async (_id: string, page: number, filters?: { kind: string; search: string }) => ({
+      history: filters?.kind === 'VERIFICATION' ? [] : [event],
+      pagination: { page, pageSize: 12, total: filters?.kind === 'VERIFICATION' ? 0 : 1, totalPages: filters?.kind === 'VERIFICATION' ? 0 : 1 },
+    }));
+    setup(); await ready();
+    fireEvent.click(screen.getByRole('tab', { name: 'Historial administrativo' }));
+    await waitFor(() => expect(api.getRecordHistory).toHaveBeenCalledWith(business.id, 1, { kind: 'ALL', search: '' }));
+    const panel = screen.getByRole('tabpanel', { name: 'Historial administrativo' });
+    expect(within(panel).getByText('Producto o servicio desactivado por Admin')).toBeInTheDocument();
+    expect(within(panel).getByText('Administradora de prueba')).toBeInTheDocument();
+    expect(within(panel).getByText('Activo')).toBeInTheDocument();
+    expect(within(panel).getByText('Desactivado')).toBeInTheDocument();
+    const filter = within(panel).getByRole('button', { name: 'Productos y servicios' });
+    fireEvent.click(filter);
+    await waitFor(() => expect(api.getRecordHistory).toHaveBeenCalledWith(business.id, 1, { kind: 'OFFER', search: '' }));
+    expect(filter).toHaveAttribute('aria-pressed', 'true');
+    const search = within(panel).getByRole('textbox', { name: 'Buscar por actuación o responsable' });
+    fireEvent.change(search, { target: { value: 'Administradora' } });
+    fireEvent.submit(search.closest('form')!);
+    await waitFor(() => expect(api.getRecordHistory).toHaveBeenCalledWith(business.id, 1, { kind: 'OFFER', search: 'Administradora' }));
+    fireEvent.click(within(panel).getByRole('button', { name: 'Verificación' }));
+    await waitFor(() => expect(within(panel).getByText('Sin resultados para esta búsqueda')).toBeInTheDocument());
+    expect(api.getRecordHistory).toHaveBeenCalledWith(business.id, 1, { kind: 'VERIFICATION', search: 'Administradora' });
+    expect(within(panel).queryByRole('button', { name: /Confirmar|Eliminar|Guardar actuación/ })).not.toBeInTheDocument();
+  });
+
+  it('historial administrativo: pagina sin alterar las actuaciones y permite consultar los estados', async () => {
+    const event = {
+      id: 'entry-2', action: 'ADMIN_BUSINESS_SET_HIDDEN', createdAt: business.updatedAt,
+      reason: 'Revisión justificada', comment: 'Actuación registrada',
+      actor: { displayName: 'Responsable autorizado' },
+      previousState: { visibilityStatus: 'VISIBLE' }, newState: { visibilityStatus: 'HIDDEN' },
+    };
+    api.getRecordHistory.mockImplementation(async (_id: string, page: number, filters?: { kind: string }) => ({
+      history: [event], pagination: { page, pageSize: 12, total: 15, totalPages: 2 },
+    }));
+    setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Historial administrativo' }));
+    const panel = screen.getByRole('tabpanel', { name: 'Historial administrativo' });
+    expect(await within(panel).findByText('Negocio ocultado por Admin')).toBeInTheDocument();
+    const details = within(panel).getByText('Ver detalles del registro');
+    fireEvent.click(details);
+    expect(within(panel).getAllByText('Estado anterior').length).toBeGreaterThan(0);
+    expect(within(panel).getByText('Observaciones:')).toBeInTheDocument();
+    fireEvent.click(within(panel).getByRole('button', { name: 'Siguiente' }));
+    await waitFor(() => expect(api.getRecordHistory).toHaveBeenCalledWith(business.id, 2, { kind: 'ALL', search: '' }));
+    expect(within(panel).getByRole('button', { name: 'Página 2' })).toHaveAttribute('aria-current', 'page');
+  });
+
   it('muestra únicamente la imagen de perfil en la cabecera sin cartel de fotografía faltante', async () => {
     setup(); await ready();
     const identity = screen.getByRole('region', { name: 'Identificación del establecimiento' });
