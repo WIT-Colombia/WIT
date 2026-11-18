@@ -10,6 +10,7 @@ import { AdminContentBulkDialog } from './AdminContentBulkDialog';
 import { contentStatusLabel, displayDate, offerKindLabel, offerPrice } from './AdminContentLabels';
 import './AdminContentRefresh.css';
 import './AdminContentControl.css';
+import './AdminContentPremium.css';
 import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
 
 function exportVisibleContent(rows:AdminOfferRecord[]){
@@ -119,25 +120,32 @@ export function AdminContentPage(){
     setRevision(v=>v+1);setAnalyticsRevision(v=>v+1);
   };
   const totals=insights?.totals;
+  // Counters are returned by /admin/content-insights for the active filters.
   const kpis=totals?[
-    {label:'Contenido del segmento',value:totals.total,icon:'box',tone:'blue',hint:'Según los filtros seleccionados'},
-    {label:'Productos',value:totals.products,icon:'grid',tone:'violet',hint:'Artículos registrados'},
-    {label:'Servicios',value:totals.services,icon:'settings',tone:'cyan',hint:'Servicios registrados'},
-    {label:'Publicados',value:totals.published,icon:'check',tone:'green',hint:'Activos y publicados'},
-    {label:'Ocultos por Admin',value:totals.hidden,icon:'eye-off',tone:'violet',hint:'Medida administrativa vigente'},
-    {label:'En revisión',value:totals.inReview,icon:'flag',tone:'cyan',hint:'Pendientes de decisión'},
-    {label:'Eliminados',value:totals.deletedOverall,icon:'clock',tone:'violet',hint:'Incluye bajas del negocio; solo se recuperan las eliminaciones hechas por Admin'},
+    {label:'Contenido del segmento',value:totals.total,icon:'box',tone:'violet',hint:'Según filtros activos',status:''},
+    {label:'Publicados',value:totals.published,icon:'check',tone:'green',hint:'Estado de publicación',status:'PUBLISHED'},
+    {label:'En revisión',value:totals.inReview,icon:'flag',tone:'amber',hint:'Revisión de publicación',status:'REVIEW'},
+    {label:'Ocultos por Admin',value:totals.hidden,icon:'eye-off',tone:'rose',hint:'Restricción administrativa',status:'HIDDEN'},
   ]:[];
   if(!allowed)return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso de catálogo para consultar el contenido."/>;
-  return <div className="ac-page">
-    <header className="admin-section-heading"><h1 id="ac-title">Contenido</h1></header>
-        {totals&&<div className="ac-kpis" aria-label="Resumen del catálogo">{kpis.map(k=><div key={k.label} className={'ac-kpi '+k.tone}><span className="ac-kpi-icon"><Icon name={k.icon} size={22}/></span>
-      <div><span>{k.label}</span><strong>{num(k.value)}</strong><small>{k.hint}</small></div></div>)}</div>}
+  return <div className="ac-page ac-premium">
+    <header className="ac-premium-heading">
+      <div className="ac-heading-identity"><span className="ac-heading-icon"><Icon name="box" size={27}/></span><div>
+        <h1 id="ac-title">Contenido</h1><p>Productos y servicios registrados por los negocios de XAMUKO.</p>
+      </div></div>
+      <div className="ac-heading-actions"><a href="#ac-analytics-title" className="ac-secondary"><Icon name="chart" size={17}/> Estadísticas</a>
+        <Link to="/offer-reports" className="ac-primary"><Icon name="flag" size={17}/> Revisar reportes</Link></div>
+    </header>
+    {totals&&<div className="ac-kpis" aria-label="Resumen real del catálogo">{kpis.map(k=><button key={k.label} type="button"
+      className={'ac-kpi '+k.tone+(status===k.status?' is-selected':'')} aria-pressed={status===k.status}
+      onClick={()=>apply('status',k.status)} title={'Filtrar: '+k.label}>
+      <span className="ac-kpi-icon"><Icon name={k.icon} size={23}/></span>
+      <span className="ac-kpi-content"><span>{k.label}</span><strong>{num(k.value)}</strong><small>{k.hint}</small></span>
+    </button>)}</div>}
+    {analyticsLoading&&!totals&&!analyticsError&&<p className="ac-data-pending" role="status">Consultando indicadores reales del catálogo…</p>}
     {analyticsError&&<p className="ac-warning" role="status">Los indicadores generales no están disponibles: {analyticsError}</p>}
     {bulkNotice&&<p className="ac-success" role="status">{bulkNotice}</p>}
     {bulkErrors.length>0&&<div className="ac-warning" role="alert"><strong>Registros sin procesar:</strong><ul>{bulkErrors.map(err=><li key={err}>{err}</li>)}</ul></div>}
-    <AdminContentAnalyticsPanel data={insights} loading={analyticsLoading} error={analyticsError} period={period} onPeriod={setPeriod}
-      filters={filters} onFilter={apply} onRetry={()=>setAnalyticsRevision(v=>v+1)}/>
     <section className="ac-directory" aria-labelledby="ac-directory-title">
       <div className="ac-panel-head"><div><span className="ac-eyebrow">GESTIÓN DE PUBLICACIONES</span><h2 id="ac-directory-title">Directorio de contenido</h2><p>Productos y servicios de los negocios registrados en XAMUKO.</p></div>
         <div className="ac-head-actions"><button className="ac-secondary" type="button" disabled={!directory?.offers.length}
@@ -200,6 +208,8 @@ export function AdminContentPage(){
       {directory&&directory.pagination.totalPages>1&&<nav className="ac-pagination" aria-label="Páginas de contenido">
         <span>Página {page} de {directory.pagination.totalPages}</span><div><button type="button" className="ac-secondary" disabled={page<=1} onClick={()=>go(page-1)}>Anterior</button><button type="button" className="ac-primary" disabled={page>=directory.pagination.totalPages} onClick={()=>go(page+1)}>Siguiente <Icon name="arrow" size={16}/></button></div></nav>}
     </section>
+    <AdminContentAnalyticsPanel data={insights} loading={analyticsLoading} error={analyticsError} period={period} onPeriod={setPeriod}
+      filters={filters} onFilter={apply} onRetry={()=>setAnalyticsRevision(v=>v+1)}/>
 
     {bulkAction&&selectedIds.length>0&&<AdminContentBulkDialog ids={selectedIds} action={bulkAction}
       onClose={()=>setBulkAction(null)} onDone={finishBulk}/>}
