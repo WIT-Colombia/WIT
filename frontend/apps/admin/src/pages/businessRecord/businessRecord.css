@@ -2535,3 +2535,118 @@
   .bd-record .bd-report-entry>header{flex-wrap:wrap}
   .bd-record .bd-report-entry .bd-report-state{margin-left:46px}
 }
+
+
+/* Admin · Ficha del negocio · Reportes: filtros alineados por ancho disponible.
+   No modifica la tarjeta de reportes, los estados ni la lógica de búsqueda.
+   El punto de ruptura depende de la tarjeta (sidebar/iPad), no de la ventana. */
+.bd-record .bd-report-register-surface {
+  container: bd-report-filters / inline-size;
+}
+.bd-record .bd-report-register-tools {
+  display: grid;
+  grid-template-columns: minmax(260px, 2.1fr) minmax(185px, 1.4fr) minmax(148px, 1fr) minmax(148px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  min-width: 0;
+  padding-bottom: 16px;
+}
+.bd-record .bd-report-register-tools > * {
+  min-width: 0;
+  margin: 0;
+}
+.bd-record .bd-report-register-search {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 44px;
+  box-sizing: border-box;
+  padding: 0 10px;
+}
+.bd-record .bd-report-register-search input {
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+}
+.bd-record .bd-report-register-search button {
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.bd-record .bd-report-register-tools label {
+  min-width: 0;
+  gap: 7px;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 750;
+}
+.bd-record .bd-report-register-tools select,
+.bd-record .bd-report-register-tools input[type="date"] {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 9px 11px;
+  font-size: 13px;
+  line-height: normal;
+}
+.bd-record .bd-report-refresh {
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+@container bd-report-filters (max-width: 1060px) {
+  .bd-record .bd-report-register-tools {
+    grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .bd-record .bd-report-register-search {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+  .bd-record .bd-report-refresh {
+    grid-column: 3;
+    grid-row: 1;
+    width: 100%;
+  }
+  .bd-record .bd-report-reason-filter,
+  .bd-record .bd-report-date-filter {
+    width: 100%;
+  }
+}
+@container bd-report-filters (max-width: 650px) {
+  .bd-record .bd-report-register-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px 10px;
+  }
+  .bd-record .bd-report-register-search,
+  .bd-record .bd-report-reason-filter {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .bd-record .bd-report-date-filter {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .bd-record .bd-report-refresh {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    width: 100%;
+  }
+}
+@container bd-report-filters (max-width: 410px) {
+  .bd-record .bd-report-register-tools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bd-record .bd-report-register-tools > * {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .bd-record .bd-report-register-search {
+    gap: 6px;
+    padding: 0 8px;
+  }
+  .bd-record .bd-report-register-search button {
+    padding: 6px 10px;
+  }
+}
