@@ -94,6 +94,7 @@ export function AdminUsersPage() {
   };
   const filterKey = [...params.entries()].filter(([k])=>k!=='page').sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>k+'='+v).join('&');
   const activeFilters = [...params.keys()].filter(key => key!=='page' && Boolean(params.get(key))).length;
+  const allUsersSelected = activeFilters === 0;
   useEffect(()=>setInput(q),[q]);
   useEffect(()=>{
     if (!allowed) return;
@@ -229,7 +230,7 @@ export function AdminUsersPage() {
       </div>
       </div>
       <div className="au-showcase-shortcuts" role="group" aria-label="Filtros rápidos">
-        <button type="button" className={!status && !relation ? 'selected' : ''} aria-pressed={!status && !relation}
+        <button type="button" className={allUsersSelected ? 'selected' : ''} aria-pressed={allUsersSelected}
           onClick={()=>setShortcut('','')}><Icon name="filter" size={15}/> Todos {overview ? '('+number(overview.total)+')' : ''}</button>
         <button type="button" className={status==='ACTIVE' && !relation ? 'selected' : ''} aria-pressed={status==='ACTIVE' && !relation}
           onClick={()=>setShortcut('ACTIVE','')}><Icon name="check" size={15}/> Activos {overview ? '('+number(overview.active)+')' : ''}</button>
@@ -240,6 +241,8 @@ export function AdminUsersPage() {
           title={overview?.withBusiness === undefined ? 'Disponible cuando actualicemos el backend' : undefined}
           onClick={()=>setShortcut('','ANY')}><Icon name="store" size={15}/> Con negocio {overview?.withBusiness !== undefined ? '('+number(overview.withBusiness)+')' : ''}</button>
         <button type="button" className={!status && relation==='NONE' ? 'selected' : ''} aria-pressed={!status && relation==='NONE'}
+          disabled={overview?.withBusiness === undefined}
+          title={overview?.withBusiness === undefined ? 'Disponible cuando actualicemos el backend' : undefined}
           onClick={()=>setShortcut('','NONE')}><Icon name="users" size={15}/> Sin negocio {overview?.withBusiness !== undefined ? '('+number(Math.max(0,overview.total-overview.withBusiness))+')' : ''}</button>
       </div>
       <div className="au-showcase-directory-grid">
