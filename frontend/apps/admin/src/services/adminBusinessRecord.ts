@@ -17,6 +17,7 @@ export type RecordReview = { id: string; rating: number; comment: string; status
 export type RecordPhoto = { id: string; altText: string | null; createdAt: string; isCover: boolean; isProfile: boolean; offer: { id: string; name: string; kind: string } | null };
 export type RecordState = Record<string, string | number | boolean | null> | null;
 export type RecordHistory = AdminBusinessAuditEntry & { previousState: RecordState; newState: RecordState };
+export type HistoryKind = 'ALL' | 'VISIBILITY' | 'VERIFICATION' | 'SUBSCRIPTION' | 'OFFER';
 export type HistoryResult = { history: RecordHistory[]; pagination: Pagination };
 export type ActivityMetric = 'views' | 'interactions' | 'offerViews' | 'reviews' | 'products' | 'services';
 export type RecordActivity = { period: string; timezone: string; start: string; end: string; totals: Record<ActivityMetric, number>;
@@ -24,7 +25,8 @@ export type RecordActivity = { period: string; timezone: string; start: string; 
 const path = (id: string, suffix = '') => encodeURIComponent(id) + suffix;
 const query = (filters: Record<string, string | number>) => new URLSearchParams(Object.entries(filters).map(([key, value]) => [key, String(value)]));
 export const getRecordBusiness = async (id: string) => (await adminBusinessRecordRequest<{ business: RecordBusiness }>(path(id))).business;
-export const getRecordHistory = (id: string, page = 1) => adminBusinessRecordRequest<HistoryResult>(path(id, `/history?page=${page}&pageSize=12`));
+export const getRecordHistory = (id: string, page = 1, filters: { kind?: HistoryKind; search?: string } = {}) =>
+  adminBusinessRecordRequest<HistoryResult>(path(id, `/history?${new URLSearchParams({ page: String(page), pageSize: '12', kind: filters.kind ?? 'ALL', search: filters.search ?? '' })}`));
 export const getRecordCatalog = (id: string, filters: Record<string, string | number>) => adminBusinessRecordRequest<{ offers: RecordOffer[]; pagination: Pagination }>(path(id, `/catalog?${query(filters)}`));
 export type AdminOfferAction = 'ACTIVATE' | 'DEACTIVATE' | 'DELETE';
 export const setRecordOfferState = (id: string, offerId: string, action: AdminOfferAction, reason: string) =>

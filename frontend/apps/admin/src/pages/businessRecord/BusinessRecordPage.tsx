@@ -11,12 +11,12 @@ import { adminBusinessVisibilityLabel, type AdminVisibilityAction } from '../../
 import { getSession } from '../../services/adminService';
 import { getRecordBusiness, getRecordHistory, type RecordBusiness, type RecordHistory } from '../../services/adminBusinessRecord';
 import { Catalog } from './Catalog';
-import { HistoryTimeline } from './History';
+import { HistoryPanel } from './History';
 import { Information, Members, owners } from './Information';
 import { Overview } from './Overview';
 import { Reports } from './Reports';
 import { BusinessDecisionDialog, type BusinessDecision } from './BusinessDecisionDialog';
-import { Badge, Card, Empty, Loading, Pager, categoryName, date, label, number, useResource } from './shared';
+import { Badge, Loading, categoryName, date, label, number, useResource } from './shared';
 import './businessRecord.css';
 
 const tabs = [
@@ -31,9 +31,9 @@ export function BusinessRecordPage() { const { id = '' } = useParams(); return <
 function BusinessRecord({ id }: { id: string }) {
   const session = getSession(), allowed = Boolean(session?.permissions?.includes('business:write'));
   const catalogAllowed = Boolean(session?.permissions?.includes('catalog:read'));
-  const [revision, setRevision] = useState(0), [historyPage, setHistoryPage] = useState(1), [notice, setNotice] = useState(''), [operationPending, setOperationPending] = useState(false);
+  const [revision, setRevision] = useState(0), [notice, setNotice] = useState(''), [operationPending, setOperationPending] = useState(false);
   const source = useResource(() => getRecordBusiness(id), [id, revision], allowed);
-  const history = useResource(() => getRecordHistory(id, historyPage), [id, revision, historyPage], allowed && Boolean(source.data));
+  const history = useResource(() => getRecordHistory(id), [id, revision], allowed && Boolean(source.data));
   const [latest, setLatest] = useState<RecordHistory[]>([]);
   useEffect(() => { if (history.data?.pagination?.page === 1) setLatest(history.data.history.slice(0, 3)); }, [history.data]);
   useEffect(() => { if (source.data) setOperationPending(false); }, [source.data]);
@@ -50,7 +50,7 @@ function BusinessRecord({ id }: { id: string }) {
     choose(value);
     nav.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   };
-  const changed = (message: string) => { setVisibilityAction(null); setVisibilityOpen(false); setVerificationOpen(false); setSubscriptionOpen(false); setSelectedPlan(null); setDecision(null); setNotice(message); setOperationPending(true); setHistoryPage(1); setRevision(value => value + 1); };
+  const changed = (message: string) => { setVisibilityAction(null); setVisibilityOpen(false); setVerificationOpen(false); setSubscriptionOpen(false); setSelectedPlan(null); setDecision(null); setNotice(message); setOperationPending(true); setRevision(value => value + 1); };
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso de consulta de negocios para abrir la ficha."/>;
   if (!source.data) return source.error ? <StatePanel kind="error" title="No pudimos abrir la ficha" message={source.error} retry={source.retry}/> : <StatePanel kind="loading" title="Cargando ficha administrativa" message="Consultando el establecimiento y su información registrada."/>;
   const business = source.data, record = business.record;
@@ -128,7 +128,7 @@ function BusinessRecord({ id }: { id: string }) {
         : item.key === 'catalog' ? <Catalog id={business.id} allowed={catalogAllowed} canModerate={catalogAllowed && Boolean(session?.permissions?.includes('content:moderate:write'))}
             canDelete={session?.role === 'SUPER_ADMIN'} onChanged={changed}/>
         : item.key === 'reports' ? <Reports businessId={business.id} businessName={business.name}/>
-        : <Card title="Historial administrativo" icon="clock"><p className="bd-card-caption">Actuaciones conservadas en la auditoría. Fechas en hora de Bogotá.</p><Loading {...history}/>{!history.loading && !history.error && history.data && <>{history.data.history.length ? <HistoryTimeline entries={history.data.history}/> : <Empty icon="clock" title="Sin actuaciones registradas" message="No se encontraron registros de auditoría para este establecimiento."/>}{history.data.pagination && <Pager pagination={history.data.pagination} onPage={setHistoryPage}/>}</>}</Card>)}
+        : <HistoryPanel businessId={business.id} revision={revision}/>)}
     </section>)}</div></div>
     {visibilityOpen && canChangeVisibility && <AdminBusinessVisibilityPicker businessName={business.name}
       visibilityStatus={business.visibilityStatus} administrativeRestriction={business.administrativeRestriction}
