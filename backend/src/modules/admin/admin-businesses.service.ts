@@ -209,20 +209,77 @@ export async function getAdminBusinessesOverview(now = new Date()) {
   return { generatedAt: now.toISOString(), total, visible, hidden, expired, adminHidden, suspended, verified, pendingVerification, rejectedVerification, pro, reported, review, deleted, expiring: Number(expiring[0]?.quantity ?? 0) };
 }
 
-export async function getAdminBusinessHistory(identifier: string, page = 1, pageSize = 60) {
-  const business = await prisma.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }] }, select: { id: true } });
+export type AdminBusinessHistoryKind = 'ALL' | 'VISIBILITY' | 'VERIFICATION' | 'SUBSCRIPTION' | 'OFFER';
+
+/** A single immutable business audit stream; product changes already write a
+ * business-scoped audit entry in addition to their separate offer audit. Never
+ * combine those two rows, or an event would appear twice. */
+const adminBusinessHistoryGroups: Record<Exclude<AdminBusinessHistoryKind, 'ALL'>, Prisma.AuditLogWhereInput> = {
+  VISIBILITY: { OR: [
+    { action: { contains: 'VISIBILITY' } }, { action: { startsWith: 'ADMIN_BUSINESS_SET_' } },
+    { action: { in: ['ADMIN_BUSINESS_HIDE', 'ADMIN_BUSINESS_SUSPEND', 'ADMIN_BUSINESS_RESTORE', 'BUSINESS_PUBLISHED'] } },
+  ] },
+  VERIFICATION: { OR: [{ action: { contains: 'VERIF' } }, { action: { contains: 'VERIFICATION' } }] },
+  SUBSCRIPTION: { OR: [{ action: { contains: 'PLAN' } }, { action: { contains: 'SUBSCRIPTION' } }] },
+  OFFER: { OR: [
+    { action: { startsWith: 'ADMIN_OFFER_' } }, { action: { startsWith: 'BUSINESS_OFFER_' } },
+    { action: { startsWith: 'OFFER_' } }, { action: { contains: 'CATALOG' } },
+  ] },
+};
+
+export async function getAdminBusinessHistory(
+  identifier: string, page = 1, pageSize = 60, kindText = 'ALL', searchText = '',
+) {
+  const business = await prisma.business.findFirst({
+    where: { OR: [{ id: identifier }, { publicId: identifier }] }, select: { id: true },
+  });
   if (!business) throw new AppError(404, 'ADMIN_BUSINESS_NOT_FOUND', 'No encontramos este negocio.');
+  const allowedKinds: AdminBusinessHistoryKind[] = ['ALL', 'VISIBILITY', 'VERIFICATION', 'SUBSCRIPTION', 'OFFER'];
+  if (!allowedKinds.includes(kindText as AdminBusinessHistoryKind))
+    throw new AppError(400, 'ADMIN_BUSINESS_HISTORY_FILTER_INVALID', 'El filtro del historial no es válido.');
+  const kind = kindText as AdminBusinessHistoryKind;
   const currentPage = Number.isInteger(page) ? Math.max(1, Math.min(100000, page)) : 1;
   const size = Number.isInteger(pageSize) ? Math.max(1, Math.min(60, pageSize)) : 60;
-  const where = { entityType: 'BUSINESS' as const, entityId: business.id };
-  const [history, total] = await prisma.$transaction([prisma.auditLog.findMany({
-    where, take: size, skip: (currentPage - 1) * size, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    select: { id: true, action: true, reason: true, comment: true, createdAt: true, previousState: true, newState: true, actor: { select: { displayName: true } } },
-  }), prisma.auditLog.count({ where })]);
+  const search = searchText.trim().slice(0, 100);
+  const match: Prisma.AuditLogWhereInput[] = [
+    { action: { contains: search } }, { reason: { contains: search } },
+    { comment: { contains: search } }, { actor: { is: { displayName: { contains: search } } } },
+  ];
+  // Search names are shown in Spanish; audit action codes are in English.
+  // Translate common category searches without touching persisted audit rows.
+  if (search) {
+    const needle = search.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (/visib|ocult|suspend|restaur|restitu/.test(needle)) match.push(adminBusinessHistoryGroups.VISIBILITY);
+    if (/verif|aprob|rechaz/.test(needle)) match.push(adminBusinessHistoryGroups.VERIFICATION);
+    if (/suscrip|plan|pro|basic/.test(needle)) match.push(adminBusinessHistoryGroups.SUBSCRIPTION);
+    if (/product|servici|catalog|publicacion/.test(needle)) match.push(adminBusinessHistoryGroups.OFFER);
+    if (/registr|creacion|creado/.test(needle)) match.push({ action: 'BUSINESS_CREATED' });
+  }
+  const scopes: Prisma.AuditLogWhereInput[] = [];
+  if (kind !== 'ALL') scopes.push(adminBusinessHistoryGroups[kind]);
+  if (search) scopes.push({ OR: match });
+  const where: Prisma.AuditLogWhereInput = {
+    entityType: 'BUSINESS', entityId: business.id,
+    ...(scopes.length ? { AND: scopes } : {}),
+  };
+  const [history, total] = await prisma.$transaction([
+    prisma.auditLog.findMany({
+      where, take: size, skip: (currentPage - 1) * size,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: { id: true, action: true, reason: true, comment: true, createdAt: true,
+        previousState: true, newState: true, actor: { select: { displayName: true } } },
+    }),
+    prisma.auditLog.count({ where }),
+  ]);
   const state = (input: Prisma.JsonValue) => input && typeof input === 'object' && !Array.isArray(input)
-    ? Object.fromEntries(Object.entries(input).filter(([key, value]) => ['name', 'visibilityStatus', 'publicationStatus', 'lifecycleStatus', 'deletionStatus', 'verificationStatus', 'administrativeRestriction', 'completeness', 'plan', 'offerName', 'offerCode', 'offerState'].includes(key) && (value === null || ['string', 'number', 'boolean'].includes(typeof value)))) : null;
-  return { history: history.map(row => ({ ...row, previousState: state(row.previousState), newState: state(row.newState) })),
-    pagination: { page: currentPage, pageSize: size, total, totalPages: Math.ceil(total / size) } };
+    ? Object.fromEntries(Object.entries(input).filter(([key, value]) =>
+      ['name', 'visibilityStatus', 'publicationStatus', 'lifecycleStatus', 'deletionStatus', 'verificationStatus',
+        'administrativeRestriction', 'completeness', 'plan', 'offerName', 'offerCode', 'offerState'].includes(key)
+      && (value === null || ['string', 'number', 'boolean'].includes(typeof value)))) : null;
+  return {
+    history: history.map(row => ({ ...row, previousState: state(row.previousState), newState: state(row.newState) })),
+    pagination: { page: currentPage, pageSize: size, total, totalPages: Math.ceil(total / size) },
+  };
 }
 
 /** A restriction belongs to Admin, not the business owner. Never restores an expired 40-day period. */

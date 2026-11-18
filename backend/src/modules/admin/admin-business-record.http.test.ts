@@ -97,6 +97,23 @@ test('Ficha administrativa: consultas, fotografías privadas y decisiones audita
       assert.ok(history.history.some((entry: any) => entry.action === 'ADMIN_OFFER_DELETED'));
       assert.equal((await prisma.auditLog.count({ where: { entityType: 'OFFER', entityId: first.id, action: 'ADMIN_OFFER_ACTIVATED' } })), 1);
       assert.ok((await prisma.businessNotification.count({ where: { businessId: id } })) >= 3);
+
+      const filtered = await (await request('/businesses/' + id + '/history?kind=OFFER')).json() as any;
+      assert.equal(filtered.pagination.total, 3, 'Tres cambios de publicaciones del negocio, sin duplicar logs de OFFER');
+      assert.ok(filtered.history.every((entry: any) => entry.action.startsWith('ADMIN_OFFER_')));
+      assert.equal(filtered.history[0].action, 'ADMIN_OFFER_DELETED');
+      const byOwner = await (await request('/businesses/' + id + '/history?kind=OFFER&search=Administraci%C3%B3n')).json() as any;
+      assert.equal(byOwner.pagination.total, 3, 'Busca por responsable antes de paginar');
+      const byAct = await (await request('/businesses/' + id + '/history?search=servicios')).json() as any;
+      assert.ok(byAct.history.some((entry: any) => entry.action.startsWith('ADMIN_OFFER_')));
+      const two = await (await request('/businesses/' + id + '/history?kind=OFFER&page=2&pageSize=2')).json() as any;
+      assert.equal(two.pagination.total, 3);
+      assert.equal(two.history.length, 1);
+      assert.equal(two.pagination.totalPages, 2);
+      const otherHistory = await (await request('/businesses/' + fixture.other.id + '/history?kind=OFFER')).json() as any;
+      assert.equal(otherHistory.pagination.total, 0, 'Aislamiento de negocio');
+      assert.equal((await request('/businesses/' + id + '/history?kind=BAD')).status, 400);
+
     });
     await t.test('opiniones, puntuación, fechas, reportes y privacidad del autor', async () => {
       const rows = await (await request(`/businesses/${id}/reviews`)).json() as any; assert.equal(rows.pagination.total, 14); assert.equal(rows.reviews.length, 6);

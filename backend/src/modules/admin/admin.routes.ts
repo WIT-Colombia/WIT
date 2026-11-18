@@ -52,7 +52,7 @@ adminRouter.get('/businesses/filters', requireAdmin('BUSINESSES_READ'), async (_
   try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessesFilters()); } catch (error) { next(error); }
 });
 adminRouter.get('/businesses/:id/history', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
-  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessHistory(String(req.params.id), Number(req.query.page ?? 1), Number(req.query.pageSize ?? 60))); } catch (error) { next(error); }
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessHistory(String(req.params.id), Number(req.query.page ?? 1), Number(req.query.pageSize ?? 60), String(req.query.kind ?? 'ALL'), String(req.query.search ?? ''))); } catch (error) { next(error); }
 });
 const recordRead: RequestHandler = (_req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); };
 adminRouter.get('/businesses/:id/catalog', requireAdmin('BUSINESSES_READ'), recordRead, async (req, res, next) => {
