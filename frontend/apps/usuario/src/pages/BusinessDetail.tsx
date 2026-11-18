@@ -55,12 +55,12 @@ function safeBusinessReturnUrl(value: string | null): string | null {
   }
 }
 function phoneLink(phone: string) { return `tel:${phone.replace(/[^\d+]/g, "")}`; }
-function BusinessRatingSummary({ average, count }: { average: number | null; count: number }) {
+function BusinessRatingSummary({ average, count, onReviewsClick }: { average: number | null; count: number; onReviewsClick: () => void }) {
   const hasRatings = count > 0 && average !== null && Number.isFinite(average);
   const normalizedAverage = hasRatings ? Math.min(5, Math.max(0, average!)) : 0;
   return <span className="business-rating-summary" aria-label={hasRatings ? `${normalizedAverage.toFixed(1)} de 5, ${count} ${count === 1 ? "opinión" : "opiniones"}` : "Aún no hay calificaciones"}>
     <span className="business-rating-stars" aria-hidden="true"><span>★★★★★</span>{hasRatings && <b style={{ width: `${normalizedAverage / 5 * 100}%` }}>★★★★★</b>}</span>
-    {hasRatings && <><strong>{normalizedAverage.toFixed(1)}</strong><small>({count} {count === 1 ? "opinión" : "opiniones"})</small></>}
+    {hasRatings && <><strong>{normalizedAverage.toFixed(1)}</strong><button className="business-rating-reviews-link" type="button" onClick={onReviewsClick} aria-label={`Ver ${count} ${count === 1 ? "opinión" : "opiniones"} del negocio`}>({count} {count === 1 ? "opinión" : "opiniones"})</button></>}
   </span>;
 }
 function WhatsAppIcon() { return <svg className="business-contact-icon" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.2a8.8 8.8 0 0 0-7.63 13.2L3 21l4.78-1.34A8.8 8.8 0 1 0 12 3.2Zm0 15.9a7.06 7.06 0 0 1-3.6-.99l-.26-.16-2.84.8.81-2.76-.17-.28A7.07 7.07 0 1 1 12 19.1Zm3.88-5.3c-.21-.11-1.23-.61-1.42-.68-.19-.07-.33-.11-.47.11-.14.21-.54.68-.66.82-.12.14-.24.16-.45.05-.21-.11-.89-.33-1.69-1.05-.63-.56-1.05-1.25-1.17-1.46-.12-.21-.01-.33.09-.44.1-.1.21-.24.31-.36.1-.12.14-.21.21-.35.07-.14.04-.26-.02-.37-.05-.11-.47-1.13-.65-1.55-.17-.4-.34-.35-.47-.36h-.4c-.14 0-.37.05-.56.26-.19.21-.74.72-.74 1.76s.76 2.04.87 2.18c.11.14 1.5 2.29 3.64 3.21.51.22.91.35 1.22.45.51.16.98.14 1.35.08.41-.06 1.23-.5 1.4-.98.17-.48.17-.9.12-.98-.05-.09-.19-.14-.4-.25Z"/></svg>; }
@@ -87,6 +87,8 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
   const [productsVisibleCount, setProductsVisibleCount] = useState(8); const [servicesVisibleCount, setServicesVisibleCount] = useState(8);
   const shareWrapRef = useRef<HTMLDivElement>(null);
   const moreWrapRef = useRef<HTMLDivElement>(null);
+  const reviewsTabRef = useRef<HTMLElement>(null);
+  const pendingReviewsScrollRef = useRef(false);
   const galleryTouchStartX = useRef<number | null>(null);
   const headerTouchStartX = useRef<number | null>(null);
   const headerSwipeDetected = useRef(false);
@@ -205,6 +207,17 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
     ];
     return items.sort((a, b) => getOfferLike(b.item.id).count - getOfferLike(a.item.id).count || b.item.id.localeCompare(a.item.id)).slice(0, 4);
   }, [catalogProducts, catalogServices, getOfferLike]);
+  useEffect(() => {
+    if (tab !== "reviews" || !pendingReviewsScrollRef.current) return;
+    pendingReviewsScrollRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      reviewsTabRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [tab]);
   const businessReviews = useMemo<Review[]>(() => publicReviews.map(item => ({ id: item.id, businessId: id, author: item.author, rating: item.rating, date: item.createdAt, comment: item.comment, response: item.response })), [id, publicReviews]);
   // Keep the read-only frame active during loading and failures, with a safe return path.
   const fallbackPageClass = isBusinessPreview ? "business-detail-page business-preview-mode" : "";
@@ -272,6 +285,16 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
     if (list?.hasPointerCapture(event.pointerId)) list.releasePointerCapture(event.pointerId);
     popularDragRef.current = null;
   }
+  const openBusinessReviews = () => {
+    if (tab === "reviews") {
+      reviewsTabRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    pendingReviewsScrollRef.current = true;
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", "reviews");
+    setSearchParams(next);
+  };
   const tabButton = (key: Tab, label: string) => <button type="button" className={tab === key ? "active" : ""} aria-current={tab === key ? "page" : undefined} onClick={() => { const next = new URLSearchParams(searchParams); if (key === "info") next.delete("tab"); else next.set("tab", key); setSearchParams(next); }}><svg className="business-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{key === "info" ? <><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></> : key === "products" ? <><rect x="4" y="7" width="16" height="14" rx="2"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></> : key === "services" ? <><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></> : <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5Z"/>}</svg>{label}</button>;
   return <PageLayout className={`business-detail-page${isBusinessPreview ? " business-preview-mode" : ""}`}><PublicBusinessSeo business={currentBusiness} excluded={embeddedPreview || previewRequested || demoCatalog || ["preview", "demoCatalog", "token", "code", "email"].some(key => searchParams.has(key))} /><div className="business-detail-back"><button className="business-back-link" type="button" onClick={goBack}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>{isBusinessPreview && directBusinessPreviewReturnTo?.includes("/inicio") ? "Volver a Business" : embeddedPreview ? "Volver a Business" : isBusinessPreview ? "Volver a mi negocio" : "Volver"}</span></button><div className="business-header-tools"><button className="business-header-icon-button" type="button" disabled={isBusinessPreview || !cleanPublicUrl} onClick={() => void share()} aria-label="Compartir negocio" title="Compartir"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="19" r="2"/><path d="m8 11 8-5m-8 7 8 5"/></svg><span>Compartir</span></button><div className="business-more-wrap" ref={moreWrapRef}><button className="business-header-icon-button" type="button" disabled={isBusinessPreview} onClick={() => setMoreOpen((open) => !open)} aria-label="Más opciones del negocio" title="Más opciones" aria-expanded={moreOpen}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>{moreOpen && !isBusinessPreview && <div className="business-more-menu"><BusinessReportDialog key={currentBusiness.id} businessId={currentBusiness.id} businessName={currentBusiness.name} disabled={isBusinessPreview} /></div>}</div></div></div><section className="business-detail-hero">
       <div className="business-detail-gallery">
@@ -287,7 +310,7 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
       </div>
       <div className="business-detail-intro">
         <div className="business-header-identity">{business.logo && <img className="business-header-logo" src={business.logo} alt={`Logotipo de ${currentBusiness.name}`} onError={event => { event.currentTarget.hidden = true; }}/>}<div><span className="business-detail-category">{business.category}</span><h1>{currentBusiness.name}</h1><div className="business-header-accolades"><PioneerBadge pioneerNumber={business.pioneerNumber} /><div className="business-header-badges">{business.isFeatured === true && <span className="business-featured-badge" aria-label="Negocio destacado">⭐ Destacado</span>}{business.tags.length > 0 && <small className="business-header-meta">{business.tags.join(" · ")}</small>}</div></div></div></div>
-        <div className="business-detail-rating"><BusinessRatingSummary average={reviewSummary.average} count={reviewSummary.count} /><span className="business-distance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>{businessDistanceLabel}</span>{business.isVerified && <span className="business-verified">✓ Verificado</span>}</div>
+        <div className="business-detail-rating"><BusinessRatingSummary average={reviewSummary.average} count={reviewSummary.count} onReviewsClick={openBusinessReviews} /><span className="business-distance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>{businessDistanceLabel}</span>{business.isVerified && <span className="business-verified">✓ Verificado</span>}</div>
         {business.description && <div className={`business-header-description${descriptionExpanded ? " is-expanded" : ""}`}><p>{business.description}</p><button type="button" onClick={() => setDescriptionExpanded((expanded) => !expanded)} aria-expanded={descriptionExpanded}>{descriptionExpanded ? "Ver menos" : "Leer más"}</button></div>}
         {attentionModalities.length > 0 && <div className="business-attention-modalities"><strong>Modalidades de atención</strong><div>{attentionModalities.map((label) => <span key={label}>{/domicilio/i.test(label) ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="6" cy="17" r="2"/><circle cx="18" cy="17" r="2"/><path d="M8 17h8M8 6h7l4 6-1 3M8 6 5 12l3 5"/></svg> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 10v11h16V10M3 5h18l-2 5H5L3 5Zm5 16v-7h8v7M7 5V3h10v2"/></svg>}{label}</span>)}</div></div>}
         <div className="business-detail-actions">
@@ -322,7 +345,7 @@ export default function BusinessDetail({ embeddedPreview = false }: { embeddedPr
         </aside>}
       </div>
     </section>
-    <nav className="business-tabs" aria-label="Secciones del negocio">{tabButton("info", "Información")}{tabButton("products", "Productos")}{tabButton("services", "Servicios")}{tabButton("reviews", "Opiniones")}</nav>
+    <nav ref={reviewsTabRef} className="business-tabs" aria-label="Secciones del negocio">{tabButton("info", "Información")}{tabButton("products", "Productos")}{tabButton("services", "Servicios")}{tabButton("reviews", "Opiniones")}</nav>
     {tab !== "reviews" && <section className={`business-detail-columns${tab === "products" || tab === "services" ? " business-catalog-view" : ""}${tab === "info" ? " business-info-columns" : ""}${tab === "products" || tab === "services" ? " business-home-offers-view" : ""}`}><div className="business-about">{tab === "info" && <PublicBusinessDigitalCard business={currentBusiness} />}<div className="business-info-placeholder" aria-hidden="true" />{tab === "products" && <><h2 className="business-public-section-heading"><span className="business-public-section-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="7" width="16" height="14" rx="2"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg></span><span>Productos de {currentBusiness.name}</span></h2>{sortedProducts.length ? <><div className="business-offer-grid business-products-grid">{sortedProducts.slice(0, productsVisibleCount).map((product) => <ProductCard key={product.id} product={product} liked={getOfferLike(product.id).liked} likeCount={getOfferLike(product.id).count} onLike={isBusinessPreview || demoCatalog ? undefined : () => { void toggleOfferLike(product.id); }} readOnly={isBusinessPreview || demoCatalog} showReadOnlyLike={isBusinessPreview}/>)}</div>{sortedProducts.length > productsVisibleCount && <button className="business-products-more" type="button" onClick={() => setProductsVisibleCount((count) => count + 8)}>Ver más productos <span>↓</span></button>}{productsVisibleCount >= sortedProducts.length && sortedProducts.length > 8 && <button className="business-products-more business-products-top" type="button" onClick={() => { setProductsVisibleCount(8); setServicesVisibleCount(8); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Volver arriba ↑</button>} </> : <p>Aún no hay productos publicados.</p>}</>}{tab === "services" && <><h2 className="business-public-section-heading"><span className="business-public-section-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></svg></span><span>Servicios de {currentBusiness.name}</span></h2>{sortedServices.length ? <><div className="business-offer-grid business-products-grid">{sortedServices.slice(0, servicesVisibleCount).map((service) => <ServiceCard key={service.id} service={service} liked={getOfferLike(service.id).liked} likeCount={getOfferLike(service.id).count} onLike={isBusinessPreview || demoCatalog ? undefined : () => { void toggleOfferLike(service.id); }} readOnly={isBusinessPreview || demoCatalog} showReadOnlyLike={isBusinessPreview}/>)}</div>{sortedServices.length > servicesVisibleCount && <button className="business-products-more" type="button" onClick={() => setServicesVisibleCount((count) => count + 8)}>Ver más servicios <span>↓</span></button>}{servicesVisibleCount >= sortedServices.length && sortedServices.length > 8 && <button className="business-products-more business-products-top" type="button" onClick={() => { setProductsVisibleCount(8); setServicesVisibleCount(8); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Volver arriba ↑</button>} </> : <p>Aún no hay servicios publicados.</p>}</>}</div><aside className="business-detail-aside" aria-label="Datos del negocio">
       <section className="business-aside-block business-info-hours">
         <h3 className="business-info-heading"><span className="business-info-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Horario de atención</h3>
