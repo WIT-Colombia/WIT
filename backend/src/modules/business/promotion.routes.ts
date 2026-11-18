@@ -5,6 +5,7 @@ import { env } from '../../config/env.js';
 import { optionalAuth } from '../../shared/middleware/optional-auth.js';
 import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
+import { imageUploadIpLimit, imageUploadUserLimit } from '../../shared/middleware/operation-rate-limits.js';
 import { createPromotionController, deletePromotionController, deletePromotionPhotoController, finishPromotionController, getPublicPromotionController, listPromotionsController, listPublicPromotionsController, promotionPhotoContentController, publicPromotionPhotoController, recordPromotionViewController, updatePromotionController, uploadPromotionPhotoController } from './promotion.controller.js';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
@@ -21,5 +22,5 @@ promotionRouter.post('/businesses/:businessId/promotions', requireAuth, requireT
 promotionRouter.patch('/businesses/:businessId/promotions/:promotionId', requireAuth, requireTrustedOrigin, updatePromotionController);
 promotionRouter.post('/businesses/:businessId/promotions/:promotionId/finish', requireAuth, requireTrustedOrigin, finishPromotionController);
 promotionRouter.delete('/businesses/:businessId/promotions/:promotionId', requireAuth, requireTrustedOrigin, deletePromotionController);
-promotionRouter.post('/businesses/:businessId/promotions/:promotionId/photos', requireAuth, requireTrustedOrigin, upload.single('file'), uploadPromotionPhotoController);
+promotionRouter.post('/businesses/:businessId/promotions/:promotionId/photos', requireAuth, imageUploadIpLimit, imageUploadUserLimit, requireTrustedOrigin, upload.single('file'), uploadPromotionPhotoController);
 promotionRouter.delete('/businesses/:businessId/promotions/:promotionId/photos/:photoId', requireAuth, requireTrustedOrigin, deletePromotionPhotoController);
