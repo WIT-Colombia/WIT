@@ -128,7 +128,7 @@ describe('Ficha administrativa del negocio', () => {
       actor: { displayName: 'Responsable autorizado' },
       previousState: { visibilityStatus: 'VISIBLE' }, newState: { visibilityStatus: 'HIDDEN' },
     };
-    api.getRecordHistory.mockImplementation(async (_id: string, page: number, filters?: { kind: string }) => ({
+    api.getRecordHistory.mockImplementation(async (_id: string, page: number) => ({
       history: [event], pagination: { page, pageSize: 12, total: 15, totalPages: 2 },
     }));
     setup(); await ready(); fireEvent.click(screen.getByRole('tab', { name: 'Historial administrativo' }));
