@@ -15,7 +15,6 @@ import './AdminUsersRefresh.css';
 import './AdminUsersControl.css';
 import './AdminUsersShowcase.css';
 import { adminDirectoryPageSummary } from '../utils/adminDirectoryPagination';
-import { formatNickname } from '../utils/format';
 
 const date = (value: string | null) => value
   ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value))
