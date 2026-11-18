@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
@@ -240,22 +241,14 @@ export function AdminCategoriesPage() {
     title="No pudimos cargar las categorías" message={error} retry={refresh} />;
 
   return <section className="categories-workspace" aria-labelledby="cat-title">
-    <header className="cat-page-head">
-      <div className="cat-page-title">
-        <span className="cat-eyebrow"><Icon name="tag" size={15} /> ESTRUCTURA DEL CATÁLOGO</span>
-        <h1 id="cat-title">Categorías</h1>
-        <p>Consulta la organización de los negocios y su contenido en XAMUKO.
-          Información real para identificar categorías con mayor actividad registrada.</p>
-        <div className="cat-head-tags">
+    <AdminPageHeading icon="grid" id="cat-title" title="Categorías" description={<>Consulta la organización de los negocios y su contenido en XAMUKO.
+          Información real para identificar categorías con mayor actividad registrada.</>} actions={<button className="cat-refresh" type="button" onClick={refresh} disabled={loading}>
+        <Icon name="refresh" size={17} /> {loading ? 'Actualizando…' : 'Actualizar datos'}
+      </button>}><div className="cat-head-tags">
           <span><Icon name="database" size={14} /> Datos del catálogo</span>
           <span><Icon name="shield" size={14} /> Vista de consulta</span>
           <span><Icon name="check" size={14} /> Los ceros se muestran</span>
-        </div>
-      </div>
-      <button className="cat-refresh" type="button" onClick={refresh} disabled={loading}>
-        <Icon name="refresh" size={17} /> {loading ? 'Actualizando…' : 'Actualizar datos'}
-      </button>
-    </header>
+        </div></AdminPageHeading>
 
     {categories.length > 0 && !stats.complete && <div className="cat-warning cat-warning--info" role="status">
       <Icon name="database" size={18} /><span>El servidor actual todavía no ofrece

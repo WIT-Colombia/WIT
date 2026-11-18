@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Icon } from '../components/Icon';
 import { Panel, StatePanel } from '../components/common';
@@ -388,27 +389,19 @@ export function AdminZonesPage() {
     message={error || 'No se recibió información del servicio.'} retry={refreshData} />;
   const total = data.municipalities.length;
   return <section className="zones-workspace" aria-labelledby="zones-title">
-    <header className="zones-page-header">
-      <div className="zones-page-heading">
-        <span className="zones-eyebrow"><Icon name="globe" size={15} /> CONTROL DE EXPANSIÓN · COLOMBIA</span>
-        <h1 id="zones-title">Zonas y expansión territorial</h1>
-        <p>Administra dónde crece XAMUKO y programa nuevas aperturas sin afectar los registros nacionales
-          ni la visibilidad de los negocios virtuales.</p>
-        <div className="zones-header-facts">
-          <span><Icon name="check" size={14} /> Registro nacional</span>
-          <span><Icon name="globe" size={14} /> Virtuales disponibles en Colombia</span>
-          <span><Icon name="clock" size={14} /> Hora oficial de Colombia</span>
-        </div>
-      </div>
-      <div className="zones-page-actions">
+    <AdminPageHeading icon="globe" id="zones-title" title="Zonas y expansión territorial" description={<>Administra dónde crece XAMUKO y programa nuevas aperturas sin afectar los registros nacionales
+          ni la visibilidad de los negocios virtuales.</>} actions={<div className="zones-page-actions">
         <span className="zones-last-sync"><Icon name="clock" size={14} />
           Actualizado: {formatDate(data.serverTime)}</span>
         <button className="secondary-button zones-refresh-button" type="button"
           disabled={loading} onClick={refreshData}>
           <Icon name="refresh" size={17} />{loading ? 'Actualizando…' : 'Actualizar datos'}
         </button>
-      </div>
-    </header>
+      </div>}><div className="zones-header-facts">
+          <span><Icon name="check" size={14} /> Registro nacional</span>
+          <span><Icon name="globe" size={14} /> Virtuales disponibles en Colombia</span>
+          <span><Icon name="clock" size={14} /> Hora oficial de Colombia</span>
+        </div></AdminPageHeading>
     {error && <div className="zones-error" role="alert"><Icon name="flag" size={17} />
       <span>No se pudo actualizar la información. Se muestran los últimos datos obtenidos: {error}</span>
       <button type="button" className="secondary-button" onClick={refreshData}>Reintentar</button>

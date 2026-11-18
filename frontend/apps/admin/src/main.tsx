@@ -14,5 +14,6 @@ import "./styles/enterprise-refresh.css";
 import "./styles/sidebar.css";
 import "./styles/workbench.css";
 import "./styles/typography.css";
+import "./styles/page-heading.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><BrowserRouter><App /></BrowserRouter></React.StrictMode>);

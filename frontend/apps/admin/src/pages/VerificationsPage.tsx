@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { decideVerification, fetchVerificationDocument, listVerificationRequests, type AdminVerificationRequest } from '../services/adminApiClient';
 import { Icon } from '../components/Icon';
@@ -72,7 +73,7 @@ export function VerificationsPage() {
     finally{setBusy(false);}
   };
   return <section className="vr-page" aria-labelledby="vr-title">
-    <header className="admin-section-heading"><h1 id="vr-title">Verificaciones</h1></header>
+    <AdminPageHeading icon="shield" id="vr-title" title="Verificaciones" />
     <div className="vr-stats"><article><Icon name="shield" size={21}/><div><strong>{counts.pending}</strong><span>Pendientes de revisión</span></div></article>
       <article><Icon name="file" size={21}/><div><strong>{counts.information}</strong><span>Esperando información</span></div></article></div>
     <div className="vr-toolbar"><label>Buscar negocio<input type="search" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Nombre comercial" /></label>

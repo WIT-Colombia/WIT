@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useCallback, useEffect, useState } from "react";
 import {
   acknowledgeFinanceAlert,
@@ -170,17 +171,14 @@ export function FinancialManagementPage() {
   };
   return (
     <section className="finance-page">
-      <header className="admin-section-heading">
-        <h1>Control financiero</h1>
-        <div className="ad-finance-exports">
+      <AdminPageHeading icon="chart" title="Control financiero" actions={<div className="ad-finance-exports">
           <button className="ad-button" onClick={() => download("csv")}>
             <Icon name="download" size={16}/>CSV
           </button>
           <button className="ad-button" onClick={() => download("xlsx")}>
             <Icon name="download" size={16}/>XLSX
           </button>
-        </div>
-      </header>
+        </div>} />
       <div className="ad-summary-grid" aria-label="Resumen de gastos tecnológicos">
         <article><span className="ad-summary-icon"><Icon name="card"/></span><div><small>Consumo registrado en COP</small><strong>{summary ? cop.format(summary.totals.cop) : '—'}</strong><span>Periodo consultado · moneda local</span></div></article>
         <article><span className="ad-summary-icon ad-summary-icon--blue"><Icon name="chart"/></span><div><small>Consumo neto en USD</small><strong>{summary ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'USD' }).format(summary.totals.usd) : '—'}</strong><span>Periodo consultado · después de créditos</span></div></article>

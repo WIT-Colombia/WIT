@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
@@ -167,19 +168,12 @@ export function PioneersPage(){
   if(!allowed)return <StatePanel kind="error" title="Acceso restringido"
     message="Necesitas el permiso PIONEER_MANAGE para gestionar los reconocimientos."/>;
   return <section className="pioneers-workspace pioneer-control-page pioneer-premium" aria-labelledby="pioneer-title">
-    <header className="pioneer-premium-header">
-      <div className="pioneer-premium-heading">
-        <span className="pioneer-premium-heading-icon" aria-hidden="true"><Icon name="award" size={28}/></span>
-        <div><h1 id="pioneer-title">Negocios Pioneros</h1>
-          <p>Gestiona los reconocimientos, la identidad de las marcas y las reclamaciones registradas.</p></div>
-      </div>
-      <div className="pioneer-premium-actions">
+    <AdminPageHeading id="pioneer-title" title="Negocios Pioneros" icon="award" description="Gestiona los reconocimientos, la identidad de las marcas y las reclamaciones registradas." actions={<div className="pioneer-premium-actions">
         <a href="#pioneer-analytics-title" className="secondary-button"><Icon name="chart" size={17}/> Ver evolución</a>
         <button type="button" className="primary" onClick={()=>changeTab('claims')}>
           <Icon name="flag" size={17}/> Reclamaciones{claims.length>0?' ('+number(claims.length)+')':''}
         </button>
-      </div>
-    </header>
+      </div>} />
     {loading&&!data?<StatePanel kind="loading" title="Cargando Pioneros" message="Consultando registros reales."/>:
       error?<StatePanel kind="error" title="No fue posible consultar Pioneros" message={error} retry={retry}/>:
       !data?<StatePanel kind="empty" title="Registro no disponible" message="No se recibió información del servidor."/>:<>

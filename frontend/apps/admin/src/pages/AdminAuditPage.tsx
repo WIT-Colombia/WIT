@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
@@ -97,15 +98,9 @@ export function AdminAuditPage() {
     <p>Necesitas el permiso de lectura de auditoría para consultar las actuaciones administrativas.</p>
   </div></main>;
   return <main className="xa-audit-workspace">
-    <header className="xa-audit-heading">
-      <div><span className="xa-audit-eyebrow"><Icon name="shield" size={16}/> CONFIGURACIÓN Y SEGURIDAD</span>
-        <h1>Auditoría</h1>
-        <p>Consulta las decisiones de visibilidad, verificación y suscripción de los negocios, con sus responsables, motivos y estados anterior y nuevo.</p>
-      </div>
-      <button className="xa-audit-refresh" type="button" onClick={result.retry} disabled={result.loading}>
+    <AdminPageHeading icon="shield" title="Auditoría" description="Consulta las decisiones de visibilidad, verificación y suscripción de los negocios, con sus responsables, motivos y estados anterior y nuevo." actions={<button className="xa-audit-refresh" type="button" onClick={result.retry} disabled={result.loading}>
         <Icon name="refresh" size={17}/> Actualizar
-      </button>
-    </header>
+      </button>} />
     <div className="xa-audit-toolbar">
       <form onSubmit={searchAudit}>
         <label htmlFor="xa-audit-search">Buscar negocio</label>

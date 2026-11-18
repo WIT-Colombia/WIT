@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
@@ -161,10 +162,7 @@ export function AdminBusinessesPage() {
     </button>;
 
   return <div className="businesses-page abv1">
-    <header className="abv1-heading">
-      <span className="abv1-heading-icon"><Icon name="store" size={32} /></span>
-      <div><h1 id="businesses-page-title">Negocios</h1><p>Gestiona, verifica y administra los negocios registrados en Xamuko.</p></div>
-    </header>
+    <AdminPageHeading id="businesses-page-title" title="Negocios" icon="store" description="Gestiona, verifica y administra los negocios registrados en Xamuko." />
 
     <section className="abv1-kpis" aria-label="Indicadores de negocios registrados">
       {cards.map(card => <article className={'abv1-kpi abv1-kpi-' + card.tone} key={card.key}>

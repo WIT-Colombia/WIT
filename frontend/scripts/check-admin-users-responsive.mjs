@@ -115,7 +115,7 @@ try {
       await page.goto(origin + '/users', { waitUntil: 'domcontentloaded' });
       await page.getByRole('heading', { name: 'Usuarios', exact: true }).waitFor({ state: 'visible', timeout: 15000 });
       const userHeading = await page.evaluate(() => {
-        const icon = document.querySelector('.au-showcase-hero-icon')?.getBoundingClientRect();
+        const icon = document.querySelector('.admin-users-page .admin-page-heading-icon')?.getBoundingClientRect();
         const title = document.querySelector('#au-title')?.getBoundingClientRect();
         return { iconRight: icon?.right ?? Infinity, titleLeft: title?.left ?? 0 };
       });

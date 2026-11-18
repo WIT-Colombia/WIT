@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
@@ -172,14 +173,7 @@ export function AdminUsersPage() {
   ]).sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 4);
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permisos de gestión administrativa para consultar usuarios."/>;
   return <div className="admin-users-page au-page">
-    <header className="admin-section-heading au-showcase-hero">
-      <div className="au-showcase-title-row">
-        <span className="au-showcase-hero-icon" aria-hidden="true"><Icon name="users" size={34}/></span>
-        <div className="au-showcase-hero-copy"><h1 id="au-title">Usuarios</h1>
-          <p>Esta sección centraliza la gestión de usuarios, la seguridad, la actividad y los estados de las cuentas.</p>
-        </div>
-      </div>
-    </header>
+    <AdminPageHeading icon="users" id="au-title" title="Usuarios" description="Esta sección centraliza la gestión de usuarios, la seguridad, la actividad y los estados de las cuentas." />
     {notice && <div className="au-success-notice" role="status"><Icon name="check" size={18}/>{notice}</div>}
     <AdminUserOperationsOverview data={overview} loading={overviewLoading} error={overviewError} retry={()=>setRevision(value=>value+1)}/>
     <section className="au-directory" aria-labelledby="au-directory-title">

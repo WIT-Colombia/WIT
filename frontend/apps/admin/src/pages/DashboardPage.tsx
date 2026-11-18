@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useEffect, useRef, useState, type PointerEvent as ChartPointerEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
@@ -146,9 +147,7 @@ export function DashboardPage() {
   const periodLabel = stats?.monthly.length ? `Últimos ${stats.monthly.length} meses` : empty;
 
   return <div className="xa-dashboard">
-    <header className="admin-section-heading">
-      <h1>Resumen ejecutivo</h1>
-    </header>
+    <AdminPageHeading icon="home" title="Resumen ejecutivo" />
     <section className="xa-metrics" aria-label="Indicadores principales">{cards.map((card, index) => {
       const value = metricValues[index];
       const verificationUnavailable = index === 2 && !can(admin, 'verification:write');
