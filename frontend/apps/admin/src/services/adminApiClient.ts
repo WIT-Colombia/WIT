@@ -168,7 +168,7 @@ export type AdminUserPage = {
 };
 export type AdminUserOverview = {
   generatedAt: string; total: number; active: number; suspended: number; deleted: number;
-  owners: number; collaborators: number; adminCount: number;
+  owners: number; collaborators: number; adminCount: number; linkedBusinesses?: number; cities?: string[];
   active30?: number; dormant90?: number; neverLoggedIn?: number; emailVerified?: number; googleUsers?: number;
   series: Array<{ month: string; registrations: number }>; definition: string;
 };
@@ -190,7 +190,7 @@ export type AdminUserProfile = {
   deletion: { allowed: boolean; blockers: string[] };
 };
 export type AdminUserFilters = {
-  q?: string; page?: number; status?: string; relation?: string;
+  q?: string; page?: number; status?: string; relation?: string; city?: string;
   provider?: string; emailVerified?: string; admin?: string; activity?: string;
   registeredFrom?: string; registeredTo?: string; lastLoginFrom?: string; lastLoginTo?: string; order?: string;
 };
@@ -211,6 +211,7 @@ export function listAdminUsers(filters: AdminUserFilters = {}) {
   if (filters.q) params.set('q', filters.q);
   if (filters.status) params.set('status', filters.status);
   if (filters.relation) params.set('relation', filters.relation);
+  if (filters.city) params.set('city', filters.city);
   for (const key of ['provider','emailVerified','admin','activity','registeredFrom','registeredTo','lastLoginFrom','lastLoginTo','order'] as const)
     if (filters[key]) params.set(key, filters[key]!);
   return request<AdminUserPage>('/admin/users?' + params.toString());
