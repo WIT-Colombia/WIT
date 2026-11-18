@@ -118,16 +118,32 @@ export function changeAdminBusinessPlan(id: string, plan: 'BASIC' | 'PRO', reaso
     '/admin/businesses/' + encodeURIComponent(id) + '/plan',
     { method: 'POST', body: JSON.stringify({ plan, reason, confirmation }) });
 }
+export type AdminBusinessReportStatus = 'PENDING' | 'UNDER_REVIEW' | 'RESOLVED' | 'REJECTED';
 export type AdminRecordBusinessReport = {
-  id: string; reason: string; description: string; status: string; decisionNote: string | null;
+  id: string; reason: string; description: string; status: AdminBusinessReportStatus; decisionNote: string | null;
   createdAt: string; updatedAt: string; reporter: { displayName: string } | null;
 };
-export function listRecordBusinessReports(id: string, page = 1, status = '') {
-  const query = new URLSearchParams({ page: String(page), status });
-  return request<{ reports: AdminRecordBusinessReport[];
+export type AdminBusinessReportFilters = { status?: AdminBusinessReportStatus | ''; reason?: string; q?: string; from?: string; to?: string };
+export type AdminBusinessReportSummary = {
+  total: number; pending: number; reviewing: number; resolved: number; rejected: number; finalized: number;
+};
+export function listRecordBusinessReports(id: string, page = 1, filters: AdminBusinessReportFilters = {}) {
+  const query = new URLSearchParams({ page: String(page), status: filters.status ?? '', reason: filters.reason ?? '',
+    q: filters.q ?? '', from: filters.from ?? '', to: filters.to ?? '' });
+  return request<{ reports: AdminRecordBusinessReport[]; summary: AdminBusinessReportSummary;
     pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
     '/admin/businesses/' + encodeURIComponent(id) + '/reports?' + query);
 }
+export type AdminBusinessReportCaseHistory = {
+  id: string; action: string; createdAt: string; reason: string | null;
+  actor: { displayName: string } | null; previousStatus: string | null; newStatus: string | null;
+};
+export type AdminBusinessReportCase = {
+  report: AdminRecordBusinessReport & { business: { id: string; publicId: string; name: string } };
+  history: AdminBusinessReportCaseHistory[];
+};
+export const getBusinessReportCase = (id: string) =>
+  request<AdminBusinessReportCase>('/admin/business-reports/' + encodeURIComponent(id));
 export async function getAdminBusiness(id: string) { return (await request<{ business: AdminBusinessRecord }>(`/admin/businesses/${encodeURIComponent(id)}`)).business; }
 export function deleteAdminBusiness(id: string, reason: string, confirmation: string) {
   return request<{ id: string; status: 'DELETED'; message: string }>(
@@ -528,6 +544,18 @@ export type OperationalRecord = {
   targetPath?: string; targetLabel?: string;
 };
 export type OperationalResult = { records: OperationalRecord[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } };
+
+export async function getOperationalBusinessReport(id: string): Promise<OperationalRecord> {
+  const value = await getBusinessReportCase(id);
+  const r = value.report;
+  return {
+    id: r.id, title: r.business.name, category: r.reason, description: r.description,
+    status: r.status, decisionNote: r.decisionNote, createdAt: r.createdAt,
+    reporter: r.reporter?.displayName ?? 'Visitante', context: 'Negocio reportado',
+    targetPath: '/businesses/' + encodeURIComponent(r.business.id),
+    targetLabel: 'Abrir ficha del negocio',
+  };
+}
 
 export async function listOperationalRecords(kind: OperationalKind, filters: { page?: number; status?: string; q?: string } = {}): Promise<OperationalResult> {
   const p = new URLSearchParams({ page: String(filters.page ?? 1) });

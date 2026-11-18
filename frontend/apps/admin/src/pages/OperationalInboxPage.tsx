@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { decideOperationalRecord, listOperationalRecords, type OperationalKind, type OperationalRecord, type OperationalStatus } from '../services/adminApiClient';
+import { Link, useSearchParams } from 'react-router-dom';
+import { decideOperationalRecord, getOperationalBusinessReport, listOperationalRecords, type OperationalKind, type OperationalRecord, type OperationalStatus } from '../services/adminApiClient';
 import './OperationalInboxPage.css';
 import { Icon } from '../components/Icon';
 import { SupportDecisionDialog } from '../components/SupportDecisionDialog';
@@ -30,6 +30,9 @@ const date = (value: string) => {
 
 export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
   const canDecide = getSession()?.permissions?.includes('content:moderate:write') ?? false;
+  const [params] = useSearchParams();
+  const focusedId = kind === 'business-reports' ? params.get('report') : null;
+  const [focusedRecord, setFocusedRecord] = useState<OperationalRecord | null>(null);
   const [records, setRecords] = useState<OperationalRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [actionCounts, setActionCounts] = useState({ pending: 0, reviewing: 0 });
@@ -70,8 +73,22 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
     return () => { active = false; };
   }, [kind, page, status, search, confirmation]);
 
-  useEffect(() => { setSelected(null); setConfirmation(''); setNote(''); }, [kind, page, status, search]);
-  const chosen = records.find(record => record.id === selected);
+  useEffect(() => {
+    setSelected(focusedId || null); setConfirmation(''); setNote('');
+  }, [kind, page, status, search, focusedId]);
+  useEffect(() => {
+    if (!focusedId) { setFocusedRecord(null); return; }
+    let active = true;
+    void getOperationalBusinessReport(focusedId).then(record => {
+      if (!active) return;
+      setFocusedRecord(record); setSelected(record.id); setNote(record.decisionNote ?? '');
+    }).catch(cause => {
+      if (active) setError(cause instanceof Error ? cause.message : 'No se pudo consultar el expediente solicitado.');
+    });
+    return () => { active = false; };
+  }, [focusedId]);
+  const chosen = records.find(record => record.id === selected)
+    ?? (focusedRecord?.id === selected ? focusedRecord : undefined);
   async function decide(next: OperationalStatus, justification: string) {
     if (!chosen || busy) return;
     setBusy(true); setError(''); setConfirmation('');
@@ -80,6 +97,7 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
       setDecision(null); setNote('');
       setConfirmation('Decisión registrada. Se generó una notificación interna para los destinatarios identificados.');
       await load();
+      if (focusedId === chosen.id) setFocusedRecord(await getOperationalBusinessReport(chosen.id));
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar la decisión.'); throw cause; }
     finally { setBusy(false); }
   }
@@ -118,7 +136,7 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
         <td><button type="button" aria-expanded={selected === record.id} onClick={() => { setSelected(current => current === record.id ? null : record.id); setNote(record.decisionNote ?? ''); }}>Ver y gestionar</button></td>
       </tr>)}</tbody>
     </table></div>}
-    {!loading && chosen && <section className="ops-detail" aria-label="Detalle de solicitud">
+    {chosen && <section className="ops-detail" aria-label="Detalle de solicitud">
       <header><div><h2>{chosen.title}</h2><small>Radicado: {chosen.id}</small></div><button type="button" onClick={() => setSelected(null)}>Cerrar</button></header>
       <dl><div><dt>Fecha</dt><dd>{date(chosen.createdAt)}</dd></div><div><dt>Solicitante</dt><dd>{chosen.reporter}</dd></div>
         <div><dt>Origen</dt><dd>{chosen.context}</dd></div><div><dt>Motivo o tema</dt><dd>{readable(chosen.category)}</dd></div>
