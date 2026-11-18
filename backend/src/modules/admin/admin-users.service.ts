@@ -31,7 +31,7 @@ export function adminUsersWhere(filters: Filters, now = new Date()): Prisma.User
   const status = allowedStatuses.includes(filters.status ?? '') ? filters.status as UserStatus : undefined;
   const relation = filters.relation === 'OWNER' || filters.relation === 'COLLABORATOR' || filters.relation === 'ANY' || filters.relation === 'NONE' ? filters.relation : undefined;
   const city = filters.city?.trim();
-  if (city && (city.length > 160 || /[\\u0000-\\u001f]/.test(city)))
+  if (city && (city.length > 160 || [...city].some(char => char.charCodeAt(0) < 32)))
     throw new AppError(400, 'ADMIN_USER_CITY_INVALID', 'Selecciona una ciudad válida.');
   const registeredFrom = validDate(filters.registeredFrom), registeredTo = validDate(filters.registeredTo, true);
   const lastLoginFrom = validDate(filters.lastLoginFrom), lastLoginTo = validDate(filters.lastLoginTo, true);
