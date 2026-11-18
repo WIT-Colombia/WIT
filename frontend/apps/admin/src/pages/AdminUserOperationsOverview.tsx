@@ -20,7 +20,29 @@ const totalValue = (value: number) => Math.max(1, value);
 export function AdminUserOperationsOverview({ data, loading, error, retry }: {
   data: AdminUserOverview | null; loading: boolean; error: string; retry: () => void;
 }) {
+  const highlights = [
+    { key: 'total', label: 'Total de usuarios', icon: 'users', tone: 'violet', hint: 'Incluye cuentas con baja lógica' },
+    { key: 'active', label: 'Activos', icon: 'check', tone: 'green', hint: 'Acceso a la plataforma habilitado' },
+    { key: 'suspended', label: 'Suspendidos', icon: 'lock', tone: 'red', hint: 'Inicio de sesión bloqueado' },
+    { key: 'owners', label: 'Usuarios propietarios', icon: 'store', tone: 'blue', hint: 'Cuentas activas con negocios propios' },
+  ] as const;
   return <section className="au-control-overview" aria-labelledby="au-control-overview-title">
+    <div className="au-showcase-kpis">
+      {highlights.map(item => {
+        const value = data?.[item.key];
+        return <article className={'au-showcase-kpi '+item.tone} key={item.key}>
+          <span className="au-showcase-kpi-icon"><Icon name={item.icon} size={29}/></span>
+          <div className="au-showcase-kpi-copy">
+            <span>{item.label}</span>
+            <strong aria-busy={loading}>{loading && !data ? '…' : typeof value === 'number' ? value.toLocaleString('es-CO') : '—'}</strong>
+            <small>{item.hint}</small>
+          </div>
+        </article>;
+      })}
+    </div>
+    <details className="au-showcase-extra">
+      <summary><Icon name="chart" size={17}/> Explorar indicadores, distribución y vinculaciones <Icon name="chevron" size={15}/></summary>
+      <div className="au-showcase-extra-content">
     <header className="au-panel-heading"><div><span className="au-eyebrow">CENTRO DE CONTROL</span><h2 id="au-control-overview-title">Estado operativo de usuarios</h2>
       <p>Indicadores calculados desde la base de datos. Las métricas no disponibles se muestran con —, nunca como cero.</p></div>
       <button type="button" className="au-outline-button" onClick={retry}><Icon name="refresh" size={16}/> Actualizar</button>
@@ -87,5 +109,7 @@ export function AdminUserOperationsOverview({ data, loading, error, retry }: {
       </div>
     </div>}
     <p className="au-control-overview-note"><Icon name="shield" size={15}/> Las métricas de actividad se basan en último inicio de sesión, no en navegación anónima ni sesiones activas.</p>
+      </div>
+    </details>
   </section>;
 }
