@@ -7,9 +7,9 @@ import { offerPrice } from './Catalog';
 import { HistoryTimeline } from './History';
 import type { RecordBusiness, RecordOffer } from '../../services/adminBusinessRecord';
 
-const api = vi.hoisted(() => ({ getRecordBusiness: vi.fn(), getRecordHistory: vi.fn(), getRecordCatalog: vi.fn(), setRecordOfferState: vi.fn(), getRecordReviews: vi.fn(), getRecordPhotos: vi.fn(), getRecordActivity: vi.fn(), changeAdminBusinessVisibility: vi.fn(), deleteAdminBusiness: vi.fn(), changeAdminBusinessVerification: vi.fn(), changeAdminBusinessPlan: vi.fn(), listRecordBusinessReports: vi.fn() }));
+const api = vi.hoisted(() => ({ getRecordBusiness: vi.fn(), getRecordHistory: vi.fn(), getRecordCatalog: vi.fn(), setRecordOfferState: vi.fn(), getRecordReviews: vi.fn(), getRecordPhotos: vi.fn(), getRecordActivity: vi.fn(), changeAdminBusinessVisibility: vi.fn(), deleteAdminBusiness: vi.fn(), changeAdminBusinessVerification: vi.fn(), changeAdminBusinessPlan: vi.fn(), listRecordBusinessReports: vi.fn(), getBusinessReportCase: vi.fn() }));
 vi.mock('../../services/adminBusinessRecord', () => api);
-vi.mock('../../services/adminApiClient', async original => ({ ...await original<typeof import('../../services/adminApiClient')>(), changeAdminBusinessVisibility: api.changeAdminBusinessVisibility, deleteAdminBusiness: api.deleteAdminBusiness, changeAdminBusinessVerification: api.changeAdminBusinessVerification, changeAdminBusinessPlan: api.changeAdminBusinessPlan, listRecordBusinessReports: api.listRecordBusinessReports }));
+vi.mock('../../services/adminApiClient', async original => ({ ...await original<typeof import('../../services/adminApiClient')>(), changeAdminBusinessVisibility: api.changeAdminBusinessVisibility, deleteAdminBusiness: api.deleteAdminBusiness, changeAdminBusinessVerification: api.changeAdminBusinessVerification, changeAdminBusinessPlan: api.changeAdminBusinessPlan, listRecordBusinessReports: api.listRecordBusinessReports, getBusinessReportCase: api.getBusinessReportCase }));
 vi.mock('../../components/businesses/BusinessRecordPhoto', () => ({ BusinessRecordPhotos: ({ children }: { children: React.ReactNode }) => children, BusinessRecordPhoto: ({ alt }: { alt: string }) => <span data-testid="record-photo">{alt}</span> }));
 let role = 'SUPER_ADMIN', permissions = ['business:write', 'catalog:read', 'content:moderate', 'content:moderate:write', 'settings:write'];
 vi.mock('../../services/adminService', () => ({ getSession: () => ({ name: 'Administración de prueba', role, permissions }) }));
@@ -27,7 +27,7 @@ describe('Ficha administrativa del negocio', () => {
       { label: '2026-11-16', views: 0, interactions: 0, offerViews: 0, reviews: 0, products: 0, services: 0 },
       { label: '2026-11-17', views: 8, interactions: 3, offerViews: 0, reviews: 0, products: 0, services: 0 }
     ],
-    definition: 'Eventos reales por fecha de Bogotá, con cero para días sin eventos.' }); api.listRecordBusinessReports.mockResolvedValue({ reports: [], pagination: { ...pagination, total: 0, totalPages: 0 } }); });
+    definition: 'Eventos reales por fecha de Bogotá, con cero para días sin eventos.' }); api.listRecordBusinessReports.mockResolvedValue({ reports: [], summary: { total: 0, pending: 0, reviewing: 0, finalized: 0, resolved: 0, rejected: 0 }, pagination: { ...pagination, total: 0, totalPages: 0 } }); });
   afterEach(cleanup);
   it('no atribuye una actuación a un administrador ficticio cuando falta su identidad', () => { render(<HistoryTimeline entries={[{ id: 'audit-1', action: 'BUSINESS_UPDATED', reason: 'Motivo registrado', comment: null, actor: null, createdAt: business.updatedAt, previousState: null, newState: null }]}/>); expect(screen.getByText('Responsable no disponible')).toBeInTheDocument(); expect(screen.queryByText('Sistema', { exact: true })).not.toBeInTheDocument(); });
   it('no muestra bloques de estado ni detalles vacíos cuando la auditoría antigua no conserva los cambios', () => {
@@ -364,18 +364,43 @@ describe('Ficha administrativa del negocio', () => {
     await waitFor(() => expect(api.getRecordHistory).toHaveBeenCalledTimes(2));
   });
   it('un negocio eliminado conserva consulta y no ofrece acciones incompatibles', async () => { api.getRecordBusiness.mockResolvedValue({ ...business, deletionStatus: 'DELETED', publicationStatus: 'UNPUBLISHED', isPro: false }); setup(); await ready(); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Eliminado'); expect(screen.queryByRole('button', { name: 'Eliminar administrativamente' })).not.toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Ocultar negocio' })).not.toBeInTheDocument(); expect(screen.getByRole('tab', { name: 'Historial administrativo' })).toBeInTheDocument(); });
-  it('permite consultar reportes desde el indicador sin salir de la ficha', async () => {
-    api.listRecordBusinessReports.mockResolvedValue({ reports: [{
+  it('consulta el seguimiento del negocio con cifras reales, filtros y vínculo al expediente específico', async () => {
+    const report = {
       id: 'report-1', reason: 'FALSE_INFORMATION', description: 'Información reportada por una persona usuaria',
       status: 'PENDING', decisionNote: null, createdAt: business.updatedAt, updatedAt: business.updatedAt,
       reporter: { displayName: 'Denunciante registrada' },
-    }], pagination });
+    };
+    api.listRecordBusinessReports.mockResolvedValue({ reports: [report],
+      summary: { total: 4, pending: 1, reviewing: 1, finalized: 2, resolved: 1, rejected: 1 },
+      pagination });
+    api.getBusinessReportCase.mockResolvedValue({ report: {
+      ...report, business: { id: business.id, name: business.name, publicId: business.publicId },
+    }, history: [{
+      id: 'audit-1', action: 'BUSINESS_REPORT_MODERATED', createdAt: business.updatedAt,
+      actor: { displayName: 'Administradora de prueba' }, reason: 'Revisión documental',
+      previousStatus: 'PENDING', newStatus: 'UNDER_REVIEW',
+    }] });
     setup(); await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Consultar reportes de este negocio' }));
-    expect(await screen.findByRole('heading', { name: 'Reportes del negocio' })).toBeInTheDocument();
-    expect(screen.getByText('Información falsa')).toBeInTheDocument();
-    expect(screen.getByText('Denunciante registrada')).toBeInTheDocument();
-    expect(api.listRecordBusinessReports).toHaveBeenCalledWith(business.id, 1, '');
+    const panel = screen.getByRole('tabpanel', { name: 'Reportes' });
+    expect(await within(panel).findByRole('heading', { name: 'Reportes del negocio' })).toBeInTheDocument();
+    expect(within(panel).getByRole('article', { name: 'Reporte: Información falsa' })).toBeInTheDocument();
+    expect(within(panel).getByText('Finalizados: 1 resueltos y 1 rechazados. Son decisiones distintas.')).toBeInTheDocument();
+    expect(within(panel).getByRole('link', { name: /Gestionar reporte/ }))
+      .toHaveAttribute('href', '/business-reports?report=report-1');
+    expect(api.listRecordBusinessReports).toHaveBeenCalledWith(business.id, 1,
+      { status: '', reason: '', q: '', from: '', to: '' });
+    fireEvent.click(within(panel).getByRole('button', { name: 'Ver detalle' }));
+    expect(await within(panel).findByText('Denunciante registrada')).toBeInTheDocument();
+    expect(within(panel).getByText('Revisión documental')).toBeInTheDocument();
+    expect(within(panel).getByText('Administradora de prueba')).toBeInTheDocument();
+    expect(within(panel).queryByText('Identificador')).not.toBeInTheDocument();
+    fireEvent.click(within(panel).getByRole('button', { name: 'Pendientes', pressed: false }));
+    await waitFor(() => expect(api.listRecordBusinessReports).toHaveBeenCalledWith(business.id, 1,
+      { status: 'PENDING', reason: '', q: '', from: '', to: '' }));
+    fireEvent.change(within(panel).getByLabelText('Filtrar por motivo'), { target: { value: 'FALSE_INFORMATION' } });
+    await waitFor(() => expect(api.listRecordBusinessReports).toHaveBeenCalledWith(business.id, 1,
+      { status: 'PENDING', reason: 'FALSE_INFORMATION', q: '', from: '', to: '' }));
   });
   it('abre las dos opciones y exige un motivo antes de marcar Verificado', async () => {
     api.changeAdminBusinessVerification.mockResolvedValue({ verificationStatus: 'APPROVED', message: 'Negocio verificado' });
