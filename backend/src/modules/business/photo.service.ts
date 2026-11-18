@@ -2,6 +2,7 @@ import type { PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { findBusinessForPhotoRead, findBusinessForPhotoWrite, requireBusinessPhotoPermission } from './photo-access.js';
+import { assertSafePhotoDimensions } from './photo-validation.js';
 import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, isPhotoMissingError, photoMimeType, readPhoto, removePhoto, savePhoto } from './photo-storage.js';
 
 const db: PrismaClient = prisma;
@@ -16,6 +17,7 @@ function ensureFile(file: UploadedPhoto | undefined): asserts file is UploadedPh
   const isPng = file.mimetype === 'image/png' && file.buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
   const isWebp = file.mimetype === 'image/webp' && file.buffer.subarray(0, 4).toString('ascii') === 'RIFF' && file.buffer.subarray(8, 12).toString('ascii') === 'WEBP';
   if (!isJpeg && !isPng && !isWebp) throw new AppError(422, 'PHOTO_FORMAT_UNSUPPORTED', 'El contenido de la fotografía no coincide con su formato.');
+  assertSafePhotoDimensions(file.buffer, file.mimetype);
 }
 
 function serializePhoto(businessId: string, photo: any) {
