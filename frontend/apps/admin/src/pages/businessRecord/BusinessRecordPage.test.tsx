@@ -30,6 +30,41 @@ describe('Ficha administrativa del negocio', () => {
     definition: 'Eventos reales por fecha de Bogotá, con cero para días sin eventos.' }); api.listRecordBusinessReports.mockResolvedValue({ reports: [], pagination: { ...pagination, total: 0, totalPages: 0 } }); });
   afterEach(cleanup);
   it('no atribuye una actuación a un administrador ficticio cuando falta su identidad', () => { render(<HistoryTimeline entries={[{ id: 'audit-1', action: 'BUSINESS_UPDATED', reason: 'Motivo registrado', comment: null, actor: null, createdAt: business.updatedAt, previousState: null, newState: null }]}/>); expect(screen.getByText('Responsable no disponible')).toBeInTheDocument(); expect(screen.queryByText('Sistema', { exact: true })).not.toBeInTheDocument(); });
+  it('no muestra bloques de estado ni detalles vacíos cuando la auditoría antigua no conserva los cambios', () => {
+    render(<HistoryTimeline entries={[{
+      id: 'legacy-1', action: 'BUSINESS_UPDATED', createdAt: business.updatedAt,
+      reason: null, comment: null, actor: { displayName: 'Colaboradora registrada' },
+      previousState: null, newState: null,
+    }]}/>);
+    expect(screen.getByText('El registro original no incluye el detalle del cambio.')).toBeInTheDocument();
+    expect(screen.getByText('Colaboradora registrada')).toBeInTheDocument();
+    expect(screen.queryByText('No conservado')).not.toBeInTheDocument();
+    expect(screen.queryByText('Estado anterior')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sin motivo registrado.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ver detalles del registro')).not.toBeInTheDocument();
+  });
+  it('rescata la descripción histórica que cambió, sin mostrar nombres que no cambiaron', () => {
+    render(<HistoryTimeline entries={[{
+      id: 'historical-2', action: 'BUSINESS_UPDATED', createdAt: business.updatedAt,
+      reason: null, comment: null, actor: null,
+      previousState: { name: 'Empresa', description: 'Texto anterior' },
+      newState: { name: 'Empresa', description: 'Texto actualizado', changedFields: 'Descripción' },
+    }]}/>);
+    const transition = screen.getByLabelText('Cambio de Descripción');
+    expect(within(transition).getByText('Texto anterior')).toBeInTheDocument();
+    expect(within(transition).getByText('Texto actualizado')).toBeInTheDocument();
+    expect(screen.getByText('Campos modificados: Descripción')).toBeInTheDocument();
+  });
+  it('presenta los campos auditados sin inventar valores privados de contacto', () => {
+    render(<HistoryTimeline entries={[{
+      id: 'new-3', action: 'BUSINESS_UPDATED', createdAt: business.updatedAt,
+      reason: null, comment: null, actor: null, previousState: {},
+      newState: { changedFields: 'Teléfono, WhatsApp' },
+    }]}/>);
+    expect(screen.getByText('Campos modificados: Teléfono, WhatsApp')).toBeInTheDocument();
+    expect(screen.queryByText('Estado anterior')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ver detalles del registro')).not.toBeInTheDocument();
+  });
   it('impide consultar la ficha sin permiso de negocios', () => { permissions = []; setup(); expect(screen.getByRole('heading', { name: 'Acceso restringido' })).toBeInTheDocument(); expect(api.getRecordBusiness).not.toHaveBeenCalled(); });
   it('presenta identidad e indicadores procedentes de la respuesta', async () => { setup(); await ready(); expect(screen.getByRole('heading', { name: business.name })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Referidos'); expect(screen.getByRole('region', { name: 'Indicadores principales' })).toHaveTextContent('Business PRO'); expect(screen.getAllByText('Propietaria registrada').length).toBeGreaterThan(0); expect(screen.getAllByRole('tab')).toHaveLength(5); });
   it('muestra el Resumen premium con datos reales y sin el aviso Sobre este resumen', async () => {

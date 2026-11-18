@@ -29,7 +29,14 @@ export function actionName(action: string) { return ({
   BUSINESS_VISIBILITY_SET_VISIBLE: 'Negocio reactivado desde Business',
   BUSINESS_VISIBILITY_SET_HIDDEN: 'Negocio ocultado desde Business',
   BUSINESS_CREATED: 'Registro del negocio',
-  BUSINESS_UPDATED: 'Información actualizada',
+  BUSINESS_UPDATED: 'Información del negocio actualizada',
+  BUSINESS_PUBLISHED_AUTOMATICALLY: 'Publicación automática del negocio',
+  BUSINESS_MODALITY_CREATED: 'Modalidad del negocio registrada',
+  BUSINESS_MODALITY_ACTIVATED: 'Modalidad del negocio activada',
+  BUSINESS_MODALITY_PAUSED: 'Modalidad del negocio pausada',
+  BUSINESS_DELETION_REQUESTED: 'Eliminación solicitada',
+  BUSINESS_RECOVERED: 'Negocio recuperado',
+  PIONEER_ASSIGNED_AUTOMATICALLY: 'Reconocimiento pionero asignado',
   BUSINESS_PUBLISHED: 'Publicación del negocio',
   BUSINESS_VISIBILITY_EXPIRED: 'Vigencia vencida',
   BUSINESS_VERIFICATION_REQUESTED: 'Verificación solicitada',
@@ -67,6 +74,10 @@ const fields: Record<string, string> = {
   verificationStatus: 'Verificación', administrativeRestriction: 'Restricción administrativa',
   completeness: 'Progreso de la ficha', plan: 'Suscripción',
   offerName: 'Producto o servicio', offerCode: 'Código de publicación', offerState: 'Estado del contenido',
+  description: 'Descripción', sede: 'Sede', cityName: 'Ciudad', regionName: 'Región',
+  adultOnly: 'Clasificación para adultos', phonePublic: 'Teléfono público',
+  whatsappPublic: 'WhatsApp público', emailPublic: 'Correo público',
+  status: 'Estado de modalidad', type: 'Tipo de modalidad', changedFields: 'Campos modificados',
 };
 type StateValue = string | number | boolean | null;
 function stateLabel(key: string, value: StateValue | undefined): string {
@@ -74,7 +85,7 @@ function stateLabel(key: string, value: StateValue | undefined): string {
   if (value === null) return key === 'administrativeRestriction' ? 'Sin restricción' : 'No registrado';
   if (typeof value === 'boolean') return value ? 'Sí' : 'No';
   if (typeof value === 'number') return String(value) + (key === 'completeness' ? '%' : '');
-  if (['name', 'offerName', 'offerCode'].includes(key)) return value;
+  if (['name', 'offerName', 'offerCode', 'description', 'sede', 'cityName', 'regionName', 'changedFields'].includes(key)) return value;
   if (key === 'plan') return value === 'PRO' ? 'Business PRO' : value === 'BASIC' ? 'Básico' : label(value);
   if (key === 'verificationStatus' && value === 'NONE') return 'Sin verificar';
   return label(value);
@@ -86,24 +97,36 @@ function State({ value }: { value: RecordState }) {
     <div key={key}><dt>{fields[key] || 'Dato registrado'}</dt><dd>{stateLabel(key, val)}</dd></div>)}</dl>;
 }
 
-function mainChange(entry: RecordHistory): { before: string; after: string; field: string } {
+function mainChange(entry: RecordHistory): { before: string; after: string; field: string } | null {
   const group = groupFor(entry.action);
   if (group === 'REGISTRATION') return { before: 'No registrado', after: 'Registrado', field: 'Registro' };
   const preferred = group === 'VERIFICATION' ? ['verificationStatus']
     : group === 'SUBSCRIPTION' ? ['plan']
       : group === 'OFFER' ? ['offerState', 'publicationStatus']
         : group === 'VISIBILITY' ? ['visibilityStatus', 'administrativeRestriction', 'publicationStatus']
-          : ['name', 'lifecycleStatus', 'deletionStatus', 'publicationStatus', 'completeness', 'offerName'];
+          : ['name', 'description', 'sede', 'cityName', 'regionName', 'adultOnly',
+              'phonePublic', 'whatsappPublic', 'emailPublic', 'deletionStatus',
+              'lifecycleStatus', 'publicationStatus', 'completeness', 'offerName', 'status'];
   const before = entry.previousState, after = entry.newState;
-  const field = preferred.find(key => before?.[key] !== undefined || after?.[key] !== undefined)
-    ?? Object.keys(after || before || {})[0];
-  if (!field) return { before: 'No conservado', after: 'No conservado', field: 'Estado' };
-  const previous = stateLabel(field, before?.[field]);
-  let next = stateLabel(field, after?.[field]);
+  if (!before || !after) return null;
+  // Only compare explicitly persisted, actually different values. A repeated
+  // autosave or an old audit with stripped fields must never fabricate a delta.
+  const fieldsToCheck = [...new Set([...preferred, ...Object.keys(after), ...Object.keys(before)])];
+  const field = fieldsToCheck.find(key => key !== 'changedFields'
+    && Object.prototype.hasOwnProperty.call(before, key)
+    && Object.prototype.hasOwnProperty.call(after, key)
+    && before[key] !== after[key]);
+  if (!field) return null;
+  const previous = stateLabel(field, before[field]);
+  let next = stateLabel(field, after[field]);
   if (group === 'VISIBILITY' && entry.action.includes('SUSPEND')
-    && after?.administrativeRestriction === 'SUSPENDED') next = 'Suspendido';
+    && after.administrativeRestriction === 'SUSPENDED') next = 'Suspendido';
   return { before: previous, after: next, field: fields[field] ?? 'Estado' };
 }
+function hasSnapshot(value: RecordState): boolean {
+  return Boolean(value && Object.keys(value).some(key => key !== 'changedFields'));
+}
+
 function toneFor(value: string): string {
   if (/suspend|ocult|rechaz|elimin|desactivad|vencid/i.test(value)) return 'red';
   if (/pendiente|revisi[oó]n|sin verificar|solicit/i.test(value)) return 'amber';
@@ -120,9 +143,13 @@ export function HistoryTimeline({ entries, compact = false }: { entries: RecordH
     {entries.map(entry => {
       const style = presentation[groupFor(entry.action)];
       const change = mainChange(entry);
+      const changedFields = typeof entry.newState?.changedFields === 'string' ? entry.newState.changedFields : '';
+      const hasStates = hasSnapshot(entry.previousState) || hasSnapshot(entry.newState);
+      const expandable = hasStates || Boolean(entry.reason && entry.comment);
       return <li className="bd-history-item" key={entry.id}>
         <span className="bd-history-point" aria-hidden="true"/>
-        <article className="bd-history-entry" aria-label={actionName(entry.action)}>
+        <article className={'bd-history-entry' + (!change ? ' bd-history-entry--no-comparison' : '')}
+          aria-label={actionName(entry.action)}>
           <div className="bd-history-entry-intro">
             <span className={'bd-history-event-icon bd-history-tone--' + style.tone}><Icon name={style.icon} size={23}/></span>
             <div className="bd-history-entry-identity">
@@ -133,18 +160,23 @@ export function HistoryTimeline({ entries, compact = false }: { entries: RecordH
           </div>
           <div className="bd-history-entry-context">
             <p><Icon name="users" size={15}/><span>Responsable: <strong>{actorFor(entry)}</strong></span></p>
-            <p><Icon name="file" size={15}/><span>Motivo: {entry.reason || entry.comment || 'Sin motivo registrado.'}</span></p>
+            {entry.reason
+              ? <p><Icon name="file" size={15}/><span>Motivo: {entry.reason}</span></p>
+              : entry.comment && <p><Icon name="file" size={15}/><span>Observación: {entry.comment}</span></p>}
+            {changedFields && <p><Icon name="file" size={15}/><span>Campos modificados: {changedFields}</span></p>}
+            {!change && !changedFields && <p className="bd-history-missing-detail">
+              <Icon name="info" size={15}/><span>El registro original no incluye el detalle del cambio.</span></p>}
           </div>
-          <div className="bd-history-transition" aria-label={'Cambio de ' + change.field}>
+          {change && <div className="bd-history-transition" aria-label={'Cambio de ' + change.field}>
             <div><small>Estado anterior</small><span className={'bd-history-state-pill bd-history-state-pill--' + toneFor(change.before)}>{change.before}</span></div>
             <Icon name="arrow" size={18}/>
             <div><small>Estado nuevo</small><span className={'bd-history-state-pill bd-history-state-pill--' + toneFor(change.after)}>{change.after}</span></div>
-          </div>
-          {!compact && <details className="bd-history-details bd-history-entry-details">
+          </div>}
+          {!compact && expandable && <details className="bd-history-details bd-history-entry-details">
             <summary>Ver detalles del registro</summary>
             {entry.reason && entry.comment && <p><strong>Observaciones:</strong> {entry.comment}</p>}
-            <div><section><h3>Estado anterior</h3><State value={entry.previousState}/></section>
-              <section><h3>Estado nuevo</h3><State value={entry.newState}/></section></div>
+            {hasStates && <div><section><h3>Estado anterior</h3><State value={entry.previousState}/></section>
+              <section><h3>Estado nuevo</h3><State value={entry.newState}/></section></div>}
           </details>}
         </article>
       </li>;

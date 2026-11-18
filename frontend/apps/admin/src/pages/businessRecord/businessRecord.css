@@ -2295,3 +2295,24 @@
   .bd-record .bd-history-pagination>span{flex-basis:100%;text-align:center}
   .bd-record .bd-history-pagination button{min-height:39px}
 }
+
+
+/* Old audits may contain only their timestamp/actor. Never show misleading
+   "No conservado → No conservado" comparisons or empty detail accordions. */
+.bd-record .bd-history-entry.bd-history-entry--no-comparison {
+  grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);
+}
+.bd-record .bd-history-missing-detail {
+  color:#766e83;
+  font-style:italic;
+}
+@media(max-width:1280px) {
+  .bd-record .bd-history-entry.bd-history-entry--no-comparison {
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  }
+}
+@media(max-width:700px) {
+  .bd-record .bd-history-entry.bd-history-entry--no-comparison {
+    grid-template-columns:minmax(0,1fr);
+  }
+}
