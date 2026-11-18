@@ -286,7 +286,7 @@ adminRouter.get('/users', requireAdmin('ADMINS_MANAGE'), async (req, res, next) 
     res.setHeader('Cache-Control', 'no-store');
     res.json(await listAdminUsersExtended({
       q: String(req.query.q ?? ''), status: String(req.query.status ?? ''),
-      relation: String(req.query.relation ?? ''), page: Number(req.query.page) || 1,
+      relation: String(req.query.relation ?? ''), city: String(req.query.city ?? ''), page: Number(req.query.page) || 1,
       provider: String(req.query.provider ?? ''), emailVerified: String(req.query.emailVerified ?? ''),
       admin: String(req.query.admin ?? ''), activity: String(req.query.activity ?? ''),
       registeredFrom: String(req.query.registeredFrom ?? ''), registeredTo: String(req.query.registeredTo ?? ''),
