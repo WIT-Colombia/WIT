@@ -277,7 +277,7 @@ export async function getAdminBusinessHistory(
         'administrativeRestriction', 'completeness', 'plan', 'offerName', 'offerCode', 'offerState',
         'description', 'sede', 'cityName', 'regionName', 'adultOnly', 'changedFields',
         'status', 'type', 'phonePublic', 'whatsappPublic', 'emailPublic'].includes(key)
-      && (value === null || ['string', 'number', 'boolean'].includes(typeof value))))
+      && (value === null || ['string', 'number', 'boolean'].includes(typeof value)))
         .map(([key, value]) => [key, typeof value === 'string' && value.length > 600
           ? value.slice(0, 600) + '…' : value])) : null;
   return {
