@@ -81,6 +81,9 @@ jobs:
       - name: Check Business Configuración and confirmation dialogs on desktop, iPad and iPhone
         run: node scripts/check-business-settings-responsive.mjs
 
+      - name: Check Admin business Summary and Reports indicator typography on desktop, iPad and mobile
+        run: node scripts/check-admin-business-metric-typography.mjs
+
       - name: Check Admin sidebar in desktop and mobile browsers
         run: node scripts/check-admin-sidebar.mjs
 
@@ -105,6 +108,15 @@ jobs:
         with:
           name: xamuko-business-product-editor-${{ github.run_id }}
           path: frontend/test-results/business-product-editor/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save Admin Summary and Reports typography screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-admin-business-metric-type-${{ github.run_id }}
+          path: frontend/test-results/admin-business-metric-type/
           if-no-files-found: ignore
           retention-days: 7
 
