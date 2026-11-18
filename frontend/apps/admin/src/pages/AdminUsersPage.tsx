@@ -173,9 +173,11 @@ export function AdminUsersPage() {
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permisos de gestión administrativa para consultar usuarios."/>;
   return <div className="admin-users-page au-page">
     <header className="admin-section-heading au-showcase-hero">
-      <span className="au-showcase-hero-icon"><Icon name="users" size={34}/></span>
-      <div className="au-showcase-hero-copy"><h1 id="au-title">Usuarios</h1>
-        <p>Esta sección centraliza la gestión de usuarios, la seguridad, la actividad y los estados de las cuentas.</p>
+      <div className="au-showcase-title-row">
+        <span className="au-showcase-hero-icon" aria-hidden="true"><Icon name="users" size={34}/></span>
+        <div className="au-showcase-hero-copy"><h1 id="au-title">Usuarios</h1>
+          <p>Esta sección centraliza la gestión de usuarios, la seguridad, la actividad y los estados de las cuentas.</p>
+        </div>
       </div>
     </header>
     {notice && <div className="au-success-notice" role="status"><Icon name="check" size={18}/>{notice}</div>}
