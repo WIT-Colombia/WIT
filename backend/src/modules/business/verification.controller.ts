@@ -10,5 +10,14 @@ export const getVerificationController: RequestHandler = async (req, res, next) 
 export const submitVerificationController: RequestHandler = async (req, res, next) => { try { res.status(201).json({ verification: await submitVerification(userId(req), String(req.params.businessId), file(req) as any) }); } catch (e) { next(e); } };
 export const replaceVerificationController: RequestHandler = async (req, res, next) => { try { res.json({ verification: await replaceVerification(userId(req), String(req.params.businessId), file(req) as any) }); } catch (e) { next(e); } };
 export const listVerificationController: RequestHandler = async (req, res, next) => { try { res.json({ requests: await listVerificationRequests(adminFromRequest(req)) }); } catch (e) { next(e); } };
-export const verificationDocumentController: RequestHandler = async (req, res, next) => { try { const doc = await verificationDocument(adminFromRequest(req), String(req.params.requestId)); res.type(doc.mimeType).sendFile(doc.path, error => { if (error && !res.headersSent) next(error); }); } catch (e) { next(e); } };
+export const verificationDocumentController: RequestHandler = async (req, res, next) => {
+  try {
+    const doc = await verificationDocument(adminFromRequest(req), String(req.params.requestId));
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "sandbox; default-src 'none'; frame-ancestors 'none'");
+    res.attachment(`verificacion-${String(req.params.requestId).replace(/[^a-zA-Z0-9-]/g, '')}.pdf`)
+      .type(doc.mimeType).sendFile(doc.path, error => { if (error && !res.headersSent) next(error); });
+  } catch (error) { next(error); }
+};
 export const decisionVerificationController: RequestHandler = async (req, res, next) => { try { const body = req.body ?? {}; const action = body.action; if (!['APPROVE', 'REQUEST_INFORMATION', 'REJECT'].includes(action)) return res.status(400).json({ error: 'INVALID_ACTION' }); const result = await decideVerification(adminFromRequest(req), String(req.params.requestId), action, typeof body.reason === 'string' ? body.reason : '', body.nameConfirmed === true); res.json({ verification: result }); } catch (e) { next(e); } };
