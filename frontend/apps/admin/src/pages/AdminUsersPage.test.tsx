@@ -68,7 +68,7 @@ afterEach(() => { cleanup(); });
 describe('Admin → Usuarios: controles reales', () => {
   it('los accesos rápidos aplican filtros y Todos los restablece de verdad', async () => {
     show();
-    await screen.findByText('Ana Torres');
+    await screen.findAllByText('Ana Torres');
     const withBusiness = screen.getByRole('button', { name: /Con negocio/ });
     await waitFor(() => expect(withBusiness).not.toBeDisabled());
     fireEvent.click(withBusiness);
@@ -85,7 +85,7 @@ describe('Admin → Usuarios: controles reales', () => {
 
   it('filtro de ciudad y filtros avanzados llegan al backend y Limpiar restablece', async () => {
     show();
-    await screen.findByText('Ana Torres');
+    await screen.findAllByText('Ana Torres');
     const city = screen.getByRole('combobox', { name: 'Filtrar por ciudad preferida' });
     await waitFor(() => expect(city).not.toBeDisabled());
     fireEvent.change(city, { target: { value: 'Palmira' } });
@@ -103,7 +103,7 @@ describe('Admin → Usuarios: controles reales', () => {
     mocks.getAdminUserOverview.mockResolvedValue({ ...overview, withBusiness: undefined, linkedBusinesses: undefined, cities: undefined });
     mocks.getAdminUserCapabilities.mockRejectedValue(new Error('Backend anterior'));
     show();
-    await screen.findByText('Ana Torres');
+    await screen.findAllByText('Ana Torres');
     expect(screen.getByRole('button', { name: /Con negocio/ })).toBeDisabled();
     expect(screen.getByRole('combobox', { name: 'Filtrar por ciudad preferida' })).toBeDisabled();
     await waitFor(() => expect(screen.getByRole('button', { name: /Filtros avanzados/ })).toBeDisabled());
@@ -112,7 +112,7 @@ describe('Admin → Usuarios: controles reales', () => {
 
   it('Suspender y Cerrar sesiones abren confirmaciones con acciones auténticas', async () => {
     show();
-    await screen.findByText('Ana Torres');
+    await screen.findAllByText('Ana Torres');
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Suspender' }).length).toBeGreaterThan(0));
     fireEvent.click(screen.getAllByRole('button', { name: 'Suspender' })[0]);
     let dialog = screen.getByRole('dialog', { name: 'Suspender cuenta' });
