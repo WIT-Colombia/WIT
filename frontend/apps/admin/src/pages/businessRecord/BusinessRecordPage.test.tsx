@@ -392,7 +392,7 @@ describe('Ficha administrativa del negocio', () => {
       { status: '', reason: '', q: '', from: '', to: '' });
     fireEvent.click(within(panel).getByRole('button', { name: 'Ver detalle' }));
     expect(await within(panel).findByText('Denunciante registrada')).toBeInTheDocument();
-    expect(within(panel).getByText('Revisión documental')).toBeInTheDocument();
+    expect(within(panel).getByText(/Justificación: Revisión documental/)).toBeInTheDocument();
     expect(within(panel).getByText('Administradora de prueba')).toBeInTheDocument();
     expect(within(panel).queryByText('Identificador')).not.toBeInTheDocument();
     fireEvent.click(within(panel).getByRole('button', { name: 'Pendientes', pressed: false }));
