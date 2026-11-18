@@ -2316,3 +2316,7 @@
     grid-template-columns:minmax(0,1fr);
   }
 }
+
+.bd-record .bd-history-entry-details>div.bd-history-snapshot-grid--single {
+  grid-template-columns:minmax(0,1fr);
+}

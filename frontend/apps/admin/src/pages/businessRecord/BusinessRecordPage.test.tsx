@@ -55,6 +55,18 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(transition).getByText('Texto actualizado')).toBeInTheDocument();
     expect(screen.getByText('Campos modificados: Descripción')).toBeInTheDocument();
   });
+  it('en los detalles antiguos sólo muestra el estado realmente conservado', () => {
+    render(<HistoryTimeline entries={[{
+      id: 'partial-1', action: 'BUSINESS_MODALITY_CREATED', createdAt: business.updatedAt,
+      reason: null, comment: null, actor: null,
+      previousState: null, newState: { status: 'ACTIVE' },
+    }]}/>);
+    fireEvent.click(screen.getByText('Ver detalles del registro'));
+    expect(screen.getByText('Datos registrados')).toBeInTheDocument();
+    expect(screen.getByText('Estado de modalidad')).toBeInTheDocument();
+    expect(screen.queryByText('Estado anterior')).not.toBeInTheDocument();
+    expect(screen.queryByText('Estado no conservado en este registro.')).not.toBeInTheDocument();
+  });
   it('presenta los campos auditados sin inventar valores privados de contacto', () => {
     render(<HistoryTimeline entries={[{
       id: 'new-3', action: 'BUSINESS_UPDATED', createdAt: business.updatedAt,
