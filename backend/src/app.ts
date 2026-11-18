@@ -7,6 +7,16 @@ import { notFound } from './shared/middleware/not-found.js';
 
 export const app = express();
 app.disable('x-powered-by');
+// H9: cabeceras de defensa en profundidad para todas las respuestas de API.
+// No imponemos un CSP general de scripts que pueda romper las aplicaciones SPA.
+app.use((_request, response, next) => {
+  response.setHeader('X-Content-Type-Options', 'nosniff');
+  response.setHeader('X-Frame-Options', 'DENY');
+  response.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.setHeader('Content-Security-Policy', "frame-ancestors 'none'; object-src 'none'; base-uri 'none'");
+  response.setHeader('Strict-Transport-Security', 'max-age=31536000');
+  next();
+});
 
 // Reflect only exact trusted origins; wildcard origins cannot be used with
 // credentialed cookies.
