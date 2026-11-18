@@ -43,6 +43,7 @@ export function AdminUsersPage() {
   const q = params.get('q') ?? '';
   const status = params.get('status') ?? '';
   const relation = params.get('relation') ?? '';
+  const city = params.get('city') ?? '';
   const requestedPage = Number(params.get('page') ?? '1');
   const page = Number.isFinite(requestedPage) ? Math.max(1, Math.min(100000,Math.floor(requestedPage))) : 1;
   const [input, setInput] = useState(q);
@@ -83,12 +84,12 @@ export function AdminUsersPage() {
     if (!allowed) return;
     let active = true;
     setLoading(true); setError('');
-    void listAdminUsers({q,page,status,relation,...(featureReady ? advanced : {})})
+    void listAdminUsers({q,page,status,relation,...(overview?.cities ? {city} : {}),...(featureReady ? advanced : {})})
       .then(result=>{if(active)setData(result);})
       .catch(cause=>{if(active)setError(cause instanceof Error?cause.message:'No pudimos consultar el directorio.');})
       .finally(()=>{if(active)setLoading(false);});
     return ()=>{active=false;};
-  },[allowed,q,page,status,relation,filterKey,featureReady,revision]);
+  },[allowed,q,page,status,relation,city,filterKey,featureReady,overview?.cities,revision]);
   useEffect(()=>{
     if (!allowed) return;
     let active = true;
@@ -161,10 +162,9 @@ export function AdminUsersPage() {
         <label className="au-select-field"><span>Tipo de cuenta</span><select aria-label="Filtrar por tipo de cuenta" value={relation} onChange={e=>apply('relation',e.target.value)}>
           <option value="">Todos</option><option value="OWNER">Propietarios</option><option value="COLLABORATOR">Colaboradores</option><option value="NONE">Sin negocio vinculado</option>
         </select></label>
-        <label className="au-select-field"><span>Ordenar</span><select aria-label="Ordenar usuarios" value={advanced.order} onChange={e=>apply('order',e.target.value)}
-          disabled={!featureReady} title={!featureReady ? 'Disponible cuando se actualice el backend' : undefined}>
-          <option value="">Más recientes</option><option value="oldest">Más antiguos</option>
-          <option value="lastLogin">Último acceso</option><option value="name">Nombre A–Z</option>
+        <label className="au-select-field"><span>Ciudad</span><select aria-label="Filtrar por ciudad preferida" value={city} onChange={e=>apply('city',e.target.value)}
+          disabled={!overview?.cities} title={!overview?.cities ? 'Disponible cuando se actualice el backend' : 'Filtra por la ciudad preferida indicada por cada usuario'}>
+          <option value="">Todas</option>{overview?.cities?.map(cityName=><option value={cityName} key={cityName}>{cityName}</option>)}
         </select></label>
         <button className="au-outline-button au-showcase-clear" type="button" onClick={clear}><Icon name="refresh" size={16}/> Limpiar filtros</button>
         <button className="au-primary-button au-showcase-search" type="submit"><Icon name="search" size={17}/> Buscar</button>
@@ -193,7 +193,9 @@ export function AdminUsersPage() {
         <label>Registro hasta<input type="date" aria-label="Registro hasta" value={advanced.registeredTo} min={advanced.registeredFrom||undefined} onChange={e=>apply('registeredTo',e.target.value)}/></label>
         <label>Acceso desde<input type="date" aria-label="Último acceso desde" value={advanced.lastLoginFrom} max={advanced.lastLoginTo||undefined} onChange={e=>apply('lastLoginFrom',e.target.value)}/></label>
         <label>Acceso hasta<input type="date" aria-label="Último acceso hasta" value={advanced.lastLoginTo} min={advanced.lastLoginFrom||undefined} onChange={e=>apply('lastLoginTo',e.target.value)}/></label>
-        <p className="au-showcase-advanced-note">El ordenamiento se controla desde la barra principal de filtros.</p>
+        <label>Ordenar<select aria-label="Ordenar usuarios" value={advanced.order} onChange={e=>apply('order',e.target.value)}>
+          <option value="">Más recientes</option><option value="oldest">Más antiguos</option>
+          <option value="lastLogin">Último acceso</option><option value="name">Nombre A–Z</option></select></label>
       </div>
       </div>
       <div className="au-showcase-shortcuts" role="group" aria-label="Filtros rápidos">
