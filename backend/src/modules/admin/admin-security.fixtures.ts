@@ -8,7 +8,19 @@ export type AdminFixture = { userId: string; googleSub: string; email: string; c
 export async function createAdminFixture(): Promise<AdminFixture> {
   const googleSub = 'ci-admin-google-sub';
   const email = unique('admin-test') + '@example.test';
-  const user = await prisma.user.create({ data: { emailNormalized: email, displayName: 'Admin integration test', authIdentities: { create: { provider: 'GOOGLE', providerSubject: googleSub, verifiedAt: new Date() } }, adminRoleAssignments: { create: { role: 'SUPER_ADMIN', active: true } } }, select: { id: true } });
+  // Test-only fixture: concurrent HTTP suites can deadlock on nested inserts in MySQL.
+  // Retry only transient Prisma P2034 conflicts; do not mask real permission failures.
+  let user: { id: string } | undefined;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      user = await prisma.user.create({ data: { emailNormalized: email, displayName: 'Admin integration test', authIdentities: { create: { provider: 'GOOGLE', providerSubject: googleSub, verifiedAt: new Date() } }, adminRoleAssignments: { create: { role: 'SUPER_ADMIN', active: true } } }, select: { id: true } });
+      break;
+    } catch (error) {
+      if (attempt === 2 || !(error && typeof error === 'object' && 'code' in error && error.code === 'P2034')) throw error;
+      await new Promise(resolve => setTimeout(resolve, 40 * (attempt + 1)));
+    }
+  }
+  if (!user) throw new Error('No se pudo preparar el usuario administrativo de prueba.');
   return { userId: user.id, googleSub, email, cleanup: async () => { await prisma.adminSession.deleteMany({ where: { userId: user.id } }); await prisma.adminWebAuthnCredential.deleteMany({ where: { userId: user.id } }); await prisma.adminRoleAssignment.deleteMany({ where: { userId: user.id } }); await prisma.authIdentity.deleteMany({ where: { userId: user.id } }); await prisma.user.delete({ where: { id: user.id } }); } };
 }
 
