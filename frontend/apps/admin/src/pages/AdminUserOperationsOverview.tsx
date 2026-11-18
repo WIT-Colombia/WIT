@@ -24,7 +24,7 @@ export function AdminUserOperationsOverview({ data, loading, error, retry }: {
     { key: 'total', label: 'Total de usuarios', icon: 'users', tone: 'violet', hint: 'Incluye cuentas con baja lógica' },
     { key: 'active', label: 'Activos', icon: 'check', tone: 'green', hint: 'Acceso a la plataforma habilitado' },
     { key: 'suspended', label: 'Suspendidos', icon: 'lock', tone: 'red', hint: 'Inicio de sesión bloqueado' },
-    { key: 'owners', label: 'Usuarios propietarios', icon: 'store', tone: 'blue', hint: 'Cuentas activas con negocios propios' },
+    { key: 'linkedBusinesses', label: 'Negocios vinculados', icon: 'store', tone: 'blue', hint: 'Negocios únicos con usuarios activos vinculados' },
   ] as const;
   return <section className="au-control-overview" aria-labelledby="au-control-overview-title">
     <div className="au-showcase-kpis">
