@@ -153,6 +153,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Save Admin Negocios Pioneros responsive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-admin-pioneers-${{ github.run_id }}
+          path: frontend/test-results/admin-pioneers/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Package isolated Pages previews (Usuario and Business only)
         if: github.event_name == 'pull_request'
         working-directory: frontend
