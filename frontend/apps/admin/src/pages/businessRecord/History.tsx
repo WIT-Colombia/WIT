@@ -144,7 +144,9 @@ export function HistoryTimeline({ entries, compact = false }: { entries: RecordH
       const style = presentation[groupFor(entry.action)];
       const change = mainChange(entry);
       const changedFields = typeof entry.newState?.changedFields === 'string' ? entry.newState.changedFields : '';
-      const hasStates = hasSnapshot(entry.previousState) || hasSnapshot(entry.newState);
+      const hasBefore = hasSnapshot(entry.previousState);
+      const hasAfter = hasSnapshot(entry.newState);
+      const hasStates = hasBefore || hasAfter;
       const expandable = hasStates || Boolean(entry.reason && entry.comment);
       return <li className="bd-history-item" key={entry.id}>
         <span className="bd-history-point" aria-hidden="true"/>
@@ -175,8 +177,12 @@ export function HistoryTimeline({ entries, compact = false }: { entries: RecordH
           {!compact && expandable && <details className="bd-history-details bd-history-entry-details">
             <summary>Ver detalles del registro</summary>
             {entry.reason && entry.comment && <p><strong>Observaciones:</strong> {entry.comment}</p>}
-            {hasStates && <div><section><h3>Estado anterior</h3><State value={entry.previousState}/></section>
-              <section><h3>Estado nuevo</h3><State value={entry.newState}/></section></div>}
+            {hasStates && <div className={!hasBefore || !hasAfter ? 'bd-history-snapshot-grid--single' : ''}>
+              {hasBefore && <section><h3>{hasAfter ? 'Estado anterior' : 'Datos anteriores registrados'}</h3>
+                <State value={entry.previousState}/></section>}
+              {hasAfter && <section><h3>{hasBefore ? 'Estado nuevo' : 'Datos registrados'}</h3>
+                <State value={entry.newState}/></section>}
+            </div>}
           </details>}
         </article>
       </li>;
