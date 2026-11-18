@@ -64,3 +64,15 @@ test('cerrar sesiones exige motivo, no cambia estado ni admite auto-revocación'
   assert.throws(() => validateAdminUserSessionReason('corto'), (error: any) => error.code === 'ADMIN_USER_REASON_REQUIRED');
   await assert.rejects(() => revokeAdminUserSessions('admin', 'admin', 'Revisión de seguridad solicitada'), (error: any) => error.code === 'ADMIN_USER_SELF_MODIFICATION');
 });
+
+
+test('el directorio filtra por ciudad preferida sin mezclar estados y relaciones', () => {
+  const where = adminUsersWhere({ city: 'Cali', status: 'ACTIVE', relation: 'OWNER' });
+  assert.equal(where.preferredLocationCity, 'Cali');
+  assert.equal(where.status, 'ACTIVE');
+  assert.ok(where.memberships);
+  assert.equal(adminUsersWhere({ city: '  Palmira  ' }).preferredLocationCity, 'Palmira');
+  assert.equal(adminUsersWhere({ city: '' }).preferredLocationCity, undefined);
+  assert.throws(() => adminUsersWhere({ city: 'X'.repeat(161) }),
+    (error: any) => error.code === 'ADMIN_USER_CITY_INVALID');
+});
