@@ -1,12 +1,14 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, isPhotoMissingError, photoMimeType, readPhoto, savePhoto } from '../business/photo-storage.js';
+import { assertSafePhotoDimensions } from '../business/photo-validation.js';
 
 type AvatarFile = { buffer: Buffer; mimetype: string; size: number };
 
 function validate(file: AvatarFile | undefined): asserts file is AvatarFile {
   if (!file) throw new AppError(400, 'AVATAR_REQUIRED', 'Selecciona una imagen.');
   if (!PHOTO_MIME_TYPES.has(file.mimetype) || file.size > PHOTO_MAX_BYTES) throw new AppError(422, 'AVATAR_INVALID', 'La imagen debe ser JPG, PNG o WebP y pesar máximo 5 MB.');
+  assertSafePhotoDimensions(file.buffer, file.mimetype);
 }
 
 export async function uploadAvatar(userId: string, file: AvatarFile | undefined) {
