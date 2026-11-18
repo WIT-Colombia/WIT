@@ -73,6 +73,10 @@ test('el directorio filtra por ciudad preferida sin mezclar estados y relaciones
   assert.ok(where.memberships);
   assert.equal(adminUsersWhere({ city: '  Palmira  ' }).preferredLocationCity, 'Palmira');
   assert.equal(adminUsersWhere({ city: '' }).preferredLocationCity, undefined);
+  const withBusiness = adminUsersWhere({ q: 'Cali', relation: 'ANY' });
+  assert.ok(withBusiness.OR, 'El texto de búsqueda se mantiene');
+  assert.ok(Array.isArray(withBusiness.AND), 'La relación ANY se combina mediante AND');
+  assert.ok((withBusiness.AND as any[])[0]?.OR, 'La relación incluye propietarios, colaboradores o creadores');
   assert.throws(() => adminUsersWhere({ city: 'X'.repeat(161) }),
     (error: any) => error.code === 'ADMIN_USER_CITY_INVALID');
 });
