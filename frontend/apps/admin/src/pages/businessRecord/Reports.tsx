@@ -92,15 +92,13 @@ export function Reports({ businessId, businessName }: { businessId: string; busi
   const [status, setStatus] = useState<AdminBusinessReportStatus | ''>('');
   const [reason, setReason] = useState('');
   const [draft, setDraft] = useState(''), [search, setSearch] = useState('');
-  const [from, setFrom] = useState(''), [to, setTo] = useState('');
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const validDates = !from || !to || from <= to;
-  const options: AdminBusinessReportFilters = { status, reason, q: search, from, to };
+  const options: AdminBusinessReportFilters = { status, reason, q: search };
   const source = useResource(
     () => listRecordBusinessReports(businessId, page, options),
-    [businessId, page, status, reason, search, from, to],
-    allowed && validDates,
+    [businessId, page, status, reason, search],
+    allowed,
   );
   if (!allowed) return <Empty icon="lock" title="Reportes de acceso restringido"
     message="Necesitas permiso de revisión de reportes para consultar las denuncias sobre este negocio."/>;
@@ -151,16 +149,6 @@ export function Reports({ businessId, businessName }: { businessId: string; busi
             {Object.entries(reasons).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
           </select>
         </label>
-        <label className="bd-report-date-filter">Desde
-          <input type="date" aria-label="Reportes desde" value={from}
-            onChange={event => { setFrom(event.target.value); setPage(1); setExpandedId(null); }}/>
-        </label>
-        <label className="bd-report-date-filter">Hasta
-          <input type="date" aria-label="Reportes hasta" value={to} min={from || undefined}
-            onChange={event => { setTo(event.target.value); setPage(1); setExpandedId(null); }}/>
-        </label>
-        <button type="button" className="bd-report-refresh" disabled={source.loading || !validDates}
-          onClick={source.retry}><Icon name="refresh" size={16}/>Actualizar</button>
       </div>
       <div className="bd-report-status-filters" role="group" aria-label="Filtrar reportes por estado">
         {filters.map(option => <button key={option.value || 'all'} type="button"
@@ -169,16 +157,15 @@ export function Reports({ businessId, businessName }: { businessId: string; busi
           {option.label}
         </button>)}
       </div>
-      {!validDates && <p role="alert" className="bd-report-filter-error">La fecha inicial no puede ser posterior a la fecha final.</p>}
-      {validDates && <Loading {...source}/>}
-      {validDates && !source.loading && !source.error && source.data && (source.data.reports.length
+      <Loading {...source}/>
+      {!source.loading && !source.error && source.data && (source.data.reports.length
         ? <div className="bd-report-register-list">
           {source.data.reports.map(report => <ReportItem key={report.id} report={report}
             expanded={report.id === expandedId} onToggle={() => setExpandedId(value => value === report.id ? null : report.id)}/>)}
         </div>
         : <Empty icon="check" title="Sin reportes para esta consulta"
-          message="No hay denuncias que coincidan con estos filtros. Puedes cambiar el estado, motivo o fecha."/>)}
-      {validDates && source.data && !source.error && source.data.pagination.totalPages > 1 &&
+          message="No hay denuncias que coincidan con estos filtros. Puedes cambiar el estado o el motivo."/>)}
+      {source.data && !source.error && source.data.pagination.totalPages > 1 &&
         <Pager pagination={source.data.pagination} onPage={next => { setPage(next); setExpandedId(null); }} loading={source.loading}/>}
       <p className="bd-report-register-footnote"><Icon name="shield" size={14}/>
         Las decisiones se adoptan en el Centro de moderación, con permisos y registro de auditoría. El historial no se puede editar aquí.</p>
