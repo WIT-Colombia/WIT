@@ -114,6 +114,13 @@ try {
     try {
       await page.goto(origin + '/users', { waitUntil: 'domcontentloaded' });
       await page.getByRole('heading', { name: 'Usuarios', exact: true }).waitFor({ state: 'visible', timeout: 15000 });
+      const userHeading = await page.evaluate(() => {
+        const icon = document.querySelector('.au-showcase-hero-icon')?.getBoundingClientRect();
+        const title = document.querySelector('#au-title')?.getBoundingClientRect();
+        return { iconRight: icon?.right ?? Infinity, titleLeft: title?.left ?? 0 };
+      });
+      assert.ok(userHeading.iconRight < userHeading.titleLeft,
+        device + ': Usuarios title must sit immediately to the right of the icon');
       await page.getByText('3 usuarios encontrados').waitFor({ state: 'visible', timeout: 15000 });
       const isMobileLayout = viewport.width <= 900;
       const layout = await page.evaluate(() => {
