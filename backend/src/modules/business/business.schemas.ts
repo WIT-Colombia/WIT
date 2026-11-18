@@ -1,7 +1,13 @@
 import { z } from 'zod';
 
 const nullableText = (max: number) => z.string().trim().max(max).nullable().optional();
-const optionalUrl = (max: number) => z.string().trim().url().max(max).nullable().optional();
+const safeExternalUrl = (max: number) => z.string().trim().url().max(max).refine(value => {
+  try {
+    const url = new URL(value);
+    return ['https:', 'http:'].includes(url.protocol) && !url.username && !url.password;
+  } catch { return false; }
+}, 'Utiliza una dirección web HTTP o HTTPS válida.');
+const optionalUrl = (max: number) => safeExternalUrl(max).nullable().optional();
 const isOfficialSocialHost = (hostname: string, domains: readonly string[]) => domains.some(domain => hostname === domain || hostname.endsWith(`.${domain}`));
 const socialUrl = (platform: string, domains: readonly string[]) => z.string().trim().max(2048).transform((value, context) => {
   if (!value) return null;
@@ -51,7 +57,7 @@ const businessFields = {
 } as const;
 
 const modalityTypeSchema = z.enum(['PHYSICAL', 'VIRTUAL', 'DELIVERY']);
-const modalityContactSchema = z.object({ email: z.string().trim().email().max(320).nullable().optional(), website: z.string().trim().url().max(2048).nullable().optional(), phone: nullableText(32), whatsapp: nullableText(32) }).strict();
+const modalityContactSchema = z.object({ email: z.string().trim().email().max(320).nullable().optional(), website: optionalUrl(2048), phone: nullableText(32), whatsapp: nullableText(32) }).strict();
 const modalityHourSchema = z.object({ dayOfWeek: z.number().int().min(0).max(6), isClosed: z.boolean().default(false), opensAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable().optional(), closesAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).nullable().optional(), timezone: z.string().trim().min(1).max(64).default('America/Bogota') });
 const modalityConfigurationSchema = z.object({ type: modalityTypeSchema, contact: modalityContactSchema.optional(), hours: z.array(modalityHourSchema).max(7).optional() }).strict();
 const secondaryCategoryCodesSchema = z.array(z.string().trim().min(1).max(100)).max(32).optional();
