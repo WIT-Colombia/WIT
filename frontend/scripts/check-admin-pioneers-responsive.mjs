@@ -85,7 +85,7 @@ try{
       assert.equal(await page.getByRole('button',{name:/Disponibles/}).textContent().then(v=>v.includes('19')),
         true,device+': real available count');
       const headingBounds=await page.evaluate(()=>{
-        const icon=document.querySelector('.pioneer-premium-heading-icon')?.getBoundingClientRect();
+        const icon=document.querySelector('.pioneer-premium .admin-page-heading-icon')?.getBoundingClientRect();
         const title=document.querySelector('#pioneer-title')?.getBoundingClientRect();
         return {iconRight:icon?.right??9999,titleLeft:title?.left??0};
       });
