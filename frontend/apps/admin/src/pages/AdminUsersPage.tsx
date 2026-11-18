@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
 import { getSession } from '../services/adminService';
-import { getAdminUserOverview, getAdminUserCapabilities, getAdminUserAnalytics, listAdminUsers,
+import { getAdminUserOverview, getAdminUserCapabilities, getAdminUserAnalytics, fetchAdminUserAvatar, listAdminUsers,
   type AdminUserPage, type AdminUserOverview, type AdminUserRecord, type AdminUserAnalytics,
   type AdminUserFilters, type AdminUserStatusAction } from '../services/adminApiClient';
 import { AdminUserStatusDialog } from '../components/users/AdminUserStatusDialog';
@@ -31,8 +31,33 @@ function exportCurrent(users: AdminUserRecord[]) {
   const a=document.createElement('a');a.href=url;a.download='xamuko-usuarios-pagina.csv';a.click();
   window.setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-function UserAvatar({ user }: { user: Pick<AdminUserRecord,'displayName'> }) {
-  return <span className="au-avatar" aria-hidden="true">{initials(user.displayName)}</span>;
+// Reuse each avatar download between the desktop table and its mobile cards.
+const avatarRequests = new Map<string, Promise<Blob>>();
+function UserAvatar({ user }: { user: Pick<AdminUserRecord,'id'|'displayName'|'avatarUrl'> }) {
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user.avatarUrl) { setAvatarSrc(null); return; }
+    let active = true;
+    let objectUrl: string | null = null;
+    const cacheKey = user.id + ':' + user.avatarUrl;
+    let request = avatarRequests.get(cacheKey);
+    if (!request) {
+      request = fetchAdminUserAvatar(user.id);
+      avatarRequests.set(cacheKey, request);
+      // Failed downloads can be retried when users return to the directory.
+      request.catch(() => { if (avatarRequests.get(cacheKey) === request) avatarRequests.delete(cacheKey); });
+      if (avatarRequests.size > 80) avatarRequests.delete(avatarRequests.keys().next().value!);
+    }
+    void request.then(blob => {
+      if (!active) return;
+      objectUrl = URL.createObjectURL(blob);
+      setAvatarSrc(objectUrl);
+    }).catch(() => { if (active) setAvatarSrc(null); });
+    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [user.id, user.avatarUrl]);
+  return <span className="au-avatar" aria-hidden="true">
+    {avatarSrc ? <img src={avatarSrc} alt="" loading="lazy" onError={() => setAvatarSrc(null)}/> : initials(user.displayName)}
+  </span>;
 }
 export function AdminUsersPage() {
   const session = getSession();
