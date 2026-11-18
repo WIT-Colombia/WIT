@@ -458,7 +458,7 @@
   border-radius:12px;
   background:#fff;
   color:#2d2741;
-  font:500 14px/1.55 inherit;
+  font-family:inherit;font-size:14px;font-weight:500;line-height:1.55;
   box-sizing:border-box;
 }
 .au-control-backdrop .au-control-dialog textarea,
