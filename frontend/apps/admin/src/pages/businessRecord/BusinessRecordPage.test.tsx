@@ -393,7 +393,7 @@ describe('Ficha administrativa del negocio', () => {
     fireEvent.click(within(panel).getByRole('button', { name: 'Ver detalle' }));
     expect(await within(panel).findByText('Denunciante registrada')).toBeInTheDocument();
     expect(within(panel).getByText(/Justificación: Revisión documental/)).toBeInTheDocument();
-    expect(within(panel).getByText('Administradora de prueba')).toBeInTheDocument();
+    expect(within(panel).getByText(/Responsable: Administradora de prueba/)).toBeInTheDocument();
     expect(within(panel).queryByText('Identificador')).not.toBeInTheDocument();
     fireEvent.click(within(panel).getByRole('button', { name: 'Pendientes', pressed: false }));
     await waitFor(() => expect(api.listRecordBusinessReports).toHaveBeenCalledWith(business.id, 1,
