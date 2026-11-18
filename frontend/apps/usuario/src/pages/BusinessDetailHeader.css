@@ -595,3 +595,48 @@
     }
   }
 }
+
+
+/* Opiniones: el contador junto a las estrellas abre su pestaña. */
+.business-detail-page .business-detail-rating .business-rating-reviews-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  margin: 0;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #566575;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+}
+.business-detail-page .business-detail-rating .business-rating-reviews-link:hover {
+  color: #6b37d9;
+  text-decoration-color: currentColor;
+}
+.business-detail-page .business-detail-rating .business-rating-reviews-link:focus-visible {
+  outline: 3px solid #bca6ff;
+  outline-offset: 2px;
+  text-decoration-color: currentColor;
+}
+.business-detail-page .business-tabs {
+  scroll-margin-top: 94px;
+}
+@media (max-width: 600px) {
+  .business-detail-page .business-detail-rating .business-rating-reviews-link {
+    min-height: 32px;
+    font-size: 11px;
+  }
+  .business-detail-page .business-tabs {
+    scroll-margin-top: 72px;
+  }
+}
