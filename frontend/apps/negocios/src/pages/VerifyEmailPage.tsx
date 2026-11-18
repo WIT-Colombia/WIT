@@ -141,7 +141,7 @@ export default function VerifyEmailPage() {
         </div>
         <h1 id="verify-email-title">{heading}</h1>
         {state === "pending" && <p className="verify-email-description">
-          {registration.emailSent ? "Enviamos un enlace de verificación a tu correo." : "No pudimos enviar el enlace inicial. Solicita un nuevo correo."} Haz clic en el enlace para activar tu cuenta en <strong>XAMUKO Business</strong>.
+          Si el correo puede registrarse, recibirás un enlace de verificación. Si ya tienes cuenta, puedes iniciar sesión o recuperar tu contraseña en <strong>XAMUKO Business</strong>.
         </p>}
         {state === "unavailable" && <p className="verify-email-description" role="status">
           No encontramos una solicitud de verificación en esta pestaña. Regresa al registro para continuar con tu correo electrónico.
