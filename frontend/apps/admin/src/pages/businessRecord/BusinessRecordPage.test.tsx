@@ -389,7 +389,7 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(panel).getByRole('link', { name: /Gestionar reporte/ }))
       .toHaveAttribute('href', '/business-reports?report=report-1');
     expect(api.listRecordBusinessReports).toHaveBeenCalledWith(business.id, 1,
-      { status: '', reason: '', q: '', from: '', to: '' });
+      { status: '', reason: '', q: '' });
     fireEvent.click(within(panel).getByRole('button', { name: 'Ver detalle' }));
     expect(await within(panel).findByText('Denunciante registrada')).toBeInTheDocument();
     expect(within(panel).getByText(/Justificación: Revisión documental/)).toBeInTheDocument();
@@ -397,10 +397,10 @@ describe('Ficha administrativa del negocio', () => {
     expect(within(panel).queryByText('Identificador')).not.toBeInTheDocument();
     fireEvent.click(within(panel).getByRole('button', { name: 'Pendientes', pressed: false }));
     await waitFor(() => expect(api.listRecordBusinessReports).toHaveBeenCalledWith(business.id, 1,
-      { status: 'PENDING', reason: '', q: '', from: '', to: '' }));
+      { status: 'PENDING', reason: '', q: '' }));
     fireEvent.change(within(panel).getByLabelText('Filtrar por motivo'), { target: { value: 'FALSE_INFORMATION' } });
     await waitFor(() => expect(api.listRecordBusinessReports).toHaveBeenCalledWith(business.id, 1,
-      { status: 'PENDING', reason: 'FALSE_INFORMATION', q: '', from: '', to: '' }));
+      { status: 'PENDING', reason: 'FALSE_INFORMATION', q: '' }));
   });
   it('abre las dos opciones y exige un motivo antes de marcar Verificado', async () => {
     api.changeAdminBusinessVerification.mockResolvedValue({ verificationStatus: 'APPROVED', message: 'Negocio verificado' });
