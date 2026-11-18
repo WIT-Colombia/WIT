@@ -168,7 +168,7 @@ export type AdminUserPage = {
 };
 export type AdminUserOverview = {
   generatedAt: string; total: number; active: number; suspended: number; deleted: number;
-  owners: number; collaborators: number; adminCount: number; linkedBusinesses?: number; cities?: string[];
+  owners: number; collaborators: number; adminCount: number; linkedBusinesses?: number; withBusiness?: number; cities?: string[];
   active30?: number; dormant90?: number; neverLoggedIn?: number; emailVerified?: number; googleUsers?: number;
   series: Array<{ month: string; registrations: number }>; definition: string;
 };
