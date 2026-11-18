@@ -119,7 +119,8 @@ export function AdminContentPage(){
     setBulkNotice(result.succeeded+' publicaciones procesadas; '+result.failed+' con errores.');
     setRevision(v=>v+1);setAnalyticsRevision(v=>v+1);
   };
-  const totals=insights?.totals;
+  // Never display counters for a previous filter while a new API result is pending.
+  const totals=analyticsLoading?null:insights?.totals;
   // Counters are returned by /admin/content-insights for the active filters.
   const kpis=totals?[
     {label:'Contenido del segmento',value:totals.total,icon:'box',tone:'violet',hint:'Según filtros activos',status:''},
