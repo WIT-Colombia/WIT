@@ -8,6 +8,7 @@ import { assignPioneer, listPioneers, reviewPioneerBrand, reviewPioneerClaim,
 import { PioneerAnalyticsPanel } from './PioneerAnalyticsPanel';
 import { PioneerDecisionDialog, type PioneerDecision } from './PioneerDecisionDialog';
 import './PioneersControl.css';
+import './PioneersPremium.css';
 
 const number=(v:number)=>new Intl.NumberFormat('es-CO').format(v);
 const pad=(n:number)=>'#'+String(n).padStart(3,'0');
@@ -30,7 +31,7 @@ const csvEscape=(value:string)=>{
   return '"'+(prefix+raw).replaceAll('"','""')+'"';
 };
 function exportSlots(slots:Slot[]){
-  const rows=[['Cupón','Marca','Negocios asociados','Estado','Asignado por','Fecha'],
+  const rows=[['Cupo','Marca','Negocios asociados','Estado','Asignado por','Fecha'],
     ...slots.map(({number,assignment,brand})=>[
       pad(number),assignment?.brand.legalName??'',
       brand?.businesses.map(b=>b.name).join(' / ')??'',
@@ -165,24 +166,66 @@ export function PioneersPage(){
   const retry=()=>setRevision(v=>v+1);
   if(!allowed)return <StatePanel kind="error" title="Acceso restringido"
     message="Necesitas el permiso PIONEER_MANAGE para gestionar los reconocimientos."/>;
-  return <section className="pioneers-workspace pioneer-control-page" aria-labelledby="pioneer-title">
-    <header className="admin-section-heading"><h1 id="pioneer-title">Negocios Pioneros</h1></header>
+  return <section className="pioneers-workspace pioneer-control-page pioneer-premium" aria-labelledby="pioneer-title">
+    <header className="pioneer-premium-header">
+      <div className="pioneer-premium-heading">
+        <span className="pioneer-premium-heading-icon" aria-hidden="true"><Icon name="award" size={28}/></span>
+        <div><h1 id="pioneer-title">Negocios Pioneros</h1>
+          <p>Gestiona los reconocimientos, la identidad de las marcas y las reclamaciones registradas.</p></div>
+      </div>
+      <div className="pioneer-premium-actions">
+        <a href="#pioneer-analytics-title" className="secondary-button"><Icon name="chart" size={17}/> Ver evolución</a>
+        <button type="button" className="primary" onClick={()=>changeTab('claims')}>
+          <Icon name="flag" size={17}/> Reclamaciones{claims.length>0?' ('+number(claims.length)+')':''}
+        </button>
+      </div>
+    </header>
     {loading&&!data?<StatePanel kind="loading" title="Cargando Pioneros" message="Consultando registros reales."/>:
       error?<StatePanel kind="error" title="No fue posible consultar Pioneros" message={error} retry={retry}/>:
       !data?<StatePanel kind="empty" title="Registro no disponible" message="No se recibió información del servidor."/>:<>
-        <div className="pioneer-summary-grid">
-          <article className="pioneer-summary-card"><span className="pioneer-summary-icon violet"><Icon name="ticket"/></span><div><small>Cupos totales</small><strong>{number(data.max)}</strong></div></article>
-          <article className="pioneer-summary-card"><span className="pioneer-summary-icon green"><Icon name="check"/></span><div><small>Asignados</small><strong>{number(assignments.length)}</strong></div></article>
-          <article className="pioneer-summary-card"><span className="pioneer-summary-icon blue"><Icon name="clock"/></span><div><small>Disponibles</small><strong>{number(data.available)}</strong></div></article>
-          <article className="pioneer-summary-card pioneer-usage-card"><div className="pioneer-usage-top"><span className="pioneer-summary-icon violet"><Icon name="chart"/></span><div><small>Ocupación</small><strong>{usage}%</strong></div></div>
-            <div className="pioneer-progress" role="progressbar" aria-label="Porcentaje de cupos ocupados" aria-valuemin={0} aria-valuemax={100} aria-valuenow={usage}>
-              <span style={{width:usage+'%'}}/></div></article>
-          <article className="pioneer-summary-card pioneer-extra-kpi"><span className="pioneer-summary-icon blue"><Icon name="flag"/></span><div><small>Reclamaciones pendientes</small><strong>{number(claims.length)}</strong></div></article>
-          <article className="pioneer-summary-card pioneer-extra-kpi"><span className="pioneer-summary-icon green"><Icon name="award"/></span><div><small>Marcas elegibles</small><strong>{number(brands.filter(b=>b.eligibleForPioneer).length)}</strong></div></article>
+        <div className="pioneer-summary-grid" aria-label="Resumen real del programa Pioneros">
+          <button className={'pioneer-summary-card violet'+(tab==='coupons'&&filter==='ALL'?' is-active':'')}
+            type="button" aria-pressed={tab==='coupons'&&filter==='ALL'} onClick={()=>changeTab('coupons')}
+            title="Consultar todos los cupos">
+            <span className="pioneer-summary-icon violet"><Icon name="ticket" size={24}/></span>
+            <span className="pioneer-summary-copy"><small>Cupos totales</small><strong>{number(data.max)}</strong><span>Capacidad registrada</span></span>
+          </button>
+          <button className={'pioneer-summary-card green'+(tab==='coupons'&&filter==='OCCUPIED'?' is-active':'')}
+            type="button" aria-pressed={tab==='coupons'&&filter==='OCCUPIED'}
+            onClick={()=>{changeTab('coupons');setFilter('OCCUPIED');}}>
+            <span className="pioneer-summary-icon green"><Icon name="check" size={24}/></span>
+            <span className="pioneer-summary-copy"><small>Asignados</small><strong>{number(assignments.length)}</strong><span>Reconocimientos otorgados</span></span>
+          </button>
+          <button className={'pioneer-summary-card blue'+(tab==='coupons'&&filter==='AVAILABLE'?' is-active':'')}
+            type="button" aria-pressed={tab==='coupons'&&filter==='AVAILABLE'}
+            onClick={()=>{changeTab('coupons');setFilter('AVAILABLE');}}>
+            <span className="pioneer-summary-icon blue"><Icon name="clock" size={24}/></span>
+            <span className="pioneer-summary-copy"><small>Disponibles</small><strong>{number(data.available)}</strong><span>Sin asignación</span></span>
+          </button>
+          <article className="pioneer-summary-card pioneer-usage-card amber">
+            <div className="pioneer-usage-top"><span className="pioneer-summary-icon amber"><Icon name="chart" size={24}/></span>
+              <div className="pioneer-summary-copy"><small>Ocupación</small><strong>{usage}%</strong><span>De los cupos existentes</span></div>
+            </div>
+            <div className="pioneer-progress" role="progressbar" aria-label="Porcentaje de cupos ocupados"
+              aria-valuemin={0} aria-valuemax={100} aria-valuenow={usage}><span style={{width:usage+'%'}}/></div>
+          </article>
+          <button className={'pioneer-summary-card pioneer-extra-kpi rose'+(tab==='claims'?' is-active':'')}
+            type="button" aria-pressed={tab==='claims'} onClick={()=>changeTab('claims')}>
+            <span className="pioneer-summary-icon rose"><Icon name="flag" size={24}/></span>
+            <span className="pioneer-summary-copy"><small>Reclamaciones pendientes</small><strong>{number(claims.length)}</strong><span>Por resolver</span></span>
+          </button>
+          <button className={'pioneer-summary-card pioneer-extra-kpi turquoise'+(tab==='brands'&&brandFilter==='ELIGIBLE'?' is-active':'')}
+            type="button" aria-pressed={tab==='brands'&&brandFilter==='ELIGIBLE'}
+            onClick={()=>{changeTab('brands');setBrandFilter('ELIGIBLE');}}>
+            <span className="pioneer-summary-icon turquoise"><Icon name="award" size={24}/></span>
+            <span className="pioneer-summary-copy"><small>Marcas elegibles</small><strong>{number(brands.filter(b=>b.eligibleForPioneer).length)}</strong><span>Requisitos cumplidos</span></span>
+          </button>
         </div>
+        <p className="pioneer-data-source"><Icon name="shield" size={15}/>
+          Información del registro de Pioneros · Actualizada: <time dateTime={data.generatedAt}>{stamp(data.generatedAt)}</time>
+        </p>
         {notice&&<p role="status" className="pioneer-notice"><Icon name="check" size={17}/>{notice}</p>}
         {actionError&&<p role="alert" className="pioneer-error">{actionError}</p>}
-        <PioneerAnalyticsPanel assignments={assignments}/>
         <div className="pioneer-tabs" role="group" aria-label="Secciones de Pioneros">
           {([['coupons','Cupos'],['claims','Reclamaciones'],['brands','Marcas'],['audit','Auditoría']] as const)
             .map(([key,label])=><button key={key} type="button" className={tab===key?'selected':''}
@@ -226,7 +269,7 @@ export function PioneersPage(){
                 <p className="pioneer-muted">Sin asignar</p>}
             </article>)}</div>:
           <div className="pioneer-table-wrap"><table className="pioneer-table">
-            <thead><tr><th scope="col">Cupón</th><th scope="col">Marca / negocios</th>
+            <thead><tr><th scope="col">Cupo</th><th scope="col">Marca / negocios</th>
               <th scope="col">Estado</th><th scope="col">Fecha</th><th scope="col">Asignado por</th></tr></thead>
             <tbody>{limited(filteredSlots,currentPage).map(s=><tr key={s.number}>
               <td><strong className="pioneer-number"><Icon name="ticket" size={17}/>{pad(s.number)}</strong></td>
@@ -293,7 +336,7 @@ export function PioneersPage(){
                   })}>Rechazar verificación</button>}
                 {brand.eligibleForPioneer&&data.available>0&&
                   <button type="button" className="primary pioneer-assign-button" onClick={()=>setDecision({
-                    action:'ASSIGN',id:brand.id,name:brand.legalName,detail:'Reconocimiento único entre los 20 cupos Pioneros',
+                    action:'ASSIGN',id:brand.id,name:brand.legalName,detail:'Reconocimiento único entre los '+number(data.max)+' cupos Pioneros',
                   })}><Icon name="award" size={16}/> Asignar cupo Pionero</button>}
               </div>
               {brand.verification!=='VERIFIED'&&!brand.eligibility?.approvedClaim&&
@@ -316,6 +359,7 @@ export function PioneersPage(){
             </div>
           </li>)}</ol>}
         </Panel>}
+        <PioneerAnalyticsPanel assignments={assignments}/>
         <p className="pioneer-footnote"><Icon name="shield" size={16}/>{data.definition}
           Las decisiones administrativas deben estar fundamentadas y se registran con su motivo.</p>
       </>}
