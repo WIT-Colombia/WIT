@@ -159,7 +159,7 @@ export function AdminUsersPage() {
           <option value="">Todos los estados</option><option value="ACTIVE">Activos</option><option value="SUSPENDED">Suspendidos</option><option value="DELETED">Eliminados</option>
         </select></label>
         <label className="au-select-field"><span>Tipo de cuenta</span><select aria-label="Filtrar por tipo de cuenta" value={relation} onChange={e=>apply('relation',e.target.value)}>
-          <option value="">Todos</option><option value="OWNER">Propietarios</option><option value="COLLABORATOR">Colaboradores</option><option value="NONE">Sin negocio vinculado</option>
+          <option value="">Todos</option><option value="ANY">Con negocio</option><option value="OWNER">Propietarios</option><option value="COLLABORATOR">Colaboradores</option><option value="NONE">Sin negocio vinculado</option>
         </select></label>
         <label className="au-select-field"><span>Ciudad</span><select aria-label="Filtrar por ciudad preferida" value={city} onChange={e=>apply('city',e.target.value)}
           disabled={!overview?.cities} title={!overview?.cities ? 'Disponible cuando se actualice el backend' : 'Filtra por la ciudad preferida indicada por cada usuario'}>
@@ -204,8 +204,8 @@ export function AdminUsersPage() {
           onClick={()=>setShortcut('ACTIVE','')}><Icon name="check" size={15}/> Activos {overview ? '('+number(overview.active)+')' : ''}</button>
         <button type="button" className={status==='SUSPENDED' && !relation ? 'selected' : ''} aria-pressed={status==='SUSPENDED' && !relation}
           onClick={()=>setShortcut('SUSPENDED','')}><Icon name="lock" size={15}/> Suspendidos {overview ? '('+number(overview.suspended)+')' : ''}</button>
-        <button type="button" className={!status && relation==='OWNER' ? 'selected' : ''} aria-pressed={!status && relation==='OWNER'}
-          onClick={()=>setShortcut('','OWNER')}><Icon name="store" size={15}/> Propietarios {overview ? '('+number(overview.owners)+')' : ''}</button>
+        <button type="button" className={!status && relation==='ANY' ? 'selected' : ''} aria-pressed={!status && relation==='ANY'}
+          onClick={()=>setShortcut('','ANY')}><Icon name="store" size={15}/> Con negocio {overview?.withBusiness !== undefined ? '('+number(overview.withBusiness)+')' : ''}</button>
         <button type="button" className={!status && relation==='NONE' ? 'selected' : ''} aria-pressed={!status && relation==='NONE'}
           onClick={()=>setShortcut('','NONE')}><Icon name="users" size={15}/> Sin negocio</button>
       </div>
