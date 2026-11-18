@@ -3,6 +3,7 @@ import { Prisma, type PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, isPhotoMissingError, photoMimeType, readPhoto, removePhoto, savePhoto } from './photo-storage.js';
+import { assertSafePhotoDimensions } from './photo-validation.js';
 import { canManagePromotion, promotionEntitlements, promotionState, promotionValidationError, type PromotionPlan, type PromotionRecurrence } from './promotion-policy.js';
 import type { PromotionCreateInput, PromotionUpdateInput } from './promotion.schemas.js';
 
@@ -182,6 +183,7 @@ function ensurePhoto(file: UploadedPhoto | undefined): asserts file is UploadedP
   const png = file.mimetype === 'image/png' && file.buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
   const webp = file.mimetype === 'image/webp' && file.buffer.subarray(0, 4).toString('ascii') === 'RIFF' && file.buffer.subarray(8, 12).toString('ascii') === 'WEBP';
   if (!jpeg && !png && !webp) throw new AppError(422, 'PHOTO_FORMAT_UNSUPPORTED', 'El contenido no coincide con el formato de la fotografía.');
+  assertSafePhotoDimensions(file.buffer, file.mimetype);
 }
 
 export async function uploadPromotionPhoto(userId: string, identifier: string, promotionId: string, file: UploadedPhoto | undefined) {
