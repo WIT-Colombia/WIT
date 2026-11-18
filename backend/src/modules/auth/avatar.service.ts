@@ -1,6 +1,6 @@
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, isPhotoMissingError, photoMimeType, readPhoto, savePhoto } from '../business/photo-storage.js';
+import { PHOTO_MAX_BYTES, PHOTO_MIME_TYPES, isPhotoMissingError, photoMimeType, readPhoto, removePhoto, savePhoto } from '../business/photo-storage.js';
 import { assertSafePhotoDimensions } from '../business/photo-validation.js';
 
 type AvatarFile = { buffer: Buffer; mimetype: string; size: number };
@@ -14,7 +14,21 @@ function validate(file: AvatarFile | undefined): asserts file is AvatarFile {
 export async function uploadAvatar(userId: string, file: AvatarFile | undefined) {
   validate(file);
   const stored = await savePhoto(`user-avatars/${userId}`, file.buffer, file.mimetype);
-  await prisma.user.update({ where: { id: userId }, data: { avatarUrl: `private-avatar:${stored.storageKey}` } });
+  try {
+    const previousUrl = await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT id FROM User WHERE id = ${userId} FOR UPDATE`;
+      const user = await tx.user.findUnique({ where: { id: userId }, select: { avatarUrl: true } });
+      await tx.user.update({ where: { id: userId }, data: { avatarUrl: `private-avatar:${stored.storageKey}` } });
+      return user?.avatarUrl;
+    });
+    const previousKey = previousUrl?.startsWith('private-avatar:') ? previousUrl.slice('private-avatar:'.length) : null;
+    if (previousKey && /^user-avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(previousKey) && previousKey !== stored.storageKey) {
+      await removePhoto(previousKey).catch(() => undefined);
+    }
+  } catch (error) {
+    await removePhoto(stored.storageKey).catch(() => undefined);
+    throw error;
+  }
 }
 
 export async function readOwnAvatar(userId: string) {
