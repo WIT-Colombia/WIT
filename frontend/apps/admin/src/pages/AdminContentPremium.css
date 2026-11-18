@@ -1,0 +1,130 @@
+/* Admin → Contenido: diseño editorial basado únicamente en el catálogo real de Business.
+   No se crean estados, campos, registros ni controles de visibilidad sin confirmación. */
+.admin-refresh .ac-premium{--ac-premium-purple:#7925db;--ac-premium-ink:#20213a;--ac-premium-muted:#71758a;gap:20px;color:var(--ac-premium-ink)}
+.admin-refresh .ac-premium .ac-premium-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding:4px 2px 7px}
+.admin-refresh .ac-premium .ac-heading-identity{display:flex;align-items:center;gap:17px;min-width:0;flex:1}
+.admin-refresh .ac-premium .ac-heading-icon{display:grid;place-items:center;flex:0 0 53px;width:53px;height:53px;border-radius:15px;background:#f2e9ff;color:#7424d7;border:1px solid #e3d1ff}
+.admin-refresh .ac-premium .ac-heading-identity>div{min-width:0}
+.admin-refresh .ac-premium .ac-premium-heading h1{margin:0;color:#141526;font-size:clamp(27px,2.7vw,36px);font-weight:850;letter-spacing:-.04em;line-height:1.15}
+.admin-refresh .ac-premium .ac-premium-heading p{margin:7px 0 0;color:#6d7184;font-size:13px;line-height:1.5}
+.admin-refresh .ac-premium .ac-heading-actions{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:9px}
+.admin-refresh .ac-premium .ac-primary{background:linear-gradient(115deg,#8320e4,#5e20d1);box-shadow:0 7px 18px #6b30c127;color:white}
+.admin-refresh .ac-premium .ac-primary:hover:not(:disabled){background:linear-gradient(115deg,#7721d0,#501ab9)}
+.admin-refresh .ac-premium .ac-secondary{color:#4c4773;background:#fff;border-color:#e1dfe9}
+.admin-refresh .ac-premium .ac-secondary:hover:not(:disabled){border-color:#c7afe9;color:#6a22bb;background:#faf7ff}
+.admin-refresh .ac-premium .ac-heading-actions>*{min-height:42px;font-size:12.5px;padding-inline:15px}
+.admin-refresh .ac-premium .ac-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.admin-refresh .ac-premium .ac-kpi{position:relative;display:flex;align-items:center;gap:14px;text-align:left;width:100%;min-height:112px;padding:18px 17px;border-radius:16px;border:1px solid transparent;background:#f4eeff;box-shadow:none;cursor:pointer;transition:box-shadow .18s ease,transform .18s ease,border-color .18s ease}
+.admin-refresh .ac-premium .ac-kpi:hover{box-shadow:0 9px 24px #28164d13;transform:translateY(-1px)}
+.admin-refresh .ac-premium .ac-kpi:focus-visible{outline:3px solid #ad91ed;outline-offset:2px}
+.admin-refresh .ac-premium .ac-kpi.is-selected{border-color:#ac82e2;box-shadow:inset 0 0 0 1px #ad82e245}
+.admin-refresh .ac-premium .ac-kpi.green{background:#e8f9f0}
+.admin-refresh .ac-premium .ac-kpi.amber{background:#fff7e4}
+.admin-refresh .ac-premium .ac-kpi.rose{background:#fff0f3}
+.admin-refresh .ac-premium .ac-kpi-icon{display:grid;place-items:center;flex:0 0 51px;width:51px;height:51px;border-radius:16px;border:0;background:#e6d6ff;color:#6721bb}
+.admin-refresh .ac-premium .ac-kpi.green .ac-kpi-icon{background:#cff4dc;color:#108344}
+.admin-refresh .ac-premium .ac-kpi.amber .ac-kpi-icon{background:#ffedbd;color:#956008}
+.admin-refresh .ac-premium .ac-kpi.rose .ac-kpi-icon{background:#ffdae2;color:#c53556}
+.admin-refresh .ac-premium .ac-kpi-content{display:grid;align-content:center;gap:4px;min-width:0}
+.admin-refresh .ac-premium .ac-kpi-content>span{color:#272637;font-size:13.5px;font-weight:800;line-height:1.4}
+.admin-refresh .ac-premium .ac-kpi-content strong{color:#171728;font-size:clamp(24px,2.3vw,31px);font-weight:850;letter-spacing:-.04em;line-height:1.1}
+.admin-refresh .ac-premium .ac-kpi-content small{color:#6f7081;font-size:11px;line-height:1.4}
+.admin-refresh .ac-premium .ac-data-pending{margin:0;padding:18px;border:1px solid #e7e1ed;border-radius:14px;color:#726988;font-size:13px;background:#fff}
+.admin-refresh .ac-premium .ac-directory{border-radius:17px;border-color:#e5e2ed;box-shadow:0 12px 28px #2d20470b}
+.admin-refresh .ac-premium .ac-directory-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 21px;border-bottom:1px solid #eeebf3}
+.admin-refresh .ac-premium .ac-kind-tabs{display:flex;align-items:stretch;gap:8px;max-width:100%;overflow-x:auto}
+.admin-refresh .ac-premium .ac-kind-tabs button{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;min-height:59px;padding:12px 15px 10px;border:0;border-bottom:3px solid transparent;background:transparent;color:#626074;font:inherit;font-size:13.5px;font-weight:750;white-space:nowrap;cursor:pointer}
+.admin-refresh .ac-premium .ac-kind-tabs button:hover{color:#7430c7}
+.admin-refresh .ac-premium .ac-kind-tabs button.active{border-bottom-color:#7927d9;color:#7120c9}
+.admin-refresh .ac-premium .ac-directory-top .ac-export{min-height:37px;font-size:12px}
+.admin-refresh .ac-premium .ac-panel-head{padding:22px 22px 19px}
+.admin-refresh .ac-premium .ac-eyebrow{color:#8136cf;letter-spacing:.10em;font-size:10px}
+.admin-refresh .ac-premium .ac-panel-head h2{color:#202038;font-size:22px}
+.admin-refresh .ac-premium .ac-panel-head p{color:#79798b;font-size:12px}
+.admin-refresh .ac-premium .ac-directory-helper{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:#858092;line-height:1.5}
+.admin-refresh .ac-premium .ac-toolbar{grid-template-columns:minmax(205px,1.7fr) minmax(140px,.8fr) minmax(190px,1fr) auto auto;gap:10px;padding:0 22px 18px;align-items:end}
+.admin-refresh .ac-premium .ac-filter-label{font-size:11px;color:#5e5971}
+.admin-refresh .ac-premium .ac-search,.admin-refresh .ac-premium .ac-filter-label select{border-color:#dedce9;border-radius:11px;background:#fff;min-height:44px}
+.admin-refresh .ac-premium .ac-search input,.admin-refresh .ac-premium .ac-filter-label select{font-size:12.5px}
+.admin-refresh .ac-premium .ac-search:focus-within{border-color:#a982e5;box-shadow:0 0 0 3px #eddefd}
+.admin-refresh .ac-premium .ac-toolbar>.ac-primary,.admin-refresh .ac-premium .ac-toolbar>.ac-secondary{min-height:44px}
+.admin-refresh .ac-premium .ac-more-filter-row{padding:10px 22px;color:#77758a;border-color:#efedf4;font-size:12px}
+.admin-refresh .ac-premium .ac-filter-link{color:#7430bd;font-size:12px}
+.admin-refresh .ac-premium .ac-extra-filters{padding:16px 22px;background:#fcfaff;border-color:#eeebf4}
+.admin-refresh .ac-premium .ac-result-strip{background:#fbfaff;border-color:#eeebf5;padding:13px 22px;font-size:12px}
+.admin-refresh .ac-premium .ac-result-strip strong{color:#6427b0;font-size:13px}
+.admin-refresh .ac-premium .ac-bulk-toolbar{background:#f7f0ff;border-color:#ece0fb;gap:10px}
+.admin-refresh .ac-premium .ac-table{min-width:920px}
+.admin-refresh .ac-premium .ac-table thead th{background:#f8f7fb;border-color:#eae7f0;color:#474158;font-size:12px;padding:14px 12px}
+.admin-refresh .ac-premium .ac-table tbody td{font-size:12px;color:#4f4c63;padding:14px 12px;border-color:#f0edf5}
+.admin-refresh .ac-premium .ac-table tbody tr:hover{background:#fdfbff}
+.admin-refresh .ac-premium .ac-title-cell strong{font-size:13px;color:#24233b}
+.admin-refresh .ac-premium .ac-title-cell small,.admin-refresh .ac-premium .ac-table-sub{font-size:11px;color:#807e92}
+.admin-refresh .ac-premium .ac-title-cell .ac-photo{border-radius:11px;border-color:#e8e3f0;flex-basis:62px;width:62px;height:62px}
+.admin-refresh .ac-premium .ac-business-link{font-size:12.5px;color:#6836a7}
+.admin-refresh .ac-premium .ac-price{color:#3d285c!important;font-size:13px}
+.admin-refresh .ac-premium .ac-kind,.admin-refresh .ac-premium .ac-status,.admin-refresh .ac-premium .ac-pill-muted,.admin-refresh .ac-premium .ac-pill-age{font-size:11px;padding:6px 10px}
+.admin-refresh .ac-premium .ac-kind.product{background:#eee3ff;color:#6926bd}
+.admin-refresh .ac-premium .ac-kind.service{background:#e4efff;color:#23569d}
+.admin-refresh .ac-premium .ac-view{font-size:12px;background:#fff;border-color:#dcd7e8;color:#6431a9;border-radius:9px}
+.admin-refresh .ac-premium .ac-view:hover{background:#f2eaff;color:#6223b0}
+.admin-refresh .ac-premium .ac-activity-mini{gap:11px}
+.admin-refresh .ac-premium .ac-activity-mini span{font-size:11.5px;color:#655b7e}
+.admin-refresh .ac-premium .ac-pagination{color:#6e6883;font-size:12px}
+.admin-refresh .ac-premium .ac-analytics{border-color:#e5e2ed;border-radius:17px;box-shadow:0 10px 26px #2d20470b}
+.admin-refresh .ac-premium .ac-analytics-heading h2{color:#23213b}
+.admin-refresh .ac-premium :is(.ac-kind-tabs button,.ac-kpi,.ac-toolbar button,.ac-export){-webkit-tap-highlight-color:transparent}
+@media(max-width:1330px){
+  .admin-refresh .ac-premium .ac-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .ac-premium .ac-toolbar{grid-template-columns:minmax(180px,1.3fr) minmax(120px,.8fr) minmax(155px,1fr)}
+  .admin-refresh .ac-premium .ac-toolbar>.ac-primary,.admin-refresh .ac-premium .ac-toolbar>.ac-secondary{justify-self:stretch}
+}
+@media(max-width:900px){
+  .admin-refresh .ac-premium .ac-directory-top{padding-inline:14px}
+  .admin-refresh .ac-premium .ac-mobile-card{border-color:#e8e1f0;border-radius:15px;box-shadow:0 6px 20px #24143c0d}
+  .admin-refresh .ac-premium .ac-mobile-body h3{font-size:15px;color:#29213c}
+  .admin-refresh .ac-premium .ac-mobile-body p{font-size:12px;color:#716d80}
+  .admin-refresh .ac-premium .ac-mobile-business{color:#7234be;font-weight:750}
+  .admin-refresh .ac-premium .ac-mobile-price{font-size:15px;color:#523283}
+  .admin-refresh .ac-premium .ac-mobile-foot>span{font-size:11px;color:#858094}
+  .admin-refresh .ac-premium .ac-mobile-body .ac-view{min-height:36px}
+}
+@media(max-width:700px){
+  .admin-refresh .ac-premium{gap:14px}
+  .admin-refresh .ac-premium .ac-premium-heading{align-items:flex-start;padding:2px 0 0}
+  .admin-refresh .ac-premium .ac-heading-icon{width:45px;height:45px;flex-basis:45px;border-radius:12px}
+  .admin-refresh .ac-premium .ac-heading-identity{gap:11px}
+  .admin-refresh .ac-premium .ac-premium-heading h1{font-size:28px}
+  .admin-refresh .ac-premium .ac-premium-heading p{font-size:12px}
+  .admin-refresh .ac-premium .ac-heading-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .admin-refresh .ac-premium .ac-heading-actions>*{width:100%;padding-inline:8px;font-size:11.5px}
+  .admin-refresh .ac-premium .ac-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .admin-refresh .ac-premium .ac-kpi{min-height:130px;align-items:flex-start;flex-direction:column;gap:8px;padding:12px;border-radius:14px}
+  .admin-refresh .ac-premium .ac-kpi-icon{width:40px;height:40px;flex-basis:40px;border-radius:12px}
+  .admin-refresh .ac-premium .ac-kpi-content>span{font-size:12px}
+  .admin-refresh .ac-premium .ac-kpi-content strong{font-size:25px}
+  .admin-refresh .ac-premium .ac-kpi-content small{font-size:10px}
+  .admin-refresh .ac-premium .ac-directory-top{padding:0 12px;gap:6px}
+  .admin-refresh .ac-premium .ac-kind-tabs{width:100%}
+  .admin-refresh .ac-premium .ac-kind-tabs button{min-height:50px;font-size:12px;padding:8px 10px}
+  .admin-refresh .ac-premium .ac-directory-top .ac-export{width:100%;margin:0 0 10px}
+  .admin-refresh .ac-premium .ac-panel-head{padding:17px 14px}
+  .admin-refresh .ac-premium .ac-directory-helper{font-size:11px}
+  .admin-refresh .ac-premium .ac-toolbar{grid-template-columns:repeat(2,minmax(0,1fr));padding:0 13px 14px;gap:9px}
+  .admin-refresh .ac-premium .ac-search{grid-column:1/-1}
+  .admin-refresh .ac-premium .ac-filter-label:nth-of-type(3){grid-column:1/-1}
+  .admin-refresh .ac-premium .ac-toolbar>.ac-primary,.admin-refresh .ac-premium .ac-toolbar>.ac-secondary{min-width:0;width:100%}
+  .admin-refresh .ac-premium .ac-more-filter-row,.admin-refresh .ac-premium .ac-result-strip{padding:10px 13px}
+  .admin-refresh .ac-premium .ac-extra-filters{padding:13px}
+}
+@media(max-width:420px){
+  .admin-refresh .ac-premium .ac-kpi{min-height:129px}
+  .admin-refresh .ac-premium .ac-kpi-content>span{font-size:11.5px}
+  .admin-refresh .ac-premium .ac-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .ac-premium .ac-search{grid-column:1/-1}
+  .admin-refresh .ac-premium .ac-toolbar .ac-filter-label:nth-of-type(3){grid-column:1/-1}
+  .admin-refresh .ac-premium .ac-toolbar>.ac-primary,.admin-refresh .ac-premium .ac-toolbar>.ac-secondary{grid-column:auto}
+  .admin-refresh .ac-premium .ac-mobile-image{height:182px}
+  .admin-refresh .ac-premium .ac-kind-tabs button{font-size:11.5px}
+}
+@media(max-width:360px){.admin-refresh .ac-premium .ac-kpis{grid-template-columns:1fr}.admin-refresh .ac-premium .ac-kpi{min-height:0;flex-direction:row}}
