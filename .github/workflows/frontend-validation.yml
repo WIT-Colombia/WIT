@@ -90,6 +90,9 @@ jobs:
       - name: Check Admin Contenido on mobile, iPad and desktop with older API fields
         run: node scripts/check-admin-content-mobile.mjs
 
+      - name: Check redesigned Admin Contenido with business catalog data on desktop iPad mobile
+        run: node scripts/check-admin-content-premium.mjs
+
       - name: Check Admin Usuarios filters, permissions and operations on mobile, iPad and desktop
         run: node scripts/check-admin-users-responsive.mjs
 
@@ -138,6 +141,15 @@ jobs:
         with:
           name: xamuko-admin-users-${{ github.run_id }}
           path: frontend/test-results/admin-users/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save Admin Contenido premium responsive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-admin-content-premium-${{ github.run_id }}
+          path: frontend/test-results/admin-content-premium/
           if-no-files-found: ignore
           retention-days: 7
 
