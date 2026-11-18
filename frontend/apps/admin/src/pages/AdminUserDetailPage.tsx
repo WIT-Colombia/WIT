@@ -12,6 +12,7 @@ import { accountStatus } from './AdminUsersPage';
 import { formatNickname } from '../utils/format';
 import './AdminUsersRefresh.css';
 import './AdminUsersControl.css';
+import './AdminUsersPolish.css';
 
 const dateTime = (value: string | null) => value
   ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23' }).format(new Date(value))
@@ -163,7 +164,7 @@ export function AdminUserDetailPage() {
         <span className={'au-membership '+item.membershipStatus.toLowerCase()}>{membershipLabel[item.membershipStatus]??'Estado de vinculación no identificado'}</span>
         <span className="au-business-publication">{item.publicationStatus==='PUBLISHED'?'Publicado':item.publicationStatus==='REVIEW'?'En revisión':'No publicado'}</span></div></div>
   </article>;
-  return <div className="au-page au-detail-page">
+  return <div className="au-page au-detail-page au-polished">
     <Link className="au-back" to="/users"><Icon name="arrow" size={17}/> Volver al directorio</Link>
     <header className="au-detail-hero"><div className="au-profile-avatar">{avatarSrc?<img src={avatarSrc} alt="" onError={()=>setAvatarSrc(null)}/>:initials(profile.displayName)}</div>
       <div className="au-detail-heading"><span className="au-eyebrow">FICHA ADMINISTRATIVA · USUARIO</span><h1>{profile.displayName}</h1><p>{profile.emailNormalized??'Sin correo electrónico'}{profile.nickname?' · '+formatNickname(profile.nickname):''}</p>
