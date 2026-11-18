@@ -45,6 +45,14 @@ export async function uploadPhoto(userId: string, businessId: string, file: Uplo
   try {
     const result = await db.$transaction(async tx => {
       let replaced: Array<{ storageKey: string }> = [];
+      let committedGalleryCount = count;
+      if (!offerId) {
+        // Serializar las cargas del mismo negocio: dos solicitudes simultáneas
+        // no pueden superar la cuota de diez fotos.
+        await tx.$queryRaw`SELECT id FROM Business WHERE id = ${businessId} FOR UPDATE`;
+        committedGalleryCount = await tx.photo.count({ where: { businessId, isGallery: true } });
+        if (committedGalleryCount >= 10) throw new AppError(422, 'PHOTO_LIMIT_REACHED', 'Cada negocio puede tener máximo 10 fotografías.');
+      }
       if (offerId) {
         await tx.$queryRaw`SELECT id FROM BusinessOffer WHERE id = ${offerId} FOR UPDATE`;
         const offer = await tx.businessOffer.findFirst({
@@ -60,7 +68,7 @@ export async function uploadPhoto(userId: string, businessId: string, file: Uplo
       if (shouldUseAsCover) await tx.photo.updateMany({ where: { businessId, isCover: true }, data: { isCover: false } });
       const photo = await tx.photo.create({ data: {
         businessId, offerId: offerId ?? null, storageKey: stored.storageKey, url: null,
-        source: 'NEGOCIOS', sortOrder: count, isCover: shouldUseAsCover,
+        source: 'NEGOCIOS', sortOrder: committedGalleryCount, isCover: shouldUseAsCover,
         isGallery: !offerId, uploadedById: userId,
       } });
       if (shouldUseAsCover) await tx.business.update({ where: { id: businessId }, data: { coverPhotoId: photo.id } });
