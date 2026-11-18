@@ -2650,3 +2650,92 @@
     padding-inline: 9px;
   }
 }
+
+
+/* Admin · Reportes del negocio: escala tipográfica móvil consistente. */
+@media (max-width: 700px) {
+  .bd-record .bd-report-register-heading h2 {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -.015em;
+  }
+  .bd-record .bd-report-register-heading p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .bd-record .bd-report-center-link {
+    font-size: 13px;
+    font-weight: 750;
+    line-height: 1.3;
+  }
+  .bd-record .bd-report-stat-body > span {
+    font-size: 11px;
+    line-height: 1.35;
+    font-weight: 700;
+  }
+  .bd-record .bd-report-stat-body > strong {
+    font-size: 19px;
+    line-height: 1.15;
+  }
+  .bd-record .bd-report-finalized-summary {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .bd-record .bd-report-register-search button {
+    font-size: 13px;
+    font-weight: 750;
+  }
+  .bd-record .bd-report-register-tools .bd-report-reason-filter {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  .bd-record .bd-report-status-filter {
+    font-size: 12px;
+    font-weight: 750;
+    min-height: 39px;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .bd-record .bd-report-register .bd-error strong,
+  .bd-record .bd-report-register .bd-empty h3 {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  .bd-record .bd-report-register .bd-error p,
+  .bd-record .bd-report-register .bd-empty p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .bd-record .bd-report-register .bd-error .bd-button,
+  .bd-record .bd-report-register .bd-pagination .bd-button {
+    font-size: 13px;
+  }
+  .bd-record .bd-report-entry-title h3 {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .bd-record .bd-report-entry-description {
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  .bd-record .bd-report-entry-title time,
+  .bd-record .bd-report-entry .bd-report-state {
+    font-size: 11px;
+  }
+  .bd-record .bd-report-read,
+  .bd-record .bd-report-manage {
+    font-size: 12px;
+  }
+  .bd-record .bd-report-register-footnote {
+    font-size: 11px;
+    line-height: 1.55;
+  }
+}
+/* Evita el zoom de iOS en los campos sin agrandar los botones. */
+@container bd-report-filters (max-width: 640px) {
+  .bd-record .bd-report-register-search input[type="search"],
+  .bd-record .bd-report-register-tools .bd-report-reason-filter select {
+    font-size: 16px;
+  }
+}
