@@ -4,7 +4,7 @@ import { optionalAuth } from '../../shared/middleware/optional-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 import { requireAdmin } from '../admin/admin-auth.service.js';
-import { listBusinessReports, submitBusinessReport, decideBusinessReport } from './business-report.service.js';
+import { listBusinessReports, submitBusinessReport, decideBusinessReport, getBusinessReportCase } from './business-report.service.js';
 
 export const businessReportRouter = Router();
 const limitReports = rateLimit({
@@ -29,6 +29,12 @@ const adminList: RequestHandler = async (request, response, next) => {
 
 businessReportRouter.post('/public/businesses/:businessId/reports', limitReports, requireTrustedOrigin, optionalAuth, submit);
 businessReportRouter.get('/admin/business-reports', requireAdmin('REPORTS_REVIEW'), adminList);
+businessReportRouter.get('/admin/business-reports/:id', requireAdmin('REPORTS_REVIEW'), async (req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await getBusinessReportCase(String(req.params.id)));
+  } catch (error) { next(error); }
+});
 businessReportRouter.patch('/admin/business-reports/:id', requireTrustedOrigin, requireAdmin('CONTENT_MODERATE'), async (req, res, next) => {
   try {
     const report = await decideBusinessReport((req as AuthenticatedRequest).auth.userId, String(req.params.id), req.body?.status, req.body?.decisionNote);

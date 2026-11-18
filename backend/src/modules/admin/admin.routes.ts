@@ -15,6 +15,7 @@ import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAd
 import { controlAdminContent, controlAdminContentBulk, editAdminContent, getAdminContentHistory, removeAdminContentPhoto, type ContentControlAction } from './admin-content-control.service.js';
 import { listAdminUsersExtended, getAdminUserOverview, getAdminUserAnalytics, getAdminUserHistory, getAdminUserProfile, deactivateAdminUser, setAdminUserStatus, revokeAdminUserSessions } from './admin-users.service.js';
 import { prisma } from '../../config/prisma.js';
+import { Prisma } from '../../generated/prisma/client.js';
 import { adminZoneRegistry, decideZone } from '../zones/zones.service.js';
 import { readOwnAvatar } from '../auth/avatar.service.js';
 import { adminDocumentsRouter } from './admin-documents.routes.js';
@@ -131,6 +132,8 @@ adminRouter.post('/businesses/:id/plan', requireTrustedOrigin, requireAdmin('BUS
     res.json(await setAdminBusinessPlan(String(req.params.id), context.userId, String(req.body?.plan ?? ''), String(req.body?.reason ?? '')));
   } catch (error) { next(error); }
 });
+// This is a read-only, business-scoped report register. Decisions remain in
+// the central moderation workflow. Never expose reporter details without REPORTS_REVIEW.
 adminRouter.get('/businesses/:id/reports', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
   try {
     if (!adminFromRequest(req).permissions.includes('REPORTS_REVIEW'))
@@ -143,21 +146,65 @@ adminRouter.get('/businesses/:id/reports', requireAdmin('BUSINESSES_READ'), asyn
     const page = Math.max(1, Math.min(100000, Math.trunc(Number(req.query.page) || 1)));
     const pageSize = 12;
     const status = String(req.query.status ?? '');
+    const reason = String(req.query.reason ?? '');
+    const search = String(req.query.q ?? '').trim().slice(0, 100);
+    const from = String(req.query.from ?? ''), to = String(req.query.to ?? '');
     const allowedStatuses = ['PENDING', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED'] as const;
+    const allowedReasons = ['IMPERSONATION', 'FALSE_INFORMATION', 'SUSPECTED_FRAUD', 'INAPPROPRIATE_CONTENT', 'OTHER'] as const;
     if (status && !allowedStatuses.includes(status as typeof allowedStatuses[number]))
       throw new AppError(400, 'ADMIN_REPORT_STATUS_INVALID', 'Estado de reporte inválido.');
-    const where = { businessId: business.id,
-      ...(status ? { status: status as typeof allowedStatuses[number] } : {}) };
-    const [reports, total] = await prisma.$transaction([
+    if (reason && !allowedReasons.includes(reason as typeof allowedReasons[number]))
+      throw new AppError(400, 'ADMIN_REPORT_REASON_INVALID', 'Motivo de reporte inválido.');
+    const parseDay = (day: string) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day))
+        throw new AppError(400, 'ADMIN_REPORT_DATE_INVALID', 'La fecha del filtro no es válida.');
+      const date = new Date(day + 'T05:00:00.000Z'); // America/Bogota, UTC-5 year-round
+      if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== day)
+        throw new AppError(400, 'ADMIN_REPORT_DATE_INVALID', 'La fecha del filtro no es válida.');
+      return date;
+    };
+    const fromDate = from ? parseDay(from) : null;
+    const toDate = to ? parseDay(to) : null;
+    if (fromDate && toDate && fromDate > toDate)
+      throw new AppError(400, 'ADMIN_REPORT_DATE_RANGE_INVALID', 'La fecha inicial no puede superar la final.');
+    const where: Prisma.BusinessReportWhereInput = {
+      businessId: business.id,
+      ...(status ? { status: status as typeof allowedStatuses[number] } : {}),
+      ...(reason ? { reason: reason as typeof allowedReasons[number] } : {}),
+      ...((fromDate || toDate) ? { createdAt: {
+        ...(fromDate ? { gte: fromDate } : {}),
+        ...(toDate ? { lt: new Date(toDate.getTime() + 86400000) } : {}),
+      } } : {}),
+    };
+    if (search) {
+      where.OR = [
+        { description: { contains: search } },
+        { reporter: { is: { displayName: { contains: search } } } },
+        ...allowedReasons.filter(value => value.includes(search.toUpperCase().replace(/\s+/g, '_')))
+          .map(value => ({ reason: value })),
+      ];
+    }
+    const [reports, total, grouped] = await prisma.$transaction([
       prisma.businessReport.findMany({ where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: pageSize, skip: (page - 1) * pageSize,
         select: { id: true, reason: true, description: true, status: true,
           decisionNote: true, createdAt: true, updatedAt: true,
           reporter: { select: { displayName: true } } } }),
       prisma.businessReport.count({ where }),
+      prisma.businessReport.groupBy({ by: ['status'], where: { businessId: business.id }, _count: { _all: true } }),
     ]);
+    const summary = { total: 0, pending: 0, reviewing: 0, resolved: 0, rejected: 0, finalized: 0 };
+    for (const row of grouped) {
+      const count = row._count._all;
+      summary.total += count;
+      if (row.status === 'PENDING') summary.pending = count;
+      if (row.status === 'UNDER_REVIEW') summary.reviewing = count;
+      if (row.status === 'RESOLVED') summary.resolved = count;
+      if (row.status === 'REJECTED') summary.rejected = count;
+    }
+    summary.finalized = summary.resolved + summary.rejected;
     res.setHeader('Cache-Control', 'private, no-store');
-    res.json({ reports, pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } });
+    res.json({ reports, summary, pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } });
   } catch (error) { next(error); }
 });
 

@@ -82,3 +82,43 @@ export async function decideBusinessReport(adminId: string, id: string, rawStatu
     return report;
   });
 }
+
+
+/** An individual case is fetched by its immutable report ID, not a paginated
+ * list position. Its audit trail belongs to the same business. */
+export async function getBusinessReportCase(identifier: string) {
+  const report = await prisma.businessReport.findUnique({
+    where: { id: identifier },
+    include: {
+      business: { select: { id: true, publicId: true, name: true } },
+      reporter: { select: { displayName: true } },
+    },
+  });
+  if (!report) throw new AppError(404, 'BUSINESS_REPORT_NOT_FOUND', 'Reporte no encontrado.');
+  const history = await prisma.auditLog.findMany({
+    where: {
+      entityType: 'BUSINESS', entityId: report.businessId, action: 'BUSINESS_REPORT_MODERATED',
+      previousState: { path: '$.reportId', equals: report.id },
+    },
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    select: { id: true, createdAt: true, action: true, reason: true,
+      previousState: true, newState: true, actor: { select: { displayName: true } } },
+  });
+  const statusOf = (value: unknown): string | null => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const status = (value as Record<string, unknown>).status;
+    return typeof status === 'string' && statuses.includes(status as BusinessReportStatus) ? status : null;
+  };
+  return {
+    report: {
+      id: report.id, reason: report.reason, description: report.description, status: report.status,
+      decisionNote: report.decisionNote, createdAt: report.createdAt, updatedAt: report.updatedAt,
+      reporter: report.reporter, business: report.business,
+    },
+    history: history.map(row => ({
+      id: row.id, action: row.action, createdAt: row.createdAt,
+      reason: row.reason, actor: row.actor,
+      previousStatus: statusOf(row.previousState), newStatus: statusOf(row.newState),
+    })),
+  };
+}

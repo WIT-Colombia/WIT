@@ -45,6 +45,56 @@ test('Ficha administrativa: consultas, fotografías privadas y decisiones audita
       assert.equal(business.record.businessPhotos, 12); assert.equal(business.record.catalogPhotos, 6); assert.equal(business.isPro, true); assert.equal(business.record.effectiveVisibility, 'VISIBLE');
       assert.ok(!JSON.stringify(business).includes('passwordHash')); assert.ok(!JSON.stringify(business).includes('storageKey'));
     });
+    await t.test('Reportes: cifras reales, filtros de cada negocio, fechas de Bogotá y trazabilidad', async () => {
+      const first = await request('/businesses/' + id + '/reports');
+      assert.equal(first.status, 200);
+      assert.match(first.headers.get('cache-control') ?? '', /no-store/);
+      const initial = await first.json() as any;
+      assert.equal(initial.summary.total, 1);
+      assert.equal(initial.summary.pending, 1);
+      const pending = await prisma.businessReport.findFirstOrThrow({ where: { businessId: id } });
+      await prisma.businessReport.update({ where: { id: pending.id }, data: { status: 'UNDER_REVIEW' } });
+      const resolved = await prisma.businessReport.create({ data: {
+        businessId: id, reporterId: fixture.member.id, status: 'RESOLVED', reason: 'FALSE_INFORMATION',
+        description: 'Reporte revisado con evidencia suficiente.', decisionNote: 'Resultado fundamentado del proceso.',
+      } });
+      await prisma.businessReport.create({ data: {
+        businessId: id, status: 'REJECTED', reason: 'IMPERSONATION',
+        description: 'Denuncia de suplantación desestimada.', decisionNote: 'No se encontraron elementos.',
+      } });
+      await prisma.auditLog.create({ data: {
+        actorUserId: fixture.user.id, entityType: 'BUSINESS', entityId: id, action: 'BUSINESS_REPORT_MODERATED',
+        previousState: { reportId: resolved.id, status: 'UNDER_REVIEW' },
+        newState: { reportId: resolved.id, status: 'RESOLVED' },
+        reason: 'Revisión sustentada del expediente.',
+      } });
+      const counts = await (await request('/businesses/' + id + '/reports?status=RESOLVED')).json() as any;
+      assert.equal(counts.summary.total, 3);
+      assert.deepEqual([counts.summary.pending, counts.summary.reviewing, counts.summary.finalized], [0, 1, 2]);
+      assert.equal(counts.summary.resolved, 1); assert.equal(counts.summary.rejected, 1);
+      assert.equal(counts.pagination.total, 1);
+      assert.equal(counts.reports[0].id, resolved.id);
+      const reasonFiltered = await (await request('/businesses/' + id + '/reports?reason=IMPERSONATION')).json() as any;
+      assert.equal(reasonFiltered.pagination.total, 1);
+      const searched = await (await request('/businesses/' + id + '/reports?q=evidencia')).json() as any;
+      assert.equal(searched.pagination.total, 1);
+      assert.equal((await (await request('/businesses/' + fixture.other.id + '/reports')).json() as any).summary.total, 0);
+      const date = resolved.createdAt.toISOString().slice(0, 10);
+      assert.equal((await (await request('/businesses/' + id + '/reports?from=' + date + '&to=' + date)).json() as any).pagination.total, 3);
+      assert.equal((await request('/businesses/' + id + '/reports?from=2026-02-30')).status, 400);
+      assert.equal((await request('/businesses/' + id + '/reports?reason=INVALID')).status, 400);
+      assert.equal((await request('/businesses/' + id + '/reports?status=INVALID')).status, 400);
+      assert.equal((await request('/businesses/' + id + '/reports?from=2026-12-10&to=2026-11-10')).status, 400);
+      const incident = await request('/business-reports/' + resolved.id);
+      assert.equal(incident.status, 200);
+      const detail = await incident.json() as any;
+      assert.equal(detail.report.id, resolved.id);
+      assert.equal(detail.history.length, 1);
+      assert.equal(detail.history[0].actor.displayName, fixture.user.displayName);
+      assert.equal(detail.history[0].previousStatus, 'UNDER_REVIEW');
+      assert.equal(detail.history[0].newStatus, 'RESOLVED');
+      assert.equal((await request('/business-reports/' + resolved.id, {}, false)).status, 401);
+    });
     await t.test('historial conserva descripciones existentes sin exponer campos privados', async () => {
       await prisma.auditLog.create({ data: {
         actorUserId: fixture.user.id, entityType: 'BUSINESS', entityId: id,
