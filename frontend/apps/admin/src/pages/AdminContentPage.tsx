@@ -147,16 +147,25 @@ export function AdminContentPage(){
     {bulkNotice&&<p className="ac-success" role="status">{bulkNotice}</p>}
     {bulkErrors.length>0&&<div className="ac-warning" role="alert"><strong>Registros sin procesar:</strong><ul>{bulkErrors.map(err=><li key={err}>{err}</li>)}</ul></div>}
     <section className="ac-directory" aria-labelledby="ac-directory-title">
-      <div className="ac-panel-head"><div><span className="ac-eyebrow">GESTIÓN DE PUBLICACIONES</span><h2 id="ac-directory-title">Directorio de contenido</h2><p>Productos y servicios de los negocios registrados en XAMUKO.</p></div>
-        <div className="ac-head-actions"><button className="ac-secondary" type="button" disabled={!directory?.offers.length}
-        onClick={()=>exportVisibleContent(directory?.offers??[])}><Icon name="download" size={16}/> CSV de esta página</button>
-        <Link to="/offer-reports" className="ac-secondary"><Icon name="flag" size={17}/> Revisar reportes</Link></div></div>
+      <div className="ac-directory-top">
+        <div className="ac-kind-tabs" role="group" aria-label="Filtrar contenido por tipo">
+          <button type="button" className={kind===''?'active':''} aria-pressed={kind===''} onClick={()=>apply('kind','')}>Todos</button>
+          <button type="button" className={kind==='PRODUCT'?'active':''} aria-pressed={kind==='PRODUCT'} onClick={()=>apply('kind','PRODUCT')}><Icon name="box" size={17}/> Productos</button>
+          <button type="button" className={kind==='SERVICE'?'active':''} aria-pressed={kind==='SERVICE'} onClick={()=>apply('kind','SERVICE')}><Icon name="settings" size={17}/> Servicios</button>
+        </div>
+        <button className="ac-secondary ac-export" type="button" disabled={!directory?.offers.length}
+          onClick={()=>exportVisibleContent(directory?.offers??[])}><Icon name="download" size={16}/> Exportar página CSV</button>
+      </div>
+      <div className="ac-panel-head"><div><span className="ac-eyebrow">GESTIÓN DEL CATÁLOGO</span><h2 id="ac-directory-title">Directorio de contenido</h2>
+        <p>Información original de cada negocio, sin registros de ejemplo.</p></div>
+        <span className="ac-directory-helper"><Icon name="shield" size={16}/> Acciones sujetas a permisos y auditoría</span></div>
       <form className="ac-toolbar" onSubmit={submit}>
         <label className="ac-search" htmlFor="ac-query"><Icon name="search" size={18}/><input id="ac-query" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar publicación, código o negocio"/></label>
-        <label className="ac-filter-label"><span>Tipo</span><select aria-label="Filtrar por tipo" value={kind} onChange={e=>apply('kind',e.target.value)}>
-          <option value="">Productos y servicios</option><option value="PRODUCT">Productos</option><option value="SERVICE">Servicios</option></select></label>
-        <label className="ac-filter-label"><span>Publicación</span><select aria-label="Filtrar por estado" value={status} onChange={e=>apply('status',e.target.value)}>
+        <label className="ac-filter-label"><span>Estado</span><select aria-label="Filtrar por estado" value={status} onChange={e=>apply('status',e.target.value)}>
           <option value="">Vigentes</option><option value="PUBLISHED">Publicados</option><option value="REVIEW">En revisión</option><option value="UNPUBLISHED">No publicados</option><option value="HIDDEN">Ocultos por Admin</option><option value="ADMIN_REVIEW">Revisión administrativa</option><option value="INACTIVE">Inactivos</option><option value="DELETED">Eliminados</option></select></label>
+        <label className="ac-filter-label"><span>Ordenar por</span><select aria-label="Ordenar publicaciones" value={order} onChange={e=>apply('order',e.target.value)}>
+          <option value="">Actualizados recientemente</option><option value="created">Nuevos primero</option>
+          <option value="oldest">Antiguos primero</option><option value="name">Nombre A–Z</option></select></label>
         <button className="ac-primary" type="submit"><Icon name="search" size={16}/> Buscar</button>
         <button className="ac-secondary" type="button" onClick={clear}><Icon name="refresh" size={16}/> Limpiar</button>
       </form>
@@ -166,9 +175,6 @@ export function AdminContentPage(){
       <div className="ac-extra-filters" id="ac-directory-extra" hidden={!advanced}>
         <label>Ciudad<select value={city} onChange={e=>apply('city',e.target.value)}><option value="">Todas las ciudades</option>{insights?.filters.cities.map(v=><option key={v.value} value={v.value}>{v.label}</option>)}</select></label>
         <label>Categoría<select value={categoryId} onChange={e=>apply('categoryId',e.target.value)}><option value="">Todas las categorías</option>{insights?.filters.categories.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select></label>
-        <label>Orden<select value={order} onChange={e=>apply('order',e.target.value)}>
-          <option value="">Actualizados recientemente</option><option value="created">Nuevos primero</option>
-          <option value="oldest">Antiguos primero</option><option value="name">Nombre A–Z</option></select></label>
         <label>ID de negocio<input value={businessId} maxLength={64} placeholder="Filtrar un negocio"
           onChange={e=>apply('businessId',e.target.value.trim())}/></label>
       </div>
@@ -186,7 +192,7 @@ export function AdminContentPage(){
       {loading?<StatePanel kind="loading" title="Consultando contenido" message="Cargando productos y servicios registrados."/>:
         error?<StatePanel kind="error" title="No se pudo cargar el contenido" message={error} retry={()=>setRevision(v=>v+1)}/>:
         directory&&(directory.offers.length===0?<StatePanel kind="empty" title="Sin resultados" message="Prueba otros filtros o consulta otro período."/>:<>
-          {!mobile&&<div className="ac-table-scroll"><table className="ac-table"><thead><tr>{canModerate&&<th scope="col"><span className="sr-only">Seleccionar</span></th>}<th>Publicación</th><th>Negocio</th><th>Categoría</th><th>Precio</th><th>Estado</th><th>Actividad</th><th>Detalle</th></tr></thead>
+          {!mobile&&<div className="ac-table-scroll"><table className="ac-table"><thead><tr>{canModerate&&<th scope="col"><span className="sr-only">Seleccionar</span></th>}<th>Publicación</th><th>Negocio</th><th>Categoría</th><th>Precio</th><th>Estado</th><th>Actividad</th><th>Acciones</th></tr></thead>
             <tbody>{directory.offers.map(offer=><tr key={offer.id}>
               {canModerate&&<td><input type="checkbox" aria-label={'Seleccionar '+offer.name}
                 checked={selectedIds.includes(offer.id)} disabled={Boolean(offer.deletedAt)}
@@ -201,8 +207,11 @@ export function AdminContentPage(){
           {mobile&&<div className="ac-mobile-grid">{directory.offers.map(offer=><article className="ac-mobile-card" key={offer.id}>
             <Link className="ac-mobile-image" to={'/content/'+encodeURIComponent(offer.id)}><AdminContentPhoto photoId={offer.photoId} alt={offer.photoAlt??offer.name} type={offer.kind} thumbnail/></Link>
             <div className="ac-mobile-body">{canModerate&&<label className="ac-mobile-select"><input type="checkbox" checked={selectedIds.includes(offer.id)}
-              disabled={Boolean(offer.deletedAt)} onChange={()=>toggleSelection(offer.id)}/> Seleccionar</label>}<ContentBadge item={offer}/><h3>{offer.name}</h3><p>{offer.category} · {offer.business.name}</p>
-              <strong className="ac-mobile-price">{offerPrice(offer)}</strong><div className="ac-mobile-foot"><span>{offer.business.city??'Sin ubicación'}</span><Link className="ac-view" to={'/content/'+encodeURIComponent(offer.id)}>Explorar <Icon name="arrow" size={16}/></Link></div></div>
+              disabled={Boolean(offer.deletedAt)} onChange={()=>toggleSelection(offer.id)}/> Seleccionar</label>}<ContentBadge item={offer}/><h3>{offer.name}</h3>
+              <p>{offer.category} · <Link className="ac-mobile-business" to={'/businesses/'+encodeURIComponent(offer.business.id)}>{offer.business.name}</Link></p>
+              <strong className="ac-mobile-price">{offerPrice(offer)}</strong>
+              <div className="ac-activity-mini"><span title="Me gusta"><Icon name="heart" size={14}/>{num(offer.likes)}</span><span title="Vistas"><Icon name="eye" size={14}/>{num(offer.views)}</span><span title="Reportes"><Icon name="flag" size={14}/>{num(offer.reports)}</span></div>
+              <div className="ac-mobile-foot"><span>Actualizado: {displayDate(offer.updatedAt)}</span><Link className="ac-view" to={'/content/'+encodeURIComponent(offer.id)}>Ver ficha <Icon name="arrow" size={16}/></Link></div></div>
           </article>)}</div>}
         </>)}
       {directory&&directory.pagination.totalPages>1&&<nav className="ac-pagination" aria-label="Páginas de contenido">
