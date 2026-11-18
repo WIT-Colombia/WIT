@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
@@ -130,13 +131,8 @@ export function AdminContentPage(){
   ]:[];
   if(!allowed)return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso de catálogo para consultar el contenido."/>;
   return <div className="ac-page ac-premium">
-    <header className="ac-premium-heading">
-      <div className="ac-heading-identity"><span className="ac-heading-icon"><Icon name="box" size={27}/></span><div>
-        <h1 id="ac-title">Contenido</h1><p>Productos y servicios registrados por los negocios de XAMUKO.</p>
-      </div></div>
-      <div className="ac-heading-actions"><a href="#ac-analytics-title" className="ac-secondary"><Icon name="chart" size={17}/> Estadísticas</a>
-        <Link to="/offer-reports" className="ac-primary"><Icon name="flag" size={17}/> Revisar reportes</Link></div>
-    </header>
+    <AdminPageHeading icon="box" id="ac-title" title="Contenido" description="Productos y servicios registrados por los negocios de XAMUKO." actions={<div className="ac-heading-actions"><a href="#ac-analytics-title" className="ac-secondary"><Icon name="chart" size={17}/> Estadísticas</a>
+        <Link to="/offer-reports" className="ac-primary"><Icon name="flag" size={17}/> Revisar reportes</Link></div>} />
     {totals&&<div className="ac-kpis" aria-label="Resumen real del catálogo">{kpis.map(k=><button key={k.label} type="button"
       className={'ac-kpi '+k.tone+(status===k.status?' is-selected':'')} aria-pressed={status===k.status}
       onClick={()=>apply('status',k.status)} title={'Filtrar: '+k.label}>

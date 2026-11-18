@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { SupportDecisionDialog } from '../components/SupportDecisionDialog';
@@ -51,7 +52,7 @@ export function ReviewReportsPage() {
     {report,status:'REJECTED',label:'Rechazar reporte',word:'RECHAZAR'},
   ];
   return <section className="rr-page" aria-labelledby="rr-title">
-    <header className="admin-section-heading"><h1 id="rr-title">Reportes de comentarios</h1></header>
+    <AdminPageHeading icon="flag" id="rr-title" title="Reportes de comentarios" />
     <div className="rr-summary"><div><span className="rr-icon"><Icon name="flag" size={21}/></span><strong>{pending}</strong><span>Requieren atención</span></div>
       <div><span className="rr-icon"><Icon name="check" size={21}/></span><strong>{reports.length}</strong><span>Reportes mostrados</span></div></div>
     <div className="rr-toolbar"><label>Estado<select value={status} onChange={e=>setStatus(e.target.value)}>

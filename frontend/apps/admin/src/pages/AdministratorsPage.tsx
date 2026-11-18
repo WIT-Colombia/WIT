@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useEffect, useState } from 'react';
 import { listAdministrators, type AdministratorRecord } from '../services/adminApiClient';
 import { getSession } from '../services/adminService';
@@ -25,7 +26,7 @@ export function AdministratorsPage() {
   if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="Necesitas permiso para consultar administradores." />;
   const active = records.filter(record => record.adminRoleAssignments.some(role => role.active));
   return <section className="administrators-page">
-    <header className="admin-section-heading"><h1>Administradores y accesos</h1></header>
+    <AdminPageHeading icon="users" title="Administradores y accesos" />
     {loading ? <StatePanel kind="loading" title="Cargando administradores" message="Consultando cuentas reales." /> : error ? <StatePanel kind="error" title="No pudimos cargar las cuentas" message={error} retry={() => setRevision(value => value + 1)} /> : <>
       <div className="admin-directory-overview"><span>Administradores activos</span><strong>{active.length}</strong><small>Según los roles activos registrados</small></div>
       {records.length === 0 ? <StatePanel kind="empty" title="Sin administradores" message="La consulta no devolvió cuentas administrativas." /> : <div className="admin-directory-table"><table><thead><tr><th>Cuenta</th><th>Estado</th><th>Rol activo</th><th>Permisos</th></tr></thead><tbody>{records.map(record => <tr key={record.id}><td><strong>{record.displayName}</strong><small>{record.emailNormalized ?? 'Correo no disponible'}</small></td><td><span className="status-pill">{record.status}</span></td><td>{record.adminRoleAssignments.filter(role => role.active).map(role => role.role).join(', ') || 'Sin rol activo'}</td><td>{record.adminPermissionGrants.filter(grant => grant.granted).map(grant => grant.permission).join(', ') || 'Sin permisos adicionales'}</td></tr>)}</tbody></table></div>}

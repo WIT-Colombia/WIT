@@ -1,3 +1,4 @@
+import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { decideOperationalRecord, getOperationalBusinessReport, listOperationalRecords, type OperationalKind, type OperationalRecord, type OperationalStatus } from '../services/adminApiClient';
@@ -102,7 +103,7 @@ export function OperationalInboxPage({ kind }: { kind: OperationalKind }) {
     finally { setBusy(false); }
   }
   return <section className="ops-inbox" aria-labelledby="ops-title">
-    <header className="admin-section-heading"><h1 id="ops-title">{config[kind].title}</h1></header>
+    <AdminPageHeading icon={kind === 'needs' ? 'search' : kind === 'support' || kind === 'suggestions' ? 'message' : 'flag'} id="ops-title" title={config[kind].title} />
     <div className="ops-attention-summary" aria-label="Casos que requieren atención">
       <button type="button" aria-pressed={status === 'PENDING'} onClick={() => { setPage(1); setStatus('PENDING'); }}>
         <span>Pendientes de atención</span><strong>{actionCounts.pending}</strong>

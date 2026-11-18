@@ -1,0 +1,59 @@
+/* Shared geometry from the current Negocios directory. */
+.admin-refresh.admin-workbench .admin-main .workspace:has(.admin-page-heading) {
+  max-width:1510px; padding:28px 32px 44px;
+}
+.admin-refresh .admin-main .workspace > :has(> .admin-page-heading) {
+  width:100%; max-width:none; margin-top:0; margin-left:0; margin-right:0;
+  padding-top:0; padding-left:0; padding-right:0;
+}
+.admin-refresh .admin-main .workspace .admin-page-heading {
+  display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+  gap:14px; min-width:0; width:100%; margin:0 0 18px; padding:0;
+  border:0; border-radius:0; background:none; box-shadow:none;
+}
+.admin-refresh .admin-main .workspace .admin-page-heading-identity {
+  display:flex; align-items:center; gap:14px; min-width:0; flex:1 1 280px;
+}
+.admin-refresh .admin-main .workspace .admin-page-heading-icon {
+  display:grid; place-items:center; flex:0 0 52px; width:52px; height:52px;
+  border-radius:14px; background:linear-gradient(140deg,#eee6ff,#e6dcff); color:#6222dd;
+}
+.admin-refresh .admin-main .workspace .admin-page-heading-icon svg { width:27px; height:27px; stroke-width:2; }
+.admin-refresh .admin-main .workspace .admin-page-heading-copy {
+  min-width:0;
+  min-height:calc(var(--xa-type-page) * 1.06 + 5px + var(--xa-type-subtitle) * 1.5);
+}
+.admin-refresh .admin-main .workspace .admin-page-heading h1 {
+  margin:0 0 5px; color:#111224; font-weight:850; letter-spacing:-.045em; line-height:1.06;
+  overflow-wrap:anywhere;
+}
+.admin-refresh .admin-main .workspace .admin-page-heading-copy > p {
+  margin:0; color:#4f5874; font-size:var(--xa-type-subtitle); line-height:1.5;
+}
+.admin-refresh .admin-main .workspace .admin-page-heading-actions {
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px; max-width:100%;
+}
+.admin-refresh .admin-main .workspace .admin-page-heading-details { flex-basis:100%; min-width:0; padding-left:66px; }
+/* Audit already supplies spacing between rows through its grid. */
+.admin-refresh .admin-main .workspace .xa-audit-workspace > .admin-page-heading { margin-bottom:0; }
+@media(max-width:1150px) {
+  .admin-refresh .admin-main .workspace .admin-page-heading-icon { flex-basis:49px; width:49px; height:49px; }
+  .admin-refresh .admin-main .workspace .admin-page-heading-details { padding-left:63px; }
+}
+@media(max-width:900px) {
+  .admin-refresh.admin-workbench .admin-main .workspace:has(.admin-page-heading) { padding:calc(79px + env(safe-area-inset-top,0px)) 22px 34px !important; }
+}
+@media(max-width:700px) {
+  .admin-refresh .admin-main .workspace .admin-page-heading { gap:10px; margin-bottom:14px; }
+  .admin-refresh .admin-main .workspace .admin-page-heading-identity { gap:10px; }
+  .admin-refresh .admin-main .workspace .admin-page-heading-copy { min-height:calc(var(--xa-type-page) * 1.06 + 5px + var(--xa-type-subtitle) * 3); }
+  .admin-refresh .admin-main .workspace .admin-page-heading-icon { flex-basis:43px; width:43px; height:43px; border-radius:11px; }
+  .admin-refresh .admin-main .workspace .admin-page-heading-icon svg { width:23px; height:23px; }
+  .admin-refresh .admin-main .workspace .admin-page-heading-actions { flex-basis:100%; }
+  .admin-refresh .admin-main .workspace .admin-page-heading-details { padding-left:53px; }
+}
+@media(max-width:650px) {
+  .admin-refresh.admin-workbench .admin-main .workspace:has(.admin-page-heading) {
+    padding:calc(79px + env(safe-area-inset-top,0px)) 14px 28px !important;
+  }
+}
