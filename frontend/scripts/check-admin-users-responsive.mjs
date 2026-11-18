@@ -131,6 +131,9 @@ try {
           links: document.querySelectorAll('.au-user-cell').length };
       });
       console.log('Admin Usuarios layout ' + device + ': ' + JSON.stringify(layout));
+      // React can display the count before responsive CSS finishes settling in Chromium.
+      await page.locator('.au-mobile-users').waitFor({ state: isMobileLayout ? 'visible' : 'hidden', timeout: 10000 });
+      await page.locator('.au-table-scroll').waitFor({ state: isMobileLayout ? 'hidden' : 'visible', timeout: 10000 });
       assert.equal(await page.locator('.au-mobile-users').isVisible(), isMobileLayout, device + ': tarjetas móviles');
       assert.equal(await page.locator('.au-table-scroll').isVisible(), !isMobileLayout, device + ': tabla escritorio');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 2),
