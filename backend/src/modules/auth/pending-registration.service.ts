@@ -23,7 +23,15 @@ const normalizeEmail = (email: string) => email.trim().toLocaleLowerCase('en-US'
 export async function beginPendingRegistration(input: RegisterInput, application: EmailApplication) {
   const emailNormalized = normalizeEmail(input.email);
   const existing = await prisma.user.findUnique({ where: { emailNormalized }, select: { id: true } });
-  if (existing) throw new AppError(409, 'EMAIL_UNAVAILABLE', 'Este correo ya tiene una cuenta. Inicia sesión.', { email: 'Este correo ya tiene una cuenta. Inicia sesión.' });
+  // H7: el registro no debe revelar si un correo ya pertenece a una cuenta.
+  // Se devuelve la misma estructura pública 202, sin crear otra cuenta ni enviar
+  // un enlace de registro no funcional al titular existente.
+  if (existing) {
+    // Balancear parte del trabajo criptográfico del registro; la latencia de
+    // entrega del correo sigue requiriendo pruebas y una cola asíncrona.
+    await argon2.hash(input.password, { type: argon2.argon2id });
+    return { email: emailNormalized, verificationExpiresAt: emailActionLinkExpiresAt(new Date()).toISOString(), verificationEmailSent: true };
+  }
 
   const referralCode = input.referralCode?.trim().toUpperCase() || null;
   if (referralCode) await findEligibleReferralBusiness(prisma, referralCode);
