@@ -138,12 +138,21 @@ export async function uploadCoverPhoto(userId: string, businessId: string, file:
   const y = ensurePosition(positionY, 'la portada');
   const stored = await savePhoto(businessId, file.buffer, file.mimetype);
   try {
-    const photo = await db.$transaction(async tx => {
+    const result = await db.$transaction(async tx => {
+      await tx.$queryRaw`SELECT id FROM Business WHERE id = ${businessId} FOR UPDATE`;
+      const business = await tx.business.findUniqueOrThrow({ where: { id: businessId }, select: { coverPhotoId: true } });
       const created = await tx.photo.create({ data: { businessId, storageKey: stored.storageKey, url: null, source: 'NEGOCIOS', sortOrder: 0, isCover: false, isGallery: false, uploadedById: userId } });
       await tx.business.update({ where: { id: businessId }, data: { coverPhotoId: created.id, coverImagePositionX: x, coverImagePositionY: y } });
-      return created;
+      // Solo se retiran portadas reemplazadas que no pertenezcan a la galería.
+      // Las imágenes de galería o catálogo pueden seguir referenciadas.
+      const oldCover = business.coverPhotoId
+        ? await tx.photo.findFirst({ where: { id: business.coverPhotoId, businessId, isGallery: false, offerId: null }, select: { id: true, storageKey: true } })
+        : null;
+      if (oldCover) await tx.photo.delete({ where: { id: oldCover.id } });
+      return { photo: created, obsoleteStorageKey: oldCover?.storageKey };
     });
-    return serializePhoto(businessId, photo);
+    if (result.obsoleteStorageKey) await removePhoto(result.obsoleteStorageKey).catch(() => undefined);
+    return serializePhoto(businessId, result.photo);
   } catch (error) {
     await removePhoto(stored.storageKey).catch(() => undefined);
     throw error;
