@@ -21,6 +21,7 @@ import { collaboratorRouter } from './modules/business/collaborator.routes.js';
 import { verificationRouter } from './modules/business/verification.routes.js';
 import { ownershipTransferRouter } from './modules/business/ownership-transfer.routes.js';
 import { financeRouter } from './modules/finance/finance.routes.js';
+import { technologyRouter } from './modules/technology/technology.routes.js';
 
 export const apiRouter = Router();
 apiRouter.use('/health', healthRouter);
@@ -28,6 +29,7 @@ apiRouter.use('/auth', authRouter);
 apiRouter.use('/admin/auth', adminAuthRouter);
 apiRouter.use('/admin', adminRouter);
 apiRouter.use('/admin/finance', financeRouter);
+apiRouter.use('/admin/technology', technologyRouter);
 apiRouter.use('/public', publicBusinessRouter);
 // Public analytics events must be reachable by anonymous visitors before
 // routers that apply broad authentication middleware.
