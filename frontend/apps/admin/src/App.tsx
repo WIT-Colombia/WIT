@@ -32,6 +32,8 @@ import { AdminBusinessProPage } from './pages/AdminBusinessProPage';
 import { AdminBillingPage } from './pages/AdminBillingPage';
 import { AdminTransactionsPage } from './pages/AdminTransactionsPage';
 import { AdminRefundsPage } from './pages/AdminRefundsPage';
+import { AdminServiceStatusPage } from './pages/AdminServiceStatusPage';
+import { AdminDeploymentsPage } from './pages/AdminDeploymentsPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 
 function ProtectedRoute() {
@@ -48,7 +50,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans', '/business-pro', '/billing', '/transactions', '/refunds'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans', '/business-pro', '/billing', '/transactions', '/refunds', '/service-status', '/deployments', '/needs'];
 
 export default function App() {
   return <Routes>
@@ -81,6 +83,9 @@ export default function App() {
         <Route path="/billing" element={<AdminBillingPage />} />
         <Route path="/transactions" element={<AdminTransactionsPage />} />
         <Route path="/refunds" element={<AdminRefundsPage />} />
+        <Route path="/service-status" element={<AdminServiceStatusPage />} />
+        <Route path="/deployments" element={<AdminDeploymentsPage />} />
+        <Route path="/needs" element={<Navigate to="/deployments?work=NEED" replace />} />
         <Route path="/categories" element={<AdminCategoriesPage />} />
         <Route path="/users" element={<AdminUsersPage />} />
         <Route path="/users/:id" element={<AdminUserDetailPage />} />
