@@ -81,7 +81,7 @@ export function AdminPlusMembershipControl() {
     </div>
     {canManage && <div className="admin-plus-member-requests" aria-label="Solicitudes pendientes de Xamuko Plus">
       <div className="admin-plus-member-requests-header">
-        <div><h3>Solicitudes de Xamuko Plus</h3><p>Precio registrado: $4.900 COP/mes · no implica pago realizado.</p></div>
+        <div><h3>Solicitudes de Xamuko Plus</h3><p>Precio registrado: $3.900 COP/mes · no implica pago realizado.</p></div>
         <button type="button" className="admin-plus-request-refresh" disabled={requestsLoading} onClick={() => void loadRequests()}>
           {requestsLoading ? 'Actualizando…' : 'Actualizar solicitudes'}
         </button>
