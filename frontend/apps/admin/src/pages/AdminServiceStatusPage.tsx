@@ -105,13 +105,13 @@ export function AdminServiceStatusPage(){
       description="Monitoreo, seguimiento de incidentes y mantenimiento de la infraestructura XAMUKO."
       actions={<div className="ato-heading-actions">
         <span className="ato-checked-at"><Icon name="clock" size={16}/>
-    <TechnologyTabs />
           {data?'Comprobado: '+formatDate(data.checkedAt):'Sin comprobación reciente'}</span>
         <button type="button" className="ato-btn ato-btn-light"
           onClick={()=>setRevision(v=>v+1)}><Icon name="refresh" size={17}/> Actualizar</button>
         {manage&&<button type="button" className="ato-btn ato-btn-blue"
           onClick={()=>setCreate(true)}><Icon name="file" size={17}/> Registrar incidente</button>}
       </div>}/>
+    <TechnologyTabs />
     {notice&&<div role="status" className="ato-success"><Icon name="check" size={18}/>{notice}</div>}
     {error&&<div className="ato-message-error" role="alert"><Icon name="shield" size={18}/>
       <span>{error}. Comprueba la actualización de la API y la migración tecnológica.</span>
