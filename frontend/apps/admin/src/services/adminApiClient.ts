@@ -79,12 +79,14 @@ export function getAdminVisibilityAudit(filters: { page: number; kind: AdminVisi
 export type AdminSecurityAuditEntry = {
   id: string; action: string; createdAt: string; reason: string | null;
   actor: string | null; subject: string; role: string | null; permission: string | null;
+  planKey: 'businessPro' | 'xamukoPlus' | null;
+  enabled: boolean | null; previousEnabled: boolean | null;
 };
 export type AdminSecurityAuditResult = {
   entries: AdminSecurityAuditEntry[];
   pagination: { page: number; pageSize: number; total: number; totalPages: number };
 };
-export function getAdminSecurityAudit(filters: { page: number; kind: 'ALL' | 'ROLE' | 'PERMISSION' }) {
+export function getAdminSecurityAudit(filters: { page: number; kind: 'ALL' | 'ROLE' | 'PERMISSION' | 'PLANS' }) {
   const params = new URLSearchParams({ page: String(filters.page), kind: filters.kind });
   return request<AdminSecurityAuditResult>('/admin/audit/security?' + params.toString());
 }
