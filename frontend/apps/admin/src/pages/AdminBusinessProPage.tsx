@@ -31,7 +31,7 @@ const csvCell = (value: string) => '"' + (/^[\s]*[=+\-@]/.test(value) ? "'" : ''
 
 export function AdminBusinessProPage() {
   const admin = getSession();
-  const allowed = admin?.permissions.includes('business:write') ?? false;
+  const allowed = admin?.permissions?.includes('business:write') ?? false;
   const canManage = allowed && admin?.role === 'SUPER_ADMIN';
   const [params, setParams] = useSearchParams();
   const requestedView = (params.get('view') ?? 'EFFECTIVE').toUpperCase();
