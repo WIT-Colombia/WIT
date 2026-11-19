@@ -274,6 +274,28 @@ enum FinancialSyncStatus {
   FAILED
 }
 
+// Operational tracking: administrative cases do not imply automatic infrastructure changes.
+enum TechnologyCaseKind {
+  INCIDENT
+  MAINTENANCE
+  NEED
+}
+enum TechnologyCaseStatus {
+  OPEN
+  PLANNED
+  IN_PROGRESS
+  BLOCKED
+  RESOLVED
+  COMPLETED
+  CANCELLED
+}
+enum TechnologyCaseSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 enum FinancialPaymentStatus {
   PENDING
   PAID
@@ -1460,6 +1482,44 @@ model ExchangeRate {
   source      String   @db.VarChar(80)
   createdAt   DateTime @default(now()) @db.DateTime(3)
   @@unique([fromCurrency, toCurrency, effectiveAt])
+}
+
+/// Human-registered incidents, planned maintenance windows and internal technology needs.
+/// No field certifies uptime, a deployed release or an external infrastructure operation.
+model TechnologyCase {
+  id               String                 @id @default(uuid()) @db.Char(36)
+  kind             TechnologyCaseKind
+  status           TechnologyCaseStatus
+  severity         TechnologyCaseSeverity @default(MEDIUM)
+  title            String                 @db.VarChar(160)
+  description      String                 @db.VarChar(2000)
+  component        String?                @db.VarChar(120)
+  scheduledStartAt DateTime?              @db.DateTime(3)
+  scheduledEndAt   DateTime?              @db.DateTime(3)
+  completedAt      DateTime?              @db.DateTime(3)
+  createdById      String                 @db.Char(36)
+  updatedById      String?                @db.Char(36)
+  createdAt        DateTime               @default(now()) @db.DateTime(3)
+  updatedAt        DateTime               @updatedAt @db.DateTime(3)
+  events           TechnologyCaseEvent[]
+
+  @@index([kind, status, createdAt])
+  @@index([scheduledStartAt, kind])
+  @@index([createdAt])
+}
+model TechnologyCaseEvent {
+  id            String         @id @default(uuid()) @db.Char(36)
+  caseId        String         @db.Char(36)
+  actorUserId   String         @db.Char(36)
+  action        String         @db.VarChar(50)
+  fromStatus    TechnologyCaseStatus?
+  toStatus      TechnologyCaseStatus?
+  reason        String         @db.VarChar(500)
+  createdAt     DateTime       @default(now()) @db.DateTime(3)
+  case          TechnologyCase @relation(fields:[caseId],references:[id],onDelete:Restrict)
+
+  @@index([caseId, createdAt])
+  @@index([actorUserId, createdAt])
 }
 
 model FinancialSyncRun {
