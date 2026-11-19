@@ -29,6 +29,7 @@ export async function getPaidPlanAvailability() {
 
 export async function setPaidPlanAvailability(
   context: { role: string; userId: string }, key: PaidPlanKey, enabled: boolean, reason: string,
+  db: Pick<typeof prisma, '$transaction'> = prisma,
 ) {
   if (context.role !== 'SUPER_ADMIN') {
     throw new AppError(403, 'ADMIN_SUPER_ADMIN_REQUIRED', 'Solo el administrador principal puede activar o desactivar los planes.');
@@ -37,7 +38,7 @@ export async function setPaidPlanAvailability(
   if (justification.length < 12 || justification.length > 500) {
     throw new AppError(400, 'PAID_PLAN_REASON_REQUIRED', 'Registra una justificación de entre 12 y 500 caracteres.');
   }
-  return prisma.$transaction(async tx => {
+  return db.$transaction(async tx => {
     const previous = await tx.paidPlanAvailability.findUnique({ where: { key } });
     if (previous?.enabled === enabled) return availabilityFromRows(await tx.paidPlanAvailability.findMany());
     await tx.paidPlanAvailability.upsert({ where: { key }, create: { key, enabled }, update: { enabled } });
