@@ -1,4 +1,5 @@
 import { AdminPageHeading } from '../components/AdminPageHeading';
+import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   assignAdministratorRole, changeAdministratorPermission, listAdministrators, revokeAdministratorRole,
@@ -259,6 +260,8 @@ export function SecurityParametersPage() {
           <div><dt>Rol</dt><dd>{identity!.role === 'SUPER_ADMIN' ? 'Superadministrador' : 'Administrador'}</dd></div>
           <div><dt>Última comprobación</dt><dd>{checkedAt ? checkedAt.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : 'Sin verificar'}</dd></div>
         </dl> : <div className="sec-state">No hay información comprobada de la cuenta.</div>}
+        <div className="sec-identity-actions"><Link className="sec-button" to="/recover-password"><Icon name="lock" size={16}/> Solicitar restablecimiento de contraseña</Link>
+          <small>Este procedimiento utiliza el servicio real de recuperación por correo, no modifica la contraseña directamente.</small></div>
       </section>
       <aside className="sec-panel" aria-labelledby="sec-protection-title">
         <div className="sec-panel-header"><div><h2 id="sec-protection-title">Alcance de la comprobación</h2><p>Qué confirma realmente esta pantalla.</p></div></div>
