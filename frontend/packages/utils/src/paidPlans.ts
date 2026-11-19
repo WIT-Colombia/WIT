@@ -3,7 +3,7 @@ import { buildApiUrl } from './api';
 export type PaidPlanAvailability = { businessPro: boolean; xamukoPlus: boolean };
 export type PaidPlanKey = keyof PaidPlanAvailability;
 /** Monthly list prices in Colombian pesos. Actual payment is verified server-side. */
-export const PAID_PLAN_MONTHLY_COP = Object.freeze({ businessPro: 29_900, xamukoPlus: 4_900 } as const);
+export const PAID_PLAN_MONTHLY_COP = Object.freeze({ businessPro: 29_900, xamukoPlus: 3_900 } as const);
 export function formatCopPrice(amount: number): string {
   return String.fromCharCode(36) + new Intl.NumberFormat('es-CO', {
     maximumFractionDigits: 0,
