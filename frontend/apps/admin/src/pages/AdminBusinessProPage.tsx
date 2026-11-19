@@ -138,7 +138,6 @@ export function AdminBusinessProPage() {
     <AdminPageHeading title="Business PRO" icon="crown"
       description="Controla la vigencia de las suscripciones PRO con los registros actuales de XAMUKO."
       actions={<div className="aps-header-actions">
-        <Link className="aps-button aps-button-outline" to="/plans"><Icon name="layers" size={16}/> Planes y suscripciones</Link>
         <button className="aps-button aps-button-primary" type="button" onClick={() => setRevision(i => i+1)}>
           <Icon name="refresh" size={16}/> Actualizar
         </button>
@@ -269,7 +268,6 @@ export function AdminBusinessProPage() {
       <p>Los indicadores de PRO vigente, pendiente y por vencer cuentan <strong>negocios únicos</strong>.
         El listado y el indicador de activaciones especiales cuentan <strong>registros de suscripción</strong>.
         Estas cantidades no deben sumarse entre sí.</p>
-      <Link to="/plans">Gestionar todos los planes <Icon name="arrow" size={15}/></Link>
     </div>
   </main>;
 }
