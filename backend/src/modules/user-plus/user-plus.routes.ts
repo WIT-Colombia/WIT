@@ -8,6 +8,7 @@ import {
   addPlusCollection, deletePlusCollection, addPlusCollectionItem, deletePlusCollectionItem,
   addPlusSearch, deletePlusSearch, addPlusWatch, deletePlusWatch, plusPriceHistory, plusCompare,
 } from './user-plus.service.js';
+import { currentPlusPurchaseRequest, requestPlusPurchase, PLUS_MONTHLY_COP } from './user-plus-purchase.service.js';
 
 const uuid = z.string().uuid();
 const collectionPayload = z.object({ title: z.string().trim().min(1).max(80) }).strict();
@@ -25,6 +26,7 @@ const prefsPayload = z.object({
   radarEnabled: z.boolean().optional(), priceAlertsEnabled: z.boolean().optional(),
 }).strict();
 const watchPayload = z.object({ offerId: uuid }).strict();
+const plusPurchasePayload = z.object({ acceptedAmountCop: z.literal(PLUS_MONTHLY_COP), acceptedTerms: z.literal(true) }).strict();
 export const userPlusRouter = Router();
 userPlusRouter.use(requireAuth);
 userPlusRouter.use((_req, res, next) => { res.setHeader('Cache-Control', 'private, no-store'); next(); });
@@ -32,6 +34,9 @@ const uid = (req: Parameters<RequestHandler>[0]) => (req as AuthenticatedRequest
 const route = (work: (req: Parameters<RequestHandler>[0]) => Promise<unknown>): RequestHandler =>
   async (req, res, next) => { try { res.json(await work(req)); } catch (error) { next(error); } };
 userPlusRouter.get('/status', route(req => plusStatus(uid(req))));
+userPlusRouter.get('/purchase-request', route(req => currentPlusPurchaseRequest(uid(req))));
+userPlusRouter.post('/purchase-request', requireTrustedOrigin,
+  route(req => requestPlusPurchase(uid(req), plusPurchasePayload.parse(req.body))));
 userPlusRouter.get('/overview', route(req => plusOverview(uid(req))));
 userPlusRouter.get('/radar', route(req => plusRadar(uid(req))));
 userPlusRouter.put('/preferences', requireTrustedOrigin, route(req => setPlusPreferences(uid(req), prefsPayload.parse(req.body))));
