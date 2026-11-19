@@ -1,0 +1,40 @@
+/* A shared financial navigation across desktop, iPad and phones. */
+.admin-refresh .afn-nav,.admin-refresh .afn-nav *{box-sizing:border-box}
+.admin-refresh .afn-nav{
+  min-width:0;display:grid;gap:12px;
+  padding:16px 17px 13px;border:1px solid #e5dceb;border-radius:15px;
+  background:linear-gradient(112deg,#fff,#faf7fe);
+  box-shadow:0 6px 20px #26143a08;
+}
+.admin-refresh .afn-title{display:flex;align-items:center;gap:8px;color:#7553a1;font-size:10px;
+  font-weight:900;letter-spacing:.085em;line-height:1.45}
+.admin-refresh .afn-items{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.admin-refresh .afn-link{
+  display:flex;align-items:center;justify-content:center;gap:9px;min-width:0;min-height:48px;
+  padding:10px 11px;border:1px solid #e5dded;border-radius:10px;background:#fff;
+  color:#655577;font-family:inherit;font-size:12.5px;font-weight:850;line-height:1.4;
+  text-align:center;text-decoration:none;overflow-wrap:anywhere;
+  transition:background .15s ease,border-color .15s ease;
+}
+.admin-refresh .afn-link:hover{border-color:#ba99d9;background:#f7f1fd}
+.admin-refresh .afn-link.active,.admin-refresh .afn-link[aria-current="page"]{
+  border-color:#7642bc;background:linear-gradient(120deg,#8750ce,#6a35b9);
+  color:#fff;box-shadow:0 5px 13px #7042bb27;
+}
+.admin-refresh .afn-link svg{flex-shrink:0}
+.admin-refresh .afn-link:focus-visible{outline:3px solid #ba96ef;outline-offset:2px}
+.admin-refresh .afn-trace-note{display:flex;align-items:flex-start;gap:8px;margin:0;
+  color:#80738b;font-size:11px;line-height:1.6}
+.admin-refresh .afn-trace-note svg{flex-shrink:0;margin-top:1px;color:#8055b2}
+@media(max-width:1070px){.admin-refresh .afn-items{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){
+  .admin-refresh .afn-nav{padding:14px 12px}
+  .admin-refresh .afn-items{gap:7px}
+  .admin-refresh .afn-link{min-height:51px;font-size:11.5px;padding:9px 7px;gap:7px}
+  .admin-refresh .afn-link svg{width:15px;height:15px}
+}
+@media(max-width:360px){
+  .admin-refresh .afn-items{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .afn-link{justify-content:flex-start;padding-inline:12px}
+}
+@media(prefers-reduced-motion:reduce){.admin-refresh .afn-link{transition:none}}
