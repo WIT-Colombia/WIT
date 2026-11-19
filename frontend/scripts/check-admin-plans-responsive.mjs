@@ -74,7 +74,7 @@ try {
         return reply(200,{authenticated:true,userId:'fixture-admin',csrfToken:'fixture-csrf'});
       if (url.pathname.endsWith('/admin/me')) return reply(200,{admin:{
         user:{id:'fixture-admin',publicId:'A-1',displayName:'Super Admin',emailNormalized:'admin@example.test',avatarUrl:null,locale:'es-CO'},
-        role:'SUPER_ADMIN',permissions:['BUSINESSES_READ','AUDIT_READ','CATALOG_READ'],
+        role:'SUPER_ADMIN',permissions:['BUSINESSES_READ','AUDIT_READ','CATALOG_READ','FINANCE_READ'],
       }});
       if (url.pathname.endsWith('/admin/businesses/overview')) return reply(200,{
         generatedAt:at,total:records.length,visible:2,hidden:0,expired:0,adminHidden:0,
@@ -256,6 +256,49 @@ try {
       assert.equal(await page.locator('.abp-register a[href^="/plans?q="]').count()>0,true,
         device+': Manage plan is linked to real admin workflow');
       await page.screenshot({path:resolve(screenshots,'business-pro-'+device+'.png'),fullPage:true});
+      await page.goto(origin+'/billing',{waitUntil:'domcontentloaded'});
+      await page.getByRole('heading',{name:'Ingresos y facturación',exact:true}).waitFor({state:'visible'});
+      await page.getByText('6 registros',{exact:true}).waitFor({state:'visible'});
+      await page.getByRole('heading',{name:'Ingresos y facturación comercial'}).waitFor({state:'visible'});
+      assert.equal(await page.locator('.abill-money-card').count(),4,
+        device+': all monetary categories explicitly distinguish unavailable sources');
+      assert.equal(await page.locator('.abill-money-card').filter({hasText:'No disponible'}).count(),4,
+        device+': no invented monetary numbers or artificial zeros');
+      assert.equal(await page.getByText('Registro de ingresos comerciales aún no integrado').isVisible(),
+        true,device+': billing scope clearly disclosed');
+      assert.equal(await page.locator('.abill-commercial-card').count(),3,
+        device+': existing PRO operational indicators');
+      assert.equal(await page.getByRole('link',{name:/Consultar gastos tecnológicos/}).isVisible(),
+        true,device+': supplier invoices linked to actual expense module');
+      await page.getByLabel('Filtrar suscripciones por estado').selectOption('PENDING');
+      await page.getByText('1 registro',{exact:true}).waitFor({state:'visible'});
+      await page.getByLabel('Filtrar suscripciones por estado').selectOption('');
+      await page.getByText('6 registros',{exact:true}).waitFor({state:'visible'});
+      await page.getByLabel('Buscar registro comercial').fill('Ceiba');
+      await page.locator('.abill-filters').getByRole('button',{name:'Buscar'}).click();
+      await page.getByText('3 registros',{exact:true}).waitFor({state:'visible'});
+      await page.locator('.abill-filters').getByRole('button',{name:'Limpiar'}).click();
+      await page.getByText('6 registros',{exact:true}).waitFor({state:'visible'});
+      const billingGeometry=await page.evaluate(()=>{
+        const form=document.querySelector('.abill-filters'),input=form.querySelector('input');
+        const dropdown=form.querySelector('select'),main=document.querySelector('.abill-page');
+        const table=document.querySelector('.abill-table-scroll'),cards=document.querySelector('.abill-mobile-records');
+        return {viewport:innerWidth,scroll:document.documentElement.scrollWidth,
+          formOverflow:form.scrollWidth-form.clientWidth,mainOverflow:main.scrollWidth-main.clientWidth,
+          fontSize:parseFloat(getComputedStyle(input).fontSize),
+          selectFont:parseFloat(getComputedStyle(dropdown).fontSize),
+          selectHeight:dropdown.getBoundingClientRect().height,
+          cardsShown:getComputedStyle(cards).display!=='none',
+          tableShown:getComputedStyle(table).display!=='none'};
+      });
+      assert.ok(billingGeometry.scroll<=billingGeometry.viewport+2&&
+        billingGeometry.formOverflow<=2&&billingGeometry.mainOverflow<=2,
+        device+': billing no horizontal overflow '+JSON.stringify(billingGeometry));
+      assert.ok(billingGeometry.fontSize>=14&&billingGeometry.selectFont>=14&&billingGeometry.selectHeight>=49,
+        device+': readable billing filters '+JSON.stringify(billingGeometry));
+      assert.equal(billingGeometry.cardsShown,viewport.width<=1100,device+': tablet/mobile billing cards');
+      assert.equal(billingGeometry.tableShown,viewport.width>1100,device+': desktop billing table');
+      await page.screenshot({path:resolve(screenshots,'billing-'+device+'.png'),fullPage:true});
       assert.equal(errors.length,0,device+': no JS errors '+errors.join('; '));
       console.log('Admin Planes y suscripciones: indicadores, filtros, plan confirmation, audit, responsive OK '+device);
     } finally { await context.close(); }
