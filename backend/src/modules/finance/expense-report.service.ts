@@ -87,12 +87,13 @@ export async function getExpenseOverview(input: {from?:string;to?:string}, now =
   const f = normalizeExpenseReportFilters({ ...input }, now);
   const w = expenseReportWhere(f);
   const [consumptions, invoiceSum, paidSum, paymentStatuses, budgets, providers, lastSync] = await Promise.all([
-    prisma.financialConsumption.findMany({
+    // Aggregate in MySQL: dashboard memory grows by provider/day/origin groups,
+    // not by the number of raw consumption movements in the selected period.
+    prisma.financialConsumption.groupBy({
       where:w.consumptions,
-      select:{
-        amountCop:true,amountUsd:true,creditsUsd:true,providerId:true,
-        dataKind:true,periodStart:true,provider:{select:{name:true}},
-      },
+      by:['providerId','periodStart','dataKind'],
+      _sum:{amountCop:true,amountUsd:true,creditsUsd:true},
+      _count:{_all:true},
     }),
     prisma.financialInvoice.aggregate({
       where:w.invoices,_count:{_all:true},_sum:{amountCop:true},
@@ -108,28 +109,35 @@ export async function getExpenseOverview(input: {from?:string;to?:string}, now =
         periodStart:true,periodEnd:true,provider:{select:{name:true}}},
     }),
     prisma.financialProvider.findMany({
-      where:{active:true},select:{id:true,name:true},orderBy:{name:'asc'},
+      select:{id:true,name:true,active:true},orderBy:{name:'asc'},
     }),
     prisma.financialSyncRun.findFirst({
       orderBy:{startedAt:'desc'},
       select:{status:true,startedAt:true,finishedAt:true,provider:{select:{name:true}}},
     }),
   ]);
+  const providerNames = new Map(providers.map(provider => [provider.id, provider.name]));
+  let consumptionRecords = 0;
   let grossCop = new Prisma.Decimal(0), grossUsd=new Prisma.Decimal(0), creditsUsd=new Prisma.Decimal(0);
   const providerAmounts = new Map<string,{name:string;amount:Prisma.Decimal;rows:number}>();
   const dailyAmounts = new Map<string,Prisma.Decimal>();
   const origins:Record<string,number> = {REAL:0,ESTIMATED:0,PROJECTED:0,MANUAL:0};
   for (const item of consumptions) {
-    grossCop=grossCop.plus(item.amountCop);
-    grossUsd=grossUsd.plus(item.amountUsd);
-    creditsUsd=creditsUsd.plus(item.creditsUsd);
-    origins[item.dataKind]=(origins[item.dataKind] ?? 0)+1;
-    const name=item.provider.name;
+    const amountCop=item._sum.amountCop ?? new Prisma.Decimal(0);
+    const amountUsd=item._sum.amountUsd ?? new Prisma.Decimal(0);
+    const creditUsd=item._sum.creditsUsd ?? new Prisma.Decimal(0);
+    const rows=item._count._all;
+    grossCop=grossCop.plus(amountCop);
+    grossUsd=grossUsd.plus(amountUsd);
+    creditsUsd=creditsUsd.plus(creditUsd);
+    consumptionRecords+=rows;
+    origins[item.dataKind]=(origins[item.dataKind] ?? 0)+rows;
+    const name=providerNames.get(item.providerId) ?? 'Proveedor no identificado';
     const found=providerAmounts.get(item.providerId) ?? {name,amount:new Prisma.Decimal(0),rows:0};
-    found.amount=found.amount.plus(item.amountCop);found.rows++;
+    found.amount=found.amount.plus(amountCop);found.rows+=rows;
     providerAmounts.set(item.providerId,found);
     const date=item.periodStart.toISOString().slice(0,10);
-    dailyAmounts.set(date,(dailyAmounts.get(date)??new Prisma.Decimal(0)).plus(item.amountCop));
+    dailyAmounts.set(date,(dailyAmounts.get(date)??new Prisma.Decimal(0)).plus(amountCop));
   }
   const span = Math.floor((f.end.valueOf()-f.start.valueOf())/86400000)+1;
   const bucketSize = span>120?'month':span>45?'week':'day';
@@ -158,17 +166,17 @@ export async function getExpenseOverview(input: {from?:string;to?:string}, now =
     totals:{
       consumptionCop:grossCop.toString(),consumptionUsd:grossUsd.toString(),
       creditsUsd:creditsUsd.toString(),netConsumptionUsd:grossUsd.minus(creditsUsd).toString(),
-      consumptionRecords:consumptions.length,
+      consumptionRecords,
       invoicesCop:invoiceSum._sum.amountCop?.toString()??'0',
       invoiceRecords:invoiceSum._count._all,
       markedPaidCop:paidSum._sum.amountCop?.toString()??'0',
       markedPaidRecords:paidSum._count._all,
       pendingPaymentRecords:paymentStatuses.find(s=>s.status==='PENDING')?._count._all??0,
       activeBudgets:budgets.filter(b=>b.active).length,
-      providers:providers.length,
+      providers:providers.filter(p=>p.active).length,
     },
     originCounts:origins,
-    providers,
+    providers:providers.filter(({active})=>active).map(({id,name})=>({id,name})),
     providerBreakdown,
     timeline:{unit:bucketSize,points:timeline},
     budgets:budgets.map(b=>({
