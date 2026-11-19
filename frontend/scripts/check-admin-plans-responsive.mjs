@@ -48,6 +48,17 @@ try {
   ]) {
     const records = structuredClone(items);
     const posts = [];
+    const subscriptions = [
+      { id:'sub-active',businessId:'fixture-pro',plan:'PRO',status:'ACTIVE',effective:true,
+        startsAt:at,expiresAt:null,autoRenew:false,specialActivation:true,revokedAt:null,revocationReason:null,createdAt:at,updatedAt:at },
+      { id:'sub-pending',businessId:'fixture-basic',plan:'PRO',status:'PENDING',effective:false,
+        startsAt:at,expiresAt:null,autoRenew:true,specialActivation:false,revokedAt:null,revocationReason:null,createdAt:at,updatedAt:at },
+      { id:'sub-expired',businessId:'fixture-basic-2',plan:'PRO',status:'EXPIRED',effective:false,
+        startsAt:at,expiresAt:at,autoRenew:false,specialActivation:false,revokedAt:null,revocationReason:null,createdAt:at,updatedAt:at },
+      { id:'sub-revoked',businessId:'fixture-basic',plan:'PRO',status:'REVOKED',effective:false,
+        startsAt:at,expiresAt:at,autoRenew:false,specialActivation:false,revokedAt:at,
+        revocationReason:'Cambio administrativo registrado en prueba.',createdAt:at,updatedAt:at },
+    ];
     const context = await browser.newContext({viewport});
     await context.route('**/*', async route => {
       const request = route.request();
@@ -70,6 +81,24 @@ try {
         generatedAt:at,subscriptions:{proActive:records.filter(b=>b.isPro).length,
           proPending:1,proExpiring30Days:0,plus:null},revenue:null,
       });
+      if (url.pathname.endsWith('/admin/subscriptions')) {
+        const q=(url.searchParams.get('q')||'').toLowerCase();
+        const status=url.searchParams.get('status')||'';
+        const page=Math.max(1,Number(url.searchParams.get('page'))||1);
+        const pageSize=Number(url.searchParams.get('pageSize'))||12;
+        const matches=subscriptions.filter(s=>{
+          const b=records.find(b=>b.id===s.businessId);
+          return (!status||s.status===status)&&(!q||(b&&[b.name,b.publicId].some(value=>value.toLowerCase().includes(q))));
+        });
+        return reply(200,{generatedAt:at,definition:'Suscripciones reales simuladas en fixture aislado.',
+          subscriptions:matches.slice((page-1)*pageSize,page*pageSize).map(s=>({
+            ...s,business:(()=>{
+              const b=records.find(b=>b.id===s.businessId);
+              return {id:b.id,publicId:b.publicId,name:b.name,deletionStatus:'NONE'};
+            })(),
+          })),
+          pagination:{page,pageSize,total:matches.length,totalPages:Math.ceil(matches.length/pageSize)}});
+      }
       if (url.pathname.endsWith('/admin/businesses/filters')) return reply(200,{
         categories:[],cities:[{value:'CO|Cali',label:'Cali'},{value:'CO|Palmira',label:'Palmira'}],
       });
@@ -104,6 +133,9 @@ try {
         if(!found) return reply(404,{error:{message:'No encontrado'}});
         found.isPro=data.plan==='PRO';
         posts.push({id:found.id,plan:data.plan,reason:data.reason});
+        if(data.plan==='PRO')subscriptions.unshift({id:'sub-manual',businessId:found.id,plan:'PRO',
+          status:'ACTIVE',effective:true,startsAt:at,expiresAt:null,autoRenew:false,
+          specialActivation:true,revokedAt:null,revocationReason:null,createdAt:at,updatedAt:at});
         return reply(200,{plan:data.plan,message:'Plan actualizado y propietarios notificados.'});
       }
       if(url.origin!==origin||url.pathname.startsWith('/api/'))
@@ -117,6 +149,23 @@ try {
       await page.goto(origin+'/plans',{waitUntil:'domcontentloaded'});
       await page.getByRole('heading',{name:'Planes y suscripciones'}).waitFor({state:'visible',timeout:15000});
       await page.getByText('3 negocios encontrados').waitFor({state:'visible',timeout:15000});
+      await page.getByRole('heading',{name:'Suscripciones registradas'}).waitFor({state:'visible'});
+      await page.getByText('4 registros', { exact: true }).waitFor({state:'visible'});
+      const subscriptionCards = page.locator('.aps-subscription-cards');
+      assert.equal(await subscriptionCards.isVisible(),viewport.width<=980,
+        device+': subscription cards on mobile and tablets');
+      const subscriptionTable = page.locator('.aps-subscription-table-wrap');
+      assert.equal(await subscriptionTable.isVisible(),viewport.width>980,
+        device+': subscription table on desktop');
+      await page.getByLabel('Estado de suscripción').selectOption('PENDING');
+      await page.getByText('1 registro',{exact:true}).waitFor({state:'visible'});
+      await page.getByLabel('Estado de suscripción').selectOption('');
+      await page.getByText('4 registros',{exact:true}).waitFor({state:'visible'});
+      await page.getByLabel('Buscar suscripciones').fill('Ceiba');
+      await page.locator('.aps-subscription-filters').getByRole('button',{name:'Buscar'}).click();
+      await page.getByText('2 registros',{exact:true}).waitFor({state:'visible'});
+      await page.locator('.aps-subscription-filters').getByRole('button',{name:'Limpiar'}).click();
+      await page.getByText('4 registros',{exact:true}).waitFor({state:'visible'});
       const layout=await page.evaluate(()=>{
         const input=document.querySelector('.aps-search-wrap input');
         const select=document.querySelector('.aps-filters select');
@@ -158,6 +207,7 @@ try {
       await dialog.getByLabel(/Escribe PRO para confirmar/).fill('PRO');
       await dialog.getByRole('button',{name:'Confirmar cambio de plan'}).click();
       await page.getByText('Plan actualizado y propietarios notificados.').waitFor({state:'visible'});
+      await page.getByText('5 registros',{exact:true}).waitFor({state:'visible'});
       assert.equal(posts.length,1,device+': exactly one authorized request');
       assert.equal(posts[0].plan,'PRO',device+': assigned existing PRO plan');
       assert.ok(posts[0].reason.length>=12,device+': reason persisted in API request');
