@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Prisma } from '../../generated/prisma/client.js';
 import {
   createManualConsumption, createProvider, createBudget, createInvoice, createPayment,
-  assertSupplierInvoiceCapacity,validAmount,
+  assertSupplierInvoiceCapacity, assertInvoiceAmendmentCapacity,validAmount,
 } from './finance.service.js';
 
 const authorized = { userId: '11111111-1111-1111-1111-111111111111',
@@ -80,4 +80,19 @@ test('COP conserva exactamente dos decimales; USD admite cuatro sin redondeos si
   assert.throws(()=>validAmount(0.00001,4),(e:any)=>e.code==='FINANCIAL_AMOUNT_PRECISION');
   assert.throws(()=>validAmount(1000000000000),(e:any)=>e.code==='FINANCIAL_AMOUNT_PRECISION');
   assert.throws(()=>validAmount(Number.POSITIVE_INFINITY),(e:any)=>e.code==='INVALID_FINANCIAL_AMOUNT');
+});
+
+test('no se reduce una factura por debajo de sus pagos PAID y PENDING, y se ignoran CANCELLED',()=>{
+  const decimal=(value:string)=>new Prisma.Decimal(value);
+  const allocations=[
+    {status:'PAID' as const,amountCop:decimal('70000.01')},
+    {status:'PENDING' as const,amountCop:decimal('20000.02')},
+    {status:'CANCELLED' as const,amountCop:decimal('999999.99')},
+  ];
+  assert.doesNotThrow(()=>assertInvoiceAmendmentCapacity(90000.03,allocations));
+  assert.throws(()=>assertInvoiceAmendmentCapacity(90000.02,allocations),
+    (e:any)=>e.code==='INVOICE_BELOW_ALLOCATED_PAYMENTS');
+  assert.doesNotThrow(()=>assertInvoiceAmendmentCapacity(0,[
+    {status:'CANCELLED' as const,amountCop:decimal('1000.00')},
+  ]));
 });
