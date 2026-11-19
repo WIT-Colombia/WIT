@@ -5,6 +5,7 @@ import { requireAdmin, adminFromRequest } from '../admin/admin-auth.service.js';
 import { financeSummary, createManualConsumption, createProvider, createBudget, createInvoice, createPayment, listFinanceRecords, acknowledgeAlert, updateManualConsumption, reconcileFinancials, updateProvider, updateBudget, updateInvoice, updatePayment, listFinancialAudit } from './finance.service.js';
 import { createAwsFreeTierReader, fetchFreeTierUsage, type FreeTierUsage } from './aws-free-tier.js';
 import { listAdminFinancialTransactions } from './admin-financial-transactions.service.js';
+import { listRefundCases, getRefundCase, createRefundCase, decideRefundCase } from './refund-cases.service.js';
 
 export const financeRouter = Router();
 let awsSyncRunning = false;
@@ -29,6 +30,31 @@ financeRouter.get('/transactions', requireAdmin('FINANCE_READ'), async (req, res
       from: String(req.query.from ?? ''), to: String(req.query.to ?? ''),
     }));
   } catch (error) { next(error); }
+});
+// Administrative refund casework only; no external PSP calls or paid/refunded states.
+financeRouter.get('/refund-cases', requireAdmin('FINANCE_READ'), async (req,res,next)=>{
+  try {
+    res.setHeader('Cache-Control','private, no-store');
+    res.json(await listRefundCases({
+      page:Number(req.query.page??1),status:String(req.query.status??''),q:String(req.query.q??''),
+    }));
+  }catch(error){next(error);}
+});
+financeRouter.get('/refund-cases/:id', requireAdmin('FINANCE_READ'), async (req,res,next)=>{
+  try {
+    res.setHeader('Cache-Control','private, no-store');
+    res.json(await getRefundCase(String(req.params.id)));
+  }catch(error){next(error);}
+});
+financeRouter.post('/refund-cases', requireAdmin('FINANCE_MANAGE'), async (req,res,next)=>{
+  try {res.setHeader('Cache-Control','private, no-store');
+    res.status(201).json(await createRefundCase(adminFromRequest(req),req.body??{}));
+  }catch(error){next(error);}
+});
+financeRouter.patch('/refund-cases/:id', requireAdmin('FINANCE_MANAGE'), async (req,res,next)=>{
+  try {res.setHeader('Cache-Control','private, no-store');
+    res.json(await decideRefundCase(adminFromRequest(req),String(req.params.id),req.body??{}));
+  }catch(error){next(error);}
 });
 financeRouter.get('/records', requireAdmin('FINANCE_READ'), async (req, res, next) => { try { res.json(await listFinanceRecords(Number(req.query.page) || 1, Number(req.query.pageSize) || 50)); } catch (error) { next(error); } });
 financeRouter.get('/aws/free-tier', requireAdmin('FINANCE_READ'), async (req, res, next) => {
