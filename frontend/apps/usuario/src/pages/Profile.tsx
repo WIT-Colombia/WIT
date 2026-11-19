@@ -81,6 +81,7 @@ export default function Profile() {
       {user && !user.emailVerified && <p className="profile-verification-status" role="status">Correo pendiente de verificación</p>}
       <section className="profile-links profile-activity-only">
         <h2>Tu actividad</h2>
+        <Link to="/plus"><span className="profile-icon--plus" aria-hidden="true">♛</span><div><b>Xamuko Plus</b><small>Radar, precios, comparador, colecciones y rutas</small></div><i>›</i></Link>
         <Link to="/favorites"><span className="profile-icon--stores"><HeartIcon /></span><div><b>Favoritos</b><small>Lugares que guardaste</small></div><i>›</i></Link>
         <Link to="/likes"><span className="profile-icon--products"><ThumbsUpIcon /></span><div><b>Productos y servicios que te gustan</b><small>Lo que has marcado con Me gusta</small></div><i>›</i></Link>
         <Link to="/reviews"><span className="profile-icon--reviews"><ReviewIcon /></span><div><b>Mis opiniones</b><small>Comparte tu experiencia</small></div><i>›</i></Link>
