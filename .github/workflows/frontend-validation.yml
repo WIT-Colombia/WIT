@@ -102,6 +102,9 @@ jobs:
       - name: Check Admin Planes y suscripciones and Business PRO on mobile, iPad and desktop
         run: node scripts/check-admin-plans-responsive.mjs
 
+      - name: Check Admin Transacciones with real vendor payment records on mobile, iPad and desktop
+        run: node scripts/check-admin-transactions-responsive.mjs
+
       - name: Save Usuario offer card screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -162,6 +165,15 @@ jobs:
         with:
           name: xamuko-admin-plans-${{ github.run_id }}
           path: frontend/test-results/admin-plans/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save Admin Transacciones responsive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-admin-transactions-${{ github.run_id }}
+          path: frontend/test-results/admin-transactions/
           if-no-files-found: ignore
           retention-days: 7
 
