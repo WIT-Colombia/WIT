@@ -58,7 +58,7 @@ export async function createOffer(userId: string, businessIdentifier: string, in
       && business.publicationStatus === 'PUBLISHED' && business.visibilityStatus === 'VISIBLE';
     if (offer.priceAmount) await recordPlusPriceChange(tx, {
       offerId: offer.id, businessId: business.id, name: offer.name,
-      previousPrice: null, newPrice: offer.priceAmount, currency: offer.currency,
+      previousPrice: null, newPrice: offer.priceAmount, previousCurrency: null, currency: offer.currency,
       adultOnly: offer.adultOnly || business.adultOnly, publiclyVisible: publicOffer,
     });
     if (publicOffer) await notifyPlusFollowers(tx, {
@@ -91,7 +91,7 @@ export async function updateOffer(userId: string, businessIdentifier: string, of
       && business.publicationStatus === 'PUBLISHED' && business.visibilityStatus === 'VISIBLE';
     await recordPlusPriceChange(tx, {
       offerId: offer.id, businessId: business.id, name: offer.name, previousPrice: current.priceAmount,
-      newPrice: offer.priceAmount, currency: offer.currency,
+      newPrice: offer.priceAmount, previousCurrency: current.currency, currency: offer.currency,
       adultOnly: offer.adultOnly || business.adultOnly, publiclyVisible,
     });
     if (publiclyVisible && current.publicationStatus !== 'PUBLISHED') await notifyPlusFollowers(tx, {
