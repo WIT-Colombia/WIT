@@ -51,6 +51,9 @@ try {
     const subscriptions = [
       { id:'sub-active',businessId:'fixture-pro',plan:'PRO',status:'ACTIVE',effective:true,
         startsAt:at,expiresAt:null,autoRenew:false,specialActivation:true,revokedAt:null,revocationReason:null,createdAt:at,updatedAt:at },
+      { id:'sub-expiring',businessId:'fixture-pro',plan:'PRO',status:'ACTIVE',effective:true,
+        startsAt:at,expiresAt:'2026-12-07T17:00:00.000Z',autoRenew:true,specialActivation:false,
+        revokedAt:null,revocationReason:null,createdAt:at,updatedAt:at },
       { id:'sub-pending',businessId:'fixture-basic',plan:'PRO',status:'PENDING',effective:false,
         startsAt:at,expiresAt:null,autoRenew:true,specialActivation:false,revokedAt:null,revocationReason:null,createdAt:at,updatedAt:at },
       { id:'sub-expired',businessId:'fixture-basic-2',plan:'PRO',status:'EXPIRED',effective:false,
@@ -79,16 +82,21 @@ try {
       });
       if (url.pathname.endsWith('/admin/dashboard/stats')) return reply(200,{
         generatedAt:at,subscriptions:{proActive:records.filter(b=>b.isPro).length,
-          proPending:1,proExpiring30Days:0,plus:null},revenue:null,
+          proPending:1,proExpiring30Days:1,plus:null},revenue:null,
       });
       if (url.pathname.endsWith('/admin/subscriptions')) {
         const q=(url.searchParams.get('q')||'').toLowerCase();
         const status=url.searchParams.get('status')||'';
+        const view=url.searchParams.get('view')||'ALL';
         const page=Math.max(1,Number(url.searchParams.get('page'))||1);
         const pageSize=Number(url.searchParams.get('pageSize'))||12;
         const matches=subscriptions.filter(s=>{
           const b=records.find(b=>b.id===s.businessId);
-          return (!status||s.status===status)&&(!q||(b&&[b.name,b.publicId].some(value=>value.toLowerCase().includes(q))));
+          return (!status||s.status===status)&&
+            (view==='ALL'||(view==='EFFECTIVE'&&s.effective)||
+              (view==='EXPIRING_30_DAYS'&&s.effective&&s.expiresAt&&s.expiresAt>'2026-11-18T12:00:00.000Z'&&s.expiresAt<='2026-12-18T12:00:00.000Z')||
+              (view==='SPECIAL_EFFECTIVE'&&s.effective&&s.specialActivation))&&
+            (!q||(b&&[b.name,b.publicId].some(value=>value.toLowerCase().includes(q))));
         });
         return reply(200,{generatedAt:at,definition:'Suscripciones reales simuladas en fixture aislado.',
           subscriptions:matches.slice((page-1)*pageSize,page*pageSize).map(s=>({
@@ -150,7 +158,7 @@ try {
       await page.getByRole('heading',{name:'Planes y suscripciones'}).waitFor({state:'visible',timeout:15000});
       await page.getByText('3 negocios encontrados').waitFor({state:'visible',timeout:15000});
       await page.getByRole('heading',{name:'Suscripciones registradas'}).waitFor({state:'visible'});
-      await page.getByText('4 registros', { exact: true }).waitFor({state:'visible'});
+      await page.getByText('5 registros', { exact: true }).waitFor({state:'visible'});
       const subscriptionCards = page.locator('.aps-subscription-cards');
       assert.equal(await subscriptionCards.isVisible(),viewport.width<=980,
         device+': subscription cards on mobile and tablets');
@@ -160,12 +168,12 @@ try {
       await page.getByLabel('Estado de suscripción').selectOption('PENDING');
       await page.getByText('1 registro',{exact:true}).waitFor({state:'visible'});
       await page.getByLabel('Estado de suscripción').selectOption('');
-      await page.getByText('4 registros',{exact:true}).waitFor({state:'visible'});
+      await page.getByText('5 registros',{exact:true}).waitFor({state:'visible'});
       await page.getByLabel('Buscar suscripciones').fill('Ceiba');
       await page.locator('.aps-subscription-filters').getByRole('button',{name:'Buscar'}).click();
       await page.getByText('2 registros',{exact:true}).waitFor({state:'visible'});
       await page.locator('.aps-subscription-filters').getByRole('button',{name:'Limpiar'}).click();
-      await page.getByText('4 registros',{exact:true}).waitFor({state:'visible'});
+      await page.getByText('5 registros',{exact:true}).waitFor({state:'visible'});
       const layout=await page.evaluate(()=>{
         const input=document.querySelector('.aps-search-wrap input');
         const select=document.querySelector('.aps-filters select');
@@ -207,13 +215,47 @@ try {
       await dialog.getByLabel(/Escribe PRO para confirmar/).fill('PRO');
       await dialog.getByRole('button',{name:'Confirmar cambio de plan'}).click();
       await page.getByText('Plan actualizado y propietarios notificados.').waitFor({state:'visible'});
-      await page.getByText('5 registros',{exact:true}).waitFor({state:'visible'});
+      await page.getByText('6 registros',{exact:true}).waitFor({state:'visible'});
       assert.equal(posts.length,1,device+': exactly one authorized request');
       assert.equal(posts[0].plan,'PRO',device+': assigned existing PRO plan');
       assert.ok(posts[0].reason.length>=12,device+': reason persisted in API request');
       await page.getByText('Cambios administrativos de plan').waitFor({state:'visible'});
       await page.getByText('Decisión administrativa justificada en prueba aislada.').waitFor({state:'visible'});
       await page.screenshot({path:resolve(screenshots,device+'.png'),fullPage:true});
+      await page.goto(origin+'/business-pro',{waitUntil:'domcontentloaded'});
+      await page.getByRole('heading',{name:'Business PRO',exact:true}).waitFor({state:'visible'});
+      await page.getByText('2 registros encontrados',{exact:true}).waitFor({state:'visible'});
+      const tabs=page.getByRole('group',{name:'Vistas de Business PRO'});
+      await tabs.getByRole('button',{name:'Por vencer'}).click();
+      await page.getByText('1 registro encontrado',{exact:true}).waitFor({state:'visible'});
+      await tabs.getByRole('button',{name:'Activaciones especiales'}).click();
+      await page.getByText('1 registro encontrado',{exact:true}).waitFor({state:'visible'});
+      await tabs.getByRole('button',{name:'Pendientes'}).click();
+      await page.getByText('1 registro encontrado',{exact:true}).waitFor({state:'visible'});
+      await tabs.getByRole('button',{name:'Todo el historial'}).click();
+      await page.getByText('6 registros encontrados',{exact:true}).waitFor({state:'visible'});
+      await page.getByLabel('Buscar negocios Business PRO').fill('Ceiba');
+      await page.locator('.abp-filters').getByRole('button',{name:'Buscar'}).click();
+      await page.getByText('3 registros encontrados',{exact:true}).waitFor({state:'visible'});
+      const layouts=await page.evaluate(()=>{
+        const form=document.querySelector('.abp-filters'),input=form.querySelector('input');
+        const tabs=document.querySelector('.abp-view-tabs');
+        const main=document.querySelector('.abp-page');
+        return { scroll:document.documentElement.scrollWidth,width:innerWidth,
+          formOverflow:form.scrollWidth-form.clientWidth,mainOverflow:main.scrollWidth-main.clientWidth,
+          inputSize:parseFloat(getComputedStyle(input).fontSize),
+          tabsScroll:tabs.scrollWidth-tabs.clientWidth,
+          tableShown:getComputedStyle(document.querySelector('.aps-subscription-table-wrap')).display!=='none',
+          cardsShown:getComputedStyle(document.querySelector('.aps-subscription-cards')).display!=='none' };
+      });
+      assert.ok(layouts.scroll<=layouts.width+2&&layouts.formOverflow<=2&&layouts.mainOverflow<=2,
+        device+': Business PRO no horizontal overflow '+JSON.stringify(layouts));
+      assert.ok(layouts.inputSize>=14,device+': Business PRO search legible');
+      assert.equal(layouts.cardsShown,viewport.width<=980,device+': Business PRO cards for iPad and mobile');
+      assert.equal(layouts.tableShown,viewport.width>980,device+': Business PRO table for desktop');
+      assert.equal(await page.locator('.abp-register a[href^="/plans?q="]').count()>0,true,
+        device+': Manage plan is linked to real admin workflow');
+      await page.screenshot({path:resolve(screenshots,'business-pro-'+device+'.png'),fullPage:true});
       assert.equal(errors.length,0,device+': no JS errors '+errors.join('; '));
       console.log('Admin Planes y suscripciones: indicadores, filtros, plan confirmation, audit, responsive OK '+device);
     } finally { await context.close(); }
