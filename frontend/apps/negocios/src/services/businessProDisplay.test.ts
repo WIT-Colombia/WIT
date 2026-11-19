@@ -43,6 +43,9 @@ describe("Business: tarjeta promocional Pro en el sidebar", () => {
 
   it("solo autoriza la insignia PRO de demostración en la ruta /preview", () => {
     expect(isBusinessProPreview("/preview", "?demoPro=1")).toBe(true);
+    expect(isBusinessProPreview("/preview/estadisticas", "?demoPro=1")).toBe(true);
+    expect(isBusinessProPreview("/preview/estadisticas", "")).toBe(false);
+    expect(isBusinessProPreview("/preview", "?demoPro=0")).toBe(false);
     expect(isBusinessProPreview("/inicio", "?demoPro=1")).toBe(false);
     expect(isBusinessProPreview("/mis-negocios", "?demoPro=1")).toBe(false);
     expect(getBusinessProDisplay({ ...base, demoPro: true, resolvedPlan: null }))
