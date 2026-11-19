@@ -4,6 +4,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import type { OfferCreateInput, OfferUpdateInput } from './offer.schemas.js';
 import { catalogLimits, limitForKind } from './recognition.service.js';
 import { notifyBusinessOwners } from '../notifications/platform-notifications.service.js';
+import { notifyPlusFollowers, recordPlusPriceChange } from '../user-plus/user-plus-events.service.js';
 
 type Db = PrismaClient | Prisma.TransactionClient;
 type RequestMeta = { ipAddress?: string };
@@ -11,7 +12,7 @@ type RequestMeta = { ipAddress?: string };
 async function findBusiness(userId: string, identifier: string, db: Db) {
   const business = await db.business.findFirst({
     where: { OR: [{ id: identifier }, { publicId: identifier }], deletionStatus: { not: 'DELETED' }, memberships: { some: { userId, status: 'ACTIVE' } } },
-    select: { id: true, businessAccount: { select: { status: true } }, adultOnly: true, memberships: { where: { userId, status: 'ACTIVE' }, include: { permissions: true } } },
+    select: { id: true, name: true, publicationStatus: true, visibilityStatus: true, businessAccount: { select: { status: true } }, adultOnly: true, memberships: { where: { userId, status: 'ACTIVE' }, include: { permissions: true } } },
   });
   if (!business || business.businessAccount.status !== 'ACTIVE') throw new AppError(404, 'BUSINESS_NOT_FOUND', 'No encontramos ese negocio.');
   const membership = business.memberships[0];
@@ -53,6 +54,17 @@ export async function createOffer(userId: string, businessIdentifier: string, in
     const internalCode = `${input.kind === 'PRODUCT' ? 'P' : 'S'}-${String(number).padStart(4, '0')}`;
     const offer = await tx.businessOffer.create({ data: { businessId: business.id, internalCode, kind: input.kind, name: input.name, description: input.description ?? null, priceAmount: amount(input.priceAmount), currency: input.currency ?? null, priceText: input.priceText ?? null, negotiable: input.negotiable, active: input.active, adultOnly: input.adultOnly, publicationStatus: input.publicationStatus }, include: offerInclude });
     await audit(tx, userId, offer.id, 'OFFER_CREATED', null, { adultOnly: offer.adultOnly, kind: offer.kind }, meta);
+    const publicOffer = offer.active && offer.publicationStatus === 'PUBLISHED'
+      && business.publicationStatus === 'PUBLISHED' && business.visibilityStatus === 'VISIBLE';
+    if (offer.priceAmount) await recordPlusPriceChange(tx, {
+      offerId: offer.id, businessId: business.id, name: offer.name,
+      previousPrice: null, newPrice: offer.priceAmount, currency: offer.currency,
+      adultOnly: offer.adultOnly || business.adultOnly, publiclyVisible: publicOffer,
+    });
+    if (publicOffer) await notifyPlusFollowers(tx, {
+      businessId: business.id, sourceId: offer.id, businessName: business.name, itemName: offer.name,
+      sourceType: 'PLUS_NEW_OFFER', adultOnly: offer.adultOnly || business.adultOnly,
+    });
     if (business.memberships[0]?.role !== 'OWNER') await notifyBusinessOwners(tx, business.id,
       'Un colaborador agregó una publicación',
       'Se agregó el ' + (offer.kind === 'PRODUCT' ? 'producto' : 'servicio') + ' «' + offer.name + '» al catálogo de tu negocio. Revisa sus detalles.',
@@ -75,6 +87,17 @@ export async function updateOffer(userId: string, businessIdentifier: string, of
   const updated = await prisma.$transaction(async tx => {
     const offer = await tx.businessOffer.update({ where: { id: current.id, administrativeStatus: 'NONE', deletedAt: null }, data: { ...(input.kind !== undefined ? { kind: input.kind } : {}), ...(input.name !== undefined ? { name: input.name } : {}), ...(input.description !== undefined ? { description: input.description } : {}), ...(input.priceAmount !== undefined ? { priceAmount: amount(input.priceAmount) } : {}), ...(input.currency !== undefined ? { currency: input.currency } : {}), ...(input.priceText !== undefined ? { priceText: input.priceText } : {}), ...(input.negotiable !== undefined ? { negotiable: input.negotiable } : {}), ...(input.active !== undefined ? { active: input.active } : {}), ...(input.adultOnly !== undefined ? { adultOnly: input.adultOnly } : {}), ...(input.publicationStatus !== undefined ? { publicationStatus: input.publicationStatus } : {}) }, include: offerInclude });
     await audit(tx, userId, offer.id, input.adultOnly === undefined || input.adultOnly === current.adultOnly ? 'OFFER_UPDATED' : 'OFFER_ADULT_CLASSIFICATION_CHANGED', { adultOnly: current.adultOnly }, { adultOnly: offer.adultOnly }, meta);
+    const publiclyVisible = offer.active && offer.publicationStatus === 'PUBLISHED'
+      && business.publicationStatus === 'PUBLISHED' && business.visibilityStatus === 'VISIBLE';
+    await recordPlusPriceChange(tx, {
+      offerId: offer.id, businessId: business.id, name: offer.name, previousPrice: current.priceAmount,
+      newPrice: offer.priceAmount, currency: offer.currency,
+      adultOnly: offer.adultOnly || business.adultOnly, publiclyVisible,
+    });
+    if (publiclyVisible && current.publicationStatus !== 'PUBLISHED') await notifyPlusFollowers(tx, {
+      businessId: business.id, sourceId: offer.id, businessName: business.name, itemName: offer.name,
+      sourceType: 'PLUS_NEW_OFFER', adultOnly: offer.adultOnly || business.adultOnly,
+    });
     if (business.memberships[0]?.role !== 'OWNER' && (
       input.name !== undefined && input.name !== current.name ||
       input.active !== undefined && input.active !== current.active ||
