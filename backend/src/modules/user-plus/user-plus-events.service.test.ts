@@ -12,14 +12,15 @@ function fakeTx(options: {
   const { switchOn = true, optedIn = false, forPrice = false } = options;
   return {
     paidPlanAvailability: { findUnique: async () => ({ enabled: switchOn }) },
-    userPlusSubscription: { findMany: async () => [{ userId: 'member' }, { userId: 'minor' }] },
-    userPlusPreference: { findMany: async () => optedIn ? [
+    userPlusSubscription: { findMany: async ({ where }: { where: { userId: { in: string[] } } }) =>
+      [{ userId: 'member' }, { userId: 'minor' }].filter(row => where.userId.in.includes(row.userId)) },
+    userPlusPreference: { findMany: async ({ where }: { where: { userId: { in: string[] } } }) => optedIn ? [
       { userId: 'member', radarEnabled: !forPrice, priceAlertsEnabled: forPrice },
       { userId: 'minor', radarEnabled: !forPrice, priceAlertsEnabled: forPrice },
-    ] : [] },
-    user: { findMany: async () => [
+    ].filter(row => where.userId.in.includes(row.userId)) : [] },
+    user: { findMany: async ({ where }: { where: { id: { in: string[] } } }) => [
       { id: 'member', adultContentEnabled: true }, { id: 'minor', adultContentEnabled: false },
-    ] },
+    ].filter(row => where.id.in.includes(row.id)) },
   } as any;
 }
 
