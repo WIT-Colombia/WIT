@@ -123,8 +123,8 @@ export async function plusOverview(userId: string) {
     };
   });
   return { ...status, collections: safeCollections, searches, watches: safeWatches,
-    preferences: { radarEnabled: preferences?.radarEnabled ?? true,
-      priceAlertsEnabled: preferences?.priceAlertsEnabled ?? true } };
+    preferences: { radarEnabled: preferences?.radarEnabled ?? false,
+      priceAlertsEnabled: preferences?.priceAlertsEnabled ?? false } };
 }
 
 export async function setPlusPreferences(userId: string, next: { radarEnabled?: boolean; priceAlertsEnabled?: boolean }) {
@@ -137,8 +137,7 @@ export async function setPlusPreferences(userId: string, next: { radarEnabled?: 
 
 export async function plusRadar(userId: string) {
   await requirePlus(userId);
-  const prefs = await prisma.userPlusPreference.findUnique({ where: { userId } });
-  if (prefs?.radarEnabled === false) return { items: [] };
+  // Radar remains viewable; the user's explicit preference only controls delivery of notices.
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { adultContentEnabled: true } });
   const allowedAdult = user?.adultContentEnabled === true;
   const favorites = await prisma.businessFavorite.findMany({ where: { userId }, select: { businessId: true }, take: 250 });
