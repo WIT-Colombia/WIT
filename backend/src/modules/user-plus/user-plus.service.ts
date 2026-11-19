@@ -27,7 +27,7 @@ export function hasPlusEntitlement(enabled: boolean, membership: {
   status: string; startsAt: Date; expiresAt: Date; revokedAt: Date | null;
 } | null, now = new Date()): boolean {
   return Boolean(enabled && membership?.status === 'ACTIVE'
-    && membership.startsAt <= now && membership.expiresAt > now && !membership.revokedAt);
+    && membership.startsAt.getTime() <= now.getTime() && membership.expiresAt.getTime() > now.getTime() && !membership.revokedAt);
 }
 
 export async function plusStatus(userId: string) {
