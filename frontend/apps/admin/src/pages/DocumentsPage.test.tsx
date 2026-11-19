@@ -14,7 +14,7 @@ const document: AdminDocument = { id: 'test-document', section: 'CORPORATE', tit
 const list: DocumentList = { documents: [document], pagination: { page: 1, pageSize: 12, total: 1, totalPages: 1 }, summary: { active: 1, deleted: 0, sizeBytes: 2400 } };
 const empty: DocumentList = { ...list, documents: [], pagination: { ...list.pagination, total: 0, totalPages: 0 }, summary: { active: 0, deleted: 0, sizeBytes: 0 } };
 async function fillUpload() {
-  fireEvent.click(screen.getAllByRole('button', { name: 'Adjuntar estatuto' })[0]);
+  fireEvent.click(screen.getAllByRole('button', { name: 'Adjuntar documento societario' })[0]);
   fireEvent.change(screen.getByLabelText('Título del documento'), { target: { value: 'Reforma estatutaria' } });
   fireEvent.change(screen.getByLabelText('Archivo PDF'), { target: { files: [new File(['%PDF-1.4\n%%EOF'], 'reforma.pdf', { type: 'application/pdf' })] } });
 }
