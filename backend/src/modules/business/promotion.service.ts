@@ -44,7 +44,7 @@ async function findMemberBusiness(userId: string, businessId: string) {
   return business;
 }
 
-async function limits(db: Db, businessId: string) {
+export async function getPromotionLimits(db: Db, businessId: string) {
   const now = new Date();
   const pro = await db.$queryRaw<Array<{ id: string }>>`SELECT id FROM BusinessSubscription WHERE businessId = ${businessId} AND plan = 'PRO' AND status = 'ACTIVE' AND startsAt <= ${now} AND revokedAt IS NULL AND (expiresAt > ${now} OR (expiresAt IS NULL AND specialActivation = true)) ORDER BY startsAt DESC, createdAt DESC LIMIT 1`;
   const plan: PromotionPlan = pro.length && await isPaidPlanEnabled('businessPro', db) ? 'PRO' : 'BASIC';
@@ -93,7 +93,7 @@ export async function listPromotions(userId: string, businessIdentifier: string)
   const business = await findManagedBusiness(userId, businessIdentifier, prisma);
   const [rows, access] = await Promise.all([
     prisma.businessPromotion.findMany({ where: { businessId: business.id, deletedAt: null }, include: includePhotos, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }] }),
-    limits(prisma, business.id),
+    getPromotionLimits(prisma, business.id),
   ]);
   const views = rows.length ? await prisma.businessPromotionView.groupBy({ by: ['promotionId'], where: { promotionId: { in: rows.map(row => row.id) } }, _count: { _all: true } }) : [];
   const viewMap = new Map(views.map(row => [row.promotionId, row._count._all]));
@@ -113,7 +113,7 @@ export async function createPromotion(userId: string, identifier: string, input:
   const startsAt = new Date(input.startsAt); const endsAt = new Date(input.endsAt); const recurrenceUntil = input.recurrenceUntil ? new Date(input.recurrenceUntil) : null;
   const created = await prisma.$transaction(async tx => {
     await tx.$queryRaw`SELECT id FROM Business WHERE id = ${business.id} FOR UPDATE`;
-    const access = await limits(tx, business.id);
+    const access = await getPromotionLimits(tx, business.id);
     validatePromotion({ type: input.type, originalPrice: input.originalPrice, promotionalPrice: input.promotionalPrice, startsAt, endsAt, recurrence: input.recurrence, recurrenceUntil }, access.plan);
     if (access.activeCount >= access.maxActive) throw new AppError(409, 'PROMOTION_LIMIT_REACHED', `Tu plan permite hasta ${access.maxActive} publicaciones activas.`);
     if (input.relatedOfferId) {
@@ -142,7 +142,7 @@ export async function updatePromotion(userId: string, identifier: string, promot
     startsAt: input.startsAt ? new Date(input.startsAt) : current.startsAt, endsAt: input.endsAt ? new Date(input.endsAt) : current.endsAt,
     recurrence: input.recurrence ?? current.recurrence, recurrenceUntil: input.recurrenceUntil !== undefined ? (input.recurrenceUntil ? new Date(input.recurrenceUntil) : null) : current.recurrenceUntil,
   };
-  const access = await limits(prisma, business.id);
+  const access = await getPromotionLimits(prisma, business.id);
   validatePromotion(merged, access.plan);
   if (merged.recurrence !== 'NONE' && !merged.recurrenceUntil) throw new AppError(422, 'PROMOTION_RECURRENCE_INVALID', 'Indica hasta cuándo se repetirá la promoción.');
   if (input.relatedOfferId) {
@@ -190,7 +190,7 @@ function ensurePhoto(file: UploadedPhoto | undefined): asserts file is UploadedP
 export async function uploadPromotionPhoto(userId: string, identifier: string, promotionId: string, file: UploadedPhoto | undefined) {
   ensurePhoto(file);
   const business = await findManagedBusiness(userId, identifier, prisma);
-  const access = await limits(prisma, business.id);
+  const access = await getPromotionLimits(prisma, business.id);
   const promotion = await prisma.businessPromotion.findFirst({ where: { id: promotionId, businessId: business.id, deletedAt: null }, select: { id: true } });
   if (!promotion) throw new AppError(404, 'PROMOTION_NOT_FOUND', 'No encontramos esta publicación.');
   const count = await prisma.businessPromotionPhoto.count({ where: { promotionId } });
