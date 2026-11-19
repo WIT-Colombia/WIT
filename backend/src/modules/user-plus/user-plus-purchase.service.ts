@@ -4,7 +4,7 @@ import { isPaidPlanEnabled } from '../admin/paid-plans.service.js';
 import { hasPlusEntitlement } from './user-plus.service.js';
 
 /** Price is fixed server-side in Colombian pesos; client amounts are never trusted. */
-export const PLUS_MONTHLY_COP = 4_900;
+export const PLUS_MONTHLY_COP = 3_900;
 
 function publicRequest(row: {
   id: string; status: string; amountCop: number; currency: string;
