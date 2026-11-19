@@ -14,6 +14,14 @@ const publishedOffer = {
   administrativeStatus: 'NONE' as const,
   business: publishedBusiness,
 };
+const safeOfferWhere = (adultContentEnabled: boolean) => ({
+  ...publishedOffer,
+  ...(adultContentEnabled ? {} : { adultOnly: false, business: { ...publishedBusiness, adultOnly: false } }),
+});
+const adultConsent = async (userId: string) => (await prisma.user.findUnique({
+  where: { id: userId }, select: { adultContentEnabled: true },
+}))?.adultContentEnabled === true;
+
 
 export async function plusStatus(userId: string) {
   const [enabled, membership] = await Promise.all([
@@ -57,6 +65,28 @@ export async function plusOverview(userId: string) {
     }),
     prisma.userPlusPreference.findUnique({ where: { userId } }),
   ]);
+  const adultAllowed = await adultConsent(userId);
+  const offerIds = collections.flatMap(col => col.items.filter(item => item.targetType === 'OFFER').map(item => item.targetId));
+  const businessIds = collections.flatMap(col => col.items.filter(item => item.targetType === 'BUSINESS').map(item => item.targetId));
+  const [collectedOffers, collectedBusinesses] = await Promise.all([
+    prisma.businessOffer.findMany({ where: { id: { in: offerIds }, ...safeOfferWhere(adultAllowed) },
+      select: { id: true, name: true, kind: true } }),
+    prisma.business.findMany({ where: { id: { in: businessIds }, ...publishedBusiness,
+      ...(adultAllowed ? {} : { adultOnly: false }) },
+      select: { id: true, name: true } }),
+  ]);
+  const foundOffers = new Map(collectedOffers.map(item => [item.id, item]));
+  const foundBusinesses = new Map(collectedBusinesses.map(item => [item.id, item]));
+  const safeCollections = collections.map(col => ({
+    ...col,
+    items: col.items.map(item => {
+      const business = item.targetType === 'BUSINESS' ? foundBusinesses.get(item.targetId) : undefined;
+      const offer = item.targetType === 'OFFER' ? foundOffers.get(item.targetId) : undefined;
+      return { ...item, available: Boolean(business || offer),
+        name: business?.name ?? offer?.name ?? 'Publicación no disponible',
+        href: business ? '/business/' + business.id : offer ? '/' + (offer.kind === 'PRODUCT' ? 'product' : 'service') + '/' + offer.id : null };
+    }),
+  }));
   const safeWatches = watches.map(row => ({
     id: row.id, offerId: row.offerId, createdAt: row.createdAt,
     name: row.offer.name, kind: row.offer.kind, currency: row.offer.currency,
@@ -66,7 +96,7 @@ export async function plusOverview(userId: string) {
       && row.offer.administrativeStatus === 'NONE' && row.offer.business.publicationStatus === 'PUBLISHED'
       && row.offer.business.visibilityStatus === 'VISIBLE',
   }));
-  return { ...status, collections, searches, watches: safeWatches,
+  return { ...status, collections: safeCollections, searches, watches: safeWatches,
     preferences: { radarEnabled: preferences?.radarEnabled ?? true,
       priceAlertsEnabled: preferences?.priceAlertsEnabled ?? true } };
 }
@@ -128,9 +158,11 @@ export async function addPlusCollectionItem(userId: string, id: string, targetTy
   await requirePlus(userId);
   const collection = await prisma.userPlusCollection.findFirst({ where: { id, userId }, select: { id: true } });
   if (!collection) throw new AppError(404, 'PLUS_COLLECTION_NOT_FOUND', 'Colección no encontrada.');
+  const adultAllowed = await adultConsent(userId);
   const exists = targetType === 'BUSINESS'
-    ? await prisma.business.findFirst({ where: { OR: [{ id: targetId }, { publicId: targetId }], ...publishedBusiness }, select: { id: true } })
-    : await prisma.businessOffer.findFirst({ where: { id: targetId, ...publishedOffer }, select: { id: true } });
+    ? await prisma.business.findFirst({ where: { OR: [{ id: targetId }, { publicId: targetId }], ...publishedBusiness,
+      ...(adultAllowed ? {} : { adultOnly: false }) }, select: { id: true } })
+    : await prisma.businessOffer.findFirst({ where: { id: targetId, ...safeOfferWhere(adultAllowed) }, select: { id: true } });
   if (!exists) throw new AppError(404, 'PLUS_ITEM_NOT_AVAILABLE', 'El elemento no está disponible.');
   const count = await prisma.userPlusCollectionItem.count({ where: { collectionId: id } });
   if (count >= 100) throw new AppError(409, 'PLUS_ITEMS_LIMIT', 'Máximo 100 elementos por colección.');
@@ -162,7 +194,7 @@ export async function deletePlusSearch(userId: string, id: string) {
 
 export async function addPlusWatch(userId: string, offerId: string) {
   await requirePlus(userId);
-  const offer = await prisma.businessOffer.findFirst({ where: { id: offerId, ...publishedOffer }, select: { id: true, priceAmount: true } });
+  const offer = await prisma.businessOffer.findFirst({ where: { id: offerId, ...safeOfferWhere(await adultConsent(userId)) }, select: { id: true, priceAmount: true } });
   if (!offer) throw new AppError(404, 'PLUS_OFFER_NOT_AVAILABLE', 'Producto o servicio no publicado.');
   if (await prisma.userPlusPriceWatch.count({ where: { userId } }) >= 100)
     throw new AppError(409, 'PLUS_WATCH_LIMIT', 'Máximo 100 productos vigilados.');
@@ -178,7 +210,7 @@ export async function deletePlusWatch(userId: string, id: string) {
 }
 export async function plusPriceHistory(userId: string, offerId: string) {
   await requirePlus(userId);
-  const offer = await prisma.businessOffer.findFirst({ where: { id: offerId, ...publishedOffer },
+  const offer = await prisma.businessOffer.findFirst({ where: { id: offerId, ...safeOfferWhere(await adultConsent(userId)) },
     select: { id: true, name: true, priceAmount: true, currency: true } });
   if (!offer) throw new AppError(404, 'PLUS_OFFER_NOT_AVAILABLE', 'El elemento no está disponible.');
   const rows = await prisma.offerPriceHistory.findMany({
@@ -194,7 +226,7 @@ export async function plusCompare(userId: string, offerIds: string[]) {
   await requirePlus(userId);
   const ids = [...new Set(offerIds)].slice(0, 4);
   const offers = await prisma.businessOffer.findMany({
-    where: { id: { in: ids }, ...publishedOffer },
+    where: { id: { in: ids }, ...safeOfferWhere(await adultConsent(userId)) },
     select: { id: true, name: true, description: true, kind: true, priceAmount: true, currency: true,
       priceText: true, negotiable: true,
       business: { select: { name: true, publicId: true } } },
