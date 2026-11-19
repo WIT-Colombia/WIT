@@ -1,11 +1,13 @@
 import { usePaidPlans } from "@wit/utils";
 import { useCallback, useEffect, useState, type MouseEvent } from 'react';
+import { useLocation } from 'react-router-dom';
 import { BusinessProBenefitsDialog } from '../components/business/BusinessProBenefitsDialog';
 import { BusinessProfileThumbnail } from '../components/layout/Sidebar';
 import { developmentReferralTestFor, recognitionLevelFor, recognitionLevels } from '../config/businessRecognition';
 import { freeCards, periods, proCards, referralCards, type Period } from '../config/statisticsDashboard';
 import { businessApi, type BusinessStatisticsDashboard, type OfferViewRanking } from '../services/businessApiClient';
 import { useBusinessStore } from '../services/businessStore';
+import { isBusinessProPreview } from '../services/businessProDisplay';
 import './StatisticsDashboardV1.css';
 import { StatisticsDetailDialog, type StatisticsSelection } from './StatisticsDetailDialog';
 
@@ -107,7 +109,10 @@ function proContent(key: string, data: BusinessStatisticsDashboard) {
 }
 
 export function StatisticsDashboardV1() {
-  const { businessPro: proEnabled } = usePaidPlans();
+  const { businessPro: actualProEnabled } = usePaidPlans();
+  const location = useLocation();
+  const proPreview = isBusinessProPreview(location.pathname, location.search);
+  const proEnabled = actualProEnabled || proPreview;
   const { business } = useBusinessStore();
   const [period, setPeriod] = useState<Period>('month');
   const [periodReadyKey, setPeriodReadyKey] = useState<string | null>(null);
@@ -130,7 +135,7 @@ export function StatisticsDashboardV1() {
     if (target instanceof Element && target.closest('button, a, summary, details, input, select')) return;
     setSelectedDetail({ section, key });
   };
-  const detailButton = (section: StatisticsSelection['section'], key: string, locked = false) => <button type="button" className="stats-v1-explore" onClick={() => setSelectedDetail({ section, key })}>{locked ? 'Consultar acceso' : 'Explorar detalle'} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>;
+  const detailButton = (section: StatisticsSelection['section'], key: string, locked = false) => proPreview && section === 'pro' ? <button type="button" className="stats-v1-explore" onClick={() => setProHelp(true)}>Conocer beneficios <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button> : <button type="button" className="stats-v1-explore" onClick={() => setSelectedDetail({ section, key })}>{locked ? 'Consultar acceso' : 'Explorar detalle'} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>;
   useEffect(() => {
     setPeriodReadyKey(null);
     setPeriod('month');
@@ -151,27 +156,28 @@ export function StatisticsDashboardV1() {
   useEffect(() => {
     const controller = new AbortController();
     setData(null); setLoading(true); setError(false);
+    if (proPreview) { setLoading(false); return () => controller.abort(); }
     if (!business.id) { setLoading(false); setError(true); return () => controller.abort(); }
     void businessApi.getStatisticsDashboard(business.id, period, controller.signal)
       .then(result => { if (!controller.signal.aborted) setData(result); })
       .catch(() => { if (!controller.signal.aborted) setError(true); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [business.id, period, retry]);
+  }, [business.id, period, retry, proPreview]);
   useEffect(() => {
     const controller = new AbortController();
     setOfferViewRanking(null);
-    if (!business.id) return () => controller.abort();
+    if (proPreview || !business.id) return () => controller.abort();
     void businessApi.getOfferViewRanking(business.id, period, controller.signal)
       .then(result => { if (!controller.signal.aborted) setOfferViewRanking(result); })
       .catch(() => { /* The card reports a neutral unavailable state without affecting other statistics. */ });
     return () => controller.abort();
-  }, [business.id, period, retry]);
+  }, [business.id, period, retry, proPreview]);
   useEffect(() => {
     let cancelled = false;
     setFavoriteCount(null);
     setOfferLikeCount(null);
-    if (!business.id) return () => { cancelled = true; };
+    if (proPreview || !business.id) return () => { cancelled = true; };
     void Promise.allSettled([
       businessApi.getFavoriteCount(business.id),
       businessApi.getOfferLikeCounts(business.id),
@@ -186,7 +192,7 @@ export function StatisticsDashboardV1() {
     let cancelled = false;
     setReviewStatistics(null);
     setReviewCountError(false);
-    if (!business.publicId || !data) return () => { cancelled = true; };
+    if (proPreview || !business.publicId || !data) return () => { cancelled = true; };
     void countPublishedReviewsInWindow(business.publicId, data.window.start, data.window.end)
       .then(summary => { if (!cancelled) setReviewStatistics(summary); })
       .catch(() => { if (!cancelled) setReviewCountError(true); });
@@ -204,6 +210,7 @@ export function StatisticsDashboardV1() {
   const from = data?.window.start ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeZone: data.timezone }).format(new Date(data.window.start)) : null;
   const periodLabel = data ? data.period === 'all' ? 'Todo el historial' : `Desde ${from}` : 'Período seleccionado';
   const availablePro = data?.access.proUnlocked && Boolean(data.pro);
+  const showProCard = proPreview || Boolean(availablePro);
   return <div className="stats-v1">
     <header className="stats-v1-heading">
       <span>ANÁLISIS COMERCIAL {testReferrals !== null && <b className="stats-v1-test-badge">MODO PRUEBA</b>}</span>
@@ -215,7 +222,7 @@ export function StatisticsDashboardV1() {
     {error && <div className="stats-v1-error" role="alert">No pudimos cargar las estadísticas de este negocio. <button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar</button></div>}
     <section className="stats-v1-context" aria-label="Negocio y derechos actuales">
       <div><span className="stats-v1-context-icon"><BusinessProfileThumbnail business={business} /></span><div><small>NEGOCIO SELECCIONADO</small><strong>{business.name || 'Sin negocio seleccionado'}</strong></div></div>
-      {proEnabled && <div><span className="stats-v1-context-icon purple">♛</span><div><small>PLAN COMERCIAL</small><strong>{loading ? 'Cargando…' : error ? 'No disponible' : access?.proUnlocked ? 'Business PRO' : 'Plan básico'}</strong><span>{access?.proUnlocked ? 'Acceso vigente' : error ? 'No se pudo verificar el plan' : 'Estadísticas PRO disponibles con un plan vigente'}</span></div></div>}
+      {proEnabled && <div><span className="stats-v1-context-icon purple">♛</span><div><small>PLAN COMERCIAL</small><strong>{proPreview ? 'Business PRO (demo)' : loading ? 'Cargando…' : error ? 'No disponible' : access?.proUnlocked ? 'Business PRO' : 'Plan básico'}</strong><span>{proPreview ? 'Vista previa sin datos reales ni acceso de pago' : access?.proUnlocked ? 'Acceso vigente' : error ? 'No se pudo verificar el plan' : 'Estadísticas PRO disponibles con un plan vigente'}</span></div></div>}
       <div><span className="stats-v1-context-icon blue">★</span><div><small>NIVEL DE RECONOCIMIENTO</small><strong>{loading ? 'Cargando…' : level?.name ?? 'No disponible'}</strong><span>{access ? `${access.referralCount} referidos válidos` : 'Sin información'}</span></div></div>
     </section>
 
@@ -277,7 +284,7 @@ export function StatisticsDashboardV1() {
     </section>
 
     {proEnabled && <section className="stats-v1-section stats-v1-pro" aria-labelledby="stats-v1-pro-title">
-      <div className="stats-v1-section-head"><div><span className="stats-v1-section-icon">♛</span><div><h2 id="stats-v1-pro-title">Estadísticas PRO <small>20 estadísticas exclusivas</small></h2><p>Análisis avanzado respaldado por datos reales, con fuentes pendientes claramente marcadas.</p></div></div>{!loading && !error && !availablePro && <button type="button" onClick={() => setProHelp(true)}>Ver Business PRO →</button>}</div>
+      <div className="stats-v1-section-head"><div><span className="stats-v1-section-icon">♛</span><div><h2 id="stats-v1-pro-title">Estadísticas PRO <small>20 estadísticas exclusivas</small></h2><p>{proPreview ? 'Explora los indicadores que incluye Business PRO. En esta demostración no se consultan ni se simulan valores.' : 'Análisis avanzado respaldado por datos reales, con fuentes pendientes claramente marcadas.'}</p></div></div>{!proPreview && !loading && !error && !availablePro && <button type="button" onClick={() => setProHelp(true)}>Ver Business PRO →</button>}</div>
       <div className="stats-v1-pro-grid">{proCards.map(card => {
         const content = availablePro && data ? proContent(card.key, data) : null;
         const ranking = availablePro && data ? proRanking(card.key, data, offerViewRanking) : null;
@@ -285,30 +292,30 @@ export function StatisticsDashboardV1() {
         const isCommercialIndex = card.key === 'commercialIndex';
         const hasNoRatingHistory = card.key === 'ratingEvolution' && availablePro && data && content === null;
         const points = content && 'points' in content ? content.points : undefined;
-        if (isRanking) return <article onClick={event => openFromCard(event, 'pro', card.key)} className={`stats-v1-card stats-v1-pro-card stats-v1-pro-ranking-card ${availablePro ? '' : 'locked'}`} key={card.key}>
+        if (isRanking) return <article onClick={event => openFromCard(event, 'pro', card.key)} className={`stats-v1-card stats-v1-pro-card stats-v1-pro-ranking-card ${showProCard ? '' : 'locked'}`} key={card.key}>
           <h3>{card.label}</h3>
-          <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
-          {!availablePro ? <strong>Bloqueada</strong> : <HorizontalRanking points={ranking} emptyMessage={card.key === 'keywords' ? 'Aún no hay búsquedas registradas.' : card.key === 'categoryPerformance' ? 'Aún no hay actividad por categoría.' : 'Aún no hay aperturas registradas.'} />}
-          {detailButton('pro', card.key, !availablePro)}
+          <p className="stats-v1-description">{proPreview ? card.source : !availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
+          {!availablePro ? <strong>{proPreview ? 'Sin datos reales en demostración' : 'Bloqueada'}</strong> : <HorizontalRanking points={ranking} emptyMessage={card.key === 'keywords' ? 'Aún no hay búsquedas registradas.' : card.key === 'categoryPerformance' ? 'Aún no hay actividad por categoría.' : 'Aún no hay aperturas registradas.'} />}
+          {detailButton('pro', card.key, !showProCard)}
         </article>;
-        if (isCommercialIndex) return <article onClick={event => openFromCard(event, 'pro', card.key)} className={`stats-v1-card stats-v1-pro-card stats-v1-commercial-index ${availablePro ? '' : 'locked'}`} key={card.key}>
+        if (isCommercialIndex) return <article onClick={event => openFromCard(event, 'pro', card.key)} className={`stats-v1-card stats-v1-pro-card stats-v1-commercial-index ${showProCard ? '' : 'locked'}`} key={card.key}>
           <h3>{card.label}</h3>
-          <strong>{loading ? 'Cargando…' : error ? 'No disponible' : !availablePro ? 'Bloqueada' : 'Aún no hay datos comparables suficientes'}</strong>
-          <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
-          {detailButton('pro', card.key, !availablePro)}
+          <strong>{loading ? 'Cargando…' : error ? 'No disponible' : !availablePro ? (proPreview ? 'Sin datos reales en demostración' : 'Bloqueada') : 'Aún no hay datos comparables suficientes'}</strong>
+          <p className="stats-v1-description">{proPreview ? card.source : !availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
+          {detailButton('pro', card.key, !showProCard)}
         </article>;
-        return <article onClick={event => openFromCard(event, 'pro', card.key)} className={`stats-v1-card stats-v1-pro-card ${availablePro ? '' : 'locked'}`} key={card.key}>
+        return <article onClick={event => openFromCard(event, 'pro', card.key)} className={`stats-v1-card stats-v1-pro-card ${showProCard ? '' : 'locked'}`} key={card.key}>
           <h3>{card.label}</h3>
-          <strong>{loading ? 'Cargando…' : error ? 'No disponible' : !availablePro ? 'Bloqueada' : hasNoRatingHistory ? 'Sin calificaciones en este período' : content ? content.value : 'Medición pendiente'}</strong>
-          <p className="stats-v1-description">{!availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
+          <strong>{loading ? 'Cargando…' : error ? 'No disponible' : !availablePro ? (proPreview ? 'Sin datos reales en demostración' : 'Bloqueada') : hasNoRatingHistory ? 'Sin calificaciones en este período' : content ? content.value : 'Medición pendiente'}</strong>
+          <p className="stats-v1-description">{proPreview ? card.source : !availablePro ? 'Disponible con una suscripción Business PRO vigente.' : card.source}</p>
           {points && content && ('kind' in content && content.kind === 'bar' ? <Bars points={points} /> : <Sparkline points={points} />)}
           {points && <DataTable points={points} />}
           {availablePro && card.key === 'ratingEvolution' && data?.period === 'all' && <span className="stats-v1-history-note">Todo el tiempo muestra los últimos 24 meses.</span>}
-          {detailButton('pro', card.key, !availablePro)}
+          {detailButton('pro', card.key, !showProCard)}
         </article>;
       })}</div>
     </section>}
     {proEnabled && proHelp && <BusinessProBenefitsDialog onClose={() => setProHelp(false)} />}
-    {selectedDetail && (proEnabled || selectedDetail.section !== "pro") && <StatisticsDetailDialog selection={selectedDetail} onClose={closeDetail} data={data} period={period} favoriteCount={favoriteCount} offerLikeCount={offerLikeCount} reviewStatistics={reviewStatistics} offerViewRanking={offerViewRanking} unlockedReferralStatistics={unlockedReferralStatistics} availablePro={Boolean(availablePro)} loading={loading} error={error} />}
+    {selectedDetail && !proPreview && (proEnabled || selectedDetail.section !== "pro") && <StatisticsDetailDialog selection={selectedDetail} onClose={closeDetail} data={data} period={period} favoriteCount={favoriteCount} offerLikeCount={offerLikeCount} reviewStatistics={reviewStatistics} offerViewRanking={offerViewRanking} unlockedReferralStatistics={unlockedReferralStatistics} availablePro={Boolean(availablePro)} loading={loading} error={error} />}
   </div>;
 }
