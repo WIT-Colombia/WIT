@@ -16,8 +16,8 @@ CREATE TABLE `UserPlusSubscription` (
 
 CREATE TABLE `UserPlusPreference` (
   `userId` CHAR(36) NOT NULL,
-  `radarEnabled` BOOLEAN NOT NULL DEFAULT true,
-  `priceAlertsEnabled` BOOLEAN NOT NULL DEFAULT true,
+  `radarEnabled` BOOLEAN NOT NULL DEFAULT false,
+  `priceAlertsEnabled` BOOLEAN NOT NULL DEFAULT false,
   `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `updatedAt` DATETIME(3) NOT NULL,
   PRIMARY KEY (`userId`),
