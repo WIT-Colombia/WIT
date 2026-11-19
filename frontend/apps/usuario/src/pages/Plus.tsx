@@ -58,6 +58,8 @@ export default function Plus() {
   const [savedTitle, setSavedTitle] = useState('');
   const [savedCategory, setSavedCategory] = useState('');
   const [savedOpenNow, setSavedOpenNow] = useState(false);
+  const [savedMinRating, setSavedMinRating] = useState('');
+  const [savedSort, setSavedSort] = useState<'recommended' | 'rating' | 'distance'>('recommended');
   const [targetValue, setTargetValue] = useState(queryParams.get('watch') ?? '');
   const [compareValue, setCompareValue] = useState(queryParams.get('compare') ?? '');
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -232,12 +234,14 @@ export default function Plus() {
           event.preventDefault();
           void run(() => createPlusSearch({
             title: savedTitle.trim(), query: savedQuery.trim(), category: savedCategory.trim() || null,
-            city: currentCity, openNow: savedOpenNow, minRating: null, sort: 'recommended',
+            city: currentCity, openNow: savedOpenNow, minRating: savedMinRating ? Number(savedMinRating) : null, sort: savedSort,
           }), 'Búsqueda guardada.').then(ok => { if (ok) { setSavedTitle(''); setSavedQuery(''); } });
         }}>
           <label>Nombre<input value={savedTitle} maxLength={80} onChange={event => setSavedTitle(event.target.value)} placeholder="Ej. Panaderías cerca" required/></label>
           <label>Buscar<input value={savedQuery} maxLength={160} onChange={event => setSavedQuery(event.target.value)} placeholder="Qué quieres encontrar" required/></label>
           <label>Categoría (opcional)<input value={savedCategory} maxLength={120} onChange={event => setSavedCategory(event.target.value)} placeholder="Ej. Restaurantes"/></label>
+          <label>Calificación mínima<select value={savedMinRating} onChange={event => setSavedMinRating(event.target.value)}><option value="">Cualquiera</option><option value="4">4 estrellas o más</option><option value="4.5">4.5 estrellas o más</option></select></label>
+          <label>Ordenar por<select value={savedSort} onChange={event => setSavedSort(event.target.value as typeof savedSort)}><option value="recommended">Recomendados</option><option value="rating">Mejor calificados</option><option value="distance">Más cercanos</option></select></label>
           <label className="plus-check"><input type="checkbox" checked={savedOpenNow} onChange={event => setSavedOpenNow(event.target.checked)}/>Solo abiertos ahora</label>
           <button className="plus-button" disabled={busy}>Guardar búsqueda</button>
         </form>
