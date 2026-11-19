@@ -288,6 +288,18 @@ export async function updateBudget(context:AdminContext,id:string,
     return after;
   });
 }
+/** A corrected invoice cannot be smaller than its active allocation.
+ * PENDING reserves capacity; CANCELLED is excluded, just like new payment writes. */
+export function assertInvoiceAmendmentCapacity(
+  invoiceAmountCop:number,
+  payments:ReadonlyArray<{status:'PENDING'|'PAID'|'CANCELLED';amountCop:Prisma.Decimal}>,
+) {
+  const allocated=payments.filter(payment=>payment.status!=='CANCELLED')
+    .reduce((sum,payment)=>sum.plus(payment.amountCop),new Prisma.Decimal(0));
+  if(allocated.greaterThan(new Prisma.Decimal(invoiceAmountCop)))
+    throw new AppError(409,'INVOICE_BELOW_ALLOCATED_PAYMENTS',
+      'El nuevo valor de la factura es inferior al total de pagos activos y pendientes registrados.');
+}
 export async function updateInvoice(context:AdminContext,id:string,
   input:{amountCop:number;amountUsd:number;documentUrl?:string;reason:string}) {
   assertManage(context);requireReason(input.reason);
@@ -295,15 +307,18 @@ export async function updateInvoice(context:AdminContext,id:string,
   const documentUrl=input.documentUrl===undefined?undefined:
     input.documentUrl.trim()?validateReceiptUrl(input.documentUrl.trim()):null;
   return prisma.$transaction(async tx=>{
-    const before=await tx.financialInvoice.findUnique({where:{id}});
+    const before=await tx.financialInvoice.findUnique({where:{id},include:{
+      payments:{select:{status:true,amountCop:true}},
+    }});
     if(!before)throw new AppError(404,'INVOICE_NOT_FOUND','Factura no encontrada.');
+    assertInvoiceAmendmentCapacity(input.amountCop,before.payments);
     const after=await tx.financialInvoice.update({where:{id},
       data:{amountCop:input.amountCop,amountUsd:input.amountUsd,documentUrl}});
     await financeAudit(context,'FinancialInvoice',id,
       {amountCop:before.amountCop,amountUsd:before.amountUsd,documentUrl:before.documentUrl},
       {amountCop:after.amountCop,amountUsd:after.amountUsd,documentUrl:after.documentUrl},input.reason,tx);
     return after;
-  });
+ , { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 export async function updatePayment(context:AdminContext,id:string,
   input:{amountCop:number;status:'PENDING'|'PAID'|'CANCELLED';reference?:string;reason:string}) {
@@ -326,6 +341,6 @@ export async function updatePayment(context:AdminContext,id:string,
       amountCop:before.amountCop,status:before.status,reference:before.reference,
     },{amountCop:after.amountCop,status:after.status,reference:after.reference},input.reason,tx);
     return after;
-  });
+ , { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 export async function listFinancialAudit() { return prisma.financialAuditEntry.findMany({orderBy:{createdAt:'desc'},take:200}); }
