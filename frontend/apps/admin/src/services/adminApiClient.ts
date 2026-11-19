@@ -900,3 +900,16 @@ export function setAdminPlusUser(userId: string, enabled: boolean, expiresAt: st
     { method: 'PUT', body: JSON.stringify({ enabled, expiresAt, reason, confirmation }) },
   );
 }
+
+export type AdminPlusPurchaseRequest = {
+  id: string; userId: string; status: string; amountCop: number; currency: string;
+  periodMonths: number; createdAt: string;
+  user: { displayName: string; emailNormalized: string | null };
+};
+export function getAdminPlusPurchaseRequests() {
+  return request<{ requests: AdminPlusPurchaseRequest[] }>('/admin/xamuko-plus/purchase-requests');
+}
+export function closeAdminPlusPurchaseRequest(id: string, reason: string) {
+  return request<{ status: string }>('/admin/xamuko-plus/purchase-requests/' + encodeURIComponent(id) + '/close',
+    { method: 'PUT', body: JSON.stringify({ reason, confirmation: 'CONFIRMAR' }) });
+}
