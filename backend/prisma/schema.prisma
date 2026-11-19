@@ -280,6 +280,14 @@ enum FinancialPaymentStatus {
   CANCELLED
 }
 
+// Administrative case lifecycle only. NONE of these statuses confirms a refund payout.
+enum RefundCaseStatus {
+  OPEN
+  IN_REVIEW
+  NEEDS_INFORMATION
+  CLOSED
+}
+
 enum BusinessReviewModerationStatus {
   PUBLISHED
   HIDDEN
@@ -1407,6 +1415,27 @@ model FinancialPayment {
   invoice     FinancialInvoice       @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
   createdAt   DateTime                @default(now()) @db.DateTime(3)
   @@index([invoiceId, status])
+}
+
+/// Claims and documentation for potential refunds. No payment gateway or executed
+/// refund status is present. Amounts are claimed, unverified, and not revenue.
+model RefundCase {
+  id                  String           @id @default(uuid()) @db.Char(36)
+  status              RefundCaseStatus @default(OPEN)
+  subject             String           @db.VarChar(160)
+  contactEmail        String?          @db.VarChar(320)
+  externalReference   String?          @db.VarChar(160)
+  requestedAmountCop  Decimal?         @db.Decimal(14, 2)
+  description         String           @db.VarChar(2000)
+  decisionNote        String?          @db.VarChar(1500)
+  createdById         String           @db.Char(36)
+  lastReviewedById    String?          @db.Char(36)
+  closedAt            DateTime?        @db.DateTime(3)
+  createdAt           DateTime         @default(now()) @db.DateTime(3)
+  updatedAt           DateTime         @updatedAt @db.DateTime(3)
+
+  @@index([status, createdAt])
+  @@index([createdAt])
 }
 
 model FinancialCredit {
