@@ -79,6 +79,7 @@ CREATE TABLE `OfferPriceHistory` (
   `offerId` CHAR(36) NOT NULL,
   `previousPrice` DECIMAL(12,2) NULL,
   `newPrice` DECIMAL(12,2) NULL,
+  `previousCurrency` CHAR(3) NULL,
   `currency` CHAR(3) NULL,
   `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (`id`),
