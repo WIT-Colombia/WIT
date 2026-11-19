@@ -81,6 +81,42 @@ export const expenseReportWhere = (f: Filters) => ({
   } satisfies Prisma.FinancialAuditEntryWhereInput,
 });
 
+type GroupedConsumption = {
+  providerId:string;periodStart:Date;dataKind:string;
+  _sum:{amountCop:Prisma.Decimal|null;amountUsd:Prisma.Decimal|null;creditsUsd:Prisma.Decimal|null};
+  _count:{_all:number};
+};
+/** Each database group may represent many rows. Count and sum the underlying
+ * movements, not the number of aggregate groups, with precise decimal math. */
+export function foldExpenseConsumption(
+  groups:ReadonlyArray<GroupedConsumption>,providerNames:ReadonlyMap<string,string>,
+) {
+  let consumptionRecords=0;
+  let grossCop=new Prisma.Decimal(0),grossUsd=new Prisma.Decimal(0),creditsUsd=new Prisma.Decimal(0);
+  const providerAmounts=new Map<string,{name:string;amount:Prisma.Decimal;rows:number}>();
+  const dailyAmounts=new Map<string,Prisma.Decimal>();
+  const origins:Record<string,number>={REAL:0,ESTIMATED:0,PROJECTED:0,MANUAL:0};
+  for(const item of groups){
+    const amountCop=item._sum.amountCop??new Prisma.Decimal(0);
+    const amountUsd=item._sum.amountUsd??new Prisma.Decimal(0);
+    const creditUsd=item._sum.creditsUsd??new Prisma.Decimal(0);
+    const rows=item._count._all;
+    consumptionRecords+=rows;
+    grossCop=grossCop.plus(amountCop);
+    grossUsd=grossUsd.plus(amountUsd);
+    creditsUsd=creditsUsd.plus(creditUsd);
+    origins[item.dataKind]=(origins[item.dataKind]??0)+rows;
+    const name=providerNames.get(item.providerId)??'Proveedor no identificado';
+    const found=providerAmounts.get(item.providerId)??{name,amount:new Prisma.Decimal(0),rows:0};
+    found.amount=found.amount.plus(amountCop);
+    found.rows+=rows;
+    providerAmounts.set(item.providerId,found);
+    const day=item.periodStart.toISOString().slice(0,10);
+    dailyAmounts.set(day,(dailyAmounts.get(day)??new Prisma.Decimal(0)).plus(amountCop));
+  }
+  return {consumptionRecords,grossCop,grossUsd,creditsUsd,origins,providerAmounts,dailyAmounts};
+}
+
 /** Read-only real financial overview. Does NOT equate consumption, invoices and outflows.
  * Aggregate by recorded periodStart; all daily gaps appear with an explicit real zero. */
 export async function getExpenseOverview(input: {from?:string;to?:string}, now = new Date()) {
@@ -117,28 +153,8 @@ export async function getExpenseOverview(input: {from?:string;to?:string}, now =
     }),
   ]);
   const providerNames = new Map(providers.map(provider => [provider.id, provider.name]));
-  let consumptionRecords = 0;
-  let grossCop = new Prisma.Decimal(0), grossUsd=new Prisma.Decimal(0), creditsUsd=new Prisma.Decimal(0);
-  const providerAmounts = new Map<string,{name:string;amount:Prisma.Decimal;rows:number}>();
-  const dailyAmounts = new Map<string,Prisma.Decimal>();
-  const origins:Record<string,number> = {REAL:0,ESTIMATED:0,PROJECTED:0,MANUAL:0};
-  for (const item of consumptions) {
-    const amountCop=item._sum.amountCop ?? new Prisma.Decimal(0);
-    const amountUsd=item._sum.amountUsd ?? new Prisma.Decimal(0);
-    const creditUsd=item._sum.creditsUsd ?? new Prisma.Decimal(0);
-    const rows=item._count._all;
-    grossCop=grossCop.plus(amountCop);
-    grossUsd=grossUsd.plus(amountUsd);
-    creditsUsd=creditsUsd.plus(creditUsd);
-    consumptionRecords+=rows;
-    origins[item.dataKind]=(origins[item.dataKind] ?? 0)+rows;
-    const name=providerNames.get(item.providerId) ?? 'Proveedor no identificado';
-    const found=providerAmounts.get(item.providerId) ?? {name,amount:new Prisma.Decimal(0),rows:0};
-    found.amount=found.amount.plus(amountCop);found.rows+=rows;
-    providerAmounts.set(item.providerId,found);
-    const date=item.periodStart.toISOString().slice(0,10);
-    dailyAmounts.set(date,(dailyAmounts.get(date)??new Prisma.Decimal(0)).plus(amountCop));
-  }
+  const {consumptionRecords,grossCop,grossUsd,creditsUsd,origins,providerAmounts,dailyAmounts}
+    = foldExpenseConsumption(consumptions,providerNames);
   const span = Math.floor((f.end.valueOf()-f.start.valueOf())/86400000)+1;
   const bucketSize = span>120?'month':span>45?'week':'day';
   const buckets = new Map<string,Prisma.Decimal>();
