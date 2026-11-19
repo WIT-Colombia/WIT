@@ -58,21 +58,16 @@ export async function createManualConsumption(context: AdminContext, input: { pr
     if (before && before.dataKind !== 'MANUAL')
       throw new AppError(409, 'SYNCED_CONSUMPTION_IMMUTABLE',
         'Un registro sincronizado o estimado no puede ser sobrescrito mediante la carga manual.');
-    const row = before
-      ? await tx.financialConsumption.update({ where: { id: before.id },
-          data: { amountUsd: input.amountUsd, amountCop: input.amountCop,
-            creditsUsd: input.creditsUsd ?? 0, serviceId: input.serviceId } })
-      : await tx.financialConsumption.create({ data: {
-          ...input, externalId: key.externalId, creditsUsd: input.creditsUsd ?? 0, dataKind: 'MANUAL',
-        } });
+    if (before)
+      throw new AppError(409, 'MANUAL_CONSUMPTION_ALREADY_EXISTS',
+        'Este consumo ya existe. Para corregirlo utiliza la operación de corrección con motivo obligatorio.');
+    const row = await tx.financialConsumption.create({ data: {
+      ...input, externalId: key.externalId, creditsUsd: input.creditsUsd ?? 0, dataKind: 'MANUAL',
+    } });
     await tx.financialAuditEntry.create({ data: {
       actorUserId: context.userId, entityType: 'FinancialConsumption', entityId: row.id,
-      action: before ? 'UPDATE_MANUAL_CONSUMPTION' : 'CREATE_MANUAL_CONSUMPTION',
-      reason: 'Registro administrativo manual; no altera costos sincronizados.',
-      beforeState: before ? {
-        amountCop: before.amountCop.toString(), amountUsd: before.amountUsd.toString(),
-        creditsUsd: before.creditsUsd.toString(),
-      } : undefined,
+      action: 'CREATE_MANUAL_CONSUMPTION',
+      reason: 'Alta administrativa manual; las correcciones posteriores requieren motivo explícito.',
       afterState: {
         dataKind: row.dataKind, externalId: row.externalId,
         amountCop: row.amountCop.toString(), amountUsd: row.amountUsd.toString(),
@@ -141,21 +136,16 @@ export async function createInvoice(context: AdminContext, input: { providerId: 
     const before = await tx.financialInvoice.findUnique({
       where: { providerId_externalId: key },
     });
-    const row = before
-      ? await tx.financialInvoice.update({ where: { id: before.id },
-          data: { invoiceNumber: input.invoiceNumber, amountUsd: input.amountUsd,
-            amountCop: input.amountCop, documentUrl } })
-      : await tx.financialInvoice.create({
-          data: { ...input, externalId: key.externalId, documentUrl, dataKind: 'MANUAL' },
-        });
+    if (before)
+      throw new AppError(409, 'FINANCE_INVOICE_ALREADY_EXISTS',
+        'La factura ya está registrada. Utiliza la corrección con justificación para modificarla.');
+    const row = await tx.financialInvoice.create({
+      data: { ...input, externalId: key.externalId, documentUrl, dataKind: 'MANUAL' },
+    });
     await tx.financialAuditEntry.create({ data: {
       actorUserId: context.userId, entityType: 'FinancialInvoice', entityId: row.id,
-      action: before ? 'UPDATE_MANUAL_INVOICE' : 'CREATE_MANUAL_INVOICE',
-      reason: 'Registro manual de factura de proveedor; no equivale a una validación tributaria.',
-      beforeState: before ? {
-        amountCop: before.amountCop.toString(), amountUsd: before.amountUsd.toString(),
-        documentUrl: before.documentUrl,
-      } : undefined,
+      action: 'CREATE_MANUAL_INVOICE',
+      reason: 'Alta manual de factura de proveedor; no equivale a validación tributaria y las correcciones posteriores requieren motivo explícito.',
       afterState: {
         dataKind: row.dataKind, externalId: row.externalId, amountCop: row.amountCop.toString(),
         amountUsd: row.amountUsd.toString(), documentUrl: row.documentUrl,
