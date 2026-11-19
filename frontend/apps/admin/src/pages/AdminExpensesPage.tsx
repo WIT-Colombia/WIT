@@ -13,7 +13,7 @@ import {
   type ExpenseLedgerKind, type ExpenseLedgerRecord, type ExpenseReportOverview, type ExpenseLedgerPage,
   type FreeTierUsage,
 } from '../services/adminApiClient';
-import { financeCsv, financeXlsx } from '../utils/financeExport';
+import { financeXlsx } from '../utils/financeExport';
 import './AdminExpensesPage.css';
 
 const formatter = new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:2});
