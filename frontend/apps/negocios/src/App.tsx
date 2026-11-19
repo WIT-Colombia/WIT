@@ -63,14 +63,6 @@ function BusinessLegalLayout() {
   return state.status === "authenticated" ? <AppShell /> : <Outlet />;
 }
 
-// A demo-only route: never request business statistics for an unmarked preview.
-function BusinessProPreviewStatistics() {
-  const { search } = useLocation();
-  return new URLSearchParams(search).get("demoPro") === "1"
-    ? <StatisticsPage />
-    : <Navigate to="/preview?demoPro=1" replace />;
-}
-
 function PrivateAuthMetadata() {
   const { pathname } = useLocation();
   if (["/login", "/registro"].includes(pathname)) return null;
@@ -89,7 +81,7 @@ export default function App() {
     <Route path="/bienvenida" element={<WelcomePage />} />
     <Route path="/sin-negocio" element={<NoBusinessPage />} />
     <Route element={<BusinessLegalLayout />}><Route path="/legal/:page" element={<LegalPage />} /></Route>
-    <Route path="/preview" element={<AppShell demoMode />}><Route index element={<DashboardPage />} /><Route path="estadisticas" element={<BusinessProPreviewStatistics />} /></Route>
+    <Route path="/preview" element={<AppShell demoMode />}><Route index element={<DashboardPage />} /></Route>
     <Route element={<AppShell />}>
       <Route path="/" element={<Navigate to="/inicio" replace />} />
       <Route path="/inicio" element={<DashboardPage />} />
