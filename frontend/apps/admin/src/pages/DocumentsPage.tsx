@@ -52,6 +52,22 @@ export function LegalOverviewPage() {
   const [unavailable, setUnavailable] = useState<DocumentSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
+  const [recentPreview, setRecentPreview] = useState<{ document: AdminDocument; url: string } | null>(null);
+  const [previewBusy, setPreviewBusy] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+
+  useEffect(() => { const url = recentPreview?.url; return () => { if (url) URL.revokeObjectURL(url); }; }, [recentPreview?.url]);
+
+  async function openRecent(document: AdminDocument) {
+    if (previewBusy) return;
+    setPreviewBusy(true); setPreviewError('');
+    try {
+      const blob = await getAdminDocumentBlob(document.id);
+      setRecentPreview({ document, url: URL.createObjectURL(blob) });
+    } catch (cause) {
+      setPreviewError(cause instanceof Error ? cause.message : 'No se pudo consultar este documento.');
+    } finally { setPreviewBusy(false); }
+  }
 
   useEffect(() => {
     if (!allowed) { setLoading(false); return; }
@@ -119,9 +135,11 @@ export function LegalOverviewPage() {
     </section>
     <section className="ad-panel" aria-labelledby="legal-recent-title">
       <div className="ad-panel-heading"><div><h2 id="legal-recent-title">Documentos recientes disponibles</h2><p>Últimos archivos entre los registros consultados de cada sección. No es un historial completo de actuaciones.</p></div></div>
-      {loading ? <div className="ad-legal-no-documents" role="status">Consultando archivos…</div> : recent.length === 0 ? <div className="ad-legal-no-documents">No hay documentos recuperados en las consultas actuales.</div> : <div className="ad-legal-recent-list">{recent.map(document => <Link to={document.path} key={document.id} className="ad-legal-recent-row"><span className="ad-legal-recent-icon"><Icon name="file" size={19}/></span><span><strong>{document.title}</strong><small>{document.collection} · {date(document.createdAt)}</small></span><Icon name="arrow" size={17}/></Link>)}</div>}
+      {loading ? <div className="ad-legal-no-documents" role="status">Consultando archivos…</div> : recent.length === 0 ? <div className="ad-legal-no-documents">No hay documentos recuperados en las consultas actuales.</div> : <div className="ad-legal-recent-list">{recent.map(document => <button type="button" onClick={() => { void openRecent(document); }} disabled={previewBusy} key={document.id} className="ad-legal-recent-row"><span className="ad-legal-recent-icon"><Icon name="file" size={19}/></span><span><strong>{document.title}</strong><small>{document.collection} · {date(document.createdAt)}</small></span><Icon name="eye" size={17}/></button>)}</div>}
     </section>
     <p className="ad-footnote"><Icon name="shield" size={15}/>El acceso futuro del abogado deberá configurarse con permisos jurídicos específicos en backend, sin compartir la cuenta del administrador principal.</p>
+    {previewError && <div className="ad-error" role="alert"><Icon name="shield"/><div><strong>No se pudo abrir el documento</strong><p>{previewError}</p></div><button className="ad-button" onClick={() => setPreviewError('')}>Cerrar</button></div>}
+    {recentPreview && <AdminDialog title={recentPreview.document.title} wide onClose={() => setRecentPreview(null)}><div className="ad-preview-info"><span>{recentPreview.document.filename} · {formatDocumentBytes(recentPreview.document.sizeBytes)}</span><button className="ad-button" type="button" onClick={() => { const a = window.document.createElement('a'); a.href = recentPreview.url; a.download = recentPreview.document.filename; a.click(); }}><Icon name="download" size={16}/>Descargar PDF</button></div><Suspense fallback={<p className="ad-preview-note" role="status">Cargando visor privado…</p>}><PdfPreview url={recentPreview.url} title={recentPreview.document.title}/></Suspense></AdminDialog>}
   </section>;
 }
 
