@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
+import { FinanceSectionNav } from '../components/FinanceSectionNav';
 import { AdminPageHeading } from '../components/AdminPageHeading';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
@@ -286,6 +287,7 @@ export function AdminRefundsPage(){
         {canManage&&<button className="arf-btn arf-btn-primary" type="button" onClick={()=>setCreating(true)}>
           <Icon name="file" size={16}/> Nueva solicitud</button>}
       </div>}/>
+    <FinanceSectionNav />
     <section className="arf-scope" aria-label="Alcance del módulo de reembolsos">
       <span className="arf-scope-icon"><Icon name="shield" size={25}/></span>
       <div><strong>Gestión de solicitudes; sin devolución automática de dinero</strong>
