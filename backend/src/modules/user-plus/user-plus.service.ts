@@ -210,8 +210,10 @@ export async function deletePlusSearch(userId: string, id: string) {
 
 export async function addPlusWatch(userId: string, offerId: string) {
   await requirePlus(userId);
-  const offer = await prisma.businessOffer.findFirst({ where: { id: offerId, ...safeOfferWhere(await adultConsent(userId)) }, select: { id: true, priceAmount: true } });
+  const offer = await prisma.businessOffer.findFirst({ where: { id: offerId, ...safeOfferWhere(await adultConsent(userId)) }, select: { id: true, priceAmount: true, negotiable: true } });
   if (!offer) throw new AppError(404, 'PLUS_OFFER_NOT_AVAILABLE', 'Producto o servicio no publicado.');
+  if (!offer.priceAmount || offer.negotiable) throw new AppError(422, 'PLUS_PRICE_NOT_NUMERIC',
+    'Este artículo aún no tiene un precio numérico verificable para seguimiento.');
   if (await prisma.userPlusPriceWatch.count({ where: { userId } }) >= 100)
     throw new AppError(409, 'PLUS_WATCH_LIMIT', 'Máximo 100 productos vigilados.');
   return prisma.userPlusPriceWatch.upsert({
