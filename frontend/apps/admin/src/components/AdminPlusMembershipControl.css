@@ -10,3 +10,22 @@
 .admin-plus-member .admin-plus-member-error{padding:10px;border-radius:9px;background:#fff1f1;color:#a73745}
 .admin-plus-member .admin-plus-member-success{padding:10px;border-radius:9px;background:#edf9f0;color:#246c43}
 @media(max-width:700px){.admin-plus-member{padding:16px}.admin-plus-member-search{flex-direction:column;align-items:stretch}.admin-plus-member-search label{width:100%}.admin-plus-member-actions{flex-direction:column}.admin-plus-member-actions button{width:100%}}
+
+
+.admin-plus-member-requests{display:grid;gap:13px;padding:17px;border:1px solid #e6e4ef;border-radius:14px;background:#faf9fe}
+.admin-plus-member-requests-header{display:flex;align-items:center;justify-content:space-between;gap:13px}
+.admin-plus-member-requests h3{margin:0 0 5px;font-size:15px;color:#334060}
+.admin-plus-member-requests-header .admin-plus-request-refresh{background:#fff;color:#6140ab;min-height:36px;flex:none}
+.admin-plus-request-list{display:grid;gap:10px}
+.admin-plus-request-list article{display:grid;gap:12px;padding:15px;border:1px solid #e5e1f0;border-radius:12px;background:#fff}
+.admin-plus-request-identity{display:grid;gap:4px;overflow-wrap:anywhere}
+.admin-plus-request-identity strong{font-size:13px;color:#253651}
+.admin-plus-request-identity small,.admin-plus-request-identity span{font-size:11px;color:#6d7891}
+.admin-plus-request-actions,.admin-plus-request-confirm>div{display:flex;gap:8px;flex-wrap:wrap}
+.admin-plus-request-actions button{min-height:36px;font-size:11px}
+.admin-plus-member button.is-secondary{border-color:#d7c9ed;background:#fff;color:#6845a9}
+.admin-plus-request-confirm{display:grid;gap:12px;padding:14px;border:1px solid #f0ddae;border-radius:12px;background:#fffcf2}
+.admin-plus-request-confirm label.admin-plus-request-check{display:flex;align-items:center;gap:8px}
+.admin-plus-request-check input{width:17px;height:17px;min-height:auto;accent-color:#6340b7}
+.admin-plus-requests-empty{padding:9px 0;color:#6c7890;font-size:12px}
+@media(max-width:700px){.admin-plus-member-requests{padding:12px}.admin-plus-member-requests-header{flex-direction:column;align-items:stretch}.admin-plus-request-actions{flex-direction:column}.admin-plus-request-actions button{width:100%}}
