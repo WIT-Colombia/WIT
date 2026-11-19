@@ -31,6 +31,7 @@ const Favorites = lazy(() => import("./pages/Favorites"));
 const Likes = lazy(() => import("./pages/Likes"));
 const Reviews = lazy(() => import("./pages/Reviews"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Plus = lazy(() => import("./pages/Plus"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -172,6 +173,7 @@ export default function App() {
     <Route path="/likes" element={<RequireAccount><Likes /></RequireAccount>} />
     <Route path="/reviews" element={<Reviews />} />
     <Route path="/profile" element={<RequireAccount><Profile /></RequireAccount>} />
+    <Route path="/plus" element={<RequireAccount><Plus /></RequireAccount>} />
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<NotFound />} />
