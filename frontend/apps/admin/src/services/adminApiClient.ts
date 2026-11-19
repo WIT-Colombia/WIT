@@ -79,8 +79,8 @@ export function getAdminVisibilityAudit(filters: { page: number; kind: AdminVisi
 export type AdminSecurityAuditEntry = {
   id: string; action: string; createdAt: string; reason: string | null;
   actor: string | null; subject: string; role: string | null; permission: string | null;
-  planKey: 'businessPro' | 'xamukoPlus' | null;
-  enabled: boolean | null; previousEnabled: boolean | null;
+  planKey?: 'businessPro' | 'xamukoPlus' | null;
+  enabled?: boolean | null; previousEnabled?: boolean | null;
 };
 export type AdminSecurityAuditResult = {
   entries: AdminSecurityAuditEntry[];
