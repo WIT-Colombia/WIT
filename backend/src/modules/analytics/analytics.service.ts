@@ -16,8 +16,11 @@ const normalizeText = (value: string | undefined, max: number) => {
 const visitorHash = (value: string | undefined) => value && /^[a-zA-Z0-9-]{16,120}$/.test(value)
   ? createHash('sha256').update(value).digest('hex') : undefined;
 
-function publicBusiness(identifier: string) {
-  return prisma.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }], ...PUBLIC_BUSINESS }, select: { id: true, publicId: true } });
+/** Narrow persistence boundary to test event collection without a live database. */
+type EventPersistence = Pick<typeof prisma, 'business' | 'businessOffer' | 'businessAnalyticsEvent'>;
+
+function publicBusiness(identifier: string, db: EventPersistence) {
+  return db.business.findFirst({ where: { OR: [{ id: identifier }, { publicId: identifier }], ...PUBLIC_BUSINESS }, select: { id: true, publicId: true } });
 }
 
 function periodStart(period: AnalyticsPeriod, now = new Date()): Date | null {
@@ -32,14 +35,14 @@ function periodStart(period: AnalyticsPeriod, now = new Date()): Date | null {
   return new Date(date.getTime() + 5 * 60 * 60 * 1000);
 }
 
-export async function recordAnalyticsEvent(input: { businessId: string; eventType: string; offerId?: string; dedupeKey?: string; actorUserId?: string; context?: AnalyticsContext }) {
+export async function recordAnalyticsEvent(input: { businessId: string; eventType: string; offerId?: string; dedupeKey?: string; actorUserId?: string; context?: AnalyticsContext }, db: EventPersistence = prisma) {
   if (!EVENT_TYPES.includes(input.eventType as AnalyticsEventType)) throw new AppError(400, 'INVALID_ANALYTICS_EVENT', 'Tipo de evento no permitido.');
-  const business = await publicBusiness(input.businessId);
+  const business = await publicBusiness(input.businessId, db);
   if (!business) throw new AppError(404, 'BUSINESS_NOT_AVAILABLE', 'El establecimiento no está disponible.');
   let offerId: string | undefined;
   if (input.eventType === 'OFFER_VIEW') {
     if (!input.offerId) throw new AppError(400, 'OFFER_REQUIRED', 'Debes indicar el producto o servicio consultado.');
-    const offer = await prisma.businessOffer.findFirst({
+    const offer = await db.businessOffer.findFirst({
       where: { id: input.offerId, businessId: business.id, deletedAt: null, active: true, publicationStatus: 'PUBLISHED' },
       select: { id: true },
     });
@@ -51,7 +54,7 @@ export async function recordAnalyticsEvent(input: { businessId: string; eventTyp
   const category = normalizeText(input.context?.category, 120);
   const searchPosition = Number.isInteger(input.context?.searchPosition) && input.context!.searchPosition! > 0 && input.context!.searchPosition! <= 1000 ? input.context!.searchPosition : undefined;
   try {
-    await prisma.businessAnalyticsEvent.create({ data: {
+    await db.businessAnalyticsEvent.create({ data: {
       businessId: business.id, offerId, eventType: input.eventType as AnalyticsEventType, actorUserId: input.actorUserId,
       visitorKey: visitorHash(input.context?.visitorId), source, searchTerm, searchPosition, category,
       isFeatured: input.context?.isFeatured === true, dedupeKey: input.dedupeKey?.slice(0, 191) || undefined,
