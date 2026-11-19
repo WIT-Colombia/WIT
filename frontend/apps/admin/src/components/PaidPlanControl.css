@@ -1,1 +1,31 @@
-.paid-plan-control{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px;margin:20px 0;border:1px solid #dbe1ee;border-radius:16px;background:#fff;color:#24314a}.paid-plan-control h2{margin:0 0 10px;font-size:18px}.paid-plan-control p{margin:6px 0;font-size:14px;line-height:1.6}.paid-plan-button{flex-shrink:0;border:0;border-radius:10px;background:#6435d9;color:#fff;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}.paid-plan-button:disabled{opacity:.55;cursor:wait}.paid-plan-button:focus-visible{outline:3px solid #9a7feb;outline-offset:3px}.paid-plan-control .paid-plan-error{color:#b42318}@media(max-width:640px){.paid-plan-control{align-items:stretch;flex-direction:column;padding:18px}}
+.paid-plan-control{display:flex;flex-direction:column;gap:14px;margin:20px 0;padding:26px;border:1px solid #dfe5ef;border-radius:18px;background:#fff;color:#24314a;box-shadow:0 8px 24px rgba(31,45,75,.035)}
+.paid-plan-control-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.paid-plan-control-eyebrow{display:block;margin-bottom:8px;color:#7656b9;font-size:11px;font-weight:750;letter-spacing:.11em}
+.paid-plan-control h2{margin:0 0 6px;font-size:22px;line-height:1.25;font-weight:750}
+.paid-plan-control h3{margin:0;font-size:17px}
+.paid-plan-control p{margin:0;font-size:14px;line-height:1.6}
+.paid-plan-control-heading p{color:#607087}
+.paid-plan-control-status{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;background:#f1f3f8;color:#536078;font-size:12px;font-weight:750}
+.paid-plan-control-status:before{content:"";width:8px;height:8px;border-radius:50%;background:#98a1b4}
+.paid-plan-control-status.is-enabled{background:#e9f8ef;color:#16794a}
+.paid-plan-control-status.is-enabled:before{background:#20ae68}
+.paid-plan-control-description{max-width:850px;color:#354760}
+.paid-plan-control-preservation{color:#65758d}
+.paid-plan-control-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.paid-plan-button{border:1px solid transparent;border-radius:10px;background:#683bd9;color:#fff;padding:11px 18px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s}
+.paid-plan-button:hover:not(:disabled){background:#5530b3}
+.paid-plan-button.is-danger{background:#b52b42}
+.paid-plan-button.is-danger:hover:not(:disabled){background:#9d2036}
+.paid-plan-button.is-secondary{background:#fff;color:#33445e;border-color:#ced6e2}
+.paid-plan-button.is-secondary:hover:not(:disabled){background:#f5f7fb}
+.paid-plan-button:disabled{opacity:.55;cursor:not-allowed}
+.paid-plan-button:focus-visible{outline:3px solid #9a7feb;outline-offset:3px}
+.paid-plan-control-confirmation{display:flex;flex-direction:column;gap:13px;border-top:1px solid #e5eaf2;padding-top:18px}
+.paid-plan-control-confirmation>p{color:#66516b}
+.paid-plan-control-confirmation label{display:flex;flex-direction:column;gap:7px;max-width:650px;font-size:13px;font-weight:700;color:#3b4760}
+.paid-plan-control-confirmation textarea,.paid-plan-control-confirmation input{box-sizing:border-box;width:100%;border:1px solid #cbd4e2;border-radius:10px;padding:11px 12px;color:#24314a;font:inherit;font-weight:400;background:#fff}
+.paid-plan-control-confirmation textarea:focus,.paid-plan-control-confirmation input:focus{outline:2px solid #9a7feb;outline-offset:1px}
+.paid-plan-control .paid-plan-error{color:#b42318}
+.paid-plan-control .paid-plan-control-notice{color:#18774d}
+.paid-plan-control .paid-plan-control-restricted{color:#5a6480}
+@media(max-width:640px){.paid-plan-control{padding:18px;gap:12px}.paid-plan-control-heading{flex-direction:column;gap:12px}.paid-plan-control-status{align-self:flex-start}.paid-plan-control-actions{flex-direction:column;align-items:stretch}.paid-plan-button{width:100%;text-align:center}}
