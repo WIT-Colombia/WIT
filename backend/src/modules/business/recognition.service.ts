@@ -1,4 +1,5 @@
 import type { PrismaClient, Prisma } from '../../generated/prisma/client.js';
+import { isPaidPlanEnabled } from '../admin/paid-plans.service.js';
 type Db = PrismaClient | Prisma.TransactionClient;
 
 export type RecognitionLevel = 'BASIC' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND';
@@ -32,7 +33,7 @@ export async function catalogLimits(db: Db, businessId: string) {
       AND (expiresAt > ${now} OR (expiresAt IS NULL AND specialActivation = true))
     ORDER BY startsAt DESC, createdAt DESC LIMIT 1
   `;
-  const proActive = proRows.length > 0;
+  const proActive = proRows.length > 0 && await isPaidPlanEnabled('businessPro', db);
   const [products, services] = await Promise.all([
     db.businessOffer.count({ where: { businessId, kind: 'PRODUCT', deletedAt: null } }),
     db.businessOffer.count({ where: { businessId, kind: 'SERVICE', deletedAt: null } }),
