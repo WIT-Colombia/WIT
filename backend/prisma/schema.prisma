@@ -1716,8 +1716,8 @@ model UserPlusSubscription {
 
 model UserPlusPreference {
   userId             String    @id @db.Char(36)
-  radarEnabled       Boolean   @default(true)
-  priceAlertsEnabled Boolean   @default(true)
+  radarEnabled       Boolean   @default(false)
+  priceAlertsEnabled Boolean   @default(false)
   createdAt          DateTime  @default(now()) @db.DateTime(3)
   updatedAt          DateTime  @updatedAt @db.DateTime(3)
   user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
