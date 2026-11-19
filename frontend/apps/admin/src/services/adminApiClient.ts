@@ -547,10 +547,12 @@ export type RefundReviewPage = {
   pagination: { page: number; pageSize: number; total: number; totalPages: number };
   definition: string;
 };
-export function listRefundReviewCases(filters: { page?: number; status?: string; q?: string } = {}) {
+export function listRefundReviewCases(filters: { page?: number; status?: string; q?: string; from?:string;to?:string } = {}) {
   const query = new URLSearchParams({ page: String(filters.page ?? 1) });
   if (filters.status) query.set('status', filters.status);
   if (filters.q) query.set('q', filters.q);
+  if (filters.from) query.set('from',filters.from);
+  if (filters.to) query.set('to',filters.to);
   return request<RefundReviewPage>('/admin/finance/refund-cases?' + query.toString());
 }
 export function getRefundReviewCase(id: string) {
