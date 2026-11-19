@@ -178,3 +178,61 @@
 .admin-workbench .finance-page>.success-message,.admin-workbench .finance-page>.error-message { margin-bottom:16px; padding:14px 18px; border-radius:10px; background:#F0FDF4; color:#166534; font-size:12px; line-height:1.7; }
 .admin-workbench .finance-page>.error-message { background:#FEF2F2; color:#B91C1C; }
 @media(max-width:650px) { .ad-finance-free-tier { padding:18px; }.ad-finance-free-tier>.finance-free-tier { min-width:0; width:100%; flex-basis:100%; }.admin-workbench .finance-tabs { gap:3px; }.admin-workbench .finance-tabs button { flex:1; min-width:100px; min-height:40px; }.admin-workbench .finance-table-wrap .ad-empty { padding:35px 18px; }.admin-workbench .finance-table-wrap:has(.ad-empty) table { min-width:0; }.admin-workbench .finance-table-wrap .ad-empty h2 { font-size:17px; }.admin-workbench .finance-table-wrap .ad-empty p { white-space:normal; } }
+
+
+/* Jurídica y corporativa: real-data command center shared by founder and future counsel. */
+.ad-legal-overview,.ad-documents { min-width:0; }
+.ad-legal-tabs { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 23px; }
+.ad-legal-tabs a { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:10px 15px; border:1px solid #E2E8F0; border-radius:11px; background:#fff; color:#475569; font-size:13px; font-weight:750; text-decoration:none; transition:background .16s,border-color .16s,color .16s; }
+.ad-legal-tabs a:hover { color:#6D28D9; border-color:#C4B5FD; background:#FAF8FF; }
+.ad-legal-tabs a[aria-current="page"] { color:#5B21B6; border-color:#C4B5FD; background:#F5F3FF; }
+.ad-legal-context { display:flex; align-items:flex-start; gap:11px; padding:14px 17px; margin-bottom:20px; border:1px solid #DDE7F8; border-radius:12px; background:#F8FAFF; color:#475569; }
+.ad-legal-context>svg { flex:0 0 auto; color:#2563EB; margin-top:1px; }
+.ad-legal-context p { margin:0; font-size:13px; line-height:1.6; }
+.ad-legal-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:20px; }
+.ad-legal-metrics article { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; column-gap:12px; padding:19px; min-width:0; border:1px solid #E2E8F0; border-radius:15px; background:#fff; box-shadow:0 8px 24px rgba(15,23,42,.035); }
+.ad-legal-metrics article>span { display:grid; grid-row:1 / 4; place-items:center; width:43px; height:43px; color:#6D28D9; background:#F5F3FF; border-radius:12px; }
+.ad-legal-metrics small { color:#475569; font-size:13px; font-weight:700; }
+.ad-legal-metrics strong { display:block; margin-top:4px; font-size:29px; line-height:1.22; font-weight:800; color:#0F172A; font-variant-numeric:tabular-nums; }
+.ad-legal-metrics p { margin:5px 0 0; color:#64748B; font-size:12px; }
+.ad-legal-layout { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(290px,.75fr); gap:18px; align-items:stretch; margin-bottom:18px; }
+.ad-legal-overview>.ad-panel { margin-bottom:18px; }
+.ad-legal-collections,.ad-legal-recent-list { display:grid; padding:0 18px 18px; }
+.ad-legal-collection,.ad-legal-recent-row { display:flex; align-items:center; gap:14px; min-width:0; padding:16px; border:1px solid #E2E8F0; border-radius:12px; background:#fff; color:#0F172A; text-decoration:none; transition:background .15s,border-color .15s; }
+.ad-legal-collection+.ad-legal-collection,.ad-legal-recent-row+.ad-legal-recent-row { margin-top:9px; }
+.ad-legal-collection:hover,.ad-legal-recent-row:hover,.ad-legal-workstream:hover { border-color:#C4B5FD; background:#FCFAFF; }
+.ad-legal-collection-icon,.ad-legal-recent-icon { display:grid; flex:0 0 auto; place-items:center; width:42px; height:42px; border-radius:11px; background:#F1F5F9; color:#475569; }
+.ad-legal-collection-copy,.ad-legal-recent-row>span:nth-child(2) { display:grid; flex:1 1 auto; min-width:0; gap:5px; }
+.ad-legal-collection-copy strong,.ad-legal-recent-row strong { color:#0F172A; font-size:14px; line-height:1.4; }
+.ad-legal-collection-copy small,.ad-legal-recent-row small { color:#64748B; font-size:12px; line-height:1.55; }
+.ad-legal-collection-count { flex:0 0 auto; color:#475569; background:#F1F5F9; padding:6px 9px; border-radius:99px; font-size:12px; font-weight:700; }
+.ad-legal-collection>svg,.ad-legal-recent-row>svg { flex:0 0 auto; color:#64748B; }
+.ad-legal-guidance-body { display:grid; gap:16px; padding:0 22px 23px; }
+.ad-legal-guidance-body p { display:flex; align-items:flex-start; gap:10px; margin:0; font-size:13px; line-height:1.6; color:#475569; }
+.ad-legal-guidance-body svg { flex:0 0 auto; color:#6D28D9; margin-top:2px; }
+.ad-legal-workstreams { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:0 22px 22px; }
+.ad-legal-workstream { display:flex; align-items:flex-start; gap:12px; min-width:0; padding:17px; border:1px solid #E2E8F0; border-radius:12px; background:#fff; text-decoration:none; }
+.ad-legal-workstream>span { display:grid; flex:0 0 auto; place-items:center; width:38px; height:38px; border-radius:10px; background:#EFF6FF; color:#2563EB; }
+.ad-legal-workstream div { flex:1 1 auto; min-width:0; }
+.ad-legal-workstream strong { display:block; color:#0F172A; font-size:14px; line-height:1.4; }
+.ad-legal-workstream p { margin:5px 0 0; color:#64748B; font-size:12px; line-height:1.55; }
+.ad-legal-workstream>svg { flex:0 0 auto; margin-top:9px; color:#64748B; }
+.ad-legal-no-documents { padding:0 23px 24px; font-size:13px; color:#64748B; }
+.ad-legal-overview .ad-footnote { margin-top:4px; }
+@media(max-width:1150px) {
+  .ad-legal-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .ad-legal-layout { grid-template-columns:1fr; }
+}
+@media(max-width:650px) {
+  .ad-legal-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-top:12px; }
+  .ad-legal-tabs a { min-height:48px; padding:9px; font-size:12px; line-height:1.4; text-align:center; }
+  .ad-legal-metrics { grid-template-columns:1fr; gap:10px; }
+  .ad-legal-metrics article { padding:16px; }
+  .ad-legal-workstreams { grid-template-columns:1fr; padding:0 15px 15px; gap:10px; }
+  .ad-legal-collections,.ad-legal-recent-list { padding:0 14px 14px; }
+  .ad-legal-collection { gap:10px; flex-wrap:wrap; padding:13px; }
+  .ad-legal-collection-count { margin-left:52px; }
+  .ad-legal-collection>svg { margin-left:auto; }
+  .ad-legal-guidance-body { padding:0 16px 18px; }
+  .ad-legal-context { padding:13px; }
+}
