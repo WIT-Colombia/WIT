@@ -1683,3 +1683,10 @@ model SupportRequest {
   @@index([userId, createdAt])
   @@index([businessId, createdAt])
 }
+
+// Global commercial availability; subscriptions remain independent records.
+model PaidPlanAvailability {
+  key       String   @id @db.VarChar(32)
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt @db.DateTime(3)
+}
