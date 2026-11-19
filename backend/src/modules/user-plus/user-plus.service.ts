@@ -62,9 +62,10 @@ export async function plusOverview(userId: string) {
     prisma.userPlusSavedSearch.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 }),
     prisma.userPlusPriceWatch.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 100,
       select: { id: true, offerId: true, createdAt: true,
-        offer: { select: { name: true, kind: true, priceAmount: true, priceText: true, currency: true, active: true, deletedAt: true,
+        offer: { select: { name: true, kind: true, priceAmount: true, priceText: true, currency: true, active: true, adultOnly: true, deletedAt: true,
           publicationStatus: true, administrativeStatus: true,
-          business: { select: { name: true, publicId: true, publicationStatus: true, visibilityStatus: true } },
+          business: { select: { name: true, publicId: true, adultOnly: true, publicationStatus: true, visibilityStatus: true,
+            lifecycleStatus: true, deletionStatus: true, businessAccount: { select: { status: true } } } },
         } },
       },
     }),
@@ -92,15 +93,24 @@ export async function plusOverview(userId: string) {
         href: business ? '/business/' + business.id : offer ? '/' + (offer.kind === 'PRODUCT' ? 'product' : 'service') + '/' + offer.id : null };
     }),
   }));
-  const safeWatches = watches.map(row => ({
-    id: row.id, offerId: row.offerId, createdAt: row.createdAt,
-    name: row.offer.name, kind: row.offer.kind, currency: row.offer.currency,
-    price: row.offer.priceAmount?.toString() ?? null, priceText: row.offer.priceText,
-    businessName: row.offer.business.name,
-    available: row.offer.active && !row.offer.deletedAt && row.offer.publicationStatus === 'PUBLISHED'
-      && row.offer.administrativeStatus === 'NONE' && row.offer.business.publicationStatus === 'PUBLISHED'
-      && row.offer.business.visibilityStatus === 'VISIBLE',
-  }));
+  const safeWatches = watches.map(row => {
+    const item = row.offer;
+    const business = item.business;
+    const available = item.active && !item.deletedAt && item.publicationStatus === 'PUBLISHED'
+      && item.administrativeStatus === 'NONE' && business.publicationStatus === 'PUBLISHED'
+      && business.visibilityStatus === 'VISIBLE' && business.lifecycleStatus === 'ACTIVE'
+      && business.deletionStatus === 'NONE' && business.businessAccount.status === 'ACTIVE'
+      && (adultAllowed || (!item.adultOnly && !business.adultOnly));
+    return {
+      id: row.id, offerId: row.offerId, createdAt: row.createdAt, kind: item.kind,
+      name: available ? item.name : 'Publicación no disponible',
+      currency: available ? item.currency : null,
+      price: available ? item.priceAmount?.toString() ?? null : null,
+      priceText: available ? item.priceText : null,
+      businessName: available ? business.name : '',
+      available,
+    };
+  });
   return { ...status, collections: safeCollections, searches, watches: safeWatches,
     preferences: { radarEnabled: preferences?.radarEnabled ?? true,
       priceAlertsEnabled: preferences?.priceAlertsEnabled ?? true } };
