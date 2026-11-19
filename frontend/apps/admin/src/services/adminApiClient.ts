@@ -477,6 +477,53 @@ export function decideVerification(requestId: string, action: 'APPROVE' | 'REQUE
 export function verificationDocumentUrl(requestId: string) { return `${API_BASE}/admin/verifications/${encodeURIComponent(requestId)}/document`; }
 export async function fetchVerificationDocument(requestId: string) { const response = await fetch(verificationDocumentUrl(requestId), headers({})); if (!response.ok) throw new AdminApiError(response.status, 'DOCUMENT_UNAVAILABLE', 'El documento ya no está disponible.'); return response.blob(); }
 
+export type ExpenseLedgerKind = 'CONSUMPTIONS' | 'INVOICES' | 'PAYMENTS' | 'BUDGETS' | 'PROVIDERS' | 'ALERTS' | 'AUDIT';
+export type ExpenseLedgerRecord = {
+  id: string; kind: ExpenseLedgerKind; name: string; detail: string;
+  providerName?: string | null; providerId?: string | null;
+  amountCop?: string | null; amountUsd?: string | null; creditsUsd?: string;
+  currency?: string; status?: string; periodStart?: string; periodEnd?: string;
+  createdAt: string; documentUrl?: string | null; region?: string | null;
+  paidAt?: string | null; reference?: string | null;
+  acknowledgedAt?: string | null; reason?: string | null; actorUserId?: string | null;
+  canEdit: boolean;
+};
+export type ExpenseReportOverview = {
+  scope: 'TECHNOLOGY_VENDOR_EXPENSES'; currency: 'COP';
+  period: { from: string; to: string; origin: string };
+  totals: {
+    consumptionCop: string; consumptionUsd: string; creditsUsd: string; netConsumptionUsd: string;
+    consumptionRecords: number; invoicesCop: string; invoiceRecords: number;
+    markedPaidCop: string; markedPaidRecords: number; pendingPaymentRecords: number;
+    activeBudgets: number; providers: number;
+  };
+  originCounts: Record<string,number>;
+  providers: Array<{id:string;name:string}>;
+  providerBreakdown: Array<{id:string;name:string;amountCop:string;records:number}>;
+  timeline: {unit:'day'|'week'|'month';points:Array<{label:string;amountCop:string}>};
+  budgets: Array<{id:string;name:string;amountCop:string;active:boolean;providerName:string;
+    periodStart:string;periodEnd:string}>;
+  lastSync: {status:string;providerName:string;startedAt:string;finishedAt:string|null}|null;
+  notes:string[];
+};
+export type ExpenseLedgerPage = {
+  scope:'TECHNOLOGY_VENDOR_EXPENSES';kind:ExpenseLedgerKind;
+  period:{from:string;to:string};records:ExpenseLedgerRecord[];
+  pagination:{page:number;pageSize:number;total:number;totalPages:number};
+  definition:string;
+};
+export function getExpenseReportOverview(filters: {from:string;to:string}) {
+  const query=new URLSearchParams(filters);
+  return request<ExpenseReportOverview>('/admin/finance/expenses/overview?'+query.toString());
+}
+export function listExpenseReportLedger(filters:{
+  from:string;to:string;kind:ExpenseLedgerKind;page?:number;q?:string;providerId?:string;
+}) {
+  const query=new URLSearchParams({from:filters.from,to:filters.to,kind:filters.kind,page:String(filters.page??1)});
+  if(filters.q)query.set('q',filters.q);
+  if(filters.providerId)query.set('providerId',filters.providerId);
+  return request<ExpenseLedgerPage>('/admin/finance/expenses/ledger?'+query.toString());
+}
 export type FinanceSummary = { period: { start: string; end: string }; totals: { usd: number; cop: number }; billing?: { costExplorer: { unblendedUsd: number; netUnblendedUsd: number; lastUpdatedAt: string | null; provisional: boolean }; projectEstimate: { usd: number; lastUpdatedAt: string } | null; promotionalCredits: { usedUsd: number; remainingUsd: number; lastUpdatedAt: string } | null; amountDue: { usd: number; lastUpdatedAt: string } | null; notes: string[] }; budgets: Array<{ id: string; name: string; amountCop: string | number; provider?: { name: string } | null }>; providers: Array<{ id: string; name: string; kind: string; services: Array<{ id: string; name: string; sku?: string | null }> }>; consumptions: Array<{ id: string; externalId: string; amountUsd: string | number; amountCop: string | number; creditsUsd: string | number; dataKind: string; periodStart: string; periodEnd: string; provider: { name: string }; service?: { name: string } | null }>; lastSync: Array<{ id: string; status: string; startedAt: string; finishedAt?: string | null; provider: { name: string } }> };
 export function getFinanceSummary(start?: string, end?: string) { const query = start && end ? `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}` : ''; return request<FinanceSummary>(`/admin/finance/summary${query}`); }
 export type FreeTierUsage = { service: string; usageType: string; actual: number; forecasted: number | null; limit: number | null; unit: string; region: string; freeTierType: string };
