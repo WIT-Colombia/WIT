@@ -677,3 +677,9 @@
   .offer-detail-page .offer-detail-share-status { display:none; }
 }
 
+
+/* Optional Plus shortcuts never replace free product actions. */
+.offer-detail-plus-links{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 14px}
+.offer-detail-plus-links a{display:inline-flex;align-items:center;min-height:37px;padding:8px 12px;border:1px solid #e1d4f7;border-radius:10px;background:#f7f2ff;color:#6336b7;font-size:12px;font-weight:750;text-decoration:none}
+.offer-detail-plus-links a:hover{background:#efe7ff}
+@media(max-width:500px){.offer-detail-plus-links a{flex:1 1 140px;justify-content:center;font-size:11px}}
