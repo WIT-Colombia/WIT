@@ -885,3 +885,17 @@ export function updateAdminPaidPlan(key: import('@wit/utils').PaidPlanKey, enabl
     method: 'PUT', body: JSON.stringify({ enabled, reason, confirmation }),
   });
 }
+
+export type AdminPlusUser = {
+  user: { id: string; displayName: string; emailNormalized: string | null; status: string };
+  subscription: { status: string; startsAt: string; expiresAt: string; revokedAt: string | null } | null;
+};
+export function getAdminPlusUser(userId: string) {
+  return request<AdminPlusUser>('/admin/xamuko-plus/users/' + encodeURIComponent(userId));
+}
+export function setAdminPlusUser(userId: string, enabled: boolean, expiresAt: string | undefined, reason: string, confirmation: 'CONFIRMAR') {
+  return request<{ userId: string; subscription: AdminPlusUser['subscription'] }>(
+    '/admin/xamuko-plus/users/' + encodeURIComponent(userId),
+    { method: 'PUT', body: JSON.stringify({ enabled, expiresAt, reason, confirmation }) },
+  );
+}
