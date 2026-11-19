@@ -111,6 +111,9 @@ jobs:
       - name: Check Admin Gastos y contabilidad with live-ledger fixtures on mobile, iPad and desktop
         run: node scripts/check-admin-expenses-responsive.mjs
 
+      - name: Check Admin Operación tecnológica services and deployments on mobile, iPad and desktop
+        run: node scripts/check-admin-technology-responsive.mjs
+
       - name: Save Usuario offer card screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -198,6 +201,15 @@ jobs:
         with:
           name: xamuko-admin-expenses-${{ github.run_id }}
           path: frontend/test-results/admin-expenses/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save Admin Operación tecnológica screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-admin-technology-${{ github.run_id }}
+          path: frontend/test-results/admin-technology/
           if-no-files-found: ignore
           retention-days: 7
 
