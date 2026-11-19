@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type PointerEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { FinanceSectionNav } from '../components/FinanceSectionNav';
 import { AdminPageHeading } from '../components/AdminPageHeading';
 import { AdminDialog } from '../components/AdminDialog';
 import { Icon } from '../components/Icon';
@@ -329,6 +330,7 @@ export function AdminExpensesPage(){
         <button type="button" className="afc-btn afc-btn-main" onClick={()=>{setRevision(v=>v+1);if(showFreeTier)loadFreeTier();}}>
           <Icon name="refresh" size={16}/> Actualizar</button>
       </div>}/>
+    <FinanceSectionNav />
     <section className="afc-scope-banner" aria-label="Alcance contable">
       <span className="afc-scope-icon"><Icon name="shield" size={24}/></span>
       <div><strong>Gastos tecnológicos · registros contables de apoyo</strong>
