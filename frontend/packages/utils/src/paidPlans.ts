@@ -5,7 +5,10 @@ export type PaidPlanKey = keyof PaidPlanAvailability;
 /** Monthly list prices in Colombian pesos. Actual payment is verified server-side. */
 export const PAID_PLAN_MONTHLY_COP = Object.freeze({ businessPro: 29_900, xamukoPlus: 4_900 } as const);
 export function formatCopPrice(amount: number): string {
-  return '
+  return String.fromCharCode(36) + new Intl.NumberFormat('es-CO', {
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 const disabled: PaidPlanAvailability = { businessPro: false, xamukoPlus: false };
 let state = disabled;
 let pending: Promise<void> | null = null;
