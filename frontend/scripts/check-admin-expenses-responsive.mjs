@@ -216,7 +216,7 @@ try{
       const nav=page.getByRole('group',{name:'Secciones del archivo financiero'});
       await nav.getByRole('button',{name:/Facturas/}).click();
       await page.getByText('1 registro',{exact:true}).waitFor({state:'visible'});
-      assert.equal(await page.getByRole('link',{name:/Documento/}).count()>0,true,
+      assert.equal(await page.getByRole('link',{name:/documento/i}).count()>0,true,
         device+': HTTPS invoice document remains accessible');
       await nav.getByRole('button',{name:/Pagos/}).click();
       await page.getByText('1 registro',{exact:true}).waitFor({state:'visible'});
