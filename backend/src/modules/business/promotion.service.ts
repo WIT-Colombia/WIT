@@ -1,5 +1,6 @@
 import { publicReleaseWhere } from '../zones/zones.service.js';
 import { isPaidPlanEnabled } from '../admin/paid-plans.service.js';
+import { notifyPlusFollowers } from '../user-plus/user-plus-events.service.js';
 import { Prisma, type PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
@@ -29,7 +30,7 @@ async function ensureRelatedOfferAvailable(db: Db, businessId: string, relatedOf
 async function findManagedBusiness(userId: string, identifier: string, db: Db) {
   const business = await db.business.findFirst({
     where: { OR: [{ id: identifier }, { publicId: identifier }], deletionStatus: { not: 'DELETED' }, memberships: { some: { userId, status: 'ACTIVE' } } },
-    select: { id: true, businessAccount: { select: { status: true } }, memberships: { where: { userId, status: 'ACTIVE' }, include: { permissions: true } } },
+    select: { id: true, name: true, adultOnly: true, publicationStatus: true, visibilityStatus: true, businessAccount: { select: { status: true } }, memberships: { where: { userId, status: 'ACTIVE' }, include: { permissions: true } } },
   });
   const membership = business?.memberships[0];
   const allowed = membership ? canManagePromotion(membership.role, membership.permissions) : false;
@@ -127,6 +128,12 @@ export async function createPromotion(userId: string, identifier: string, input:
       relatedOfferId: input.relatedOfferId ?? null, originalPrice: amount(input.originalPrice), promotionalPrice: amount(input.promotionalPrice),
       startsAt, endsAt, recurrence: input.recurrence, recurrenceUntil,
     }, include: includePhotos });
+    if (startsAt <= new Date() && endsAt > new Date()
+      && business.publicationStatus === 'PUBLISHED' && business.visibilityStatus === 'VISIBLE') {
+      await notifyPlusFollowers(tx, { businessId: business.id, sourceId: row.id,
+        businessName: business.name, itemName: row.title,
+        sourceType: 'PLUS_NEW_PROMOTION', adultOnly: business.adultOnly });
+    }
     return row;
   });
   return serialize(created, business.id, 0);
