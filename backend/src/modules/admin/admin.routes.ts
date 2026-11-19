@@ -21,7 +21,21 @@ import { adminZoneRegistry, decideZone } from '../zones/zones.service.js';
 import { readOwnAvatar } from '../auth/avatar.service.js';
 import { adminDocumentsRouter } from './admin-documents.routes.js';
 
+import { getPaidPlanAvailability, setPaidPlanAvailability, paidPlanKey, paidPlanUpdate } from './paid-plans.service.js';
+
 export const adminRouter = Router();
+adminRouter.get('/paid-plans', requireAdmin(), async (_req, res, next) => {
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getPaidPlanAvailability()); }
+  catch (error) { next(error); }
+});
+adminRouter.put('/paid-plans/:key', requireTrustedOrigin, requireAdmin(), async (req, res, next) => {
+  try {
+    const key = paidPlanKey.parse(req.params.key);
+    const { enabled } = paidPlanUpdate.parse(req.body);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await setPaidPlanAvailability(adminFromRequest(req), key, enabled));
+  } catch (error) { next(error); }
+});
 adminRouter.use('/documents', adminDocumentsRouter);
 adminRouter.get('/me', requireAdmin(), adminMeController);
 // Platform-wide business visibility audit. Restricted independently from business details.
