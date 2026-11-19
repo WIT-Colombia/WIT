@@ -164,6 +164,10 @@ export function AdminBillingPage() {
           <p>Los valores sin integración se muestran como no disponibles, nunca como $0.</p></div>
         <span className="abill-data-source"><Icon name="info" size={16}/> Sin fuente monetaria validada</span>
       </div>
+      <div className="abill-expenses-link">
+        <p>Las facturas de proveedores y los gastos tecnológicos se consultan en su módulo contable, no se registran como ingresos comerciales.</p>
+        <Link to="/financial-reports">Consultar gastos tecnológicos <Icon name="arrow" size={15}/></Link>
+      </div>
       <div className="abill-monetary-grid">
         {monetary.map(item => <article key={item.label} className="abill-money-card">
           <div className="abill-money-top"><span className="abill-money-icon"><Icon name={item.icon} size={22}/></span>
