@@ -8,7 +8,8 @@ import { getSession } from '../services/adminService';
 import {
   adminBusinessVisibilityLabel, changeAdminBusinessPlan, getAdminBusinessesFilterOptions,
   getAdminBusinessesOverview, getAdminDashboardStats, getAdminVisibilityAudit,
-  listAdminBusinesses,
+  listAdminBusinesses, listAdminSubscriptions,
+  type AdminSubscriptionsPage, type AdminSubscriptionRecord,
   type AdminBusinessRecord, type AdminBusinessPage, type AdminBusinessOverview,
   type AdminDashboardStats, type AdminVisibilityAuditResult,
   type AdminBusinessFilterOptions,
@@ -26,6 +27,9 @@ const dateTime = (value: string) => new Intl.DateTimeFormat('es-CO', {
   dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota',
 }).format(new Date(value));
 const displayPlan = (value: Plan) => value === 'PRO' ? 'Business PRO' : 'Básico';
+const subscriptionStatus: Record<AdminSubscriptionRecord['status'], string> = {
+  PENDING: 'Pendiente', ACTIVE: 'Activa registrada', EXPIRED: 'Vencida', REVOKED: 'Revocada',
+};
 const planOf = (business: AdminBusinessRecord): Plan => business.isPro ? 'PRO' : 'BASIC';
 
 function PlanDecisionDialog({ business, close, completed }: {
@@ -142,6 +146,13 @@ export function AdminPlansPage() {
   const [auditPage, setAuditPage] = useState(1);
   const [auditError, setAuditError] = useState('');
   const [auditLoading, setAuditLoading] = useState(false);
+  const [subscriptions, setSubscriptions] = useState<AdminSubscriptionsPage | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState('');
+  const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState('');
+  const [subscriptionDraft, setSubscriptionDraft] = useState('');
+  const [subscriptionQuery, setSubscriptionQuery] = useState('');
+  const [subscriptionPage, setSubscriptionPage] = useState(1);
 
   useEffect(() => { setSearch(q); }, [q]);
   useEffect(() => {
@@ -184,6 +195,21 @@ export function AdminPlansPage() {
       .finally(() => { if (active) setAuditLoading(false); });
     return () => { active = false; };
   }, [allowed, canAudit, auditPage, revision]);
+
+  useEffect(() => {
+    if (!allowed) return;
+    let active = true;
+    setSubscriptionLoading(true); setSubscriptionError('');
+    void listAdminSubscriptions({ page: subscriptionPage, status: subscriptionStatusFilter, q: subscriptionQuery })
+      .then(value => { if (active) setSubscriptions(value); })
+      .catch(cause => {
+        if (active) {
+          setSubscriptions(null);
+          setSubscriptionError(cause instanceof Error ? cause.message : 'No se pudieron consultar las suscripciones.');
+        }
+      }).finally(() => { if (active) setSubscriptionLoading(false); });
+    return () => { active = false; };
+  }, [allowed, subscriptionStatusFilter, subscriptionQuery, subscriptionPage, revision]);
 
   const apply = (key: 'q' | 'plan' | 'city' | 'order', value: string) => {
     const next = new URLSearchParams(params);
@@ -326,6 +352,95 @@ export function AdminPlansPage() {
             onClick={() => changePage(page+1)}>Siguiente <Icon name="arrow" size={15}/></button>
         </div></nav>}
       {!canManage && <p className="aps-readonly"><Icon name="shield" size={16}/> La asignación manual de planes está reservada al administrador principal.</p>}
+    </section>
+    <section className="aps-subscriptions" aria-labelledby="aps-subscriptions-title">
+      <header className="aps-panel-head"><div><span className="aps-eyebrow">REGISTRO ORIGINAL · BUSINESS PRO</span>
+        <h2 id="aps-subscriptions-title">Suscripciones registradas</h2>
+        <p>Consulta el estado almacenado, la vigencia efectiva, las fechas y las opciones de renovación de cada suscripción real.</p></div>
+        <button type="button" className="aps-button aps-button-outline"
+          onClick={() => { setSubscriptionPage(1); setRevision(v => v+1); }}>
+          <Icon name="refresh" size={16}/> Actualizar registros
+        </button>
+      </header>
+      <form className="aps-subscription-filters" onSubmit={event => {
+        event.preventDefault(); setSubscriptionPage(1); setSubscriptionQuery(subscriptionDraft.trim());
+      }}>
+        <label className="aps-field"><span>Buscar por negocio</span><div className="aps-search-wrap">
+          <Icon name="search" size={17}/>
+          <input type="search" aria-label="Buscar suscripciones" placeholder="Nombre o ID del negocio"
+            maxLength={100} value={subscriptionDraft} onChange={event => setSubscriptionDraft(event.target.value)}/>
+        </div></label>
+        <label className="aps-field"><span>Estado de suscripción</span>
+          <select aria-label="Estado de suscripción" value={subscriptionStatusFilter} onChange={event => {
+            setSubscriptionPage(1); setSubscriptionStatusFilter(event.target.value);
+          }}>
+            <option value="">Todos los estados</option>
+            <option value="PENDING">Pendiente</option><option value="ACTIVE">Activa</option>
+            <option value="EXPIRED">Vencida</option><option value="REVOKED">Revocada</option>
+          </select></label>
+        <div className="aps-filter-actions">
+          <button type="button" className="aps-button aps-button-outline" onClick={() => {
+            setSubscriptionDraft(''); setSubscriptionQuery(''); setSubscriptionStatusFilter(''); setSubscriptionPage(1);
+          }}>Limpiar</button>
+          <button type="submit" className="aps-button aps-button-primary"><Icon name="search" size={16}/> Buscar</button>
+        </div>
+      </form>
+      <div className="aps-result-bar"><strong>{subscriptionLoading ? 'Consultando suscripciones…'
+        : subscriptions ? number(subscriptions.pagination.total) + (subscriptions.pagination.total === 1 ? ' registro' : ' registros')
+          : 'Registro de suscripciones'}</strong>
+        <span>Las suscripciones históricas pueden pertenecer al mismo negocio.</span>
+      </div>
+      {subscriptionLoading ? <p className="aps-history-state" role="status">Consultando suscripciones reales…</p>
+        : subscriptionError ? <p className="aps-subscription-error" role="alert"><Icon name="shield" size={19}/>
+          <span>No se pudo consultar el registro de suscripciones: {subscriptionError}. Esta consulta requiere la API administrativa actualizada.</span>
+          <button type="button" className="aps-button aps-button-outline" onClick={() => setRevision(v=>v+1)}>Reintentar</button>
+        </p>
+        : subscriptions?.subscriptions.length === 0 ? <p className="aps-history-state">No hay registros de suscripción con estos criterios.</p>
+        : <>
+          <div className="aps-subscription-table-wrap"><table className="aps-table aps-subscriptions-table">
+            <thead><tr><th>Negocio</th><th>Estado registrado</th><th>Vigencia actual</th>
+              <th>Inicio</th><th>Vencimiento</th><th>Renovación automática</th></tr></thead>
+            <tbody>{subscriptions?.subscriptions.map(item => <tr key={item.id}>
+              <td><div className="aps-subscription-business"><Link to={'/businesses/'+encodeURIComponent(item.business.id)}>
+                {item.business.name}</Link><small>{item.business.publicId}
+                  {item.business.deletionStatus === 'DELETED' ? ' · Negocio eliminado' : ''}</small></div></td>
+              <td><span className={'aps-record-status '+item.status.toLowerCase()}>{subscriptionStatus[item.status]}</span></td>
+              <td><span className={'aps-effective '+(item.effective?'is-effective':'not-effective')}>
+                <Icon name={item.effective?'check':'clock'} size={15}/>{item.effective?'PRO efectivo':'No efectivo'}</span>
+                {item.specialActivation && <small className="aps-sub-detail">Activación especial</small>}
+              </td>
+              <td>{date(item.startsAt)}</td>
+              <td>{item.expiresAt ? date(item.expiresAt) : item.specialActivation ? 'Sin vencimiento' : 'Sin fecha definida'}</td>
+              <td><strong className="aps-renewal">{item.autoRenew?'Sí':'No'}</strong>
+                {item.revocationReason && <details className="aps-revocation">
+                  <summary>Motivo de revocación</summary><p>{item.revocationReason}</p>
+                </details>}</td>
+            </tr>)}</tbody>
+          </table></div>
+          <div className="aps-subscription-cards">{subscriptions?.subscriptions.map(item => <article key={item.id}>
+            <header><Link to={'/businesses/'+encodeURIComponent(item.business.id)}>{item.business.name}</Link>
+              <small>{item.business.publicId}</small></header>
+            <div className="aps-subscription-card-badges">
+              <span className={'aps-record-status '+item.status.toLowerCase()}>{subscriptionStatus[item.status]}</span>
+              <span className={'aps-effective '+(item.effective?'is-effective':'not-effective')}>{item.effective?'PRO efectivo':'No efectivo'}</span>
+            </div>
+            <dl><div><dt>Inicio</dt><dd>{date(item.startsAt)}</dd></div>
+              <div><dt>Vencimiento</dt><dd>{item.expiresAt ? date(item.expiresAt) : item.specialActivation ? 'Sin vencimiento' : 'Sin fecha definida'}</dd></div>
+              <div><dt>Renovación automática</dt><dd>{item.autoRenew?'Sí':'No'}</dd></div>
+              <div><dt>Activación especial</dt><dd>{item.specialActivation?'Sí':'No'}</dd></div>
+              {item.revocationReason && <div className="aps-revocation-reason"><dt>Motivo de revocación</dt><dd>{item.revocationReason}</dd></div>}
+            </dl>
+          </article>)}</div>
+        </>}
+      {subscriptions && subscriptions.pagination.totalPages > 1 && <nav className="aps-pagination" aria-label="Páginas de suscripciones">
+        <span>Página {subscriptionPage} de {subscriptions.pagination.totalPages}</span><div>
+          <button type="button" className="aps-button aps-button-outline" disabled={subscriptionLoading || subscriptionPage<=1}
+            onClick={() => setSubscriptionPage(v => v-1)}>Anterior</button>
+          <button type="button" className="aps-button aps-button-primary" disabled={subscriptionLoading || subscriptionPage>=subscriptions.pagination.totalPages}
+            onClick={() => setSubscriptionPage(v => v+1)}>Siguiente <Icon name="arrow" size={15}/></button>
+        </div></nav>}
+      <p className="aps-ledger-note"><Icon name="shield" size={16}/>{subscriptions?.definition ??
+        'Se muestran únicamente registros persistidos. El estado y la vigencia efectiva no son equivalentes y ninguno prueba un cobro.'}</p>
     </section>
     {canAudit && <section className="aps-history" id="aps-history" aria-labelledby="aps-history-title">
       <header className="aps-panel-head"><div><span className="aps-eyebrow">TRAZABILIDAD ADMINISTRATIVA</span>
