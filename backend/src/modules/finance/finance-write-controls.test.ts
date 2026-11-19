@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { Prisma } from '../../generated/prisma/client.js';
 import {
   createManualConsumption, createProvider, createBudget, createInvoice, createPayment,
+  assertSupplierInvoiceCapacity,
 } from './finance.service.js';
 
 const authorized = { userId: '11111111-1111-1111-1111-111111111111',
@@ -46,4 +48,27 @@ test('las facturas manuales solo aceptan enlaces de soporte HTTPS',async()=>{
   await assert.rejects(createInvoice(authorized,{providerId:'a',externalId:'b',
     periodStart:goodDate,periodEnd:goodDate,amountCop:100,amountUsd:2,
     documentUrl:'javascript:alert(1)'}), (e:any)=>e.code==='INVALID_RECEIPT_URL');
+});
+
+test('la misma regla impide sobreasignar pagos nuevos y correcciones, sin contar cancelados',()=>{
+  const dec=(n:string)=>new Prisma.Decimal(n);
+  const invoice=dec('100000.00');
+  const existing=[
+    {id:'p-1',amountCop:dec('70000.00'),status:'PAID' as const},
+    {id:'p-2',amountCop:dec('20000.00'),status:'PENDING' as const},
+    {id:'cancelled',amountCop:dec('999999.00'),status:'CANCELLED' as const},
+  ];
+  assert.doesNotThrow(()=>assertSupplierInvoiceCapacity(invoice,existing,
+    {amountCop:10000,status:'PENDING'}));
+  assert.throws(()=>assertSupplierInvoiceCapacity(invoice,existing,
+    {amountCop:10000.01,status:'PAID'}),(e:any)=>e.code==='PAYMENT_EXCEEDS_BALANCE');
+  assert.doesNotThrow(()=>assertSupplierInvoiceCapacity(invoice,existing,
+    {id:'p-1',amountCop:80000,status:'PAID'}));
+  assert.throws(()=>assertSupplierInvoiceCapacity(invoice,existing,
+    {id:'p-2',amountCop:40000,status:'PENDING'}),
+    (e:any)=>e.code==='PAYMENT_EXCEEDS_BALANCE');
+  assert.doesNotThrow(()=>assertSupplierInvoiceCapacity(invoice,existing,
+    {amountCop:500000,status:'CANCELLED'}));
+  assert.doesNotThrow(()=>assertSupplierInvoiceCapacity(invoice,existing,
+    {id:'p-1',amountCop:70000,status:'CANCELLED'}));
 });
