@@ -11,7 +11,7 @@ import { PageLayout } from '../components/PageLayout';
 import './Notifications.css';
 
 type DisplayNotice = {
-  id: string; title: string; body: string; date: string; read: boolean; source: 'local' | 'server'; sourceType?: string;
+  id: string; title: string; body: string; date: string; read: boolean; source: 'local' | 'server'; sourceType?: string; sourceId?: string;
 };
 const notifyCount = (userId: string, count: number) =>
   window.dispatchEvent(new CustomEvent('xamuko-user-notifications-updated', { detail: { userId, count } }));
@@ -109,7 +109,7 @@ export default function Notifications() {
   const notices = useMemo<DisplayNotice[]>(() => [
     ...visibleRemote.map(item => ({
       id: item.id, title: item.title, body: item.message,
-      date: readableDate(item.createdAt), read: Boolean(item.readAt), source: 'server' as const, sourceType: item.sourceType,
+      date: readableDate(item.createdAt), read: Boolean(item.readAt), source: 'server' as const, sourceType: item.sourceType, sourceId: item.sourceId,
     })),
     ...visibleLocal.map(item => ({ id: item.id, title: item.title, body: item.body, date: item.date, read: item.read, source: 'local' as const })),
   ].sort((a, b) => Number(b.source === "local" && b.id === "welcome") - Number(a.source === "local" && a.id === "welcome")), [visibleLocal, visibleRemote]);
@@ -200,7 +200,10 @@ export default function Notifications() {
             item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'COLLABORATION_PERMISSIONS' ||
             item.sourceType === 'COLLABORATION_EXPIRED' && item.title.includes('vence mañana') ||
             item.sourceType === 'OWNERSHIP_TRANSFER' && /proponen|vence mañana|solicitud para transferir/i.test(item.title);
-          const ownAction = item.sourceType === 'REVIEW_RESPONSE' ? '/reviews' : item.sourceType === 'ACCOUNT_SECURITY' ? '/settings' : null;
+          const ownAction = item.sourceType === 'REVIEW_RESPONSE' ? '/reviews'
+            : item.sourceType === 'ACCOUNT_SECURITY' ? '/settings'
+            : item.sourceType === 'PLUS_NEW_PROMOTION' && item.sourceId ? '/promociones/' + encodeURIComponent(item.sourceId)
+            : item.sourceType?.startsWith('PLUS_') ? '/plus' : null;
           const title = item.title.toLocaleLowerCase('es-CO');
           const kind = welcome ? 'welcome' :
             item.sourceType?.startsWith('COLLABORATION') ? 'collaboration' :
@@ -220,7 +223,7 @@ export default function Notifications() {
               </span>
             </button>
             {manageBusiness && <a className="notification-business-action" href="https://business.xamuko.com/mis-negocios" target="_blank" rel="noopener noreferrer">{item.sourceType === 'COLLABORATION_INVITED' || item.sourceType === 'COLLABORATION_EXPIRED' || item.sourceType === 'OWNERSHIP_TRANSFER' ? 'Ver solicitudes en XAMUKO Business' : 'Gestionar en XAMUKO Business'} <span aria-hidden="true">↗</span></a>}
-            {ownAction && <Link className="notification-business-action" to={ownAction}>{item.sourceType === 'REVIEW_RESPONSE' ? 'Ver mi opinión' : 'Revisar seguridad de la cuenta'} <span aria-hidden="true">→</span></Link>}
+            {ownAction && <Link className="notification-business-action" to={ownAction}>{item.sourceType === 'REVIEW_RESPONSE' ? 'Ver mi opinión' : item.sourceType?.startsWith('PLUS_') ? 'Ver novedad Plus' : 'Revisar seguridad de la cuenta'} <span aria-hidden="true">→</span></Link>}
             <button type="button" className="notification-delete" disabled={busy}
               title="Eliminar notificación" aria-label={'Eliminar ' + item.title}
               onClick={() => setPendingDeleteId(item.source + ':' + item.id)}>
