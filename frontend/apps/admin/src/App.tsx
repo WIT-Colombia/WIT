@@ -25,7 +25,7 @@ import { getSession, restoreSession } from './services/adminService';
 import { navigation } from './data/navigation';
 import { PendingModulePage } from './pages/PendingModulePage';
 import { FinancialExpensesPage } from './pages/FinancialExpensesPage';
-import { AdministratorsPage } from './pages/AdministratorsPage';
+import { AdministratorsPage, SecurityParametersPage } from './pages/AdministratorsPage';
 import { AdminAuditPage } from './pages/AdminAuditPage';
 import { AdminPlansPage } from './pages/AdminPlansPage';
 import { AdminBusinessProPage } from './pages/AdminBusinessProPage';
@@ -50,7 +50,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/legal-overview', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans', '/business-pro', '/billing', '/transactions', '/refunds', '/service-status', '/deployments', '/needs'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/parameters', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/legal-overview', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans', '/business-pro', '/billing', '/transactions', '/refunds', '/service-status', '/deployments', '/needs'];
 
 export default function App() {
   return <Routes>
@@ -76,6 +76,7 @@ export default function App() {
         <Route path="/pioneers" element={<PioneersErrorBoundary><PioneersPage /></PioneersErrorBoundary>} />
         <Route path="/zones" element={<AdminZonesPage />} />
         <Route path="/financial-reports" element={<FinancialExpensesPage />} />
+        <Route path="/parameters" element={<SecurityParametersPage />} />
         <Route path="/administrators" element={<AdministratorsPage />} />
         <Route path="/audit" element={<AdminAuditPage />} />
         <Route path="/plans" element={<AdminPlansPage />} />
