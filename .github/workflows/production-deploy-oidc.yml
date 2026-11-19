@@ -104,7 +104,8 @@ jobs:
 
   deploy:
     needs: verify
-    if: vars.XAMUKO_PRODUCTION_DEPLOY_ENABLED == 'true'
+    # Never publish backend/database migrations on a branch push; only an explicitly requested release.
+    if: github.event_name == 'workflow_dispatch' && vars.XAMUKO_PRODUCTION_DEPLOY_ENABLED == 'true'
     environment: production
     runs-on: ubuntu-24.04
     permissions:
