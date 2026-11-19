@@ -1,1 +1,1 @@
-export { FinancialManagementPage as FinancialExpensesPage } from './FinancialManagementPage';
+export { AdminExpensesPage as FinancialExpensesPage } from './AdminExpensesPage';
