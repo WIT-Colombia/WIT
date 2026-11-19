@@ -6,8 +6,6 @@ import { hasPlusEntitlement } from './user-plus.service.js';
 /** Price is fixed server-side in Colombian pesos; client amounts are never trusted. */
 export const PLUS_MONTHLY_COP = 4_900;
 
-type PurchaseStatus = 'PENDING_PAYMENT' | 'CLOSED';
-
 function publicRequest(row: {
   id: string; status: string; amountCop: number; currency: string;
   periodMonths: number; createdAt: Date;
