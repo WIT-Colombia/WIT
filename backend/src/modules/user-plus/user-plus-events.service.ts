@@ -41,13 +41,15 @@ export async function notifyPlusFollowers(tx: Tx, input: {
 export async function recordPlusPriceChange(tx: Tx, input: {
   offerId: string; businessId: string; name: string;
   previousPrice: Prisma.Decimal | null; newPrice: Prisma.Decimal | null;
-  currency: string | null; adultOnly: boolean; publiclyVisible: boolean;
+  previousCurrency: string | null; currency: string | null; adultOnly: boolean; publiclyVisible: boolean;
 }) {
-  if (input.previousPrice?.toString() === input.newPrice?.toString()) return;
+  if (input.previousPrice?.toString() === input.newPrice?.toString() && input.previousCurrency === input.currency) return;
   await tx.offerPriceHistory.create({ data: {
-    offerId: input.offerId, previousPrice: input.previousPrice, newPrice: input.newPrice, currency: input.currency,
+    offerId: input.offerId, previousPrice: input.previousPrice, newPrice: input.newPrice,
+    previousCurrency: input.previousCurrency, currency: input.currency,
   } });
-  if (!input.publiclyVisible || !input.newPrice || !input.previousPrice || input.newPrice.gte(input.previousPrice)) return;
+  if (!input.publiclyVisible || !input.newPrice || !input.previousPrice ||
+    input.previousCurrency !== input.currency || input.newPrice.gte(input.previousPrice)) return;
   const watchRows = await tx.userPlusPriceWatch.findMany({ where: { offerId: input.offerId },
     select: { userId: true }, take: 2000 });
   const recipients = await eligibleUsers(tx, watchRows.map(w => w.userId), 'price', input.adultOnly);
