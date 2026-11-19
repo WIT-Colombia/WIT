@@ -30,7 +30,7 @@ export async function notifyPlusFollowers(tx: Tx, input: {
 }) {
   // Never send commercial alerts for businesses in closed/unreleased cities.
   const released = await tx.business.findFirst({
-    where: { id: input.businessId, AND: [await publicReleaseWhere()] },
+    where: { id: input.businessId, AND: [await publicReleaseWhere(undefined, tx)] },
     select: { id: true },
   });
   if (!released) return;
