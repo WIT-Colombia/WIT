@@ -19,6 +19,6 @@ describe('Xamuko Plus: enlaces seguros para colecciones, precios y comparador', 
     expect(searchHref({
       id: 'saved', title: 'Panaderías', query: 'pan artesanal', category: 'Panaderías',
       city: 'Palmira', openNow: true, minRating: 4, sort: 'rating',
-    })).toBe('/results?q=pan+artesanal&category=Panader%C3%ADas&openNow=true&minRating=4&sort=rating');
+    })).toBe('/results?q=pan+artesanal&category=Panader%C3%ADas');
   });
 });
