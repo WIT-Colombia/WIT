@@ -34,7 +34,7 @@ import { AdminTransactionsPage } from './pages/AdminTransactionsPage';
 import { AdminRefundsPage } from './pages/AdminRefundsPage';
 import { AdminServiceStatusPage } from './pages/AdminServiceStatusPage';
 import { AdminDeploymentsPage } from './pages/AdminDeploymentsPage';
-import { DocumentsPage } from './pages/DocumentsPage';
+import { DocumentsPage, LegalOverviewPage } from './pages/DocumentsPage';
 
 function ProtectedRoute() {
   const [state, setState] = useState<'loading' | 'ready'>(getSession() ? 'ready' : 'loading');
@@ -50,7 +50,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans', '/business-pro', '/billing', '/transactions', '/refunds', '/service-status', '/deployments', '/needs'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/legal-overview', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans', '/business-pro', '/billing', '/transactions', '/refunds', '/service-status', '/deployments', '/needs'];
 
 export default function App() {
   return <Routes>
@@ -91,6 +91,7 @@ export default function App() {
         <Route path="/users/:id" element={<AdminUserDetailPage />} />
         <Route path="/content" element={<AdminContentErrorBoundary><AdminContentPage /></AdminContentErrorBoundary>} />
         <Route path="/content/:id" element={<AdminContentErrorBoundary><AdminContentDetailPage /></AdminContentErrorBoundary>} />
+        <Route path="/legal-overview" element={<LegalOverviewPage />} />
         <Route path="/corporate" element={<DocumentsPage key="CORPORATE" section="CORPORATE" />} />
         <Route path="/legal-documents" element={<DocumentsPage key="LEGAL" section="LEGAL" />} />
         <Route path="/legal-cases" element={<DocumentsPage key="CASES" section="CASES" />} />
