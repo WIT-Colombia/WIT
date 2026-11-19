@@ -34,7 +34,7 @@ export function Sidebar({ empty = false, onNavigate }: { empty?: boolean; onNavi
   // Neither the upgrade card nor a PRO badge is speculative. Always verify
   // the current business and never carry a previous selection's plan forward.
   const [resolvedPlan, setResolvedPlan] = useState<{ businessId: string; isPro: boolean } | null>(null);
-  const planBusinessId = business.source === "real" ? business.id : null;
+  const planBusinessId = !demoPro && business.source === "real" ? business.id : null;
   const { showProBadge: isPro, showProOffer } = getBusinessProDisplay({
     businessId: planBusinessId,
     role: business.role,
