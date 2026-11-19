@@ -8,23 +8,17 @@ type BusinessProDisplayInput = {
   businessId: string | null | undefined;
   role: "Propietario" | "Colaborador";
   empty: boolean;
-  demoPro: boolean;
   resolvedPlan: ResolvedBusinessPlan;
 };
 
-export function isBusinessProPreview(pathname: string, search: string): boolean {
-  return (pathname === "/preview" || pathname.startsWith("/preview/"))
-    && new URLSearchParams(search).get("demoPro") === "1";
-}
-
-export function getBusinessProDisplay({
-  businessId, role, empty, demoPro, resolvedPlan,
+ export function getBusinessProDisplay({
+  businessId, role, empty, resolvedPlan,
 }: BusinessProDisplayInput): { showProBadge: boolean; showProOffer: boolean } {
   const currentPlan = businessId && resolvedPlan?.businessId === businessId
     ? resolvedPlan.isPro : null;
   return {
-    showProBadge: demoPro || currentPlan === true,
-    showProOffer: !demoPro && !empty && Boolean(businessId)
+    showProBadge: currentPlan === true,
+    showProOffer: !empty && Boolean(businessId)
       && role === "Propietario" && currentPlan === false,
   };
 }
