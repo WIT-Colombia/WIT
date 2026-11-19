@@ -32,8 +32,8 @@ export async function assignAdminPlusSubscription(actor: Actor, userId: string, 
       actorUserId: actor.userId, entityType: 'ADMIN_SECURITY', entityId: userId,
       action: input.enabled ? 'XAMUKO_PLUS_GRANTED' : 'XAMUKO_PLUS_REVOKED',
       reason,
-      previousState: previous ? { status: previous.status, expiresAt: previous.expiresAt.toISOString(), revoked: !!previous.revokedAt } : { status: 'NONE' },
-      newState: { status: next.status, expiresAt: next.expiresAt.toISOString(), revoked: !!next.revokedAt },
+      previousState: previous ? { userId, status: previous.status, expiresAt: previous.expiresAt.toISOString(), revoked: !!previous.revokedAt } : { userId, status: 'NONE' },
+      newState: { userId, status: next.status, expiresAt: next.expiresAt.toISOString(), revoked: !!next.revokedAt },
     } });
     return { userId, subscription: next };
   });
