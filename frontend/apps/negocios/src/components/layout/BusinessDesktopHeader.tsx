@@ -21,7 +21,7 @@ export function BusinessDesktopHeader() {
   const isLegalPage = location.pathname.startsWith("/legal/");
   const isRecoveryPage = location.pathname === "/recuperar";
   const legalFromProfile = ["perfil", "profile"].includes(searchParams.get("from") ?? "");
-  const title = isRecoveryPage ? "Mi cuenta" : isLegalPage ? (legalFromProfile ? "Mi cuenta" : "Configuración") : searchParams.get("section") === "collaborators" ? "Colaboradores" : titles[location.pathname.split("/")[1]] ?? "Inicio";
+  const title = proPreview ? (location.pathname.startsWith("/preview/estadisticas") ? "Estadísticas PRO · Demo" : "Inicio PRO · Demo") : isRecoveryPage ? "Mi cuenta" : isLegalPage ? (legalFromProfile ? "Mi cuenta" : "Configuración") : searchParams.get("section") === "collaborators" ? "Colaboradores" : titles[location.pathname.split("/")[1]] ?? "Inicio";
   const legalDocumentTitle = location.pathname.endsWith("/terms") ? "Términos y condiciones" : "Política de privacidad";
   const recoveryTitle = searchParams.has("token") ? "Restablecer contraseña" : searchParams.get("mode") === "email" ? "Recuperar contraseña" : "Cambiar contraseña";
   const auth = useBusinessAuth();
