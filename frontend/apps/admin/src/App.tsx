@@ -28,6 +28,7 @@ import { FinancialExpensesPage } from './pages/FinancialExpensesPage';
 import { AdministratorsPage } from './pages/AdministratorsPage';
 import { AdminAuditPage } from './pages/AdminAuditPage';
 import { AdminPlansPage } from './pages/AdminPlansPage';
+import { AdminBusinessProPage } from './pages/AdminBusinessProPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 
 function ProtectedRoute() {
@@ -44,7 +45,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans', '/business-pro'];
 
 export default function App() {
   return <Routes>
@@ -73,6 +74,7 @@ export default function App() {
         <Route path="/administrators" element={<AdministratorsPage />} />
         <Route path="/audit" element={<AdminAuditPage />} />
         <Route path="/plans" element={<AdminPlansPage />} />
+        <Route path="/business-pro" element={<AdminBusinessProPage />} />
         <Route path="/categories" element={<AdminCategoriesPage />} />
         <Route path="/users" element={<AdminUsersPage />} />
         <Route path="/users/:id" element={<AdminUserDetailPage />} />
