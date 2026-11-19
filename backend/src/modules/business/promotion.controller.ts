@@ -9,7 +9,7 @@ const sendPhoto = (handler: (req: Parameters<RequestHandler>[0]) => Promise<{ co
   try { const photo = await handler(req); res.type(photo.mimeType).send(photo.content); } catch (error) { next(error); }
 };
 
-export const listPromotionsController: RequestHandler = async (req, res, next) => { try { res.json(await listPromotions(actor(req), req.params.businessId as string)); } catch (error) { next(error); } };
+export const listPromotionsController: RequestHandler = async (req, res, next) => { try { res.setHeader('Cache-Control', 'private, no-store'); res.json(await listPromotions(actor(req), req.params.businessId as string)); } catch (error) { next(error); } };
 export const createPromotionController: RequestHandler = async (req, res, next) => { try { res.status(201).json({ promotion: await createPromotion(actor(req), req.params.businessId as string, parseBody(promotionCreateSchema, req.body)) }); } catch (error) { next(error); } };
 export const updatePromotionController: RequestHandler = async (req, res, next) => { try { res.json({ promotion: await updatePromotion(actor(req), req.params.businessId as string, req.params.promotionId as string, parseBody(promotionUpdateSchema, req.body)) }); } catch (error) { next(error); } };
 export const finishPromotionController: RequestHandler = async (req, res, next) => { try { res.json({ promotion: await finishPromotion(actor(req), req.params.businessId as string, req.params.promotionId as string) }); } catch (error) { next(error); } };
