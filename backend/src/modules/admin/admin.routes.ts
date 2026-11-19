@@ -8,7 +8,7 @@ import { requireAdmin, adminFromRequest } from './admin-auth.service.js';
 import { decisionVerificationController, listVerificationController, verificationDocumentController } from '../business/verification.controller.js';
 import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility, setAdminBusinessVerification, setAdminBusinessVerificationStatus, setAdminBusinessPlan } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
-import { listAdminVisibilityAudit } from './admin-visibility-audit.service.js';
+import { listAdminVisibilityAudit, listAdminSecurityAudit } from './admin-visibility-audit.service.js';
 import { listAdminSubscriptions } from './admin-subscriptions.service.js';
 import { recordActivity, recordCatalog, recordPhoto, recordPhotos, recordReviews, setAdminRecordOfferState } from './admin-business-record.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
@@ -32,6 +32,17 @@ adminRouter.get('/audit/visibility', requireAdmin('AUDIT_READ'), async (req, res
       page: Number(req.query.page ?? 1),
       kind: String(req.query.kind ?? 'ALL'),
       search: String(req.query.search ?? ''),
+    }));
+  } catch (error) { next(error); }
+});
+// Security-access audit is more sensitive than business moderation and is superadmin-only.
+adminRouter.get('/audit/security', requireAdmin('AUDIT_READ'), async (req, res, next) => {
+  try {
+    if (adminFromRequest(req).role !== 'SUPER_ADMIN')
+      throw new AppError(403, 'ADMIN_SUPER_ADMIN_REQUIRED', 'Solo el superadministrador puede consultar cambios de accesos.');
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await listAdminSecurityAudit({
+      page: Number(req.query.page ?? 1), kind: String(req.query.kind ?? 'ALL'),
     }));
   } catch (error) { next(error); }
 });
