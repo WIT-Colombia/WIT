@@ -99,11 +99,44 @@ export async function authorizeStatisticsBusiness(userId: string, identifier: st
   return business;
 }
 
-/** Rankings are owner-only, and their period window matches the dashboard exactly. */
+/**
+ * Commercial offer availability and paid analytics entitlement are independent.
+ * Events are collected for every eligible published business regardless of plan;
+ * this query only decides which historical aggregates may be returned.
+ * Deactivating new sales must never revoke an existing subscription.
+ */
+function effectiveProSubscription(businessId: string, now: Date) {
+  return prisma.businessSubscription.findFirst({
+    where: {
+      businessId, plan: 'PRO', status: 'ACTIVE', startsAt: { lte: now },
+      revokedAt: null,
+      OR: [{ expiresAt: { gt: now } }, { expiresAt: null, specialActivation: true }],
+    },
+    select: { id: true },
+  });
+}
+export function offerRankingVisibility(referralCount: number, proSubscriptionActive: boolean) {
+  // The fifth recognition reward is an offer-view ranking, independent of PRO.
+  const referralRanking = recognitionFor(referralCount).minimum >= 500;
+  return { referralRanking: referralRanking || proSubscriptionActive, proRankings: proSubscriptionActive };
+}
+
+/** Statistics rankings use the same business membership and period window as the dashboard. */
+
 export async function getOfferViewRanking(userId: string, identifier: string, period: StatisticsPeriod) {
   const business = await authorizeStatisticsBusiness(userId, identifier);
   const now = new Date();
   const window = statisticsWindow(period, now);
+  const [referralCounter, subscription] = await Promise.all([
+    prisma.businessReferralCounter.findUnique({ where: { businessId: business.id }, select: { validReferralCount: true } }),
+    effectiveProSubscription(business.id, now),
+  ]);
+  const visibility = offerRankingVisibility(referralCounter?.validReferralCount ?? 0, Boolean(subscription));
+  if (!visibility.referralRanking && !visibility.proRankings) {
+    return { period, timezone: STATISTICS_TIMEZONE,
+      window: { start: window.start?.toISOString() ?? null, end: now.toISOString() },
+      offers: [], productOffers: [], serviceOffers: [] };
+  }
   const createdAt = { ...(window.start ? { gte: window.start } : {}), lt: now };
   const rank = (kind: 'PRODUCT' | 'SERVICE') => prisma.businessAnalyticsEvent.groupBy({
     by: ['offerId'],
@@ -131,11 +164,11 @@ export async function getOfferViewRanking(userId: string, identifier: string, pe
     period,
     timezone: STATISTICS_TIMEZONE,
     window: { start: window.start?.toISOString() ?? null, end: now.toISOString() },
-    // `offers` stays available for the pre-existing referral card; PRO cards
-    // consume the independent rankings below.
-    offers: [...productOffers, ...serviceOffers],
-    productOffers,
-    serviceOffers,
+    // Fifth recognition reward: combined ranking; commercial PRO rankings are
+    // available only to businesses with a verified, effective PRO subscription.
+    offers: visibility.referralRanking ? [...productOffers, ...serviceOffers] : [],
+    productOffers: visibility.proRankings ? productOffers : [],
+    serviceOffers: visibility.proRankings ? serviceOffers : [],
   };
 }
 
@@ -151,7 +184,7 @@ export async function getBusinessStatistics(userId: string, identifier: string, 
       : Promise.resolve(null),
     prisma.businessFavorite.count({ where: { businessId: business.id } }),
     prisma.businessReferralCounter.findUnique({ where: { businessId: business.id }, select: { validReferralCount: true } }),
-    prisma.businessSubscription.findFirst({ where: { businessId: business.id, plan: 'PRO', status: 'ACTIVE', startsAt: { lte: now }, revokedAt: null, OR: [{ expiresAt: { gt: now } }, { expiresAt: null, specialActivation: true }] }, select: { id: true } }),
+    effectiveProSubscription(business.id, now),
   ]);
   const counts = currentCounts(events as EventCount[]);
   const previous = previousEvents ? currentCounts(previousEvents as EventCount[]) : null;
