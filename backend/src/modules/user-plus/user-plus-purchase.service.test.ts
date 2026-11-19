@@ -7,8 +7,8 @@ process.env.DATABASE_URL ??= 'mysql://test:test@127.0.0.1:3306/plus_purchase_tes
 const { PLUS_MONTHLY_COP, requestPlusPurchase, adminListPlusRequests, adminClosePlusRequest } =
   await import('./user-plus-purchase.service.js');
 
-test('Plus monthly price is exactly COP 4,900 on the server', () => {
-  assert.equal(PLUS_MONTHLY_COP, 4_900);
+test('Plus monthly price is exactly COP 3,900 on the server', () => {
+  assert.equal(PLUS_MONTHLY_COP, 3_900);
 });
 
 test('User purchase requests reject the wrong amount and missing price consent before contacting DB', async () => {
