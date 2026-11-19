@@ -3,9 +3,16 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 import { isSubscriptionEffective } from '../business/recognition.service.js';
+import { isPaidPlanEnabled } from '../admin/paid-plans.service.js';
 import { publicReleaseWhere } from '../zones/zones.service.js';
 
-type PublicDb = Pick<PrismaClient, 'business' | 'businessOffer' | 'photo'> & { user?: PrismaClient['user'] };
+type PublicDb = Pick<PrismaClient, 'business' | 'businessOffer' | 'photo'> & { user?: PrismaClient['user']; paidPlanAvailability?: PrismaClient['paidPlanAvailability'] };
+
+// Public rankings and badges must obey the same global master switch as Business.
+async function publicProEnabled(db: PublicDb) {
+  if (!db.paidPlanAvailability) return false;
+  return isPaidPlanEnabled('businessPro', { paidPlanAvailability: db.paidPlanAvailability });
+}
 type PublicOfferKind = 'PRODUCT' | 'SERVICE';
 export type PublicAccessContext = { userId?: string };
 
@@ -361,6 +368,7 @@ function featuredPriority(value: any) { return (value?.subscriptions ?? []).some
 function prioritizeBusinesses<T extends { id?: string; publicId?: string }>(items: T[]) { return [...items].sort((a: any, b: any) => pioneerPriority(b) - pioneerPriority(a) || featuredPriority(b) - featuredPriority(a) || String(a.publicId ?? a.id ?? '').localeCompare(String(b.publicId ?? b.id ?? ''))); }
 
 export async function listPublicBusinesses(input: PublicBusinessListInput, db: PublicDb = prisma, viewer?: PublicAccessContext) {
+  const proEnabled = await publicProEnabled(db);
   const canViewAdult = await canViewAdultContent(viewer, db);
   const where = await zonedPublicBusinessWhere(canViewAdult,db);
   const [total, businesses] = await Promise.all([
@@ -386,7 +394,7 @@ export async function listPublicBusinesses(input: PublicBusinessListInput, db: P
     }),
   ]);
   return {
-    businesses: prioritizeBusinesses(businesses).map(summary).slice((input.page - 1) * input.pageSize, input.page * input.pageSize),
+    businesses: prioritizeBusinesses(proEnabled ? businesses : businesses.map(row => ({ ...row, subscriptions: [] }))).map(summary).slice((input.page - 1) * input.pageSize, input.page * input.pageSize),
     pagination: { page: input.page, pageSize: input.pageSize, total, totalPages: Math.ceil(total / input.pageSize) },
   };
 }
@@ -485,6 +493,7 @@ export async function listPublicCategories(
 }
 
 export async function searchPublicUniversal(input: PublicUniversalSearchInput, db: PublicDb = prisma, viewer?: PublicAccessContext) {
+  const proEnabled = await publicProEnabled(db);
   const canViewAdult = await canViewAdultContent(viewer, db);
   // A virtual business must have its VIRTUAL modality ACTIVE, not just registered.
   // Applying the predicate to the owning business also filters products/services.
@@ -518,7 +527,10 @@ export async function searchPublicUniversal(input: PublicUniversalSearchInput, d
   const sortNearby = (a: any, b: any) => input.latitude !== undefined && input.longitude !== undefined ? distanceKm(input.latitude, input.longitude, a) - distanceKm(input.latitude, input.longitude, b) : 0;
   const matchingOffers = [...products, ...services].filter((item: any) => offerCategoryMatches(item) && (terms.length ? searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, offer: item.name, description: item.description }, terms) > 0 : true));
   const matchingBusinessIds = new Set(matchingOffers.map((item: any) => item.business.publicId));
-  const businessItems = businesses.map((item: any) => ({ item, rank: searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, description: item.description }, terms) }));
+  const businessItems = businesses.map((row: any) => {
+    const item = proEnabled ? row : { ...row, subscriptions: [] };
+    return { item, rank: searchRank({ name: item.name, category: item.category?.translations?.[0]?.name, description: item.description }, terms) };
+  });
   // Cuando el usuario solicita un radio, los negocios sin coordenadas públicas
   // verificables quedan fuera (distanceKm devuelve Infinity). Sin radio, se
   // conserva el comportamiento actual y no se aplica ningún filtro geográfico.
@@ -661,7 +673,9 @@ export async function listPublicNewArrivals(
     (row.business.modalities?.length ?? 0)>0 || (normalizeCityFilterName(row.business.location?.cityName) === normalizeCityFilterName(input.city)
     && (!input.region || normalizeRegionFilterName(row.business.location?.regionName) === normalizeRegionFilterName(input.region))),
   );
-  const ordered = rotatePublicNewArrivals(matching, colombiaArrivalDay(now.getTime()));
+  const proEnabled = await publicProEnabled(db);
+  const effectiveOffers = proEnabled ? matching : matching.map(row => ({ ...row, business: { ...row.business, subscriptions: [] } }));
+  const ordered = rotatePublicNewArrivals(effectiveOffers, colombiaArrivalDay(now.getTime()));
   const total = ordered.length;
   const items = ordered.slice((input.page - 1) * input.pageSize, input.page * input.pageSize).map(row => ({
     kind: row.kind,
@@ -682,7 +696,8 @@ export async function getPublicBusiness(publicId: string, db: PublicDb = prisma,
   const canViewAdult = await canViewAdultContent(viewer, db);
   const business = await db.business.findFirst({ where: { publicId, ...await zonedPublicBusinessWhere(canViewAdult,db) }, select: publicBusinessDetailSelect });
   if (!business) throw new AppError(404, 'PUBLIC_BUSINESS_NOT_FOUND', 'No encontramos ese establecimiento público.');
-  return detail(business, canViewAdult);
+  const proEnabled = await publicProEnabled(db);
+  return detail(proEnabled ? business : { ...business, subscriptions: [] }, canViewAdult);
 }
 
 async function listPublicOffers(publicId: string, kind: PublicOfferKind, db: PublicDb = prisma, viewer?: PublicAccessContext) {
