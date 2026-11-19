@@ -94,10 +94,10 @@ const securityPermissionName: Record<string, string> = {
   FINANCE_READ: 'Lectura financiera', FINANCE_MANAGE: 'Gestión financiera',
 };
 function SecurityEvent({ entry }: { entry: AdminSecurityAuditEntry }) {
-  const isRevocation = entry.action.includes('REVOKED');
+  const isRevocation = entry.action.includes('REVOKED') || (Boolean(entry.planKey) && entry.enabled === false);
   return <article className="sec-security-event">
     <span className={'sec-security-event-icon ' + (isRevocation ? 'sec-security-event-revoke' : '')}>
-      <Icon name={isRevocation ? 'lock' : 'shield'} size={20}/></span>
+      <Icon name={entry.planKey ? 'crown' : isRevocation ? 'lock' : 'shield'} size={20}/></span>
     <div className="sec-security-event-content">
       <div className="sec-security-event-head"><div><small>{entry.planKey ? 'INTERRUPTOR MAESTRO DE PLAN' : entry.action.includes('ROLE') ? 'ROL ADMINISTRATIVO' : 'PERMISO DE ACCESO'}</small>
         <h3>{securityActionLabel[entry.action] ?? 'Cambio de acceso registrado'}</h3></div>
