@@ -30,7 +30,7 @@ export type PlusCompareOffer = {
 };
 export type PriceHistory = {
   offer: { id: string; name: string; price: string | null; currency: string | null };
-  history: Array<{ previousPrice: string | null; newPrice: string | null; currency: string | null; createdAt: string }>;
+  history: Array<{ previousPrice: string | null; newPrice: string | null; previousCurrency: string | null; currency: string | null; createdAt: string }>;
 };
 const base = '/api/v1/user/plus';
 const json = (data: unknown) => ({ headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
