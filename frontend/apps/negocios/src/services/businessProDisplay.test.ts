@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { getBusinessProDisplay, isBusinessProPreview } from "./businessProDisplay";
+import { getBusinessProDisplay } from "./businessProDisplay";
 
 const selected = "panaderia-patico";
 const base = {
   businessId: selected,
   role: "Propietario" as const,
   empty: false,
-  demoPro: false,
 };
 
 describe("Business: tarjeta promocional Pro en el sidebar", () => {
@@ -41,14 +40,13 @@ describe("Business: tarjeta promocional Pro en el sidebar", () => {
     expect(getBusinessProDisplay({ ...base, resolvedPlan: { ...oldPlan, isPro: true } }).showProBadge).toBe(false);
   });
 
-  it("solo autoriza la insignia PRO de demostración en la ruta /preview", () => {
-    expect(isBusinessProPreview("/preview", "?demoPro=1")).toBe(true);
-    expect(isBusinessProPreview("/preview/estadisticas", "?demoPro=1")).toBe(true);
-    expect(isBusinessProPreview("/preview/estadisticas", "")).toBe(false);
-    expect(isBusinessProPreview("/preview", "?demoPro=0")).toBe(false);
-    expect(isBusinessProPreview("/inicio", "?demoPro=1")).toBe(false);
-    expect(isBusinessProPreview("/mis-negocios", "?demoPro=1")).toBe(false);
-    expect(getBusinessProDisplay({ ...base, demoPro: true, resolvedPlan: null }))
-      .toEqual({ showProBadge: true, showProOffer: false });
+  it("no muestra PRO cuando el backend no ha confirmado una suscripción del negocio seleccionado", () => {
+    const pending = getBusinessProDisplay({ ...base, resolvedPlan: null });
+    const otherBusiness = getBusinessProDisplay({ ...base, resolvedPlan: { businessId: "otro-negocio", isPro: true } });
+    const realPro = getBusinessProDisplay({ ...base, resolvedPlan: { businessId: selected, isPro: true } });
+    expect(pending.showProBadge).toBe(false);
+    expect(otherBusiness.showProBadge).toBe(false);
+    expect(realPro.showProBadge).toBe(true);
   });
+
 });
