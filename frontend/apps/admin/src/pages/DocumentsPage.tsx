@@ -1,4 +1,5 @@
 import { AdminPageHeading } from '../components/AdminPageHeading';
+import { Link } from 'react-router-dom';
 import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
 import { AdminDialog } from '../components/AdminDialog';
 import { Icon } from '../components/Icon';
@@ -7,13 +8,122 @@ import { getSession } from '../services/adminService';
 import { listDocuments, restoreDocument, trashDocument, uploadDocument, type AdminDocument, type DocumentList, type DocumentSection } from '../services/adminDocuments';
 
 const settings = {
-  CORPORATE: { title: 'Estatutos', caption: 'La memoria institucional, en un solo lugar.', description: 'Conserva los estatutos, reformas y actas de la organización en un archivo privado y trazable.', icon: 'store', empty: 'Tu archivo corporativo comienza aquí', button: 'Adjuntar estatuto' },
-  LEGAL: { title: 'Documentos legales', caption: 'Claridad documental para cada decisión.', description: 'Organiza contratos, acuerdos y documentos legales con acceso administrativo controlado.', icon: 'box', empty: 'Organiza tu documentación legal', button: 'Adjuntar documento' },
-  CASES: { title: 'Procesos judiciales', caption: 'Cada expediente, con su respaldo documental.', description: 'Conserva soportes y documentos de los procesos. Esta vista gestiona archivos; no sustituye un sistema de seguimiento judicial.', icon: 'scales', empty: 'El respaldo documental de tus procesos', button: 'Adjuntar soporte' },
+  CORPORATE: { title: 'Sociedad y gobierno corporativo', caption: 'La memoria institucional, en un solo lugar.', description: 'Custodia estatutos, actas, reformas, decisiones y soportes societarios. Este archivo no sustituye los trámites ni registros oficiales.', icon: 'book-open', empty: 'Tu archivo corporativo comienza aquí', button: 'Adjuntar documento societario' },
+  LEGAL: { title: 'Contratos y documentos', caption: 'Claridad documental para cada decisión.', description: 'Conserva contratos y soportes de cumplimiento, propiedad intelectual y privacidad. Los plazos y firmas no se verifican automáticamente.', icon: 'file', empty: 'Organiza tu documentación legal', button: 'Adjuntar documento legal' },
+  CASES: { title: 'Expedientes y procesos', caption: 'Cada expediente, con su respaldo documental.', description: 'Conserva soportes de reclamaciones, requerimientos y procesos. Esta vista archiva documentos; no realiza seguimiento judicial ni gestiona términos procesales.', icon: 'scales', empty: 'El respaldo documental de tus procesos', button: 'Adjuntar soporte' },
 };
 export const formatDocumentBytes = (bytes: number) => bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toLocaleString('es-CO', { maximumFractionDigits: 1 })} MB`;
 const date = (value: string) => new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
 const PdfPreview = lazy(() => import('../components/PdfPreview'));
+
+const legalTabs = [
+  { path: '/legal-overview', label: 'Centro jurídico' },
+  { path: '/corporate', label: 'Sociedad y gobierno' },
+  { path: '/legal-documents', label: 'Contratos y documentos' },
+  { path: '/legal-cases', label: 'Expedientes y procesos' },
+];
+
+function LegalNavigation({ current }: { current: string }) {
+  return <nav className="ad-legal-tabs" aria-label="Secciones de Jurídica y corporativa">
+    {legalTabs.map(tab => <Link key={tab.path} to={tab.path} aria-current={tab.path === current ? 'page' : undefined}>{tab.label}</Link>)}
+  </nav>;
+}
+
+const legalCollections: { section: DocumentSection; title: string; path: string; description: string; icon: string }[] = [
+  { section: 'CORPORATE', title: 'Sociedad y gobierno', path: '/corporate', description: 'Estatutos, reformas, actas, decisiones y documentos societarios.', icon: 'book-open' },
+  { section: 'LEGAL', title: 'Contratos y documentos', path: '/legal-documents', description: 'Contratos, acuerdos, privacidad, propiedad intelectual y demás soportes legales.', icon: 'file' },
+  { section: 'CASES', title: 'Expedientes y procesos', path: '/legal-cases', description: 'Soportes de reclamaciones, requerimientos y actuaciones judiciales.', icon: 'scales' },
+];
+
+const legalWorkstreams = [
+  { title: 'Información societaria', description: 'Constitución, registro mercantil, representación legal y certificados.', path: '/corporate', icon: 'store' },
+  { title: 'Gobierno corporativo', description: 'Accionistas, capital, decisiones, actas y libros.', path: '/corporate', icon: 'users' },
+  { title: 'Contratos', description: 'Acuerdos y sus soportes, versiones y firmas acreditadas.', path: '/legal-documents', icon: 'file' },
+  { title: 'Cumplimiento normativo', description: 'Normas aplicables, obligaciones y evidencias de cumplimiento.', path: '/legal-documents', icon: 'shield' },
+  { title: 'Protección de datos', description: 'Políticas, autorizaciones y solicitudes de titulares.', path: '/legal-documents', icon: 'lock' },
+  { title: 'Propiedad intelectual', description: 'Marca, logo, software, dominios y licencias.', path: '/legal-documents', icon: 'award' },
+  { title: 'Asuntos jurídicos', description: 'Requerimientos, controversias, reclamaciones y procesos.', path: '/legal-cases', icon: 'scales' },
+];
+
+export function LegalOverviewPage() {
+  const session = getSession();
+  const allowed = session?.role === 'SUPER_ADMIN' && session.permissions?.includes('settings:write');
+  const [records, setRecords] = useState<Partial<Record<DocumentSection, DocumentList>>>({});
+  const [unavailable, setUnavailable] = useState<DocumentSection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [revision, setRevision] = useState(0);
+
+  useEffect(() => {
+    if (!allowed) { setLoading(false); return; }
+    let active = true;
+    setLoading(true);
+    void Promise.allSettled(legalCollections.map(collection => listDocuments(collection.section, '', 1, false)))
+      .then(outcomes => {
+        if (!active) return;
+        const next: Partial<Record<DocumentSection, DocumentList>> = {};
+        const errors: DocumentSection[] = [];
+        outcomes.forEach((outcome, index) => {
+          const section = legalCollections[index].section;
+          if (outcome.status === 'fulfilled') next[section] = outcome.value;
+          else errors.push(section);
+        });
+        setRecords(next);
+        setUnavailable(errors);
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [allowed, revision]);
+
+  if (!allowed) return <section className="ad-empty"><span className="ad-large-icon"><Icon name="lock" size={28}/></span><h1>Centro jurídico de acceso restringido</h1><p>Solo la administración principal con permiso de gestión puede consultar este espacio.</p></section>;
+
+  const complete = !loading && unavailable.length === 0 && legalCollections.every(collection => records[collection.section]);
+  const count = (section: DocumentSection) => !loading && records[section] ? String(records[section]!.summary.active) : '—';
+  const total = complete ? String(legalCollections.reduce((sum, collection) => sum + (records[collection.section]?.summary.active ?? 0), 0)) : '—';
+  const recent = legalCollections.flatMap(collection => (records[collection.section]?.documents ?? []).map(document => ({ ...document, collection: collection.title, path: collection.path }))).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 5);
+
+  return <section className="ad-legal-overview" aria-labelledby="legal-overview-title">
+    <AdminPageHeading id="legal-overview-title" title="Centro jurídico" icon="scales" description="Una vista clara para administrar la documentación legal de Xamuko y facilitar el trabajo del asesor jurídico." actions={<button type="button" className="ad-button" disabled={loading} onClick={() => setRevision(value => value + 1)}><Icon name="refresh" size={17}/>Actualizar</button>}/>
+    <LegalNavigation current="/legal-overview"/>
+    <div className="ad-legal-context"><Icon name="info" size={19}/><p>Los indicadores siguientes cuentan exclusivamente archivos activos obtenidos del backend. No certifican la constitución, el cumplimiento normativo, el registro de una marca ni el estado de un proceso judicial.</p></div>
+    {unavailable.length > 0 && !loading && <div className="ad-error" role="alert"><Icon name="shield"/><div><strong>Consulta incompleta</strong><p>No fue posible consultar {unavailable.length === 1 ? 'uno de los archivos privados' : 'algunos archivos privados'}. Los indicadores no disponibles se muestran con —; comprueba la conexión y los permisos.</p></div><button className="ad-button" onClick={() => setRevision(value => value + 1)}>Reintentar</button></div>}
+    <div className="ad-legal-metrics" aria-label="Indicadores documentales">
+      <article><span><Icon name="archive"/></span><small>Documentos activos</small><strong>{total}</strong><p>Total de los tres archivos</p></article>
+      <article><span><Icon name="book-open"/></span><small>Societarios</small><strong>{count('CORPORATE')}</strong><p>Archivo corporativo</p></article>
+      <article><span><Icon name="file"/></span><small>Legales</small><strong>{count('LEGAL')}</strong><p>Contratos y soportes</p></article>
+      <article><span><Icon name="scales"/></span><small>Expedientes</small><strong>{count('CASES')}</strong><p>Soportes archivados</p></article>
+    </div>
+    <div className="ad-legal-layout">
+      <section className="ad-panel" aria-labelledby="legal-collections-title">
+        <div className="ad-panel-heading"><div><h2 id="legal-collections-title">Archivos jurídicos</h2><p>Accede a los repositorios privados existentes. Las acciones sobre documentos conservan sus controles y auditoría.</p></div></div>
+        <div className="ad-legal-collections">
+          {legalCollections.map(collection => <Link className="ad-legal-collection" to={collection.path} key={collection.section}>
+            <span className="ad-legal-collection-icon"><Icon name={collection.icon} size={23}/></span><span className="ad-legal-collection-copy"><strong>{collection.title}</strong><small>{collection.description}</small></span><span className="ad-legal-collection-count">{count(collection.section)} archivos</span><Icon name="arrow" size={19}/>
+          </Link>)}
+        </div>
+      </section>
+      <aside className="ad-panel ad-legal-guidance" aria-label="Guía de control">
+        <div className="ad-panel-heading"><div><h2>Control y trazabilidad</h2><p>Lo que un abogado debe saber antes de gestionar los documentos.</p></div></div>
+        <div className="ad-legal-guidance-body">
+          <p><Icon name="lock" size={18}/>Acceso actualmente restringido a la administración principal.</p>
+          <p><Icon name="shield" size={18}/>Altas, papelera y restauraciones documentales son auditadas por el backend.</p>
+          <p><Icon name="calendar" size={18}/>No hay aún un registro estructurado de vencimientos u obligaciones; no se generan alertas jurídicas automáticas.</p>
+          <p><Icon name="info" size={18}/>La gestión documental interna no reemplaza firmas, inscripciones ni actuaciones ante autoridades.</p>
+        </div>
+      </aside>
+    </div>
+    <section className="ad-panel" aria-labelledby="legal-areas-title">
+      <div className="ad-panel-heading"><div><h2 id="legal-areas-title">Áreas de gestión jurídica</h2><p>Organización temática para el fundador y el asesor jurídico. Por ahora cada área dirige a su archivo correspondiente; no constituye un expediente ni una validación de cumplimiento.</p></div></div>
+      <div className="ad-legal-workstreams">
+        {legalWorkstreams.map(area => <Link key={area.title} to={area.path} className="ad-legal-workstream"><span><Icon name={area.icon} size={21}/></span><div><strong>{area.title}</strong><p>{area.description}</p></div><Icon name="arrow" size={17}/></Link>)}
+      </div>
+    </section>
+    <section className="ad-panel" aria-labelledby="legal-recent-title">
+      <div className="ad-panel-heading"><div><h2 id="legal-recent-title">Documentos recientes disponibles</h2><p>Últimos archivos entre los registros consultados de cada sección. No es un historial completo de actuaciones.</p></div></div>
+      {loading ? <div className="ad-legal-no-documents" role="status">Consultando archivos…</div> : recent.length === 0 ? <div className="ad-legal-no-documents">No hay documentos recuperados en las consultas actuales.</div> : <div className="ad-legal-recent-list">{recent.map(document => <Link to={document.path} key={document.id} className="ad-legal-recent-row"><span className="ad-legal-recent-icon"><Icon name="file" size={19}/></span><span><strong>{document.title}</strong><small>{document.collection} · {date(document.createdAt)}</small></span><Icon name="arrow" size={17}/></Link>)}</div>}
+    </section>
+    <p className="ad-footnote"><Icon name="shield" size={15}/>El acceso futuro del abogado deberá configurarse con permisos jurídicos específicos en backend, sin compartir la cuenta del administrador principal.</p>
+  </section>;
+}
 
 export function DocumentsPage({ section }: { section: DocumentSection }) {
   const config = settings[section];
@@ -76,6 +186,7 @@ export function DocumentsPage({ section }: { section: DocumentSection }) {
   if (!allowed) return <section className="ad-empty"><span className="ad-large-icon"><Icon name="lock" size={28}/></span><h1>Archivo de acceso restringido</h1><p>Solo la administración principal con permiso de gestión puede acceder a estos documentos.</p></section>;
   return <section className="ad-documents" aria-labelledby="documents-title">
     <AdminPageHeading icon={section === 'CASES' ? 'shield' : 'box'} id="documents-title" title={config.title} actions={<button className="ad-button ad-button--primary" disabled={busy} onClick={() => { setActionError(''); setTitle(''); setDescription(''); setFile(null); setUploadOpen(true); }}><Icon name="upload" size={18}/>{config.button}</button>} />
+    <LegalNavigation current={section === 'CORPORATE' ? '/corporate' : section === 'LEGAL' ? '/legal-documents' : '/legal-cases'}/>
     <div className="ad-summary-grid" aria-label="Resumen documental">
       <article><span className="ad-summary-icon"><Icon name="box"/></span><div><small>Documentos activos</small><strong>{data?.summary.active ?? '—'}</strong><span>En el archivo privado</span></div></article>
       <article><span className="ad-summary-icon ad-summary-icon--blue"><Icon name="database"/></span><div><small>Volumen documental</small><strong>{data ? (data.summary.sizeBytes ? formatDocumentBytes(data.summary.sizeBytes) : '0 KB') : '—'}</strong><span>Archivos activos de esta sección</span></div></article>
