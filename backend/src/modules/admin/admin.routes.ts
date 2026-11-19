@@ -9,6 +9,7 @@ import { decisionVerificationController, listVerificationController, verificatio
 import { deleteAdminBusiness, getAdminBusiness, listAdminBusinesses, getAdminBusinessesFilters, getAdminBusinessesOverview, getAdminBusinessHistory, getAdminBusinessCoverPhoto, setAdminBusinessVisibility, setAdminBusinessVerification, setAdminBusinessVerificationStatus, setAdminBusinessPlan } from './admin-businesses.service.js';
 import { getAdminBusinessAnalytics } from './admin-business-analytics.service.js';
 import { listAdminVisibilityAudit } from './admin-visibility-audit.service.js';
+import { listAdminSubscriptions } from './admin-subscriptions.service.js';
 import { recordActivity, recordCatalog, recordPhoto, recordPhotos, recordReviews, setAdminRecordOfferState } from './admin-business-record.service.js';
 import { getAdminSupportAttention } from './admin-support-attention.service.js';
 import { listAdminContent, getAdminContentInsights, getAdminContentDetail, getAdminContentPhoto } from './admin-content.service.js';
@@ -40,6 +41,15 @@ adminRouter.get('/businesses', requireAdmin('BUSINESSES_READ'), async (req, res,
 });
 adminRouter.get('/businesses/overview', requireAdmin('BUSINESSES_READ'), async (_req, res, next) => {
   try { res.setHeader('Cache-Control', 'no-store'); res.json(await getAdminBusinessesOverview()); } catch (error) { next(error); }
+});
+adminRouter.get('/subscriptions', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await listAdminSubscriptions({
+      page: Number(req.query.page) || 1, pageSize: Number(req.query.pageSize) || 12,
+      q: String(req.query.q ?? ''), status: String(req.query.status ?? ''),
+    }));
+  } catch (error) { next(error); }
 });
 adminRouter.get('/business-photos/:photoId', requireAdmin('BUSINESSES_READ'), async (req, res, next) => {
   try {
