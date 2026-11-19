@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { getSession } from '../services/adminService';
 import {
-  getAdminVisibilityAudit, type AdminVisibilityAuditKind,
+  getAdminVisibilityAudit, getAdminSecurityAudit, type AdminSecurityAuditEntry, type AdminVisibilityAuditKind,
   type AdminVisibilityAuditEntry,
 } from '../services/adminApiClient';
 import { actionName } from './businessRecord/History';
@@ -77,16 +77,81 @@ function AuditEntry({ entry }: { entry: AdminVisibilityAuditEntry }) {
   </article>;
 }
 
+
+const securityActionLabel: Record<string, string> = {
+  ADMIN_ROLE_ASSIGNED: 'Rol administrativo asignado',
+  ADMIN_ROLE_REVOKED: 'Rol administrativo revocado',
+  ADMIN_PERMISSION_GRANTED: 'Permiso administrativo concedido',
+  ADMIN_PERMISSION_REVOKED: 'Permiso administrativo revocado',
+  FINANCE_PERMISSION_GRANTED: 'Permiso financiero concedido',
+  FINANCE_PERMISSION_REVOKED: 'Permiso financiero revocado',
+};
+const securityPermissionName: Record<string, string> = {
+  BUSINESSES_READ: 'Negocios', CATALOG_READ: 'Catálogo', REPORTS_REVIEW: 'Reportes',
+  CONTENT_MODERATE: 'Moderación', AUDIT_READ: 'Auditoría',
+  ADMINS_MANAGE: 'Administradores', PIONEER_MANAGE: 'Pioneros',
+  FINANCE_READ: 'Lectura financiera', FINANCE_MANAGE: 'Gestión financiera',
+};
+function SecurityEvent({ entry }: { entry: AdminSecurityAuditEntry }) {
+  const isRevocation = entry.action.includes('REVOKED');
+  return <article className="sec-security-event">
+    <span className={'sec-security-event-icon ' + (isRevocation ? 'sec-security-event-revoke' : '')}>
+      <Icon name={isRevocation ? 'lock' : 'shield'} size={20}/></span>
+    <div className="sec-security-event-content">
+      <div className="sec-security-event-head"><div><small>{entry.action.includes('ROLE') ? 'ROL ADMINISTRATIVO' : 'PERMISO DE ACCESO'}</small>
+        <h3>{securityActionLabel[entry.action] ?? 'Cambio de acceso registrado'}</h3></div>
+        <time dateTime={entry.createdAt}>{auditDate(entry.createdAt)}</time></div>
+      <div className="sec-security-event-details">
+        <span><strong>Cuenta afectada</strong>{entry.subject}</span>
+        <span><strong>Responsable</strong>{entry.actor || 'No disponible'}</span>
+        {entry.role && <span><strong>Rol</strong>{entry.role === 'SUPER_ADMIN' ? 'Superadministrador' : 'Administrador'}</span>}
+        {entry.permission && <span><strong>Permiso</strong>{securityPermissionName[entry.permission] ?? entry.permission}</span>}
+      </div>
+      <div className="sec-security-reason"><strong>Justificación registrada</strong><p>{entry.reason || 'Motivo no disponible en esta actuación.'}</p></div>
+    </div>
+  </article>;
+}
+
+function SecurityAuditPanel() {
+  const [kind, setKind] = useState<'ALL' | 'ROLE' | 'PERMISSION'>('ALL');
+  const [page, setPage] = useState(1);
+  const result = useResource(() => getAdminSecurityAudit({ page, kind }), [page, kind], true);
+  return <section className="sec-panel sec-audit-panel" aria-labelledby="sec-security-audit-title">
+    <div className="sec-panel-header"><div><h2 id="sec-security-audit-title">Cambios de roles y permisos</h2>
+      <p>Eventos autorizados y registrados por el servidor. Esta consulta no incluye contraseñas ni datos secretos.</p></div>
+      {result.data && <span className="sec-count">{result.data.pagination.total.toLocaleString('es-CO')} actuaciones</span>}
+    </div>
+    <div className="sec-toolbar sec-audit-toolbar">
+      <label><span>Tipo de actuación</span><select value={kind} onChange={event => { setKind(event.target.value as typeof kind); setPage(1); }}>
+        <option value="ALL">Todas</option><option value="ROLE">Roles</option><option value="PERMISSION">Permisos</option>
+      </select></label>
+      <button type="button" className="sec-button" disabled={result.loading} onClick={result.retry}><Icon name="refresh" size={16}/> Actualizar</button>
+    </div>
+    {result.loading ? <div className="sec-state" role="status">Consultando bitácora de seguridad…</div>
+      : result.error ? <div className="sec-state sec-state-error" role="alert"><strong>No fue posible consultar la auditoría de accesos</strong>
+        <p>{result.error}. Comprueba que la API actualizada esté disponible.</p><button className="sec-button" onClick={result.retry}>Reintentar</button></div>
+      : result.data?.entries.length ? <div className="sec-security-feed">{result.data.entries.map(entry => <SecurityEvent key={entry.id} entry={entry}/>)}</div>
+      : <div className="sec-state">No hay actuaciones registradas para este filtro.</div>}
+    {result.data && result.data.pagination.totalPages > 1 && <nav className="sec-pagination" aria-label="Páginas de auditoría de accesos">
+      <span>Página {result.data.pagination.page} de {result.data.pagination.totalPages}</span>
+      <div><button type="button" className="sec-button" disabled={result.loading || page <= 1} onClick={() => setPage(value => Math.max(1, value - 1))}>Anterior</button>
+      <button type="button" className="sec-button" disabled={result.loading || page >= result.data.pagination.totalPages} onClick={() => setPage(value => value + 1)}>Siguiente</button></div>
+    </nav>}
+    <p className="sec-footnote"><Icon name="lock" size={16}/> Fuente: AuditLog del backend, limitado a cambios de roles y permisos. Solo el superadministrador puede consultar esta vista. No representa la totalidad de eventos de seguridad de la plataforma.</p>
+  </section>;
+}
+
 export function AdminAuditPage() {
   const session = getSession();
   const allowed = session?.role === 'SUPER_ADMIN' || Boolean(session?.permissions?.includes('audit:read'));
+  const [source, setSource] = useState<'BUSINESS' | 'SECURITY'>('BUSINESS');
   const [kind, setKind] = useState<AdminVisibilityAuditKind>('ALL');
   const [draft, setDraft] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const result = useResource(
     () => getAdminVisibilityAudit({ page, kind, search }),
-    [page, kind, search], allowed,
+    [page, kind, search], allowed && source === 'BUSINESS',
   );
   const searchAudit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -98,9 +163,14 @@ export function AdminAuditPage() {
     <p>Necesitas el permiso de lectura de auditoría para consultar las actuaciones administrativas.</p>
   </div></main>;
   return <main className="xa-audit-workspace">
-    <AdminPageHeading icon="shield" title="Auditoría" description="Consulta las decisiones de visibilidad, verificación y suscripción de los negocios, con sus responsables, motivos y estados anterior y nuevo." actions={<button className="xa-audit-refresh" type="button" onClick={result.retry} disabled={result.loading}>
-        <Icon name="refresh" size={17}/> Actualizar
-      </button>} />
+    <AdminPageHeading icon="shield" title="Auditoría" description="Consulta actuaciones administrativas reales, responsables y justificaciones. Cada fuente mantiene sus permisos y cobertura."/>
+    <div className="sec-audit-sources" role="group" aria-label="Fuente de auditoría">
+      <button type="button" aria-pressed={source === 'BUSINESS'} onClick={() => setSource('BUSINESS')}><Icon name="store" size={18}/> Negocios</button>
+      {session?.role === 'SUPER_ADMIN' && <button type="button" aria-pressed={source === 'SECURITY'} onClick={() => setSource('SECURITY')}><Icon name="lock" size={18}/> Seguridad y accesos</button>}
+    </div>
+    {source === 'BUSINESS' ? <>
+      <div className="sec-business-audit-actions"><span>Visibilidad, verificaciones y suscripciones</span>
+        <button className="xa-audit-refresh" type="button" onClick={result.retry} disabled={result.loading}><Icon name="refresh" size={17}/> Actualizar</button></div>
     <div className="xa-audit-toolbar">
       <form onSubmit={searchAudit}>
         <label htmlFor="xa-audit-search">Buscar negocio</label>
@@ -141,5 +211,6 @@ export function AdminAuditPage() {
       Los registros provienen de la misma auditoría conservada en la ficha administrativa de cada negocio.
       No se duplican actuaciones. Las fechas se muestran en hora de Bogotá. Esta vista presenta cambios de visibilidad, verificación y suscripción.
     </footer>
+    </> : <SecurityAuditPanel/>}
   </main>;
 }
