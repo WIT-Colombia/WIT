@@ -163,7 +163,7 @@ function EditFinancialRecord({record,onClose,onUpdated}:{
         </select>:<input aria-label={fieldNames[key]}
           type={key.startsWith('amount')?'number':key==='documentUrl'?'url':'text'}
           min={key.startsWith('amount')?'0':undefined}
-          step={key.startsWith('amount')?'0.01':undefined} maxLength={key==='documentUrl'?2048:160}
+          step={key==='amountUsd'?'0.0001':key==='amountCop'?'0.01':undefined} maxLength={key==='documentUrl'?2048:160}
           required={key!=='documentUrl'&&!(key==='amountUsd'&&record.kind==='BUDGETS')}
           value={form[key]??''} disabled={busy} onChange={e=>setForm(p=>({...p,[key]:e.target.value}))}/>}
       </label>)}
