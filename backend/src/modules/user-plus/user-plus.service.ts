@@ -23,14 +23,19 @@ const adultConsent = async (userId: string) => (await prisma.user.findUnique({
 }))?.adultContentEnabled === true;
 
 
+export function hasPlusEntitlement(enabled: boolean, membership: {
+  status: string; startsAt: Date; expiresAt: Date; revokedAt: Date | null;
+} | null, now = new Date()): boolean {
+  return Boolean(enabled && membership?.status === 'ACTIVE'
+    && membership.startsAt <= now && membership.expiresAt > now && !membership.revokedAt);
+}
+
 export async function plusStatus(userId: string) {
   const [enabled, membership] = await Promise.all([
     isPaidPlanEnabled('xamukoPlus'),
     prisma.userPlusSubscription.findUnique({ where: { userId } }),
   ]);
-  const now = new Date();
-  const active = Boolean(enabled && membership?.status === 'ACTIVE'
-    && membership.startsAt <= now && membership.expiresAt > now && !membership.revokedAt);
+  const active = hasPlusEntitlement(enabled, membership);
   return {
     enabled, active,
     subscription: membership ? {
