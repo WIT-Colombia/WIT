@@ -1,3 +1,4 @@
+import { PAID_PLAN_MONTHLY_COP, formatCopPrice } from '@wit/utils';
 import { PaidPlanControl } from '../components/PaidPlanControl';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -137,7 +138,7 @@ export function AdminBusinessProPage() {
   ];
   return <main className="aps-page abp-page">
     <AdminPageHeading title="Business PRO" icon="crown"
-      description="Controla la vigencia de las suscripciones PRO con los registros actuales de XAMUKO."
+      description={`Precio comercial: ${formatCopPrice(PAID_PLAN_MONTHLY_COP.businessPro)} COP mensuales. Controla la disponibilidad y vigencia de Business PRO.`}
       actions={<div className="aps-header-actions">
         <button className="aps-button aps-button-primary" type="button" onClick={() => setRevision(i => i+1)}>
           <Icon name="refresh" size={16}/> Actualizar
