@@ -21,7 +21,7 @@ import { adminZoneRegistry, decideZone } from '../zones/zones.service.js';
 import { readOwnAvatar } from '../auth/avatar.service.js';
 import { adminDocumentsRouter } from './admin-documents.routes.js';
 
-import { getPaidPlanAvailability, setPaidPlanAvailability, paidPlanKey, paidPlanUpdate } from './paid-plans.service.js';
+import { getPaidPlanAvailability, setPaidPlanAvailability, isPaidPlanEnabled, paidPlanKey, paidPlanUpdate } from './paid-plans.service.js';
 
 export const adminRouter = Router();
 adminRouter.get('/paid-plans', requireAdmin(), async (_req, res, next) => {
@@ -31,9 +31,9 @@ adminRouter.get('/paid-plans', requireAdmin(), async (_req, res, next) => {
 adminRouter.put('/paid-plans/:key', requireTrustedOrigin, requireAdmin(), async (req, res, next) => {
   try {
     const key = paidPlanKey.parse(req.params.key);
-    const { enabled } = paidPlanUpdate.parse(req.body);
+    const { enabled, reason } = paidPlanUpdate.parse(req.body);
     res.setHeader('Cache-Control', 'no-store');
-    res.json(await setPaidPlanAvailability(adminFromRequest(req), key, enabled));
+    res.json(await setPaidPlanAvailability(adminFromRequest(req), key, enabled, reason));
   } catch (error) { next(error); }
 });
 adminRouter.use('/documents', adminDocumentsRouter);
@@ -163,6 +163,7 @@ adminRouter.post('/businesses/:id/plan', requireTrustedOrigin, requireAdmin('BUS
     const context = adminFromRequest(req);
     if (context.role !== 'SUPER_ADMIN') throw new AppError(403, 'ADMIN_SUPER_ADMIN_REQUIRED', 'Solo el administrador principal puede asignar planes.');
     if (req.body?.confirmation !== String(req.body?.plan ?? '')) throw new AppError(400, 'ADMIN_PLAN_CONFIRMATION_REQUIRED', 'Confirma el plan que deseas asignar.');
+    if (req.body?.plan === 'PRO' && !(await isPaidPlanEnabled('businessPro'))) throw new AppError(409, 'BUSINESS_PRO_DISABLED', 'Business PRO está desactivado en Admin. No se pueden asignar nuevas suscripciones.');
     res.setHeader('Cache-Control', 'no-store');
     res.json(await setAdminBusinessPlan(String(req.params.id), context.userId, String(req.body?.plan ?? ''), String(req.body?.reason ?? '')));
   } catch (error) { next(error); }
