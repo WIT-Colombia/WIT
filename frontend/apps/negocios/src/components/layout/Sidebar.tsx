@@ -10,7 +10,7 @@ import { PersistedPhoto } from "../common/PersistedPhoto";
 import { BusinessProBenefitsDialog } from "../business/BusinessProBenefitsDialog";
 import { businessApi } from "../../services/businessApiClient";
 import { getAvatarBlob } from "../../services/businessAuthService";
-import { getBusinessProDisplay, isBusinessProPreview } from "../../services/businessProDisplay";
+import { getBusinessProDisplay } from "../../services/businessProDisplay";
 export type SidebarIconName = "home" | "store" | "box" | "tag" | "star" | "chart" | "bell" | "settings" | "logout" | "offers" | "users" | "help" | "support" | "message" | "crown" | "handshake";
 const iconPaths: any = { crown: "M3 6 7 10l5-6 5 6 4-4-3 13H6L3 6ZM7 22h10", offers: "M3 8 8 3h6l7 7-11 11-7-7V8ZM8 8h.01M12 4l8 8M5 15l4 4", users: "M16 21v-2a6 6 0 0 0-12 0v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM17 4a4 4 0 0 1 0 8M18 15a5 5 0 0 1 3 5", help: "M12 17h.01M9 9a3 3 0 1 1 5 2c-1 1-2 1-2 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z", support: "M4 14v-3a8 8 0 0 1 16 0v3M4 12H2v7h5v-7H4Zm16 0h2v7h-5v-7h3ZM20 19c0 3-4 3-7 3", message: "M4 3h16v14H9l-5 4V3Zm4 8 3-4 3 6 3-4", home: "M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-9Zm5.5 10v-6h7v6", store: "M4 9h16l-1.2-5H5.2L4 9Zm1 0v10h14V9M8 13h8M3 9h18", box: "m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Zm0 0v9m8-4.5-8 4.5m-8-4.5 8 4.5", tag: "m20.5 13.5-7 7a2 2 0 0 1-2.8 0l-8.2-8.2V4h8.3l8.2 8.2a2 2 0 0 1 0 1.3ZM7.5 7.5h.01", star: "m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z", chart: "M4 20V10m5 10V6m5 14v-8m5 8V3M2 20h20", bell: "M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4", settings: "M12 3.5 13.4 5a7.8 7.8 0 0 1 2.1.9l2-.5 1.8 1.8-.5 2a7.8 7.8 0 0 1 .9 2.1l1.5 1.4v2.6l-1.5 1.4a7.8 7.8 0 0 1-.9 2.1l.5 2-1.8 1.8-2-.5a7.8 7.8 0 0 1-2.1.9L12 23l-2.4-1.4a7.8 7.8 0 0 1-2.1-.9l-2 .5-1.8-1.8.5-2a7.8 7.8 0 0 1-.9-2.1L1.8 14v-2.6l1.5-1.4a7.8 7.8 0 0 1 .9-2.1l-.5-2 1.8-1.8 2 .5a7.8 7.8 0 0 1 2.1-.9L12 3.5Zm0 5.2a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z", logout: "M10 17l5-5-5-5m5 5H3m9-9h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7" };
 export function SidebarIcon({ name }: { name: SidebarIconName }) { const path = name === "handshake" ? "M7 11 4 8l3-3 5 4 5-4 3 3-3 3m-10 0-3 3 4 4 3-3m6-4 3 3-4 4-3-3m-1 3 2 2 3-3" : iconPaths[name]; return <svg className="sidebar-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={path} /></svg>; }
@@ -28,18 +28,16 @@ export function Sidebar({ empty = false, onNavigate }: { empty?: boolean; onNavi
   const { business, notifications, persistentNotificationCount, account } = useBusinessStore();
   const { user } = useBusinessAuth();
   const location = useLocation();
-  const demoPro = isBusinessProPreview(location.pathname, location.search);
   const [notice, setNotice] = useState<"pro" | null>(null);
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   // Neither the upgrade card nor a PRO badge is speculative. Always verify
   // the current business and never carry a previous selection's plan forward.
   const [resolvedPlan, setResolvedPlan] = useState<{ businessId: string; isPro: boolean } | null>(null);
-  const planBusinessId = !demoPro && business.source === "real" ? business.id : null;
+  const planBusinessId = business.source === "real" ? business.id : null;
   const { showProBadge: isPro, showProOffer } = getBusinessProDisplay({
     businessId: planBusinessId,
     role: business.role,
     empty,
-    demoPro,
     resolvedPlan,
   });
   const accountWelcomeUnread = useBusinessAccountWelcomeUnread(user?.id);
@@ -74,13 +72,10 @@ export function Sidebar({ empty = false, onNavigate }: { empty?: boolean; onNavi
     { label: "Mi colaboración", icon: "handshake", to: "/mi-colaboracion" },
     { label: "Configuración", icon: "settings", to: "/configuracion", ownerOnly: true },
   ];
-  const visibleEntries = demoPro
-    ? entries.filter(entry => entry.label === "Inicio" || entry.label === "Estadísticas").map(entry => ({ ...entry, to: entry.label === "Inicio" ? "/preview?demoPro=1" : "/preview/estadisticas?demoPro=1" }))
-    : entries.filter(entry => entry.label === "Mi colaboración" ? isCollaborator : business.role === "Propietario" || (!entry.ownerOnly && (!entry.permission || business.permissions?.includes(entry.permission))));
+  const visibleEntries = entries.filter(entry => entry.label === "Mi colaboración" ? isCollaborator : business.role === "Propietario" || (!entry.ownerOnly && (!entry.permission || business.permissions?.includes(entry.permission))));
   return <aside className="sidebar business-shell-sidebar" tabIndex={0} aria-label="Menú lateral de XAMUKO Business">
-    <Link className="sidebar-brand" to={demoPro ? "/preview?demoPro=1" : "/inicio"} aria-label="XAMUKO Business, inicio" onClick={onNavigate}><span className="sidebar-brand-artwork"><img src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" /><img className="sidebar-brand-wordmark" src="/brand/xamuko-lockup.png" alt="" aria-hidden="true" width="2170" height="725" /></span><span>BUSINESS{(demoPro || (proEnabled && isPro)) && <em className="business-pro-badge">PRO</em>}</span></Link>
-    <nav aria-label="Navegación principal" className="sidebar-nav">{visibleEntries.map(entry => <NavLink key={entry.label} to={entry.to} end={entry.label === "Inicio"} onClick={onNavigate} className={({ isActive }) => `nav-link${(entry.label === "Colaboradores" ? collaborators && !empty : entry.label === "Mi negocio" ? !collaborators && location.pathname.startsWith("/mi-negocio") : entry.label === "Configuración" ? (isActive || legalFromSettings) : isActive) ? " active" : ""}`}><SidebarIcon name={entry.icon} /><span>{entry.label}</span>{entry.label === "Notificaciones" && unread > 0 && <span className="notification-dot">{unread}</span>}</NavLink>)}</nav>
-    {!demoPro && !empty && business.role === "Propietario" && <Link className="business-pro-preview-link" to="/preview?demoPro=1" onClick={onNavigate}><SidebarIcon name="crown" /><span>Ver Business PRO en modo prueba</span></Link>}
+    <Link className="sidebar-brand" to="/inicio" aria-label="XAMUKO Business, inicio" onClick={onNavigate}><span className="sidebar-brand-artwork"><img src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" /><img className="sidebar-brand-wordmark" src="/brand/xamuko-lockup.png" alt="" aria-hidden="true" width="2170" height="725" /></span><span>BUSINESS{proEnabled && isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
+    <nav aria-label="Navegación principal" className="sidebar-nav">{visibleEntries.map(entry => <NavLink key={entry.label} to={entry.to} end={entry.to === "/"} onClick={onNavigate} className={({ isActive }) => `nav-link${(entry.label === "Colaboradores" ? collaborators && !empty : entry.label === "Mi negocio" ? !collaborators && location.pathname.startsWith("/mi-negocio") : entry.label === "Configuración" ? (isActive || legalFromSettings) : isActive) ? " active" : ""}`}><SidebarIcon name={entry.icon} /><span>{entry.label}</span>{entry.label === "Notificaciones" && unread > 0 && <span className="notification-dot">{unread}</span>}</NavLink>)}</nav>
     {proEnabled && showProOffer && <section className="sidebar-pro-card"><div><span className="sidebar-pro-icon" aria-hidden="true"><SidebarIcon name="crown" /></span><strong><em>XAMUKO</em>Business Pro</strong></div><p>Haz crecer tu negocio con herramientas exclusivas.</p><button type="button" onClick={() => setNotice("pro")}>Conocer beneficios</button></section>}
     <nav aria-label="Ayuda y soporte" className="sidebar-support"><Link to="/ayuda" onClick={onNavigate}><SidebarIcon name="help" />Centro de ayuda</Link><Link to="/soporte" onClick={onNavigate}><SidebarIcon name="support" />Soporte técnico</Link><Link to="/sugerencias" onClick={onNavigate}><SidebarIcon name="message" />Sugerencias</Link></nav>
     <Link className="sidebar-account-link" to={empty ? "/perfil?empty=1" : "/perfil"} onClick={onNavigate}><span className="sidebar-account-avatar">{avatarSrc ? <img src={avatarSrc} alt="" /> : initials}</span><span><strong>{displayName}</strong><small>Mi cuenta</small></span><span className="sidebar-account-arrow">›</span></Link>
