@@ -99,11 +99,12 @@ const securityActionGroups = {
 } as const;
 function safeSecurityPayload(state: Prisma.JsonValue) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) return null;
-  const userId = typeof state.userId === 'string' ? state.userId : null;
-  const role = state.role === 'ADMIN' || state.role === 'SUPER_ADMIN' ? state.role : null;
-  const permission = typeof state.permission === 'string' &&
-    ['BUSINESSES_READ', 'CATALOG_READ', 'REPORTS_REVIEW', 'CONTENT_MODERATE', 'AUDIT_READ', 'ADMINS_MANAGE', 'PIONEER_MANAGE', 'FINANCE_READ', 'FINANCE_MANAGE'].includes(state.permission)
-    ? state.permission : null;
+  const payload = state as Record<string, unknown>;
+  const userId = typeof payload.userId === 'string' ? payload.userId : null;
+  const role = payload.role === 'ADMIN' || payload.role === 'SUPER_ADMIN' ? payload.role : null;
+  const permission = typeof payload.permission === 'string' &&
+    ['BUSINESSES_READ', 'CATALOG_READ', 'REPORTS_REVIEW', 'CONTENT_MODERATE', 'AUDIT_READ', 'ADMINS_MANAGE', 'PIONEER_MANAGE', 'FINANCE_READ', 'FINANCE_MANAGE'].includes(payload.permission)
+    ? payload.permission : null;
   return { userId, role, permission };
 }
 export async function listAdminSecurityAudit(query: { page: number; kind: string }) {
