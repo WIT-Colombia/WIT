@@ -1,3 +1,4 @@
+import { usePaidPlans } from "@wit/utils";
 import { useCallback, useEffect, useState, type MouseEvent } from 'react';
 import { BusinessProBenefitsDialog } from '../components/business/BusinessProBenefitsDialog';
 import { BusinessProfileThumbnail } from '../components/layout/Sidebar';
@@ -106,6 +107,7 @@ function proContent(key: string, data: BusinessStatisticsDashboard) {
 }
 
 export function StatisticsDashboardV1() {
+  const { businessPro: proEnabled } = usePaidPlans();
   const { business } = useBusinessStore();
   const [period, setPeriod] = useState<Period>('month');
   const [periodReadyKey, setPeriodReadyKey] = useState<string | null>(null);
@@ -213,7 +215,7 @@ export function StatisticsDashboardV1() {
     {error && <div className="stats-v1-error" role="alert">No pudimos cargar las estadísticas de este negocio. <button type="button" onClick={() => setRetry(value => value + 1)}>Reintentar</button></div>}
     <section className="stats-v1-context" aria-label="Negocio y derechos actuales">
       <div><span className="stats-v1-context-icon"><BusinessProfileThumbnail business={business} /></span><div><small>NEGOCIO SELECCIONADO</small><strong>{business.name || 'Sin negocio seleccionado'}</strong></div></div>
-      <div><span className="stats-v1-context-icon purple">♛</span><div><small>PLAN COMERCIAL</small><strong>{loading ? 'Cargando…' : error ? 'No disponible' : access?.proUnlocked ? 'Business PRO' : 'Plan básico'}</strong><span>{access?.proUnlocked ? 'Acceso vigente' : error ? 'No se pudo verificar el plan' : 'Estadísticas PRO disponibles con un plan vigente'}</span></div></div>
+      {proEnabled && <div><span className="stats-v1-context-icon purple">♛</span><div><small>PLAN COMERCIAL</small><strong>{loading ? 'Cargando…' : error ? 'No disponible' : access?.proUnlocked ? 'Business PRO' : 'Plan básico'}</strong><span>{access?.proUnlocked ? 'Acceso vigente' : error ? 'No se pudo verificar el plan' : 'Estadísticas PRO disponibles con un plan vigente'}</span></div></div>}
       <div><span className="stats-v1-context-icon blue">★</span><div><small>NIVEL DE RECONOCIMIENTO</small><strong>{loading ? 'Cargando…' : level?.name ?? 'No disponible'}</strong><span>{access ? `${access.referralCount} referidos válidos` : 'Sin información'}</span></div></div>
     </section>
 
@@ -274,7 +276,7 @@ export function StatisticsDashboardV1() {
       })}</div>
     </section>
 
-    <section className="stats-v1-section stats-v1-pro" aria-labelledby="stats-v1-pro-title">
+    {proEnabled && <section className="stats-v1-section stats-v1-pro" aria-labelledby="stats-v1-pro-title">
       <div className="stats-v1-section-head"><div><span className="stats-v1-section-icon">♛</span><div><h2 id="stats-v1-pro-title">Estadísticas PRO <small>20 estadísticas exclusivas</small></h2><p>Análisis avanzado respaldado por datos reales, con fuentes pendientes claramente marcadas.</p></div></div>{!loading && !error && !availablePro && <button type="button" onClick={() => setProHelp(true)}>Ver Business PRO →</button>}</div>
       <div className="stats-v1-pro-grid">{proCards.map(card => {
         const content = availablePro && data ? proContent(card.key, data) : null;
@@ -305,8 +307,8 @@ export function StatisticsDashboardV1() {
           {detailButton('pro', card.key, !availablePro)}
         </article>;
       })}</div>
-    </section>
-    {proHelp && <BusinessProBenefitsDialog onClose={() => setProHelp(false)} />}
-    {selectedDetail && <StatisticsDetailDialog selection={selectedDetail} onClose={closeDetail} data={data} period={period} favoriteCount={favoriteCount} offerLikeCount={offerLikeCount} reviewStatistics={reviewStatistics} offerViewRanking={offerViewRanking} unlockedReferralStatistics={unlockedReferralStatistics} availablePro={Boolean(availablePro)} loading={loading} error={error} />}
+    </section>}
+    {proEnabled && proHelp && <BusinessProBenefitsDialog onClose={() => setProHelp(false)} />}
+    {selectedDetail && (proEnabled || selectedDetail.section !== "pro") && <StatisticsDetailDialog selection={selectedDetail} onClose={closeDetail} data={data} period={period} favoriteCount={favoriteCount} offerLikeCount={offerLikeCount} reviewStatistics={reviewStatistics} offerViewRanking={offerViewRanking} unlockedReferralStatistics={unlockedReferralStatistics} availablePro={Boolean(availablePro)} loading={loading} error={error} />}
   </div>;
 }

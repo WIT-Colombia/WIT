@@ -28,6 +28,7 @@ import { FinancialExpensesPage } from './pages/FinancialExpensesPage';
 import { AdministratorsPage, SecurityParametersPage } from './pages/AdministratorsPage';
 import { AdminAuditPage } from './pages/AdminAuditPage';
 import { AdminPlansPage } from './pages/AdminPlansPage';
+import { AdminXamukoPlusPage } from './pages/AdminXamukoPlusPage';
 import { AdminBusinessProPage } from './pages/AdminBusinessProPage';
 import { AdminBillingPage } from './pages/AdminBillingPage';
 import { AdminTransactionsPage } from './pages/AdminTransactionsPage';
@@ -50,7 +51,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/parameters', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/legal-overview', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans', '/business-pro', '/billing', '/transactions', '/refunds', '/service-status', '/deployments', '/needs'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/parameters', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/legal-overview', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans', '/business-pro', '/xamuko-plus', '/billing', '/transactions', '/refunds', '/service-status', '/deployments', '/needs'];
 
 export default function App() {
   return <Routes>
@@ -80,6 +81,7 @@ export default function App() {
         <Route path="/administrators" element={<AdministratorsPage />} />
         <Route path="/audit" element={<AdminAuditPage />} />
         <Route path="/plans" element={<AdminPlansPage />} />
+        <Route path="/xamuko-plus" element={<AdminXamukoPlusPage />} />
         <Route path="/business-pro" element={<AdminBusinessProPage />} />
         <Route path="/billing" element={<AdminBillingPage />} />
         <Route path="/transactions" element={<AdminTransactionsPage />} />

@@ -1,0 +1,20 @@
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, expect, it, vi } from 'vitest';
+import { refreshPaidPlans, usePaidPlans } from '@wit/utils';
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+it('oculta los planes mientras carga, comparte la consulta y falla cerrado si el servidor deja de responder', async () => {
+  let respond!: (value: Response) => void;
+  const request = vi.fn().mockImplementationOnce(() => new Promise<Response>(resolve => { respond = resolve; }));
+  vi.stubGlobal('fetch', request);
+  const first = renderHook(() => usePaidPlans());
+  const second = renderHook(() => usePaidPlans());
+  expect(first.result.current).toEqual({ businessPro: false, xamukoPlus: false });
+  expect(request).toHaveBeenCalledTimes(1);
+  await act(async () => { respond(new Response(JSON.stringify({ businessPro: true, xamukoPlus: false }), { status: 200 })); });
+  await waitFor(() => expect(first.result.current.businessPro).toBe(true));
+  expect(second.result.current.businessPro).toBe(true);
+  request.mockRejectedValueOnce(new Error('Offline'));
+  await act(async () => { await refreshPaidPlans(); });
+  expect(first.result.current).toEqual({ businessPro: false, xamukoPlus: false });
+  expect(second.result.current.businessPro).toBe(false);
+});
