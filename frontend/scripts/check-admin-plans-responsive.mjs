@@ -260,6 +260,10 @@ try {
       await page.getByRole('heading',{name:'Ingresos y facturación',exact:true}).waitFor({state:'visible'});
       await page.getByText('6 registros',{exact:true}).waitFor({state:'visible'});
       await page.getByRole('heading',{name:'Ingresos y facturación comercial'}).waitFor({state:'visible'});
+      const financeNavigation=page.getByRole('navigation',{name:'Pestañas de Finanzas y contabilidad'});
+      assert.equal(await financeNavigation.getByRole('link').count(),4,device+': all four finance modules linked');
+      assert.equal(await financeNavigation.getByRole('link',{name:'Ingresos y facturación',exact:true}).getAttribute('aria-current'),
+        'page',device+': correct active financial tab');
       assert.equal(await page.locator('.abill-money-card').count(),4,
         device+': all monetary categories explicitly distinguish unavailable sources');
       assert.equal(await page.locator('.abill-money-card').filter({hasText:'No disponible'}).count(),4,
