@@ -78,8 +78,6 @@ export function searchHref(search: PlusSearch) {
   const params = new URLSearchParams();
   if (search.query) params.set('q', search.query);
   if (search.category) params.set('category', search.category);
-  if (search.openNow) params.set('openNow', 'true');
-  if (search.minRating) params.set('minRating', String(search.minRating));
-  if (search.sort !== 'recommended') params.set('sort', search.sort);
+  // Results currently accepts query/category only; do not advertise ignored filters.
   return '/results?' + params.toString();
 }
