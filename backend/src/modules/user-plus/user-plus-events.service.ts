@@ -4,7 +4,7 @@ import { publicReleaseWhere } from '../zones/zones.service.js';
 
 type Tx = Prisma.TransactionClient;
 
-async function eligibleUsers(tx: Tx, ids: string[], kind: 'radar' | 'price', adultOnly: boolean) {
+export async function eligibleUsers(tx: Tx, ids: string[], kind: 'radar' | 'price', adultOnly: boolean) {
   if (!ids.length || !(await isPaidPlanEnabled('xamukoPlus', tx))) return [];
   const now = new Date();
   const unique = [...new Set(ids)];
