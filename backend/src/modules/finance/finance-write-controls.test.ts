@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Prisma } from '../../generated/prisma/client.js';
 import {
   createManualConsumption, createProvider, createBudget, createInvoice, createPayment,
-  assertSupplierInvoiceCapacity,
+  assertSupplierInvoiceCapacity,validAmount,
 } from './finance.service.js';
 
 const authorized = { userId: '11111111-1111-1111-1111-111111111111',
@@ -71,4 +71,13 @@ test('la misma regla impide sobreasignar pagos nuevos y correcciones, sin contar
     {amountCop:500000,status:'CANCELLED'}));
   assert.doesNotThrow(()=>assertSupplierInvoiceCapacity(invoice,existing,
     {id:'p-1',amountCop:70000,status:'CANCELLED'}));
+});
+
+test('COP conserva exactamente dos decimales; USD admite cuatro sin redondeos silenciosos',()=>{
+  assert.doesNotThrow(()=>validAmount(10000.01));
+  assert.doesNotThrow(()=>validAmount(0.0001,4));
+  assert.throws(()=>validAmount(0.001),(e:any)=>e.code==='FINANCIAL_AMOUNT_PRECISION');
+  assert.throws(()=>validAmount(0.00001,4),(e:any)=>e.code==='FINANCIAL_AMOUNT_PRECISION');
+  assert.throws(()=>validAmount(1000000000000),(e:any)=>e.code==='FINANCIAL_AMOUNT_PRECISION');
+  assert.throws(()=>validAmount(Number.POSITIVE_INFINITY),(e:any)=>e.code==='INVALID_FINANCIAL_AMOUNT');
 });
