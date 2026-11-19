@@ -253,9 +253,9 @@ export function DashboardPage() {
     let active = true;
     setProUnlocked(null);
     if (isPreview || !realBusiness || !business.id) return () => { active = false; };
-    void businessApi.getCatalogLimits(business.id).then(result => { if (active) setProUnlocked(result.plan === "PRO"); }).catch(() => { if (active) setProUnlocked(null); });
+    void businessApi.getCatalogLimits(business.id).then(result => { if (active) setProUnlocked(proEnabled && result.plan === "PRO"); }).catch(() => { if (active) setProUnlocked(null); });
     return () => { active = false; };
-  }, [business.id, isPreview, realBusiness]);
+  }, [business.id, isPreview, realBusiness, proEnabled]);
 
   useEffect(() => {
     let active = true;
