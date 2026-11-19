@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import { PAID_PLAN_MONTHLY_COP, formatCopPrice } from '@wit/utils';
 import { parsePlusTarget, searchHref } from './userPlusService';
 
 const uuid = '12345678-1234-4234-8234-123456789abc';
+describe('Precios de los planes Xamuko en COP', () => {
+  it('conserva precios mensuales aprobados y formato colombiano', () => {
+    expect(PAID_PLAN_MONTHLY_COP.businessPro).toBe(29900);
+    expect(PAID_PLAN_MONTHLY_COP.xamukoPlus).toBe(4900);
+    expect(formatCopPrice(PAID_PLAN_MONTHLY_COP.businessPro)).toBe('$29.900');
+    expect(formatCopPrice(PAID_PLAN_MONTHLY_COP.xamukoPlus)).toBe('$4.900');
+  });
+});
+
 describe('Xamuko Plus: enlaces seguros para colecciones, precios y comparador', () => {
   it('acepta identificadores públicos correctos y enlaces internos de negocios', () => {
     expect(parsePlusTarget('/business/' + uuid)).toEqual({ targetType: 'BUSINESS', targetId: uuid });
