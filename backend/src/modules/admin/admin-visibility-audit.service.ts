@@ -87,3 +87,59 @@ export async function listAdminVisibilityAudit(query: {
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
 }
+
+/**
+ * Security-access audit: expose only an explicit allowlist of fields.
+ * Never return AuditLog JSON payloads, token material or user identifiers.
+ */
+const securityActionGroups = {
+  ALL: ['ADMIN_ROLE_ASSIGNED', 'ADMIN_ROLE_REVOKED', 'ADMIN_PERMISSION_GRANTED', 'ADMIN_PERMISSION_REVOKED', 'FINANCE_PERMISSION_GRANTED', 'FINANCE_PERMISSION_REVOKED'],
+  ROLE: ['ADMIN_ROLE_ASSIGNED', 'ADMIN_ROLE_REVOKED'],
+  PERMISSION: ['ADMIN_PERMISSION_GRANTED', 'ADMIN_PERMISSION_REVOKED', 'FINANCE_PERMISSION_GRANTED', 'FINANCE_PERMISSION_REVOKED'],
+} as const;
+function safeSecurityPayload(state: Prisma.JsonValue) {
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return null;
+  const userId = typeof state.userId === 'string' ? state.userId : null;
+  const role = state.role === 'ADMIN' || state.role === 'SUPER_ADMIN' ? state.role : null;
+  const permission = typeof state.permission === 'string' &&
+    ['BUSINESSES_READ', 'CATALOG_READ', 'REPORTS_REVIEW', 'CONTENT_MODERATE', 'AUDIT_READ', 'ADMINS_MANAGE', 'PIONEER_MANAGE', 'FINANCE_READ', 'FINANCE_MANAGE'].includes(state.permission)
+    ? state.permission : null;
+  return { userId, role, permission };
+}
+export async function listAdminSecurityAudit(query: { page: number; kind: string }) {
+  const kind = (query.kind.trim() || 'ALL').toUpperCase();
+  if (!Object.prototype.hasOwnProperty.call(securityActionGroups, kind))
+    throw new AppError(400, 'ADMIN_AUDIT_FILTER_INVALID', 'Selecciona un tipo de actuación válido.');
+  const page = Number.isInteger(query.page) ? Math.max(1, Math.min(100000, query.page)) : 1;
+  const pageSize = 15;
+  const where: Prisma.AuditLogWhereInput = {
+    entityType: 'ADMIN_SECURITY',
+    action: { in: [...securityActionGroups[kind as keyof typeof securityActionGroups]] },
+  };
+  const [rows, total] = await prisma.$transaction([
+    prisma.auditLog.findMany({
+      where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: pageSize, skip: (page - 1) * pageSize,
+      select: { id: true, action: true, reason: true, createdAt: true, newState: true, previousState: true,
+        actor: { select: { displayName: true } } },
+    }),
+    prisma.auditLog.count({ where }),
+  ]);
+  const normalized = rows.map(row => ({
+    row, payload: safeSecurityPayload(row.newState) ?? safeSecurityPayload(row.previousState),
+  }));
+  const targets = await prisma.user.findMany({
+    where: { id: { in: [...new Set(normalized.map(item => item.payload?.userId).filter((id): id is string => Boolean(id)))] } },
+    select: { id: true, displayName: true },
+  });
+  const byId = new Map(targets.map(target => [target.id, target.displayName]));
+  return {
+    entries: normalized.map(({ row, payload }) => ({
+      id: row.id, action: row.action, reason: row.reason, createdAt: row.createdAt,
+      actor: row.actor?.displayName ?? null,
+      subject: payload?.userId ? byId.get(payload.userId) ?? 'Cuenta no disponible' : 'Cuenta no disponible',
+      role: payload?.role ?? null, permission: payload?.permission ?? null,
+    })),
+    pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+  };
+}
