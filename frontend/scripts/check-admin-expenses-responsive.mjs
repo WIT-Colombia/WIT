@@ -178,7 +178,7 @@ try{
         .waitFor({state:'visible',timeout:18000});
       await page.getByText('3 registros',{exact:true}).waitFor({state:'visible',timeout:16000});
       assert.equal(await page.locator('.afc-kpi').count(),6,device+': six grounded financial indicators');
-      assert.equal(await page.getByText('Sin conciliación bancaria').isVisible(),true,
+      assert.equal(await page.getByText('Sin conciliación bancaria',{exact:true}).isVisible(),true,
         device+': no invented banking verification');
       assert.equal(await page.getByText('Evolución de los gastos').isVisible(),true,
         device+': real interactive trend');
