@@ -10,10 +10,11 @@ export async function getAdminDashboardStats(now = new Date()) {
   });
   const liveBusiness = { deletionStatus: { not: 'DELETED' as const } };
   const activePro = {
+    plan: 'PRO' as const,
     status: 'ACTIVE' as const,
     revokedAt: null,
     startsAt: { lte: now },
-    OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+    OR: [{ expiresAt: { gt: now } }, { expiresAt: null, specialActivation: true }],
   };
   const soon = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
