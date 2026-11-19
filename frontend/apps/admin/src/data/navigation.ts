@@ -22,7 +22,7 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/billing', label: 'Ingresos y facturación', icon: 'card', group: 'finanzas', description: 'Consulta de fuentes reales de ingresos y contexto comercial sin inventar cobros.' },
     { path: '/transactions', label: 'Transacciones', icon: 'clock', group: 'finanzas', description: 'Registro real de pagos a proveedores con indicadores, filtros y auditoría.' },
     { path: '/refunds', label: 'Reembolsos', icon: 'refresh', group: 'finanzas', description: 'Expedientes de reembolso con seguimiento, permisos y auditoría; sin transferencias automáticas.' },
-    { path: '/financial-reports', label: 'Gastos tecnológicos', icon: 'chart', group: 'finanzas', description: 'Consulta de gastos tecnológicos desde API.' },
+    { path: '/financial-reports', label: 'Gastos y contabilidad', icon: 'chart', group: 'finanzas', description: 'Control real de consumos, facturas, pagos, presupuestos y auditoría.' }
   ] },
   { id: 'tecnologia', label: 'Operación tecnológica', items: [
     { path: '/service-status', label: 'Estado de servicios', icon: 'shield', group: 'tecnologia', description: 'Estado de servicios pendiente de integración.', pending: true },
