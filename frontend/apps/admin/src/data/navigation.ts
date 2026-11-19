@@ -25,9 +25,8 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/financial-reports', label: 'Gastos y contabilidad', icon: 'chart', group: 'finanzas', description: 'Control real de consumos, facturas, pagos, presupuestos y auditoría.' }
   ] },
   { id: 'tecnologia', label: 'Operación tecnológica', items: [
-    { path: '/service-status', label: 'Estado de servicios', icon: 'shield', group: 'tecnologia', description: 'Estado de servicios pendiente de integración.', pending: true },
-    { path: '/deployments', label: 'Despliegues', icon: 'box', group: 'tecnologia', description: 'Historial de despliegues pendiente de integración.', pending: true },
-    { path: '/needs', label: 'Necesidades', icon: 'search', group: 'tecnologia', description: 'Consulta de necesidades pendiente de API.', pending: true },
+    { path: '/service-status', label: 'Estado de servicios', icon: 'heart-pulse', group: 'tecnologia', description: 'Comprobación real de API y MySQL; seguimiento de incidentes y eventos sin uptime ficticio.' },
+    { path: '/deployments', label: 'Despliegues y mantenimiento', icon: 'layers', group: 'tecnologia', description: 'GitHub Actions verificable, programación de mantenimiento y necesidades tecnológicas.' },
   ] },
   { id: 'soporte', label: 'Atención y soporte', items: [
     { path: '/verifications', label: 'Verificaciones', icon: 'shield', group: 'soporte', description: 'Revisión documental de negocios.' },
