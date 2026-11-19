@@ -4,6 +4,7 @@ import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-or
 import { requireAdmin, adminFromRequest } from '../admin/admin-auth.service.js';
 import { financeSummary, createManualConsumption, createProvider, createBudget, createInvoice, createPayment, listFinanceRecords, acknowledgeAlert, updateManualConsumption, reconcileFinancials, updateProvider, updateBudget, updateInvoice, updatePayment, listFinancialAudit } from './finance.service.js';
 import { createAwsFreeTierReader, fetchFreeTierUsage, type FreeTierUsage } from './aws-free-tier.js';
+import { listAdminFinancialTransactions } from './admin-financial-transactions.service.js';
 
 export const financeRouter = Router();
 let awsSyncRunning = false;
@@ -17,6 +18,16 @@ financeRouter.get('/summary', requireAdmin('FINANCE_READ'), async (req, res, nex
     const end = req.query.end ? new Date(String(req.query.end)) : new Date(now.getFullYear(), now.getMonth() + 1, 0);
     if (Number.isNaN(start.valueOf()) || Number.isNaN(end.valueOf())) return res.status(400).json({ code: 'INVALID_PERIOD', message: 'El periodo financiero no es válido.' });
     res.json(await financeSummary(start, end));
+  } catch (error) { next(error); }
+});
+financeRouter.get('/transactions', requireAdmin('FINANCE_READ'), async (req, res, next) => {
+  try {
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await listAdminFinancialTransactions({
+      page: Number(req.query.page ?? 1), pageSize: Number(req.query.pageSize ?? 12),
+      q: String(req.query.q ?? ''), status: String(req.query.status ?? ''),
+      from: String(req.query.from ?? ''), to: String(req.query.to ?? ''),
+    }));
   } catch (error) { next(error); }
 });
 financeRouter.get('/records', requireAdmin('FINANCE_READ'), async (req, res, next) => { try { res.json(await listFinanceRecords(Number(req.query.page) || 1, Number(req.query.pageSize) || 50)); } catch (error) { next(error); } });
