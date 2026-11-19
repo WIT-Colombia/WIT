@@ -1,4 +1,5 @@
 import { publicReleaseWhere } from '../zones/zones.service.js';
+import { isPaidPlanEnabled } from '../admin/paid-plans.service.js';
 import { Prisma, type PrismaClient } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
@@ -46,7 +47,7 @@ async function findMemberBusiness(userId: string, businessId: string) {
 async function limits(db: Db, businessId: string) {
   const now = new Date();
   const pro = await db.$queryRaw<Array<{ id: string }>>`SELECT id FROM BusinessSubscription WHERE businessId = ${businessId} AND plan = 'PRO' AND status = 'ACTIVE' AND startsAt <= ${now} AND revokedAt IS NULL AND (expiresAt > ${now} OR (expiresAt IS NULL AND specialActivation = true)) ORDER BY startsAt DESC, createdAt DESC LIMIT 1`;
-  const plan: PromotionPlan = pro.length ? 'PRO' : 'BASIC';
+  const plan: PromotionPlan = pro.length && await isPaidPlanEnabled('businessPro', db) ? 'PRO' : 'BASIC';
   const entitlements = promotionEntitlements(plan);
   const [rows, totalViews] = await Promise.all([
     db.businessPromotion.findMany({ where: { businessId, deletedAt: null }, select: { id: true, active: true, startsAt: true, endsAt: true, recurrence: true, recurrenceUntil: true } }),
