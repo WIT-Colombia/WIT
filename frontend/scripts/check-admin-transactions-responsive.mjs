@@ -129,18 +129,22 @@ try {
         const input=form.querySelector('input[type="search"]');
         const controls=[...form.querySelectorAll('input,select')].map(el=>({
           height:el.getBoundingClientRect().height,font:parseFloat(getComputedStyle(el).fontSize),
+          type:el.getAttribute('type')??'select',
         }));
+        const searchWrapper=form.querySelector('.atx-search-wrap').getBoundingClientRect();
         const table=document.querySelector('.atx-table-scroll'),cards=document.querySelector('.atx-mobile-records');
         return {viewport:innerWidth,scroll:document.documentElement.scrollWidth,
           mainOverflow:main.scrollWidth-main.clientWidth,formOverflow:form.scrollWidth-form.clientWidth,
-          controls,searchFont:parseFloat(getComputedStyle(input).fontSize),
+          controls,searchWrapperHeight:searchWrapper.height,
+          searchFont:parseFloat(getComputedStyle(input).fontSize),
           tableVisible:getComputedStyle(table).display!=='none',
           cardsVisible:getComputedStyle(cards).display!=='none'};
       });
       assert.ok(geometry.scroll<=geometry.viewport+2&&geometry.formOverflow<=2&&geometry.mainOverflow<=2,
         device+': no horizontal page or filter overflow '+JSON.stringify(geometry));
-      assert.ok(geometry.controls.every(c=>c.height>=47&&c.font>=14),
-        device+': desktop and iPad inputs readable '+JSON.stringify(geometry));
+      assert.ok(geometry.searchWrapperHeight>=47&&geometry.controls.every(c=>
+        c.font>=14 && (c.type==='search'?c.height>=24:c.height>=47)),
+        device+': all input text legible and complete search hit-target >=47px '+JSON.stringify(geometry));
       assert.equal(geometry.cardsVisible,viewport.width<=1100,device+': cards for iPad and mobile');
       assert.equal(geometry.tableVisible,viewport.width>1100,device+': table for desktop');
       await page.getByLabel('Filtrar por estado de transacción').selectOption('PENDING');
