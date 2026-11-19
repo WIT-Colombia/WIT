@@ -7,7 +7,7 @@ import {
 
 test('las solicitudes de reembolso solo tienen estados de seguimiento, nunca PAID ni REFUNDED',()=>{
   assert.deepEqual(refundCaseStatuses,['OPEN','IN_REVIEW','NEEDS_INFORMATION','CLOSED']);
-  assert.deepEqual(normalizeRefundCaseFilters({}),{page:1,pageSize:12,status:'',q:''});
+  assert.deepEqual(normalizeRefundCaseFilters({}),{page:1,pageSize:12,status:'',q:'',from:'',to:'',fromDate:null,endExclusive:null});
   assert.equal(normalizeRefundCaseFilters({status:'in_review'}).status,'IN_REVIEW');
   assert.throws(()=>normalizeRefundCaseFilters({status:'REFUNDED'}),
     (e:any)=>e.code==='REFUND_CASE_STATUS_INVALID');
@@ -53,4 +53,15 @@ test('las decisiones administrativas exigen motivo y jamás aceptan estado de pa
     (e:any)=>e.code==='REFUND_CASE_INVALID_INPUT');
   assert.throws(()=>validateRefundCaseDecision({status:'PAID',reason:'Se verificó con el banco externo.'}),
     (e:any)=>e.code==='REFUND_CASE_STATUS_INVALID');
+});
+
+test('filtro por radicación usa límites UTC inclusivos y rechaza fechas imposibles',()=>{
+  const filters=normalizeRefundCaseFilters({status:'OPEN',from:'2026-11-01',to:'2026-11-18'});
+  assert.deepEqual(refundCaseWhere(filters),{status:'OPEN',
+    createdAt:{gte:new Date('2026-11-01T00:00:00.000Z'),lt:new Date('2026-11-19T00:00:00.000Z')}});
+  assert.throws(()=>normalizeRefundCaseFilters({from:'2026-02-30'}),
+    (e:any)=>e.code==='REFUND_CASE_DATE_INVALID');
+  assert.throws(()=>normalizeRefundCaseFilters({from:'2026-11-20',to:'2026-11-01'}),
+    (e:any)=>e.code==='REFUND_CASE_DATE_INVALID');
+  assert.deepEqual(refundCaseWhere(normalizeRefundCaseFilters({})),{});
 });
