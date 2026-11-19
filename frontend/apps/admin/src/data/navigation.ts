@@ -38,9 +38,10 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/suggestions', label: 'Sugerencias', icon: 'message', group: 'soporte', description: 'Gestión de sugerencias recibidas desde Business.' },
   ] },
   { id: 'juridica', label: 'Jurídica y corporativa', items: [
-    { path: '/legal-documents', label: 'Documentos legales', icon: 'box', group: 'juridica', description: 'Archivo privado de documentos legales y contratos.' },
-    { path: '/corporate', label: 'Estatutos', icon: 'box', group: 'juridica', description: 'Archivo privado de estatutos, reformas y actas.' },
-    { path: '/legal-cases', label: 'Procesos judiciales', icon: 'shield', group: 'juridica', description: 'Archivo documental de procesos y expedientes judiciales.' },
+    { path: '/legal-overview', label: 'Centro jurídico', icon: 'scales', group: 'juridica', description: 'Vista general verificable de los archivos jurídicos y guía para su gestión.' },
+    { path: '/corporate', label: 'Sociedad y gobierno', icon: 'book-open', group: 'juridica', description: 'Estatutos, actas, decisiones y soportes societarios en archivo privado.' },
+    { path: '/legal-documents', label: 'Contratos y documentos', icon: 'file', group: 'juridica', description: 'Contratos y documentos legales con almacenamiento privado y auditoría.' },
+    { path: '/legal-cases', label: 'Expedientes y procesos', icon: 'shield', group: 'juridica', description: 'Soportes de reclamaciones y procesos; no sustituye el seguimiento judicial.' },
   ] },
   { id: 'configuracion', label: 'Configuración y seguridad', items: [
     { path: '/parameters', label: 'Parámetros', icon: 'settings', group: 'configuracion', description: 'Parámetros pendientes de API.', pending: true },
