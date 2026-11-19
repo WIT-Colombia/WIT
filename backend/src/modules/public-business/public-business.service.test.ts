@@ -330,7 +330,9 @@ test('Virtual: todos los destacados preceden a pioneros y negocios cercanos sin 
     business('pro-three', 'Destacado tres', 10, true),
     business('pro-one', 'Destacado uno', 9, true),
   ];
+  let proEnabled = true;
   const db = {
+    paidPlanAvailability: { findUnique: async () => ({ enabled: proEnabled }) },
     business: { findMany: async ({ where }: any) => {
       assert.deepEqual(where.modalities, { some: { type: 'VIRTUAL', status: 'ACTIVE' } });
       return source;
@@ -355,6 +357,17 @@ test('Virtual: todos los destacados preceden a pioneros y negocios cercanos sin 
   assert.equal(first.businesses.every(item => item.isFeatured), true);
   assert.equal(second.businesses[0].isFeatured, true);
   assert.equal(second.businesses[1].isFeatured, false);
+
+  // A global suspension removes every PRO badge and public ranking advantage
+  // without changing or deleting any recorded subscription.
+  proEnabled = false;
+  const suspended = await searchPublicUniversal(parseUniversalSearchInput({
+    scope: 'virtual', latitude: '3.539', longitude: '-76.303',
+    radiusKm: '1', businessPageSize: '10',
+  }), db);
+  assert.equal(suspended.businesses.length, 6);
+  assert.equal(suspended.businesses.every(item => !item.isFeatured && item.plan === 'free'), true);
+  assert.equal(source.filter(item => item.subscriptions.length > 0).length, 4);
 });
 
 test('Virtual: productos y servicios se ordenan por precio efectivo antes de paginar; sin precio van al final', async () => {
