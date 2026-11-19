@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AdminPageHeading } from '../components/AdminPageHeading';
-import { FinanceSectionNav } from '../components/FinanceSectionNav';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
 import { can, getSession } from '../services/adminService';
@@ -287,7 +286,6 @@ export function AdminRefundsPage(){
         {canManage&&<button className="arf-btn arf-btn-primary" type="button" onClick={()=>setCreating(true)}>
           <Icon name="file" size={16}/> Nueva solicitud</button>}
       </div>}/>
-    <FinanceSectionNav/>
     <section className="arf-scope" aria-label="Alcance del módulo de reembolsos">
       <span className="arf-scope-icon"><Icon name="shield" size={25}/></span>
       <div><strong>Gestión de solicitudes; sin devolución automática de dinero</strong>
@@ -397,17 +395,6 @@ export function AdminRefundsPage(){
       <p className="arf-directory-footer"><Icon name="shield" size={17}/>
         Los cuatro indicadores superiores cuentan expedientes administrativos, no operaciones bancarias.
         Exportar incluye únicamente la página consultada. Ninguna decisión ejecuta transferencias.</p>
-    </section>
-    <section className="arf-related" aria-label="Fuentes relacionadas">
-      <article><span><Icon name="clock" size={22}/></span><div><h3>Transacciones</h3>
-        <p>Movimientos existentes de pagos a proveedores. Una cancelación no es un reembolso.</p>
-        <Link to="/transactions">Consultar transacciones <Icon name="arrow" size={16}/></Link></div></article>
-      <article><span><Icon name="card" size={22}/></span><div><h3>Ingresos y facturación</h3>
-        <p>Consulta qué fuentes comerciales están disponibles y cuáles necesitan integración.</p>
-        <Link to="/billing">Ver control comercial <Icon name="arrow" size={16}/></Link></div></article>
-      <article><span><Icon name="message" size={22}/></span><div><h3>Atención y soporte</h3>
-        <p>Solicitudes de asistencia de usuarios y negocios, sin clasificarlas automáticamente como reembolsos.</p>
-        <Link to="/support">Ir a soporte <Icon name="arrow" size={16}/></Link></div></article>
     </section>
     {creating&&canManage&&<NewRefundCase onClose={()=>setCreating(false)} onComplete={finish}/>}
     {selected&&<RefundCaseDetail id={selected} canManage={canManage} onClose={()=>setSelected(null)} onComplete={finish}/>}
