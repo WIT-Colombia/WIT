@@ -104,11 +104,17 @@ export default function Plus() {
     return () => { clearInterval(timer); window.removeEventListener('focus', refresh); };
   }, [reload, user?.id]);
 
-  async function run(task: () => Promise<unknown>, success = 'Cambios guardados.') {
+  async function run(task: () => Promise<unknown>, success = 'Cambios guardados.'): Promise<boolean> {
     setBusy(true); setError(''); setNotice('');
-    try { await task(); await reload(); setNotice(success); }
-    catch (cause) { setError(cause instanceof Error ? cause.message : 'No pudimos guardar los cambios.'); }
-    finally { setBusy(false); }
+    try {
+      await task();
+      try { await reload(); } catch { setError('El cambio se guardó, pero no se pudo actualizar la información.'); }
+      setNotice(success);
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No pudimos guardar los cambios.');
+      return false;
+    } finally { setBusy(false); }
   }
   const routeBusinesses = useMemo(() => routeIds.flatMap(id => {
     const item = places.find(b => b.id === id);
@@ -202,7 +208,7 @@ export default function Plus() {
 
       <section className="plus-panel" id="collections">
         <div className="plus-heading"><div><span>04 · ORGANIZACIÓN</span><h2>Tus colecciones</h2><p>Listas personales para guardar negocios, productos y servicios.</p></div></div>
-        <form className="plus-form" onSubmit={event => { event.preventDefault(); if (collectionName.trim()) void run(() => createPlusCollection(collectionName.trim()), 'Colección creada.').then(() => setCollectionName('')); }}>
+        <form className="plus-form" onSubmit={event => { event.preventDefault(); if (collectionName.trim()) void run(() => createPlusCollection(collectionName.trim()), 'Colección creada.').then(ok => { if (ok) setCollectionName(''); }); }}>
           <label>Nombre de la colección<input value={collectionName} onChange={event => setCollectionName(event.target.value)} maxLength={80} placeholder="Ej. Mis cafés favoritos" required/></label><button className="plus-button" disabled={busy}>Crear colección</button>
         </form>
         <div className="plus-list">{data?.collections.map(col => <article key={col.id} className="plus-collection">
@@ -210,7 +216,7 @@ export default function Plus() {
           <form className="plus-form plus-form-inline" onSubmit={event => {
             event.preventDefault(); const target = parsePlusTarget(collectionValue);
             if (!target) { setError('Copia el enlace del negocio, producto o servicio en Xamuko.'); return; }
-            void run(() => addPlusCollectionItem(col.id, target), 'Guardado en tu colección.').then(() => setCollectionValue(''));
+            void run(() => addPlusCollectionItem(col.id, target), 'Guardado en tu colección.').then(ok => { if (ok) setCollectionValue(''); });
           }}><label>Enlace para agregar<input value={collectionValue} onChange={event => setCollectionValue(event.target.value)} placeholder="/business/… o /product/…" required/></label><button type="submit" disabled={busy}>Agregar</button></form>
           <div className="plus-collection-items">{col.items.map(item => <div key={item.id}>
             {item.href ? <Link to={item.href}>{item.name} ›</Link> : <span>{item.name}</span>}
@@ -227,7 +233,7 @@ export default function Plus() {
           void run(() => createPlusSearch({
             title: savedTitle.trim(), query: savedQuery.trim(), category: savedCategory.trim() || null,
             city: currentCity, openNow: savedOpenNow, minRating: null, sort: 'recommended',
-          }), 'Búsqueda guardada.').then(() => { setSavedTitle(''); setSavedQuery(''); });
+          }), 'Búsqueda guardada.').then(ok => { if (ok) { setSavedTitle(''); setSavedQuery(''); } });
         }}>
           <label>Nombre<input value={savedTitle} maxLength={80} onChange={event => setSavedTitle(event.target.value)} placeholder="Ej. Panaderías cerca" required/></label>
           <label>Buscar<input value={savedQuery} maxLength={160} onChange={event => setSavedQuery(event.target.value)} placeholder="Qué quieres encontrar" required/></label>
