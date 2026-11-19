@@ -6,9 +6,9 @@ const uuid = '12345678-1234-4234-8234-123456789abc';
 describe('Precios de los planes Xamuko en COP', () => {
   it('conserva precios mensuales aprobados y formato colombiano', () => {
     expect(PAID_PLAN_MONTHLY_COP.businessPro).toBe(29900);
-    expect(PAID_PLAN_MONTHLY_COP.xamukoPlus).toBe(4900);
+    expect(PAID_PLAN_MONTHLY_COP.xamukoPlus).toBe(3900);
     expect(formatCopPrice(PAID_PLAN_MONTHLY_COP.businessPro)).toBe('$29.900');
-    expect(formatCopPrice(PAID_PLAN_MONTHLY_COP.xamukoPlus)).toBe('$4.900');
+    expect(formatCopPrice(PAID_PLAN_MONTHLY_COP.xamukoPlus)).toBe('$3.900');
   });
 });
 
