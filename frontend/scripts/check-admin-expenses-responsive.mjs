@@ -177,6 +177,10 @@ try{
       await page.getByRole('heading',{name:'Gastos y contabilidad',exact:true})
         .waitFor({state:'visible',timeout:18000});
       await page.getByText('3 registros',{exact:true}).waitFor({state:'visible',timeout:16000});
+      const financeNavigation=page.getByRole('navigation',{name:'Pestañas de Finanzas y contabilidad'});
+      assert.equal(await financeNavigation.getByRole('link').count(),4,device+': all four finance modules linked');
+      assert.equal(await financeNavigation.getByRole('link',{name:'Gastos y contabilidad',exact:true}).getAttribute('aria-current'),
+        'page',device+': correct active financial tab');
       assert.equal(await page.locator('.afc-kpi').count(),6,device+': six grounded financial indicators');
       assert.equal(await page.getByText('Sin conciliación bancaria',{exact:true}).isVisible(),true,
         device+': no invented banking verification');
