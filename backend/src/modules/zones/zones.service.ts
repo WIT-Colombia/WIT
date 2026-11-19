@@ -70,8 +70,8 @@ export function releaseWhere(records: ZoneRecord[], now = colombiaNow()): Prisma
     { location: { is: { countryCode: 'CO', OR: conditions } } },
   ] };
 }
-export async function publicReleaseWhere(now = colombiaNow()) {
-  const records = await prisma.zoneLaunch.findMany({ select: {
+export async function publicReleaseWhere(now = colombiaNow(), db: Pick<typeof prisma, 'zoneLaunch'> = prisma) {
+  const records = await db.zoneLaunch.findMany({ select: {
     scope: true, code: true, state: true, opensAt: true,
   } });
   return releaseWhere(records, now);
