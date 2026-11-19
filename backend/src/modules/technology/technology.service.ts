@@ -225,7 +225,9 @@ export async function getTechnologyStatus(now=new Date()){
     recentEvents:[],counts:null,
     description:'API respondió, pero la base de datos no estuvo disponible. No se certifica disponibilidad histórica.',
   };
-  const since=new Date(now.getTime()-30*86400000);
+  // Exactly 30 UTC calendar dates, including today. The chart and KPI use the same window.
+  const baseDay=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
+  const since=new Date(baseDay-29*86400000);
   const [grouped,incidents,maintenance,events,rawTrend,upcomingCount,incident30dCount]=await Promise.all([
     prisma.technologyCase.groupBy({by:['kind','status'],_count:{_all:true}}),
     prisma.technologyCase.findMany({where:{kind:'INCIDENT'},select:caseSelect,
