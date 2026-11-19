@@ -137,7 +137,7 @@ describe('Sidebar aprobado de Admin', () => {
     expect(group('plataforma')).toHaveAttribute('open');
     expect(sidebar().querySelector('a.active')).toHaveAttribute('href', '/businesses');
     toggle('finanzas');
-    fireEvent.click(within(sidebar()).getByText('Gastos tecnológicos'));
+    fireEvent.click(within(sidebar()).getByText('Gastos y contabilidad'));
     expect(group('finanzas')).toHaveAttribute('open');
     expect(sidebar().querySelector('a.active')).toHaveAttribute('href', '/financial-reports');
   });
