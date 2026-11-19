@@ -19,7 +19,7 @@ export function BottomNavigation() {
   function isActive(path: string) {
     if (path === "/home") return pathname === "/home";
     if (path === "/favorites") return pathname === "/favorites";
-    if (path === "/profile") return ["/profile", "/settings", "/notifications", "/reviews", "/account", "/change-password"].includes(pathname) || pathname.startsWith("/legal/");
+    if (path === "/profile") return ["/profile", "/settings", "/notifications", "/reviews", "/account", "/change-password", "/plus"].includes(pathname) || pathname.startsWith("/legal/");
     return false;
   }
   return <nav className="user-bottom-nav" aria-label="Navegación principal móvil">
