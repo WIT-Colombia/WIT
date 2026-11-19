@@ -1,9 +1,9 @@
-import type { SVGProps } from 'react';
+import type { ReactNode, SVGProps } from 'react';
 
 export type PlusIconName = 'crown' | 'radar' | 'price' | 'compare' | 'collection' | 'route' | 'ad-free' | 'check' | 'arrow-right';
 
 export function PlusIcon({ name, size = 24, ...rest }: Omit<SVGProps<SVGSVGElement>, 'name'> & { name: PlusIconName; size?: number }) {
-  const shapes: Record<PlusIconName, React.ReactNode> = {
+  const shapes: Record<PlusIconName, ReactNode> = {
     crown: <><path d="m2.5 7 4 4 5.5-7 5.5 7 4-4-2 12h-15Z"/><path d="M5 22h14"/></>,
     radar: <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><path d="M12 12 18 6"/></>,
     price: <><path d="M4 5v14h16"/><path d="m6 8 5 5 4-4 4 3"/><path d="M19 9v3h-3"/></>,
