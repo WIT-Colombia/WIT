@@ -524,6 +524,86 @@ export function listExpenseReportLedger(filters:{
   if(filters.providerId)query.set('providerId',filters.providerId);
   return request<ExpenseLedgerPage>('/admin/finance/expenses/ledger?'+query.toString());
 }
+export type TechnologyKind='INCIDENT'|'MAINTENANCE'|'NEED';
+export type TechnologyStatus='OPEN'|'PLANNED'|'IN_PROGRESS'|'BLOCKED'|'RESOLVED'|'COMPLETED'|'CANCELLED';
+export type TechnologySeverity='LOW'|'MEDIUM'|'HIGH'|'CRITICAL';
+export type TechnologyCase={
+  id:string;kind:TechnologyKind;status:TechnologyStatus;severity:TechnologySeverity;
+  title:string;description:string;component:string|null;
+  scheduledStartAt:string|null;scheduledEndAt:string|null;completedAt:string|null;
+  createdById:string;updatedById:string|null;createdAt:string;updatedAt:string;
+};
+export type TechnologyEvent={
+  id:string;caseId:string;actorUserId:string;action:'CREATED'|'STATUS_CHANGED'|'NOTE';
+  fromStatus:TechnologyStatus|null;toStatus:TechnologyStatus|null;
+  reason:string;createdAt:string;case?:{title:string;kind:TechnologyKind};
+};
+export type TechnologyCasePage={
+  cases:TechnologyCase[];pagination:{page:number;pageSize:number;total:number;totalPages:number};
+  scope:'ADMIN_TECHNOLOGY_CASES';
+};
+export type TechnologyServicesStatus={
+  scope:'LIVE_PROBES_ONLY';checkedAt:string;
+  components:Array<{id:string;name:string;detail:string;status:'HEALTHY'|'UNAVAILABLE'|'UNMONITORED';
+    source:string|null;latencyMs:number|null;checkedAt:string|null}>;
+  live:{checked:number;healthy:number;unavailable:number};
+  uptime30Days:null;processUptimeSeconds:number;caseDataAvailable:boolean;
+  counts:{registeredIncidents30d:number;openIncidents:number;upcomingMaintenance:number;openNeeds:number;
+    totalIncidents:number;totalMaintenance:number;totalNeeds:number}|null;
+  incidentTrend:Array<{date:string;count:number}>;
+  incidents:TechnologyCase[];upcomingMaintenance:TechnologyCase[];
+  recentEvents:TechnologyEvent[];description:string;
+};
+export type TechnologyDeployRun={
+  id:number;title:string;kind:'CI'|'RELEASE'|'OTHER';
+  branch:string|null;commit:string;createdAt:string;updatedAt:string;
+  workflowStatus:string;workflowConclusion:string|null;
+  deploymentStatus:string;url:string;runNumber:number;
+};
+export type TechnologyDeployments={
+  connected:boolean;source:'GITHUB_ACTIONS';branch:string;checkedAt:string;
+  actionsUrl:string;items:TechnologyDeployRun[];
+  summary:{runs:number;ciPassed:number;ciFailed:number;
+    confirmedDeployments:number;skippedDeployments:number}|null;
+  limitation:string;
+};
+export function getTechnologyServicesStatus() {
+  return request<TechnologyServicesStatus>('/admin/technology/status');
+}
+export function getTechnologyDeployments() {
+  return request<TechnologyDeployments>('/admin/technology/deployments');
+}
+export function listTechnologyCases(filters:{
+  kind?:TechnologyKind|'ALL';status?:TechnologyStatus|'ALL';q?:string;page?:number;
+}={}) {
+  const query=new URLSearchParams({page:String(filters.page??1)});
+  if(filters.kind&&filters.kind!=='ALL')query.set('kind',filters.kind);
+  if(filters.status&&filters.status!=='ALL')query.set('status',filters.status);
+  if(filters.q)query.set('q',filters.q);
+  return request<TechnologyCasePage>('/admin/technology/cases?'+query.toString());
+}
+export function getTechnologyCase(id:string) {
+  return request<{case:TechnologyCase;history:TechnologyEvent[]}>(
+    '/admin/technology/cases/'+encodeURIComponent(id));
+}
+export function createTechnologyCase(input:{
+  kind:TechnologyKind;severity:TechnologySeverity;title:string;description:string;
+  component?:string;scheduledStartAt?:string;scheduledEndAt?:string;
+}) {
+  return request<{case:TechnologyCase}>('/admin/technology/cases',{
+    method:'POST',body:JSON.stringify(input),
+  });
+}
+export function transitionTechnologyCase(id:string,status:TechnologyStatus,reason:string){
+  return request<{case:TechnologyCase}>('/admin/technology/cases/'+encodeURIComponent(id)+'/status',{
+    method:'PATCH',body:JSON.stringify({status,reason}),
+  });
+}
+export function addTechnologyCaseNote(id:string,reason:string){
+  return request<{event:TechnologyEvent}>('/admin/technology/cases/'+encodeURIComponent(id)+'/notes',{
+    method:'POST',body:JSON.stringify({reason}),
+  });
+}
 export type FinanceSummary = { period: { start: string; end: string }; totals: { usd: number; cop: number }; billing?: { costExplorer: { unblendedUsd: number; netUnblendedUsd: number; lastUpdatedAt: string | null; provisional: boolean }; projectEstimate: { usd: number; lastUpdatedAt: string } | null; promotionalCredits: { usedUsd: number; remainingUsd: number; lastUpdatedAt: string } | null; amountDue: { usd: number; lastUpdatedAt: string } | null; notes: string[] }; budgets: Array<{ id: string; name: string; amountCop: string | number; provider?: { name: string } | null }>; providers: Array<{ id: string; name: string; kind: string; services: Array<{ id: string; name: string; sku?: string | null }> }>; consumptions: Array<{ id: string; externalId: string; amountUsd: string | number; amountCop: string | number; creditsUsd: string | number; dataKind: string; periodStart: string; periodEnd: string; provider: { name: string }; service?: { name: string } | null }>; lastSync: Array<{ id: string; status: string; startedAt: string; finishedAt?: string | null; provider: { name: string } }> };
 export function getFinanceSummary(start?: string, end?: string) { const query = start && end ? `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}` : ''; return request<FinanceSummary>(`/admin/finance/summary${query}`); }
 export type FreeTierUsage = { service: string; usageType: string; actual: number; forecasted: number | null; limit: number | null; unit: string; region: string; freeTierType: string };
