@@ -117,9 +117,11 @@ export async function createPromotion(userId: string, identifier: string, input:
     const access = await getPromotionLimits(tx, business.id);
     validatePromotion({ type: input.type, originalPrice: input.originalPrice, promotionalPrice: input.promotionalPrice, startsAt, endsAt, recurrence: input.recurrence, recurrenceUntil }, access.plan);
     if (access.activeCount >= access.maxActive) throw new AppError(409, 'PROMOTION_LIMIT_REACHED', `Tu plan permite hasta ${access.maxActive} publicaciones activas.`);
+    let relatedAdultOnly = false;
     if (input.relatedOfferId) {
-      const related = await tx.businessOffer.findFirst({ where: { id: input.relatedOfferId, businessId: business.id, deletedAt: null }, select: { id: true } });
+      const related = await tx.businessOffer.findFirst({ where: { id: input.relatedOfferId, businessId: business.id, deletedAt: null }, select: { id: true, adultOnly: true } });
       if (!related) throw new AppError(422, 'RELATED_CATALOG_ITEM_NOT_FOUND', 'El producto o servicio seleccionado no pertenece a este negocio.');
+      relatedAdultOnly = related.adultOnly;
       await ensureRelatedOfferAvailable(tx, business.id, input.relatedOfferId);
     }
     const row = await tx.businessPromotion.create({ data: {
@@ -132,7 +134,7 @@ export async function createPromotion(userId: string, identifier: string, input:
       && business.publicationStatus === 'PUBLISHED' && business.visibilityStatus === 'VISIBLE') {
       await notifyPlusFollowers(tx, { businessId: business.id, sourceId: row.id,
         businessName: business.name, itemName: row.title,
-        sourceType: 'PLUS_NEW_PROMOTION', adultOnly: business.adultOnly });
+        sourceType: 'PLUS_NEW_PROMOTION', adultOnly: business.adultOnly || relatedAdultOnly });
     }
     return row;
   });
