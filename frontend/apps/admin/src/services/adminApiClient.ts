@@ -481,6 +481,39 @@ export type FinanceSummary = { period: { start: string; end: string }; totals: {
 export function getFinanceSummary(start?: string, end?: string) { const query = start && end ? `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}` : ''; return request<FinanceSummary>(`/admin/finance/summary${query}`); }
 export type FreeTierUsage = { service: string; usageType: string; actual: number; forecasted: number | null; limit: number | null; unit: string; region: string; freeTierType: string };
 export function getAwsFreeTierUsage(service?: string) { return request<{ available: boolean; reason?: string; usages: FreeTierUsage[]; lastUpdatedAt: string | null }>(`/admin/finance/aws/free-tier${service ? `?service=${encodeURIComponent(service)}` : ''}`); }
+export type AdminFinancialPaymentStatus = 'PENDING' | 'PAID' | 'CANCELLED';
+export type AdminFinancialTransaction = {
+  id: string; status: AdminFinancialPaymentStatus; amountCop: string;
+  reference: string | null; createdAt: string; paidAt: string | null;
+  invoice: {
+    id: string; externalId: string; invoiceNumber: string | null; amountCop: string;
+    documentUrl: string | null; provider: { id: string; name: string };
+  };
+};
+export type AdminFinancialTransactionsPage = {
+  generatedAt: string; scope: 'VENDOR_PAYMENTS'; currency: 'COP';
+  totals: {
+    records: number;
+    PAID: { count: number; amountCop: number };
+    PENDING: { count: number; amountCop: number };
+    CANCELLED: { count: number; amountCop: number };
+  };
+  transactions: AdminFinancialTransaction[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+  definition: string;
+};
+export function listAdminFinancialTransactions(filters: {
+  page?: number; q?: string; status?: string; from?: string; to?: string;
+} = {}) {
+  const query = new URLSearchParams({
+    page: String(filters.page ?? 1), pageSize: '12',
+  });
+  if (filters.q) query.set('q', filters.q);
+  if (filters.status) query.set('status', filters.status);
+  if (filters.from) query.set('from', filters.from);
+  if (filters.to) query.set('to', filters.to);
+  return request<AdminFinancialTransactionsPage>('/admin/finance/transactions?' + query.toString());
+}
 export function getFinanceRecords() { return request<{ providers: any[]; budgets: any[]; invoices: any[]; payments: any[]; alerts: any[] }>('/admin/finance/records'); }
 export function createFinanceProvider(input: unknown) { return request('/admin/finance/providers', { method: 'POST', body: JSON.stringify(input) }); }
 export function createFinanceBudget(input: unknown) { return request('/admin/finance/budgets', { method: 'POST', body: JSON.stringify(input) }); }
