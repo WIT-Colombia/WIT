@@ -16,7 +16,7 @@ const permissionLabels: Array<{ value: ManagedAdminPermission; label: string; de
   { value: 'REPORTS_REVIEW', label: 'Reportes', detail: 'Revisión de reportes y opiniones' },
   { value: 'CONTENT_MODERATE', label: 'Moderación', detail: 'Acciones sobre contenido' },
   { value: 'AUDIT_READ', label: 'Auditoría', detail: 'Consulta del historial habilitado' },
-  { value: 'ADMINS_MANAGE', label: 'Administradores', detail: 'Gestión de accesos y permisos' },
+  { value: 'ADMINS_MANAGE', label: 'Administradores', detail: 'Consulta del directorio; los cambios requieren rol principal' },
   { value: 'PIONEER_MANAGE', label: 'Pioneros', detail: 'Gestión del programa de pioneros' },
 ];
 const permissionName = (value: string) => permissionLabels.find(item => item.value === value)?.label ?? value;
