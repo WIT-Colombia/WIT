@@ -167,7 +167,7 @@ export default function Plus() {
     </section> : <>
       <section className="plus-panel" id="radar">
         <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2>Tu radar de novedades</h2><p>Productos, servicios y promociones recientes de tus negocios favoritos.</p></div>
-          <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.radarEnabled ?? true} disabled={busy}
+          <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.radarEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ radarEnabled: event.target.checked }))}/>Recibir avisos</label></div>
         {radar.length ? <div className="plus-list">{radar.map(item => <Link key={item.type + ':' + item.id} to={item.href} className="plus-list-row">
           <span className="plus-row-symbol">✦</span><span><strong>{item.title}</strong><small>{item.business} · {dateFormat(item.createdAt)}</small></span><span>Ver ›</span></Link>)}</div>
@@ -176,7 +176,7 @@ export default function Plus() {
 
       <section className="plus-panel" id="prices">
         <div className="plus-heading"><div><span>02 · AHORRO</span><h2>Seguimiento de precios</h2><p>Observa precios reales y recibe avisos si bajan.</p></div>
-          <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.priceAlertsEnabled ?? true} disabled={busy}
+          <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.priceAlertsEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ priceAlertsEnabled: event.target.checked }))}/>Avisar cuando bajen</label></div>
         <form className="plus-form" onSubmit={watchOffer}>
           <label>Enlace del producto o servicio<input value={targetValue} onChange={event => setTargetValue(event.target.value)} placeholder="https://xamuko.com/product/…" required/></label>
