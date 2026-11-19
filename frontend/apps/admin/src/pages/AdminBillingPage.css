@@ -1,0 +1,356 @@
+/* XAMUKO Admin — Ingresos y facturación
+   Present financial facts without conflating subscription records and payments. */
+.admin-refresh .abill-page,
+.admin-refresh .abill-page *{box-sizing:border-box}
+.admin-refresh .abill-page{
+  --abill-ink:#262139;--abill-muted:#6b657d;--abill-line:#e6e0ed;
+  width:100%;min-width:0;max-width:1580px;margin:0 auto;
+  display:grid;gap:19px;color:var(--abill-ink);
+}
+.admin-refresh .abill-page :is(a,button,input,select):focus-visible{
+  outline:3px solid #c1a0ef;outline-offset:2px;
+}
+.admin-refresh .abill-page button{font-family:inherit;cursor:pointer}
+.admin-refresh .abill-page button:disabled{opacity:.56;cursor:not-allowed}
+.admin-refresh .abill-page a{text-decoration:none}
+.admin-refresh .abill-heading-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.admin-refresh .abill-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:45px;min-width:0;padding:10px 15px;
+  border:1px solid #e2d9ed;border-radius:11px;
+  font:800 12.5px/1.45 inherit;
+  white-space:normal;text-align:center;text-decoration:none;
+  transition:background-color .15s ease,border-color .15s ease;
+}
+.admin-refresh .abill-btn-outline{background:#fff;color:#68449f}
+.admin-refresh .abill-btn-outline:hover:not(:disabled){background:#f6f0fc;border-color:#bda1db}
+.admin-refresh .abill-btn-main{
+  border-color:transparent;background:linear-gradient(120deg,#8742d8,#632dc2);
+  box-shadow:0 6px 16px #5e31b525;color:#fff;
+}
+.admin-refresh .abill-btn-main:hover:not(:disabled){background:#6a33be}
+.admin-refresh .abill-reality-banner{
+  display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;
+  padding:20px 24px;border:1px solid #e4d7f0;border-radius:17px;
+  background:linear-gradient(115deg,#f9f4ff 0%,#fff 80%);
+  box-shadow:0 8px 22px #2916430c;
+}
+.admin-refresh .abill-banner-icon{
+  display:grid;place-items:center;width:49px;height:49px;
+  flex:0 0 49px;border-radius:13px;background:#eae0fa;color:#7543b6;
+}
+.admin-refresh .abill-reality-banner>div{
+  flex:1 1 360px;min-width:0;display:grid;gap:7px;align-content:center;
+}
+.admin-refresh .abill-reality-banner strong{font-size:15px;line-height:1.45;color:#38294b}
+.admin-refresh .abill-reality-banner p{
+  margin:0;max-width:980px;color:#645b75;font-size:12.5px;line-height:1.7;
+}
+.admin-refresh .abill-banner-tag{
+  display:inline-flex;align-items:center;min-height:30px;
+  padding:7px 11px;border:1px solid #e5d3f1;border-radius:999px;
+  background:#f4ecfc;color:#7651a1;font-size:11px;font-weight:800;line-height:1.3;
+}
+.admin-refresh .abill-finance-overview,.admin-refresh .abill-commercial,
+.admin-refresh .abill-record-section,.admin-refresh .abill-integrations{
+  min-width:0;overflow:hidden;padding:23px 25px 24px;
+  border:1px solid var(--abill-line);border-radius:18px;background:#fff;
+  box-shadow:0 8px 27px #21113e0b;
+}
+.admin-refresh .abill-section-top{
+  display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:17px;
+  margin-bottom:21px;
+}
+.admin-refresh .abill-section-top>div:first-child{min-width:0;flex:1 1 340px}
+.admin-refresh .abill-eyebrow{
+  display:block;margin:0 0 8px;color:#8454ba;
+  font-size:10px;line-height:1.5;font-weight:900;letter-spacing:.095em;
+}
+.admin-refresh .abill-section-top h2{
+  margin:0 0 8px;font-size:clamp(19px,2.2vw,24px);font-weight:850;
+  line-height:1.25;letter-spacing:-.025em;color:#2d2342;
+}
+.admin-refresh .abill-section-top p{
+  margin:0;max-width:780px;font-size:12.5px;color:#706a7f;line-height:1.6;
+}
+.admin-refresh .abill-data-source{
+  display:inline-flex;gap:7px;align-items:center;max-width:100%;
+  min-height:35px;padding:8px 12px;border:1px solid #e7e0ec;border-radius:9px;
+  background:#faf8fc;color:#675d79;font-size:11.5px;font-weight:750;line-height:1.4;
+}
+.admin-refresh .abill-monetary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.admin-refresh .abill-money-card{
+  display:grid;gap:18px;align-content:start;min-width:0;min-height:204px;
+  padding:18px;border:1px solid #e9e5ee;border-radius:15px;
+  background:linear-gradient(160deg,#fff 30%,#fcfaff);
+}
+.admin-refresh .abill-money-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.admin-refresh .abill-money-icon{
+  display:grid;place-items:center;width:43px;height:43px;
+  border-radius:12px;background:#f1eafd;color:#7650b1;
+}
+.admin-refresh .abill-unknown{
+  display:inline-flex;padding:6px 9px;border-radius:8px;background:#f2f1f6;
+  font-size:10.5px;font-weight:850;line-height:1.4;color:#777185;
+}
+.admin-refresh .abill-money-copy{display:grid;align-content:start;gap:9px}
+.admin-refresh .abill-money-copy h3{
+  margin:0;font-size:13px;line-height:1.4;font-weight:800;color:#52475f;
+}
+.admin-refresh .abill-money-copy>strong{
+  font-size:32px;font-weight:900;letter-spacing:-.035em;line-height:1;color:#342b46;
+}
+.admin-refresh .abill-money-copy p{
+  margin:0;color:#777083;font-size:11.5px;line-height:1.55;
+}
+.admin-refresh .abill-text-link{
+  display:inline-flex;align-items:center;gap:8px;min-height:41px;padding:9px 13px;
+  border:1px solid #e0d2ee;border-radius:10px;background:#f9f5fd;
+  color:#6d3daa;font-size:12px;font-weight:850;line-height:1.4;
+}
+.admin-refresh .abill-text-link:hover{background:#eee2fb}
+.admin-refresh .abill-commercial-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.admin-refresh .abill-commercial-card{
+  display:flex;gap:16px;align-items:flex-start;min-width:0;
+  padding:19px;border:1px solid #e9e1f0;border-radius:15px;
+  background:linear-gradient(140deg,#fbf8ff,#fff);min-height:136px;
+}
+.admin-refresh .abill-commercial-icon{
+  display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;
+  border-radius:12px;background:#ece1fc;color:#6c37b9;
+}
+.admin-refresh .abill-commercial-orange .abill-commercial-icon{background:#fff1df;color:#a96715}
+.admin-refresh .abill-commercial-blue .abill-commercial-icon{background:#eaf0ff;color:#3562bb}
+.admin-refresh .abill-commercial-card>div{display:grid;align-content:start;gap:7px;min-width:0}
+.admin-refresh .abill-commercial-card small{font-size:12.5px;font-weight:800;line-height:1.45;color:#514763}
+.admin-refresh .abill-commercial-card strong{
+  font-size:32px;letter-spacing:-.035em;font-weight:900;line-height:1.05;
+  font-variant-numeric:tabular-nums;color:#332345;
+}
+.admin-refresh .abill-commercial-card span:last-child{
+  color:#736b7e;font-size:11.5px;line-height:1.5;
+}
+.admin-refresh .abill-metric-note{
+  display:flex;align-items:flex-start;gap:8px;margin:15px 0 0;
+  color:#797083;font-size:11.5px;line-height:1.65;
+}
+.admin-refresh .abill-metric-note svg{flex-shrink:0;margin-top:2px}
+.admin-refresh .abill-inline-error{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;
+  padding:12px 13px;border:1px solid #e9d4df;border-radius:9px;
+  background:#fff6f8;color:#994f67;font-size:12px;line-height:1.5;
+}
+.admin-refresh .abill-inline-error button{
+  border:1px solid #e4b9cb;border-radius:8px;background:#fff;
+  color:#9b4666;padding:6px 10px;font-size:11px;font-weight:800;
+}
+.admin-refresh .abill-record-section{padding-bottom:0}
+.admin-refresh .abill-record-section .abill-section-top{margin-bottom:18px}
+.admin-refresh .abill-filters{
+  display:grid;grid-template-columns:minmax(200px,1.65fr) minmax(175px,.85fr) minmax(190px,auto);
+  gap:12px;align-items:end;margin-bottom:18px;
+  padding:18px;border:1px solid #e9e2ee;border-radius:13px;
+  background:linear-gradient(140deg,#fbf9fe,#f8f5fb);
+}
+.admin-refresh .abill-field{display:grid;gap:8px;min-width:0;color:#51485f;font-size:12px;font-weight:800;line-height:1.4}
+.admin-refresh .abill-input-group,
+.admin-refresh .abill-field select{
+  display:flex;align-items:center;gap:9px;width:100%;min-width:0;min-height:49px;
+  padding:10px 13px;border:1px solid #dbd4e6;border-radius:11px;
+  background:#fff;color:#2d2740;font-family:inherit;font-size:14px;font-weight:500;line-height:1.4;
+}
+.admin-refresh .abill-field select{display:block;cursor:pointer}
+.admin-refresh .abill-input-group:focus-within{border-color:#9362d0;box-shadow:0 0 0 3px #cdb2ec4d}
+.admin-refresh .abill-input-group svg{flex-shrink:0;color:#8b57bf}
+.admin-refresh .abill-input-group input{
+  width:100%;min-width:0;min-height:24px;padding:0;border:0;background:transparent;outline:0;
+  color:#2d2740;font-family:inherit;font-size:14px;line-height:1.5;
+}
+.admin-refresh .abill-input-group input:focus-visible{outline:0}
+.admin-refresh .abill-input-group input::placeholder{color:#868094;opacity:1}
+.admin-refresh .abill-filter-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.admin-refresh .abill-filter-actions button{min-height:49px;padding:10px 12px}
+.admin-refresh .abill-register-result{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;
+  margin:0 -25px;padding:13px 25px;border-top:1px solid #eee8f4;border-bottom:1px solid #eee8f4;
+  background:#fbfafe;color:#797083;font-size:11.5px;line-height:1.5;
+}
+.admin-refresh .abill-register-result strong{font-size:13px;color:#543989}
+.admin-refresh .abill-table-scroll{margin:0 -25px;max-width:calc(100% + 50px);overflow-x:auto}
+.admin-refresh .abill-table{width:100%;min-width:985px;border-collapse:collapse;text-align:left}
+.admin-refresh .abill-table th{
+  padding:15px 14px;border-bottom:1px solid #ede7f4;
+  background:#f9f7fc;color:#625970;font-size:11.5px;font-weight:850;line-height:1.4;
+  white-space:nowrap;
+}
+.admin-refresh .abill-table td{
+  padding:16px 14px;border-bottom:1px solid #efebf4;
+  color:#4b425b;font-size:12.5px;line-height:1.6;vertical-align:middle;
+}
+.admin-refresh .abill-table tr:last-child td{border-bottom:0}
+.admin-refresh .abill-table tbody tr:hover{background:#fdfbff}
+.admin-refresh .abill-table th:first-child,.admin-refresh .abill-table td:first-child{padding-left:25px}
+.admin-refresh .abill-business-name{display:flex;align-items:center;gap:11px;min-width:190px}
+.admin-refresh .abill-business-avatar{
+  display:grid;place-items:center;flex:0 0 41px;width:41px;height:41px;
+  border-radius:12px;background:#f0e6fd;color:#7240b7;
+}
+.admin-refresh .abill-business-name>span:last-child{display:grid;gap:5px;min-width:0}
+.admin-refresh .abill-business-name a{
+  color:#433064;font-size:13px;font-weight:850;line-height:1.4;overflow-wrap:anywhere;
+}
+.admin-refresh .abill-business-name a:hover{text-decoration:underline}
+.admin-refresh .abill-business-name small{font-size:11px;color:#817a8c}
+.admin-refresh .abill-status,
+.admin-refresh .abill-effective{
+  display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #e4e0e9;
+  border-radius:999px;background:#f5f5f8;color:#6b687a;
+  font-size:11px;font-weight:800;line-height:1.5;white-space:nowrap;
+}
+.admin-refresh .abill-status-active,.admin-refresh .abill-effective.yes{
+  background:#eaf9ef;border-color:#cee8d8;color:#238053;
+}
+.admin-refresh .abill-status-pending{background:#fff6e7;border-color:#f5dfbb;color:#936824}
+.admin-refresh .abill-status-expired{background:#f4f0fa;border-color:#e4d9f1;color:#775d95}
+.admin-refresh .abill-status-revoked{background:#fff0f3;border-color:#f0cfd9;color:#aa4b67}
+.admin-refresh .abill-special{display:block;margin-top:6px;color:#7d738c;font-size:10.5px}
+.admin-refresh .abill-row-action{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:37px;padding:8px 11px;border:1px solid #dbcced;border-radius:9px;
+  color:#68409e;background:#faf7fe;font-size:11.5px;font-weight:800;line-height:1.4;
+  white-space:nowrap;
+}
+.admin-refresh .abill-row-action:hover{background:#efe4fc}
+.admin-refresh .abill-register-message,.admin-refresh .abill-register-empty,
+.admin-refresh .abill-no-business{margin:0 -25px;padding:22px 25px;color:#696079;font-size:13px;line-height:1.6}
+.admin-refresh .abill-register-empty{display:grid;justify-items:center;gap:8px;text-align:center;padding:31px 20px}
+.admin-refresh .abill-register-empty svg{color:#9368c5}
+.admin-refresh .abill-register-empty strong{font-size:15px;color:#3e3054}
+.admin-refresh .abill-register-empty p{margin:0 0 7px}
+.admin-refresh .abill-register-error{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin:0 -25px;padding:18px 25px;color:#8c5570;font-size:12.5px;line-height:1.6;
+}
+.admin-refresh .abill-register-error svg{flex-shrink:0}
+.admin-refresh .abill-register-error span{flex:1 1 210px;min-width:0}
+.admin-refresh .abill-no-business{display:flex;align-items:flex-start;gap:13px;border-top:1px solid #f1edf5}
+.admin-refresh .abill-no-business svg{flex-shrink:0;color:#7d5fa0}
+.admin-refresh .abill-no-business strong{font-size:14px;color:#453953}
+.admin-refresh .abill-no-business p{margin:5px 0 0}
+.admin-refresh .abill-pagination{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:13px;
+  margin:0 -25px;padding:16px 25px;border-top:1px solid #eee9f3;
+  color:#766c82;font-size:12.5px;
+}
+.admin-refresh .abill-pagination>div{display:flex;gap:9px;flex-wrap:wrap}
+.admin-refresh .abill-pagination button{min-height:40px;padding:8px 14px}
+.admin-refresh .abill-mobile-records{display:none}
+.admin-refresh .abill-integration-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.admin-refresh .abill-integration-grid article{
+  min-width:0;display:grid;align-content:start;justify-items:start;gap:12px;
+  padding:18px 20px;border:1px solid #ebe6f0;border-radius:14px;background:#fdfbff;
+}
+.admin-refresh .abill-integration-grid article>span{
+  display:grid;place-items:center;width:43px;height:43px;border-radius:12px;
+  color:#7140a9;background:#f0e8fb;
+}
+.admin-refresh .abill-integration-grid h3{
+  margin:0;font-size:14px;font-weight:850;line-height:1.45;color:#40304c;
+}
+.admin-refresh .abill-integration-grid p{margin:0;color:#716b7d;font-size:12px;line-height:1.65}
+.admin-refresh .abill-integration-grid a{
+  display:inline-flex;align-items:center;gap:7px;margin-top:2px;min-height:36px;
+  color:#703ea7;font-size:11.5px;font-weight:850;
+}
+.admin-refresh .abill-integration-grid a:hover{text-decoration:underline}
+.admin-refresh .abill-footer-source{
+  display:flex;align-items:flex-start;gap:11px;margin:0;padding:15px 18px;
+  border:1px solid #e9e2f1;border-radius:13px;background:#faf8fd;
+  color:#726a80;font-size:11.5px;line-height:1.7;
+}
+.admin-refresh .abill-footer-source svg{flex-shrink:0;margin-top:2px;color:#7450ad}
+@media(max-width:1390px){
+  .admin-refresh .abill-monetary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .abill-money-card{min-height:172px}
+}
+@media(max-width:1100px){
+  .admin-refresh .abill-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .abill-search-field{grid-column:1/-1}
+  .admin-refresh .abill-commercial-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .abill-commercial-grid>article:last-child{grid-column:1/-1}
+  .admin-refresh .abill-table-scroll{display:none}
+  .admin-refresh .abill-mobile-records{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:13px;margin:0 -25px;padding:17px 25px;
+  }
+  .admin-refresh .abill-mobile-records article{
+    display:grid;align-content:start;gap:13px;min-width:0;
+    padding:19px;border:1px solid #e9e3ef;border-radius:14px;
+    box-shadow:0 5px 18px #2916420a;background:#fff;
+  }
+  .admin-refresh .abill-mobile-records header{display:grid;gap:5px}
+  .admin-refresh .abill-mobile-records header a{
+    color:#553989;font-size:14px;font-weight:850;line-height:1.4;overflow-wrap:anywhere;
+  }
+  .admin-refresh .abill-mobile-records header small{color:#7a7285;font-size:11px}
+  .admin-refresh .abill-mobile-badges{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .admin-refresh .abill-mobile-records dl{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0;
+  }
+  .admin-refresh .abill-mobile-records dl>div{
+    display:grid;align-content:start;gap:7px;min-width:0;
+    padding:12px;border:1px solid #eee9f3;border-radius:10px;background:#fbf9fd;
+  }
+  .admin-refresh .abill-mobile-records dt{font-size:11px;font-weight:800;line-height:1.4;color:#7a7384}
+  .admin-refresh .abill-mobile-records dd{margin:0;font-size:12.5px;font-weight:800;line-height:1.5;color:#433a55;overflow-wrap:anywhere}
+  .admin-refresh .abill-mobile-records .abill-row-action{justify-self:stretch}
+}
+@media(max-width:800px){
+  .admin-refresh .abill-heading-actions{width:100%}
+  .admin-refresh .abill-heading-actions .abill-btn{flex:1 1 175px}
+  .admin-refresh .abill-finance-overview,.admin-refresh .abill-commercial,
+  .admin-refresh .abill-record-section,.admin-refresh .abill-integrations{padding:20px 18px}
+  .admin-refresh .abill-register-result,.admin-refresh .abill-register-error,
+  .admin-refresh .abill-register-message,.admin-refresh .abill-register-empty,
+  .admin-refresh .abill-no-business,.admin-refresh .abill-pagination{margin-inline:-18px;padding-inline:18px}
+  .admin-refresh .abill-mobile-records{margin-inline:-18px;padding-inline:18px}
+  .admin-refresh .abill-integration-grid{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .abill-integration-grid article{grid-template-columns:44px minmax(0,1fr);align-items:start;gap:8px 13px}
+  .admin-refresh .abill-integration-grid article>span{grid-row:1/3}
+  .admin-refresh .abill-integration-grid article a{grid-column:2}
+}
+@media(max-width:650px){
+  .admin-refresh .abill-page{gap:14px}
+  .admin-refresh .abill-reality-banner{padding:17px 16px;gap:12px}
+  .admin-refresh .abill-banner-icon{width:42px;height:42px;flex-basis:42px}
+  .admin-refresh .abill-reality-banner>div{flex-basis:230px}
+  .admin-refresh .abill-banner-tag{margin-left:54px}
+  .admin-refresh .abill-finance-overview,.admin-refresh .abill-commercial,
+  .admin-refresh .abill-record-section,.admin-refresh .abill-integrations{padding:18px 15px}
+  .admin-refresh .abill-section-top{margin-bottom:16px}
+  .admin-refresh .abill-monetary-grid,.admin-refresh .abill-commercial-grid{gap:10px}
+  .admin-refresh .abill-money-card{padding:15px;min-height:194px;gap:14px}
+  .admin-refresh .abill-money-copy h3{font-size:12.5px}
+  .admin-refresh .abill-money-copy p{font-size:11px}
+  .admin-refresh .abill-unknown{font-size:10px}
+  .admin-refresh .abill-commercial-grid>article:last-child{grid-column:auto}
+  .admin-refresh .abill-commercial-grid{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .abill-commercial-card{min-height:0;padding:15px;gap:12px}
+  .admin-refresh .abill-filters{
+    grid-template-columns:minmax(0,1fr);gap:12px;padding:13px;
+  }
+  .admin-refresh .abill-search-field{grid-column:auto}
+  .admin-refresh .abill-filter-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .abill-register-result,.admin-refresh .abill-register-error,
+  .admin-refresh .abill-register-message,.admin-refresh .abill-register-empty,
+  .admin-refresh .abill-no-business,.admin-refresh .abill-pagination{margin-inline:-15px;padding-inline:15px}
+  .admin-refresh .abill-mobile-records{grid-template-columns:minmax(0,1fr);margin-inline:-15px;padding:12px 15px}
+  .admin-refresh .abill-mobile-records article{padding:16px}
+}
+@media(max-width:370px){
+  .admin-refresh .abill-monetary-grid{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .abill-money-card{min-height:0}
+}
+@media(prefers-reduced-motion:reduce){
+  .admin-refresh .abill-page *{transition:none!important}
+}
