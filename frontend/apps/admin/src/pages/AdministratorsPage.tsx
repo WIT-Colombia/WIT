@@ -187,7 +187,7 @@ export function AdministratorsPage() {
         <div className="sec-dialog-actions"><button type="button" className="sec-button" disabled={busy} onClick={() => setTarget(null)}>Cancelar</button>
           <button type="submit" className="sec-button sec-button-primary" disabled={busy || reason.trim().length < 12 || disabled ||
             ((operation === 'PERMISSION_GRANT' || operation === 'PERMISSION_REVOKE') &&
-              !permissionLabels.some(item => item.value === permission && (operation === 'PERMISSION_GRANT' ? !grants(target).includes(item.value) : grants(target).includes(item.value)))}
+              !permissionLabels.some(item => item.value === permission && (operation === 'PERMISSION_GRANT' ? !grants(target).includes(item.value) : grants(target).includes(item.value))))}
           >{busy ? 'Guardando…' : actionLabel[operation]}</button></div>
       </form>
     </AdminDialog>}
