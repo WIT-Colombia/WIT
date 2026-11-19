@@ -21,3 +21,6 @@
 .home-page .admob-banner-slot--home-footer { order:8; }
 .admob-banner-slot .admob-banner { margin:0 auto !important; }
 @media(max-width:700px) { .admob-banner-slot .admob-banner { margin:0 !important; } }
+
+/* Plus members must not keep empty layout gaps where advertising was suppressed. */
+.admob-banner-slot:empty{display:none!important;margin:0!important;padding:0!important}
