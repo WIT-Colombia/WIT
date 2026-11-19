@@ -3,6 +3,7 @@ import { Prisma, type BusinessVisibilityStatus } from '../../generated/prisma/cl
 import { AppError } from '../../shared/errors/app-error.js';
 import { notifyBusinessOwners, notifyPlatformUser } from '../notifications/platform-notifications.service.js';
 import { isSubscriptionEffective } from '../business/recognition.service.js';
+import { isPaidPlanEnabled } from './paid-plans.service.js';
 import { isPhotoMissingError, photoMimeType, readPhoto } from '../business/photo-storage.js';
 
 export type AdminVisibilityAction = 'HIDE' | 'SUSPEND' | 'RESTORE' | 'SET_VISIBLE' | 'SET_HIDDEN';
@@ -504,6 +505,10 @@ export async function setAdminBusinessPlan(identifier: string, actorUserId: stri
   if (reason.length < 12 || reason.length > 500)
     throw new AppError(400, 'ADMIN_PLAN_REASON_REQUIRED', 'Explica el cambio de plan (12 a 500 caracteres).');
   return prisma.$transaction(async tx => {
+    if (plan === 'PRO' && !(await isPaidPlanEnabled('businessPro', tx))) {
+      throw new AppError(409, 'BUSINESS_PRO_DISABLED',
+        'Business PRO está deshabilitado por el interruptor maestro. No se pueden crear nuevas activaciones.');
+    }
     const business = await tx.business.findFirst({
       where: { OR: [{ id: identifier }, { publicId: identifier }] },
       select: { id: true, name: true, deletionStatus: true },
