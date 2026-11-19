@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { authorizeStatisticsBusiness, completeCountTrend, statisticsWindow } from './statistics.service.js';
+import { authorizeStatisticsBusiness, completeCountTrend, statisticsWindow, offerRankingVisibility } from './statistics.service.js';
 
 test('statistics windows use Bogotá midnight and compare the same elapsed duration', () => {
   const now = new Date('2026-10-24T18:30:00.000Z');
@@ -78,4 +78,12 @@ test('año e histórico preservan meses de valor cero para estadísticas de cont
   assert.equal(all.length, 24);
   assert.equal(all[0].label, '2024-11');
   assert.equal(all.at(-1)?.label, '2026-10');
+});
+
+test('Business PRO unlocks advanced rankings; recognition rewards stay independent of paid subscriptions', () => {
+  assert.deepEqual(offerRankingVisibility(0, false), { referralRanking: false, proRankings: false });
+  assert.deepEqual(offerRankingVisibility(499, false), { referralRanking: false, proRankings: false });
+  assert.deepEqual(offerRankingVisibility(500, false), { referralRanking: true, proRankings: false });
+  assert.deepEqual(offerRankingVisibility(0, true), { referralRanking: true, proRankings: true });
+  assert.deepEqual(offerRankingVisibility(500, true), { referralRanking: true, proRankings: true });
 });
