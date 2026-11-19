@@ -1,4 +1,4 @@
-import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { MobileNavigation } from "./MobileNavigation";
 import { Sidebar } from "./Sidebar";
 import { BusinessDesktopHeader } from "./BusinessDesktopHeader";
@@ -12,7 +12,7 @@ export function AppShell({ demoMode = false }: { demoMode?: boolean }) {
   const { businesses, businessesReady } = useBusinessStore();
   const auth = useBusinessAuth();
   const emptyAccount = businesses.length === 0 || (location.pathname === "/perfil" && new URLSearchParams(location.search).get("empty") === "1");
-  const renderLayout = (content: ReactNode) => <div className="business-app"><div className="app-content"><div className="body-layout"><Sidebar empty={emptyAccount} /><div className="business-shell-workspace"><BusinessDesktopHeader />{demoMode && <div className="business-pro-preview-banner" role="status"><div><strong>Business PRO · Vista de demostración</strong><span>Explora la apariencia y las estadísticas PRO sin activar una suscripción. No se consultan estadísticas protegidas ni se hacen cambios en tu negocio.</span></div><Link to="/inicio">Salir de la vista previa</Link></div>}<main className="page-content">{content}</main><footer className="business-institutional-footer"><div><strong>XAMUKO</strong><span>Lo que necesitas, está más cerca.</span></div><small>© 2026 XAMUKO · Palmira, Colombia</small></footer></div></div></div><MobileNavigation /></div>;
+  const renderLayout = (content: ReactNode) => <div className="business-app"><div className="app-content"><div className="body-layout"><Sidebar empty={emptyAccount} /><div className="business-shell-workspace"><BusinessDesktopHeader /><main className="page-content">{content}</main><footer className="business-institutional-footer"><div><strong>XAMUKO</strong><span>Lo que necesitas, está más cerca.</span></div><small>© 2026 XAMUKO · Palmira, Colombia</small></footer></div></div></div><MobileNavigation /></div>;
   if (demoMode) return renderLayout(<Outlet />);
   if (auth.state.status === "unchecked") return <main className="auth-page"><p className="auth-status">Comprobando tu sesión…</p></main>;
   if (auth.state.status === "unauthenticated") return <Navigate to={`/login?next=${encodeURIComponent(location.pathname)}`} replace />;
