@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
+import {useSearchParams} from 'react-router-dom';
 import {AdminPageHeading} from '../components/AdminPageHeading';
 import {Icon} from '../components/Icon';
 import {StatePanel} from '../components/common';
@@ -106,6 +107,7 @@ function DeploymentFeed({data,loading,error,onReload}:{
 }
 export function AdminDeploymentsPage(){
   const admin=getSession();
+  const [searchParams,setSearchParams]=useSearchParams();
   const read=admin?can(admin,'audit:read'):false;
   const manage=admin?(admin.realRole==='SUPER_ADMIN'||can(admin,'settings:write')):false;
   const [deployments,setDeployments]=useState<TechnologyDeployments|null>(null);
@@ -117,7 +119,7 @@ export function AdminDeploymentsPage(){
   const [caseError,setCaseError]=useState('');
   const [notice,setNotice]=useState('');
   const [revision,setRevision]=useState(0);
-  const [work,setWork]=useState<'MAINTENANCE'|'NEED'>('MAINTENANCE');
+  const [work,setWork]=useState<'MAINTENANCE'|'NEED'>(searchParams.get('work')==='NEED'?'NEED':'MAINTENANCE');
   const [q,setQ]=useState('');
   const [draft,setDraft]=useState('');
   const [filter,setFilter]=useState<TechnologyStatus|'ALL'>('ALL');
@@ -150,6 +152,7 @@ export function AdminDeploymentsPage(){
   },[read,revision,work,filter,q,page]);
   const changeWork=(kind:'MAINTENANCE'|'NEED')=>{
     setWork(kind);setPage(1);setQ('');setDraft('');setFilter('ALL');
+    setSearchParams(kind==='NEED'?{work:'NEED'}:{},{replace:true});
   };
   const onComplete=(message:string)=>{
     setCreating(null);setSelected(null);setNotice(message);setRevision(v=>v+1);
