@@ -27,6 +27,7 @@ import { PendingModulePage } from './pages/PendingModulePage';
 import { FinancialExpensesPage } from './pages/FinancialExpensesPage';
 import { AdministratorsPage } from './pages/AdministratorsPage';
 import { AdminAuditPage } from './pages/AdminAuditPage';
+import { AdminPlansPage } from './pages/AdminPlansPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 
 function ProtectedRoute() {
@@ -43,7 +44,7 @@ function ProtectedRoute() {
   return getSession() ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
-const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases', '/audit'];
+const implementedPaths = ['/dashboard', '/summary', '/statistics', '/verifications', '/reports', '/reviews', '/pioneers', '/zones', '/financial-reports', '/businesses', '/administrators', '/categories', '/users', '/content', '/user-needs', '/offer-reports', '/business-reports', '/support', '/suggestions', '/corporate', '/legal-documents', '/legal-cases', '/audit', '/plans'];
 
 export default function App() {
   return <Routes>
@@ -71,6 +72,7 @@ export default function App() {
         <Route path="/financial-reports" element={<FinancialExpensesPage />} />
         <Route path="/administrators" element={<AdministratorsPage />} />
         <Route path="/audit" element={<AdminAuditPage />} />
+        <Route path="/plans" element={<AdminPlansPage />} />
         <Route path="/categories" element={<AdminCategoriesPage />} />
         <Route path="/users" element={<AdminUsersPage />} />
         <Route path="/users/:id" element={<AdminUserDetailPage />} />
