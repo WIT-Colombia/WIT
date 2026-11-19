@@ -4,7 +4,6 @@ import { useBusinessAccountWelcomeUnread } from "../../services/businessWelcomeS
 import { useEffect, useRef, useState } from "react";
 import { BusinessProfileThumbnail, BusinessIndicatorRow, Sidebar, SidebarIcon, type SidebarIconName } from "./Sidebar";
 import { useBusinessStore } from "../../services/businessStore";
-import { isBusinessProPreview } from "../../services/businessProDisplay";
 
 type MobileLink = { label: string; icon: SidebarIconName; to: string; end?: boolean; permission?: string; ownerOnly?: boolean };
 const primaryLinks: MobileLink[] = [
@@ -16,7 +15,6 @@ const primaryLinks: MobileLink[] = [
 export function MobileNavigation() {
   const { businesses, business, notifications, persistentNotificationCount, setBusiness } = useBusinessStore();
   const location = useLocation();
-  const proPreview = isBusinessProPreview(location.pathname, location.search);
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
   const [businessesOpen, setBusinessesOpen] = useState(false);
@@ -47,10 +45,7 @@ export function MobileNavigation() {
   const accountWelcomeUnread = useBusinessAccountWelcomeUnread(auth.user?.id);
   const unread = notifications.filter((item) => !item.read).length + persistentNotificationCount + (businesses.length === 0 && accountWelcomeUnread ? 1 : 0);
   const destination = (link: MobileLink) => link.label === "Mi cuenta" && empty ? "/perfil?empty=1" : link.to;
-  const visiblePrimaryLinks = proPreview ? [
-    { label: "Inicio", icon: "home" as const, to: "/preview?demoPro=1", end: true },
-    { label: "Estadísticas", icon: "chart" as const, to: "/preview/estadisticas?demoPro=1" },
-  ] : primaryLinks.filter(link => business.role === "Propietario" || (!link.ownerOnly && (!link.permission || business.permissions?.includes(link.permission))));
+  const visiblePrimaryLinks = primaryLinks.filter(link => business.role === "Propietario" || (!link.ownerOnly && (!link.permission || business.permissions?.includes(link.permission))));
   useEffect(() => setMoreOpen(false), [location.pathname]);
   useEffect(() => {
     if (!businessesOpen) return;
@@ -83,7 +78,7 @@ export function MobileNavigation() {
           <span className="mobile-business-avatar">{activeBusiness ? <BusinessProfileThumbnail business={activeBusiness} /> : "W"}</span>
           <span className="mobile-business-copy"><strong>{activeBusiness?.name ?? "Crea tu negocio"}</strong><small>{activeBusiness ? activeBusiness.role : "Empieza en XAMUKO Business"}</small>{activeBusiness && <BusinessIndicatorRow business={activeBusiness} />}</span><span className="mobile-business-chevron">⌄</span>
         </button>
-        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{selectableBusinesses.map(({ item, index }) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate(proPreview ? "/preview?demoPro=1" : "/inicio"); }}><span className="mobile-business-avatar"><BusinessProfileThumbnail business={item} /></span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{item.role}</small><BusinessIndicatorRow business={item} /></span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}{!proPreview && <button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button>}</div>}
+        {businessesOpen && activeBusiness && <div className="mobile-business-menu">{selectableBusinesses.map(({ item, index }) => <button type="button" key={`${item.name}-${index}`} className={`mobile-business-option${item === activeBusiness ? " selected" : ""}`} onClick={() => { setBusiness(item); setBusinessesOpen(false); navigate("/inicio"); }}><span className="mobile-business-avatar"><BusinessProfileThumbnail business={item} /></span><span className="mobile-business-copy"><strong>{item.name}</strong><small>{item.role}</small><BusinessIndicatorRow business={item} /></span><span>{item === activeBusiness ? "✓" : ""}</span></button>)}<button type="button" className="mobile-business-all" onClick={() => { setBusinessesOpen(false); navigate("/mis-negocios"); }}><SidebarIcon name="store" /><span>Mis negocios</span></button></div>}
       </div>
       <NavLink className="mobile-notification-button" to="/notificaciones" aria-label="Notificaciones"><SidebarIcon name="bell" />{unread > 0 && <span className="mobile-topbar-dot">{unread}</span>}</NavLink>
     </header>
