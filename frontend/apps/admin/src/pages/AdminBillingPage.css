@@ -362,3 +362,7 @@
 .admin-refresh .abill-finance-tabs a[aria-current="page"]{border-color:#a892dc;background:#f2ebff;color:#5733a5}
 .admin-refresh .abill-finance-tabs a:hover{border-color:#a892dc;background:#f7f3ff}
 @media(max-width:680px){.admin-refresh .abill-finance-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.admin-refresh .abill-finance-tabs a{min-width:0;text-align:center;padding:8px;font-size:11px}}
+
+/* Clear supplier-cost destination; invoices are not commercial sales. */
+.admin-refresh .abill-supplier-link{display:inline-flex;align-items:center;gap:6px;min-height:32px;margin-top:12px;color:#6540a8;font-size:12px;font-weight:750;text-decoration:none}
+.admin-refresh .abill-supplier-link:hover{text-decoration:underline}
