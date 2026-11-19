@@ -23,6 +23,7 @@ import { adminDocumentsRouter } from './admin-documents.routes.js';
 
 import { getPaidPlanAvailability, setPaidPlanAvailability, isPaidPlanEnabled, paidPlanKey, paidPlanUpdate } from './paid-plans.service.js';
 import { readAdminPlusSubscription, assignAdminPlusSubscription } from '../user-plus/user-plus-admin.service.js';
+import { adminListPlusRequests, adminClosePlusRequest } from '../user-plus/user-plus-purchase.service.js';
 
 export const adminRouter = Router();
 adminRouter.get('/paid-plans', requireAdmin(), async (_req, res, next) => {
@@ -42,6 +43,20 @@ const adminPlusSubscriptionUpdate = z.object({
   reason: z.string().trim().min(12).max(500), confirmation: z.literal('CONFIRMAR'),
 }).strict();
 const plusUserId = z.string().uuid();
+const plusRequestCloseBody = z.object({
+  reason: z.string().trim().min(12).max(500), confirmation: z.literal('CONFIRMAR'),
+}).strict();
+adminRouter.get('/xamuko-plus/purchase-requests', requireAdmin(), async (req, res, next) => {
+  try { res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await adminListPlusRequests(adminFromRequest(req))); }
+  catch (error) { next(error); }
+});
+adminRouter.put('/xamuko-plus/purchase-requests/:id/close', requireTrustedOrigin, requireAdmin(), async (req, res, next) => {
+  try { const { reason } = plusRequestCloseBody.parse(req.body);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await adminClosePlusRequest(adminFromRequest(req), z.string().uuid().parse(req.params.id), reason)); }
+  catch (error) { next(error); }
+});
 adminRouter.get('/xamuko-plus/users/:userId', requireAdmin(), async (req, res, next) => {
   try { res.setHeader('Cache-Control', 'private, no-store');
     res.json(await readAdminPlusSubscription(adminFromRequest(req), plusUserId.parse(req.params.userId))); }
