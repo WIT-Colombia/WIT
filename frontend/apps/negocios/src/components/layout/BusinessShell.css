@@ -212,3 +212,15 @@
     background-attachment:scroll;
   }
 }
+
+/* Read-only Business PRO walkthrough, isolated from subscription/permissions. */
+.business-pro-preview-link{display:flex;align-items:center;gap:10px;margin:12px 14px;padding:10px 12px;border:1px solid #c9b6ff;border-radius:12px;background:#f5f1ff;color:#5425b5;font-size:12px;font-weight:750;text-decoration:none;line-height:1.4}
+.business-pro-preview-link:hover,.business-pro-preview-link:focus-visible{background:#ede5ff;border-color:#9264ea}
+.business-pro-preview-link .sidebar-icon{flex:0 0 20px;width:20px;height:20px}
+.business-pro-preview-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:12px 24px 0;padding:12px 16px;border:1px solid #c9b6ff;border-radius:14px;background:#f3eeff;color:#38226d;box-sizing:border-box}
+.business-pro-preview-banner>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.business-pro-preview-banner strong{font-size:13px;font-weight:800}
+.business-pro-preview-banner span{font-size:12px;line-height:1.5}
+.business-pro-preview-banner>a{flex-shrink:0;padding:9px 12px;border-radius:9px;background:#fff;color:#5425b5;font-size:12px;font-weight:750;text-decoration:none}
+.business-pro-preview-banner>a:hover,.business-pro-preview-banner>a:focus-visible{background:#e9defe}
+@media(max-width:820px){.business-pro-preview-banner{align-items:stretch;flex-direction:column;margin:10px 14px 0}.business-pro-preview-banner>a{align-self:flex-start}.business-pro-preview-link{margin:10px 0}}
