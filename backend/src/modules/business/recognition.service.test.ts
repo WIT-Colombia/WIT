@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { catalogLimits, isSubscriptionEffective } from './recognition.service.js';
 
-function fakeDb({ referrals = 0, pro = false, products = 0, services = 0 }: { referrals?: number; pro?: boolean; products?: number; services?: number }) {
+function fakeDb({ referrals = 0, pro = false, enabled = true, products = 0, services = 0 }: { referrals?: number; pro?: boolean; enabled?: boolean; products?: number; services?: number }) {
   return {
     business: { findUnique: async () => ({ referralCounter: { validReferralCount: referrals } }) },
     $queryRaw: async () => pro ? [{ id: 'subscription' }] : [],
+    paidPlanAvailability: { findUnique: async () => ({ enabled }) },
     businessOffer: { count: async ({ where }: { where: { kind: string } }) => where.kind === 'PRODUCT' ? products : services },
   } as any;
 }
@@ -24,6 +25,22 @@ test('Pro vigente concede productos y servicios ilimitados', async () => {
   assert.equal(result.products.limit, null);
   assert.equal(result.services.limit, null);
   assert.equal(result.products.unlimited, true);
+});
+
+test('si el interruptor maestro deshabilita PRO, un negocio antes ilimitado vuelve a sus cuotas Básicas sin perder sus productos', async () => {
+  const limits = await catalogLimits(fakeDb({
+    pro: true, enabled: false, referrals: 0, products: 28, services: 5,
+  }), 'business-patico');
+  assert.equal(limits.plan, 'BASIC');
+  assert.deepEqual(limits.products, { used: 28, limit: 20, available: 0, unlimited: false });
+  assert.deepEqual(limits.services, { used: 5, limit: 20, available: 15, unlimited: false });
+});
+
+test('sin suscripción vigente, un flag global activo tampoco concede PRO', async () => {
+  const limits = await catalogLimits(fakeDb({ enabled: true, pro: false, referrals: 50 }), 'business-expired');
+  assert.equal(limits.plan, 'BASIC');
+  assert.equal(limits.products.limit, 30);
+  assert.equal(limits.services.limit, 30);
 });
 
 test('Pro no vigente no concede beneficios', async () => {
