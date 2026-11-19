@@ -873,8 +873,12 @@ export function updateAdminZone(input:{scope:ZoneScope;code:string;state:ZoneLau
   });
 }
 
-export function getAdminPaidPlans() {
-  return request<import('@wit/utils').PaidPlanAvailability>('/admin/paid-plans');
+export async function getAdminPaidPlans() {
+  const result = await request<import('@wit/utils').PaidPlanAvailability>('/admin/paid-plans');
+  if (typeof result?.businessPro !== 'boolean' || typeof result?.xamukoPlus !== 'boolean') {
+    throw new Error('La API respondió sin un estado válido para Business PRO y Xamuko Plus. Revisa la versión del backend.');
+  }
+  return result;
 }
 export function updateAdminPaidPlan(key: import('@wit/utils').PaidPlanKey, enabled: boolean, reason: string, confirmation: 'CONFIRMAR') {
   return request<import('@wit/utils').PaidPlanAvailability>(`/admin/paid-plans/${key}`, {
