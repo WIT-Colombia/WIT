@@ -293,7 +293,8 @@ export function AdminBillingPage() {
           <p>El registro de Business PRO no contiene evidencia de transacciones cobradas.</p></article>
         <article><span><Icon name="chart" size={21}/></span><h3>Facturas de proveedores</h3>
           <p>Los documentos de servicios tecnológicos sí cuentan con un módulo separado de egresos.</p>
-</article>
+          <Link to="/financial-reports" className="abill-supplier-link">Consultar gastos tecnológicos <Icon name="arrow" size={15}/></Link>
+        </article>
       </div>
     </section>
     <p className="abill-footer-source"><Icon name="shield" size={17}/>
