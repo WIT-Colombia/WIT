@@ -105,6 +105,9 @@ jobs:
       - name: Check Admin Transacciones with real vendor payment records on mobile, iPad and desktop
         run: node scripts/check-admin-transactions-responsive.mjs
 
+      - name: Check Admin Reembolsos administrative cases and audit on mobile, iPad and desktop
+        run: node scripts/check-admin-refunds-responsive.mjs
+
       - name: Save Usuario offer card screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -174,6 +177,15 @@ jobs:
         with:
           name: xamuko-admin-transactions-${{ github.run_id }}
           path: frontend/test-results/admin-transactions/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save Admin Reembolsos responsive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-admin-refunds-${{ github.run_id }}
+          path: frontend/test-results/admin-refunds/
           if-no-files-found: ignore
           retention-days: 7
 
