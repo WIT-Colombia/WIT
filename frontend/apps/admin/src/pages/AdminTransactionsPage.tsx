@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AdminPageHeading } from '../components/AdminPageHeading';
-import { FinanceSectionNav } from '../components/FinanceSectionNav';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
 import { can, getSession } from '../services/adminService';
@@ -278,12 +277,10 @@ export function AdminTransactionsPage() {
     <AdminPageHeading icon="clock" title="Transacciones"
       description="Historial de movimientos financieros registrados, con estados, montos y trazabilidad administrativa."
       actions={<div className="atx-header-actions">
-        <Link to="/billing" className="atx-btn atx-btn-outline"><Icon name="card" size={16}/> Ingresos y facturación</Link>
         <button type="button" className="atx-btn atx-btn-primary" onClick={() => setRevision(v => v+1)}>
           <Icon name="refresh" size={16}/> Actualizar
         </button>
       </div>}/>
-    <FinanceSectionNav/>
     <section className="atx-scope" aria-label="Alcance real de las transacciones">
       <span className="atx-scope-icon"><Icon name="shield" size={24}/></span>
       <div><strong>Transacciones comerciales de clientes: sin integración</strong>
@@ -402,16 +399,6 @@ export function AdminTransactionsPage() {
         los detalles se presentan en hora de Colombia. Exportar incluye exclusivamente la página y los filtros visibles.</p>
     </section>
 
-    <section className="atx-bottom" aria-label="Módulos relacionados">
-      <article><span className="atx-related-icon"><Icon name="chart" size={21}/></span>
-        <div><h3>Gastos tecnológicos</h3>
-          <p>Facturas, pagos, consumos y auditoría de proveedores. Aquí se registran las correcciones administrativas.</p>
-          <Link to="/financial-reports">Abrir control financiero <Icon name="arrow" size={16}/></Link></div></article>
-      <article><span className="atx-related-icon"><Icon name="card" size={21}/></span>
-        <div><h3>Ingresos y facturación</h3>
-          <p>Consulta la disponibilidad de las fuentes comerciales sin sumar pagos de proveedores a las ventas.</p>
-          <Link to="/billing">Ver ingresos y facturación <Icon name="arrow" size={16}/></Link></div></article>
-    </section>
     <p className="atx-last-note"><Icon name="info" size={17}/>
       Esta sección no genera cobros, transferencias ni facturas. La edición de movimientos existentes está
       restringida a FINANCE_MANAGE, exige un motivo y utiliza la auditoría financiera del backend.</p>
