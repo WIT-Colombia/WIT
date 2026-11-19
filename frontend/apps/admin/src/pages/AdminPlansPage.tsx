@@ -257,7 +257,6 @@ export function AdminPlansPage() {
     <AdminPageHeading icon="crown" title="Planes y suscripciones"
       description="Consulta los planes de negocios y gestiona los cambios administrativos de Business PRO con información real."
       actions={<div className="aps-header-actions">
-        <Link to="/businesses" className="aps-button aps-button-outline"><Icon name="store" size={17}/> Ver negocios</Link>
         <button type="button" className="aps-button aps-button-primary" onClick={() => { setNotice(''); setRevision(v => v+1); }}>
           <Icon name="refresh" size={17}/> Actualizar datos
         </button>
