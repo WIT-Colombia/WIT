@@ -341,3 +341,99 @@
 @media(prefers-reduced-motion:reduce){
   .admin-refresh .aps-page *, .aps-dialog-backdrop *{transition:none!important}
 }
+
+/* Real BusinessSubscription ledger: stored state, validity and dates, never revenue. */
+.admin-refresh .aps-subscriptions{
+  min-width:0;overflow:hidden;border:1px solid var(--aps-line);
+  border-radius:18px;background:#fff;box-shadow:0 9px 28px #28164b0c;
+}
+.admin-refresh .aps-subscription-filters{
+  display:grid;grid-template-columns:minmax(230px,1.65fr) minmax(180px,1fr) minmax(196px,auto);
+  gap:13px;align-items:end;min-width:0;
+  margin:0 24px 19px;padding:17px;
+  border:1px solid #eae4f1;border-radius:14px;background:#faf8fd;
+}
+.admin-refresh .aps-subscription-filters .aps-filter-actions .aps-button{min-height:49px}
+.admin-refresh .aps-subscription-table-wrap{max-width:100%;overflow-x:auto}
+.admin-refresh .aps-subscriptions-table{min-width:1070px}
+.admin-refresh .aps-subscription-business{display:grid;gap:5px;min-width:170px}
+.admin-refresh .aps-subscription-business>a{
+  font-size:13px;font-weight:850;line-height:1.4;color:#573394;
+  overflow-wrap:anywhere;
+}
+.admin-refresh .aps-subscription-business>a:hover{text-decoration:underline!important}
+.admin-refresh .aps-subscription-business small{font-size:11px;line-height:1.5;color:#746e81}
+.admin-refresh .aps-record-status{
+  display:inline-flex;align-items:center;max-width:100%;padding:6px 10px;
+  border:1px solid #dddce7;border-radius:99px;background:#f4f5f8;color:#5d6476;
+  font-size:11.5px;font-weight:800;line-height:1.4;
+}
+.admin-refresh .aps-record-status.active{border-color:#cbe9d8;background:#ecfaf1;color:#17794b}
+.admin-refresh .aps-record-status.pending{border-color:#f1ddb4;background:#fff7e7;color:#90651e}
+.admin-refresh .aps-record-status.expired{border-color:#e1d9ee;background:#f6f2fc;color:#665187}
+.admin-refresh .aps-record-status.revoked{border-color:#f2d2d8;background:#fff0f3;color:#aa4561}
+.admin-refresh .aps-effective{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 9px;
+  border-radius:9px;font-size:11.5px;font-weight:750;line-height:1.4;
+  white-space:nowrap;
+}
+.admin-refresh .aps-effective.is-effective{background:#e8f8ef;color:#148152}
+.admin-refresh .aps-effective.not-effective{background:#f1f1f6;color:#69687a}
+.admin-refresh .aps-sub-detail{display:block;margin-top:6px;color:#6c6880;font-size:11px}
+.admin-refresh .aps-renewal{font-weight:850;color:#3c3252}
+.admin-refresh .aps-revocation{margin-top:7px;max-width:210px}
+.admin-refresh .aps-revocation summary{font-size:11px;font-weight:800;cursor:pointer;color:#7640ad}
+.admin-refresh .aps-revocation p{margin:6px 0;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.admin-refresh .aps-subscription-error{
+  display:flex;align-items:flex-start;flex-wrap:wrap;gap:11px;margin:0;
+  padding:20px 24px;color:#716580;font-size:12px;line-height:1.6;
+}
+.admin-refresh .aps-subscription-error svg{flex-shrink:0;color:#9d6bbd}
+.admin-refresh .aps-subscription-error span{flex:1;min-width:220px}
+.admin-refresh .aps-subscription-error button{min-height:38px}
+.admin-refresh .aps-ledger-note{
+  display:flex;align-items:flex-start;gap:8px;margin:0;
+  padding:13px 24px;border-top:1px solid #eee8f4;background:#fbfafe;
+  color:#6e677d;font-size:11.5px;line-height:1.6;
+}
+.admin-refresh .aps-ledger-note svg{flex-shrink:0;margin-top:1px;color:#7c45b3}
+.admin-refresh .aps-subscription-cards{display:none}
+@media(max-width:980px){
+  .admin-refresh .aps-subscription-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .aps-subscription-filters .aps-field:first-child{grid-column:1/-1}
+  .admin-refresh .aps-subscription-table-wrap{display:none}
+  .admin-refresh .aps-subscription-cards{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:13px;padding:15px 20px;
+  }
+  .admin-refresh .aps-subscription-cards article{
+    min-width:0;display:grid;align-content:start;gap:14px;padding:18px;
+    border:1px solid #e8e1ef;border-radius:14px;
+    background:#fff;box-shadow:0 4px 14px #2918480b;
+  }
+  .admin-refresh .aps-subscription-cards article>header{display:grid;gap:6px}
+  .admin-refresh .aps-subscription-cards article>header a{
+    font-size:14px;font-weight:850;line-height:1.45;
+    color:#56358b;overflow-wrap:anywhere;
+  }
+  .admin-refresh .aps-subscription-cards article>header small{font-size:11px;color:#797285}
+  .admin-refresh .aps-subscription-card-badges{display:flex;flex-wrap:wrap;gap:8px}
+  .admin-refresh .aps-subscription-cards dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0}
+  .admin-refresh .aps-subscription-cards dl>div{
+    display:grid;align-content:start;gap:6px;min-width:0;padding:12px;
+    border:1px solid #eee9f4;border-radius:10px;background:#faf8fc;
+  }
+  .admin-refresh .aps-subscription-cards dt{font-size:11px;font-weight:800;color:#6e667b;line-height:1.4}
+  .admin-refresh .aps-subscription-cards dd{margin:0;color:#322945;font-size:13px;font-weight:750;line-height:1.5;overflow-wrap:anywhere}
+  .admin-refresh .aps-subscription-cards .aps-revocation-reason{grid-column:1/-1}
+}
+@media(max-width:700px){
+  .admin-refresh .aps-subscription-filters{margin:0 14px 16px;padding:14px}
+  .admin-refresh .aps-subscription-cards{grid-template-columns:minmax(0,1fr);gap:10px;padding:13px}
+  .admin-refresh .aps-subscription-cards article{padding:15px}
+  .admin-refresh .aps-ledger-note{padding:13px 15px}
+}
+@media(max-width:520px){
+  .admin-refresh .aps-subscription-filters{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .aps-subscription-filters .aps-field:first-child{grid-column:auto}
+}
