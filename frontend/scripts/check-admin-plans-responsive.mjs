@@ -281,7 +281,7 @@ try {
         true,device+': billing scope clearly disclosed');
       assert.equal(await page.locator('.abill-commercial-card').count(),3,
         device+': existing PRO operational indicators');
-      assert.equal(await page.getByRole('link',{name:/Consultar gastos tecnológicos/}).isVisible(),
+      assert.equal((await page.getByRole('link',{name:/Consultar gastos tecnológicos/}).filter({visible:true}).count()) > 0,
         true,device+': supplier invoices linked to actual expense module');
       await page.getByLabel('Filtrar suscripciones por estado').selectOption('PENDING');
       await page.getByText('1 registro',{exact:true}).waitFor({state:'visible'});
