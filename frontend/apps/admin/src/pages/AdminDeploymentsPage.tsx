@@ -10,7 +10,7 @@ import {
   type TechnologyKind,type TechnologyServicesStatus,type TechnologyStatus,
 } from '../services/adminApiClient';
 import {
-  TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
+  TechnologyTabs,TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
   TechnologyCaseDialog,formatDate,number,downloadCsv,severityName,
 } from './TechnologyShared';
 import './TechnologyOperations.css';
@@ -179,6 +179,7 @@ export function AdminDeploymentsPage(){
       actions={<div className="ato-heading-actions">
         <button type="button" className="ato-btn ato-btn-light" onClick={()=>setRevision(v=>v+1)}>
           <Icon name="refresh" size={17}/> Actualizar</button>
+    <TechnologyTabs />
         {manage&&<button type="button" className="ato-btn ato-btn-blue"
           onClick={()=>setCreating('MAINTENANCE')}>
           <Icon name="calendar" size={17}/> Programar mantenimiento</button>}
