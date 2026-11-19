@@ -1,0 +1,459 @@
+/* XAMUKO Admin — Gastos y contabilidad.
+   Scope: recorded supplier expenses, not reconciled bank transactions or revenues. */
+.admin-refresh .afc-page,.admin-refresh .afc-page *{box-sizing:border-box}
+.admin-refresh .afc-page{
+  --afc-ink:#302541;--afc-muted:#766a83;--afc-line:#e7e1ed;
+  display:grid;gap:19px;width:100%;max-width:1580px;min-width:0;margin:0 auto;color:var(--afc-ink);
+}
+.admin-refresh .afc-page a{text-decoration:none}
+.admin-refresh .afc-page button{font-family:inherit;cursor:pointer}
+.admin-refresh .afc-page button:disabled{opacity:.5;cursor:not-allowed}
+.admin-refresh .afc-page :is(a,button,input,select):focus-visible,
+.afc-edit-form :is(button,input,select,textarea):focus-visible{
+  outline:3px solid #c09bf3;outline-offset:2px;
+}
+.admin-refresh .afc-btn,.afc-edit-form .afc-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;min-width:0;
+  padding:10px 15px;border:1px solid #e0d4eb;border-radius:11px;
+  font-family:inherit;font-size:12.5px;font-weight:850;line-height:1.45;
+  text-align:center;text-decoration:none;white-space:normal;
+  transition:background-color .16s ease,border-color .16s ease;
+}
+.admin-refresh .afc-btn-outline,.afc-edit-form .afc-btn-outline{background:#fff;color:#6c459b}
+.admin-refresh .afc-btn-outline:hover:not(:disabled),.afc-edit-form .afc-btn-outline:hover:not(:disabled){
+  background:#f9f4fe;border-color:#c3a5df;
+}
+.admin-refresh .afc-btn-main,.afc-edit-form .afc-btn-main{
+  border-color:#7b3aca;background:linear-gradient(120deg,#8852d0,#6432bd);
+  box-shadow:0 6px 14px #7940c227;color:#fff;
+}
+.admin-refresh .afc-btn-main:hover:not(:disabled),.afc-edit-form .afc-btn-main:hover:not(:disabled){
+  background:#6e36bc;
+}
+.admin-refresh .afc-header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.admin-refresh .afc-scope-banner{
+  display:flex;align-items:flex-start;gap:15px;flex-wrap:wrap;min-width:0;
+  padding:19px 23px;border:1px solid #e7d9f1;border-radius:17px;
+  background:linear-gradient(118deg,#f8f3ff,#fff 85%);
+  box-shadow:0 8px 25px #26133e08;
+}
+.admin-refresh .afc-scope-icon{
+  display:grid;place-items:center;flex:0 0 49px;width:49px;height:49px;
+  border-radius:13px;background:#ece1fa;color:#7945b4;
+}
+.admin-refresh .afc-scope-banner>div{flex:1 1 330px;min-width:0;display:grid;gap:7px}
+.admin-refresh .afc-scope-banner strong{font-size:15px;color:#39294d;line-height:1.4}
+.admin-refresh .afc-scope-banner p{margin:0;max-width:960px;color:#6d637c;font-size:12.5px;line-height:1.65}
+.admin-refresh .afc-scope-tag,.admin-refresh .afc-head-pill{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:32px;
+  padding:7px 12px;border:1px solid #e0d1ee;border-radius:99px;
+  background:#f1e9fc;color:#74489e;font-size:11px;font-weight:850;line-height:1.4;
+}
+.admin-refresh .afc-notice{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:13px 17px;border:1px solid #badfca;border-radius:11px;
+  background:#f0faf4;color:#33754a;font-size:12.5px;font-weight:750;line-height:1.6;
+}
+.admin-refresh .afc-notice svg{flex-shrink:0}
+.admin-refresh .afc-period-bar{
+  display:flex;align-items:end;gap:15px;flex-wrap:wrap;
+  padding:19px 21px;border:1px solid var(--afc-line);border-radius:16px;
+  background:#fff;box-shadow:0 7px 22px #1c102808;
+}
+.admin-refresh .afc-period-info{display:grid;gap:6px;align-self:center;flex:1 1 170px;min-width:0}
+.admin-refresh .afc-eyebrow{
+  display:block;color:#8050b1;font-size:10px;font-weight:900;letter-spacing:.1em;line-height:1.5;
+}
+.admin-refresh .afc-period-info strong{font-size:16px;font-weight:900;line-height:1.3;color:#3b2c50}
+.admin-refresh .afc-period-info small{font-size:11px;color:#7b7286}
+.admin-refresh .afc-period-controls{display:flex;align-items:end;gap:10px;flex:2 1 400px;flex-wrap:wrap}
+.admin-refresh .afc-period-controls label{
+  display:grid;gap:7px;flex:1 1 128px;min-width:0;
+  color:#584e67;font-size:12px;font-weight:850;line-height:1.4;
+}
+.admin-refresh .afc-period-controls input{
+  display:block;width:100%;max-width:100%;min-height:48px;min-width:0;
+  padding:10px 12px;border:1px solid #dcd4e7;border-radius:10px;
+  background:#fff;color:#342b42;font-size:14px;font-family:inherit;line-height:1.4;
+}
+.admin-refresh .afc-period-controls button{flex:1 1 125px;min-height:48px}
+.admin-refresh .afc-presets{display:flex;flex-wrap:wrap;align-items:center;gap:7px;flex:1 1 225px}
+.admin-refresh .afc-presets button{
+  display:inline-flex;align-items:center;justify-content:center;min-height:36px;
+  padding:8px 10px;border:1px solid #e8dff1;border-radius:10px;
+  background:#f8f5fc;color:#6c5491;font-size:11px;font-weight:850;line-height:1.4;
+}
+.admin-refresh .afc-presets button:hover{background:#eee4fb}
+.admin-refresh .afc-period-error{
+  flex-basis:100%;margin:0;padding:10px 14px;border:1px solid #f2c6d5;border-radius:10px;
+  background:#fff4f7;color:#a43b58;font-size:12px;
+}
+.admin-refresh .afc-error{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:16px 18px;border:1px solid #ead0dc;border-radius:12px;
+  background:#fff6f8;color:#8e526d;font-size:12.5px;line-height:1.6;
+}
+.admin-refresh .afc-error svg{flex-shrink:0}
+.admin-refresh .afc-error p{margin:0;flex:1 1 190px}
+.admin-refresh .afc-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.admin-refresh .afc-kpi{
+  display:flex;align-items:flex-start;gap:15px;min-height:146px;min-width:0;
+  padding:19px;border:1px solid #e8e2ee;border-radius:16px;
+  background:#fff;box-shadow:0 7px 23px #1e0e3d09;
+}
+.admin-refresh .afc-kpi-icon{
+  display:grid;place-items:center;flex:0 0 45px;width:45px;height:45px;
+  border-radius:12px;background:#efe6fc;color:#7942b7;
+}
+.admin-refresh .afc-kpi-blue .afc-kpi-icon{background:#eaf0ff;color:#3d66b7}
+.admin-refresh .afc-kpi-neutral .afc-kpi-icon{background:#eceef5;color:#637088}
+.admin-refresh .afc-kpi-green .afc-kpi-icon{background:#e7f8f0;color:#25875a}
+.admin-refresh .afc-kpi-amber .afc-kpi-icon{background:#fff4e1;color:#9d6c22}
+.admin-refresh .afc-kpi>div{display:grid;align-content:start;gap:9px;min-width:0;flex:1}
+.admin-refresh .afc-kpi>div>span{color:#5a4e6a;font-size:12.5px;font-weight:850;line-height:1.45}
+.admin-refresh .afc-kpi strong{
+  display:block;min-width:0;color:#302140;font-size:clamp(24px,2.6vw,32px);
+  font-weight:950;letter-spacing:-.04em;line-height:1.16;
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere;
+}
+.admin-refresh .afc-kpi small{color:#766c83;font-size:11.5px;line-height:1.5}
+.admin-refresh .afc-analytics{
+  display:grid;grid-template-columns:minmax(0,1.6fr) minmax(310px,1fr);gap:13px;
+}
+.admin-refresh .afc-trend-panel,.admin-refresh .afc-breakdown,
+.admin-refresh .afc-context-panel,.admin-refresh .afc-ledger,
+.admin-refresh .afc-methodology{
+  min-width:0;overflow:hidden;padding:23px 24px;
+  border:1px solid var(--afc-line);border-radius:17px;
+  background:#fff;box-shadow:0 7px 23px #1f13390a;
+}
+.admin-refresh .afc-section-heading{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:13px;flex-wrap:wrap;
+  margin-bottom:18px;
+}
+.admin-refresh .afc-section-heading>div:first-child{min-width:0;flex:1 1 210px}
+.admin-refresh .afc-section-heading h2,.admin-refresh .afc-methodology h2{
+  margin:5px 0 7px;color:#36274b;font-size:clamp(18px,2.1vw,23px);
+  font-weight:900;letter-spacing:-.025em;line-height:1.3;
+}
+.admin-refresh .afc-section-heading p{margin:0;color:#7a6f84;font-size:12px;line-height:1.6}
+.admin-refresh .afc-chart-active{
+  display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;
+  padding:13px 16px;border:1px solid #ece6f3;border-radius:11px;
+  background:linear-gradient(115deg,#fbf7ff,#fff);
+}
+.admin-refresh .afc-chart-active span{font-size:12px;color:#796e83;font-weight:850}
+.admin-refresh .afc-chart-active strong{
+  font-size:22px;color:#553489;font-weight:900;line-height:1.25;letter-spacing:-.03em;
+}
+.admin-refresh .afc-chart-active small{color:#837989;font-size:10.5px}
+.admin-refresh .afc-graph-wrapper{min-width:0}
+.admin-refresh .afc-graph{display:block;width:100%;height:auto;min-height:170px;max-height:305px;cursor:crosshair;touch-action:pan-y}
+.admin-refresh .afc-chart-keyboard{display:grid;gap:6px;padding:0 9px;margin:0}
+.admin-refresh .afc-chart-keyboard span{font-size:11px;color:#857b91;line-height:1.4}
+.admin-refresh .afc-chart-keyboard input{width:100%;min-height:25px;accent-color:#8350bd}
+.admin-refresh .afc-chart-empty{margin:0;padding:55px 20px;color:#7e748c;font-size:13px;text-align:center}
+.admin-refresh .afc-chart-caption{
+  display:flex;align-items:flex-start;gap:8px;margin:14px 0 0;
+  color:#817687;font-size:11.5px;line-height:1.6;
+}
+.admin-refresh .afc-chart-caption svg{flex-shrink:0;margin-top:2px}
+.admin-refresh .afc-provider-bars{display:grid;gap:17px}
+.admin-refresh .afc-provider-row{display:grid;gap:8px}
+.admin-refresh .afc-provider-row>div:first-child{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.admin-refresh .afc-provider-row strong{font-size:12.5px;color:#463954;line-height:1.4;overflow-wrap:anywhere}
+.admin-refresh .afc-provider-row>div:first-child span{font-size:12px;color:#5b4d6e;font-weight:850;white-space:nowrap}
+.admin-refresh .afc-progress{height:9px;border-radius:999px;overflow:hidden;background:#eee9f4}
+.admin-refresh .afc-progress>span{
+  display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,#b58ee8,#7640c1);
+}
+.admin-refresh .afc-provider-row>small{color:#817788;font-size:11px}
+.admin-refresh .afc-extra-note{margin:15px 0 0;color:#847a91;font-size:11px;line-height:1.5}
+.admin-refresh .afc-source-summary{
+  display:flex;gap:9px;align-items:flex-start;margin-top:19px;padding:14px;
+  border:1px solid #eee8f4;border-radius:10px;background:#faf8fd;
+  color:#766b80;font-size:11.5px;line-height:1.6;
+}
+.admin-refresh .afc-source-summary svg{flex-shrink:0;margin-top:2px;color:#7850ae}
+.admin-refresh .afc-source-summary strong{font-weight:900;color:#4a3b65}
+.admin-refresh .afc-mini-empty{padding:23px 0;color:#817788;font-size:12px;line-height:1.6}
+.admin-refresh .afc-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.admin-refresh .afc-text-action{
+  display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:8px 12px;
+  border:1px solid #e2d2ed;border-radius:9px;
+  background:#f9f4fe;color:#7044a8;font-size:11.5px;font-weight:850;
+}
+.admin-refresh .afc-text-action:hover{background:#efe5fc}
+.admin-refresh .afc-budget-list{display:grid;gap:2px}
+.admin-refresh .afc-budget-list>div{
+  display:flex;justify-content:space-between;align-items:center;gap:11px;
+  padding:14px 0;border-bottom:1px solid #eee9f3;
+}
+.admin-refresh .afc-budget-list>div:last-child{border-bottom:0}
+.admin-refresh .afc-budget-list>div>span{display:grid;gap:6px;min-width:0}
+.admin-refresh .afc-budget-list strong{color:#443451;font-size:12.5px;line-height:1.4}
+.admin-refresh .afc-budget-list small{color:#807689;font-size:11px;line-height:1.5}
+.admin-refresh .afc-budget-list b{font-size:13px;color:#513d70;white-space:nowrap}
+.admin-refresh .afc-context-footnote{margin:12px 0 0;color:#7f7689;font-size:11px;line-height:1.6}
+.admin-refresh .afc-sync-stat{
+  display:grid;gap:8px;padding:13px 0;border-bottom:1px solid #f0eaf5;
+}
+.admin-refresh .afc-sync-stat>span{color:#71657d;font-size:12px;font-weight:850}
+.admin-refresh .afc-sync-stat>strong{color:#403055;font-size:22px;line-height:1.3;font-weight:900}
+.admin-refresh .afc-sync-stat>small{color:#797083;font-size:11.5px;line-height:1.6}
+.admin-refresh .afc-free-toggle{
+  display:flex;align-items:center;gap:10px;width:100%;min-height:47px;
+  margin-top:17px;padding:11px 13px;border:1px solid #e6d8f2;border-radius:11px;
+  color:#71489e;background:#f8f3fe;font-size:12px;font-weight:850;line-height:1.45;
+}
+.admin-refresh .afc-free-toggle:hover{background:#f0e5fd}
+.admin-refresh .afc-free-toggle>svg:last-child{margin-left:auto}
+.admin-refresh .afc-free-body{display:grid;gap:9px;margin-top:13px;min-width:0}
+.admin-refresh .afc-free-body .finance-free-tier{min-width:0;padding:13px;background:#faf9fc;border-radius:12px}
+.admin-refresh .afc-free-body .finance-free-tier .page-heading{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.admin-refresh .afc-free-body .finance-free-tier h2{font-size:17px;margin:0}
+.admin-refresh .afc-free-body .finance-free-tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.admin-refresh .afc-free-body .finance-card{border:1px solid #e5ddec;border-radius:11px;padding:12px}
+.admin-refresh .afc-free-body>.afc-btn{justify-self:start}
+.admin-refresh .afc-ledger{padding:24px 25px 0}
+.admin-refresh .afc-ledger-heading{margin-bottom:19px}
+.admin-refresh .afc-admin-access{
+  display:inline-flex;align-items:center;gap:7px;min-height:33px;
+  border:1px solid #e5d9f0;border-radius:9px;background:#faf7fc;
+  padding:8px 12px;font-size:11px;font-weight:800;color:#77558e;
+}
+.admin-refresh .afc-tabs{
+  display:flex;align-items:center;gap:8px;overflow-x:auto;max-width:100%;padding:0 0 15px;
+  scrollbar-width:thin;
+}
+.admin-refresh .afc-tabs button{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  flex:0 0 auto;min-height:43px;padding:10px 14px;
+  border:1px solid #e5ddec;border-radius:10px;
+  color:#736481;background:#f9f7fb;font-size:12.5px;font-weight:850;white-space:nowrap;
+}
+.admin-refresh .afc-tabs button:hover{background:#f1e8fa;border-color:#c5aadf}
+.admin-refresh .afc-tabs button[aria-pressed="true"]{
+  color:#fff;background:linear-gradient(125deg,#8d52cd,#7037b9);
+  border-color:#7941bd;box-shadow:0 5px 13px #6d3fb822;
+}
+.admin-refresh .afc-filters{
+  display:grid;grid-template-columns:minmax(200px,1.65fr) minmax(190px,.85fr) minmax(174px,auto);
+  gap:12px;align-items:end;padding:17px;margin-bottom:17px;
+  border:1px solid #eae4f0;border-radius:13px;
+  background:linear-gradient(125deg,#fcfaff,#f8f6fb);
+}
+.admin-refresh .afc-field{display:grid;gap:8px;min-width:0;color:#554b65;font-size:12px;font-weight:850;line-height:1.4}
+.admin-refresh .afc-field select,.admin-refresh .afc-search{
+  display:flex;align-items:center;gap:9px;width:100%;min-width:0;min-height:49px;
+  padding:10px 12px;border:1px solid #ded4e7;border-radius:10px;
+  background:#fff;color:#332944;font-family:inherit;font-size:14px;font-weight:500;line-height:1.4;
+}
+.admin-refresh .afc-field select{display:block;cursor:pointer}
+.admin-refresh .afc-field select:disabled{background:#f6f4f8;color:#8f8498}
+.admin-refresh .afc-search:focus-within{border-color:#9363c8;box-shadow:0 0 0 3px #c8acec4d}
+.admin-refresh .afc-search>svg{flex-shrink:0;color:#8b5ab8}
+.admin-refresh .afc-search>input{
+  min-width:0;width:100%;min-height:24px;border:0;padding:0;outline:0;background:transparent;
+  color:#342942;font-family:inherit;font-size:14px;line-height:1.45;
+}
+.admin-refresh .afc-search>input:focus-visible{outline:0}
+.admin-refresh .afc-search>input::placeholder{color:#8c8397;opacity:1}
+.admin-refresh .afc-filter-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.admin-refresh .afc-filter-actions>.afc-btn{min-height:49px;padding:9px 11px}
+.admin-refresh .afc-ledger-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:13px 25px;margin:0 -25px;
+  border-top:1px solid #eee8f5;border-bottom:1px solid #eee8f5;
+  background:#faf8fc;
+}
+.admin-refresh .afc-ledger-toolbar>div:first-child{display:grid;gap:5px;min-width:0;flex:1 1 220px}
+.admin-refresh .afc-ledger-toolbar strong{font-size:13px;color:#523780}
+.admin-refresh .afc-ledger-toolbar span{color:#81778b;font-size:11.5px;line-height:1.5}
+.admin-refresh .afc-export-actions{display:flex;flex-wrap:wrap;gap:9px}
+.admin-refresh .afc-export-actions>.afc-btn{min-height:41px;padding:9px 12px}
+.admin-refresh .afc-ledger>.afc-error{margin:14px 0}
+.admin-refresh .afc-data-message,.admin-refresh .afc-empty{
+  margin:0 -25px;padding:25px;color:#706780;font-size:13px;line-height:1.6;
+}
+.admin-refresh .afc-empty{display:grid;justify-items:center;gap:9px;text-align:center;padding:37px 22px}
+.admin-refresh .afc-empty>svg{color:#9365c9}
+.admin-refresh .afc-empty>strong{font-size:16px;color:#3c2d50}
+.admin-refresh .afc-empty>p{margin:0 0 7px}
+.admin-refresh .afc-table-scroll{margin:0 -25px;max-width:calc(100% + 50px);overflow-x:auto}
+.admin-refresh .afc-table{width:100%;min-width:1030px;border-collapse:collapse;text-align:left}
+.admin-refresh .afc-table th{
+  padding:16px 14px;border-bottom:1px solid #eae4ef;
+  background:#f9f7fc;color:#62566e;font-size:11.5px;font-weight:900;line-height:1.4;
+  white-space:nowrap;
+}
+.admin-refresh .afc-table td{
+  padding:17px 14px;border-bottom:1px solid #f0ebf4;color:#5f546b;
+  font-size:12.5px;line-height:1.55;vertical-align:middle;
+}
+.admin-refresh .afc-table tbody tr:last-child td{border-bottom:0}
+.admin-refresh .afc-table tbody tr:hover{background:#fdfbff}
+.admin-refresh .afc-table th:first-child,.admin-refresh .afc-table td:first-child{padding-left:25px}
+.admin-refresh .afc-table td strong{display:block;font-size:13px;color:#3d2f4e;line-height:1.5;overflow-wrap:anywhere}
+.admin-refresh .afc-table td small{display:block;color:#857b90;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.admin-refresh .afc-table-money{white-space:nowrap;color:#3c2c53!important;font-size:13px!important;font-weight:850;font-variant-numeric:tabular-nums}
+.admin-refresh .afc-status{
+  display:inline-flex;align-items:center;justify-content:center;min-height:27px;
+  padding:5px 9px;border:1px solid #e2dce9;border-radius:99px;
+  background:#f4f2f7;color:#6c6278;font-size:11px;font-weight:850;line-height:1.35;white-space:nowrap;
+}
+.admin-refresh .afc-status-real,.admin-refresh .afc-status-active,.admin-refresh .afc-status-paid,
+.admin-refresh .afc-status-acknowledged,.admin-refresh .afc-status-succeeded{
+  background:#eaf8f0;border-color:#cce8d8;color:#278356;
+}
+.admin-refresh .afc-status-pending,.admin-refresh .afc-status-estimated,
+.admin-refresh .afc-status-projected,.admin-refresh .afc-status-running{
+  background:#fff5e5;border-color:#f0dfba;color:#987126;
+}
+.admin-refresh .afc-status-cancelled,.admin-refresh .afc-status-failed{
+  background:#fff0f3;border-color:#efcfd9;color:#b15170;
+}
+.admin-refresh .afc-status-manual{
+  background:#f2e9fc;border-color:#e4d3f2;color:#70469e;
+}
+.admin-refresh .afc-row-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.admin-refresh .afc-row-button,.admin-refresh .afc-inline-link{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:38px;padding:8px 11px;border:1px solid #dacce9;border-radius:9px;
+  background:#f9f4ff;color:#7143a8;font-size:11.5px;font-weight:850;line-height:1.4;
+}
+.admin-refresh .afc-row-button:hover:not(:disabled),.admin-refresh .afc-inline-link:hover{
+  background:#eee3fc;border-color:#c6a9e1;
+}
+.admin-refresh .afc-read-only{color:#898093;font-size:11.5px}
+.admin-refresh .afc-record-cards{display:none}
+.admin-refresh .afc-pagination{
+  display:flex;align-items:center;justify-content:space-between;gap:13px;flex-wrap:wrap;
+  padding:15px 25px;margin:0 -25px;border-top:1px solid #eee8f4;color:#756c81;font-size:12.5px;
+}
+.admin-refresh .afc-pagination>div{display:flex;flex-wrap:wrap;gap:9px}
+.admin-refresh .afc-pagination .afc-btn{min-height:40px;padding:8px 12px}
+.admin-refresh .afc-ledger-footnote{
+  display:flex;align-items:flex-start;gap:9px;line-height:1.65;
+  padding:16px 25px;margin:0 -25px;
+  border-top:1px solid #eee7f4;background:#faf8fd;
+  color:#796f84;font-size:11.5px;
+}
+.admin-refresh .afc-ledger-footnote svg{flex-shrink:0;margin-top:2px}
+.admin-refresh .afc-methodology>header{display:flex;align-items:flex-start;gap:13px}
+.admin-refresh .afc-methodology>header>svg{flex:0 0 auto;color:#8c5ac3;margin-top:5px}
+.admin-refresh .afc-methodology h2{margin:3px 0 5px}
+.admin-refresh .afc-methodology>header p{margin:0;font-size:12.5px;color:#7a6e85;line-height:1.6}
+.admin-refresh .afc-methodology>div:nth-child(2){
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 19px;margin-top:22px;
+}
+.admin-refresh .afc-methodology>div:nth-child(2)>p{
+  display:flex;align-items:flex-start;gap:9px;min-width:0;margin:0;
+  padding:12px 14px;border:1px solid #eee9f4;border-radius:10px;
+  background:#fbf9fe;color:#685d79;font-size:11.5px;line-height:1.65;
+}
+.admin-refresh .afc-methodology>div:nth-child(2)>p>svg{flex:0 0 auto;margin-top:2px;color:#8351b2}
+.admin-refresh .afc-related{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:20px}
+.admin-refresh .afc-related>a{
+  display:inline-flex;align-items:center;gap:8px;min-height:37px;
+  padding:8px 12px;border:1px solid #e3d6ed;border-radius:9px;
+  color:#7143a7;background:#faf7fe;font-size:11.5px;font-weight:850;
+}
+.admin-refresh .afc-related>a:hover{background:#f0e6fb}
+/* Editor uses existing accessible AdminDialog; only the inner form is new. */
+.afc-edit-form{display:grid;gap:13px}
+.afc-edit-form>p{margin:0 0 4px;color:#71647c;font-size:12.5px;line-height:1.65}
+.afc-edit-form label{display:grid;gap:8px;min-width:0;color:#554565;font-size:12px;font-weight:850;line-height:1.4}
+.afc-edit-form :is(input,textarea,select){
+  width:100%;min-width:0;min-height:49px;padding:10px 13px;
+  border:1px solid #ddd2e8;border-radius:10px;background:#fff;
+  color:#2f2741;font-family:inherit;font-size:14px;font-weight:500;line-height:1.5;
+}
+.afc-edit-form textarea{min-height:112px;resize:vertical}
+.afc-edit-actions{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:10px;margin-top:9px}
+.afc-edit-form .afc-error{margin:0}
+@media(max-width:1340px){
+  .admin-refresh .afc-analytics{grid-template-columns:minmax(0,1.2fr) minmax(310px,1fr)}
+  .admin-refresh .afc-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:1100px){
+  .admin-refresh .afc-analytics{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .afc-table-scroll{display:none}
+  .admin-refresh .afc-record-cards{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;
+    padding:17px 25px;margin:0 -25px;
+  }
+  .admin-refresh .afc-record-cards>article{
+    display:grid;align-content:start;gap:13px;min-width:0;padding:18px;
+    border:1px solid #e9e1ef;border-radius:14px;
+    background:#fff;box-shadow:0 5px 14px #190c2609;
+  }
+  .admin-refresh .afc-record-cards>article>header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .admin-refresh .afc-record-cards>article>header strong{flex:1 1 135px;min-width:0;color:#402f53;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+  .admin-refresh .afc-record-cards>article>small{font-size:11.5px;color:#81758a;overflow-wrap:anywhere}
+  .admin-refresh .afc-record-cards dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0}
+  .admin-refresh .afc-record-cards dl>div{display:grid;align-content:start;gap:7px;min-width:0;padding:12px;border:1px solid #eee9f3;border-radius:10px;background:#fbf9fc}
+  .admin-refresh .afc-record-cards dt{color:#80748a;font-size:11px;font-weight:850;line-height:1.4}
+  .admin-refresh .afc-record-cards dd{margin:0;color:#3e3153;font-size:12.5px;font-weight:850;line-height:1.45;overflow-wrap:anywhere}
+  .admin-refresh .afc-card-actions{display:flex;align-items:stretch;gap:9px;flex-wrap:wrap}
+  .admin-refresh .afc-card-actions>a,.admin-refresh .afc-card-actions>button{
+    flex:1 1 125px;min-height:42px;padding:10px 13px;
+    border:1px solid #ddcbea;border-radius:10px;background:#f9f4ff;
+    color:#7143a6;font-size:11.5px;font-weight:850;text-align:center;
+  }
+  .admin-refresh .afc-card-actions>span{font-size:11.5px;color:#928799}
+}
+@media(max-width:950px){
+  .admin-refresh .afc-period-controls{flex:1 1 100%}
+  .admin-refresh .afc-presets{flex:1 1 100%}
+  .admin-refresh .afc-context-grid{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .afc-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .afc-search-field{grid-column:1/-1}
+  .admin-refresh .afc-filter-actions{grid-column:1/-1}
+}
+@media(max-width:720px){
+  .admin-refresh .afc-page{gap:14px}
+  .admin-refresh .afc-header-actions{width:100%}
+  .admin-refresh .afc-header-actions .afc-btn{flex:1 1 150px}
+  .admin-refresh .afc-scope-banner{padding:17px 15px;gap:11px}
+  .admin-refresh .afc-scope-icon{width:42px;height:42px;flex-basis:42px}
+  .admin-refresh .afc-scope-banner>div{flex:1 1 190px}
+  .admin-refresh .afc-period-bar{padding:17px}
+  .admin-refresh .afc-trend-panel,.admin-refresh .afc-breakdown,
+  .admin-refresh .afc-context-panel,.admin-refresh .afc-ledger,
+  .admin-refresh .afc-methodology{padding:18px 16px}
+  .admin-refresh .afc-kpis{gap:10px}
+  .admin-refresh .afc-kpi{min-height:140px;padding:16px;gap:10px}
+  .admin-refresh .afc-kpi-icon{width:40px;height:40px;flex-basis:40px}
+  .admin-refresh .afc-kpi strong{font-size:23px}
+  .admin-refresh .afc-kpi small{font-size:10.5px}
+  .admin-refresh .afc-ledger-toolbar,.admin-refresh .afc-data-message,
+  .admin-refresh .afc-empty,.admin-refresh .afc-pagination,.admin-refresh .afc-ledger-footnote{
+    margin-inline:-16px;padding-inline:16px;
+  }
+  .admin-refresh .afc-record-cards{margin-inline:-16px;padding:13px 16px}
+  .admin-refresh .afc-methodology>div:nth-child(2){grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:550px){
+  .admin-refresh .afc-kpis{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .afc-kpi{min-height:0}
+  .admin-refresh .afc-kpi strong{font-size:27px}
+  .admin-refresh .afc-period-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .afc-period-controls label{flex:auto}
+  .admin-refresh .afc-period-controls button{grid-column:1/-1}
+  .admin-refresh .afc-filters{grid-template-columns:minmax(0,1fr);padding:13px}
+  .admin-refresh .afc-search-field,.admin-refresh .afc-filter-actions{grid-column:auto}
+  .admin-refresh .afc-record-cards{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .afc-record-cards>article{padding:16px}
+  .admin-refresh .afc-budget-list>div{align-items:flex-start;flex-wrap:wrap}
+  .admin-refresh .afc-budget-list b{white-space:normal}
+  .admin-refresh .afc-chart-active strong{font-size:18px}
+  .admin-refresh .afc-pagination>div{width:100%}
+  .admin-refresh .afc-pagination .afc-btn{flex:1}
+  .afc-edit-actions{flex-direction:column-reverse}
+  .afc-edit-actions .afc-btn{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .admin-refresh .afc-page *, .afc-edit-form *{transition:none!important}
+}
