@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { PAID_PLAN_MONTHLY_COP, formatCopPrice } from '@wit/utils';
+import { PlusIcon, type PlusIconName } from '../components/PlusIcon';
 import { PageLayout } from '../components/PageLayout';
 import { useAuth } from '../context/AuthContext';
 import { useLocationContext } from '../context/LocationContext';
@@ -10,20 +12,20 @@ import { distanceBetweenCoordinates, getBusinessCoordinates } from '../utils/coo
 import type { Business } from '../data/mockData';
 import {
   addPlusCollectionItem, addPlusWatch, comparePlusOffers, createPlusCollection, createPlusSearch,
-  fetchPlusOverview, fetchPlusPriceHistory, fetchPlusRadar, fetchPlusStatus,
+  fetchPlusOverview, fetchPlusPriceHistory, fetchPlusRadar, fetchPlusStatus, fetchPlusPurchaseRequest, requestPlusMembership,
   parsePlusTarget, removePlusCollection, removePlusCollectionItem, removePlusSearch,
   removePlusWatch, savePlusPreferences, searchHref,
-  type PlusOverview, type PlusRadarItem, type PlusCompareOffer, type PriceHistory, type PlusStatus,
+  type PlusOverview, type PlusRadarItem, type PlusCompareOffer, type PriceHistory, type PlusStatus, type PlusPurchaseRequest,
 } from '../services/userPlusService';
 import './Plus.css';
 
-const benefits = [
-  { title: 'Radar de novedades', description: 'Novedades reales de tus negocios favoritos', icon: '✦' },
-  { title: 'Seguimiento de precios', description: 'Historial y alertas cuando bajan los precios', icon: '↘' },
-  { title: 'Comparar opciones', description: 'Hasta cuatro productos o servicios', icon: '≍' },
-  { title: 'Colecciones y búsquedas', description: 'Guarda tus lugares e intereses', icon: '▣' },
-  { title: 'Rutas múltiples', description: 'Organiza visitas a varios negocios', icon: '⌁' },
-  { title: 'Sin anuncios de terceros', description: 'Una experiencia de navegación más limpia', icon: '◈' },
+const benefits: Array<{ title: string; description: string; icon: PlusIconName }> = [
+  { title: 'Radar de novedades', description: 'Novedades reales de tus negocios favoritos', icon: 'radar' },
+  { title: 'Seguimiento de precios', description: 'Historial y alertas cuando bajan los precios', icon: 'price' },
+  { title: 'Comparar opciones', description: 'Hasta cuatro productos o servicios', icon: 'compare' },
+  { title: 'Colecciones y búsquedas', description: 'Guarda tus lugares e intereses', icon: 'collection' },
+  { title: 'Rutas múltiples', description: 'Organiza visitas a varios negocios', icon: 'route' },
+  { title: 'Sin anuncios de terceros', description: 'Una experiencia de navegación más limpia', icon: 'ad-free' },
 ];
 
 function readablePrice(value: string | null, currency = 'COP') {
@@ -49,6 +51,10 @@ export default function Plus() {
   const { favorites } = useFavorites();
   const requestEpoch = useRef(0);
   const [status, setStatus] = useState<PlusStatus | null>(null);
+  const [purchaseRequest, setPurchaseRequest] = useState<PlusPurchaseRequest | null>(null);
+  const [confirmPurchase, setConfirmPurchase] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [data, setData] = useState<PlusOverview | null>(null);
   const [radar, setRadar] = useState<PlusRadarItem[]>([]);
   const [places, setPlaces] = useState<Business[]>([]);
@@ -77,6 +83,13 @@ export default function Plus() {
     const current = await fetchPlusStatus();
     if (epoch !== requestEpoch.current) return;
     setStatus(current);
+    if (current.enabled && !current.active) {
+      const pendingPurchase = await fetchPlusPurchaseRequest();
+      if (epoch !== requestEpoch.current) return;
+      setPurchaseRequest(pendingPurchase.request);
+    } else {
+      setPurchaseRequest(null);
+    }
     if (current.active) {
       const [overview, feed] = await Promise.all([fetchPlusOverview(), fetchPlusRadar()]);
       if (epoch !== requestEpoch.current) return;
@@ -110,6 +123,20 @@ export default function Plus() {
     window.addEventListener('focus', refresh);
     return () => { clearInterval(timer); window.removeEventListener('focus', refresh); };
   }, [reload, user?.id]);
+
+  async function submitPurchaseRequest() {
+    if (!status?.enabled || status.active || !acceptedTerms || purchaseBusy || purchaseRequest) return;
+    setPurchaseBusy(true); setError(''); setNotice('');
+    try {
+      const result = await requestPlusMembership(PAID_PLAN_MONTHLY_COP.xamukoPlus);
+      setPurchaseRequest(result.request);
+      setConfirmPurchase(false);
+      setAcceptedTerms(false);
+      setNotice('Tu solicitud de Xamuko Plus quedó registrada. Aún no se ha realizado ningún cobro ni activado la membresía.');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No pudimos registrar tu solicitud de Xamuko Plus.');
+    } finally { setPurchaseBusy(false); }
+  }
 
   async function run(task: () => Promise<unknown>, success = 'Cambios guardados.'): Promise<boolean> {
     setBusy(true); setError(''); setNotice('');
@@ -150,7 +177,7 @@ export default function Plus() {
     <Link to="/profile" className="plus-back">← Volver al perfil</Link>
     <header className="plus-hero">
       <span className="plus-kicker">MEMBRESÍA XAMUKO</span>
-      <h1><span aria-hidden="true">♛</span> Xamuko Plus</h1>
+      <h1><span className="plus-hero-crown"><PlusIcon name="crown" size={32}/></span> Xamuko Plus</h1>
       <p>Descubre oportunidades, organiza tus favoritos y aprovecha mejor tu ciudad.</p>
       <div className="plus-hero-state" role="status">
         {loading ? 'Consultando membresía…' : error && !status ? 'No pudimos verificar tu membresía' : status?.active
@@ -161,18 +188,51 @@ export default function Plus() {
     </header>
     {error && <p className="plus-error" role="alert">{error}</p>}
     {notice && <p className="plus-success" role="status">{notice}</p>}
-    {!status?.active ? <section className="plus-benefits" aria-label="Beneficios incluidos">
+    {!status?.active ? <>
+      <section className="plus-subscription-banner" aria-labelledby="plus-subscription-title">
+        <div className="plus-subscription-heading"><span className="plus-subscription-emblem"><PlusIcon name="crown" size={29}/></span>
+          <div><span className="plus-subscription-eyebrow">TU MEMBRESÍA PERSONAL</span>
+            <h2 id="plus-subscription-title">Descubre todo con Xamuko Plus</h2>
+            <p>Radar, alertas, comparador, colecciones y rutas en una sola experiencia.</p>
+          </div>
+        </div>
+        <div className="plus-subscription-action">
+          <div className="plus-subscription-price"><strong>{formatCopPrice(PAID_PLAN_MONTHLY_COP.xamukoPlus)}</strong><span> COP / mes</span></div>
+          {purchaseRequest ? <p className="plus-subscription-pending" role="status"><PlusIcon name="check" size={17}/> Solicitud registrada · pendiente de pago y activación</p>
+            : <button type="button" className="plus-button plus-subscription-cta"
+              disabled={loading || !status?.enabled || purchaseBusy}
+              onClick={() => { setConfirmPurchase(true); setAcceptedTerms(false); }}>
+                {status?.enabled ? 'Solicitar Xamuko Plus' : 'Adquisición no disponible'}
+                <PlusIcon name="arrow-right" size={17}/>
+              </button>}
+          <small>No se cobrará dinero al enviar una solicitud. El pago en línea y la renovación automática aún no están habilitados.</small>
+        </div>
+      </section>
+      {confirmPurchase && <section className="plus-purchase-confirm" aria-label="Confirmar solicitud de suscripción">
+        <h2>Solicitar Xamuko Plus</h2>
+        <p>Precio anunciado: <strong>{formatCopPrice(PAID_PLAN_MONTHLY_COP.xamukoPlus)} COP mensuales.</strong> Esta solicitud no constituye un pago ni activa automáticamente la membresía.</p>
+        <label><input type="checkbox" checked={acceptedTerms} onChange={event => setAcceptedTerms(event.target.checked)}/>
+          Acepto el precio mensual indicado y entiendo que el pago se gestionará por separado antes de activar el servicio.
+        </label>
+        <div className="plus-purchase-buttons">
+          <button type="button" className="plus-button" onClick={() => void submitPurchaseRequest()}
+            disabled={purchaseBusy || !acceptedTerms}>{purchaseBusy ? 'Enviando solicitud…' : 'Confirmar solicitud'}</button>
+          <button type="button" className="plus-button plus-button-secondary" disabled={purchaseBusy}
+            onClick={() => setConfirmPurchase(false)}>Cancelar</button>
+        </div>
+      </section>}
+      <section className="plus-benefits" aria-label="Beneficios incluidos">
       <h2>Lo que incluye Plus</h2>
-      <div className="plus-benefit-grid">{benefits.map(b => <article key={b.title}><span aria-hidden="true">{b.icon}</span><h3>{b.title}</h3><p>{b.description}</p></article>)}</div>
-      <p className="plus-note">Todavía no se ofrecen compras ni cobros desde esta sección. Los beneficios se habilitan únicamente para suscripciones vigentes y con el interruptor administrativo activado.</p>
+      <div className="plus-benefit-grid">{benefits.map(b => <article key={b.title}><span className="plus-benefit-icon"><PlusIcon name={b.icon} size={26}/></span><h3>{b.title}</h3><p>{b.description}</p></article>)}</div>
+      <p className="plus-note">Los beneficios se activan solo después de verificar la suscripción. Las funciones gratuitas de Xamuko siguen disponibles para todos.</p>
       <button type="button" className="plus-button plus-button-secondary" disabled={loading} onClick={() => { setLoading(true); void reload().catch(() => setError('No pudimos actualizar la consulta.')).finally(() => setLoading(false)); }}>Verificar otra vez</button>
-    </section> : <>
+    </section></> : <>
       <section className="plus-panel" id="radar">
         <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2>Tu radar de novedades</h2><p>Productos, servicios y promociones recientes de tus negocios favoritos.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.radarEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ radarEnabled: event.target.checked }))}/>Recibir avisos</label></div>
         {radar.length ? <div className="plus-list">{radar.map(item => <Link key={item.type + ':' + item.id} to={item.href} className="plus-list-row">
-          <span className="plus-row-symbol">✦</span><span><strong>{item.title}</strong><small>{item.business} · {dateFormat(item.createdAt)}</small></span><span>Ver ›</span></Link>)}</div>
+          <span className="plus-row-symbol"><PlusIcon name="radar" size={19}/></span><span><strong>{item.title}</strong><small>{item.business} · {dateFormat(item.createdAt)}</small></span><span>Ver ›</span></Link>)}</div>
           : <p className="plus-empty">Aún no hay novedades recientes. Guarda negocios como favoritos para recibir sus nuevas publicaciones.</p>}
       </section>
 
@@ -185,7 +245,7 @@ export default function Plus() {
           <button className="plus-button" disabled={busy}>Seguir precio</button>
         </form>
         <div className="plus-list">{data?.watches.map(item => <div className="plus-list-row" key={item.id}>
-          <span className="plus-row-symbol">↘</span><span><strong>{item.name}</strong><small>{item.businessName} · {item.available ? readablePrice(item.price, item.currency ?? 'COP') : 'Publicación no disponible'}</small></span>
+          <span className="plus-row-symbol"><PlusIcon name="price" size={19}/></span><span><strong>{item.name}</strong><small>{item.businessName} · {item.available ? readablePrice(item.price, item.currency ?? 'COP') : 'Publicación no disponible'}</small></span>
           <div className="plus-row-buttons">
             {item.available && <button type="button" disabled={busy} onClick={() => void run(async () => {
               const result = await fetchPlusPriceHistory(item.offerId); setHistory(result);
@@ -274,7 +334,7 @@ export default function Plus() {
           <button className="plus-button" disabled={busy}>Guardar búsqueda</button>
         </form>
         <p className="plus-footnote">Las búsquedas se ejecutan en la zona que tengas seleccionada al abrirlas. Puedes cambiar tu ubicación en Xamuko.</p>
-        <div className="plus-list">{data?.searches.map(item => <div key={item.id} className="plus-list-row"><span className="plus-row-symbol">⌕</span><span><strong>{item.title}</strong><small>{item.query}{item.city ? ' · Guardada en ' + item.city : ''}</small></span>
+        <div className="plus-list">{data?.searches.map(item => <div key={item.id} className="plus-list-row"><span className="plus-row-symbol"><PlusIcon name="collection" size={19}/></span><span><strong>{item.title}</strong><small>{item.query}{item.city ? ' · Guardada en ' + item.city : ''}</small></span>
           <div className="plus-row-buttons"><Link to={searchHref(item)}>Buscar</Link><button type="button" disabled={busy} onClick={() => void run(() => removePlusSearch(item.id))}>Quitar</button></div>
         </div>)}</div>
       </section>
@@ -291,7 +351,7 @@ export default function Plus() {
         <p className="plus-footnote">La ruta se abre en Google Maps; la disponibilidad y el recorrido final dependen de ese servicio. Si compartes tu ubicación, se usará como punto de partida.</p>
       </section>
 
-      <section className="plus-panel plus-adfree"><span aria-hidden="true">◈</span><div><h2>06 · Experiencia sin anuncios</h2><p>Mientras Plus esté activo, se ocultan los espacios publicitarios de terceros. Los negocios y resultados públicos siguen visibles.</p></div></section>
+      <section className="plus-panel plus-adfree"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>Mientras Plus esté activo, se ocultan los espacios publicitarios de terceros. Los negocios y resultados públicos siguen visibles.</p></div></section>
     </>}
   </PageLayout>;
 }
