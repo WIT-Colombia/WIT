@@ -481,6 +481,47 @@ export type FinanceSummary = { period: { start: string; end: string }; totals: {
 export function getFinanceSummary(start?: string, end?: string) { const query = start && end ? `?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}` : ''; return request<FinanceSummary>(`/admin/finance/summary${query}`); }
 export type FreeTierUsage = { service: string; usageType: string; actual: number; forecasted: number | null; limit: number | null; unit: string; region: string; freeTierType: string };
 export function getAwsFreeTierUsage(service?: string) { return request<{ available: boolean; reason?: string; usages: FreeTierUsage[]; lastUpdatedAt: string | null }>(`/admin/finance/aws/free-tier${service ? `?service=${encodeURIComponent(service)}` : ''}`); }
+export type RefundReviewStatus = 'OPEN' | 'IN_REVIEW' | 'NEEDS_INFORMATION' | 'CLOSED';
+export type RefundReviewCase = {
+  id: string; status: RefundReviewStatus; subject: string; description: string;
+  contactEmail: string | null; externalReference: string | null; requestedAmountCop: string | null;
+  decisionNote: string | null; createdById: string; lastReviewedById: string | null;
+  closedAt: string | null; createdAt: string; updatedAt: string;
+};
+export type RefundReviewAuditEntry = {
+  id: string; actorUserId: string | null; action: string; reason: string | null;
+  beforeState: unknown; afterState: unknown; createdAt: string;
+};
+export type RefundReviewPage = {
+  scope: 'ADMIN_REFUND_REVIEW_ONLY'; payoutsIntegrated: false;
+  verifiedRefunds: null; refundedAmountCop: null;
+  counts: { total: number; OPEN: number; IN_REVIEW: number; NEEDS_INFORMATION: number; CLOSED: number };
+  cases: RefundReviewCase[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+  definition: string;
+};
+export function listRefundReviewCases(filters: { page?: number; status?: string; q?: string } = {}) {
+  const query = new URLSearchParams({ page: String(filters.page ?? 1) });
+  if (filters.status) query.set('status', filters.status);
+  if (filters.q) query.set('q', filters.q);
+  return request<RefundReviewPage>('/admin/finance/refund-cases?' + query.toString());
+}
+export function getRefundReviewCase(id: string) {
+  return request<{case: RefundReviewCase; history: RefundReviewAuditEntry[]; payoutsIntegrated: false}>(
+    '/admin/finance/refund-cases/' + encodeURIComponent(id));
+}
+export function createRefundReviewCase(input: {
+  subject: string; description: string; contactEmail?: string;
+  externalReference?: string; requestedAmountCop?: string | null;
+}) {
+  return request<{case: RefundReviewCase; payoutsIntegrated: false}>('/admin/finance/refund-cases',
+    { method:'POST', body:JSON.stringify(input) });
+}
+export function decideRefundReviewCase(id: string, input: {status: RefundReviewStatus; reason: string}) {
+  return request<{case: RefundReviewCase; payoutsIntegrated: false}>(
+    '/admin/finance/refund-cases/' + encodeURIComponent(id),
+    {method:'PATCH',body:JSON.stringify(input)});
+}
 export type AdminFinancialPaymentStatus = 'PENDING' | 'PAID' | 'CANCELLED';
 export type AdminFinancialTransaction = {
   id: string; status: AdminFinancialPaymentStatus; amountCop: string;
