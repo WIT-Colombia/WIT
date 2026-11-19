@@ -1,5 +1,6 @@
 import { Prisma } from '../../generated/prisma/client.js';
 import { isPaidPlanEnabled } from '../admin/paid-plans.service.js';
+import { publicReleaseWhere } from '../zones/zones.service.js';
 
 type Tx = Prisma.TransactionClient;
 
@@ -27,6 +28,12 @@ export async function notifyPlusFollowers(tx: Tx, input: {
   businessId: string; sourceId: string; businessName: string;
   itemName: string; sourceType: 'PLUS_NEW_OFFER' | 'PLUS_NEW_PROMOTION'; adultOnly: boolean;
 }) {
+  // Never send commercial alerts for businesses in closed/unreleased cities.
+  const released = await tx.business.findFirst({
+    where: { id: input.businessId, AND: [await publicReleaseWhere()] },
+    select: { id: true },
+  });
+  if (!released) return;
   const favorites = await tx.businessFavorite.findMany({ where: { businessId: input.businessId },
     select: { userId: true }, take: 2000 });
   const recipients = await eligibleUsers(tx, favorites.map(f => f.userId), 'radar', input.adultOnly);
