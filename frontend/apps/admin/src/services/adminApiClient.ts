@@ -97,9 +97,10 @@ export type AdminSubscriptionsPage = {
   pagination: { page: number; pageSize: number; total: number; totalPages: number };
   definition: string;
 };
-export function listAdminSubscriptions(filters: { page?: number; status?: string; q?: string } = {}) {
+export function listAdminSubscriptions(filters: { page?: number; status?: string; q?: string; view?: 'ALL' | 'EFFECTIVE' | 'EXPIRING_30_DAYS' | 'SPECIAL_EFFECTIVE' } = {}) {
   const query = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '12' });
   if (filters.status) query.set('status', filters.status);
+  if (filters.view && filters.view !== 'ALL') query.set('view', filters.view);
   if (filters.q) query.set('q', filters.q);
   return request<AdminSubscriptionsPage>('/admin/subscriptions?' + query.toString());
 }
