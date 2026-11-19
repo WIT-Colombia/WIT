@@ -109,7 +109,7 @@ function safeSecurityPayload(state: Prisma.JsonValue) {
   const planKey = payload.key === 'businessPro' || payload.key === 'xamukoPlus' ? payload.key : null;
   const enabled = typeof payload.enabled === 'boolean' ? payload.enabled : null;
   const plusStatus = ['ACTIVE', 'INACTIVE', 'NONE'].includes(String(payload.status)) ? String(payload.status) : null;
-  const plusExpiresAt = typeof payload.expiresAt === 'string' && /^\\d{4}-\\d{2}-\\d{2}T/.test(payload.expiresAt) ? payload.expiresAt : null;
+  const plusExpiresAt = typeof payload.expiresAt === 'string' && Number.isFinite(Date.parse(payload.expiresAt)) ? payload.expiresAt : null;
   return { userId, role, permission, planKey, enabled, plusStatus, plusExpiresAt };
 }
 export async function listAdminSecurityAudit(query: { page: number; kind: string }) {
@@ -137,7 +137,7 @@ export async function listAdminSecurityAudit(query: { page: number; kind: string
     before: safeSecurityPayload(row.previousState),
   }));
   const targets = await prisma.user.findMany({
-    where: { id: { in: [...new Set(normalized.map(item => item.payload?.userId).filter((id): id is string => Boolean(id)))] } },
+    where: { id: { in: [...new Set(normalized.map(item => item.payload?.userId ?? (item.row.action.startsWith('XAMUKO_PLUS_') ? item.row.entityId : null)).filter((id): id is string => Boolean(id)))] } },
     select: { id: true, displayName: true },
   });
   const byId = new Map(targets.map(target => [target.id, target.displayName]));
@@ -147,7 +147,7 @@ export async function listAdminSecurityAudit(query: { page: number; kind: string
       actor: row.actor?.displayName ?? null,
       subject: payload?.planKey === 'businessPro' ? 'Business PRO'
         : payload?.planKey === 'xamukoPlus' ? 'XAMUKO Plus'
-        : payload?.userId ? byId.get(payload.userId) ?? 'Cuenta no disponible' : 'Cuenta no disponible',
+        : (payload?.userId || row.action.startsWith('XAMUKO_PLUS_')) ? byId.get(payload?.userId ?? row.entityId) ?? 'Cuenta no disponible' : 'Cuenta no disponible',
       role: payload?.role ?? null, permission: payload?.permission ?? null,
       planKey: payload?.planKey ?? null, enabled: payload?.enabled ?? null,
       previousEnabled: before?.enabled ?? null,
