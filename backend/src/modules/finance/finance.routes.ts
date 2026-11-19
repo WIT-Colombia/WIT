@@ -6,6 +6,7 @@ import { financeSummary, createManualConsumption, createProvider, createBudget, 
 import { createAwsFreeTierReader, fetchFreeTierUsage, type FreeTierUsage } from './aws-free-tier.js';
 import { listAdminFinancialTransactions } from './admin-financial-transactions.service.js';
 import { listRefundCases, getRefundCase, createRefundCase, decideRefundCase } from './refund-cases.service.js';
+import { getExpenseOverview, listExpenseLedger } from './expense-report.service.js';
 
 export const financeRouter = Router();
 let awsSyncRunning = false;
@@ -54,6 +55,27 @@ financeRouter.post('/refund-cases', requireAdmin('FINANCE_MANAGE'), async (req,r
 financeRouter.patch('/refund-cases/:id', requireAdmin('FINANCE_MANAGE'), async (req,res,next)=>{
   try {res.setHeader('Cache-Control','private, no-store');
     res.json(await decideRefundCase(adminFromRequest(req),String(req.params.id),req.body??{}));
+  }catch(error){next(error);}
+});
+// Correctly scoped, server-paginated expense read APIs. No artificial bank reconciliation.
+financeRouter.get('/expenses/overview', requireAdmin('FINANCE_READ'), async (req,res,next)=>{
+  try {
+    res.setHeader('Cache-Control','private, no-store');
+    res.json(await getExpenseOverview({from:typeof req.query.from==='string'?req.query.from:undefined,
+      to:typeof req.query.to==='string'?req.query.to:undefined}));
+  } catch(error) { next(error); }
+});
+financeRouter.get('/expenses/ledger', requireAdmin('FINANCE_READ'), async (req,res,next)=>{
+  try {
+    res.setHeader('Cache-Control','private, no-store');
+    res.json(await listExpenseLedger({
+      from:typeof req.query.from==='string'?req.query.from:undefined,
+      to:typeof req.query.to==='string'?req.query.to:undefined,
+      kind:typeof req.query.kind==='string'?req.query.kind:undefined,
+      q:typeof req.query.q==='string'?req.query.q:undefined,
+      providerId:typeof req.query.providerId==='string'?req.query.providerId:undefined,
+      page:Number(req.query.page??1),
+    }));
   }catch(error){next(error);}
 });
 financeRouter.get('/records', requireAdmin('FINANCE_READ'), async (req, res, next) => { try { res.json(await listFinanceRecords(Number(req.query.page) || 1, Number(req.query.pageSize) || 50)); } catch (error) { next(error); } });
