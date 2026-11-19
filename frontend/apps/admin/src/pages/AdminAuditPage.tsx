@@ -85,6 +85,7 @@ const securityActionLabel: Record<string, string> = {
   ADMIN_PERMISSION_REVOKED: 'Permiso administrativo revocado',
   FINANCE_PERMISSION_GRANTED: 'Permiso financiero concedido',
   FINANCE_PERMISSION_REVOKED: 'Permiso financiero revocado',
+  PAID_PLAN_AVAILABILITY_CHANGED: 'Disponibilidad global del plan modificada',
 };
 const securityPermissionName: Record<string, string> = {
   BUSINESSES_READ: 'Negocios', CATALOG_READ: 'Catálogo', REPORTS_REVIEW: 'Reportes',
@@ -98,14 +99,16 @@ function SecurityEvent({ entry }: { entry: AdminSecurityAuditEntry }) {
     <span className={'sec-security-event-icon ' + (isRevocation ? 'sec-security-event-revoke' : '')}>
       <Icon name={isRevocation ? 'lock' : 'shield'} size={20}/></span>
     <div className="sec-security-event-content">
-      <div className="sec-security-event-head"><div><small>{entry.action.includes('ROLE') ? 'ROL ADMINISTRATIVO' : 'PERMISO DE ACCESO'}</small>
+      <div className="sec-security-event-head"><div><small>{entry.planKey ? 'INTERRUPTOR MAESTRO DE PLAN' : entry.action.includes('ROLE') ? 'ROL ADMINISTRATIVO' : 'PERMISO DE ACCESO'}</small>
         <h3>{securityActionLabel[entry.action] ?? 'Cambio de acceso registrado'}</h3></div>
         <time dateTime={entry.createdAt}>{auditDate(entry.createdAt)}</time></div>
       <div className="sec-security-event-details">
-        <span><strong>Cuenta afectada</strong>{entry.subject}</span>
+        <span><strong>{entry.planKey ? 'Plan afectado' : 'Cuenta afectada'}</strong>{entry.subject}</span>
         <span><strong>Responsable</strong>{entry.actor || 'No disponible'}</span>
         {entry.role && <span><strong>Rol</strong>{entry.role === 'SUPER_ADMIN' ? 'Superadministrador' : 'Administrador'}</span>}
         {entry.permission && <span><strong>Permiso</strong>{securityPermissionName[entry.permission] ?? entry.permission}</span>}
+        {entry.planKey && <span><strong>Estado anterior</strong>{entry.previousEnabled === null ? 'No registrado' : entry.previousEnabled ? 'Habilitado' : 'Deshabilitado'}</span>}
+        {entry.planKey && <span><strong>Estado nuevo</strong>{entry.enabled ? 'Habilitado' : 'Deshabilitado'}</span>}
       </div>
       <div className="sec-security-reason"><strong>Justificación registrada</strong><p>{entry.reason || 'Motivo no disponible en esta actuación.'}</p></div>
     </div>
@@ -113,17 +116,17 @@ function SecurityEvent({ entry }: { entry: AdminSecurityAuditEntry }) {
 }
 
 function SecurityAuditPanel() {
-  const [kind, setKind] = useState<'ALL' | 'ROLE' | 'PERMISSION'>('ALL');
+  const [kind, setKind] = useState<'ALL' | 'ROLE' | 'PERMISSION' | 'PLANS'>('ALL');
   const [page, setPage] = useState(1);
   const result = useResource(() => getAdminSecurityAudit({ page, kind }), [page, kind], true);
   return <section className="sec-panel sec-audit-panel" aria-labelledby="sec-security-audit-title">
-    <div className="sec-panel-header"><div><h2 id="sec-security-audit-title">Cambios de roles y permisos</h2>
+    <div className="sec-panel-header"><div><h2 id="sec-security-audit-title">Cambios de accesos y planes</h2>
       <p>Eventos autorizados y registrados por el servidor. Esta consulta no incluye contraseñas ni datos secretos.</p></div>
       {result.data && <span className="sec-count">{result.data.pagination.total.toLocaleString('es-CO')} actuaciones</span>}
     </div>
     <div className="sec-toolbar sec-audit-toolbar">
       <label><span>Tipo de actuación</span><select value={kind} onChange={event => { setKind(event.target.value as typeof kind); setPage(1); }}>
-        <option value="ALL">Todas</option><option value="ROLE">Roles</option><option value="PERMISSION">Permisos</option>
+        <option value="ALL">Todas</option><option value="ROLE">Roles</option><option value="PERMISSION">Permisos</option><option value="PLANS">Planes</option>
       </select></label>
       <button type="button" className="sec-button" disabled={result.loading} onClick={result.retry}><Icon name="refresh" size={16}/> Actualizar</button>
     </div>
@@ -137,7 +140,7 @@ function SecurityAuditPanel() {
       <div><button type="button" className="sec-button" disabled={result.loading || page <= 1} onClick={() => setPage(value => Math.max(1, value - 1))}>Anterior</button>
       <button type="button" className="sec-button" disabled={result.loading || page >= result.data.pagination.totalPages} onClick={() => setPage(value => value + 1)}>Siguiente</button></div>
     </nav>}
-    <p className="sec-footnote"><Icon name="lock" size={16}/> Fuente: AuditLog del backend, limitado a cambios de roles y permisos. Solo el superadministrador puede consultar esta vista. No representa la totalidad de eventos de seguridad de la plataforma.</p>
+    <p className="sec-footnote"><Icon name="lock" size={16}/> Fuente: AuditLog del backend, limitado a cambios de roles, permisos y disponibilidad global de planes. Solo el superadministrador puede consultar esta vista. No representa la totalidad de eventos de seguridad de la plataforma.</p>
   </section>;
 }
 
