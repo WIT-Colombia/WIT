@@ -93,7 +93,7 @@ export async function listAdminVisibilityAudit(query: {
  * Never return AuditLog JSON payloads, token material or user identifiers.
  */
 const securityActionGroups = {
-  ALL: ['ADMIN_ROLE_ASSIGNED', 'ADMIN_ROLE_REVOKED', 'ADMIN_PERMISSION_GRANTED', 'ADMIN_PERMISSION_REVOKED', 'FINANCE_PERMISSION_GRANTED', 'FINANCE_PERMISSION_REVOKED', 'PAID_PLAN_AVAILABILITY_CHANGED', 'XAMUKO_PLUS_GRANTED', 'XAMUKO_PLUS_REVOKED'],
+  ALL: ['ADMIN_ROLE_ASSIGNED', 'ADMIN_ROLE_REVOKED', 'ADMIN_PERMISSION_GRANTED', 'ADMIN_PERMISSION_REVOKED', 'FINANCE_PERMISSION_GRANTED', 'FINANCE_PERMISSION_REVOKED', 'PAID_PLAN_AVAILABILITY_CHANGED', 'XAMUKO_PLUS_GRANTED', 'XAMUKO_PLUS_REVOKED', 'XAMUKO_PLUS_REQUEST_CLOSED', 'XAMUKO_PLUS_REQUEST_CLOSED'],
   ROLE: ['ADMIN_ROLE_ASSIGNED', 'ADMIN_ROLE_REVOKED'],
   PERMISSION: ['ADMIN_PERMISSION_GRANTED', 'ADMIN_PERMISSION_REVOKED', 'FINANCE_PERMISSION_GRANTED', 'FINANCE_PERMISSION_REVOKED'],
   PLANS: ['PAID_PLAN_AVAILABILITY_CHANGED', 'XAMUKO_PLUS_GRANTED', 'XAMUKO_PLUS_REVOKED'],
@@ -108,7 +108,7 @@ function safeSecurityPayload(state: Prisma.JsonValue) {
     ? payload.permission : null;
   const planKey = payload.key === 'businessPro' || payload.key === 'xamukoPlus' ? payload.key : null;
   const enabled = typeof payload.enabled === 'boolean' ? payload.enabled : null;
-  const plusStatus = ['ACTIVE', 'INACTIVE', 'NONE'].includes(String(payload.status)) ? String(payload.status) : null;
+  const plusStatus = ['ACTIVE', 'INACTIVE', 'NONE', 'PENDING_PAYMENT', 'CLOSED'].includes(String(payload.status)) ? String(payload.status) : null;
   const plusExpiresAt = typeof payload.expiresAt === 'string' && Number.isFinite(Date.parse(payload.expiresAt)) ? payload.expiresAt : null;
   return { userId, role, permission, planKey, enabled, plusStatus, plusExpiresAt };
 }
