@@ -13,7 +13,7 @@ export function AdminDialog({ title, children, onClose, busy = false, wide = fal
     const keydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); if (!latest.current.busy) latest.current.onClose(); }
       if (event.key === 'Tab') {
-        const items = Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), a[href], iframe') ?? []).filter(item => item.getClientRects().length);
+        const items = Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], iframe') ?? []).filter(item => item.getClientRects().length);
         if (!items.length) { event.preventDefault(); return; }
         if (!ref.current?.contains(document.activeElement) || document.activeElement === ref.current) { event.preventDefault(); (event.shiftKey ? items.at(-1) : items[0])?.focus(); }
         else if (event.shiftKey && document.activeElement === items[0]) { event.preventDefault(); items.at(-1)?.focus(); }
