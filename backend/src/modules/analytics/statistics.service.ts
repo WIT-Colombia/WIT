@@ -2,6 +2,7 @@ import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { recognitionFor } from '../business/recognition.service.js';
+import { isPaidPlanEnabled } from '../admin/paid-plans.service.js';
 
 export type StatisticsPeriod = 'day' | 'week' | 'month' | 'year' | 'all';
 export const STATISTICS_TIMEZONE = 'America/Bogota';
@@ -103,9 +104,10 @@ export async function authorizeStatisticsBusiness(userId: string, identifier: st
  * Commercial offer availability and paid analytics entitlement are independent.
  * Events are collected for every eligible published business regardless of plan;
  * this query only decides which historical aggregates may be returned.
- * Deactivating new sales must never revoke an existing subscription.
+ * Turning the master switch off suspends PRO access without deleting subscriptions or data.
  */
-function effectiveProSubscription(businessId: string, now: Date) {
+async function effectiveProSubscription(businessId: string, now: Date) {
+  if (!(await isPaidPlanEnabled('businessPro'))) return null;
   return prisma.businessSubscription.findFirst({
     where: {
       businessId, plan: 'PRO', status: 'ACTIVE', startsAt: { lte: now },
