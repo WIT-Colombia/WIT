@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import { refreshPaidPlans, type PaidPlanAvailability, type PaidPlanKey } from '@wit/utils';
 import { getSession } from '../services/adminService';
-import { getAdminPaidPlans, updateAdminPaidPlan } from '../services/adminApiClient';
+import { AdminApiError, getAdminPaidPlans, updateAdminPaidPlan } from '../services/adminApiClient';
 import './PaidPlanControl.css';
+
+function describePlanConnectionError(cause: unknown): string {
+  if (cause instanceof AdminApiError) {
+    if (cause.status === 404) return 'La API conectada no tiene todavía el endpoint de control de planes (HTTP 404). Es necesario desplegar la versión actualizada del backend.';
+    if (cause.status === 401 || cause.status === 403) return 'No se pudo autorizar la consulta del plan (HTTP ' + cause.status + '). Comprueba la sesión administrativa.';
+    if (cause.status >= 500) return 'El backend no pudo consultar el control de planes (HTTP ' + cause.status + '). Revisa los registros del servidor y la migración de PaidPlanAvailability.';
+    return 'La API rechazó la consulta del plan (HTTP ' + cause.status + ').';
+  }
+  return 'No se pudo conectar con la API de XAMUKO. Comprueba la conexión y que el backend actualizado esté disponible.';
+}
 
 export function PaidPlanControl({ plan, name }: { plan: PaidPlanKey; name: string }) {
   const [plans, setPlans] = useState<PaidPlanAvailability | null>(null);
@@ -17,14 +27,14 @@ export function PaidPlanControl({ plan, name }: { plan: PaidPlanKey; name: strin
   async function load() {
     setBusy(true); setError('');
     try { setPlans(await getAdminPaidPlans()); }
-    catch { setPlans(null); setError('No se pudo consultar el estado real del plan.'); }
+    catch (cause) { setPlans(null); setError(describePlanConnectionError(cause)); }
     finally { setBusy(false); }
   }
 
   useEffect(() => {
     let active = true;
     getAdminPaidPlans().then(result => { if (active) setPlans(result); })
-      .catch(() => { if (active) setError('No se pudo consultar el estado real del plan.'); })
+      .catch(cause => { if (active) { setPlans(null); setError(describePlanConnectionError(cause)); } })
       .finally(() => { if (active) setBusy(false); });
     return () => { active = false; };
   }, []);
@@ -60,15 +70,25 @@ export function PaidPlanControl({ plan, name }: { plan: PaidPlanKey; name: strin
         : 'Al deshabilitar, se ocultan las ofertas y las funciones exclusivas PRO, y el backend vuelve a aplicar límites básicos. También se suspende temporalmente el acceso avanzado de suscriptores vigentes.'}
     </p>
     <p className="paid-plan-control-preservation">Las suscripciones registradas, estadísticas y demás datos históricos no se eliminan. El registro administrativo permanece disponible.</p>
+    <div className="paid-plan-control-switch-row">
+      <div className="paid-plan-control-switch-copy">
+        <strong>Control de activación</strong>
+        <span>{!plans ? 'Esperando una respuesta válida del backend' : enabled ? 'Funciones del plan habilitadas globalmente' : 'Funciones del plan deshabilitadas globalmente'}</span>
+      </div>
+      <label className="paid-plan-switch">
+        <input type="checkbox" role="switch" aria-label={`Activar o desactivar ${name}`}
+          checked={enabled} disabled={busy || !plans || !canManage || confirming}
+          onChange={() => { setConfirming(true); setError(''); setNotice(''); }}/>
+        <span className="paid-plan-switch-track" aria-hidden="true"><span className="paid-plan-switch-thumb"/></span>
+        <span className="paid-plan-switch-label">{!plans ? 'No conectado' : enabled ? 'Activado' : 'Desactivado'}</span>
+      </label>
+    </div>
     {notice && <p className="paid-plan-control-notice" role="status">{notice}</p>}
     {error && <p className="paid-plan-error" role="alert">{error}</p>}
-    {!canManage && <p className="paid-plan-control-restricted">Solo el superadministrador puede modificar este estado.</p>}
-    {canManage && !confirming && <div className="paid-plan-control-actions">
-      <button className={`paid-plan-button ${enabled ? 'is-danger' : ''}`} type="button" disabled={busy}
-        onClick={() => plans ? setConfirming(true) : void load()}>
-        {busy ? 'Consultando…' : !plans ? 'Reintentar consulta' : `${action} ${name}`}
-      </button>
+    {!plans && !busy && <div className="paid-plan-control-actions">
+      <button className="paid-plan-button is-secondary" type="button" onClick={() => void load()}>Reintentar conexión</button>
     </div>}
+    {!canManage && <p className="paid-plan-control-restricted">Solo el superadministrador puede modificar este estado.</p>}
     {canManage && confirming && plans && <div className="paid-plan-control-confirmation">
       <h3>Confirmar: {action.toLowerCase()} {name}</h3>
       <p>{enabled
