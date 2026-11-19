@@ -61,7 +61,7 @@ jobs:
         run: npm run build
 
       - name: Install Chromium for Admin sidebar check
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Check Usuario offer card geometry on iPhone and iPad
         run: node scripts/check-usuario-offer-cards.mjs
