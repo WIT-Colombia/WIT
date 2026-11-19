@@ -1,0 +1,100 @@
+/* Business PRO reuses the verified Planes & suscripciones system, with its own
+   focused list controls and clarity on actual subscription counts. */
+.admin-refresh .abp-page,.admin-refresh .abp-page *{box-sizing:border-box}
+.admin-refresh .abp-page{max-width:1540px;margin-inline:auto}
+.admin-refresh .abp-page .abp-kpis .aps-kpi{cursor:pointer}
+.admin-refresh .abp-register .aps-panel-head{padding-bottom:18px}
+.admin-refresh .abp-view-tabs{
+  display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+  padding:0 24px 17px;
+}
+.admin-refresh .abp-view-tabs button{
+  min-height:41px;display:inline-flex;align-items:center;justify-content:center;
+  padding:10px 15px;border:1px solid #e1d9ec;border-radius:11px;
+  background:#f8f6fb;color:#6b5c83;
+  font-size:12.5px;font-weight:800;line-height:1.4;
+  transition:border-color .15s ease,background-color .15s ease;
+}
+.admin-refresh .abp-view-tabs button:hover{border-color:#aa88d7;background:#eee6f9}
+.admin-refresh .abp-view-tabs button[aria-pressed="true"]{
+  border-color:#854dd1;background:linear-gradient(120deg,#8950d3,#6e35bf);
+  box-shadow:0 5px 15px #6935bc20;color:#fff;
+}
+.admin-refresh .abp-filters{
+  display:grid;grid-template-columns:minmax(210px,1fr) auto auto;gap:11px;
+  align-items:end;margin:0 24px 18px;padding:16px;
+  border:1px solid #ebe3f0;border-radius:13px;
+  background:linear-gradient(125deg,#fcfaff,#f8f4fc);
+}
+.admin-refresh .abp-filters .aps-button{min-height:49px}
+.admin-refresh .abp-filters .aps-search-wrap input{font-size:14px}
+.admin-refresh .abp-register .aps-subscriptions-table{min-width:1110px}
+.admin-refresh .abp-register .aps-subscriptions-table th,
+.admin-refresh .abp-register .aps-subscriptions-table td{padding-block:17px}
+.admin-refresh .abp-register .aps-subscription-business>a{font-size:14px}
+.admin-refresh .abp-register .aps-row-actions{min-width:190px}
+.admin-refresh .abp-error{
+  display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:20px 24px;
+  color:#735d77;font-size:13px;line-height:1.6;
+}
+.admin-refresh .abp-error p{margin:0;flex:1 1 200px;min-width:0}
+.admin-refresh .abp-error>svg{flex-shrink:0;color:#8e53bc}
+.admin-refresh .abp-empty{
+  display:grid;justify-items:center;gap:9px;min-height:210px;
+  padding:31px 20px;text-align:center;color:#695b7c;
+}
+.admin-refresh .abp-empty>svg{color:#9569c7}
+.admin-refresh .abp-empty>strong{font-size:16px;color:#38284e}
+.admin-refresh .abp-empty>p{max-width:460px;margin:0 0 7px;font-size:13px;line-height:1.55}
+.admin-refresh .abp-info-line{
+  display:flex;align-items:flex-start;gap:13px;flex-wrap:wrap;
+  padding:19px 22px;border:1px solid #e8e1ef;border-radius:14px;
+  background:linear-gradient(100deg,#fff,#faf6fe);
+  color:#625c78;
+}
+.admin-refresh .abp-info-line>svg{flex-shrink:0;color:#7a43b6}
+.admin-refresh .abp-info-line p{flex:1 1 390px;margin:0;font-size:12.5px;line-height:1.7}
+.admin-refresh .abp-info-line strong{color:#40324f}
+.admin-refresh .abp-info-line a{
+  display:inline-flex;align-items:center;gap:7px;min-height:39px;
+  border:1px solid #dccced;border-radius:10px;padding:9px 13px;
+  font-size:12px;font-weight:800;background:#f5ecff;color:#6536a8;
+}
+.admin-refresh .abp-info-line a:hover{background:#ece0fa}
+.admin-refresh .abp-card-actions{
+  display:flex;align-items:stretch;gap:9px;flex-wrap:wrap;
+  padding-top:12px;border-top:1px solid #eee9f3;
+}
+.admin-refresh .abp-card-actions a{
+  display:inline-flex;flex:1 1 125px;align-items:center;justify-content:center;
+  font-size:12px;text-align:center;min-height:41px;padding:10px 13px;
+}
+@media(max-width:1140px){
+  .admin-refresh .abp-page .abp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .abp-view-tabs{gap:8px}
+}
+@media(max-width:980px){
+  .admin-refresh .abp-view-tabs{padding-inline:19px}
+  .admin-refresh .abp-register .aps-subscription-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .abp-filters{margin-inline:19px}
+}
+@media(max-width:700px){
+  .admin-refresh .abp-view-tabs{padding-inline:15px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+  .admin-refresh .abp-view-tabs button{flex:0 0 auto;white-space:nowrap}
+  .admin-refresh .abp-filters{grid-template-columns:repeat(2,minmax(0,1fr));margin-inline:14px;padding:14px}
+  .admin-refresh .abp-filters label{grid-column:1/-1}
+  .admin-refresh .abp-register .aps-subscription-cards{grid-template-columns:minmax(0,1fr)}
+  .admin-refresh .abp-page .abp-kpis{gap:10px}
+  .admin-refresh .abp-info-line{padding:15px 16px}
+}
+@media(max-width:520px){
+  .admin-refresh .abp-filters .aps-button{padding:10px 12px}
+  .admin-refresh .abp-page .abp-kpis .aps-kpi{min-height:157px}
+  .admin-refresh .abp-page .abp-kpis .aps-kpi-body>small{font-size:11px;line-height:1.5}
+}
+@media(max-width:355px){
+  .admin-refresh .abp-page .abp-kpis{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){
+  .admin-refresh .abp-page *{transition:none!important}
+}
