@@ -66,7 +66,7 @@ export function PaidPlanControl({ plan, name }: { plan: PaidPlanKey; name: strin
     </div>
     <p className="paid-plan-control-description">
       {isPlus
-        ? 'El estado queda preparado para las futuras funciones de XAMUKO Plus. Actualmente no existen contratación, cobros ni beneficios Plus operativos.'
+        ? 'Controla globalmente el radar de novedades, seguimiento de precios, comparador, colecciones, búsquedas, rutas y experiencia sin publicidad. Deshabilitar Plus suspende el acceso a sus beneficios sin borrar datos ni suscripciones. La contratación y los cobros siguen deshabilitados.'
         : 'Al deshabilitar, se ocultan las ofertas y las funciones exclusivas PRO, y el backend vuelve a aplicar límites básicos. También se suspende temporalmente el acceso avanzado de suscriptores vigentes.'}
     </p>
     <p className="paid-plan-control-preservation">Las suscripciones registradas, estadísticas y demás datos históricos no se eliminan. El registro administrativo permanece disponible.</p>
@@ -93,7 +93,7 @@ export function PaidPlanControl({ plan, name }: { plan: PaidPlanKey; name: strin
       <h3>Confirmar: {action.toLowerCase()} {name}</h3>
       <p>{enabled
         ? 'Esta acción suspenderá las funciones exclusivas del plan incluso para suscripciones vigentes, hasta que vuelva a habilitarse.'
-        : isPlus ? 'Se activará el indicador global, pero Plus seguirá sin funciones de pago ni beneficios implementados.' : 'Las funciones PRO volverán a estar disponibles únicamente para las suscripciones que sigan vigentes.'}</p>
+        : isPlus ? 'Se activará el indicador global, pero Los beneficios Plus solo estarán disponibles para usuarios con suscripción vigente. No se habilitan cobros.' : 'Las funciones PRO volverán a estar disponibles únicamente para las suscripciones que sigan vigentes.'}</p>
       <label>Justificación administrativa obligatoria
         <textarea value={reason} onChange={event => setReason(event.target.value)} minLength={12} maxLength={500} rows={3}
           disabled={busy} placeholder="Registra el motivo y quién autoriza este cambio" />
