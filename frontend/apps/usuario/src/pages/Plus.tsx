@@ -29,9 +29,6 @@ function readablePrice(value: string | null, currency = 'COP') {
   if (value === null || !Number.isFinite(Number(value))) return 'Precio por consultar';
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: currency || 'COP', maximumFractionDigits: 0 }).format(Number(value));
 }
-function typedId(target: ReturnType<typeof parsePlusTarget>) {
-  return target?.targetId ?? null;
-}
 function collectionTargetLink(item: { targetType: string; targetId: string }) {
   return item.targetType === 'BUSINESS' ? '/business/' + item.targetId : null;
 }
@@ -59,7 +56,7 @@ export default function Plus() {
   const [routeIds, setRouteIds] = useState<string[]>([]);
   const [travelMode, setTravelMode] = useState<'driving' | 'walking'>('driving');
   const [collectionName, setCollectionName] = useState('');
-  const [collectionValue, setCollectionValue] = useState('');
+  const [collectionValue, setCollectionValue] = useState(queryParams.get('item') ?? '');
   const [savedQuery, setSavedQuery] = useState('');
   const [savedTitle, setSavedTitle] = useState('');
   const [savedCategory, setSavedCategory] = useState('');
