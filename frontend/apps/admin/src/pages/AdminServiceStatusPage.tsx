@@ -5,7 +5,7 @@ import {StatePanel} from '../components/common';
 import {can,getSession} from '../services/adminService';
 import {getTechnologyServicesStatus,type TechnologyServicesStatus,type TechnologyCase} from '../services/adminApiClient';
 import {
-  TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
+  TechnologyTabs,TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
   TechnologyCaseDialog,formatDate,number,
 } from './TechnologyShared';
 import './TechnologyOperations.css';
@@ -105,6 +105,7 @@ export function AdminServiceStatusPage(){
       description="Monitoreo, seguimiento de incidentes y mantenimiento de la infraestructura XAMUKO."
       actions={<div className="ato-heading-actions">
         <span className="ato-checked-at"><Icon name="clock" size={16}/>
+    <TechnologyTabs />
           {data?'Comprobado: '+formatDate(data.checkedAt):'Sin comprobación reciente'}</span>
         <button type="button" className="ato-btn ato-btn-light"
           onClick={()=>setRevision(v=>v+1)}><Icon name="refresh" size={17}/> Actualizar</button>
