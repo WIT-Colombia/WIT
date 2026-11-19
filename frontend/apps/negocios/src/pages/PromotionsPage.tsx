@@ -44,7 +44,9 @@ export function PromotionsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
-  const refreshInFlightRef = useRef(false);
+  const refreshInFlightRef = useRef<string | null>(null);
+  const selectedBusinessIdRef = useRef(business.id);
+  selectedBusinessIdRef.current = business.id;
   const createKeyRef = useRef<string | null>(null);
   const [error, setError] = useState("");
   const [query] = useState("");
@@ -68,20 +70,36 @@ export function PromotionsPage() {
 
   const reload = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!isReal || !business.id) { setPromotions([]); setLimits(null); setLoading(false); return; }
-    if (refreshInFlightRef.current) return;
-    refreshInFlightRef.current = true;
+    const businessId = business.id;
+    if (refreshInFlightRef.current === businessId) return;
+    refreshInFlightRef.current = businessId;
     if (!silent) { setLoading(true); setError(""); setLimits(null); }
     try {
-      const data = await businessApi.listPromotions(business.id);
-      setPromotions(data.promotions); setLimits(data.limits);
+      const data = await businessApi.listPromotions(businessId);
+      if (selectedBusinessIdRef.current !== businessId) return;
+      setPromotions(data.promotions);
+      setLimits(data.limits);
       if (!silent) {
-        const catalog = await businessApi.listOffers(business.id).catch(() => ({ offers: [] }));
+        const catalog = await businessApi.listOffers(businessId).catch(() => ({ offers: [] }));
+        if (selectedBusinessIdRef.current !== businessId) return;
         setCatalogItems([...catalog.offers].sort((a, b) => (a.internalCode ?? "").localeCompare(b.internalCode ?? "", undefined, { numeric: true })));
       }
+    } catch {
+      if (selectedBusinessIdRef.current === businessId) {
+        setLimits(null);
+        if (!silent) setError("No pudimos cargar las ofertas de este negocio. Intenta de nuevo.");
+      }
+    } finally {
+      if (refreshInFlightRef.current === businessId) refreshInFlightRef.current = null;
+      if (!silent && selectedBusinessIdRef.current === businessId) setLoading(false);
     }
-    catch { setLimits(null); if (!silent) setError("No pudimos cargar las ofertas de este negocio. Intenta de nuevo."); }
-    finally { refreshInFlightRef.current = false; if (!silent) setLoading(false); }
   }, [business.id, isReal]);
+  useEffect(() => {
+    // Never display limits or promotions belonging to the previously selected business.
+    setPromotions([]);
+    setCatalogItems([]);
+    setLimits(null);
+  }, [business.id]);
   useEffect(() => {
     void reload();
     if (!isReal) return;
