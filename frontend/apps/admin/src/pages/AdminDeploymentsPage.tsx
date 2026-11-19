@@ -10,7 +10,7 @@ import {
   type TechnologyKind,type TechnologyServicesStatus,type TechnologyStatus,
 } from '../services/adminApiClient';
 import {
-  TechnologyTabs,TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
+  TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
   TechnologyCaseDialog,formatDate,number,downloadCsv,severityName,
 } from './TechnologyShared';
 import './TechnologyOperations.css';
@@ -183,7 +183,6 @@ export function AdminDeploymentsPage(){
           onClick={()=>setCreating('MAINTENANCE')}>
           <Icon name="calendar" size={17}/> Programar mantenimiento</button>}
       </div>}/>
-    <TechnologyTabs/>
     {notice&&<div className="ato-success" role="status"><Icon name="check" size={18}/>{notice}</div>}
     <section className="ato-kpi-grid" aria-label="Indicadores de despliegues y mantenimiento">
       {counters.map(k=><article className={'ato-kpi ato-kpi-'+k.tone} key={k.name}>
