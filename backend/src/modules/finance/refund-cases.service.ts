@@ -26,18 +26,34 @@ function amount(value: unknown): string | null {
       'El importe solicitado debe ser positivo y tener como máximo dos decimales.');
   return text;
 }
-export function normalizeRefundCaseFilters(input: { page?: number; status?: string; q?: string }) {
+const parseCalendarDay = (value:string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(value+'T00:00:00.000Z');
+  return Number.isFinite(date.valueOf())&&date.toISOString().slice(0,10)===value?date:null;
+};
+export function normalizeRefundCaseFilters(input: { page?: number; status?: string; q?: string; from?:string; to?:string }) {
   const page = Number.isSafeInteger(input.page) ? Math.max(1, Math.min(100000, input.page!)) : 1;
   const status = trim(input.status).toUpperCase();
   const q = trim(input.q);
+  const from=trim(input.from),to=trim(input.to);
+  const fromDate=from?parseCalendarDay(from):null;
+  const toDate=to?parseCalendarDay(to):null;
+  if ((from&&!fromDate)||(to&&!toDate)||(fromDate&&toDate&&fromDate>toDate))
+    throw new AppError(400,'REFUND_CASE_DATE_INVALID',
+      'Selecciona fechas de radicación válidas y en orden (AAAA-MM-DD).');
+  const endExclusive=toDate?new Date(toDate.valueOf()+86400000):null;
   if (q.length > 100) throw new AppError(400,'REFUND_CASE_SEARCH_TOO_LONG','La búsqueda no puede superar 100 caracteres.');
   if (status && !refundCaseStatuses.includes(status as RefundCaseStatus))
     throw new AppError(400,'REFUND_CASE_STATUS_INVALID','Estado de solicitud desconocido.');
-  return { page, status: status as RefundCaseFilter, q, pageSize: 12 };
+  return { page, status: status as RefundCaseFilter, q, from,to,fromDate,endExclusive,pageSize: 12 };
 }
 export function refundCaseWhere(filters: ReturnType<typeof normalizeRefundCaseFilters>): Prisma.RefundCaseWhereInput {
   return {
     ...(filters.status ? { status: filters.status } : {}),
+    ...(filters.fromDate||filters.endExclusive ? {createdAt:{
+      ...(filters.fromDate?{gte:filters.fromDate}:{}),
+      ...(filters.endExclusive?{lt:filters.endExclusive}:{}),
+    }}:{}),
     ...(filters.q ? { OR: [
       { subject: { contains: filters.q } },
       { externalReference: { contains: filters.q } },
@@ -83,7 +99,7 @@ function serialize(row: {
   return { ...row, requestedAmountCop: row.requestedAmountCop?.toString() ?? null };
 }
 
-export async function listRefundCases(filters: { page?: number; status?: string; q?: string }) {
+export async function listRefundCases(filters: { page?: number; status?: string; q?: string;from?:string;to?:string }) {
   const parsed = normalizeRefundCaseFilters(filters);
   const where = refundCaseWhere(parsed);
   const [total, rows, grouped] = await prisma.$transaction([
@@ -104,7 +120,7 @@ export async function listRefundCases(filters: { page?: number; status?: string;
     counts:{total:grouped.reduce((sum,row)=>sum+row._count._all,0),...counts},
     cases:rows.map(serialize),
     pagination:{page:parsed.page,pageSize:parsed.pageSize,total,totalPages:Math.ceil(total/parsed.pageSize)},
-    definition:'Los casos se crean y revisan manualmente. Sus montos solicitados no son obligaciones verificadas y ningún estado certifica devolución de dinero. No hay pasarela ni registro de desembolso conectado.',
+    definition:'Los casos se crean y revisan manualmente. Los indicadores cuentan todos los expedientes; la tabla filtra por fecha de radicación UTC. Los montos solicitados no son obligaciones verificadas y ningún estado certifica devolución de dinero. No hay pasarela ni desembolso conectado.',
   };
 }
 export async function getRefundCase(id: string) {
