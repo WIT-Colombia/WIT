@@ -17,7 +17,7 @@ export async function assignAdminPlusSubscription(actor: Actor, userId: string, 
   if (reason.length < 12) throw new AppError(400, 'ADMIN_REASON_REQUIRED', 'La justificación debe tener al menos 12 caracteres.');
   const now = new Date();
   const expiresAt = input.enabled ? new Date(input.expiresAt ?? '') : now;
-  if (input.enabled && (!Number.isFinite(expiresAt.getTime()) || expiresAt <= now || expiresAt.getTime() > now.getTime() + 2 * 366 * 86400000))
+  if (input.enabled && (!Number.isFinite(expiresAt.getTime()) || expiresAt.getTime() <= now.getTime() || expiresAt.getTime() > now.getTime() + 2 * 366 * 86400000))
     throw new AppError(400, 'PLUS_EXPIRY_INVALID', 'Selecciona una fecha futura, hasta dos años.');
   return prisma.$transaction(async tx => {
     const user = await tx.user.findUnique({ where: { id: userId }, select: { id: true, status: true } });
