@@ -4,8 +4,9 @@ import { PageLayout } from '../components/PageLayout';
 import { useAuth } from '../context/AuthContext';
 import { useLocationContext } from '../context/LocationContext';
 import { useFavorites } from '../services/favoritesService';
-import { listPublicBusinesses } from '../services/publicBusinessApi';
-import { getBusinessCoordinates } from '../utils/coordinates';
+import { getPublicBusiness, listPublicBusinesses } from '../services/publicBusinessApi';
+import { listPublicReviews } from '../services/reviewsService';
+import { distanceBetweenCoordinates, getBusinessCoordinates } from '../utils/coordinates';
 import type { Business } from '../data/mockData';
 import {
   addPlusCollectionItem, addPlusWatch, comparePlusOffers, createPlusCollection, createPlusSearch,
@@ -62,6 +63,7 @@ export default function Plus() {
   const [compareValue, setCompareValue] = useState(queryParams.get('compare') ?? '');
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [comparison, setComparison] = useState<PlusCompareOffer[]>([]);
+  const [comparisonBusinesses, setComparisonBusinesses] = useState<Record<string, Business>>({});
   const [history, setHistory] = useState<PriceHistory | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -81,7 +83,7 @@ export default function Plus() {
       setData(overview);
       setRadar(feed.items);
     } else if (epoch === requestEpoch.current) {
-      setData(null); setRadar([]); setHistory(null); setComparison([]);
+      setData(null); setRadar([]); setHistory(null); setComparison([]); setComparisonBusinesses({});
     }
   }, [user?.id]);
 
@@ -203,12 +205,38 @@ export default function Plus() {
         <form className="plus-form" onSubmit={addComparison}><label>Enlace de producto o servicio<input value={compareValue} onChange={event => setCompareValue(event.target.value)} placeholder="Pega un enlace de Xamuko" required/></label><button className="plus-button" disabled={busy || compareIds.length >= 4}>Añadir a comparación</button></form>
         {compareIds.length > 0 && <><div className="plus-chips">{compareIds.map((id, i) => <button key={id} type="button" onClick={() => { setCompareIds(compareIds.filter(x => x !== id)); setComparison([]); }}>Opción {i + 1} ×</button>)}</div>
           <button className="plus-button plus-button-secondary" type="button" disabled={busy || compareIds.length < 2}
-            onClick={() => void run(async () => { const result = await comparePlusOffers(compareIds); setComparison(result.offers); }, 'Comparación actualizada.')}>Comparar {compareIds.length} opciones</button></>}
-        {comparison.length > 0 && <div className="plus-compare-grid">{comparison.map(item => <article key={item.id}>
-          <span>{item.kind === 'PRODUCT' ? 'Producto' : 'Servicio'}</span><h3>{item.name}</h3><p>{item.business.name}</p>
-          <strong>{item.negotiable ? 'Precio a convenir' : item.priceAmount !== null ? readablePrice(item.priceAmount, item.currency ?? 'COP') : item.priceText || 'Consultar'}</strong>
-          <p>{item.description || 'Sin descripción publicada'}</p><Link to={`/${item.kind === 'PRODUCT' ? 'product' : 'service'}/${item.id}`}>Ver detalle ›</Link>
-        </article>)}</div>}
+            onClick={() => void run(async () => { const result = await comparePlusOffers(compareIds);
+              setComparison(result.offers);
+              const details = await Promise.all(result.offers.map(async offer => {
+                const id = offer.business.publicId;
+                const [detail, reviews] = await Promise.all([
+                  getPublicBusiness(id).catch(() => null),
+                  listPublicReviews(id, 1, 1).catch(() => null),
+                ]);
+                if (!detail) return null;
+                return { id, business: {
+                  ...detail.business,
+                  rating: reviews?.summary?.average ?? detail.business.rating,
+                  reviewCount: reviews?.summary?.total ?? detail.business.reviewCount,
+                } };
+              }));
+              setComparisonBusinesses(Object.fromEntries(details.filter((item): item is { id: string; business: Business } => item !== null)
+                .map(item => [item.id, item.business]))); }, 'Comparación actualizada.')}>Comparar {compareIds.length} opciones</button></>}
+        {comparison.length > 0 && <div className="plus-compare-grid">{comparison.map(item => {
+          const place = comparisonBusinesses[item.business.publicId];
+          const coordinates = place ? getBusinessCoordinates(place) : null;
+          const distance = coordinates && selection?.coordinates
+            ? distanceBetweenCoordinates(selection.coordinates, coordinates) : null;
+          return <article key={item.id}>
+            <span>{item.kind === 'PRODUCT' ? 'Producto' : 'Servicio'}</span><h3>{item.name}</h3><p>{item.business.name}</p>
+            <strong>{item.negotiable ? 'Precio a convenir' : item.priceAmount !== null ? readablePrice(item.priceAmount, item.currency ?? 'COP') : item.priceText || 'Consultar'}</strong>
+            <p>{item.description || 'Sin descripción publicada'}</p>
+            <p><b>Ubicación:</b> {place?.address || place?.city || 'No verificada'}</p>
+            <p><b>Calificación:</b> {place && place.reviewCount > 0 ? place.rating.toFixed(1) + ' / 5 (' + place.reviewCount + ')' : 'Sin calificaciones verificadas'}</p>
+            <p><b>Distancia:</b> {distance !== null ? distance.toFixed(1) + ' km' : 'No disponible'}</p>
+            <Link to={`/${item.kind === 'PRODUCT' ? 'product' : 'service'}/${item.id}`}>Ver detalle ›</Link>
+          </article>;
+        })}</div>}
       </section>
 
       <section className="plus-panel" id="collections">
