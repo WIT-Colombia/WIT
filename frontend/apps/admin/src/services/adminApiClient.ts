@@ -81,6 +81,7 @@ export type AdminSecurityAuditEntry = {
   actor: string | null; subject: string; role: string | null; permission: string | null;
   planKey?: 'businessPro' | 'xamukoPlus' | null;
   enabled?: boolean | null; previousEnabled?: boolean | null;
+  plusPreviousStatus?: string | null; plusStatus?: string | null; plusExpiresAt?: string | null;
 };
 export type AdminSecurityAuditResult = {
   entries: AdminSecurityAuditEntry[];
