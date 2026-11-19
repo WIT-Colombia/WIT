@@ -93,7 +93,7 @@ export function PaidPlanControl({ plan, name }: { plan: PaidPlanKey; name: strin
       <h3>Confirmar: {action.toLowerCase()} {name}</h3>
       <p>{enabled
         ? 'Esta acción suspenderá las funciones exclusivas del plan incluso para suscripciones vigentes, hasta que vuelva a habilitarse.'
-        : isPlus ? 'Se activará el indicador global, pero Los beneficios Plus solo estarán disponibles para usuarios con suscripción vigente. No se habilitan cobros.' : 'Las funciones PRO volverán a estar disponibles únicamente para las suscripciones que sigan vigentes.'}</p>
+        : isPlus ? 'Se activarán las funciones Plus únicamente para usuarios con suscripción vigente. La activación no genera cobros.' : 'Las funciones PRO volverán a estar disponibles únicamente para las suscripciones que sigan vigentes.'}</p>
       <label>Justificación administrativa obligatoria
         <textarea value={reason} onChange={event => setReason(event.target.value)} minLength={12} maxLength={500} rows={3}
           disabled={busy} placeholder="Registra el motivo y quién autoriza este cambio" />
