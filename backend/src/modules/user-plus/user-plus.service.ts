@@ -79,7 +79,7 @@ export async function plusOverview(userId: string) {
       select: { id: true, name: true, kind: true } }),
     prisma.business.findMany({ where: { id: { in: businessIds }, ...publishedBusiness,
       ...(adultAllowed ? {} : { adultOnly: false }) },
-      select: { id: true, name: true } }),
+      select: { id: true, publicId: true, name: true } }),
   ]);
   const foundOffers = new Map(collectedOffers.map(item => [item.id, item]));
   const foundBusinesses = new Map(collectedBusinesses.map(item => [item.id, item]));
@@ -90,7 +90,7 @@ export async function plusOverview(userId: string) {
       const offer = item.targetType === 'OFFER' ? foundOffers.get(item.targetId) : undefined;
       return { ...item, available: Boolean(business || offer),
         name: business?.name ?? offer?.name ?? 'Publicación no disponible',
-        href: business ? '/business/' + business.id : offer ? '/' + (offer.kind === 'PRODUCT' ? 'product' : 'service') + '/' + offer.id : null };
+        href: business ? '/business/' + business.publicId : offer ? '/' + (offer.kind === 'PRODUCT' ? 'product' : 'service') + '/' + offer.id : null };
     }),
   }));
   const safeWatches = watches.map(row => {
