@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
+import { FinanceSectionNav } from '../components/FinanceSectionNav';
 import { AdminPageHeading } from '../components/AdminPageHeading';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
@@ -281,6 +282,7 @@ export function AdminTransactionsPage() {
           <Icon name="refresh" size={16}/> Actualizar
         </button>
       </div>}/>
+    <FinanceSectionNav />
     <section className="atx-scope" aria-label="Alcance real de las transacciones">
       <span className="atx-scope-icon"><Icon name="shield" size={24}/></span>
       <div><strong>Transacciones comerciales de clientes: sin integración</strong>
