@@ -101,17 +101,17 @@
 .admin-refresh .arf-financial-grid strong{color:#493657;font-size:32px;font-weight:900;line-height:1}
 .admin-refresh .arf-financial-grid small{font-size:11.5px;color:#7b7187;line-height:1.55}
 .admin-refresh .arf-filters{
-  display:grid;grid-template-columns:minmax(230px,1.5fr) minmax(185px,.9fr) minmax(180px,auto);
+  display:grid;grid-template-columns:minmax(200px,1.5fr) minmax(155px,.9fr) repeat(2,minmax(155px,.85fr));
   align-items:end;gap:12px;margin-bottom:19px;padding:17px;
   border:1px solid #ede6f3;border-radius:14px;background:linear-gradient(140deg,#fcfaff,#f8f5fb);
 }
 .admin-refresh .arf-field{display:grid;gap:8px;min-width:0;font-size:12px;font-weight:800;color:#52495f;line-height:1.4}
-.admin-refresh .arf-field select,.admin-refresh .arf-search{
+.admin-refresh .arf-field select,.admin-refresh .arf-field>input,.admin-refresh .arf-search{
   display:flex;align-items:center;gap:9px;width:100%;min-width:0;min-height:49px;
   padding:10px 13px;border:1px solid #dcd4e7;border-radius:11px;
   color:#2e2540;background:#fff;font-family:inherit;font-size:14px;font-weight:500;line-height:1.45;
 }
-.admin-refresh .arf-field select{display:block;cursor:pointer}
+.admin-refresh .arf-field select,.admin-refresh .arf-field>input{display:block;cursor:pointer}
 .admin-refresh .arf-search:focus-within{border-color:#a674d6;box-shadow:0 0 0 3px #c4a0ed40}
 .admin-refresh .arf-search svg{flex-shrink:0;color:#8654bb}
 .admin-refresh .arf-search input{
@@ -120,7 +120,14 @@
 }
 .admin-refresh .arf-search input:focus-visible{outline:0}
 .admin-refresh .arf-search input::placeholder{color:#888194;opacity:1}
-.admin-refresh .arf-filter-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.admin-refresh .arf-filter-actions{
+  grid-column:1/-1;display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:9px
+}
+.admin-refresh .arf-filter-actions .arf-btn{min-width:113px}
+.admin-refresh .arf-date-error{
+  grid-column:1/-1;margin:0;padding:10px 12px;border:1px solid #efcbd6;border-radius:9px;
+  background:#fff5f7;color:#9d3d60;font-size:12px;line-height:1.5
+}
 .admin-refresh .arf-filter-actions .arf-btn{min-height:49px;padding:10px 12px}
 .admin-refresh .arf-countbar{
   display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
@@ -317,6 +324,8 @@
 @media(max-width:530px){
   .admin-refresh .arf-filters{grid-template-columns:minmax(0,1fr);padding:13px}
   .admin-refresh .arf-filters .arf-field:first-child,.admin-refresh .arf-filter-actions{grid-column:auto}
+  .admin-refresh .arf-filter-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .arf-filter-actions .arf-btn{min-width:0}
   .admin-refresh .arf-financial-grid{grid-template-columns:minmax(0,1fr)}
   .admin-refresh .arf-financial-grid>div{min-height:0}
   .admin-refresh .arf-financial-grid>div:last-child{grid-column:auto}
