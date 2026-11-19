@@ -1,4 +1,4 @@
-import { Prisma, type FinancialPaymentStatus } from '../../generated/prisma/client.js';
+import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 
