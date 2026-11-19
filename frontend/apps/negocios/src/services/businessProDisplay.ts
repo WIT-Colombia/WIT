@@ -11,7 +11,7 @@ type BusinessProDisplayInput = {
   resolvedPlan: ResolvedBusinessPlan;
 };
 
- export function getBusinessProDisplay({
+export function getBusinessProDisplay({
   businessId, role, empty, resolvedPlan,
 }: BusinessProDisplayInput): { showProBadge: boolean; showProOffer: boolean } {
   const currentPlan = businessId && resolvedPlan?.businessId === businessId
