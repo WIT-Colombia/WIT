@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PageLayout } from '../components/PageLayout';
 import { useAuth } from '../context/AuthContext';
@@ -46,6 +46,7 @@ export default function Plus() {
   const [queryParams] = useSearchParams();
   const { selection } = useLocationContext();
   const { favorites } = useFavorites();
+  const requestEpoch = useRef(0);
   const [status, setStatus] = useState<PlusStatus | null>(null);
   const [data, setData] = useState<PlusOverview | null>(null);
   const [radar, setRadar] = useState<PlusRadarItem[]>([]);
@@ -73,13 +74,18 @@ export default function Plus() {
 
   const reload = useCallback(async () => {
     if (!user) return;
+    const epoch = ++requestEpoch.current;
     const current = await fetchPlusStatus();
+    if (epoch !== requestEpoch.current) return;
     setStatus(current);
     if (current.active) {
       const [overview, feed] = await Promise.all([fetchPlusOverview(), fetchPlusRadar()]);
+      if (epoch !== requestEpoch.current) return;
       setData(overview);
       setRadar(feed.items);
-    } else { setData(null); setRadar([]); setHistory(null); setComparison([]); }
+    } else if (epoch === requestEpoch.current) {
+      setData(null); setRadar([]); setHistory(null); setComparison([]);
+    }
   }, [user?.id]);
 
   useEffect(() => {
@@ -87,7 +93,7 @@ export default function Plus() {
     setLoading(true); setError(''); setStatus(null); setData(null);
     void reload().catch(e => { if (active) setError(e instanceof Error ? e.message : 'No se pudo consultar Xamuko Plus.'); })
       .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    return () => { active = false; requestEpoch.current += 1; };
   }, [reload]);
 
   useEffect(() => {
