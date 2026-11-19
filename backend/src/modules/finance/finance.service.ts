@@ -164,6 +164,23 @@ export async function createInvoice(context: AdminContext, input: { providerId: 
     return row;
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
+/** Shared capacity rule for newly recorded payments and corrections.
+ * PENDING and PAID both reserve the invoice amount, CANCELLED reserves nothing.
+ * No bank settlement is inferred from either administrative state. */
+export function assertSupplierInvoiceCapacity(
+  invoiceAmountCop: Prisma.Decimal,
+  existing: Array<{ id?:string; amountCop: Prisma.Decimal; status:'PENDING'|'PAID'|'CANCELLED' }>,
+  incoming: { id?:string; amountCop:number; status:'PENDING'|'PAID'|'CANCELLED' },
+) {
+  const allocated = existing
+    .filter(payment => payment.id !== incoming.id && payment.status !== 'CANCELLED')
+    .reduce((sum,payment) => sum.plus(payment.amountCop),new Prisma.Decimal(0));
+  const incomingAmount = incoming.status === 'CANCELLED'
+    ? new Prisma.Decimal(0) : new Prisma.Decimal(incoming.amountCop);
+  if (allocated.plus(incomingAmount).greaterThan(invoiceAmountCop))
+    throw new AppError(409,'PAYMENT_EXCEEDS_BALANCE',
+      'El importe acumulado de los pagos registrados supera el valor de la factura.');
+}
 /** Only an administrative supplier-payment record. A PAID status does not certify bank settlement. */
 export async function createPayment(context: AdminContext, input: { invoiceId: string; amountCop: number; status: 'PENDING' | 'PAID' | 'CANCELLED'; reference?: string }) {
   assertManage(context);
@@ -176,13 +193,7 @@ export async function createPayment(context: AdminContext, input: { invoiceId: s
       where: { id: input.invoiceId }, include: { payments: true },
     });
     if (!invoice) throw new AppError(404, 'INVOICE_NOT_FOUND', 'La factura de proveedor no existe.');
-    const allocated = invoice.payments
-      .filter(payment => payment.status !== 'CANCELLED')
-      .reduce((sum, payment) => sum.plus(payment.amountCop), new Prisma.Decimal(0));
-    const incoming = input.status === 'CANCELLED' ? new Prisma.Decimal(0) : new Prisma.Decimal(input.amountCop);
-    if (allocated.plus(incoming).greaterThan(invoice.amountCop))
-      throw new AppError(409, 'PAYMENT_EXCEEDS_BALANCE',
-        'El importe acumulado de los pagos registrados supera el valor de la factura.');
+    assertSupplierInvoiceCapacity(invoice.amountCop, invoice.payments, input);
     const row = await tx.financialPayment.create({ data: {
       ...input, reference: input.reference?.trim() || null,
     } });
@@ -308,12 +319,8 @@ export async function updatePayment(context:AdminContext,id:string,
       invoice:{include:{payments:true}},
     }});
     if(!before)throw new AppError(404,'PAYMENT_NOT_FOUND','Pago no encontrado.');
-    const previousOther=before.invoice.payments.filter(p=>p.id!==id&&p.status!=='CANCELLED')
-      .reduce((sum,p)=>sum.plus(p.amountCop),new Prisma.Decimal(0));
-    // Cancelled payments are not outstanding payable amounts.
-    const incoming=input.status==='CANCELLED'?new Prisma.Decimal(0):new Prisma.Decimal(input.amountCop);
-    if(previousOther.plus(incoming).greaterThan(before.invoice.amountCop))
-      throw new AppError(409,'PAYMENT_EXCEEDS_BALANCE','El pago supera el saldo permitido.');
+    assertSupplierInvoiceCapacity(before.invoice.amountCop, before.invoice.payments,
+      { id, amountCop:input.amountCop, status:input.status });
     const after=await tx.financialPayment.update({where:{id},data:{
       amountCop:input.amountCop,status:input.status,reference:input.reference,
     }});
