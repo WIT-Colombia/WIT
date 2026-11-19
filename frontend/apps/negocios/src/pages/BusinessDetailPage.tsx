@@ -1065,7 +1065,7 @@ export function BusinessDetailPage() {
                   <span className="business-admin-state-badge is-hidden">Vigencia vencida</span>}
                 {proEnabled && business.deletionStatus === "NONE" && business.isPro === true &&
                   <span className="business-admin-plan-badge is-pro">Business PRO</span>}
-                {business.deletionStatus === "NONE" && business.isPro === false &&
+                {business.deletionStatus === "NONE" && (!proEnabled || business.isPro === false) &&
                   <span className="business-admin-plan-badge">Plan Básico</span>}
               </div>
             </div>
