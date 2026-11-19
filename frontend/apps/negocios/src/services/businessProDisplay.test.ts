@@ -48,5 +48,4 @@ describe("Business: tarjeta promocional Pro en el sidebar", () => {
     expect(otherBusiness.showProBadge).toBe(false);
     expect(realPro.showProBadge).toBe(true);
   });
-
 });
