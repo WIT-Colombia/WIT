@@ -1,5 +1,9 @@
 import { requestWithSession } from './authService';
 
+export type PlusPurchaseRequest = {
+  id: string; status: 'PENDING_PAYMENT' | 'CLOSED'; amountCop: number;
+  currency: 'COP'; periodMonths: number; createdAt: string;
+};
 export type PlusStatus = {
   enabled: boolean; active: boolean;
   subscription: { status: string; startsAt: string; expiresAt: string; revoked: boolean } | null;
@@ -35,6 +39,16 @@ export type PriceHistory = {
 const base = '/api/v1/user/plus';
 const json = (data: unknown) => ({ headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
 export const fetchPlusStatus = () => requestWithSession<PlusStatus>(base + '/status');
+export const fetchPlusPurchaseRequest = () =>
+  requestWithSession<{ request: PlusPurchaseRequest | null }>(base + '/purchase-request');
+/**
+ * Registers a request for a membership. This does not debit, renew or activate the account.
+ * The price and entitlement remain server-verified.
+ */
+export const requestPlusMembership = (acceptedAmountCop: number) =>
+  requestWithSession<{ request: PlusPurchaseRequest; created: boolean }>(base + '/purchase-request',
+    { method: 'POST', ...json({ acceptedAmountCop, acceptedTerms: true }) });
+
 export const fetchPlusOverview = () => requestWithSession<PlusOverview>(base + '/overview');
 export const fetchPlusRadar = () => requestWithSession<{ items: PlusRadarItem[] }>(base + '/radar');
 export const savePlusPreferences = (data: { radarEnabled?: boolean; priceAlertsEnabled?: boolean }) =>
