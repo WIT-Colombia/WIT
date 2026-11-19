@@ -354,3 +354,11 @@
 @media(prefers-reduced-motion:reduce){
   .admin-refresh .abill-page *{transition:none!important}
 }
+
+
+/* Consistent finance navigation; scroll locally on compact viewports. */
+.admin-refresh .abill-finance-tabs{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:4px 0;min-width:0}
+.admin-refresh .abill-finance-tabs a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 13px;border:1px solid #e4dced;border-radius:10px;background:#fff;color:#514766;font-size:12px;font-weight:700;text-decoration:none;line-height:1.4}
+.admin-refresh .abill-finance-tabs a[aria-current="page"]{border-color:#a892dc;background:#f2ebff;color:#5733a5}
+.admin-refresh .abill-finance-tabs a:hover{border-color:#a892dc;background:#f7f3ff}
+@media(max-width:680px){.admin-refresh .abill-finance-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.admin-refresh .abill-finance-tabs a{min-width:0;text-align:center;padding:8px;font-size:11px}}
