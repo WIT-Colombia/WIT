@@ -234,6 +234,10 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
             {whatsappUrl && <a className="offer-detail-contact whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => recordBusinessEvent(business.id, "WHATSAPP_CLICK", "click", undefined, analyticsContextRef.current)}>WhatsApp</a>}
             {phone && <a className="offer-detail-contact phone" href={`tel:${phone}`} onClick={() => recordBusinessEvent(business.id, "PHONE_CLICK", "click", undefined, analyticsContextRef.current)}><PhoneIcon />Llamar</a>}
           </div>
+          {isRealOfferId(item.id) && <div className="offer-detail-plus-links">
+            <Link to={`/plus?watch=${encodeURIComponent(item.id)}`}>↘ Seguir precio con Plus</Link>
+            <Link to={`/plus?compare=${encodeURIComponent(item.id)}`}>≍ Comparar con Plus</Link>
+          </div>}
           <div className="offer-detail-actions">
             <div className="offer-detail-like-control">
               <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`offer-detail-thumb-button${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}>
