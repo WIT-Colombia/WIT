@@ -44,9 +44,9 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/legal-cases', label: 'Expedientes y procesos', icon: 'shield', group: 'juridica', description: 'Soportes de reclamaciones y procesos; no sustituye el seguimiento judicial.' },
   ] },
   { id: 'configuracion', label: 'Configuración y seguridad', items: [
-    { path: '/parameters', label: 'Parámetros', icon: 'settings', group: 'configuracion', description: 'Parámetros pendientes de API.', pending: true },
-    { path: '/administrators', label: 'Administradores y accesos', icon: 'users', group: 'configuracion', description: 'Consulta de cuentas y permisos administrativos.' },
-    { path: '/audit', label: 'Auditoría', icon: 'shield', group: 'configuracion', description: 'Trazabilidad real de los cambios de visibilidad de negocios.' },
+    { path: '/parameters', label: 'Parámetros y políticas', icon: 'settings', group: 'configuracion', description: 'Comprobación de identidad y estado verificable de la configuración administrativa.' },
+    { path: '/administrators', label: 'Administradores y accesos', icon: 'users', group: 'configuracion', description: 'Gestión real de roles y permisos con autorización y auditoría.' },
+    { path: '/audit', label: 'Auditoría', icon: 'shield', group: 'configuracion', description: 'Historial verificable de visibilidad, verificación y suscripciones de negocios.' },
   ] },
 ];
 
