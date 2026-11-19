@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run src/services/businessAuthService.test.ts src/services/businessProDisplay.test.ts",
+    "test": "vitest run src/services/businessAuthService.test.ts src/services/businessProDisplay.test.ts src/services/effectivePlanLimits.test.ts",
     "test:gallery": "node --test tests/galleryLayout.test.mjs"
   },
   "dependencies": {
