@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AdminPageHeading } from '../components/AdminPageHeading';
-import { FinanceSectionNav } from '../components/FinanceSectionNav';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
 import { can, getSession } from '../services/adminService';
@@ -143,12 +142,10 @@ export function AdminBillingPage() {
     <AdminPageHeading title="Ingresos y facturación" icon="card"
       description="Estado financiero comercial y seguimiento de suscripciones, con datos verificables."
       actions={<div className="abill-heading-actions">
-        <Link className="abill-btn abill-btn-outline" to="/plans"><Icon name="crown" size={16}/> Planes y suscripciones</Link>
         <button className="abill-btn abill-btn-main" type="button" onClick={() => setRevision(v => v+1)}>
           <Icon name="refresh" size={17}/> Actualizar
         </button>
       </div>}/>
-    <FinanceSectionNav/>
     <section className="abill-reality-banner" aria-label="Disponibilidad de ingresos">
       <span className="abill-banner-icon"><Icon name="shield" size={25}/></span>
       <div><strong>Registro de ingresos comerciales aún no integrado</strong>
@@ -178,7 +175,7 @@ export function AdminBillingPage() {
       <header className="abill-section-top"><div><span className="abill-eyebrow">ACTIVIDAD VERIFICABLE</span>
         <h2 id="abill-commercial-heading">Business PRO · actividad comercial</h2>
         <p>Información operacional registrada; no representa ingresos, facturas ni pagos.</p></div>
-        {canReadBusinesses && <Link className="abill-text-link" to="/business-pro">Explorar Business PRO <Icon name="arrow" size={16}/></Link>}
+        
       </header>
       {!canReadBusinesses && <div className="abill-inline-error" role="status">
         <Icon name="lock" size={17}/> Los indicadores de negocios requieren adicionalmente BUSINESSES_READ.
@@ -294,7 +291,7 @@ export function AdminBillingPage() {
           <p>El registro de Business PRO no contiene evidencia de transacciones cobradas.</p></article>
         <article><span><Icon name="chart" size={21}/></span><h3>Facturas de proveedores</h3>
           <p>Los documentos de servicios tecnológicos sí cuentan con un módulo separado de egresos.</p>
-          <Link to="/financial-reports">Consultar gastos tecnológicos <Icon name="arrow" size={15}/></Link></article>
+</article>
       </div>
     </section>
     <p className="abill-footer-source"><Icon name="shield" size={17}/>
