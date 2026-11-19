@@ -6,7 +6,7 @@ export type PlusStatus = {
 };
 export type PlusCollection = {
   id: string; title: string;
-  items: Array<{ id: string; targetType: 'BUSINESS' | 'OFFER'; targetId: string; createdAt: string }>;
+  items: Array<{ id: string; targetType: 'BUSINESS' | 'OFFER'; targetId: string; name: string; href: string | null; available: boolean; createdAt: string }>;
 };
 export type PlusSearch = { id: string; title: string; query: string; category: string | null; city: string | null;
   openNow: boolean; minRating: number | null; sort: string };
