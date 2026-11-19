@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { createPortal } from "react-dom";
 import { useBusinessStore } from "../services/businessStore";
 import { businessApi, type BusinessPromotion, type PromotionLimits, type RealOffer } from "../services/businessApiClient";
+import { effectivePromotionLimits } from "../services/effectivePlanLimits";
 import { BusinessProBenefitsDialog } from "../components/business/BusinessProBenefitsDialog";
 import { displayInternalCode } from "../utils/internalCode";
 import "./PromotionsPage.css";
@@ -38,7 +39,8 @@ export function PromotionsPage() {
   const { business } = useBusinessStore();
   const [promotions, setPromotions] = useState<BusinessPromotion[]>([]);
   const [catalogItems, setCatalogItems] = useState<RealOffer[]>([]);
-  const [limits, setLimits] = useState<PromotionLimits | null>(null);
+  const [serverLimits, setLimits] = useState<PromotionLimits | null>(null);
+  const limits = effectivePromotionLimits(serverLimits, proEnabled);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
@@ -68,7 +70,7 @@ export function PromotionsPage() {
     if (!isReal || !business.id) { setPromotions([]); setLimits(null); setLoading(false); return; }
     if (refreshInFlightRef.current) return;
     refreshInFlightRef.current = true;
-    if (!silent) { setLoading(true); setError(""); }
+    if (!silent) { setLoading(true); setError(""); setLimits(null); }
     try {
       const data = await businessApi.listPromotions(business.id);
       setPromotions(data.promotions); setLimits(data.limits);
@@ -77,7 +79,7 @@ export function PromotionsPage() {
         setCatalogItems([...catalog.offers].sort((a, b) => (a.internalCode ?? "").localeCompare(b.internalCode ?? "", undefined, { numeric: true })));
       }
     }
-    catch { if (!silent) setError("No pudimos cargar las ofertas de este negocio. Intenta de nuevo."); }
+    catch { setLimits(null); if (!silent) setError("No pudimos cargar las ofertas de este negocio. Intenta de nuevo."); }
     finally { refreshInFlightRef.current = false; if (!silent) setLoading(false); }
   }, [business.id, isReal]);
   useEffect(() => {
@@ -96,7 +98,7 @@ export function PromotionsPage() {
       document.removeEventListener("visibilitychange", refreshIfVisible);
       window.removeEventListener("focus", refreshIfVisible);
     };
-  }, [isReal, reload]);
+  }, [isReal, reload, proEnabled]);
 
   const counts = useMemo(() => ({ ALL: promotions.length, ACTIVE: promotions.filter(item => item.state === "ACTIVE").length, SCHEDULED: promotions.filter(item => item.state === "SCHEDULED").length, FINISHED: promotions.filter(item => item.state === "FINISHED").length }), [promotions]);
   const filtered = useMemo(() => promotions.filter(item => (tab === "ALL" || item.state === tab) && `${item.title} ${item.description} ${item.category ?? ""}`.toLocaleLowerCase("es-CO").includes(query.toLocaleLowerCase("es-CO"))), [promotions, query, tab]);
@@ -190,6 +192,10 @@ export function PromotionsPage() {
   const save = async (event: FormEvent) => {
     event.preventDefault();
     if (!business.id || savingRef.current) return;
+    if (!limits) { setError('No se pudieron verificar las cuotas actuales del negocio. Intenta actualizar.'); return; }
+    if (!editing && limits.activeCount >= limits.maxActive) {
+      setError('Alcanzaste el límite de publicaciones activas de tu plan actual.'); return;
+    }
     if (form.type === "OFFER" && (!form.relatedOfferId || !form.originalPrice || !form.promotionalPrice || Number(form.promotionalPrice) >= Number(form.originalPrice))) { setError("Selecciona un producto o servicio y define un precio promocional menor al original."); return; }
     if (new Date(form.endsAt) <= new Date(form.startsAt)) { setError("La fecha final debe ser posterior a la fecha de inicio."); return; }
     if (form.recurrence !== "NONE" && (!form.recurrenceUntil || new Date(form.recurrenceUntil) <= new Date(form.endsAt))) { setError("Indica hasta cuándo se repetirá la promoción, después de la primera vigencia."); return; }
@@ -212,7 +218,8 @@ export function PromotionsPage() {
     finally { setRemoving(false); }
   };
   const activeLimitReached = Boolean(limits && limits.activeCount >= limits.maxActive);
-  const canCreate = canManage && !activeLimitReached;
+  // An unverified response never authorizes an additional promotion.
+  const canCreate = Boolean(canManage && limits && !activeLimitReached);
 
   return <main className="promotions-page">
     <header className="page-heading promotions-heading">
@@ -221,11 +228,12 @@ export function PromotionsPage() {
           <div><h1>Ofertas y promociones</h1><p>{`Crea y administra las ofertas y promociones de ${business.name}. Atrae más clientes y aumenta tus ventas.`}</p></div>
         </div>
       </div>
-      <button className="action-button promotions-new" type="button" onClick={() => { if (activeLimitReached) { setError("Alcanzaste el límite de publicaciones activas de tu plan actual."); return; } beginNew(); }} disabled={!canManage}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>Crear publicación</button>
+      <button className="action-button promotions-new" type="button" onClick={() => { if (activeLimitReached) { setError("Alcanzaste el límite de publicaciones activas de tu plan actual."); return; } beginNew(); }} disabled={!canCreate}><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>Crear publicación</button>
     </header>
     {!isReal && <div className="promotions-notice" role="status">Selecciona un negocio real para administrar sus publicaciones.</div>}
     {!canManage && isReal && <div className="promotions-notice" role="alert">Tu perfil no tiene permiso para administrar promociones de este negocio.</div>}
-    {activeLimitReached && <div className="promotions-notice">Alcanzaste el límite de publicaciones activas de tu plan {proEnabled ? limits?.plan === "PRO" ? "Business Pro" : "Básico" : "actual"}. {proEnabled && limits?.plan === "BASIC" && <button type="button" onClick={() => setProDialog(true)}>Conocer Business Pro</button>}</div>}
+    {!limits && isReal && !loading && <div className="promotions-notice" role="status">No pudimos verificar las cuotas del negocio. La creación está bloqueada hasta actualizar la consulta.</div>}
+    {activeLimitReached && <div className="promotions-notice">Alcanzaste el límite de publicaciones activas de tu plan {limits?.plan === "PRO" ? "Business PRO" : "Básico"}. Las publicaciones anteriores permanecen registradas. {proEnabled && limits?.plan === "BASIC" && <button type="button" onClick={() => setProDialog(true)}>Conocer Business Pro</button>}</div>}
     <section className="promotions-summary" aria-label="Resumen de promociones">
       <article><span className="promotions-summary-icon violet" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 22 23 6.5H40.5V24L25 39.5a4.2 4.2 0 0 1-5.9 0L7.5 27.9a4.2 4.2 0 0 1 0-5.9Z"/><circle cx="33.6" cy="13.4" r="2.2" fill="currentColor" stroke="none"/></svg></span><div><strong>{counts.ACTIVE}</strong><small>Activas</small></div></article>
       <article><span className="promotions-summary-icon coral" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="3.3" strokeLinecap="round" strokeLinejoin="round"><rect x="6.5" y="9" width="32" height="31" rx="5"/><path d="M6.5 18.5h32M15 5.8v7M30 5.8v7"/><circle cx="33" cy="33" r="10" fill="#f43b55"/><path d="M33 27.4v5.7l4.3 2.5"/></svg></span><div><strong>{counts.SCHEDULED}</strong><small>Programadas</small></div></article>
