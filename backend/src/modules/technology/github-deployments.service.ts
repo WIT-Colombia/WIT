@@ -5,7 +5,8 @@
  * only an explicitly successful deploy job can confirm that. */
 const apiRoot='https://api.github.com/repos/WIT-Colombia/WIT';
 const githubActionsUrl='https://github.com/WIT-Colombia/WIT/actions';
-const branch='integration/preserve-all-20261029';
+// The history intentionally spans all repository branches; each run carries its real head_branch.
+const branch='ALL_REPOSITORY_BRANCHES';
 const runKinds=['CI','RELEASE','OTHER'] as const;
 type Job={name:string;status:string;conclusion:string|null};
 type WorkflowRun={
