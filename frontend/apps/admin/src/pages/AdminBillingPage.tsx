@@ -146,6 +146,12 @@ export function AdminBillingPage() {
           <Icon name="refresh" size={17}/> Actualizar
         </button>
       </div>}/>
+    <nav className="abill-finance-tabs" aria-label="Pestañas de Finanzas y contabilidad">
+      <Link to="/billing" aria-current="page">Ingresos y facturación</Link>
+      <Link to="/transactions">Transacciones</Link>
+      <Link to="/refunds">Reembolsos</Link>
+      <Link to="/financial-reports">Gastos y contabilidad</Link>
+    </nav>
     <section className="abill-reality-banner" aria-label="Disponibilidad de ingresos">
       <span className="abill-banner-icon"><Icon name="shield" size={25}/></span>
       <div><strong>Registro de ingresos comerciales aún no integrado</strong>
