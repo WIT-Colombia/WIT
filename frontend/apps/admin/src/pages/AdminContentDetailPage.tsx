@@ -80,7 +80,7 @@ export function AdminContentDetailPage(){
             <span>{offer.business.publicationStatus==='PUBLISHED'?'Negocio publicado':offer.business.publicationStatus==='REVIEW'?'Negocio en revisión':'Negocio no publicado'}</span></div></div>
       </section>
       <section className="ac-card"><div className="ac-section-head"><span className="ac-section-icon"><Icon name="flag" size={20}/></span><div><h2>Reportes sobre el contenido</h2><p>Últimos reportes registrados.</p></div>
-          <Link className="ac-secondary" to="/offer-reports">Gestionar reportes</Link></div>
+          </div>
         {offer.reportsRecent.length?<div className="ac-reports-list">{offer.reportsRecent.map(report=><article key={report.id}><div><strong>{reportReasonLabel(report.reason)}</strong>
           <span>{reportStatusLabel(report.status)}</span></div><small>{displayDate(report.createdAt)}</small>{report.description&&<p>{report.description}</p>}</article>)}</div>:
           <p className="ac-muted">No existen reportes registrados para esta publicación.</p>}
