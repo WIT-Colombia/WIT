@@ -7,6 +7,10 @@ const context = await readFile(new URL("../src/context/LocationContext.tsx", imp
 const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
 const manual = await readFile(new URL("../src/pages/ManualLocation.tsx", import.meta.url), "utf8");
 const home = await readFile(new URL("../src/pages/Home.tsx", import.meta.url), "utf8");
+const sharedHeader = await readFile(new URL("../src/components/SiteHeader.tsx", import.meta.url), "utf8");
+const sharedHeaderStyles = await readFile(new URL("../src/components/SiteHeader.css", import.meta.url), "utf8");
+const homeStyles = await readFile(new URL("../src/pages/HomeV2.css", import.meta.url), "utf8");
+const pageLayout = await readFile(new URL("../src/components/PageLayout.tsx", import.meta.url), "utf8");
 
 test("new visitors are not silently assigned Palmira", () => {
   assert.match(service, /if \(!saved\) return null/);
@@ -30,4 +34,23 @@ test("manual municipalities persist immediately, then enrich with coordinates sa
 test("Home filters explicit manual city selections and promotions", () => {
   assert.match(home, /scope: "city" as const, city: selection\.locality\.name, region: selection\.locality\.context/);
   assert.match(home, /Promise\.resolve\(items\)\.then\(async businesses/);
+});
+
+
+test("user pages share the header without an Inicio text navigation", () => {
+  assert.match(pageLayout, /<SiteHeader active=\{active\}/);
+  assert.match(home, /<SiteHeader active="home"/);
+  assert.match(manual, /<SiteHeader\s*\/>/);
+  assert.doesNotMatch(sharedHeader, /<nav\s+className="desktop-nav"/);
+  assert.match(sharedHeader, /to="\/home"/);
+});
+
+test("all user pages use the same search bar height, not Home-only overrides", () => {
+  assert.doesNotMatch(homeStyles, /\.home-page\.home-v2 \.search-bar\s*\{/);
+  assert.match(sharedHeaderStyles, /min-height:\s*44px;/);
+  assert.match(sharedHeaderStyles, /min-height:\s*46px;/);
+});
+
+test("municipality input avoids Safari's second magnifying glass", () => {
+  assert.match(manual, /<SearchIcon\s*\/><input id="municipality-search" type="text" inputMode="search" enterKeyHint="search"/);
 });
