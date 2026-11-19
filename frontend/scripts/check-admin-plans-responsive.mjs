@@ -224,12 +224,12 @@ try {
       await page.screenshot({path:resolve(screenshots,device+'.png'),fullPage:true});
       await page.goto(origin+'/business-pro',{waitUntil:'domcontentloaded'});
       await page.getByRole('heading',{name:'Business PRO',exact:true}).waitFor({state:'visible'});
-      await page.getByText('2 registros encontrados',{exact:true}).waitFor({state:'visible'});
+      await page.getByText('3 registros encontrados',{exact:true}).waitFor({state:'visible'});
       const tabs=page.getByRole('group',{name:'Vistas de Business PRO'});
       await tabs.getByRole('button',{name:'Por vencer'}).click();
       await page.getByText('1 registro encontrado',{exact:true}).waitFor({state:'visible'});
       await tabs.getByRole('button',{name:'Activaciones especiales'}).click();
-      await page.getByText('1 registro encontrado',{exact:true}).waitFor({state:'visible'});
+      await page.getByText('2 registros encontrados',{exact:true}).waitFor({state:'visible'});
       await tabs.getByRole('button',{name:'Pendientes'}).click();
       await page.getByText('1 registro encontrado',{exact:true}).waitFor({state:'visible'});
       await tabs.getByRole('button',{name:'Todo el historial'}).click();
