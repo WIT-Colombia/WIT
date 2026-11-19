@@ -179,11 +179,11 @@ export function AdminDeploymentsPage(){
       actions={<div className="ato-heading-actions">
         <button type="button" className="ato-btn ato-btn-light" onClick={()=>setRevision(v=>v+1)}>
           <Icon name="refresh" size={17}/> Actualizar</button>
-    <TechnologyTabs />
         {manage&&<button type="button" className="ato-btn ato-btn-blue"
           onClick={()=>setCreating('MAINTENANCE')}>
           <Icon name="calendar" size={17}/> Programar mantenimiento</button>}
       </div>}/>
+    <TechnologyTabs />
     {notice&&<div className="ato-success" role="status"><Icon name="check" size={18}/>{notice}</div>}
     <section className="ato-kpi-grid" aria-label="Indicadores de despliegues y mantenimiento">
       {counters.map(k=><article className={'ato-kpi ato-kpi-'+k.tone} key={k.name}>
