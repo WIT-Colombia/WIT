@@ -1,4 +1,4 @@
-import { usePaidPlans } from "@wit/utils";
+import { PAID_PLAN_MONTHLY_COP, formatCopPrice, usePaidPlans } from "@wit/utils";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ChartPointerEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { PersistedPhoto } from "../components/common/PersistedPhoto";
@@ -509,7 +509,7 @@ export function DashboardPage() {
       </section>
 
       {proEnabled && <section className="business-home-pro" aria-labelledby="business-home-pro-title">
-        <div className="business-home-pro-mark" aria-hidden="true">♛</div><div className="business-home-pro-copy"><span className="business-home-eyebrow">MÁS HERRAMIENTAS PARA CRECER</span><h2 id="business-home-pro-title">Business PRO</h2><p>5 estadísticas gratuitas · 20 estadísticas PRO · 5 desbloqueables por nivel.</p></div><div className="business-home-pro-status"><span>{proUnlocked === true ? "Plan activo" : proUnlocked === false ? "Plan Básico" : "Plan sin verificar"}</span><small>{proUnlocked === true ? "Acceso Business PRO vigente" : "La contratación del plan no está disponible en esta versión."}</small></div><Link to="/estadisticas" className="business-home-pro-link">Ver estadísticas <span aria-hidden="true">→</span></Link>
+        <div className="business-home-pro-mark" aria-hidden="true">♛</div><div className="business-home-pro-copy"><span className="business-home-eyebrow">MÁS HERRAMIENTAS PARA CRECER</span><h2 id="business-home-pro-title">Business PRO</h2><p>20 estadísticas PRO, catálogo ampliado y herramientas para tu negocio.</p><strong className="business-home-pro-price">{formatCopPrice(PAID_PLAN_MONTHLY_COP.businessPro)} COP <small>/ mes</small></strong></div><div className="business-home-pro-status"><span>{proUnlocked === true ? "Plan activo" : proUnlocked === false ? "Plan Básico" : "Plan sin verificar"}</span><small>{proUnlocked === true ? "Acceso Business PRO vigente" : "La contratación del plan no está disponible en esta versión."}</small></div><Link to="/estadisticas" className="business-home-pro-link">Ver estadísticas <span aria-hidden="true">→</span></Link>
       </section>}
     </>}
   </div>;
