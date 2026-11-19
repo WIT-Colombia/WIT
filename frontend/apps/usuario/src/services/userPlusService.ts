@@ -68,7 +68,7 @@ export function parsePlusTarget(value: string): { targetType: 'BUSINESS' | 'OFFE
   if (uuid.test(clean)) return { targetType: 'OFFER', targetId: clean };
   try {
     const url = new URL(clean, window.location.origin);
-    if (url.origin !== window.location.origin) return null;
+    if (!['http:', 'https:'].includes(url.protocol) || ![window.location.hostname, 'xamuko.com', 'www.xamuko.com'].includes(url.hostname)) return null;
     const match = /^\/(business|product|service)\/([0-9a-f-]{36})\/?$/.exec(url.pathname);
     if (!match || !uuid.test(match[2])) return null;
     return { targetType: match[1] === 'business' ? 'BUSINESS' : 'OFFER', targetId: match[2] };
