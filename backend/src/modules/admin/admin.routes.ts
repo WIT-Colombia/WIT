@@ -22,6 +22,7 @@ import { readOwnAvatar } from '../auth/avatar.service.js';
 import { adminDocumentsRouter } from './admin-documents.routes.js';
 
 import { getPaidPlanAvailability, setPaidPlanAvailability, isPaidPlanEnabled, paidPlanKey, paidPlanUpdate } from './paid-plans.service.js';
+import { readAdminPlusSubscription, assignAdminPlusSubscription } from '../user-plus/user-plus-admin.service.js';
 
 export const adminRouter = Router();
 adminRouter.get('/paid-plans', requireAdmin(), async (_req, res, next) => {
@@ -35,6 +36,22 @@ adminRouter.put('/paid-plans/:key', requireTrustedOrigin, requireAdmin(), async 
     res.setHeader('Cache-Control', 'no-store');
     res.json(await setPaidPlanAvailability(adminFromRequest(req), key, enabled, reason));
   } catch (error) { next(error); }
+});
+const adminPlusSubscriptionUpdate = z.object({
+  enabled: z.boolean(), expiresAt: z.string().datetime().optional(),
+  reason: z.string().trim().min(12).max(500), confirmation: z.literal('CONFIRMAR'),
+}).strict();
+const plusUserId = z.string().uuid();
+adminRouter.get('/xamuko-plus/users/:userId', requireAdmin(), async (req, res, next) => {
+  try { res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await readAdminPlusSubscription(adminFromRequest(req), plusUserId.parse(req.params.userId))); }
+  catch (error) { next(error); }
+});
+adminRouter.put('/xamuko-plus/users/:userId', requireTrustedOrigin, requireAdmin(), async (req, res, next) => {
+  try { const input = adminPlusSubscriptionUpdate.parse(req.body);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json(await assignAdminPlusSubscription(adminFromRequest(req), plusUserId.parse(req.params.userId), input)); }
+  catch (error) { next(error); }
 });
 adminRouter.use('/documents', adminDocumentsRouter);
 adminRouter.get('/me', requireAdmin(), adminMeController);
