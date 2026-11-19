@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AdminPageHeading } from '../components/AdminPageHeading';
+import { FinanceSectionNav } from '../components/FinanceSectionNav';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
 import { getSession } from '../services/adminService';
@@ -147,6 +148,7 @@ export function AdminBillingPage() {
           <Icon name="refresh" size={17}/> Actualizar
         </button>
       </div>}/>
+    <FinanceSectionNav/>
     <section className="abill-reality-banner" aria-label="Disponibilidad de ingresos">
       <span className="abill-banner-icon"><Icon name="shield" size={25}/></span>
       <div><strong>Registro de ingresos comerciales aún no integrado</strong>
