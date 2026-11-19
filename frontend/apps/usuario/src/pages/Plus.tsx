@@ -193,7 +193,7 @@ export default function Plus() {
         {!data?.watches.length && <p className="plus-empty">Todavía no sigues ningún precio.</p>}
         {history && <div className="plus-history"><h3>Historial de {history.offer.name}</h3>
           <p>Precio actual publicado: {readablePrice(history.offer.price, history.offer.currency ?? 'COP')}</p>
-          {history.history.length ? <ul>{history.history.map((point, i) => <li key={point.createdAt + i}>{dateFormat(point.createdAt)} · {readablePrice(point.previousPrice, point.currency ?? 'COP')} → {readablePrice(point.newPrice, point.currency ?? 'COP')}</li>)}</ul> : <p>Sin cambios registrados desde que se habilitó el historial.</p>}
+          {history.history.length ? <ul>{history.history.map((point, i) => <li key={point.createdAt + i}>{dateFormat(point.createdAt)} · {point.previousPrice === null ? 'Primer precio registrado' : readablePrice(point.previousPrice, point.previousCurrency ?? 'COP')} → {readablePrice(point.newPrice, point.currency ?? 'COP')}</li>)}</ul> : <p>Sin cambios registrados desde que se habilitó el historial.</p>}
           <button type="button" onClick={() => setHistory(null)}>Cerrar historial</button>
         </div>}
       </section>
