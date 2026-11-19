@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 process.env.AUTH_ACCESS_TOKEN_SECRET ??= 'xamuko-plus-test-secret-with-32-characters';
 process.env.DATABASE_URL ??= 'mysql://test:test@127.0.0.1:3306/xamuko_plus_test';
-const { hasPlusEntitlement, requirePlus } = await import('./user-plus.service.js');
+const { hasPlusEntitlement } = await import('./user-plus.service.js');
 const { assignAdminPlusSubscription } = await import('./user-plus-admin.service.js');
 const now = new Date('2026-11-19T12:00:00.000Z');
 const active = { status: 'ACTIVE', startsAt: new Date('2026-11-01T00:00:00.000Z'),
