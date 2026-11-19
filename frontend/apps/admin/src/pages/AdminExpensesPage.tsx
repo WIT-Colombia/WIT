@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type PointerEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AdminPageHeading } from '../components/AdminPageHeading';
-import { FinanceSectionNav } from '../components/FinanceSectionNav';
 import { AdminDialog } from '../components/AdminDialog';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
@@ -327,11 +326,9 @@ export function AdminExpensesPage(){
     <AdminPageHeading icon="chart" title="Gastos y contabilidad"
       description="Control financiero de proveedores tecnológicos, facturas, consumos y registros administrativos."
       actions={<div className="afc-header-actions">
-        <Link className="afc-btn afc-btn-outline" to="/transactions"><Icon name="card" size={16}/> Transacciones</Link>
         <button type="button" className="afc-btn afc-btn-main" onClick={()=>{setRevision(v=>v+1);if(showFreeTier)loadFreeTier();}}>
           <Icon name="refresh" size={16}/> Actualizar</button>
       </div>}/>
-    <FinanceSectionNav/>
     <section className="afc-scope-banner" aria-label="Alcance contable">
       <span className="afc-scope-icon"><Icon name="shield" size={24}/></span>
       <div><strong>Gastos tecnológicos · registros contables de apoyo</strong>
@@ -551,11 +548,6 @@ export function AdminExpensesPage(){
         'Una factura de proveedor no equivale a un pago bancario confirmado.',
         'No se descuentan créditos USD de montos COP sin tasa de conversión explícita.',
       ]).map((note,i)=><p key={i}><Icon name="check" size={15}/>{note}</p>)}</div>
-      <div className="afc-related">
-        <Link to="/transactions">Consultar transacciones <Icon name="arrow" size={15}/></Link>
-        <Link to="/billing">Ingresos y facturación <Icon name="arrow" size={15}/></Link>
-        <Link to="/refunds">Solicitudes de reembolso <Icon name="arrow" size={15}/></Link>
-      </div>
     </section>
     {editing&&mayEdit&&<EditFinancialRecord record={editing}
       onClose={()=>setEditing(null)} onUpdated={onUpdated}/>}
