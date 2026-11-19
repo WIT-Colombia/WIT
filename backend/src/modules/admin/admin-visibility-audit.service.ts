@@ -93,10 +93,10 @@ export async function listAdminVisibilityAudit(query: {
  * Never return AuditLog JSON payloads, token material or user identifiers.
  */
 const securityActionGroups = {
-  ALL: ['ADMIN_ROLE_ASSIGNED', 'ADMIN_ROLE_REVOKED', 'ADMIN_PERMISSION_GRANTED', 'ADMIN_PERMISSION_REVOKED', 'FINANCE_PERMISSION_GRANTED', 'FINANCE_PERMISSION_REVOKED', 'PAID_PLAN_AVAILABILITY_CHANGED'],
+  ALL: ['ADMIN_ROLE_ASSIGNED', 'ADMIN_ROLE_REVOKED', 'ADMIN_PERMISSION_GRANTED', 'ADMIN_PERMISSION_REVOKED', 'FINANCE_PERMISSION_GRANTED', 'FINANCE_PERMISSION_REVOKED', 'PAID_PLAN_AVAILABILITY_CHANGED', 'XAMUKO_PLUS_GRANTED', 'XAMUKO_PLUS_REVOKED'],
   ROLE: ['ADMIN_ROLE_ASSIGNED', 'ADMIN_ROLE_REVOKED'],
   PERMISSION: ['ADMIN_PERMISSION_GRANTED', 'ADMIN_PERMISSION_REVOKED', 'FINANCE_PERMISSION_GRANTED', 'FINANCE_PERMISSION_REVOKED'],
-  PLANS: ['PAID_PLAN_AVAILABILITY_CHANGED'],
+  PLANS: ['PAID_PLAN_AVAILABILITY_CHANGED', 'XAMUKO_PLUS_GRANTED', 'XAMUKO_PLUS_REVOKED'],
 } as const;
 function safeSecurityPayload(state: Prisma.JsonValue) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) return null;
@@ -108,7 +108,9 @@ function safeSecurityPayload(state: Prisma.JsonValue) {
     ? payload.permission : null;
   const planKey = payload.key === 'businessPro' || payload.key === 'xamukoPlus' ? payload.key : null;
   const enabled = typeof payload.enabled === 'boolean' ? payload.enabled : null;
-  return { userId, role, permission, planKey, enabled };
+  const plusStatus = ['ACTIVE', 'INACTIVE', 'NONE'].includes(String(payload.status)) ? String(payload.status) : null;
+  const plusExpiresAt = typeof payload.expiresAt === 'string' && /^\\d{4}-\\d{2}-\\d{2}T/.test(payload.expiresAt) ? payload.expiresAt : null;
+  return { userId, role, permission, planKey, enabled, plusStatus, plusExpiresAt };
 }
 export async function listAdminSecurityAudit(query: { page: number; kind: string }) {
   const kind = (query.kind.trim() || 'ALL').toUpperCase();
@@ -124,7 +126,7 @@ export async function listAdminSecurityAudit(query: { page: number; kind: string
     prisma.auditLog.findMany({
       where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: pageSize, skip: (page - 1) * pageSize,
-      select: { id: true, action: true, reason: true, createdAt: true, newState: true, previousState: true,
+      select: { id: true, entityId: true, action: true, reason: true, createdAt: true, newState: true, previousState: true,
         actor: { select: { displayName: true } } },
     }),
     prisma.auditLog.count({ where }),
@@ -149,6 +151,9 @@ export async function listAdminSecurityAudit(query: { page: number; kind: string
       role: payload?.role ?? null, permission: payload?.permission ?? null,
       planKey: payload?.planKey ?? null, enabled: payload?.enabled ?? null,
       previousEnabled: before?.enabled ?? null,
+      plusPreviousStatus: before?.plusStatus ?? null,
+      plusStatus: payload?.plusStatus ?? null,
+      plusExpiresAt: payload?.plusExpiresAt ?? null,
     })),
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
