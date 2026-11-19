@@ -2,6 +2,7 @@ import { AdminPageHeading } from '../components/AdminPageHeading';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   assignAdministratorRole, changeAdministratorPermission, listAdministrators, revokeAdministratorRole,
+  adminMe, getAdminSession, type RealAdmin,
   type AdministratorRecord, type ManagedAdminPermission,
 } from '../services/adminApiClient';
 import { getSession } from '../services/adminService';
@@ -177,5 +178,92 @@ export function AdministratorsPage() {
           >{busy ? 'Guardando…' : actionLabel[operation]}</button></div>
       </form>
     </AdminDialog>}
+  </section>;
+}
+
+const parameterAreas = [
+  { name: 'Seguridad de acceso', icon: 'lock', detail: 'Políticas de sesión, duración, revocación y autenticación reforzada.', source: 'Falta API de configuración y verificación por cuenta' },
+  { name: 'Privacidad y custodia', icon: 'shield', detail: 'Conservación, acceso y protección de datos y documentos.', source: 'Falta inventario de políticas verificables' },
+  { name: 'Operación administrativa', icon: 'settings', detail: 'Parámetros generales de comportamiento y límites operativos.', source: 'Falta servicio de parámetros autorizados' },
+  { name: 'Historial de configuración', icon: 'archive', detail: 'Registro de cambios, responsable, fecha y justificación.', source: 'Falta consulta de auditoría específica de parámetros' },
+];
+
+/**
+ * Parameters are not editable until a verified, audited backend endpoint exists.
+ * This screen only checks the authenticated admin identity and reports unconnected controls honestly.
+ */
+export function SecurityParametersPage() {
+  const session = getSession();
+  const allowed = session?.role === 'SUPER_ADMIN' && session.permissions?.includes('settings:write');
+  const [identity, setIdentity] = useState<RealAdmin | null>(null);
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [checkedAt, setCheckedAt] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(Boolean(allowed));
+  const [error, setError] = useState('');
+  const [revision, setRevision] = useState(0);
+
+  useEffect(() => {
+    if (!allowed) { setLoading(false); return; }
+    let active = true; setLoading(true); setError('');
+    void Promise.all([getAdminSession(), adminMe()])
+      .then(([result, admin]) => {
+        if (active) {
+          setAuthenticated(result.authenticated === true && result.userId === admin.user.id);
+          setIdentity(admin);
+          setCheckedAt(new Date());
+        }
+      }).catch(cause => {
+        if (active) {
+          setIdentity(null);
+          setAuthenticated(null);
+          setCheckedAt(null);
+          setError(cause instanceof Error ? cause.message : 'No fue posible comprobar el acceso.');
+        }
+      }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [allowed, revision]);
+
+  if (!allowed) return <StatePanel kind="error" title="Acceso restringido" message="La consulta de parámetros y políticas está reservada al administrador principal."/>;
+
+  const hasIdentity = Boolean(identity && authenticated);
+  return <section className="sec-workspace sec-parameters" aria-labelledby="sec-parameters-title">
+    <AdminPageHeading icon="settings" id="sec-parameters-title" title="Parámetros y políticas"
+      description="Centro de verificación de acceso y preparación de la configuración segura de Xamuko."
+      actions={<button className="sec-button" disabled={loading} type="button" onClick={() => setRevision(value => value + 1)}><Icon name="refresh" size={17}/> Verificar acceso</button>}/>
+    <div className="sec-info" role="note"><Icon name="info" size={19}/><p>Esta pantalla no simula parámetros operativos. Hasta conectar un servicio con permisos, validaciones y auditoría, las políticas configurables permanecen en solo lectura y sin valores inventados.</p></div>
+    {error && <div className="sec-state sec-state-error" role="alert"><strong>No se pudo verificar la sesión</strong><p>{error}</p><button type="button" className="sec-button" onClick={() => setRevision(value => value + 1)}>Reintentar</button></div>}
+    <div className="sec-kpis" aria-label="Comprobaciones de acceso">
+      <article><span className="sec-kpi-icon"><Icon name="shield" size={21}/></span><small>Sesión administrativa</small><strong className="sec-kpi-long">{loading ? 'Comprobando…' : authenticated === true ? 'Verificada' : authenticated === false ? 'No verificada' : 'Sin datos'}</strong><p>Respuesta autenticada del servidor</p></article>
+      <article><span className="sec-kpi-icon"><Icon name="users" size={21}/></span><small>Rol actual</small><strong className="sec-kpi-long">{loading ? 'Comprobando…' : hasIdentity ? identity!.role === 'SUPER_ADMIN' ? 'Principal' : 'Administrador' : 'Sin datos'}</strong><p>Desde la identidad del backend</p></article>
+      <article><span className="sec-kpi-icon"><Icon name="lock" size={21}/></span><small>Permisos actuales</small><strong>{hasIdentity ? identity!.permissions.length : '—'}</strong><p>Permisos devueltos por la API</p></article>
+      <article><span className="sec-kpi-icon"><Icon name="settings" size={21}/></span><small>Edición de parámetros</small><strong className="sec-kpi-long">No conectada</strong><p>Sin API de configuración autorizada</p></article>
+    </div>
+    <div className="sec-layout">
+      <section className="sec-panel" aria-labelledby="sec-account-heading">
+        <div className="sec-panel-header"><div><h2 id="sec-account-heading">Identidad administrativa</h2><p>Información comprobada de la cuenta actual, cuando el servidor responde.</p></div></div>
+        {loading ? <div className="sec-state" role="status">Verificando identidad…</div> : hasIdentity ? <dl className="sec-identity">
+          <div><dt>Cuenta</dt><dd>{identity!.user.displayName}</dd></div>
+          <div><dt>Correo</dt><dd>{identity!.user.emailNormalized || 'Sin correo disponible'}</dd></div>
+          <div><dt>Rol</dt><dd>{identity!.role === 'SUPER_ADMIN' ? 'Superadministrador' : 'Administrador'}</dd></div>
+          <div><dt>Última comprobación</dt><dd>{checkedAt ? checkedAt.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : 'Sin verificar'}</dd></div>
+        </dl> : <div className="sec-state">No hay información comprobada de la cuenta.</div>}
+      </section>
+      <aside className="sec-panel" aria-labelledby="sec-protection-title">
+        <div className="sec-panel-header"><div><h2 id="sec-protection-title">Alcance de la comprobación</h2><p>Qué confirma realmente esta pantalla.</p></div></div>
+        <div className="sec-guidance">
+          <p><Icon name="check" size={18}/> La respuesta de identidad y sesión procede del backend autenticado.</p>
+          <p><Icon name="info" size={18}/> No se informa un estado de MFA o passkey sin un inventario de métodos registrado para esta cuenta.</p>
+          <p><Icon name="lock" size={18}/> Verificar una sesión no acredita que todas las políticas de seguridad estén correctamente configuradas.</p>
+        </div>
+      </aside>
+    </div>
+    <section className="sec-panel" aria-labelledby="sec-policies-heading">
+      <div className="sec-panel-header"><div><h2 id="sec-policies-heading">Áreas de configuración</h2><p>Mapa de los controles que requieren backend antes de permitir modificaciones administrativas.</p></div><span className="sec-count">Solo lectura</span></div>
+      <div className="sec-policy-grid">{parameterAreas.map(area => <article key={area.name} className="sec-policy">
+        <div className="sec-policy-head"><span className="sec-kpi-icon"><Icon name={area.icon} size={20}/></span><span className="sec-status sec-status-pending">Integración pendiente</span></div>
+        <h3>{area.name}</h3><p>{area.detail}</p><small>{area.source}</small>
+      </article>)}</div>
+    </section>
+    <p className="sec-footnote"><Icon name="shield" size={16}/> Antes de habilitar cambios deberá existir control de permisos en servidor, validación de valores, motivo obligatorio y registro auditable del estado anterior y nuevo.</p>
   </section>;
 }
