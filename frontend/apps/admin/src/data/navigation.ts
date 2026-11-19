@@ -21,7 +21,7 @@ export const navigationGroups: NavigationGroup[] = [
   { id: 'finanzas', label: 'Finanzas y contabilidad', items: [
     { path: '/billing', label: 'Ingresos y facturación', icon: 'card', group: 'finanzas', description: 'Consulta de fuentes reales de ingresos y contexto comercial sin inventar cobros.' },
     { path: '/transactions', label: 'Transacciones', icon: 'clock', group: 'finanzas', description: 'Registro real de pagos a proveedores con indicadores, filtros y auditoría.' },
-    { path: '/refunds', label: 'Reembolsos', icon: 'clock', group: 'finanzas', description: 'Reembolsos pendientes de API.', pending: true },
+    { path: '/refunds', label: 'Reembolsos', icon: 'refresh', group: 'finanzas', description: 'Expedientes de reembolso con seguimiento, permisos y auditoría; sin transferencias automáticas.' },
     { path: '/financial-reports', label: 'Gastos tecnológicos', icon: 'chart', group: 'finanzas', description: 'Consulta de gastos tecnológicos desde API.' },
   ] },
   { id: 'tecnologia', label: 'Operación tecnológica', items: [
