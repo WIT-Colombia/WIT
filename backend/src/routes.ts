@@ -23,7 +23,13 @@ import { ownershipTransferRouter } from './modules/business/ownership-transfer.r
 import { financeRouter } from './modules/finance/finance.routes.js';
 import { technologyRouter } from './modules/technology/technology.routes.js';
 
+import { getPaidPlanAvailability } from './modules/admin/paid-plans.service.js';
+
 export const apiRouter = Router();
+apiRouter.get('/public/paid-plans', async (_req, res, next) => {
+  try { res.setHeader('Cache-Control', 'no-store'); res.json(await getPaidPlanAvailability()); }
+  catch (error) { next(error); }
+});
 apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/admin/auth', adminAuthRouter);

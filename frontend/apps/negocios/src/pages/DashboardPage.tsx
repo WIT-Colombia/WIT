@@ -1,3 +1,4 @@
+import { usePaidPlans } from "@wit/utils";
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ChartPointerEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { PersistedPhoto } from "../components/common/PersistedPhoto";
@@ -207,6 +208,7 @@ function QuickAction({ to, title, description, icon, disabled = false }: { to?: 
 }
 
 export function DashboardPage() {
+  const { businessPro: proEnabled } = usePaidPlans();
   const { business, businesses } = useBusinessStore();
   const location = useLocation();
   const isPreview = location.pathname === "/preview" || location.pathname.startsWith("/preview/");
@@ -506,9 +508,9 @@ export function DashboardPage() {
         {(business.role !== "Propietario" && (!availableActions.catalog || !availableActions.edit || !availableActions.promotions)) && <p className="business-home-muted-note">Algunas acciones requieren permisos del propietario del negocio.</p>}
       </section>
 
-      <section className="business-home-pro" aria-labelledby="business-home-pro-title">
+      {proEnabled && <section className="business-home-pro" aria-labelledby="business-home-pro-title">
         <div className="business-home-pro-mark" aria-hidden="true">♛</div><div className="business-home-pro-copy"><span className="business-home-eyebrow">MÁS HERRAMIENTAS PARA CRECER</span><h2 id="business-home-pro-title">Business PRO</h2><p>5 estadísticas gratuitas · 20 estadísticas PRO · 5 desbloqueables por nivel.</p></div><div className="business-home-pro-status"><span>{proUnlocked === true ? "Plan activo" : proUnlocked === false ? "Plan Básico" : "Plan sin verificar"}</span><small>{proUnlocked === true ? "Acceso Business PRO vigente" : "La contratación del plan no está disponible en esta versión."}</small></div><Link to="/estadisticas" className="business-home-pro-link">Ver estadísticas <span aria-hidden="true">→</span></Link>
-      </section>
+      </section>}
     </>}
   </div>;
 }

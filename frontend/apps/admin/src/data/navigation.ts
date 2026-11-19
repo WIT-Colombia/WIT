@@ -16,7 +16,7 @@ export const navigationGroups: NavigationGroup[] = [
   { id: 'crecimiento', label: 'Suscripciones y crecimiento', items: [
     { path: '/plans', label: 'Planes y suscripciones', icon: 'crown', group: 'crecimiento', description: 'Consulta real de Business PRO y decisiones administrativas de plan.' },
     { path: '/business-pro', label: 'Business PRO', icon: 'store', group: 'crecimiento', description: 'Seguimiento real de vigencias, vencimientos y activaciones especiales Business PRO.' },
-    { path: '/xamuko-plus', label: 'XAMUKO Plus', icon: 'users', group: 'crecimiento', description: 'Gestión de XAMUKO Plus pendiente de API.', pending: true },
+    { path: '/xamuko-plus', label: 'XAMUKO Plus', icon: 'users', group: 'crecimiento', description: 'Activación y desactivación de XAMUKO Plus.' },
   ] },
   { id: 'finanzas', label: 'Finanzas y contabilidad', items: [
     { path: '/billing', label: 'Ingresos y facturación', icon: 'card', group: 'finanzas', description: 'Consulta de fuentes reales de ingresos y contexto comercial sin inventar cobros.' },

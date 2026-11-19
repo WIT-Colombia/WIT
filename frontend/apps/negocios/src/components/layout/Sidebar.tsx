@@ -1,3 +1,4 @@
+import { usePaidPlans } from "@wit/utils";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useBusinessAccountWelcomeUnread } from "../../services/businessWelcomeStatus";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -23,6 +24,7 @@ export function BusinessProfileThumbnail({ business }: { business: Pick<Business
 }
 export function BusinessIndicatorRow({ business }: { business: Pick<BusinessDetails, "adultOnly" | "deletionStatus" | "verificationStatus" | "status"> }) { const status = visibleBusinessStatus(business); if (!status && business.adultOnly !== true) return null; return <span className="business-indicator-row" aria-label="Estados del establecimiento">{status === "Eliminado" ? <em className="business-state-badge deleted">Eliminado</em> : status === "Verificado" ? <em className="business-state-badge verified">✓ Verificado</em> : null}{status !== "Eliminado" && business.adultOnly === true && <em className="business-adult-indicator">+18</em>}</span>; }
 export function Sidebar({ empty = false, onNavigate }: { empty?: boolean; onNavigate?: () => void }) {
+  const { businessPro: proEnabled } = usePaidPlans();
   const { business, notifications, persistentNotificationCount, account } = useBusinessStore();
   const { user } = useBusinessAuth();
   const location = useLocation();
@@ -74,12 +76,12 @@ export function Sidebar({ empty = false, onNavigate }: { empty?: boolean; onNavi
   ];
   const visibleEntries = entries.filter(entry => entry.label === "Mi colaboración" ? isCollaborator : business.role === "Propietario" || (!entry.ownerOnly && (!entry.permission || business.permissions?.includes(entry.permission))));
   return <aside className="sidebar business-shell-sidebar" tabIndex={0} aria-label="Menú lateral de XAMUKO Business">
-    <Link className="sidebar-brand" to="/inicio" aria-label="XAMUKO Business, inicio" onClick={onNavigate}><span className="sidebar-brand-artwork"><img src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" /><img className="sidebar-brand-wordmark" src="/brand/xamuko-lockup.png" alt="" aria-hidden="true" width="2170" height="725" /></span><span>BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
+    <Link className="sidebar-brand" to="/inicio" aria-label="XAMUKO Business, inicio" onClick={onNavigate}><span className="sidebar-brand-artwork"><img src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" /><img className="sidebar-brand-wordmark" src="/brand/xamuko-lockup.png" alt="" aria-hidden="true" width="2170" height="725" /></span><span>BUSINESS{proEnabled && isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
     <nav aria-label="Navegación principal" className="sidebar-nav">{visibleEntries.map(entry => <NavLink key={entry.label} to={entry.to} end={entry.to === "/"} onClick={onNavigate} className={({ isActive }) => `nav-link${(entry.label === "Colaboradores" ? collaborators && !empty : entry.label === "Mi negocio" ? !collaborators && location.pathname.startsWith("/mi-negocio") : entry.label === "Configuración" ? (isActive || legalFromSettings) : isActive) ? " active" : ""}`}><SidebarIcon name={entry.icon} /><span>{entry.label}</span>{entry.label === "Notificaciones" && unread > 0 && <span className="notification-dot">{unread}</span>}</NavLink>)}</nav>
-    {showProOffer && <section className="sidebar-pro-card"><div><span className="sidebar-pro-icon" aria-hidden="true"><SidebarIcon name="crown" /></span><strong><em>XAMUKO</em>Business Pro</strong></div><p>Haz crecer tu negocio con herramientas exclusivas.</p><button type="button" onClick={() => setNotice("pro")}>Conocer beneficios</button></section>}
+    {proEnabled && showProOffer && <section className="sidebar-pro-card"><div><span className="sidebar-pro-icon" aria-hidden="true"><SidebarIcon name="crown" /></span><strong><em>XAMUKO</em>Business Pro</strong></div><p>Haz crecer tu negocio con herramientas exclusivas.</p><button type="button" onClick={() => setNotice("pro")}>Conocer beneficios</button></section>}
     <nav aria-label="Ayuda y soporte" className="sidebar-support"><Link to="/ayuda" onClick={onNavigate}><SidebarIcon name="help" />Centro de ayuda</Link><Link to="/soporte" onClick={onNavigate}><SidebarIcon name="support" />Soporte técnico</Link><Link to="/sugerencias" onClick={onNavigate}><SidebarIcon name="message" />Sugerencias</Link></nav>
     <Link className="sidebar-account-link" to={empty ? "/perfil?empty=1" : "/perfil"} onClick={onNavigate}><span className="sidebar-account-avatar">{avatarSrc ? <img src={avatarSrc} alt="" /> : initials}</span><span><strong>{displayName}</strong><small>Mi cuenta</small></span><span className="sidebar-account-arrow">›</span></Link>
-    {notice === "pro" && <BusinessProBenefitsDialog onClose={() => setNotice(null)} />}
+    {proEnabled && notice === "pro" && <BusinessProBenefitsDialog onClose={() => setNotice(null)} />}
   </aside>;
 }
 

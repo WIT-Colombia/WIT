@@ -1,3 +1,4 @@
+import { usePaidPlans } from "@wit/utils";
 import { normalizeBusinessPhotoForUpload, PHOTO_INPUT_ACCEPT } from "@wit/utils";
 import { useEffect, useRef, useState, type FormEvent, type ChangeEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -173,6 +174,7 @@ type CoverDraft = { file: File; previewUrl: string; position: HeaderImagePositio
 const safeImagePosition = (value?: HeaderImagePosition): HeaderImagePosition => ({ x: Number.isFinite(value?.x) ? Math.min(100, Math.max(0, value!.x)) : 50, y: Number.isFinite(value?.y) ? Math.min(100, Math.max(0, value!.y)) : 50 });
 
 export function BusinessDetailPage() {
+  const { businessPro: proEnabled } = usePaidPlans();
   const { index = "0" } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1061,7 +1063,7 @@ export function BusinessDetailPage() {
                   <span className="business-admin-state-badge is-visible">Visible</span>}
                 {business.deletionStatus === "NONE" && business.visibilityStatus === "EXPIRED" &&
                   <span className="business-admin-state-badge is-hidden">Vigencia vencida</span>}
-                {business.deletionStatus === "NONE" && business.isPro === true &&
+                {proEnabled && business.deletionStatus === "NONE" && business.isPro === true &&
                   <span className="business-admin-plan-badge is-pro">Business PRO</span>}
                 {business.deletionStatus === "NONE" && business.isPro === false &&
                   <span className="business-admin-plan-badge">Plan Básico</span>}

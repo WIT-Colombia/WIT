@@ -1,3 +1,4 @@
+import { usePaidPlans } from "@wit/utils";
 import { Link } from "react-router-dom";
 import { useBusinessStore } from "../../services/businessStore";
 import { businessApi } from "../../services/businessApiClient";
@@ -5,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useBusinessAuth } from "../../services/businessAuthContext";
 
 export function BusinessHeader() {
+  const { businessPro: proEnabled } = usePaidPlans();
   const { account, business } = useBusinessStore();
   const { user } = useBusinessAuth();
   const [isPro, setIsPro] = useState(false);
@@ -12,7 +14,7 @@ export function BusinessHeader() {
   const displayName = user?.displayName || (business.source === "real" ? "" : account.name);
   const initials = displayName.split(" ").map((part) => part[0]).slice(0, 2).join("");
   return <header className="business-header">
-    <Link className="business-header-brand" to="/inicio" aria-label="XAMUKO Business, inicio"><span className="xamuko-header-artwork"><img className="xamuko-header-logo" src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" /><img className="xamuko-header-logo xamuko-header-wordmark" src="/brand/xamuko-lockup.png" alt="" aria-hidden="true" width="2170" height="725" /></span><span className="business-header-name">BUSINESS{isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
+    <Link className="business-header-brand" to="/inicio" aria-label="XAMUKO Business, inicio"><span className="xamuko-header-artwork"><img className="xamuko-header-logo" src="/brand/xamuko-lockup.png" alt="XAMUKO" width="2170" height="725" /><img className="xamuko-header-logo xamuko-header-wordmark" src="/brand/xamuko-lockup.png" alt="" aria-hidden="true" width="2170" height="725" /></span><span className="business-header-name">BUSINESS{proEnabled && isPro && <em className="business-pro-badge">PRO</em>}</span></Link>
     <Link className="business-header-profile" to="/perfil" aria-label="Abrir mi perfil">{initials}</Link>
   </header>;
 }

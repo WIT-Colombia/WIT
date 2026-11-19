@@ -870,3 +870,12 @@ export function updateAdminZone(input:{scope:ZoneScope;code:string;state:ZoneLau
     method:'PUT',body:JSON.stringify(input),
   });
 }
+
+export function getAdminPaidPlans() {
+  return request<import('@wit/utils').PaidPlanAvailability>('/admin/paid-plans');
+}
+export function updateAdminPaidPlan(key: import('@wit/utils').PaidPlanKey, enabled: boolean) {
+  return request<import('@wit/utils').PaidPlanAvailability>(`/admin/paid-plans/${key}`, {
+    method: 'PUT', body: JSON.stringify({ enabled }),
+  });
+}

@@ -1,3 +1,4 @@
+import { PaidPlanControl } from '../components/PaidPlanControl';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AdminPageHeading } from '../components/AdminPageHeading';
@@ -142,6 +143,7 @@ export function AdminBusinessProPage() {
           <Icon name="refresh" size={16}/> Actualizar
         </button>
       </div>} />
+    <PaidPlanControl plan="businessPro" name="Business Pro" />
     <section aria-label="Indicadores reales Business PRO" className="aps-kpis abp-kpis">
       {stats.map(item => <button type="button" key={item.view} aria-pressed={view === item.view}
         className={'aps-kpi aps-kpi-'+item.tone+(view === item.view ? ' selected' : '')}
