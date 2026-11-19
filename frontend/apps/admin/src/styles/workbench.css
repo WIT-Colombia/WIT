@@ -236,3 +236,7 @@
   .ad-legal-guidance-body { padding:0 16px 18px; }
   .ad-legal-context { padding:13px; }
 }
+
+.ad-legal-recent-row { width:100%; text-align:left; cursor:pointer; font:inherit; }
+.ad-legal-recent-row:disabled { opacity:.65; cursor:wait; }
+.ad-legal-recent-row:focus-visible { outline:3px solid #7B3FFB; outline-offset:2px; }
