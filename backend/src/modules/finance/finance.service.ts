@@ -46,7 +46,7 @@ export async function ensureDefaultBudgets() {
 export async function createManualConsumption(context: AdminContext, input: { providerId: string; serviceId?: string; externalId: string; periodStart: Date; periodEnd: Date; amountUsd: number; amountCop: number; creditsUsd?: number; }) {
   assertManage(context);
   validateFinanceDates(input.periodStart, input.periodEnd);
-  validAmount(input.amountCop); validAmount(input.amountUsd); validAmount(input.creditsUsd ?? 0);
+  validAmount(input.amountCop); validAmount(input.amountUsd,4); validAmount(input.creditsUsd ?? 0,4);
   if (!input.externalId?.trim() || !input.providerId?.trim())
     throw new AppError(400, 'FINANCE_CONSUMPTION_INVALID', 'El proveedor y el identificador de consumo son obligatorios.');
   return prisma.$transaction(async tx => {
@@ -114,7 +114,7 @@ export async function createBudget(context: AdminContext, input: { name: string;
     throw new AppError(400, 'FINANCE_BUDGET_NAME_INVALID', 'El nombre del presupuesto no es válido.');
   validateFinanceDates(input.periodStart, input.periodEnd);
   validAmount(input.amountCop);
-  if (input.amountUsd !== undefined) validAmount(input.amountUsd);
+  if (input.amountUsd !== undefined) validAmount(input.amountUsd,4);
   return prisma.$transaction(async tx => {
     const row = await tx.financialBudget.create({ data: { ...input, name: input.name.trim() } });
     await tx.financialAuditEntry.create({ data: {
@@ -132,7 +132,7 @@ export async function createBudget(context: AdminContext, input: { name: string;
 export async function createInvoice(context: AdminContext, input: { providerId: string; externalId: string; invoiceNumber?: string; periodStart: Date; periodEnd: Date; amountUsd: number; amountCop: number; documentUrl?: string }) {
   assertManage(context);
   validateFinanceDates(input.periodStart, input.periodEnd);
-  validAmount(input.amountCop); validAmount(input.amountUsd);
+  validAmount(input.amountCop); validAmount(input.amountUsd,4);
   if (!input.providerId?.trim() || !input.externalId?.trim())
     throw new AppError(400, 'FINANCE_INVOICE_INVALID', 'Proveedor y referencia de factura obligatorios.');
   const documentUrl = input.documentUrl?.trim() ? validateReceiptUrl(input.documentUrl.trim()) : null;
@@ -231,7 +231,7 @@ export function reconcileFinancials(input: { consumptions: Array<{ amountCop: nu
 export async function updateManualConsumption(context: AdminContext, id: string,
   input: {amountCop:number;amountUsd:number;reason:string}) {
   assertManage(context);requireReason(input.reason);
-  validAmount(input.amountCop);validAmount(input.amountUsd);
+  validAmount(input.amountCop);validAmount(input.amountUsd,4);
   return prisma.$transaction(async tx=>{
     const before=await tx.financialConsumption.findUnique({where:{id}});
     if(!before)throw new AppError(404,'CONSUMPTION_NOT_FOUND','Consumo no encontrado.');
@@ -247,7 +247,15 @@ export async function updateManualConsumption(context: AdminContext, id: string,
     return after;
   });
 }
-function validAmount(value: number) { if (!Number.isFinite(value) || value < 0) throw new AppError(400, 'INVALID_FINANCIAL_AMOUNT', 'El importe debe ser un número no negativo.'); }
+/** Match the actual Decimal(14,2) COP and Decimal(14,4) USD storage without silent rounding. */
+export function validAmount(value: number, scale: 2|4 = 2) {
+  if (!Number.isFinite(value) || value < 0)
+    throw new AppError(400,'INVALID_FINANCIAL_AMOUNT','El importe debe ser un número finito no negativo.');
+  const decimal = new Prisma.Decimal(value);
+  if (decimal.decimalPlaces() > scale || decimal.greaterThanOrEqualTo(new Prisma.Decimal(10).pow(14-scale)))
+    throw new AppError(400,'FINANCIAL_AMOUNT_PRECISION',
+      'El importe supera los dígitos permitidos o contiene demasiados decimales para su moneda.');
+}
 async function financeAudit(context:AdminContext,entityType:string,entityId:string,
   beforeState:unknown,afterState:unknown,reason:string,tx:Prisma.TransactionClient) {
   requireReason(reason);
@@ -276,7 +284,7 @@ export async function updateBudget(context:AdminContext,id:string,
   input:{name:string;amountCop:number;amountUsd?:number;reason:string}) {
   assertManage(context);requireReason(input.reason);
   validAmount(input.amountCop);
-  if(input.amountUsd!==undefined)validAmount(input.amountUsd);
+  if(input.amountUsd!==undefined)validAmount(input.amountUsd,4);
   if(!input.name?.trim()||input.name.trim().length>160)
     throw new AppError(400,'FINANCE_BUDGET_NAME_INVALID','Nombre de presupuesto inválido.');
   return prisma.$transaction(async tx=>{
@@ -293,7 +301,7 @@ export async function updateBudget(context:AdminContext,id:string,
 export async function updateInvoice(context:AdminContext,id:string,
   input:{amountCop:number;amountUsd:number;documentUrl?:string;reason:string}) {
   assertManage(context);requireReason(input.reason);
-  validAmount(input.amountCop);validAmount(input.amountUsd);
+  validAmount(input.amountCop);validAmount(input.amountUsd,4);
   const documentUrl=input.documentUrl===undefined?undefined:
     input.documentUrl.trim()?validateReceiptUrl(input.documentUrl.trim()):null;
   return prisma.$transaction(async tx=>{
