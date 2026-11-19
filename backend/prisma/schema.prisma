@@ -1788,7 +1788,7 @@ model UserPlusPurchaseRequest {
   id             String   @id @default(uuid()) @db.Char(36)
   userId         String   @db.Char(36)
   status         String   @default("PENDING_PAYMENT") @db.VarChar(24)
-  amountCop      Int      @default(4900)
+  amountCop      Int      @default(3900)
   currency       String   @default("COP") @db.Char(3)
   periodMonths   Int      @default(1)
   createdAt      DateTime @default(now()) @db.DateTime(3)
