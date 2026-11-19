@@ -272,6 +272,10 @@
   .admin-refresh .arf-related{grid-template-columns:repeat(2,minmax(0,1fr))}
   .admin-refresh .arf-related article:last-child{grid-column:1/-1}
 }
+@media(max-width:1250px){
+  .admin-refresh .arf-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-refresh .arf-filters .arf-field:first-child,.admin-refresh .arf-filter-actions{grid-column:1/-1}
+}
 @media(max-width:1080px){
   .admin-refresh .arf-table-wrap{display:none}
   .admin-refresh .arf-case-cards{
