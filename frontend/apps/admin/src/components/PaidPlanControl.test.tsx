@@ -68,7 +68,7 @@ describe('Interruptores maestros de planes pagos', () => {
 
   it('el interruptor Xamuko Plus no inventa funciones o cobros todavía inexistentes', async () => {
     render(<PaidPlanControl plan="xamukoPlus" name="Xamuko Plus" />);
-    expect(await screen.findByText(/Actualmente no existen contratación, cobros ni beneficios Plus operativos/)).toBeTruthy();
+    expect(await screen.findByText(/La contratación y los cobros siguen deshabilitados/)).toBeTruthy();
     const toggle = await switchFor('Xamuko Plus');
     expect(toggle.checked).toBe(false);
   });
@@ -79,7 +79,7 @@ describe('Interruptores maestros de planes pagos', () => {
     render(<PaidPlanControl plan="xamukoPlus" name="Xamuko Plus" />);
     const toggle = await switchFor('Xamuko Plus');
     fireEvent.click(toggle);
-    expect(screen.getByText(/Plus seguirá sin funciones de pago ni beneficios implementados/)).toBeTruthy();
+    expect(screen.getByText(/No se habilitan cobros/)).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText('Registra el motivo y quién autoriza este cambio'), {
       target: { value: 'Habilitar indicador para preparación administrativa del plan Plus' },
     });
