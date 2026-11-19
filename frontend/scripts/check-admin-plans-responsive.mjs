@@ -62,6 +62,8 @@ try {
         startsAt:at,expiresAt:at,autoRenew:false,specialActivation:false,revokedAt:at,
         revocationReason:'Cambio administrativo registrado en prueba.',createdAt:at,updatedAt:at },
     ];
+    let businessReadAllowed = true;
+    let deniedBusinessReads = 0;
     const context = await browser.newContext({viewport});
     await context.route('**/*', async route => {
       const request = route.request();
@@ -74,12 +76,19 @@ try {
         return reply(200,{authenticated:true,userId:'fixture-admin',csrfToken:'fixture-csrf'});
       if (url.pathname.endsWith('/admin/me')) return reply(200,{admin:{
         user:{id:'fixture-admin',publicId:'A-1',displayName:'Super Admin',emailNormalized:'admin@example.test',avatarUrl:null,locale:'es-CO'},
-        role:'SUPER_ADMIN',permissions:['BUSINESSES_READ','AUDIT_READ','CATALOG_READ','FINANCE_READ'],
+        role:'SUPER_ADMIN',permissions:businessReadAllowed
+          ? ['BUSINESSES_READ','AUDIT_READ','CATALOG_READ','FINANCE_READ']
+          : ['FINANCE_READ'],
       }});
       if (url.pathname.endsWith('/admin/businesses/overview')) return reply(200,{
         generatedAt:at,total:records.length,visible:2,hidden:0,expired:0,adminHidden:0,
         suspended:0,verified:0,pro:records.filter(b=>b.isPro).length,reported:0,review:1,deleted:0,expiring:0,
       });
+      if (!businessReadAllowed &&
+          (url.pathname.endsWith('/admin/dashboard/stats') || url.pathname.endsWith('/admin/subscriptions'))) {
+        deniedBusinessReads++;
+        return reply(403,{error:{message:'BUSINESSES_READ requerido'}});
+      }
       if (url.pathname.endsWith('/admin/dashboard/stats')) return reply(200,{
         generatedAt:at,subscriptions:{proActive:records.filter(b=>b.isPro).length,
           proPending:1,proExpiring30Days:1,plus:null},revenue:null,
@@ -303,6 +312,15 @@ try {
       assert.equal(billingGeometry.cardsShown,viewport.width<=1100,device+': tablet/mobile billing cards');
       assert.equal(billingGeometry.tableShown,viewport.width>1100,device+': desktop billing table');
       await page.screenshot({path:resolve(screenshots,'billing-'+device+'.png'),fullPage:true});
+      if (device==='desktop') {
+        businessReadAllowed=false;
+        await page.reload({waitUntil:'domcontentloaded'});
+        await page.getByText('Consulta de negocios restringida').waitFor({state:'visible'});
+        await page.locator('.abill-inline-error').getByText(/Los indicadores de negocios requieren adicionalmente BUSINESSES_READ/).waitFor({state:'visible'});
+        assert.equal(deniedBusinessReads,0,'Finance-only admin must not request protected Business PRO records');
+        assert.equal(await page.locator('.abill-commercial-card strong').filter({hasText:'—'}).count(),3,
+          'Business PRO statistics remain unavailable without business permission');
+      }
       assert.equal(errors.length,0,device+': no JS errors '+errors.join('; '));
       console.log('Admin Planes y suscripciones: indicadores, filtros, plan confirmation, audit, responsive OK '+device);
     } finally { await context.close(); }
