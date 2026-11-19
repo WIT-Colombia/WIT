@@ -47,7 +47,7 @@ adminRouter.get('/subscriptions', requireAdmin('BUSINESSES_READ'), async (req, r
     res.setHeader('Cache-Control', 'private, no-store');
     res.json(await listAdminSubscriptions({
       page: Number(req.query.page) || 1, pageSize: Number(req.query.pageSize) || 12,
-      q: String(req.query.q ?? ''), status: String(req.query.status ?? ''),
+      q: String(req.query.q ?? ''), status: String(req.query.status ?? ''), view: String(req.query.view ?? 'ALL'),
     }));
   } catch (error) { next(error); }
 });
