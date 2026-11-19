@@ -6,6 +6,7 @@ import { BusinessProfileThumbnail } from "../components/layout/Sidebar";
 import { getPublicBusinessUrl, getPublicBusinessPreviewUrl } from "../config/publicApp";
 import { businessApi, type BusinessStatisticsDashboard, type BusinessVisibility } from "../services/businessApiClient";
 import { homeVisibilityState } from "../services/homeVisibilityState";
+import { isBusinessProPreview } from "../services/businessProDisplay";
 import { useBusinessStore } from "../services/businessStore";
 import { shareLink } from "../../../usuario/src/utils/share";
 import { formatCategoryName, visibleBusinessStatus } from "../services/realBusinessAdapter";
@@ -208,10 +209,12 @@ function QuickAction({ to, title, description, icon, disabled = false }: { to?: 
 }
 
 export function DashboardPage() {
-  const { businessPro: proEnabled } = usePaidPlans();
+  const { businessPro: actualProEnabled } = usePaidPlans();
   const { business, businesses } = useBusinessStore();
   const location = useLocation();
   const isPreview = location.pathname === "/preview" || location.pathname.startsWith("/preview/");
+  const proPreview = isBusinessProPreview(location.pathname, location.search);
+  const proEnabled = actualProEnabled || proPreview;
   const [period, setPeriod] = useState<Period>("month");
   const [data, setData] = useState<BusinessStatisticsDashboard | null>(null);
   const [loading, setLoading] = useState(false);
@@ -509,7 +512,7 @@ export function DashboardPage() {
       </section>
 
       {proEnabled && <section className="business-home-pro" aria-labelledby="business-home-pro-title">
-        <div className="business-home-pro-mark" aria-hidden="true">♛</div><div className="business-home-pro-copy"><span className="business-home-eyebrow">MÁS HERRAMIENTAS PARA CRECER</span><h2 id="business-home-pro-title">Business PRO</h2><p>20 estadísticas PRO, catálogo ampliado y herramientas para tu negocio.</p><strong className="business-home-pro-price">{formatCopPrice(PAID_PLAN_MONTHLY_COP.businessPro)} COP <small>/ mes</small></strong></div><div className="business-home-pro-status"><span>{proUnlocked === true ? "Plan activo" : proUnlocked === false ? "Plan Básico" : "Plan sin verificar"}</span><small>{proUnlocked === true ? "Acceso Business PRO vigente" : "La contratación del plan no está disponible en esta versión."}</small></div><Link to="/estadisticas" className="business-home-pro-link">Ver estadísticas <span aria-hidden="true">→</span></Link>
+        <div className="business-home-pro-mark" aria-hidden="true">♛</div><div className="business-home-pro-copy"><span className="business-home-eyebrow">MÁS HERRAMIENTAS PARA CRECER</span><h2 id="business-home-pro-title">Business PRO</h2><p>20 estadísticas PRO, catálogo ampliado y herramientas para tu negocio.</p><strong className="business-home-pro-price">{formatCopPrice(PAID_PLAN_MONTHLY_COP.businessPro)} COP <small>/ mes</small></strong></div><div className="business-home-pro-status"><span>{proPreview ? "Vista PRO" : proUnlocked === true ? "Plan activo" : proUnlocked === false ? "Plan Básico" : "Plan sin verificar"}</span><small>{proPreview ? "Simulación visual, sin suscripción ni datos reales" : proUnlocked === true ? "Acceso Business PRO vigente" : "La contratación del plan no está disponible en esta versión."}</small></div><Link to={proPreview ? "/preview/estadisticas?demoPro=1" : "/estadisticas"} className="business-home-pro-link">Ver estadísticas <span aria-hidden="true">→</span></Link>
       </section>}
     </>}
   </div>;
