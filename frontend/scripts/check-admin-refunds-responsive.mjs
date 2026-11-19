@@ -125,6 +125,10 @@ try {
       await page.goto(origin+'/refunds',{waitUntil:'domcontentloaded'});
       await page.getByRole('heading',{name:'Reembolsos',exact:true}).waitFor({state:'visible',timeout:15000});
       await page.getByText('4 expedientes',{exact:true}).waitFor({state:'visible',timeout:15000});
+      const financeNavigation=page.getByRole('navigation',{name:'Pestañas de Finanzas y contabilidad'});
+      assert.equal(await financeNavigation.getByRole('link').count(),4,device+': all four finance modules linked');
+      assert.equal(await financeNavigation.getByRole('link',{name:'Reembolsos',exact:true}).getAttribute('aria-current'),
+        'page',device+': correct active financial tab');
       assert.equal(await page.locator('.arf-kpi').count(),4,device+': four real administrative counts');
       assert.equal(await page.locator('.arf-financial-grid strong').count(),3,
         device+': three monetary metrics explicitly unavailable');
