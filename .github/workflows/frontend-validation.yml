@@ -99,7 +99,7 @@ jobs:
       - name: Check Admin Negocios Pioneros on mobile, iPad and desktop
         run: node scripts/check-admin-pioneers-responsive.mjs
 
-      - name: Check Admin Planes y suscripciones on mobile, iPad and desktop
+      - name: Check Admin Planes y suscripciones and Business PRO on mobile, iPad and desktop
         run: node scripts/check-admin-plans-responsive.mjs
 
       - name: Save Usuario offer card screenshots
@@ -156,7 +156,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: Save Admin Planes y suscripciones responsive screenshots
+      - name: Save Admin Planes y suscripciones and Business PRO responsive screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
