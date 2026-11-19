@@ -143,7 +143,8 @@ export async function plusRadar(userId: string) {
     }),
     prisma.businessPromotion.findMany({
       where: { businessId: { in: ids }, deletedAt: null, active: true, endsAt: { gt: new Date() }, createdAt: { gte: since },
-        business: { ...publishedBusiness, ...(allowedAdult ? {} : { adultOnly: false }) } },
+        business: { ...publishedBusiness, ...(allowedAdult ? {} : { adultOnly: false }) },
+        ...(allowedAdult ? {} : { OR: [{ relatedOfferId: null }, { relatedOffer: { adultOnly: false } }] }) },
       select: { id: true, title: true, createdAt: true, business: { select: { name: true, publicId: true } } },
       orderBy: { createdAt: 'desc' }, take: 30,
     }),
