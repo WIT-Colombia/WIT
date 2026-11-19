@@ -47,8 +47,7 @@ test('los cambios se auditan una sola vez con motivo, actor y estado anterior', 
     },
     auditLog: { create: async ({ data }: { data: Record<string, unknown> }) => { audit.push(data); } },
   };
-  const db = ({ $transaction: async (callback: (arg: typeof tx) => Promise<unknown>) => callback(tx) })
-    as unknown as NonNullable<Parameters<typeof setPaidPlanAvailability>[4]>;
+  const db = { $transaction: async (callback: (arg: typeof tx) => Promise<unknown>) => callback(tx) } as unknown as NonNullable<Parameters<typeof setPaidPlanAvailability>[4]>;
   const admin = { role: 'SUPER_ADMIN', userId: 'admin-test' };
   const reason = 'Cambio de control global autorizado';
   assert.deepEqual(await setPaidPlanAvailability(admin, 'businessPro', true, reason, db),
