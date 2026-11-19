@@ -29,9 +29,6 @@ function readablePrice(value: string | null, currency = 'COP') {
   if (value === null || !Number.isFinite(Number(value))) return 'Precio por consultar';
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: currency || 'COP', maximumFractionDigits: 0 }).format(Number(value));
 }
-function collectionTargetLink(item: { targetType: string; targetId: string }) {
-  return item.targetType === 'BUSINESS' ? '/business/' + item.targetId : null;
-}
 function buildMultiStopRoute(points: Business[], travelMode: 'driving' | 'walking', origin?: { lat: number; lng: number }) {
   const sites = points.map(point => getBusinessCoordinates(point)).filter((p): p is { lat: number; lng: number } => Boolean(p));
   if (sites.length < 2) return null;
@@ -216,7 +213,7 @@ export default function Plus() {
             void run(() => addPlusCollectionItem(col.id, target), 'Guardado en tu colección.').then(() => setCollectionValue(''));
           }}><label>Enlace para agregar<input value={collectionValue} onChange={event => setCollectionValue(event.target.value)} placeholder="/business/… o /product/…" required/></label><button type="submit" disabled={busy}>Agregar</button></form>
           <div className="plus-collection-items">{col.items.map(item => <div key={item.id}>
-            {collectionTargetLink(item) ? <Link to={collectionTargetLink(item)!}>Negocio guardado ›</Link> : <span>Producto o servicio guardado</span>}
+            {item.href ? <Link to={item.href}>{item.name} ›</Link> : <span>{item.name}</span>}
             <button type="button" disabled={busy} onClick={() => void run(() => removePlusCollectionItem(col.id, item.id))}>Quitar</button>
           </div>)}</div>
         </article>)}</div>
@@ -245,9 +242,9 @@ export default function Plus() {
       </section>
 
       <section className="plus-panel" id="routes">
-        <div className="plus-heading"><div><span>05 · EXPLORACIÓN</span><h2>Rutas con varios negocios</h2><p>Selecciona entre dos y cinco negocios favoritos con ubicación registrada.</p></div></div>
+        <div className="plus-heading"><div><span>05 · EXPLORACIÓN</span><h2>Rutas con varios negocios</h2><p>Selecciona entre dos y cuatro negocios favoritos con ubicación registrada.</p></div></div>
         <div className="plus-routes-list">{availableFavorites.map(place => <label key={place.id}>
-          <input type="checkbox" checked={routeIds.includes(place.id)} disabled={!routeIds.includes(place.id) && routeIds.length >= 5}
+          <input type="checkbox" checked={routeIds.includes(place.id)} disabled={!routeIds.includes(place.id) && routeIds.length >= 4}
             onChange={() => setRouteIds(current => current.includes(place.id) ? current.filter(x => x !== place.id) : [...current, place.id])}/>
           <span>{place.name}</span></label>)}</div>
         {!availableFavorites.length && <p className="plus-empty">Primero guarda como favoritos negocios con ubicación disponible.</p>}
