@@ -218,9 +218,13 @@ export function AdminRefundsPage(){
   const q=params.get('q')??'';
   const filter=params.get('status')??'';
   const status=options.some(item=>item.value===filter)?filter:'';
+  const from=params.get('from')??'',to=params.get('to')??'';
   const rawPage=Number(params.get('page')??1);
   const page=Number.isFinite(rawPage)?Math.max(1,Math.min(100000,Math.floor(rawPage))):1;
   const [draft,setDraft]=useState(q);
+  const [draftFrom,setDraftFrom]=useState(from);
+  const [draftTo,setDraftTo]=useState(to);
+  const [dateError,setDateError]=useState('');
   const [data,setData]=useState<RefundReviewPage|null>(null);
   const [loading,setLoading]=useState(canRead);
   const [error,setError]=useState('');
@@ -228,20 +232,25 @@ export function AdminRefundsPage(){
   const [creating,setCreating]=useState(false);
   const [selected,setSelected]=useState<string|null>(null);
   const [revision,setRevision]=useState(0);
-  useEffect(()=>setDraft(q),[q]);
+  useEffect(()=>{setDraft(q);setDraftFrom(from);setDraftTo(to);},[q,from,to]);
   useEffect(()=>{
     if(!canRead)return;
     let active=true;setLoading(true);setError('');
-    void listRefundReviewCases({q,status,page}).then(response=>{if(active)setData(response);})
+    void listRefundReviewCases({q,status,page,from,to}).then(response=>{if(active)setData(response);})
       .catch(cause=>{if(active){setData(null);setError(cause instanceof Error?cause.message:'No se pudo consultar el registro de reembolsos.');}})
       .finally(()=>{if(active)setLoading(false);});
     return ()=>{active=false;};
-  },[canRead,page,q,status,revision]);
+  },[canRead,page,q,status,from,to,revision]);
 
-  const updateFilters=(changes:{q?:string;status?:string;page?:number})=>{
+  const updateFilters=(changes:{q?:string;status?:string;from?:string;to?:string;page?:number})=>{
     const next=new URLSearchParams(params);
     if(changes.q!==undefined){if(changes.q)next.set('q',changes.q);else next.delete('q');next.delete('page');}
     if(changes.status!==undefined){if(changes.status)next.set('status',changes.status);else next.delete('status');next.delete('page');}
+    for(const key of ['from','to'] as const){
+      if(changes[key]===undefined)continue;
+      if(changes[key])next.set(key,changes[key]);else next.delete(key);
+      next.delete('page');
+    }
     if(changes.page!==undefined){if(changes.page>1)next.set('page',String(changes.page));else next.delete('page');}
     setParams(next,{replace:true});
   };
@@ -314,7 +323,12 @@ export function AdminRefundsPage(){
         <button type="button" className="arf-btn arf-btn-outline" disabled={loading||!data?.cases.length}
           onClick={download}><Icon name="download" size={16}/> Exportar página CSV</button></header>
       <form className="arf-filters" onSubmit={(event:FormEvent<HTMLFormElement>)=>{
-        event.preventDefault();updateFilters({q:draft.trim()});
+        event.preventDefault();
+        if(draftFrom&&draftTo&&draftFrom>draftTo){
+          setDateError('La fecha inicial no puede ser posterior a la final.');return;
+        }
+        setDateError('');
+        updateFilters({q:draft.trim(),from:draftFrom,to:draftTo});
       }}>
         <label className="arf-field"><span>Buscar expediente</span><span className="arf-search">
           <Icon name="search" size={17}/>
@@ -323,16 +337,24 @@ export function AdminRefundsPage(){
         <label className="arf-field"><span>Estado de seguimiento</span><select aria-label="Estado de solicitud"
           value={status} onChange={event=>updateFilters({status:event.target.value})}>
           {options.map(opt=><option value={opt.value} key={opt.value}>{opt.label}</option>)}</select></label>
+        <label className="arf-field"><span>Radicada desde · UTC</span>
+          <input type="date" aria-label="Radicación desde" value={draftFrom}
+            max={draftTo||undefined} onChange={event=>setDraftFrom(event.target.value)}/></label>
+        <label className="arf-field"><span>Radicada hasta · UTC</span>
+          <input type="date" aria-label="Radicación hasta" value={draftTo}
+            min={draftFrom||undefined} onChange={event=>setDraftTo(event.target.value)}/></label>
+        {dateError&&<p className="arf-date-error" role="alert">{dateError}</p>}
         <div className="arf-filter-actions">
           <button type="button" className="arf-btn arf-btn-outline" onClick={()=>{
-            setDraft('');setParams({}, {replace:true});}}>Limpiar</button>
+            setDraft('');setDraftFrom('');setDraftTo('');setDateError('');
+            setParams({}, {replace:true});}}>Limpiar</button>
           <button type="submit" className="arf-btn arf-btn-primary"><Icon name="search" size={16}/> Buscar</button>
         </div>
       </form>
       <div className="arf-countbar"><strong>{loading?'Consultando solicitudes…':data
         ?number(data.pagination.total)+(data.pagination.total===1?' expediente':' expedientes')
         :'Solicitudes de reembolso'}</strong>
-        <span>Fuente: RefundCase · cambios auditables</span></div>
+        <span>Fuente: RefundCase · fechas de radicación UTC · indicadores históricos</span></div>
       {loading?<div className="arf-state" role="status">Consultando las solicitudes registradas…</div>
         :error?<div className="arf-error" role="alert"><Icon name="shield" size={22}/>
           <span>{error}. Esta sección requiere el backend y la migración de expedientes actualizados.</span>
