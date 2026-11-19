@@ -45,17 +45,158 @@ export async function ensureDefaultBudgets() {
 
 export async function createManualConsumption(context: AdminContext, input: { providerId: string; serviceId?: string; externalId: string; periodStart: Date; periodEnd: Date; amountUsd: number; amountCop: number; creditsUsd?: number; }) {
   assertManage(context);
-  const row = await prisma.financialConsumption.upsert({ where: { providerId_externalId_periodStart_periodEnd: { providerId: input.providerId, externalId: input.externalId, periodStart: input.periodStart, periodEnd: input.periodEnd } }, create: { ...input, creditsUsd: input.creditsUsd ?? 0, dataKind: 'MANUAL' }, update: { amountUsd: input.amountUsd, amountCop: input.amountCop, creditsUsd: input.creditsUsd ?? 0, serviceId: input.serviceId } });
-  await prisma.financialAuditEntry.create({ data: { actorUserId: context.userId, entityType: 'FinancialConsumption', entityId: row.id, action: 'UPSERT_MANUAL_CONSUMPTION', afterState: row as any } });
-  return row;
+  validateFinanceDates(input.periodStart, input.periodEnd);
+  validAmount(input.amountCop); validAmount(input.amountUsd); validAmount(input.creditsUsd ?? 0);
+  if (!input.externalId?.trim() || !input.providerId?.trim())
+    throw new AppError(400, 'FINANCE_CONSUMPTION_INVALID', 'El proveedor y el identificador de consumo son obligatorios.');
+  return prisma.$transaction(async tx => {
+    const key = { providerId: input.providerId, externalId: input.externalId.trim(),
+      periodStart: input.periodStart, periodEnd: input.periodEnd };
+    const before = await tx.financialConsumption.findUnique({
+      where: { providerId_externalId_periodStart_periodEnd: key },
+    });
+    if (before && before.dataKind !== 'MANUAL')
+      throw new AppError(409, 'SYNCED_CONSUMPTION_IMMUTABLE',
+        'Un registro sincronizado o estimado no puede ser sobrescrito mediante la carga manual.');
+    const row = before
+      ? await tx.financialConsumption.update({ where: { id: before.id },
+          data: { amountUsd: input.amountUsd, amountCop: input.amountCop,
+            creditsUsd: input.creditsUsd ?? 0, serviceId: input.serviceId } })
+      : await tx.financialConsumption.create({ data: {
+          ...input, externalId: key.externalId, creditsUsd: input.creditsUsd ?? 0, dataKind: 'MANUAL',
+        } });
+    await tx.financialAuditEntry.create({ data: {
+      actorUserId: context.userId, entityType: 'FinancialConsumption', entityId: row.id,
+      action: before ? 'UPDATE_MANUAL_CONSUMPTION' : 'CREATE_MANUAL_CONSUMPTION',
+      reason: 'Registro administrativo manual; no altera costos sincronizados.',
+      beforeState: before ? {
+        amountCop: before.amountCop.toString(), amountUsd: before.amountUsd.toString(),
+        creditsUsd: before.creditsUsd.toString(),
+      } : undefined,
+      afterState: {
+        dataKind: row.dataKind, externalId: row.externalId,
+        amountCop: row.amountCop.toString(), amountUsd: row.amountUsd.toString(),
+        creditsUsd: row.creditsUsd.toString(),
+      },
+    } });
+    return row;
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
 export function budgetThresholds(consumedCop: number, budgetCop: number) { return [50, 75, 90, 100].filter(threshold => consumedCop >= budgetCop * threshold / 100); }
 
-export async function createProvider(context: AdminContext, input: { name: string; kind: 'AWS' | 'GOOGLE_MAPS' | 'RESEND' | 'OTHER'; currency?: string }) { assertManage(context); return prisma.financialProvider.create({ data: { name: input.name.trim(), kind: input.kind, currency: input.currency ?? 'USD' } }); }
-export async function createBudget(context: AdminContext, input: { name: string; amountCop: number; amountUsd?: number; periodStart: Date; periodEnd: Date; providerId?: string }) { assertManage(context); return prisma.financialBudget.create({ data: input }); }
-export async function createInvoice(context: AdminContext, input: { providerId: string; externalId: string; invoiceNumber?: string; periodStart: Date; periodEnd: Date; amountUsd: number; amountCop: number; documentUrl?: string }) { assertManage(context); return prisma.financialInvoice.upsert({ where: { providerId_externalId: { providerId: input.providerId, externalId: input.externalId } }, create: { ...input, dataKind: 'REAL' }, update: { invoiceNumber: input.invoiceNumber, amountUsd: input.amountUsd, amountCop: input.amountCop, documentUrl: input.documentUrl } }); }
-export async function createPayment(context: AdminContext, input: { invoiceId: string; amountCop: number; status: 'PENDING' | 'PAID' | 'CANCELLED'; reference?: string }) { assertManage(context); return prisma.financialPayment.create({ data: input }); }
+function validateFinanceDates(from: Date, to: Date) {
+  if (!(from instanceof Date) || !(to instanceof Date) || !Number.isFinite(from.valueOf()) ||
+      !Number.isFinite(to.valueOf()) || from > to)
+    throw new AppError(400, 'FINANCE_PERIOD_INVALID', 'Las fechas financieras deben existir y estar en orden.');
+}
+export async function createProvider(context: AdminContext, input: { name: string; kind: 'AWS' | 'GOOGLE_MAPS' | 'RESEND' | 'OTHER'; currency?: string }) {
+  assertManage(context);
+  if (!input.name?.trim() || input.name.trim().length > 120 ||
+      !['AWS','GOOGLE_MAPS','RESEND','OTHER'].includes(input.kind) ||
+      !/^[A-Z]{3}$/.test(input.currency ?? 'USD'))
+    throw new AppError(400, 'FINANCE_PROVIDER_INVALID', 'Nombre, tipo o moneda de proveedor no válidos.');
+  return prisma.$transaction(async tx => {
+    const row = await tx.financialProvider.create({
+      data: { name: input.name.trim(), kind: input.kind, currency: input.currency ?? 'USD' },
+    });
+    await tx.financialAuditEntry.create({ data: {
+      actorUserId: context.userId, entityType: 'FinancialProvider', entityId: row.id,
+      action: 'CREATE', reason: 'Alta administrativa de proveedor tecnológico.',
+      afterState: { name: row.name, kind: row.kind, currency: row.currency },
+    } });
+    return row;
+  });
+}
+export async function createBudget(context: AdminContext, input: { name: string; amountCop: number; amountUsd?: number; periodStart: Date; periodEnd: Date; providerId?: string }) {
+  assertManage(context);
+  if (!input.name?.trim() || input.name.trim().length > 160)
+    throw new AppError(400, 'FINANCE_BUDGET_NAME_INVALID', 'El nombre del presupuesto no es válido.');
+  validateFinanceDates(input.periodStart, input.periodEnd);
+  validAmount(input.amountCop);
+  if (input.amountUsd !== undefined) validAmount(input.amountUsd);
+  return prisma.$transaction(async tx => {
+    const row = await tx.financialBudget.create({ data: { ...input, name: input.name.trim() } });
+    await tx.financialAuditEntry.create({ data: {
+      actorUserId: context.userId, entityType: 'FinancialBudget', entityId: row.id,
+      action: 'CREATE', reason: 'Presupuesto administrativo, no saldo bancario disponible.',
+      afterState: {
+        name: row.name, amountCop: row.amountCop.toString(),
+        amountUsd: row.amountUsd?.toString() ?? null,
+        periodStart: row.periodStart.toISOString(), periodEnd: row.periodEnd.toISOString(),
+      },
+    } });
+    return row;
+  });
+}
+export async function createInvoice(context: AdminContext, input: { providerId: string; externalId: string; invoiceNumber?: string; periodStart: Date; periodEnd: Date; amountUsd: number; amountCop: number; documentUrl?: string }) {
+  assertManage(context);
+  validateFinanceDates(input.periodStart, input.periodEnd);
+  validAmount(input.amountCop); validAmount(input.amountUsd);
+  if (!input.providerId?.trim() || !input.externalId?.trim())
+    throw new AppError(400, 'FINANCE_INVOICE_INVALID', 'Proveedor y referencia de factura obligatorios.');
+  const documentUrl = input.documentUrl?.trim() ? validateReceiptUrl(input.documentUrl.trim()) : null;
+  return prisma.$transaction(async tx => {
+    const key = { providerId: input.providerId, externalId: input.externalId.trim() };
+    const before = await tx.financialInvoice.findUnique({
+      where: { providerId_externalId: key },
+    });
+    const row = before
+      ? await tx.financialInvoice.update({ where: { id: before.id },
+          data: { invoiceNumber: input.invoiceNumber, amountUsd: input.amountUsd,
+            amountCop: input.amountCop, documentUrl } })
+      : await tx.financialInvoice.create({
+          data: { ...input, externalId: key.externalId, documentUrl, dataKind: 'MANUAL' },
+        });
+    await tx.financialAuditEntry.create({ data: {
+      actorUserId: context.userId, entityType: 'FinancialInvoice', entityId: row.id,
+      action: before ? 'UPDATE_MANUAL_INVOICE' : 'CREATE_MANUAL_INVOICE',
+      reason: 'Registro manual de factura de proveedor; no equivale a una validación tributaria.',
+      beforeState: before ? {
+        amountCop: before.amountCop.toString(), amountUsd: before.amountUsd.toString(),
+        documentUrl: before.documentUrl,
+      } : undefined,
+      afterState: {
+        dataKind: row.dataKind, externalId: row.externalId, amountCop: row.amountCop.toString(),
+        amountUsd: row.amountUsd.toString(), documentUrl: row.documentUrl,
+      },
+    } });
+    return row;
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+}
+/** Only an administrative supplier-payment record. A PAID status does not certify bank settlement. */
+export async function createPayment(context: AdminContext, input: { invoiceId: string; amountCop: number; status: 'PENDING' | 'PAID' | 'CANCELLED'; reference?: string }) {
+  assertManage(context);
+  validAmount(input.amountCop);
+  if (!input.invoiceId?.trim() || !['PENDING','PAID','CANCELLED'].includes(input.status) ||
+      (input.reference !== undefined && input.reference.length > 160))
+    throw new AppError(400, 'FINANCE_PAYMENT_INVALID', 'Factura, estado o referencia de pago inválidos.');
+  return prisma.$transaction(async tx => {
+    const invoice = await tx.financialInvoice.findUnique({
+      where: { id: input.invoiceId }, include: { payments: true },
+    });
+    if (!invoice) throw new AppError(404, 'INVOICE_NOT_FOUND', 'La factura de proveedor no existe.');
+    const allocated = invoice.payments
+      .filter(payment => payment.status !== 'CANCELLED')
+      .reduce((sum, payment) => sum.plus(payment.amountCop), new Prisma.Decimal(0));
+    const incoming = input.status === 'CANCELLED' ? new Prisma.Decimal(0) : new Prisma.Decimal(input.amountCop);
+    if (allocated.plus(incoming).greaterThan(invoice.amountCop))
+      throw new AppError(409, 'PAYMENT_EXCEEDS_BALANCE',
+        'El importe acumulado de los pagos registrados supera el valor de la factura.');
+    const row = await tx.financialPayment.create({ data: {
+      ...input, reference: input.reference?.trim() || null,
+    } });
+    await tx.financialAuditEntry.create({ data: {
+      actorUserId: context.userId, entityType: 'FinancialPayment', entityId: row.id,
+      action: 'CREATE', reason: 'Alta administrativa de movimiento; no es una conciliación bancaria.',
+      afterState: {
+        invoiceId: row.invoiceId, status: row.status,
+        amountCop: row.amountCop.toString(), reference: row.reference,
+      },
+    } });
+    return row;
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+}
 export async function persistBudgetAlerts(budgetId: string, consumedCop: number, budgetCop: number) { const thresholds = budgetThresholds(consumedCop, budgetCop); const created = []; for (const threshold of thresholds) { const dedupeKey = `${budgetId}:${threshold}`; created.push(await prisma.financialAlert.upsert({ where: { dedupeKey }, create: { budgetId, dedupeKey, threshold, message: `El presupuesto alcanzó el ${threshold}%.` }, update: {} })); } return created; }
 export async function listFinanceRecords(page = 1, pageSize = 50) { const safePage = Math.max(1, page); const safeSize = Math.min(100, Math.max(1, pageSize)); const [providers, budgets, consumptions, invoices, payments, alerts, totalConsumptions] = await Promise.all([prisma.financialProvider.findMany({ include: { services: true } }), prisma.financialBudget.findMany({ include: { provider: true }, orderBy: { periodStart: 'desc' } }), prisma.financialConsumption.findMany({ include: { provider: true, service: true }, orderBy: { periodStart: 'desc' }, skip: (safePage - 1) * safeSize, take: safeSize }), prisma.financialInvoice.findMany({ include: { provider: true, payments: true }, orderBy: { periodStart: 'desc' } }), prisma.financialPayment.findMany({ include: { invoice: true }, orderBy: { createdAt: 'desc' } }), prisma.financialAlert.findMany({ orderBy: { createdAt: 'desc' } }), prisma.financialConsumption.count()]); return { providers, budgets, consumptions, invoices, payments, alerts, pagination: { page: safePage, pageSize: safeSize, total: totalConsumptions, totalPages: Math.ceil(totalConsumptions / safeSize) } }; }
 export async function acknowledgeAlert(context: AdminContext, id: string) {
