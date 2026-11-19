@@ -81,7 +81,7 @@ export default function App() {
     <Route path="/bienvenida" element={<WelcomePage />} />
     <Route path="/sin-negocio" element={<NoBusinessPage />} />
     <Route element={<BusinessLegalLayout />}><Route path="/legal/:page" element={<LegalPage />} /></Route>
-    <Route path="/preview" element={<AppShell demoMode />}><Route index element={<DashboardPage />} /></Route>
+    <Route path="/preview" element={<AppShell demoMode />}><Route index element={<DashboardPage />} /><Route path="estadisticas" element={<StatisticsPage />} /></Route>
     <Route element={<AppShell />}>
       <Route path="/" element={<Navigate to="/inicio" replace />} />
       <Route path="/inicio" element={<DashboardPage />} />
