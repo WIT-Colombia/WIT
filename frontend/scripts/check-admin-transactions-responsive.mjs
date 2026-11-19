@@ -163,7 +163,8 @@ try {
       await page.getByText('4 registros',{exact:true}).waitFor({state:'visible'});
       const visible=page.locator(viewport.width<=1100?'.atx-mobile-records':'.atx-table-scroll');
       await visible.getByRole('button',{name:'Ver detalle'}).first().click();
-      const dialog=page.getByRole('dialog',{name:'Detalle del pago a proveedor'});
+      const dialog=page.getByRole('dialog');
+      await dialog.getByRole('heading',{name:'Detalle del pago a proveedor'}).waitFor({state:'visible'});
       await dialog.getByText('Amazon Web Services').first().waitFor({state:'visible'});
       assert.equal(await dialog.getByText('BANCO-001').isVisible(),true,
         device+': backend reference appears in detail');
