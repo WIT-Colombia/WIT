@@ -1,12 +1,11 @@
 import {useEffect,useState} from 'react';
-import {Link} from 'react-router-dom';
 import {AdminPageHeading} from '../components/AdminPageHeading';
 import {Icon} from '../components/Icon';
 import {StatePanel} from '../components/common';
 import {can,getSession} from '../services/adminService';
 import {getTechnologyServicesStatus,type TechnologyServicesStatus,type TechnologyCase} from '../services/adminApiClient';
 import {
-  TechnologyTabs,TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
+  TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
   TechnologyCaseDialog,formatDate,number,
 } from './TechnologyShared';
 import './TechnologyOperations.css';
@@ -112,7 +111,6 @@ export function AdminServiceStatusPage(){
         {manage&&<button type="button" className="ato-btn ato-btn-blue"
           onClick={()=>setCreate(true)}><Icon name="file" size={17}/> Registrar incidente</button>}
       </div>}/>
-    <TechnologyTabs/>
     {notice&&<div role="status" className="ato-success"><Icon name="check" size={18}/>{notice}</div>}
     {error&&<div className="ato-message-error" role="alert"><Icon name="shield" size={18}/>
       <span>{error}. Comprueba la actualización de la API y la migración tecnológica.</span>
@@ -177,7 +175,7 @@ export function AdminServiceStatusPage(){
           <span className="ato-kicker">PRÓXIMOS EVENTOS</span>
           <h2><Icon name="calendar" size={21}/> Mantenimientos y actividad</h2>
           <p>Planificación y últimas anotaciones documentadas en XAMUKO.</p>
-        </div><Link className="ato-link" to="/deployments">Ver mantenimiento <Icon name="arrow" size={15}/></Link></header>
+        </div></header>
         {data?.upcomingMaintenance.length?<div className="ato-event-list">{data.upcomingMaintenance.slice(0,3).map(i=>
           <button type="button" className="ato-event-item" onClick={()=>setSelected(i.id)} key={i.id}>
             <span className="ato-event-symbol"><Icon name="wrench" size={17}/></span>
@@ -195,7 +193,6 @@ export function AdminServiceStatusPage(){
       </article>
     </section>
     <div className="ato-context-links">
-      <Link to="/deployments"><Icon name="layers" size={18}/> Revisar despliegues y mantenimiento <Icon name="arrow" size={16}/></Link>
       <span><Icon name="shield" size={16}/> Fuente: comprobación autenticada y expedientes de MySQL</span>
     </div>
     {create&&manage&&<TechnologyCreateDialog kind="INCIDENT"
