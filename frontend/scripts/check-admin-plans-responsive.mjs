@@ -187,12 +187,12 @@ try {
       assert.equal(await page.getByText('PRO pendiente').count()>0,true,device+': actual pending indicator');
       await page.getByRole('button',{name:/Ver negocios/}).first().click();
       await page.getByText('2 negocios encontrados').waitFor({state:'visible'});
-      await page.getByRole('button',{name:'Limpiar'}).click();
+      await page.locator('.aps-filters').getByRole('button',{name:'Limpiar'}).click();
       await page.getByText('3 negocios encontrados').waitFor({state:'visible'});
       await page.getByLabel('Buscar negocios por nombre o identificador').fill('Ceiba');
-      await page.getByRole('button',{name:'Buscar',exact:true}).click();
+      await page.locator('.aps-filters').getByRole('button',{name:'Buscar',exact:true}).click();
       await page.getByText('1 negocio encontrado').waitFor({state:'visible'});
-      await page.getByRole('button',{name:'Limpiar'}).click();
+      await page.locator('.aps-filters').getByRole('button',{name:'Limpiar'}).click();
       await page.getByText('3 negocios encontrados').waitFor({state:'visible'});
       await page.getByLabel('Filtrar por plan').selectOption('pro');
       await page.getByText('1 negocio encontrado').waitFor({state:'visible'});
