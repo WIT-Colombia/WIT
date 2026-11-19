@@ -71,8 +71,10 @@ export function AdministratorsPage() {
   function manage(record: AdministratorRecord) {
     if (!mayManage || record.id === session?.id || activeRoles(record).includes('SUPER_ADMIN')) return;
     setTarget(record);
-    setOperation(activeRoles(record).includes('ADMIN') ? 'PERMISSION_GRANT' : 'ROLE_GRANT');
-    setPermission('BUSINESSES_READ');
+    const firstGrantable = permissionLabels.find(item => !grants(record).includes(item.value));
+    const firstRevocable = permissionLabels.find(item => grants(record).includes(item.value));
+    setOperation(!activeRoles(record).includes('ADMIN') ? 'ROLE_GRANT' : firstGrantable ? 'PERMISSION_GRANT' : 'PERMISSION_REVOKE');
+    setPermission(firstGrantable?.value ?? firstRevocable?.value ?? 'BUSINESSES_READ');
     setReason('');
     setConfirmation('');
     setActionError('');
@@ -154,15 +156,25 @@ export function AdministratorsPage() {
       <form className="sec-dialog-form" onSubmit={event => { void apply(event); }}>
         <div className="sec-target"><strong>{target.displayName}</strong><small>{target.emailNormalized || 'Sin correo registrado'}</small></div>
         <label><span>Operación</span><select value={operation} disabled={busy}
-          onChange={event => { setOperation(event.target.value as Change); setConfirmation(''); setActionError(''); }}>
+          onChange={event => {
+            const nextOperation = event.target.value as Change;
+            setOperation(nextOperation);
+            const matching = permissionLabels.find(item => nextOperation === 'PERMISSION_GRANT'
+              ? !grants(target).includes(item.value) : grants(target).includes(item.value));
+            setPermission(matching?.value ?? 'BUSINESSES_READ');
+            setConfirmation('');
+            setActionError('');
+          }}>
           {!activeRoles(target).includes('ADMIN') && <option value="ROLE_GRANT">Asignar rol ADMIN</option>}
           {activeRoles(target).includes('ADMIN') && <option value="ROLE_REVOKE">Revocar rol ADMIN</option>}
           <option value="PERMISSION_GRANT">Conceder permiso</option><option value="PERMISSION_REVOKE">Revocar permiso</option>
         </select></label>
         {(operation === 'PERMISSION_GRANT' || operation === 'PERMISSION_REVOKE') && <label><span>Permiso</span>
           <select value={permission} disabled={busy} onChange={event => setPermission(event.target.value as ManagedAdminPermission)}>
-            {permissionLabels.filter(item => operation === 'PERMISSION_GRANT' ? !grants(target).includes(item.value) : grants(target).includes(item.value))
-              .map(item => <option key={item.value} value={item.value}>{item.label} — {item.detail}</option>)}
+            {permissionLabels.filter(item => operation === 'PERMISSION_GRANT' ? !grants(target).includes(item.value) : grants(target).includes(item.value)).length === 0
+              ? <option value="">No hay permisos disponibles para esta operación</option>
+              : permissionLabels.filter(item => operation === 'PERMISSION_GRANT' ? !grants(target).includes(item.value) : grants(target).includes(item.value))
+                .map(item => <option key={item.value} value={item.value}>{item.label} — {item.detail}</option>)}
           </select>
           <small>La asignación efectiva depende también del rol activo y de las validaciones del backend.</small></label>}
         <label><span>Justificación obligatoria</span><textarea value={reason} disabled={busy} required minLength={12} maxLength={500} rows={3}
