@@ -38,6 +38,7 @@ financeRouter.get('/refund-cases', requireAdmin('FINANCE_READ'), async (req,res,
     res.setHeader('Cache-Control','private, no-store');
     res.json(await listRefundCases({
       page:Number(req.query.page??1),status:String(req.query.status??''),q:String(req.query.q??''),
+      from:String(req.query.from??''),to:String(req.query.to??''),
     }));
   }catch(error){next(error);}
 });
