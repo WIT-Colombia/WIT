@@ -1,0 +1,174 @@
+import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
+import { mkdir, readFile } from 'node:fs/promises';
+import { extname, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
+
+// Isolated browser fixtures, never calls real Admin/API accounts.
+const root = fileURLToPath(new URL('../apps/admin/dist/', import.meta.url));
+const screenshots = fileURLToPath(new URL('../test-results/admin-plans/', import.meta.url));
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2' };
+const server = createServer(async (req, res) => {
+  try {
+    const pathname = decodeURIComponent(new URL(req.url, 'http://fixture.local').pathname);
+    const resolved = resolve(root, '.' + pathname);
+    if (resolved !== resolve(root) && !resolved.startsWith(root.endsWith(sep) ? root : root + sep)) {
+      res.writeHead(403).end(); return;
+    }
+    const target = extname(resolved) ? resolved : resolve(root, 'index.html');
+    const body = await readFile(target);
+    res.writeHead(200, { 'Content-Type': types[extname(target)] || 'application/octet-stream' }).end(body);
+  } catch { res.writeHead(404).end(); }
+});
+await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+const origin = 'http://127.0.0.1:' + server.address().port;
+const browser = await chromium.launch({ headless: true,
+  ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
+const at = '2026-11-18T17:00:00.000Z';
+const items = [
+  { id:'fixture-pro', publicId:'NEG-001', name:'Panadería del Valle', isPro:true,
+    createdAt:at, location:{cityName:'Cali',countryCode:'CO'},
+    visibilityStatus:'VISIBLE',administrativeRestriction:null },
+  { id:'fixture-basic', publicId:'NEG-002', name:'Café La Ceiba', isPro:false,
+    createdAt:at, location:{cityName:'Palmira',countryCode:'CO'},
+    visibilityStatus:'REVIEW',administrativeRestriction:null },
+  { id:'fixture-basic-2', publicId:'NEG-003', name:'Tienda Lirio', isPro:false,
+    createdAt:at, location:{cityName:'Cali',countryCode:'CO'},
+    visibilityStatus:'VISIBLE',administrativeRestriction:null },
+];
+try {
+  await mkdir(screenshots,{recursive:true});
+  for (const [device,viewport] of [
+    ['mobile',{width:390,height:844}],
+    ['ipad',{width:768,height:1024}],
+    ['ipad-landscape',{width:1024,height:768}],
+    ['desktop',{width:1440,height:900}],
+  ]) {
+    const records = structuredClone(items);
+    const posts = [];
+    const context = await browser.newContext({viewport});
+    await context.route('**/*', async route => {
+      const request = route.request();
+      const url = new URL(request.url());
+      const headers = { 'Content-Type':'application/json','Access-Control-Allow-Origin':origin,
+        'Access-Control-Allow-Credentials':'true','Access-Control-Allow-Headers':'*' };
+      const reply = (status,body) => route.fulfill({status,headers,body:JSON.stringify(body)});
+      if (request.method()==='OPTIONS') return route.fulfill({status:204,headers});
+      if (url.pathname.endsWith('/admin/auth/session'))
+        return reply(200,{authenticated:true,userId:'fixture-admin',csrfToken:'fixture-csrf'});
+      if (url.pathname.endsWith('/admin/me')) return reply(200,{admin:{
+        user:{id:'fixture-admin',publicId:'A-1',displayName:'Super Admin',emailNormalized:'admin@example.test',avatarUrl:null,locale:'es-CO'},
+        role:'SUPER_ADMIN',permissions:['BUSINESSES_READ','AUDIT_READ','CATALOG_READ'],
+      }});
+      if (url.pathname.endsWith('/admin/businesses/overview')) return reply(200,{
+        generatedAt:at,total:records.length,visible:2,hidden:0,expired:0,adminHidden:0,
+        suspended:0,verified:0,pro:records.filter(b=>b.isPro).length,reported:0,review:1,deleted:0,expiring:0,
+      });
+      if (url.pathname.endsWith('/admin/dashboard/stats')) return reply(200,{
+        generatedAt:at,subscriptions:{proActive:records.filter(b=>b.isPro).length,
+          proPending:1,proExpiring30Days:0,plus:null},revenue:null,
+      });
+      if (url.pathname.endsWith('/admin/businesses/filters')) return reply(200,{
+        categories:[],cities:[{value:'CO|Cali',label:'Cali'},{value:'CO|Palmira',label:'Palmira'}],
+      });
+      if (url.pathname.endsWith('/admin/audit/visibility')) return reply(200,{
+        entries:posts.map((post,i)=>({
+          id:'audit-'+i,entityId:post.id,action:'ADMIN_BUSINESS_PLAN_CHANGED',reason:post.reason,comment:null,
+          createdAt:at,actor:{displayName:'Super Admin'},
+          previousState:{plan:post.plan==='PRO'?'BASIC':'PRO'},newState:{plan:post.plan},
+          business:{id:post.id,name:records.find(b=>b.id===post.id)?.name ?? 'Negocio',publicId:'NEG-002'},
+        })),
+        pagination:{page:1,pageSize:15,total:posts.length,totalPages:posts.length?1:0},
+      });
+      if (url.pathname.endsWith('/admin/businesses') && request.method()==='GET') {
+        const q=(url.searchParams.get('q')??'').toLowerCase();
+        const plan=url.searchParams.get('plan')??'';
+        const city=url.searchParams.get('city')??'';
+        const order=url.searchParams.get('order')??'';
+        let filtered=records.filter(b=>(!q||[b.name,b.publicId].some(s=>s.toLowerCase().includes(q))) &&
+          (!plan||(plan==='pro'?b.isPro:!b.isPro)) &&
+          (!city||city===b.location.countryCode+'|'+b.location.cityName));
+        if(order==='name')filtered=[...filtered].sort((a,b)=>a.name.localeCompare(b.name));
+        const page=Math.max(1,Number(url.searchParams.get('page'))||1);
+        const pageSize=Math.max(1,Number(url.searchParams.get('pageSize'))||15);
+        return reply(200,{businesses:filtered.slice((page-1)*pageSize,page*pageSize),
+          pagination:{page,pageSize,total:filtered.length,totalPages:Math.ceil(filtered.length/pageSize)}});
+      }
+      const planMatch=url.pathname.match(/\/admin\/businesses\/(fixture-[^/]+)\/plan$/);
+      if(planMatch&&request.method()==='POST'){
+        const data=JSON.parse(request.postData()||'{}');
+        if(data.confirmation!==data.plan||data.reason?.trim().length<12) return reply(400,{error:{message:'Confirmación inválida'}});
+        const found=records.find(b=>b.id===planMatch[1]);
+        if(!found) return reply(404,{error:{message:'No encontrado'}});
+        found.isPro=data.plan==='PRO';
+        posts.push({id:found.id,plan:data.plan,reason:data.reason});
+        return reply(200,{plan:data.plan,message:'Plan actualizado y propietarios notificados.'});
+      }
+      if(url.origin!==origin||url.pathname.startsWith('/api/'))
+        return reply(503,{error:{code:'ISOLATED_FIXTURE',message:'No hay datos para esta consulta en pruebas.'}});
+      return route.continue();
+    });
+    const page=await context.newPage();
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    try {
+      await page.goto(origin+'/plans',{waitUntil:'domcontentloaded'});
+      await page.getByRole('heading',{name:'Planes y suscripciones'}).waitFor({state:'visible',timeout:15000});
+      await page.getByText('3 negocios encontrados').waitFor({state:'visible',timeout:15000});
+      const layout=await page.evaluate(()=>{
+        const input=document.querySelector('.aps-search-wrap input');
+        const select=document.querySelector('.aps-filters select');
+        const field=document.querySelector('.aps-filters');
+        const main=document.querySelector('.aps-page');
+        return {width:innerWidth,scroll:document.documentElement.scrollWidth,
+          inputFont:parseFloat(getComputedStyle(input).fontSize),
+          selectFont:parseFloat(getComputedStyle(select).fontSize),
+          inputHeight:input.getBoundingClientRect().height,
+          selectHeight:select.getBoundingClientRect().height,
+          formOverflow:field.scrollWidth-field.clientWidth,
+          mainOverflow:main.scrollWidth-main.clientWidth};
+      });
+      assert.ok(layout.scroll<=layout.width+2,device+': no page horizontal overflow '+JSON.stringify(layout));
+      assert.ok(layout.formOverflow<=2&&layout.mainOverflow<=2,device+': form fits viewport '+JSON.stringify(layout));
+      assert.ok(layout.inputFont>=14&&layout.selectFont>=14&&layout.inputHeight>=26&&layout.selectHeight>=49,
+        device+': desktop/iPad/mobile input readability '+JSON.stringify(layout));
+      assert.equal(await page.getByText('Business PRO vigente').count()>0,true,device+': existing plan indicator');
+      assert.equal(await page.getByText('PRO pendiente').count()>0,true,device+': actual pending indicator');
+      await page.getByRole('button',{name:/Ver negocios/}).first().click();
+      await page.getByText('2 negocios encontrados').waitFor({state:'visible'});
+      await page.getByRole('button',{name:'Limpiar'}).click();
+      await page.getByText('3 negocios encontrados').waitFor({state:'visible'});
+      await page.getByLabel('Buscar negocios por nombre o identificador').fill('Ceiba');
+      await page.getByRole('button',{name:'Buscar',exact:true}).click();
+      await page.getByText('1 negocio encontrado').waitFor({state:'visible'});
+      await page.getByRole('button',{name:'Limpiar'}).click();
+      await page.getByText('3 negocios encontrados').waitFor({state:'visible'});
+      await page.getByLabel('Filtrar por plan').selectOption('pro');
+      await page.getByText('1 negocio encontrado').waitFor({state:'visible'});
+      await page.getByLabel('Filtrar por plan').selectOption('');
+      await page.getByText('3 negocios encontrados').waitFor({state:'visible'});
+      const row=page.locator('.aps-table tbody tr').filter({hasText:'Café La Ceiba'});
+      await row.getByRole('button',{name:'Cambiar plan'}).click();
+      let dialog=page.getByRole('dialog',{name:'Cambiar plan de negocio'});
+      assert.equal(await dialog.getByRole('button',{name:'Confirmar cambio de plan'}).isDisabled(),true,
+        device+': administrative change requires reason and token');
+      await dialog.getByLabel(/Motivo administrativo obligatorio/).fill('Decisión administrativa justificada en prueba aislada.');
+      await dialog.getByLabel(/Escribe PRO para confirmar/).fill('PRO');
+      await dialog.getByRole('button',{name:'Confirmar cambio de plan'}).click();
+      await page.getByText('Plan actualizado y propietarios notificados.').waitFor({state:'visible'});
+      assert.equal(posts.length,1,device+': exactly one authorized request');
+      assert.equal(posts[0].plan,'PRO',device+': assigned existing PRO plan');
+      assert.ok(posts[0].reason.length>=12,device+': reason persisted in API request');
+      await page.getByText('Cambios administrativos de plan').waitFor({state:'visible'});
+      await page.getByText('Decisión administrativa justificada en prueba aislada.').waitFor({state:'visible'});
+      await page.screenshot({path:resolve(screenshots,device+'.png'),fullPage:true});
+      assert.equal(errors.length,0,device+': no JS errors '+errors.join('; '));
+      console.log('Admin Planes y suscripciones: indicadores, filtros, plan confirmation, audit, responsive OK '+device);
+    } finally { await context.close(); }
+  }
+} finally {
+  await browser.close();
+  await new Promise(resolve=>server.close(resolve));
+}
