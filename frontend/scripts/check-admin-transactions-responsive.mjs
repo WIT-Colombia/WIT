@@ -119,6 +119,10 @@ try {
       await page.getByRole('heading',{name:'Transacciones',exact:true})
         .waitFor({state:'visible',timeout:15000});
       await page.getByText('4 registros',{exact:true}).waitFor({state:'visible',timeout:15000});
+      const financeNavigation=page.getByRole('navigation',{name:'Pestañas de Finanzas y contabilidad'});
+      assert.equal(await financeNavigation.getByRole('link').count(),4,device+': all four finance modules linked');
+      assert.equal(await financeNavigation.getByRole('link',{name:'Transacciones',exact:true}).getAttribute('aria-current'),
+        'page',device+': correct active financial tab');
       assert.equal(await page.locator('.atx-indicator').count(),4,device+': 4 genuine financial indicators');
       assert.equal(await page.getByText('Transacciones comerciales de clientes: sin integración').isVisible(),true,
         device+': never pass vendor outflows as customer revenue');
