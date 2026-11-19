@@ -4,7 +4,7 @@ import { AdminPageHeading } from '../components/AdminPageHeading';
 import { FinanceSectionNav } from '../components/FinanceSectionNav';
 import { Icon } from '../components/Icon';
 import { StatePanel } from '../components/common';
-import { getSession } from '../services/adminService';
+import { can, getSession } from '../services/adminService';
 import {
   getAdminDashboardStats, listAdminSubscriptions,
   type AdminDashboardStats, type AdminSubscriptionRecord, type AdminSubscriptionsPage,
@@ -30,8 +30,8 @@ const csvCell = (value: string) => '"' +
 
 export function AdminBillingPage() {
   const session = getSession();
-  const allowed = session?.permissions?.includes('finance:read') ?? false;
-  const canReadBusinesses = session?.permissions?.includes('business:write') ?? false;
+  const allowed = session ? can(session, 'finance:read') : false;
+  const canReadBusinesses = session ? can(session, 'business:write') : false;
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const requestedStatus = params.get('status') ?? '';
@@ -40,7 +40,7 @@ export function AdminBillingPage() {
   const page = Number.isFinite(requestedPage) ? Math.max(1, Math.min(100000, Math.floor(requestedPage))) : 1;
   const [draft, setDraft] = useState(q);
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(allowed);
+  const [summaryLoading, setSummaryLoading] = useState(allowed && canReadBusinesses);
   const [summaryError, setSummaryError] = useState('');
   const [records, setRecords] = useState<AdminSubscriptionsPage | null>(null);
   const [recordsLoading, setRecordsLoading] = useState(allowed && canReadBusinesses);
@@ -49,7 +49,7 @@ export function AdminBillingPage() {
   useEffect(() => { setDraft(q); }, [q]);
 
   useEffect(() => {
-    if (!allowed) return;
+    if (!allowed || !canReadBusinesses) return;
     let mounted = true;
     setSummaryLoading(true); setSummaryError('');
     void getAdminDashboardStats().then(value => {
@@ -61,7 +61,7 @@ export function AdminBillingPage() {
       }
     }).finally(() => { if (mounted) setSummaryLoading(false); });
     return () => { mounted = false; };
-  }, [allowed, revision]);
+  }, [allowed, canReadBusinesses, revision]);
 
   useEffect(() => {
     if (!allowed || !canReadBusinesses) return;
@@ -178,8 +178,12 @@ export function AdminBillingPage() {
       <header className="abill-section-top"><div><span className="abill-eyebrow">ACTIVIDAD VERIFICABLE</span>
         <h2 id="abill-commercial-heading">Business PRO · actividad comercial</h2>
         <p>Información operacional registrada; no representa ingresos, facturas ni pagos.</p></div>
-        <Link className="abill-text-link" to="/business-pro">Explorar Business PRO <Icon name="arrow" size={16}/></Link>
+        {canReadBusinesses && <Link className="abill-text-link" to="/business-pro">Explorar Business PRO <Icon name="arrow" size={16}/></Link>}
       </header>
+      {!canReadBusinesses && <div className="abill-inline-error" role="status">
+        <Icon name="lock" size={17}/> Los indicadores de negocios requieren adicionalmente BUSINESSES_READ.
+        Los valores no disponibles se mantienen como «—».
+      </div>}
       {summaryError && <div className="abill-inline-error" role="alert">{summaryError}
         <button type="button" onClick={() => setRevision(v=>v+1)}>Reintentar</button></div>}
       <div className="abill-commercial-grid">
