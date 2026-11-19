@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { authorizeStatisticsBusiness, completeCountTrend, statisticsWindow, offerRankingVisibility } from './statistics.service.js';
+import { recordAnalyticsEvent } from './analytics.service.js';
+import { prisma } from '../../config/prisma.js';
 
 test('statistics windows use Bogotá midnight and compare the same elapsed duration', () => {
   const now = new Date('2026-10-24T18:30:00.000Z');
@@ -86,4 +88,41 @@ test('Business PRO unlocks advanced rankings; recognition rewards stay independe
   assert.deepEqual(offerRankingVisibility(500, false), { referralRanking: true, proRankings: false });
   assert.deepEqual(offerRankingVisibility(0, true), { referralRanking: true, proRankings: true });
   assert.deepEqual(offerRankingVisibility(500, true), { referralRanking: true, proRankings: true });
+});
+
+test('analytics events are recorded independently of BASIC or PRO status', async t => {
+  const originalFind = prisma.business.findFirst;
+  const originalCreate = prisma.businessAnalyticsEvent.create;
+  const businessQueries: unknown[] = [];
+  const recorded: Array<{ businessId: string; eventType: string }> = [];
+  // Only published-business eligibility is relevant to public event recording;
+  // a subscription lookup must never become a prerequisite for collection.
+  prisma.business.findFirst = (async (args: any) => {
+    businessQueries.push(args.where);
+    const id = String(args.where.OR[0].id);
+    return { id, publicId: id };
+  }) as typeof prisma.business.findFirst;
+  prisma.businessAnalyticsEvent.create = (async (args: any) => {
+    recorded.push({ businessId: args.data.businessId, eventType: args.data.eventType });
+    return {};
+  }) as typeof prisma.businessAnalyticsEvent.create;
+  t.after(() => {
+    prisma.business.findFirst = originalFind;
+    prisma.businessAnalyticsEvent.create = originalCreate;
+  });
+
+  assert.deepEqual(await recordAnalyticsEvent({ businessId: 'business-basic', eventType: 'BUSINESS_VIEW' }),
+    { recorded: true, businessId: 'business-basic' });
+  assert.deepEqual(await recordAnalyticsEvent({ businessId: 'business-pro', eventType: 'BUSINESS_VIEW' }),
+    { recorded: true, businessId: 'business-pro' });
+  assert.deepEqual(recorded, [
+    { businessId: 'business-basic', eventType: 'BUSINESS_VIEW' },
+    { businessId: 'business-pro', eventType: 'BUSINESS_VIEW' },
+  ]);
+  for (const where of businessQueries as Array<Record<string, unknown>>) {
+    assert.equal(where.publicationStatus, 'PUBLISHED');
+    assert.equal(where.visibilityStatus, 'VISIBLE');
+    assert.equal(Object.hasOwn(where, 'isPro'), false);
+    assert.equal(Object.hasOwn(where, 'businessSubscription'), false);
+  }
 });
