@@ -16,8 +16,9 @@ async function eligibleUsers(tx: Tx, ids: string[], kind: 'radar' | 'price', adu
       select: { id: true, adultContentEnabled: true } }),
   ]);
   const active = new Set(members.map(m => m.userId));
-  const muted = new Set(preferences.filter(p => kind === 'radar' ? !p.radarEnabled : !p.priceAlertsEnabled).map(p => p.userId));
-  return people.filter(person => active.has(person.id) && !muted.has(person.id)
+  // Commercial alerts are opt-in: missing preference rows must never send notifications.
+  const optedIn = new Set(preferences.filter(p => kind === 'radar' ? p.radarEnabled : p.priceAlertsEnabled).map(p => p.userId));
+  return people.filter(person => active.has(person.id) && optedIn.has(person.id)
     && (adultOnly === false || person.adultContentEnabled)).map(person => person.id);
 }
 
