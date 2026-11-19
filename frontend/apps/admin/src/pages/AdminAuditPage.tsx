@@ -88,6 +88,7 @@ const securityActionLabel: Record<string, string> = {
   PAID_PLAN_AVAILABILITY_CHANGED: 'Disponibilidad global del plan modificada',
   XAMUKO_PLUS_GRANTED: 'Membresía individual Xamuko Plus concedida',
   XAMUKO_PLUS_REVOKED: 'Membresía individual Xamuko Plus revocada',
+  XAMUKO_PLUS_REQUEST_CLOSED: 'Solicitud de adquisición Xamuko Plus cerrada',
 };
 const securityPermissionName: Record<string, string> = {
   BUSINESSES_READ: 'Negocios', CATALOG_READ: 'Catálogo', REPORTS_REVIEW: 'Reportes',
@@ -97,7 +98,7 @@ const securityPermissionName: Record<string, string> = {
 };
 function SecurityEvent({ entry }: { entry: AdminSecurityAuditEntry }) {
   const isRevocation = entry.action.includes('REVOKED') || (Boolean(entry.planKey) && entry.enabled === false);
-  const isPlusMembership = entry.action === 'XAMUKO_PLUS_GRANTED' || entry.action === 'XAMUKO_PLUS_REVOKED';
+  const isPlusMembership = entry.action === 'XAMUKO_PLUS_GRANTED' || entry.action === 'XAMUKO_PLUS_REVOKED' || entry.action === 'XAMUKO_PLUS_REQUEST_CLOSED';
   return <article className="sec-security-event">
     <span className={'sec-security-event-icon ' + (isRevocation ? 'sec-security-event-revoke' : '')}>
       <Icon name={entry.planKey || isPlusMembership ? 'crown' : isRevocation ? 'lock' : 'shield'} size={20}/></span>
