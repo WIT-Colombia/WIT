@@ -52,10 +52,6 @@
 .home-page.home-v2 .home-topbar .notification-button { grid-column: 5; grid-row: 1; width: 36px; height: 36px; color: #11194b; }
 .home-page.home-v2 .home-topbar .notification-button svg { width: 21px; height: 21px; }
 .home-page.home-v2 .home-topbar .profile-button { grid-column: 6; grid-row: 1; width: 36px; height: 36px; }
-.home-page.home-v2 .search-bar { min-height: 44px; padding: 3px 6px 3px 15px; border: 1px solid #e9edf8; border-radius: 999px; background: #edf0f8; box-shadow: none; }
-.home-page.home-v2 .search-bar > svg { width: 19px; height: 19px; flex-basis: 19px; color: #252772; }
-.home-page.home-v2 .search-bar input { height: 36px; padding: 0 10px; font-size: 13px; }
-.home-page.home-v2 .search-bar:focus-within { border-color: #7b3ffb; background: #fff; box-shadow: 0 0 0 3px #7b3ffb30; }
 
 /* Photographic hero with the same local asset and map destination as V1. */
 .home-page.home-v2 .home-city-banner-section { order: 1; margin: 0; }
@@ -212,8 +208,6 @@
   .home-page.home-v2 .home-topbar .notification-button { grid-column: 2; grid-row: 1; }
   .home-page.home-v2 .home-topbar .profile-button { display: flex; grid-column: 3; grid-row: 1; }
   .home-page.home-v2 .site-header-search { grid-column: 1 / -1; grid-row: 2; width: 100%; padding-top: 2px; }
-  .home-page.home-v2 .search-bar { min-height: 46px; padding-left: 13px; border-color: #eff0fa; background: #fff; box-shadow: 0 3px 13px #5d39b908; }
-  .home-page.home-v2 .search-bar input { height: 38px; font-size: 16px; }
   .home-page.home-v2 .home-topbar .location-pill { grid-column: 1 / -1; grid-row: 3; justify-self: start; max-width: 100%; gap: 6px; margin: 0; padding: 2px 3px; }
   .home-page.home-v2 .home-topbar .location-pill > span:nth-child(2) { display: flex; min-width: 0; align-items: baseline; gap: 4px; font-size: 11px; }
   .home-page.home-v2 .home-topbar .location-pill b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
