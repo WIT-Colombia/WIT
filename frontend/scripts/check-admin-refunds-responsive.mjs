@@ -71,8 +71,10 @@ try {
         if(req.method()==='GET'){
           const status=url.searchParams.get('status')||'';
           const q=(url.searchParams.get('q')||'').toLowerCase();
+          const from=url.searchParams.get('from')||'',to=url.searchParams.get('to')||'';
           const page=Math.max(1,Number(url.searchParams.get('page'))||1);
           const filters=entries.filter(r=>(!status||r.status===status)&&
+            (!from||r.createdAt.slice(0,10)>=from)&&(!to||r.createdAt.slice(0,10)<=to)&&
             (!q||[r.subject,r.externalReference??'',r.contactEmail??''].some(x=>x.toLowerCase().includes(q))));
           const counts=Object.fromEntries(statuses.map(x=>[x,entries.filter(r=>r.status===x).length]));
           return send(200,{scope:'ADMIN_REFUND_REVIEW_ONLY',payoutsIntegrated:false,
@@ -161,6 +163,11 @@ try {
       await page.getByLabel('Buscar solicitudes de reembolso').fill('REF-001');
       await page.locator('.arf-filters').getByRole('button',{name:'Buscar'}).click();
       await page.getByText('1 expediente',{exact:true}).waitFor({state:'visible'});
+      await page.locator('.arf-filters').getByRole('button',{name:'Limpiar'}).click();
+      await page.getByText('4 expedientes',{exact:true}).waitFor({state:'visible'});
+      await page.getByLabel('Radicación desde').fill('2026-11-19');
+      await page.locator('.arf-filters').getByRole('button',{name:'Buscar'}).click();
+      await page.getByText('0 expedientes',{exact:true}).waitFor({state:'visible'});
       await page.locator('.arf-filters').getByRole('button',{name:'Limpiar'}).click();
       await page.getByText('4 expedientes',{exact:true}).waitFor({state:'visible'});
       await page.getByRole('button',{name:'Nueva solicitud'}).click();
