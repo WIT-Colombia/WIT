@@ -318,7 +318,7 @@ export async function updateInvoice(context:AdminContext,id:string,
       {amountCop:before.amountCop,amountUsd:before.amountUsd,documentUrl:before.documentUrl},
       {amountCop:after.amountCop,amountUsd:after.amountUsd,documentUrl:after.documentUrl},input.reason,tx);
     return after;
- , { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 export async function updatePayment(context:AdminContext,id:string,
   input:{amountCop:number;status:'PENDING'|'PAID'|'CANCELLED';reference?:string;reason:string}) {
@@ -341,6 +341,6 @@ export async function updatePayment(context:AdminContext,id:string,
       amountCop:before.amountCop,status:before.status,reference:before.reference,
     },{amountCop:after.amountCop,status:after.status,reference:after.reference},input.reason,tx);
     return after;
- , { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 export async function listFinancialAudit() { return prisma.financialAuditEntry.findMany({orderBy:{createdAt:'desc'},take:200}); }
