@@ -14,7 +14,7 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/categories', label: 'Categorías', icon: 'grid', group: 'plataforma', description: 'Consulta del catálogo real.' },
   ] },
   { id: 'crecimiento', label: 'Suscripciones y crecimiento', items: [
-    { path: '/plans', label: 'Planes y suscripciones', icon: 'crown', group: 'crecimiento', description: 'Gestión de planes pendiente de API.', pending: true },
+    { path: '/plans', label: 'Planes y suscripciones', icon: 'crown', group: 'crecimiento', description: 'Consulta real de Business PRO y decisiones administrativas de plan.' },
     { path: '/business-pro', label: 'Business PRO', icon: 'store', group: 'crecimiento', description: 'Gestión de Business PRO pendiente de API.', pending: true },
     { path: '/xamuko-plus', label: 'XAMUKO Plus', icon: 'users', group: 'crecimiento', description: 'Gestión de XAMUKO Plus pendiente de API.', pending: true },
     { path: '/promotions', label: 'Promociones', icon: 'tag', group: 'crecimiento', description: 'Promociones pendientes de API.', pending: true },
