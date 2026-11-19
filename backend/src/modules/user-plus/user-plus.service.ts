@@ -231,7 +231,7 @@ export async function plusPriceHistory(userId: string, offerId: string) {
   if (!offer) throw new AppError(404, 'PLUS_OFFER_NOT_AVAILABLE', 'El elemento no está disponible.');
   const rows = await prisma.offerPriceHistory.findMany({
     where: { offerId }, orderBy: { createdAt: 'desc' }, take: 50,
-    select: { previousPrice: true, newPrice: true, currency: true, createdAt: true },
+    select: { previousPrice: true, newPrice: true, previousCurrency: true, currency: true, createdAt: true },
   });
   return { offer: { id: offer.id, name: offer.name, price: offer.priceAmount?.toString() ?? null, currency: offer.currency },
     history: rows.map(item => ({ ...item,
