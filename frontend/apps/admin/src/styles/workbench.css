@@ -377,3 +377,7 @@
   .admin-refresh .sec-dialog-actions { display:grid; grid-template-columns:1fr; }
   .admin-refresh .sec-pagination { padding:15px; }
 }
+
+.admin-refresh .sec-identity-actions { display:grid; justify-items:start; gap:8px; padding:0 23px 23px; }
+.admin-refresh .sec-identity-actions small { color:#64748b; font-size:12px; line-height:1.55; }
+@media(max-width:670px) { .admin-refresh .sec-identity-actions { padding:0 15px 17px; } }
