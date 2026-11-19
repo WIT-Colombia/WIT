@@ -19,7 +19,7 @@ export const navigationGroups: NavigationGroup[] = [
     { path: '/xamuko-plus', label: 'XAMUKO Plus', icon: 'users', group: 'crecimiento', description: 'Gestión de XAMUKO Plus pendiente de API.', pending: true },
   ] },
   { id: 'finanzas', label: 'Finanzas y contabilidad', items: [
-    { path: '/billing', label: 'Ingresos y facturación', icon: 'card', group: 'finanzas', description: 'Ingresos y facturación pendientes de API.', pending: true },
+    { path: '/billing', label: 'Ingresos y facturación', icon: 'card', group: 'finanzas', description: 'Consulta de fuentes reales de ingresos y contexto comercial sin inventar cobros.' },
     { path: '/transactions', label: 'Transacciones', icon: 'clock', group: 'finanzas', description: 'Transacciones pendientes de API.', pending: true },
     { path: '/refunds', label: 'Reembolsos', icon: 'clock', group: 'finanzas', description: 'Reembolsos pendientes de API.', pending: true },
     { path: '/financial-reports', label: 'Gastos tecnológicos', icon: 'chart', group: 'finanzas', description: 'Consulta de gastos tecnológicos desde API.' },
