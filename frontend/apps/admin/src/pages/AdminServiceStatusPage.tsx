@@ -7,7 +7,7 @@ import {can,getSession} from '../services/adminService';
 import {getTechnologyServicesStatus,type TechnologyServicesStatus,type TechnologyCase} from '../services/adminApiClient';
 import {
   TechnologyTabs,TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
-  TechnologyCaseDialog,formatDate,number,severityName,
+  TechnologyCaseDialog,formatDate,number,
 } from './TechnologyShared';
 import './TechnologyOperations.css';
 
