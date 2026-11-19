@@ -86,6 +86,8 @@ const securityActionLabel: Record<string, string> = {
   FINANCE_PERMISSION_GRANTED: 'Permiso financiero concedido',
   FINANCE_PERMISSION_REVOKED: 'Permiso financiero revocado',
   PAID_PLAN_AVAILABILITY_CHANGED: 'Disponibilidad global del plan modificada',
+  XAMUKO_PLUS_GRANTED: 'Membresía individual Xamuko Plus concedida',
+  XAMUKO_PLUS_REVOKED: 'Membresía individual Xamuko Plus revocada',
 };
 const securityPermissionName: Record<string, string> = {
   BUSINESSES_READ: 'Negocios', CATALOG_READ: 'Catálogo', REPORTS_REVIEW: 'Reportes',
@@ -95,11 +97,12 @@ const securityPermissionName: Record<string, string> = {
 };
 function SecurityEvent({ entry }: { entry: AdminSecurityAuditEntry }) {
   const isRevocation = entry.action.includes('REVOKED') || (Boolean(entry.planKey) && entry.enabled === false);
+  const isPlusMembership = entry.action === 'XAMUKO_PLUS_GRANTED' || entry.action === 'XAMUKO_PLUS_REVOKED';
   return <article className="sec-security-event">
     <span className={'sec-security-event-icon ' + (isRevocation ? 'sec-security-event-revoke' : '')}>
-      <Icon name={entry.planKey ? 'crown' : isRevocation ? 'lock' : 'shield'} size={20}/></span>
+      <Icon name={entry.planKey || isPlusMembership ? 'crown' : isRevocation ? 'lock' : 'shield'} size={20}/></span>
     <div className="sec-security-event-content">
-      <div className="sec-security-event-head"><div><small>{entry.planKey ? 'INTERRUPTOR MAESTRO DE PLAN' : entry.action.includes('ROLE') ? 'ROL ADMINISTRATIVO' : 'PERMISO DE ACCESO'}</small>
+      <div className="sec-security-event-head"><div><small>{entry.planKey ? 'INTERRUPTOR MAESTRO DE PLAN' : isPlusMembership ? 'MEMBRESÍA XAMUKO PLUS' : entry.action.includes('ROLE') ? 'ROL ADMINISTRATIVO' : 'PERMISO DE ACCESO'}</small>
         <h3>{securityActionLabel[entry.action] ?? 'Cambio de acceso registrado'}</h3></div>
         <time dateTime={entry.createdAt}>{auditDate(entry.createdAt)}</time></div>
       <div className="sec-security-event-details">
@@ -109,6 +112,9 @@ function SecurityEvent({ entry }: { entry: AdminSecurityAuditEntry }) {
         {entry.permission && <span><strong>Permiso</strong>{securityPermissionName[entry.permission] ?? entry.permission}</span>}
         {entry.planKey && <span><strong>Estado anterior</strong>{entry.previousEnabled === null ? 'No registrado' : entry.previousEnabled ? 'Habilitado' : 'Deshabilitado'}</span>}
         {entry.planKey && <span><strong>Estado nuevo</strong>{entry.enabled ? 'Habilitado' : 'Deshabilitado'}</span>}
+        {isPlusMembership && <span><strong>Estado anterior</strong>{entry.plusPreviousStatus ?? 'Sin registro'}</span>}
+        {isPlusMembership && <span><strong>Estado nuevo</strong>{entry.plusStatus ?? 'Sin registro'}</span>}
+        {isPlusMembership && entry.plusExpiresAt && <span><strong>Vigencia registrada</strong>{auditDate(entry.plusExpiresAt)}</span>}
       </div>
       <div className="sec-security-reason"><strong>Justificación registrada</strong><p>{entry.reason || 'Motivo no disponible en esta actuación.'}</p></div>
     </div>
