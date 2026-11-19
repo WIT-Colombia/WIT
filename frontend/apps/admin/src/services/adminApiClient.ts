@@ -84,6 +84,25 @@ export function listAdminBusinesses(
     if (advanced[key]) params.set(key, advanced[key]!);
   return request<AdminBusinessPage>(`/admin/businesses?${params.toString()}`);
 }
+export type AdminSubscriptionRecord = {
+  id: string; plan: 'PRO'; status: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'REVOKED';
+  startsAt: string; expiresAt: string | null; autoRenew: boolean; specialActivation: boolean;
+  revokedAt: string | null; revocationReason: string | null;
+  createdAt: string; updatedAt: string; effective: boolean;
+  business: { id: string; publicId: string; name: string; deletionStatus: string };
+};
+export type AdminSubscriptionsPage = {
+  generatedAt: string;
+  subscriptions: AdminSubscriptionRecord[];
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+  definition: string;
+};
+export function listAdminSubscriptions(filters: { page?: number; status?: string; q?: string } = {}) {
+  const query = new URLSearchParams({ page: String(filters.page ?? 1), pageSize: '12' });
+  if (filters.status) query.set('status', filters.status);
+  if (filters.q) query.set('q', filters.q);
+  return request<AdminSubscriptionsPage>('/admin/subscriptions?' + query.toString());
+}
 export function getAdminBusinessesOverview() { return request<AdminBusinessOverview>('/admin/businesses/overview'); }
 export function getAdminBusinessesFilterOptions() { return request<AdminBusinessFilterOptions>('/admin/businesses/filters'); }
 export function getAdminBusinessHistory(id: string) {
