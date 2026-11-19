@@ -11,6 +11,25 @@ export type AdminPermission = 'BUSINESSES_READ' | 'CATALOG_READ' | 'REPORTS_REVI
 export type RealAdmin = { user: { id: string; publicId: string; displayName: string; emailNormalized: string | null; avatarUrl: string | null; locale: string }; role: 'ADMIN' | 'SUPER_ADMIN'; permissions: AdminPermission[] };
 export type AdministratorRecord = { id: string; displayName: string; emailNormalized: string | null; status: string; adminRoleAssignments: { role: string; active: boolean }[]; adminPermissionGrants: { permission: string; granted: boolean }[] };
 export async function listAdministrators() { return (await request<{ administrators: AdministratorRecord[] }>('/admin/administrators')).administrators; }
+
+export type ManagedAdminPermission = 'BUSINESSES_READ' | 'CATALOG_READ' | 'REPORTS_REVIEW' | 'CONTENT_MODERATE' | 'AUDIT_READ' | 'ADMINS_MANAGE' | 'PIONEER_MANAGE';
+/** Role and permission changes require server authorization, trusted origin, and an audit reason. */
+export function assignAdministratorRole(userId: string, role: 'ADMIN', reason: string) {
+  return request<{ assignment: { id: string } }>(`/admin/administrators/${encodeURIComponent(userId)}/roles`, {
+    method: 'POST', body: JSON.stringify({ role, reason }),
+  });
+}
+export function revokeAdministratorRole(userId: string, role: 'ADMIN', reason: string) {
+  return request<{ assignment: { id: string } }>(`/admin/administrators/${encodeURIComponent(userId)}/roles/${role}/revoke`, {
+    method: 'POST', body: JSON.stringify({ reason }),
+  });
+}
+export function changeAdministratorPermission(userId: string, permission: ManagedAdminPermission, granted: boolean, reason: string) {
+  return request<{ permission: { permission: string; granted: boolean } }>(`/admin/administrators/${encodeURIComponent(userId)}/permissions`, {
+    method: 'PUT', body: JSON.stringify({ permission, granted, reason }),
+  });
+}
+
 export type AdminBusinessRecord = {
   id: string; publicId: string; name: string; description: string | null;
   coverPhotoId: string | null; profilePhotoId: string | null;
