@@ -426,6 +426,8 @@ model User {
   plusCollections             UserPlusCollection[]
   plusSavedSearches           UserPlusSavedSearch[]
   plusPriceWatches            UserPlusPriceWatch[]
+  plusDigestEvents            UserPlusDigestEvent[]
+  plusDigestDispatches        UserPlusDigestDispatch[]
   plusPurchaseRequests        UserPlusPurchaseRequest[]
   offerLikes                  BusinessOfferLike[]
   analyticsEvents             BusinessAnalyticsEvent[]   @relation("AnalyticsActor")
@@ -1719,6 +1721,9 @@ model UserPlusPreference {
   userId             String    @id @db.Char(36)
   radarEnabled       Boolean   @default(false)
   priceAlertsEnabled Boolean   @default(false)
+  deliveryMode       String    @default("IMMEDIATE") @db.VarChar(16)
+  digestTimeZone     String    @default("America/Bogota") @db.VarChar(64)
+  digestHour         Int       @default(8)
   createdAt          DateTime  @default(now()) @db.DateTime(3)
   updatedAt          DateTime  @updatedAt @db.DateTime(3)
   user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1764,11 +1769,37 @@ model UserPlusPriceWatch {
   id        String   @id @default(uuid()) @db.Char(36)
   userId    String   @db.Char(36)
   offerId   String   @db.Char(36)
+  targetAmount Decimal? @db.Decimal(12, 2)
+  targetCurrency String? @db.Char(3)
+  targetNotifiedAt DateTime? @db.DateTime(3)
   createdAt DateTime @default(now()) @db.DateTime(3)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   offer     BusinessOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
   @@unique([userId, offerId])
   @@index([offerId, createdAt])
+}
+
+/** Opted-in alerts queued for one daily Plus digest instead of immediate notifications. */
+model UserPlusDigestEvent {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
+  kind       String   @db.VarChar(16)
+  sourceId   String   @db.Char(36)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/** Database-backed exactly-once claim per user/local day; protects multi-instance schedulers. */
+model UserPlusDigestDispatch {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
+  localDay   String   @db.Char(10)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, localDay])
 }
 
 model OfferPriceHistory {
