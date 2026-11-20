@@ -7,12 +7,12 @@ import { plusLocalDateTime } from './user-plus-scheduling.js';
  * A unique database claim and the inbox write happen in one transaction, so retries
  * or multiple app instances cannot publish duplicate summaries.
  */
-export async function dispatchDuePlusDigests(now = new Date()) {
+export async function dispatchDuePlusDigests(now = new Date(), db = prisma) {
   if (!(await isPaidPlanEnabled('xamukoPlus'))) return { sent: 0 };
   // Page through recipient IDs so a large or already-delivered queue cannot starve others.
   const candidates: Array<{ userId: string }> = [];
   for (let offset = 0; offset < 3000; offset += 300) {
-    const page = await prisma.userPlusDigestEvent.findMany({
+    const page = await db.userPlusDigestEvent.findMany({
       distinct: ['userId'], orderBy: { userId: 'asc' }, skip: offset, take: 300,
       select: { userId: true },
     });
@@ -22,7 +22,7 @@ export async function dispatchDuePlusDigests(now = new Date()) {
   let sent = 0;
   for (const { userId } of candidates) {
     try {
-      const pref = await prisma.userPlusPreference.findUnique({
+      const pref = await db.userPlusPreference.findUnique({
         where: { userId }, select: {
           deliveryMode: true, digestTimeZone: true, digestHour: true,
           radarEnabled: true, priceAlertsEnabled: true,
@@ -33,7 +33,7 @@ export async function dispatchDuePlusDigests(now = new Date()) {
       try { local = plusLocalDateTime(now, pref.digestTimeZone); } catch { continue; }
       // Digest is sent in the configured local hour, not immediately on first event after it.
       if (local.hour !== pref.digestHour) continue;
-      const result = await prisma.$transaction(async tx => {
+      const result = await db.$transaction(async tx => {
         const [freshPref, membership, person, events] = await Promise.all([
           tx.userPlusPreference.findUnique({ where: { userId }, select: {
             deliveryMode: true, digestTimeZone: true, digestHour: true,
