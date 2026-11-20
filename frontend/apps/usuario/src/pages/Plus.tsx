@@ -359,38 +359,6 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       <nav className="plus-section-nav" aria-label="Ir a una herramienta de Xamuko Plus">
         {plusSections.map(item => <a key={item.href} href={item.href}><PlusIcon name={item.icon} size={17}/>{item.label}</a>)}
       </nav>
-      <section className="plus-spotlight" aria-labelledby="plus-spotlight-heading">
-        <div className="plus-spotlight-heading">
-          <div>
-            <span className="plus-overline">HERRAMIENTAS DESTACADAS</span>
-            <h2 id="plus-spotlight-heading">Aprovecha más tu membresía</h2>
-            <p>Configura alertas de precios, decide cuándo recibir avisos y prepara tus recorridos.</p>
-          </div>
-        </div>
-        <div className="plus-spotlight-grid">
-          <a className="plus-spotlight-card" href="#prices">
-            <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
-            <h3>Precio objetivo</h3>
-            <p>Fija el valor que quieres pagar por un producto y recibe el aviso al alcanzarlo.</p>
-            <span className="plus-spotlight-detail"><strong>{data.watches.filter(item => item.targetAmount).length}</strong> {data.watches.filter(item => item.targetAmount).length === 1 ? 'objetivo configurado' : 'objetivos configurados'}</span>
-            <span className="plus-spotlight-action">Gestionar precios <PlusIcon name="arrow-right" size={16}/></span>
-          </a>
-          <a className="plus-spotlight-card" href="#radar">
-            <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="radar" size={25}/></span>
-            <h3>Notificaciones inteligentes</h3>
-            <p>Recibe avisos inmediatos o un resumen diario en tu zona horaria.</p>
-            <span className="plus-spotlight-detail"><strong>{data.preferences?.deliveryMode === 'DAILY' ? 'Resumen diario' : data.preferences?.deliveryMode === 'IMMEDIATE' ? 'Inmediatas' : 'Sin configurar'}</strong> · Modalidad elegida</span>
-            <span className="plus-spotlight-action">Configurar avisos <PlusIcon name="arrow-right" size={16}/></span>
-          </a>
-          <a className="plus-spotlight-card" href="#routes">
-            <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="route" size={25}/></span>
-            <h3>Rutas optimizadas</h3>
-            <p>Organiza hasta cuatro negocios por cercanía y revisa los horarios antes de salir.</p>
-            <span className="plus-spotlight-detail"><strong>{routeLoadError ? 'Sin conexión' : routeLoading ? 'Consultando…' : availableFavorites.length}</strong>{!routeLoading && !routeLoadError ? ' negocios favoritos con ubicación' : ' · Ubicaciones'}</span>
-            <span className="plus-spotlight-action">Planear recorrido <PlusIcon name="arrow-right" size={16}/></span>
-          </a>
-        </div>
-      </section>
     </>}
     {!status?.active ? <>
       <section className="plus-subscription-banner" aria-labelledby="plus-subscription-title">
@@ -437,7 +405,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       {!loading && <button type="button" className="plus-button" onClick={() => { setLoading(true); setError(''); void reload().catch(e => setError(e instanceof Error ? e.message : 'Error de conexión.')).finally(() => setLoading(false)); }}>Reintentar conexión</button>}
     </section> : <>
       <section className="plus-panel" id="radar" tabIndex={-1} aria-labelledby="plus-radar-heading">
-        <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2 id="plus-radar-heading">Tu radar de novedades</h2><p>Productos, servicios y promociones recientes de tus negocios favoritos.</p></div>
+        <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2 id="plus-radar-heading">Tu radar de novedades</h2><p>Novedades de tus negocios favoritos y avisos inmediatos o en un resumen diario.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.radarEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ radarEnabled: event.target.checked }))}/>Recibir avisos</label></div>
         <div className="plus-delivery-controls" aria-label="Frecuencia de notificaciones Plus">
@@ -500,7 +468,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       </section>
 
       <section className="plus-panel" id="prices" tabIndex={-1} aria-labelledby="plus-prices-heading">
-        <div className="plus-heading"><div><span>02 · AHORRO</span><h2 id="plus-prices-heading">Seguimiento de precios</h2><p>Observa precios reales y recibe avisos si bajan.</p></div>
+        <div className="plus-heading"><div><span>02 · AHORRO</span><h2 id="plus-prices-heading">Seguimiento de precios</h2><p>Sigue cambios de precios, fija tus objetivos y recibe avisos cuando se alcancen.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.priceAlertsEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ priceAlertsEnabled: event.target.checked }))}/>Avisar cuando bajen</label></div>
         <p className="plus-feature-note">Puedes seguir hasta 100 publicaciones con precio numérico. Recibirás alertas de rebajas únicamente si las activas.</p>
@@ -653,7 +621,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       </section>
 
       <section className="plus-panel" id="routes" tabIndex={-1} aria-labelledby="plus-routes-heading">
-        <div className="plus-heading"><div><span>05 · EXPLORACIÓN</span><h2 id="plus-routes-heading">Rutas con varios negocios</h2><p>Selecciona entre dos y cuatro negocios favoritos con ubicación registrada.</p></div></div>
+        <div className="plus-heading"><div><span>05 · EXPLORACIÓN</span><h2 id="plus-routes-heading">Rutas con varios negocios</h2><p>Organiza hasta cuatro negocios por cercanía y revisa sus horarios antes de salir.</p></div></div>
         <div className="plus-routes-list">{availableFavorites.map(place => <label key={place.id}>
           <input type="checkbox" checked={routeIds.includes(place.id)} disabled={!routeIds.includes(place.id) && routeIds.length >= 4}
             onChange={() => setRouteIds(current => current.includes(place.id) ? current.filter(x => x !== place.id) : [...current, place.id])}/>
