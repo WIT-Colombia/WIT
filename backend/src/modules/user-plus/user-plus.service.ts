@@ -214,7 +214,7 @@ export async function plusRouteFavorites(userId: string) {
     ] } },
     orderBy: { createdAt: 'desc' },
     select: { business: { select: { publicId: true, name: true,
-      hours: { select: { dayOfWeek: true, isClosed: true, opensAt: true, closesAt: true },
+      hours: { select: { dayOfWeek: true, isClosed: true, opensAt: true, closesAt: true, timezone: true },
         orderBy: { dayOfWeek: 'asc' } },
       location: { select: { latitude: true, longitude: true, timezone: true } },
     } } },
@@ -225,7 +225,8 @@ export async function plusRouteFavorites(userId: string) {
     if (lat === undefined || lng === undefined || !Number.isFinite(lat) || !Number.isFinite(lng)
         || lat < -90 || lat > 90 || lng < -180 || lng > 180) return [];
     return [{ id: business.publicId, name: business.name, lat, lng,
-      timezone: business.location?.timezone ?? 'UTC', hours: business.hours }];
+      timezone: business.hours.find(hour => hour.timezone !== 'UTC')?.timezone
+        ?? business.location?.timezone ?? business.hours[0]?.timezone ?? 'UTC', hours: business.hours }];
   });
   return { items };
 }
