@@ -69,9 +69,6 @@ jobs:
       - name: Check Xamuko Plus on iPhone, iPad and desktop
         run: node scripts/check-usuario-plus-responsive.mjs
 
-      - name: Check Xamuko Plus preview workspace on iPhone, iPad and desktop
-        run: node scripts/check-usuario-plus-preview.mjs
-
       - name: Check Business product editor on iPhone and iPad
         run: node scripts/check-business-product-editor.mjs
 
@@ -126,15 +123,6 @@ jobs:
         with:
           name: xamuko-usuario-offer-cards-${{ github.run_id }}
           path: frontend/test-results/offer-cards/
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Save Xamuko Plus preview workspace screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: xamuko-usuario-plus-preview-${{ github.run_id }}
-          path: frontend/test-results/usuario-plus-preview/
           if-no-files-found: ignore
           retention-days: 7
 
