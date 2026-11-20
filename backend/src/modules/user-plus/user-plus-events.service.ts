@@ -4,6 +4,23 @@ import { publicReleaseWhere } from '../zones/zones.service.js';
 
 type Tx = Prisma.TransactionClient;
 
+/**
+ * Follow the same strictly numeric catalog price the public product page displays.
+ * Free text and negotiable values are not eligible for price alerts.
+ */
+export function effectivePlusPrice(amount: Prisma.Decimal | null, text: string | null, negotiable: boolean): Prisma.Decimal | null {
+  if (negotiable) return null;
+  if (amount !== null && amount.gt(0)) return amount;
+  const raw = text?.trim() ?? '';
+  if (!/^\\d+(?:\\.\\d{1,2})?$/.test(raw)) return null;
+  try {
+    const parsed = new Prisma.Decimal(raw);
+    return parsed.gt(0) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function eligibleUsers(tx: Tx, ids: string[], kind: 'radar' | 'price', adultOnly: boolean) {
   if (!ids.length || !(await isPaidPlanEnabled('xamukoPlus', tx))) return [];
   const now = new Date();
