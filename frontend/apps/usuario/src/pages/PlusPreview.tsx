@@ -272,9 +272,24 @@ export default function PlusPreview() {
     <section className="plus-panel" id="routes">
       <div className="plus-heading"><div><span>05 · EXPLORACIÓN · EJEMPLO</span><h2>Rutas con varios negocios</h2><p>Elige de dos a cuatro paradas para revisar cómo se organiza el recorrido.</p></div></div>
       <div className="plus-routes-list">{sampleStops.map(stop=><label key={stop.id}><input type="checkbox" checked={selectedStops.includes(stop.id)} disabled={!selectedStops.includes(stop.id)&&selectedStops.length>=4} onChange={()=>{setSelectedStops(ids=>ids.includes(stop.id)?ids.filter(x=>x!==stop.id):[...ids,stop.id]);setShowRoute(false);}}/><span>{stop.name} · {stop.address}</span></label>)}</div>
-      <div className="plus-route-actions"><label>Transporte <select value={travelMode} onChange={e=>setTravelMode(e.target.value as 'driving'|'walking')}><option value="driving">En vehículo</option><option value="walking">A pie</option></select></label><button type="button" className="plus-button" disabled={selectedStops.length<2} onClick={()=>setShowRoute(true)}>Ver recorrido de ejemplo</button></div>
-      {showRoute && <div className="plus-preview-trip"><strong>Recorrido simulado · {travelMode==='driving'?'En vehículo':'A pie'}</strong><ol>{sampleStops.filter(stop=>selectedStops.includes(stop.id)).map(stop=><li key={stop.id}>{stop.name}</li>)}</ol></div>}
-      <p className="plus-footnote">Esta demostración no envía direcciones a Google Maps. En Plus real, la ruta se construye con ubicaciones públicas verificadas.</p>
+      <div className="plus-route-actions">
+        <label>Transporte <select value={travelMode} onChange={e=>setTravelMode(e.target.value as 'driving'|'walking')}><option value="driving">En vehículo</option><option value="walking">A pie</option></select></label>
+        <label>Salida prevista<input type="datetime-local" aria-label="Salida demo" value={visitAt} onChange={e=>setVisitAt(e.target.value)}/></label>
+        <button type="button" className="plus-button plus-button-secondary" disabled={selectedStops.length<2}
+          onClick={()=>{setRouteOptimized(value=>!value);setShowRoute(true);}}>
+          {routeOptimized ? 'Usar orden original' : 'Optimizar recorrido'}
+        </button>
+        <button type="button" className="plus-button" disabled={selectedStops.length<2} onClick={()=>setShowRoute(true)}>Ver recorrido de ejemplo</button>
+      </div>
+      {showRoute && <div className="plus-preview-trip">
+        <strong>Recorrido simulado {routeOptimized ? 'optimizado por cercanía' : 'en orden de selección'} · {travelMode==='driving'?'En vehículo':'A pie'}</strong>
+        <ol>{demoEstimates.map(estimate=><li key={estimate.stop.id}>{estimate.stop.name}
+          <small> · Llegada aproximada: {new Intl.DateTimeFormat('es-CO',{dateStyle:'short',timeStyle:'short'}).format(estimate.arrivalAt)}
+            {' · '}{estimate.hoursStatus==='CLOSED'?'Cerrado según horario de ejemplo':
+              estimate.hoursStatus==='OPEN'?'Abierto según horario de ejemplo':'Horario no disponible'}
+          </small></li>)}</ol>
+      </div>}
+      <p className="plus-footnote">Los negocios y horarios de esta demostración son ficticios. No hay tráfico ni consultas a mapas; Plus real estima el orden por cercanía y abre después el recorrido en Google Maps.</p>
     </section>
     <section className="plus-panel plus-adfree" id="adfree"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>La membresía real oculta anuncios identificados como publicidad de terceros. Aquí solo se muestra cómo se presenta el beneficio; no cambia el resto de la plataforma.</p><small>Simulación visual · Sin activación de la política global de anuncios</small></div></section>
     <div className="plus-preview-exit"><p>Fin del recorrido de demostración. Los cambios que hiciste aquí no se guardarán.</p><Link to="/plus" className="plus-button plus-button-secondary">Salir de la vista previa</Link></div>
