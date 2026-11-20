@@ -20,6 +20,7 @@ const api = vi.hoisted(() => ({
   fetchPlusRouteFavorites: vi.fn(),
   addPlusWatch: vi.fn(),
   savePlusPreferences: vi.fn(),
+  setPlusPriceTarget: vi.fn(),
   comparePlusOffers: vi.fn(),
   createPlusCollection: vi.fn(),
   createPlusSearch: vi.fn(),
@@ -59,6 +60,7 @@ vi.mock('../services/userPlusService', async importOriginal => ({
   fetchPlusRouteFavorites: api.fetchPlusRouteFavorites,
   addPlusWatch: api.addPlusWatch,
   savePlusPreferences: api.savePlusPreferences,
+  setPlusPriceTarget: api.setPlusPriceTarget,
   comparePlusOffers: api.comparePlusOffers,
   createPlusCollection: api.createPlusCollection,
   createPlusSearch: api.createPlusSearch,
@@ -73,7 +75,8 @@ const active = { enabled: true, active: true, subscription: {
 }};
 const overview = {
   ...active, collections: [], searches: [], watches: [],
-  preferences: { radarEnabled: false, priceAlertsEnabled: false },
+  preferences: { radarEnabled: false, priceAlertsEnabled: false,
+    deliveryMode: 'IMMEDIATE', digestTimeZone: 'America/Panama', digestHour: 8 },
 };
 const renderPlus = (path = '/plus') => render(<MemoryRouter initialEntries={[path]}><Plus /></MemoryRouter>);
 
@@ -98,6 +101,7 @@ beforeEach(() => {
   } });
   api.addPlusWatch.mockResolvedValue({ id: 'watch-1' });
   api.savePlusPreferences.mockResolvedValue({ radarEnabled: true, priceAlertsEnabled: false });
+  api.setPlusPriceTarget.mockResolvedValue({ targetAmount: '1200', targetCurrency: 'COP', targetNotifiedAt: null });
   api.comparePlusOffers.mockResolvedValue({ offers: [] });
   api.createPlusCollection.mockResolvedValue({ id: 'collection-1' });
   api.createPlusSearch.mockResolvedValue({ id: 'search-1' });
@@ -177,6 +181,83 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(radar).toBeInTheDocument();
     fireEvent.click(screen.getByRole('checkbox', { name: 'Recibir avisos' }));
     await waitFor(() => expect(api.savePlusPreferences).toHaveBeenCalledWith({ radarEnabled: true }));
+  });
+
+  it('lets users select immediate delivery or configure an actual daily inbox summary', async () => {
+    renderPlus();
+    await screen.findByRole('combobox', { name: 'Frecuencia de avisos Plus' });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Frecuencia de avisos Plus' }), {
+      target: { value: 'DAILY' },
+    });
+    await waitFor(() => expect(api.savePlusPreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ deliveryMode: 'DAILY', digestTimeZone: 'America/Panama', digestHour: 8 }),
+    ));
+  });
+
+  it('allows changing the daily digest time and timezone for opted-in notifications', async () => {
+    api.fetchPlusOverview.mockResolvedValue({ ...overview, preferences: {
+      ...overview.preferences, deliveryMode: 'DAILY', digestTimeZone: 'America/Bogota', digestHour: 8,
+    } });
+    renderPlus();
+    await screen.findByRole('combobox', { name: 'Hora del resumen' });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Zona horaria del resumen' }), {
+      target: { value: 'America/Panama' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Hora del resumen' }), {
+      target: { value: '9' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar horario' }));
+    await waitFor(() => expect(api.savePlusPreferences).toHaveBeenCalledWith({
+      deliveryMode: 'DAILY', digestTimeZone: 'America/Panama', digestHour: 9,
+    }));
+  });
+
+  it('saves and clears a price objective for the selected product without changing all price alerts', async () => {
+    const watch = { id: 'watch-1', offerId: 'offer-1', kind: 'PRODUCT', name: 'Pan queso',
+      businessName: 'Panadería Patico', price: '2000', priceText: null, currency: 'COP',
+      targetAmount: null, targetCurrency: null, targetNotifiedAt: null, available: true };
+    api.fetchPlusOverview.mockResolvedValue({ ...overview, watches: [watch] });
+    renderPlus();
+    fireEvent.click(await screen.findByRole('button', { name: 'Fijar objetivo' }));
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Precio objetivo de Pan queso' }), {
+      target: { value: '1200' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar objetivo' }));
+    await waitFor(() => expect(api.setPlusPriceTarget).toHaveBeenCalledWith('watch-1', '1200'));
+    expect(api.savePlusPreferences).not.toHaveBeenCalled();
+  });
+
+  it('can delete an existing objective and re-arm it by changing its value', async () => {
+    api.fetchPlusOverview.mockResolvedValue({ ...overview, watches: [{
+      id: 'watch-1', offerId: 'offer-1', kind: 'PRODUCT', name: 'Pan queso',
+      businessName: 'Panadería Patico', price: '2000', priceText: null, currency: 'COP',
+      targetAmount: '1200', targetCurrency: 'COP', targetNotifiedAt: null, available: true,
+    }] });
+    renderPlus();
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar objetivo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar objetivo' }));
+    await waitFor(() => expect(api.setPlusPriceTarget).toHaveBeenCalledWith('watch-1', null));
+  });
+
+  it('optimizes selected favorite stores and warns when published hours show closure', async () => {
+    const closedHours = Array.from({ length: 7 }, (_, dayOfWeek) => ({
+      dayOfWeek, isClosed: true, opensAt: null, closesAt: null,
+    }));
+    api.fetchPlusRouteFavorites.mockResolvedValue({ items: [
+      { id: 'f1', name: 'Local 1', lat: 3.52, lng: -76.29, timezone: 'America/Bogota', hours: closedHours },
+      { id: 'f2', name: 'Local 2', lat: 3.55, lng: -76.31, timezone: 'America/Bogota', hours: closedHours },
+    ] });
+    renderPlus();
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Local 1' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Local 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Optimizar recorrido' }));
+    expect(screen.getByText('Recorrido optimizado por cercanía geográfica')).toBeInTheDocument();
+    expect(screen.getAllByText('Advertencia: cerrado según horario publicado')).toHaveLength(2);
+    expect(screen.getByRole('link', { name: 'Abrir ruta en Google Maps' })).toHaveAttribute(
+      'href', expect.stringContaining('https://www.google.com/maps/dir/'),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Usar orden de selección' }));
+    expect(screen.getByText('Recorrido en el orden elegido')).toBeInTheDocument();
   });
 
   it('guides users to the one-tap button on a product, without asking for a pasted link', async () => {
