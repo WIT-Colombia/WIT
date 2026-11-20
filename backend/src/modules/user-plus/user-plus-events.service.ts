@@ -57,7 +57,7 @@ export async function notifyPlusFollowers(tx: Tx, input: {
     select: { userId: true }, take: 2000 });
   const recipients = await eligibleUsers(tx, favorites.map(f => f.userId), 'radar', input.adultOnly);
   await dispatchPlusAlert(tx, recipients, {
-    kind: 'RADAR', sourceType: input.sourceType, sourceId: input.sourceId,
+    kind: 'RADAR', adultOnly: input.adultOnly, sourceType: input.sourceType, sourceId: input.sourceId,
     title: 'Novedad de ' + input.businessName.slice(0, 145),
     message: ('Se publicó «' + input.itemName + '» en uno de tus negocios favoritos.').slice(0, 500),
   });
@@ -106,13 +106,13 @@ export async function recordPlusPriceChange(tx: Tx, input: {
     } else if (dropped && regularRecipients.has(watch.userId)) dropUsers.push(watch.userId);
   }
   await dispatchPlusAlert(tx, targetUsers, {
-    kind: 'TARGET', sourceType: 'PLUS_PRICE_TARGET', sourceId: input.offerId,
+    kind: 'TARGET', adultOnly: input.adultOnly, sourceType: 'PLUS_PRICE_TARGET', sourceId: input.offerId,
     title: 'Precio objetivo alcanzado: ' + input.name.slice(0, 145),
     message: ('El precio publicado llegó a ' + input.newPrice.toString() + ' ' + input.currency
       + ', igual o menor que tu objetivo configurado.').slice(0, 500),
   });
   if (dropped && input.previousPrice) await dispatchPlusAlert(tx, dropUsers, {
-    kind: 'PRICE', sourceType: 'PLUS_PRICE_DROP', sourceId: input.offerId,
+    kind: 'PRICE', adultOnly: input.adultOnly, sourceType: 'PLUS_PRICE_DROP', sourceId: input.offerId,
     title: 'Bajó el precio de ' + input.name.slice(0, 145),
     message: ('El precio publicado bajó de ' + input.previousPrice.toString() +
       ' a ' + input.newPrice.toString() + ' ' + input.currency + '.').slice(0, 500),
@@ -121,7 +121,7 @@ export async function recordPlusPriceChange(tx: Tx, input: {
 
 /** A commercial notice goes either straight to the inbox or to the durable digest queue. */
 async function dispatchPlusAlert(tx: Tx, userIds: string[], alert: {
-  kind: 'RADAR' | 'PRICE' | 'TARGET'; sourceType: string; sourceId: string;
+  kind: 'RADAR' | 'PRICE' | 'TARGET'; adultOnly: boolean; sourceType: string; sourceId: string;
   title: string; message: string;
 }) {
   if (!userIds.length) return;
@@ -138,6 +138,6 @@ async function dispatchPlusAlert(tx: Tx, userIds: string[], alert: {
     })),
   });
   if (deferred.length) await tx.userPlusDigestEvent.createMany({
-    data: deferred.map(userId => ({ userId, kind: alert.kind, sourceId: alert.sourceId })),
+    data: deferred.map(userId => ({ userId, kind: alert.kind, adultOnly: alert.adultOnly, sourceId: alert.sourceId })),
   });
 }
