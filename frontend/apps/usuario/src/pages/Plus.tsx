@@ -429,7 +429,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       <p>Los datos de tus negocios y precios deben verificarse con el servidor. No mostramos valores de ejemplo.</p>
       {!loading && <button type="button" className="plus-button" onClick={() => { setLoading(true); setError(''); void reload().catch(e => setError(e instanceof Error ? e.message : 'Error de conexión.')).finally(() => setLoading(false)); }}>Reintentar conexión</button>}
     </section> : <>
-      <section className="plus-panel" id="radar" aria-labelledby="plus-radar-heading">
+      <section className="plus-panel" id="radar" tabIndex={-1} aria-labelledby="plus-radar-heading">
         <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2 id="plus-radar-heading">Tu radar de novedades</h2><p>Productos, servicios y promociones recientes de tus negocios favoritos.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.radarEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ radarEnabled: event.target.checked }))}/>Recibir avisos</label></div>
@@ -476,7 +476,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
           : <div className="plus-empty"><strong>Tu radar está al día</strong><p>No hay publicaciones recientes de tus favoritos. Guarda negocios para seguir sus próximas novedades.</p><Link to="/favorites">Ver mis favoritos →</Link></div>}
       </section>
 
-      <section className="plus-panel" id="prices" aria-labelledby="plus-prices-heading">
+      <section className="plus-panel" id="prices" tabIndex={-1} aria-labelledby="plus-prices-heading">
         <div className="plus-heading"><div><span>02 · AHORRO</span><h2 id="plus-prices-heading">Seguimiento de precios</h2><p>Observa precios reales y recibe avisos si bajan.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.priceAlertsEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ priceAlertsEnabled: event.target.checked }))}/>Avisar cuando bajen</label></div>
@@ -524,7 +524,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         </div>}
       </section>
 
-      <section className="plus-panel" id="compare" aria-labelledby="plus-compare-heading">
+      <section className="plus-panel" id="compare" tabIndex={-1} aria-labelledby="plus-compare-heading">
         <div className="plus-heading"><div><span>03 · COMPARACIÓN</span><h2 id="plus-compare-heading">Compara tus opciones</h2><p>Selecciona hasta cuatro productos o servicios publicados.</p></div></div>
         <p className="plus-feature-note">Elige de dos a cuatro publicaciones desde sus fichas; no tienes que copiar enlaces. Las opciones se conservan en esta pestaña mientras realizas la comparación.</p>
         <div className="plus-follow-guide">
@@ -554,7 +554,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         })}</div>}
       </section>
 
-      <section className="plus-panel" id="collections" aria-labelledby="plus-collections-heading">
+      <section className="plus-panel" id="collections" tabIndex={-1} aria-labelledby="plus-collections-heading">
         <div className="plus-heading"><div><span>04 · ORGANIZACIÓN</span><h2 id="plus-collections-heading">Tus colecciones</h2><p>Listas personales para guardar negocios, productos y servicios.</p></div></div>
         <form className="plus-form" onSubmit={event => { event.preventDefault(); if (collectionName.trim()) void run(() => createPlusCollection(collectionName.trim()), 'Colección creada.').then(ok => { if (ok) setCollectionName(''); }); }}>
           <label>Nombre de la colección<input value={collectionName} onChange={event => setCollectionName(event.target.value)} maxLength={80} placeholder="Ej. Mis cafés favoritos" required/></label><button className="plus-button" disabled={busy}>Crear colección</button>
@@ -609,7 +609,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         {!data?.collections.length && <p className="plus-empty">Crea una colección para comenzar.</p>}
       </section>
 
-      <section className="plus-panel" id="searches" aria-labelledby="plus-searches-heading">
+      <section className="plus-panel" id="searches" tabIndex={-1} aria-labelledby="plus-searches-heading">
         <div className="plus-heading"><div><span>04 · ORGANIZACIÓN</span><h2 id="plus-searches-heading">Búsquedas guardadas</h2><p>Guarda una búsqueda que puedas repetir cuando quieras.</p></div></div>
         <form className="plus-form" onSubmit={event => {
           event.preventDefault();
@@ -629,7 +629,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         </div>)}</div>
       </section>
 
-      <section className="plus-panel" id="routes" aria-labelledby="plus-routes-heading">
+      <section className="plus-panel" id="routes" tabIndex={-1} aria-labelledby="plus-routes-heading">
         <div className="plus-heading"><div><span>05 · EXPLORACIÓN</span><h2 id="plus-routes-heading">Rutas con varios negocios</h2><p>Selecciona entre dos y cuatro negocios favoritos con ubicación registrada.</p></div></div>
         <div className="plus-routes-list">{availableFavorites.map(place => <label key={place.id}>
           <input type="checkbox" checked={routeIds.includes(place.id)} disabled={!routeIds.includes(place.id) && routeIds.length >= 4}
@@ -668,7 +668,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         <p className="plus-footnote">La optimización minimiza distancias en línea recta entre hasta cuatro paradas, no tiempos de tráfico. Las horas de llegada son estimaciones orientativas (incluyen 20 minutos por negocio); verifica horarios y tráfico antes de salir. La ruta final se abre en Google Maps. Tu ubicación, si la compartes, se usa como origen.</p>
       </section>
 
-      <section className="plus-panel plus-adfree" id="adfree" aria-label="Beneficio de experiencia sin publicidad"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>Mientras Plus esté activo, se ocultan los espacios publicitarios de terceros. Los negocios y resultados públicos siguen visibles.</p></div></section>
+      <section className="plus-panel plus-adfree" id="adfree" tabIndex={-1} aria-label="Beneficio de experiencia sin publicidad"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>Mientras Plus esté activo, se ocultan los espacios publicitarios de terceros. Los negocios y resultados públicos siguen visibles.</p></div></section>
     </>}
   </PageLayout>;
 }
