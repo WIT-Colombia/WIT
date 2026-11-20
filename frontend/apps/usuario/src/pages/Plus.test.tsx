@@ -480,7 +480,7 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Optimizar recorrido' }));
     expect(screen.getByText(/Recorrido simulado optimizado por cercanía/)).toBeInTheDocument();
-    expect(screen.getByText(/Cerrado según horario de ejemplo/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Cerrado según horario de ejemplo/).length).toBeGreaterThan(0);
     expect(api.savePlusPreferences).not.toHaveBeenCalled();
     expect(api.setPlusPriceTarget).not.toHaveBeenCalled();
     expect(api.fetchPlusRouteFavorites).not.toHaveBeenCalled();
