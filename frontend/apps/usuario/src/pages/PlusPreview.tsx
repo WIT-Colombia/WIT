@@ -171,10 +171,29 @@ export default function PlusPreview() {
       {compared && <div className="plus-compare-grid">{compareIds.map(id=>{const item=resolve(id);return <article key={id}><span>Publicación de ejemplo</span><h3>{item.name}</h3><p>{item.business}</p><strong>{item.price ? '$'+item.price+' COP · ejemplo' : 'Precio no consultado'}</strong><p>La ubicación, calificación y distancia se consultarán desde el backend real.</p></article>;})}</div>}
     </section>
     <section className="plus-panel" id="collections">
-      <div className="plus-heading"><div><span>04 · ORGANIZACIÓN · EJEMPLO</span><h2>Tus colecciones</h2><p>Crea listas y agrega enlaces para probar la organización.</p></div></div>
+      <div className="plus-heading"><div><span>04 · ORGANIZACIÓN · EJEMPLO</span><h2>Tus colecciones</h2><p>Agrega únicamente negocios favoritos y publicaciones con «Me gusta». Todo es un ejemplo local.</p></div></div>
       <form className="plus-form" onSubmit={addCollection}><label>Nombre de la colección<input value={collectionName} maxLength={80} onChange={e=>setCollectionName(e.target.value)} placeholder="Ej. Mis cafeterías favoritas" required/></label><button type="submit" className="plus-button" disabled={collections.length>=50}>Crear colección</button></form>
-      <div className="plus-list">{collections.map(col=><article className="plus-collection" key={col.id}><div className="plus-collection-head"><strong>{col.title}</strong><button type="button" onClick={()=>setCollections(items=>items.filter(x=>x.id!==col.id))}>Eliminar</button></div>
-        <form className="plus-form plus-form-inline" onSubmit={e=>addCollectionItem(e,col.id)}><label>Enlace para agregar<input value={collectionInputs[col.id] ?? ''} onChange={e=>setCollectionInputs(inputs=>({...inputs,[col.id]:e.target.value}))} placeholder="/business/… o /product/…" required/></label><button type="submit">Agregar</button></form>
+      <div className="plus-list">{collections.map(col=><article className="plus-collection" key={col.id}>
+        <div className="plus-collection-head"><strong>{col.title}</strong><div className="plus-collection-actions">
+          <button type="button" className="plus-button plus-collection-add" aria-expanded={collectionPicker === col.id}
+            onClick={()=>{setCollectionPicker(collectionPicker===col.id?null:col.id);setCollectionSource('BUSINESS');}}>
+            {collectionPicker === col.id ? 'Cerrar' : 'Agregar'}</button>
+          <button type="button" onClick={()=>setCollections(items=>items.filter(x=>x.id!==col.id))}>Eliminar</button>
+        </div></div>
+        {collectionPicker === col.id && <div className="plus-collection-picker">
+          <p>Selecciona solamente entre los favoritos y «Me gusta» de demostración.</p>
+          <div className="plus-picker-types" role="group" aria-label="Origen de los elementos">
+            <button type="button" className={collectionSource==='BUSINESS'?'selected':''} aria-pressed={collectionSource==='BUSINESS'} onClick={()=>setCollectionSource('BUSINESS')}>Negocios favoritos</button>
+            <button type="button" className={collectionSource==='OFFER'?'selected':''} aria-pressed={collectionSource==='OFFER'} onClick={()=>setCollectionSource('OFFER')}>Productos y servicios con Me gusta</button>
+          </div>
+          <div className="plus-picker-list">{sampleCollectionCandidates[collectionSource].map(item => {
+            const exists=col.items.some(saved=>saved.id===item.id);
+            return <div className="plus-picker-item" key={item.id}>
+              <span><strong>{item.description.split(' · ')[0]}</strong><small>{item.description.split(' · ')[1]}</small></span>
+              <button type="button" disabled={exists} onClick={()=>addCollectionItem(col.id,item)}>{exists?'Ya agregado':'Seleccionar'}</button>
+            </div>;
+          })}</div>
+        </div>}
         <div className="plus-collection-items">{col.items.length===0 && <p className="plus-footnote">Todavía no hay elementos en esta lista.</p>}
           {col.items.map(item=><div key={item.id}><span>{item.description}</span><button type="button" onClick={()=>setCollections(items=>items.map(c=>c.id===col.id?{...c,items:c.items.filter(x=>x.id!==item.id)}:c))}>Quitar</button></div>)}</div>
       </article>)}</div>
