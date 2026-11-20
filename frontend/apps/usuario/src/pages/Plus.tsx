@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PAID_PLAN_MONTHLY_COP, formatCopPrice } from '@wit/utils';
 import { PlusIcon, type PlusIconName } from '../components/PlusIcon';
