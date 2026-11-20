@@ -96,8 +96,8 @@ describe('Ficha de producto: seguir precio en un toque', () => {
     expect(mocks.addPlusWatch).not.toHaveBeenCalled();
   });
 
-  it('does not offer price tracking on products without a numeric price', async () => {
-    setupOffer(undefined);
+  it('does not offer price tracking on products without a positive numeric price', async () => {
+    setupOffer(0);
     mount();
     await screen.findByText('Producto de prueba');
     expect(screen.queryByRole('button', { name: 'Seguir precio' })).not.toBeInTheDocument();
