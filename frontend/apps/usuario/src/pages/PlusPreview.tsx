@@ -139,7 +139,7 @@ export default function PlusPreview() {
         <label className="plus-toggle"><input type="checkbox" checked={priceAlerts} onChange={e => { setPriceAlerts(e.target.checked); updateNotice('Alerta simulada; no se enviarán notificaciones.'); }}/>Avisar cuando bajen</label></div>
       <div className="plus-follow-guide">
         <span className="plus-follow-guide-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
-        <div><strong>Un botón en cada ficha de producto</strong><p>Abre un producto publicado y pulsa <b>Seguir precio</b>. Volverás a esta demostración sin activar pagos ni guardar datos.</p></div>
+        <div><strong>Un botón en cada ficha de producto</strong><p>Abre un producto o servicio con precio numérico publicado y pulsa <b>Seguir precio</b>. Volverás a esta demostración sin activar pagos ni guardar datos.</p></div>
         <Link className="plus-button plus-button-secondary" to="/results">Explorar productos</Link>
       </div>
       {initialWatchId && <p className="plus-preview-chip" role="status">Has seguido un producto de ejemplo desde su ficha. No se registró ningún seguimiento real.</p>}
