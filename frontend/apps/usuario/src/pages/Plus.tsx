@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PAID_PLAN_MONTHLY_COP, formatCopPrice } from '@wit/utils';
 import { PlusIcon, type PlusIconName } from '../components/PlusIcon';
 import { PageLayout } from '../components/PageLayout';
@@ -50,7 +50,20 @@ function buildMultiStopRoute(points: PlusRouteFavorite[], travelMode: 'driving' 
 export default function Plus() {
   const { user } = useAuth();
   const [queryParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { selection } = useLocationContext();
+  // Old preview links must lead to the real account page, not retain a
+  // demonstration state in the address bar. Keep unrelated filters and hash.
+  useEffect(() => {
+    const next = new URLSearchParams(location.search);
+    if (!next.has('preview') && !next.has('watch')) return;
+    next.delete('preview'); next.delete('watch');
+    const search = next.toString();
+    navigate({
+      pathname: location.pathname, search: search ? '?' + search : '', hash: location.hash,
+    }, { replace: true, preventScrollReset: true });
+  }, [location.pathname, location.search, location.hash, navigate]);
   const requestEpoch = useRef(0);
   const [status, setStatus] = useState<PlusStatus | null>(null);
   const [purchaseRequest, setPurchaseRequest] = useState<PlusPurchaseRequest | null>(null);
