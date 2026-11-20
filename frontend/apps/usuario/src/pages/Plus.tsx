@@ -11,13 +11,15 @@ import { distanceBetweenCoordinates, getBusinessCoordinates } from '../utils/coo
 import type { Business } from '../data/mockData';
 import {
   addPlusCollectionItem, comparePlusOffers, createPlusCollection, createPlusSearch,
+  fetchPlusCollectionCandidates,
   fetchPlusOverview, fetchPlusPriceHistory, fetchPlusRadar, fetchPlusRouteFavorites, fetchPlusStatus, fetchPlusPurchaseRequest, requestPlusMembership,
   parsePlusTarget, removePlusCollection, removePlusCollectionItem, removePlusSearch,
   removePlusWatch, savePlusPreferences, searchHref,
-  type PlusOverview, type PlusRadarItem, type PlusRouteFavorite, type PlusCompareOffer, type PriceHistory, type PlusStatus, type PlusPurchaseRequest,
+  type PlusOverview, type PlusRadarItem, type PlusRouteFavorite, type PlusCompareOffer, type PriceHistory, type PlusStatus, type PlusPurchaseRequest, type PlusCollectionCandidate,
 } from '../services/userPlusService';
 import PlusPreview from './PlusPreview';
 import { canUsePlusVisualPreview } from '../services/plusPreviewAccess';
+import { appendPlusComparison, readPlusComparison, savePlusComparison } from '../services/plusComparisonSelection';
 import './Plus.css';
 
 const benefits: Array<{ title: string; description: string; icon: PlusIconName }> = [
@@ -64,12 +66,17 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   const [routeIds, setRouteIds] = useState<string[]>([]);
   const [travelMode, setTravelMode] = useState<'driving' | 'walking'>('driving');
   const [collectionName, setCollectionName] = useState('');
-  const [collectionValue, setCollectionValue] = useState(queryParams.get('item') ?? '');
+  const [collectionPicker, setCollectionPicker] = useState<string | null>(null);
+  const [pickerType, setPickerType] = useState<'BUSINESS' | 'OFFER'>('BUSINESS');
+  const [pickerPage, setPickerPage] = useState(1);
+  const [pickerItems, setPickerItems] = useState<PlusCollectionCandidate[]>([]);
+  const [pickerTotalPages, setPickerTotalPages] = useState(0);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [pickerError, setPickerError] = useState('');
   const [savedQuery, setSavedQuery] = useState('');
   const [savedTitle, setSavedTitle] = useState('');
   const [savedCategory, setSavedCategory] = useState('');
-  const [compareValue, setCompareValue] = useState(queryParams.get('compare') ?? '');
-  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareIds, setCompareIds] = useState<string[]>(() => readPlusComparison(user?.id ?? ''));
   const [comparison, setComparison] = useState<PlusCompareOffer[]>([]);
   const [comparisonBusinesses, setComparisonBusinesses] = useState<Record<string, Business>>({});
   const [history, setHistory] = useState<PriceHistory | null>(null);
@@ -79,7 +86,6 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   const [notice, setNotice] = useState('');
   const currentCity = selection?.locality?.name ?? null;
   const comparePrefill = queryParams.get('compare') ?? '';
-  const collectionPrefill = queryParams.get('item') ?? '';
 
   const reload = useCallback(async () => {
     if (!user) return;
@@ -118,16 +124,22 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   }, [reload]);
 
   useEffect(() => {
-    if (comparePrefill) setCompareValue(comparePrefill);
-  }, [comparePrefill]);
-  useEffect(() => {
-    if (collectionPrefill) setCollectionValue(collectionPrefill);
-  }, [collectionPrefill]);
+    if (!user?.id) { setCompareIds([]); return; }
+    if (comparePrefill) {
+      const target = parsePlusTarget(comparePrefill);
+      if (target?.targetType === 'OFFER') {
+        const { ids } = appendPlusComparison(user.id, target.targetId);
+        setCompareIds(ids);
+        return;
+      }
+    }
+    setCompareIds(readPlusComparison(user.id));
+  }, [user?.id, comparePrefill]);
   useEffect(() => {
     if (!status?.active) return;
-    const section = comparePrefill ? 'compare' : collectionPrefill ? 'collections' : '';
+    const section = comparePrefill || window.location.hash === '#compare' ? 'compare' : '';
     if (section && data) document.getElementById(section)?.scrollIntoView({ block: 'start' });
-  }, [comparePrefill, collectionPrefill, status?.active, Boolean(data)]);
+  }, [comparePrefill, status?.active, Boolean(data)]);
 
   useEffect(() => {
     if (!data?.active) { setPlaces([]); setRouteLoadError(false); setRouteLoading(false); return; }
@@ -201,14 +213,12 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
     { label: 'Sin anuncios', href: '#adfree', icon: 'ad-free' as const },
   ];
 
-  function addComparison(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const target = parsePlusTarget(compareValue);
-    if (!target || target.targetType !== 'OFFER') { setError('Escribe el enlace de un producto o servicio válido.'); return; }
-    if (compareIds.includes(target.targetId)) { setError('Esta publicación ya está en la comparación.'); return; }
-    if (compareIds.length >= 4) { setError('Puedes comparar un máximo de cuatro elementos.'); return; }
-    setCompareIds([...compareIds, target.targetId]); setCompareValue(''); setComparison([]); setComparisonBusinesses({}); setError('');
-  }
+  const updateCompareSelection = (next: string[]) => {
+    setCompareIds(savePlusComparison(user?.id ?? '', next));
+    setComparison([]);
+    setComparisonBusinesses({});
+    setError('');
+  };
   const dateFormat = (value: string) => new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));
 
   return <PageLayout className="plus-page">
@@ -332,10 +342,15 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
 
       <section className="plus-panel" id="compare" aria-labelledby="plus-compare-heading">
         <div className="plus-heading"><div><span>03 · COMPARACIÓN</span><h2 id="plus-compare-heading">Compara tus opciones</h2><p>Selecciona hasta cuatro productos o servicios publicados.</p></div></div>
-        <p className="plus-feature-note">Agrega entre dos y cuatro enlaces de publicaciones de Xamuko. Solo se mostrarán datos disponibles y verificados.</p>
-        <form className="plus-form" onSubmit={addComparison}><label>Enlace de producto o servicio<input value={compareValue} onChange={event => setCompareValue(event.target.value)} placeholder="Pega un enlace de Xamuko" required/></label><button className="plus-button" disabled={busy || compareIds.length >= 4}>Añadir a comparación</button></form>
-        {compareIds.length === 0 && <p className="plus-empty">Elige dos publicaciones para ver sus precios, negocios y ubicaciones uno junto al otro.</p>}
-        {compareIds.length > 0 && <><p className="plus-selection-caption">{compareIds.length} de 4 opciones seleccionadas</p><div className="plus-chips">{compareIds.map((id, i) => <button key={id} type="button" onClick={() => { setCompareIds(compareIds.filter(x => x !== id)); setComparison([]); }}>Opción {i + 1} ×</button>)}</div>
+        <p className="plus-feature-note">Elige de dos a cuatro publicaciones desde sus fichas; no tienes que copiar enlaces. Las opciones se conservan en esta pestaña mientras realizas la comparación.</p>
+        <div className="plus-follow-guide">
+          <span className="plus-follow-guide-icon" aria-hidden="true"><PlusIcon name="compare" size={25}/></span>
+          <div><strong>Selecciona desde cada producto o servicio</strong><p>Abre su ficha y pulsa <b>Comparar precio</b>. Cada selección se añade aquí automáticamente, hasta cuatro opciones.</p></div>
+          <Link className="plus-button plus-button-secondary" to="/results">Elegir publicaciones</Link>
+        </div>
+        {compareIds.length === 0 && <div className="plus-empty"><strong>Tu comparación está vacía</strong><p>Abre un producto o servicio y pulsa «Comparar precio». Puedes añadir hasta cuatro opciones.</p></div>}
+        {compareIds.length > 0 && <><p className="plus-selection-caption">{compareIds.length} de 4 opciones seleccionadas</p><div className="plus-chips">{compareIds.map((id, i) => <button key={id} type="button" aria-label={`Quitar opción ${i + 1}`} onClick={() => updateCompareSelection(compareIds.filter(x => x !== id))}>Opción {i + 1} ×</button>)}</div>
+          <button type="button" className="plus-button plus-clear-selection" disabled={busy} onClick={() => updateCompareSelection([])}>Eliminar selección</button>
           <button className="plus-button plus-button-secondary" type="button" disabled={busy || compareIds.length < 2}
             onClick={() => void run(async () => { const result = await comparePlusOffers(compareIds);
               setComparison(result.offers);
