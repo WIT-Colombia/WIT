@@ -20,7 +20,7 @@ import {
 } from '../services/userPlusService';
 import PlusPreview from './PlusPreview';
 import { canUsePlusVisualPreview } from '../services/plusPreviewAccess';
-import { appendPlusComparison, readPlusComparison, savePlusComparison } from '../services/plusComparisonSelection';
+import { appendPlusComparison, readPlusComparison, readPlusComparisonLabels, savePlusComparison } from '../services/plusComparisonSelection';
 import './Plus.css';
 
 const benefits: Array<{ title: string; description: string; icon: PlusIconName }> = [
@@ -216,6 +216,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   }), [places, routeIds]);
   const availableFavorites = places;
   const routeUrl = buildMultiStopRoute(routeBusinesses, travelMode, selection?.coordinates ?? undefined);
+  const compareLabels = readPlusComparisonLabels(user?.id ?? '');
   const overviewCounts = [
     { label: 'Novedades recientes', count: radarAvailable ? radar.length : null, icon: 'radar' as const, href: '#radar' },
     { label: 'Precios seguidos', count: data?.watches.length ?? 0, icon: 'price' as const, href: '#prices' },
@@ -368,7 +369,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
           <Link className="plus-button plus-button-secondary" to="/results">Elegir publicaciones</Link>
         </div>
         {compareIds.length === 0 && <div className="plus-empty"><strong>Tu comparación está vacía</strong><p>Abre un producto o servicio y pulsa «Comparar precio». Puedes añadir hasta cuatro opciones.</p></div>}
-        {compareIds.length > 0 && <><p className="plus-selection-caption">{compareIds.length} de 4 opciones seleccionadas</p><div className="plus-chips">{compareIds.map((id, i) => <button key={id} type="button" aria-label={`Quitar opción ${i + 1}`} onClick={() => updateCompareSelection(compareIds.filter(x => x !== id))}>Opción {i + 1} ×</button>)}</div>
+        {compareIds.length > 0 && <><p className="plus-selection-caption">{compareIds.length} de 4 opciones seleccionadas</p><div className="plus-chips">{compareIds.map((id, i) => <button key={id} type="button" aria-label={`Quitar ${compareLabels[id] ?? `opción ${i + 1}`}`} onClick={() => updateCompareSelection(compareIds.filter(x => x !== id))}>{compareLabels[id] ?? `Opción ${i + 1}`} ×</button>)}</div>
           <button type="button" className="plus-button plus-clear-selection" disabled={busy} onClick={() => updateCompareSelection([])}>Eliminar selección</button>
           <button className="plus-button plus-button-secondary" type="button" disabled={busy || compareIds.length < 2}
             onClick={() => void run(async () => { const result = await comparePlusOffers(compareIds);
