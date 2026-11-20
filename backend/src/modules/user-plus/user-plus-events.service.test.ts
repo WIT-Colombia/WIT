@@ -4,7 +4,8 @@ import test from 'node:test';
 process.env.AUTH_ACCESS_TOKEN_SECRET ??= 'user-plus-opt-in-test-secret-32-characters';
 process.env.DATABASE_URL ??= 'mysql://test:test@127.0.0.1:3306/plus_opt_in_test';
 
-const { eligibleUsers } = await import('./user-plus-events.service.js');
+const { eligibleUsers, recordPlusPriceChange } = await import('./user-plus-events.service.js');
+const { Prisma } = await import('../../generated/prisma/client.js');
 
 function fakeTx(options: {
   switchOn?: boolean; optedIn?: boolean; forPrice?: boolean;
@@ -39,4 +40,55 @@ test('Only a matching opt-in receives price or favorite-business notifications',
 });
 test('Adult-only marketing excludes accounts without adult-content preference', async () => {
   assert.deepEqual(await eligibleUsers(fakeTx({ optedIn: true }), ['minor', 'member'], 'radar', true), ['member']);
+});
+
+
+test('A separately configured objective alerts once on a true price drop without enabling all price notices', async () => {
+  const immediate: Array<{ sourceType: string }> = [];
+  const queued: Array<{ kind: string }> = [];
+  const row = { id: 'watch-1', userId: 'member', targetAmount: new Prisma.Decimal(100),
+    targetCurrency: 'COP', targetNotifiedAt: null as Date | null };
+  const tx = {
+    paidPlanAvailability: { findUnique: async () => ({ enabled: true }) },
+    userPlusSubscription: { findMany: async () => [{ userId: 'member' }] },
+    userPlusPreference: { findMany: async () => [{ userId: 'member',
+      radarEnabled: false, priceAlertsEnabled: false, deliveryMode: 'IMMEDIATE' }] },
+    user: { findMany: async () => [{ id: 'member', adultContentEnabled: true }] },
+    userPlusPriceWatch: {
+      findMany: async () => [row],
+      updateMany: async () => { row.targetNotifiedAt = new Date(); return { count: 1 }; },
+    },
+    offerPriceHistory: { create: async () => ({}) },
+    platformNotification: { createMany: async ({ data }: any) => { immediate.push(...data); } },
+    userPlusDigestEvent: { createMany: async ({ data }: any) => { queued.push(...data); } },
+  } as any;
+  const base = { offerId: 'offer-1', businessId: 'business-1', name: 'Pan queso', adultOnly: false,
+    publiclyVisible: true, previousCurrency: 'COP', currency: 'COP' };
+  await recordPlusPriceChange(tx, { ...base, previousPrice: new Prisma.Decimal(150), newPrice: new Prisma.Decimal(95) });
+  assert.deepEqual(immediate.map(notice => notice.sourceType), ['PLUS_PRICE_TARGET']);
+  assert.equal(queued.length, 0);
+  assert.ok(row.targetNotifiedAt);
+  await recordPlusPriceChange(tx, { ...base, previousPrice: new Prisma.Decimal(95), newPrice: new Prisma.Decimal(90) });
+  assert.equal(immediate.length, 1, 'same target must not notify twice');
+});
+
+test('Daily preference queues price changes instead of publishing an immediate notification', async () => {
+  const immediate: any[] = [], queued: any[] = [];
+  const tx = {
+    paidPlanAvailability: { findUnique: async () => ({ enabled: true }) },
+    userPlusSubscription: { findMany: async () => [{ userId: 'member' }] },
+    userPlusPreference: { findMany: async () => [{ userId: 'member',
+      radarEnabled: false, priceAlertsEnabled: true, deliveryMode: 'DAILY' }] },
+    user: { findMany: async () => [{ id: 'member', adultContentEnabled: true }] },
+    userPlusPriceWatch: { findMany: async () => [{ id: 'watch-1', userId: 'member',
+      targetAmount: null, targetCurrency: null, targetNotifiedAt: null }] },
+    offerPriceHistory: { create: async () => ({}) },
+    platformNotification: { createMany: async ({ data }: any) => { immediate.push(...data); } },
+    userPlusDigestEvent: { createMany: async ({ data }: any) => { queued.push(...data); } },
+  } as any;
+  await recordPlusPriceChange(tx, { offerId: 'offer-1', businessId: 'business-1', name: 'Pan queso',
+    adultOnly: false, publiclyVisible: true, previousCurrency: 'COP', currency: 'COP',
+    previousPrice: new Prisma.Decimal(150), newPrice: new Prisma.Decimal(130) });
+  assert.deepEqual(immediate, []);
+  assert.deepEqual(queued.map(e => e.kind), ['PRICE']);
 });
