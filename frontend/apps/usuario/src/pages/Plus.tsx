@@ -16,6 +16,7 @@ import {
   removePlusWatch, savePlusPreferences, searchHref,
   type PlusOverview, type PlusRadarItem, type PlusRouteFavorite, type PlusCompareOffer, type PriceHistory, type PlusStatus, type PlusPurchaseRequest,
 } from '../services/userPlusService';
+import PlusPreview from './PlusPreview';
 import './Plus.css';
 
 const benefits: Array<{ title: string; description: string; icon: PlusIconName }> = [
@@ -43,7 +44,7 @@ function buildMultiStopRoute(points: PlusRouteFavorite[], travelMode: 'driving' 
   return 'https://www.google.com/maps/dir/?' + input.toString();
 }
 
-export default function Plus() {
+function PlusReal({ canPreview }: { canPreview: boolean }) {
   const { user } = useAuth();
   const [queryParams] = useSearchParams();
   const { selection } = useLocationContext();
@@ -223,6 +224,7 @@ export default function Plus() {
 
   return <PageLayout className="plus-page">
     <Link to="/profile" className="plus-back">← Volver al perfil</Link>
+    {canPreview && <Link className="plus-preview-entry" to="/plus?preview=1"><PlusIcon name="crown" size={18}/> Recorrer Xamuko Plus en vista de prueba <PlusIcon name="arrow-right" size={18}/></Link>}
     <header className="plus-hero">
       <span className="plus-kicker">MEMBRESÍA XAMUKO</span>
       <h1><span className="plus-hero-crown"><PlusIcon name="crown" size={32}/></span> Xamuko Plus</h1>
@@ -436,4 +438,19 @@ export default function Plus() {
       <section className="plus-panel plus-adfree" id="adfree" aria-label="Beneficio de experiencia sin publicidad"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>Mientras Plus esté activo, se ocultan los espacios publicitarios de terceros. Los negocios y resultados públicos siguen visibles.</p></div></section>
     </>}
   </PageLayout>;
+}
+
+/** This UI-only walkthrough never grants a Plus entitlement or sends Plus writes. */
+export function canUsePlusVisualPreview(user: { emailNormalized: string | null; emailVerified: boolean; status: string } | null | undefined): boolean {
+  return user?.emailVerified === true && user?.status === 'ACTIVE'
+    && user.emailNormalized?.trim().toLowerCase() === 'administradoreswit@gmail.com';
+}
+
+export default function Plus() {
+  const { user } = useAuth();
+  const [params] = useSearchParams();
+  const canPreview = canUsePlusVisualPreview(user);
+  return canPreview && params.get('preview') === '1'
+    ? <PlusPreview />
+    : <PlusReal canPreview={canPreview} />;
 }
