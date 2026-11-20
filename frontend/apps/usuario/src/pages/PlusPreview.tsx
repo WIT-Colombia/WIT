@@ -70,13 +70,13 @@ export default function PlusPreview() {
   };
   useEffect(() => {
     if (!location.hash && !initialWatchId && !explicitNavigation.current) return;
-    const frame = window.requestAnimationFrame(() => {
+    const frame = window.setTimeout(() => {
       const panel = document.getElementById(activeSection);
-      panel?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
+      panel?.scrollIntoView?.({ block: 'start', behavior: 'auto' });
       if (explicitNavigation.current) panel?.focus({ preventScroll: true });
       explicitNavigation.current = false;
     });
-    return () => window.cancelAnimationFrame(frame);
+    return () => window.clearTimeout(frame);
   }, [activeSection, location.hash, initialWatchId]);
   const [radarEnabled, setRadarEnabled] = useState(false);
   const [priceAlerts, setPriceAlerts] = useState(false);
@@ -169,8 +169,6 @@ export default function PlusPreview() {
       <p>Los precios, negocios y novedades de esta página son ficticios. Puedes usar los controles para revisar la experiencia, pero los cambios no se guardan, no se envían al servidor y no generan notificaciones ni pagos.</p>
       <Link to="/plus">Volver a mi cuenta real</Link>
     </div>
-    {error && <p className="plus-error" role="alert">{error}</p>}
-    {notice && <p className="plus-success" role="status">{notice}</p>}
     <div className="plus-overview" aria-label="Indicadores de demostración">
       {stats.map(item => <a className="plus-overview-card" key={item.href} href={item.href}
         onClick={event => { event.preventDefault(); chooseSection(item.href.slice(1)); }}>
@@ -206,6 +204,8 @@ export default function PlusPreview() {
           <span>HERRAMIENTA {String(activeIndex + 1).padStart(2, '0')} DE {String(sections.length).padStart(2, '0')}</span>
           <strong>{sections[activeIndex].label}</strong>
         </div>
+        {error && <p className="plus-error" role="alert">{error}</p>}
+        {notice && <p className="plus-success" role="status">{notice}</p>}
         <div className="plus-tool-stage">
     <section className="plus-panel" id="radar" tabIndex={-1} hidden={activeSection !== 'radar'}>
       <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO · EJEMPLO</span><h2>Tu radar de novedades</h2><p>Así aparecen las novedades de los negocios favoritos y se configuran los avisos.</p></div>
