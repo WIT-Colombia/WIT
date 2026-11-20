@@ -195,6 +195,10 @@ export async function addPlusCollectionItem(userId: string, id: string, targetTy
       ] }, select: { id: true } })
     : await prisma.businessOffer.findFirst({ where: { id: targetId, ...await safeOfferWhere(adultAllowed) }, select: { id: true } });
   if (!exists) throw new AppError(404, 'PLUS_ITEM_NOT_AVAILABLE', 'El elemento no está disponible.');
+  const existing = await prisma.userPlusCollectionItem.findUnique({
+    where: { collectionId_targetType_targetId: { collectionId: id, targetType, targetId: exists.id } },
+  });
+  if (existing) return existing;
   const count = await prisma.userPlusCollectionItem.count({ where: { collectionId: id } });
   if (count >= 100) throw new AppError(409, 'PLUS_ITEMS_LIMIT', 'Máximo 100 elementos por colección.');
   return prisma.userPlusCollectionItem.upsert({
@@ -229,6 +233,11 @@ export async function addPlusWatch(userId: string, offerId: string) {
   if (!offer) throw new AppError(404, 'PLUS_OFFER_NOT_AVAILABLE', 'Producto o servicio no publicado.');
   if (!offer.priceAmount || offer.negotiable) throw new AppError(422, 'PLUS_PRICE_NOT_NUMERIC',
     'Este artículo aún no tiene un precio numérico verificable para seguimiento.');
+  const existing = await prisma.userPlusPriceWatch.findUnique({
+    where: { userId_offerId: { userId, offerId: offer.id } },
+    select: { id: true, offerId: true },
+  });
+  if (existing) return existing;
   if (await prisma.userPlusPriceWatch.count({ where: { userId } }) >= 100)
     throw new AppError(409, 'PLUS_WATCH_LIMIT', 'Máximo 100 productos vigilados.');
   return prisma.userPlusPriceWatch.upsert({
