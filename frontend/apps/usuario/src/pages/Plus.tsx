@@ -401,6 +401,39 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2 id="plus-radar-heading">Tu radar de novedades</h2><p>Productos, servicios y promociones recientes de tus negocios favoritos.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.radarEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ radarEnabled: event.target.checked }))}/>Recibir avisos</label></div>
+        <div className="plus-delivery-controls" aria-label="Frecuencia de notificaciones Plus">
+          <label>¿Cómo quieres recibir los avisos?
+            <select aria-label="Frecuencia de avisos Plus" disabled={busy}
+              value={data?.preferences?.deliveryMode ?? 'IMMEDIATE'}
+              onChange={event => {
+                const mode = event.target.value as 'IMMEDIATE' | 'DAILY';
+                void run(() => savePlusPreferences({ deliveryMode: mode,
+                  ...(mode === 'DAILY' ? { digestTimeZone: digestZone, digestHour } : {}) }),
+                  'Preferencia de avisos actualizada.');
+              }}>
+              <option value="IMMEDIATE">Avisos inmediatos</option>
+              <option value="DAILY">Un resumen diario</option>
+            </select>
+          </label>
+          {data?.preferences?.deliveryMode === 'DAILY' && <form className="plus-digest-schedule"
+            onSubmit={event => { event.preventDefault(); void run(
+              () => savePlusPreferences({ deliveryMode: 'DAILY', digestTimeZone: digestZone.trim(), digestHour }),
+              'Horario de resumen diario guardado.'); }}>
+            <label>Zona horaria (IANA)
+              <input aria-label="Zona horaria del resumen" value={digestZone} maxLength={64}
+                onChange={event => setDigestZone(event.target.value)} required placeholder="America/Bogota"/>
+            </label>
+            <label>Hora local del resumen
+              <select aria-label="Hora del resumen" value={digestHour}
+                onChange={event => setDigestHour(Number(event.target.value))}>
+                {Array.from({ length: 24 }, (_, hour) =>
+                  <option key={hour} value={hour}>{String(hour).padStart(2, '0')}:00</option>)}
+              </select>
+            </label>
+            <button className="plus-button plus-button-secondary" type="submit" disabled={busy}>Guardar horario</button>
+          </form>}
+          <p>Los avisos se entregan en las notificaciones de Xamuko, no por correo. El resumen diario reúne novedades, rebajas y objetivos alcanzados de las categorías autorizadas.</p>
+        </div>
         {!radarAvailable ? <p className="plus-empty">El radar está temporalmente fuera de servicio. Tus demás funciones Plus siguen disponibles.</p>
           : radar.length ? <div className="plus-list">{radar.map(item => <Link key={item.type + ':' + item.id} to={item.href} className="plus-list-row">
           <div className="plus-row-symbol plus-radar-avatar"><PlusIcon name="radar" size={19}/><CatalogPhoto src={item.businessProfilePhotoUrl ?? ""} alt={`Foto de perfil de ${item.business}`}/></div><span><strong>{item.title}</strong><small>{item.business} · {dateFormat(item.createdAt)}</small></span><span>Ver ›</span></Link>)}</div>
@@ -423,8 +456,30 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
           <span className="plus-row-symbol"><PlusIcon name="price" size={19}/></span><span><strong>{item.name}</strong><small>{item.businessName} · {item.available ? readablePrice(item.price, item.currency ?? 'COP') : 'Publicación no disponible'}</small></span>
           <div className="plus-row-buttons">
             {item.available && <button type="button" disabled={busy} onClick={() => void showPriceHistory(item.offerId)}>Historial</button>}
+            {item.available && <button type="button" disabled={busy}
+              aria-expanded={targetEditor === item.id} onClick={() => {
+                setTargetEditor(targetEditor === item.id ? null : item.id);
+                setTargetDraft(item.targetAmount ?? '');
+              }}>{item.targetAmount ? 'Cambiar objetivo' : 'Fijar objetivo'}</button>}
             <button type="button" disabled={busy} onClick={() => void run(() => removePlusWatch(item.id))}>Quitar</button>
-          </div></div>)}</div>
+          </div>
+          {item.targetAmount && <p className="plus-target-summary">Objetivo: {readablePrice(item.targetAmount, item.targetCurrency ?? item.currency ?? 'COP')}
+            {item.targetNotifiedAt ? ' · Objetivo notificado' : ' · Alerta pendiente'}</p>}
+          {targetEditor === item.id && <form className="plus-target-editor" onSubmit={event => {
+            event.preventDefault(); void saveTarget(item.id);
+          }}>
+            <label>Precio objetivo ({item.currency ?? 'COP'})
+              <input aria-label={`Precio objetivo de ${item.name}`} type="number" min="0.01" max="9999999999.99"
+                step="0.01" value={targetDraft} onChange={event => setTargetDraft(event.target.value)}
+                placeholder="Ej. 120000" required/>
+            </label>
+            <button type="submit" className="plus-button" disabled={busy}>Guardar objetivo</button>
+            {item.targetAmount && <button type="button" className="plus-button plus-button-secondary" disabled={busy}
+              onClick={() => void run(() => setPlusPriceTarget(item.id, null), 'Objetivo retirado.')
+                .then(ok => { if (ok) setTargetEditor(null); })}>Quitar objetivo</button>}
+            <small>Se avisará una sola vez al alcanzar o superar hacia abajo este precio. Puedes modificarlo para activar un nuevo objetivo.</small>
+          </form>}
+          </div>)}</div>
         {!data?.watches.length && <div className="plus-empty"><strong>Aún no sigues precios</strong><p>Explora los productos, abre uno con precio y pulsa «Seguir precio». No necesitas copiar ningún enlace.</p><Link to="/results">Encontrar un producto →</Link></div>}
         {history && <div className="plus-history"><h3>Historial de {history.offer.name}</h3>
           <p>Precio actual publicado: {readablePrice(history.offer.price, history.offer.currency ?? 'COP')}</p>
@@ -551,9 +606,30 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         {!!availableFavorites.length && <div className="plus-route-selection"><p className="plus-selection-caption">{routeIds.length} de 4 negocios seleccionados</p>
           {routeIds.length > 0 && <button type="button" className="plus-button plus-clear-selection" onClick={() => setRouteIds([])}>Limpiar ruta</button>}
         </div>}
-        <div className="plus-route-actions"><label>Transporte <select value={travelMode} onChange={event => setTravelMode(event.target.value as 'driving' | 'walking')}><option value="driving">En vehículo</option><option value="walking">A pie</option></select></label>
-          {routeUrl ? <a className="plus-button" href={routeUrl} target="_blank" rel="noopener noreferrer">Abrir ruta en Google Maps</a> : <span>Selecciona al menos dos negocios.</span>}</div>
-        <p className="plus-footnote">La ruta se abre en Google Maps; la disponibilidad y el recorrido final dependen de ese servicio. Si compartes tu ubicación, se usará como punto de partida.</p>
+        <div className="plus-route-actions">
+          <label>Transporte <select value={travelMode} onChange={event => setTravelMode(event.target.value as 'driving' | 'walking')}><option value="driving">En vehículo</option><option value="walking">A pie</option></select></label>
+          <label>Salida prevista
+            <input aria-label="Fecha y hora de salida" type="datetime-local" value={visitAt}
+              onChange={event => setVisitAt(event.target.value)}/>
+          </label>
+          <button type="button" className="plus-button plus-button-secondary" disabled={routeIds.length < 2}
+            onClick={() => setRouteOptimized(value => !value)}>
+            {routeOptimized ? 'Usar orden de selección' : 'Optimizar recorrido'}
+          </button>
+          {routeUrl ? <a className="plus-button" href={routeUrl} target="_blank" rel="noopener noreferrer">Abrir ruta en Google Maps</a> : <span>Selecciona al menos dos negocios.</span>}
+        </div>
+        {routeEstimates.length >= 2 && <div className="plus-route-itinerary">
+          <strong>{routeOptimized ? 'Recorrido optimizado por cercanía geográfica' : 'Recorrido en el orden elegido'}</strong>
+          <ol>{routeEstimates.map(estimate => <li key={estimate.stop.id}>
+            <span>{estimate.stop.name} · llegada aproximada {new Intl.DateTimeFormat('es-CO', { dateStyle: 'short', timeStyle: 'short' }).format(estimate.arrivalAt)}</span>
+            <small className={estimate.hoursStatus === 'CLOSED' ? 'plus-closed-warning' : ''}>
+              {estimate.hoursStatus === 'CLOSED' ? 'Advertencia: cerrado según horario publicado' :
+                estimate.hoursStatus === 'UNKNOWN' ? 'Horario no disponible para verificar apertura' :
+                  'Abierto según horario publicado'}
+            </small>
+          </li>)}</ol>
+        </div>}
+        <p className="plus-footnote">La optimización minimiza distancias en línea recta entre hasta cuatro paradas, no tiempos de tráfico. Las horas de llegada son estimaciones orientativas (incluyen 20 minutos por negocio); verifica horarios y tráfico antes de salir. La ruta final se abre en Google Maps. Tu ubicación, si la compartes, se usa como origen.</p>
       </section>
 
       <section className="plus-panel plus-adfree" id="adfree" aria-label="Beneficio de experiencia sin publicidad"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>Mientras Plus esté activo, se ocultan los espacios publicitarios de terceros. Los negocios y resultados públicos siguen visibles.</p></div></section>
