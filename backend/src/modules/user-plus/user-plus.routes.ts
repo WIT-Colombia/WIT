@@ -6,7 +6,7 @@ import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 import {
   plusStatus, plusOverview, setPlusPreferences, plusRadar, plusRouteFavorites,
   addPlusCollection, deletePlusCollection, addPlusCollectionItem, deletePlusCollectionItem, plusCollectionCandidates,
-  addPlusSearch, deletePlusSearch, addPlusWatch, deletePlusWatch, plusPriceHistory, plusCompare,
+  addPlusSearch, deletePlusSearch, addPlusWatch, deletePlusWatch, plusPriceHistory, plusCompare, setPlusPriceTarget,
 } from './user-plus.service.js';
 import { currentPlusPurchaseRequest, requestPlusPurchase, PLUS_MONTHLY_COP } from './user-plus-purchase.service.js';
 
@@ -24,8 +24,11 @@ const searchPayload = z.object({
 }).strict();
 const prefsPayload = z.object({
   radarEnabled: z.boolean().optional(), priceAlertsEnabled: z.boolean().optional(),
+  deliveryMode: z.enum(['IMMEDIATE', 'DAILY']).optional(),
+  digestTimeZone: z.string().max(64).optional(), digestHour: z.number().int().min(0).max(23).optional(),
 }).strict();
 const watchPayload = z.object({ offerId: uuid }).strict();
+const targetPayload = z.object({ amount: z.union([z.string().regex(/^\\d{1,10}(?:\\.\\d{1,2})?$/), z.null()]) }).strict();
 const plusPurchasePayload = z.object({ acceptedAmountCop: z.literal(PLUS_MONTHLY_COP), acceptedTerms: z.literal(true) }).strict();
 export const userPlusRouter = Router();
 userPlusRouter.use(requireAuth);
@@ -56,6 +59,8 @@ userPlusRouter.post('/searches', requireTrustedOrigin, route(req => addPlusSearc
 userPlusRouter.delete('/searches/:id', requireTrustedOrigin, route(req => deletePlusSearch(uid(req), uuid.parse(req.params.id))));
 userPlusRouter.post('/watches', requireTrustedOrigin, route(req => addPlusWatch(uid(req), watchPayload.parse(req.body).offerId)));
 userPlusRouter.delete('/watches/:id', requireTrustedOrigin, route(req => deletePlusWatch(uid(req), uuid.parse(req.params.id))));
+userPlusRouter.put('/watches/:id/target', requireTrustedOrigin,
+  route(req => setPlusPriceTarget(uid(req), uuid.parse(req.params.id), targetPayload.parse(req.body).amount)));
 userPlusRouter.get('/watches/:offerId/history', route(req => plusPriceHistory(uid(req), uuid.parse(req.params.offerId))));
 userPlusRouter.get('/compare', route(req => plusCompare(uid(req), z.array(uuid).max(4).parse(
   typeof req.query.ids === 'string' ? req.query.ids.split(',').filter(Boolean) : [],
