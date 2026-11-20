@@ -66,6 +66,9 @@ jobs:
       - name: Check Usuario offer card geometry on iPhone and iPad
         run: node scripts/check-usuario-offer-cards.mjs
 
+      - name: Check Xamuko Plus on iPhone, iPad and desktop
+        run: node scripts/check-usuario-plus-responsive.mjs
+
       - name: Check Business product editor on iPhone and iPad
         run: node scripts/check-business-product-editor.mjs
 
@@ -120,6 +123,15 @@ jobs:
         with:
           name: xamuko-usuario-offer-cards-${{ github.run_id }}
           path: frontend/test-results/offer-cards/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save Xamuko Plus responsive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xamuko-usuario-plus-${{ github.run_id }}
+          path: frontend/test-results/usuario-plus/
           if-no-files-found: ignore
           retention-days: 7
 
