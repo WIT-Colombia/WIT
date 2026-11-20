@@ -493,7 +493,7 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     renderPlus('/plus?preview=1#prices');
     expect(await screen.findByText('Xamuko Plus aún no está habilitado')).toBeInTheDocument();
     expect(screen.queryByText('Prueba visual con datos de ejemplo')).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Seguimiento de precios' })).not.toBeInTheDocument();
+    expect(document.querySelector('.plus-panel#prices')).toBeNull();
     expect(screen.queryByRole('link', { name: /Recorrer Xamuko Plus en vista de prueba/ })).not.toBeInTheDocument();
     expect(api.fetchPlusOverview).not.toHaveBeenCalled();
     expect(api.requestPlusMembership).not.toHaveBeenCalled();
