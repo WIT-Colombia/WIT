@@ -407,8 +407,12 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
               value={data?.preferences?.deliveryMode ?? 'IMMEDIATE'}
               onChange={event => {
                 const mode = event.target.value as 'IMMEDIATE' | 'DAILY';
+                // Read the verified saved schedule, not an initial browser placeholder.
+                const zone = data?.preferences?.digestTimeZone ?? digestZone;
+                const hour = data?.preferences?.digestHour ?? digestHour;
+                if (mode === 'DAILY') { setDigestZone(zone); setDigestHour(hour); }
                 void run(() => savePlusPreferences({ deliveryMode: mode,
-                  ...(mode === 'DAILY' ? { digestTimeZone: digestZone, digestHour } : {}) }),
+                  ...(mode === 'DAILY' ? { digestTimeZone: zone, digestHour: hour } : {}) }),
                   'Preferencia de avisos actualizada.');
               }}>
               <option value="IMMEDIATE">Avisos inmediatos</option>
