@@ -230,3 +230,34 @@
 .plus-follow-guide>a{flex-shrink:0}
 .plus-preview-page .plus-preview-chip[role=status]{display:inline-flex;margin:0 0 16px;padding:8px 12px;border-radius:11px;background:#ebe3ff;color:#5530a4;font-size:12px;font-weight:700;line-height:1.5}
 @media(max-width:650px){.plus-follow-guide{padding:16px}.plus-follow-guide>a{width:100%}}
+
+/* Collection picker: one Agregar entry, server-authorized favorites and liked offers only. */
+.plus-collection-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.plus-collection-actions .plus-collection-add{min-height:39px;padding:9px 17px;border-radius:10px;color:#fff}
+.plus-collection-picker{display:grid;gap:13px;margin:12px 0 16px;padding:17px;border:1px solid #ddd2f4;border-radius:15px;background:#faf8ff}
+.plus-collection-picker>p{margin:0;color:#5c5277;font-size:12px;line-height:1.55}
+.plus-picker-types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.plus-picker-types button{min-height:43px;padding:9px 11px;border:1px solid #dfd7ee;border-radius:11px;background:#fff;color:#5d4d79;font-size:12px;font-weight:750;cursor:pointer}
+.plus-picker-types button.selected{background:#6132c0;border-color:#6132c0;color:#fff}
+.plus-picker-types button:focus-visible,.plus-picker-item button:focus-visible{outline:3px solid #d3bbff;outline-offset:2px}
+.plus-picker-list{display:grid;gap:8px}
+.plus-picker-item{display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:0;padding:12px 14px;border:1px solid #e5dff1;border-radius:11px;background:#fff}
+.plus-picker-item>span{display:grid;gap:4px;min-width:0}
+.plus-picker-item strong{color:#33264f;font-size:13px;overflow-wrap:anywhere}
+.plus-picker-item small{color:#756a88;font-size:11px;line-height:1.5}
+.plus-picker-item button{flex:0 0 auto;min-height:35px;padding:8px 11px;border:1px solid #d0b8f5;border-radius:9px;background:#f2ebff;color:#5b36b1;font-size:11px;font-weight:800;cursor:pointer}
+.plus-picker-item button:hover:not(:disabled){background:#e9ddff}
+.plus-picker-item button:disabled{opacity:.6;cursor:default}
+.plus-picker-pages{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#6a5d80;font-size:11px}
+.plus-picker-pages button{padding:7px 11px;border:1px solid #dfd6ef;border-radius:9px;background:#fff;color:#5d37b0;font-size:11px;font-weight:700;cursor:pointer}
+.plus-picker-pages button:disabled{opacity:.45}
+.plus-picker-empty{padding:14px 10px;color:#6a5d80;font-size:12px}
+.plus-clear-selection{margin:10px 9px 12px 0;min-height:41px;border:1px solid #d8cee8;background:#fff;color:#67429f;box-shadow:none}
+.plus-clear-selection:hover:not(:disabled){background:#f4f0fb}
+@media(max-width:600px){
+  .plus-collection-actions .plus-collection-add{min-height:39px}
+  .plus-collection-picker{padding:13px}
+  .plus-picker-types button{min-height:46px;padding:8px;font-size:11px}
+  .plus-picker-item{align-items:flex-start;flex-direction:column;gap:9px}
+  .plus-picker-item button{align-self:flex-start}
+}
