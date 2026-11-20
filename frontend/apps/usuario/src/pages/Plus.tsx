@@ -365,7 +365,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
             <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
             <h3>Precio objetivo</h3>
             <p>Fija el valor que quieres pagar por un producto y recibe el aviso al alcanzarlo.</p>
-            <span className="plus-spotlight-detail"><strong>{data.watches.filter(item => item.targetAmount).length}</strong> objetivos configurados</span>
+            <span className="plus-spotlight-detail"><strong>{data.watches.filter(item => item.targetAmount).length}</strong> {data.watches.filter(item => item.targetAmount).length === 1 ? 'objetivo configurado' : 'objetivos configurados'}</span>
             <span className="plus-spotlight-action">Gestionar precios <PlusIcon name="arrow-right" size={16}/></span>
           </a>
           <a className="plus-spotlight-card" href="#radar">
