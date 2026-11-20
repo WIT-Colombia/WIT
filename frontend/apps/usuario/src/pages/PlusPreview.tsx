@@ -168,7 +168,7 @@ export default function PlusPreview() {
       <div className="plus-chips">{compareIds.map((id,i)=><button key={id} type="button" aria-label={`Quitar ${compareLabels[id] ?? `opción ${i+1}`}`} onClick={()=>updateCompareSelection(compareIds.filter(x=>x!==id))}>{compareLabels[id] ?? resolve(id).name} ×</button>)}</div>
       {compareIds.length < 2 && <button type="button" className="plus-button plus-button-secondary"
         onClick={()=>updateCompareSelection(sampleOffers.map(item => item.id))}>Probar con dos opciones de ejemplo</button>}
-      {compareIds.length > 0 && <button type="button" className="plus-button plus-clear-selection" onClick={()=>updateCompareSelection([])}>Eliminar selección</button>
+      {compareIds.length > 0 && <button type="button" className="plus-button plus-clear-selection" onClick={()=>updateCompareSelection([])}>Eliminar selección</button>}
       <button type="button" className="plus-button plus-button-secondary" disabled={compareIds.length<2} onClick={()=>setCompared(true)}>Comparar {compareIds.length} opciones</button>
       {compared && <div className="plus-compare-grid">{compareIds.map(id=>{const item=resolve(id);return <article key={id}><span>Publicación de ejemplo</span><h3>{item.name}</h3><p>{item.business}</p><strong>{item.price ? '$'+item.price+' COP · ejemplo' : 'Precio no consultado'}</strong><p>La ubicación, calificación y distancia se consultarán desde el backend real.</p></article>;})}</div>}
     </section>
