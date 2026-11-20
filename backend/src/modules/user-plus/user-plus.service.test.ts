@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 process.env.AUTH_ACCESS_TOKEN_SECRET ??= 'xamuko-plus-test-secret-with-32-characters';
 process.env.DATABASE_URL ??= 'mysql://test:test@127.0.0.1:3306/xamuko_plus_test';
 const { hasPlusEntitlement } = await import('./user-plus.service.js');
+const { effectivePlusPrice } = await import('./user-plus-events.service.js');
+const { Prisma } = await import('../../generated/prisma/client.js');
 const { assignAdminPlusSubscription } = await import('./user-plus-admin.service.js');
 const now = new Date('2026-11-19T12:00:00.000Z');
 const active = { status: 'ACTIVE', startsAt: new Date('2026-11-01T00:00:00.000Z'),
@@ -33,4 +35,14 @@ test('Malformed Plus grant reason is rejected before the database transaction', 
       { enabled: true, expiresAt: '2026-12-01T00:00:00.000Z', reason: 'short' }),
     { statusCode: 400 },
   );
+});
+
+test('A numeric catalog text price can be followed, while negotiable or invalid prices cannot', () => {
+  assert.equal(effectivePlusPrice(null, '2000', false)?.toString(), '2000');
+  assert.equal(effectivePlusPrice(new Prisma.Decimal(2000), null, false)?.toString(), '2000');
+  assert.equal(effectivePlusPrice(null, '0', false), null);
+  assert.equal(effectivePlusPrice(null, 'Precio a convenir', false), null);
+  assert.equal(effectivePlusPrice(null, '2000', true), null);
+  assert.equal(effectivePlusPrice(null, '2.000 COP', false), null);
+  assert.equal(effectivePlusPrice(new Prisma.Decimal(2000), null, true), null);
 });
