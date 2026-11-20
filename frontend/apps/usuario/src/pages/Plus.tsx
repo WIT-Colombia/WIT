@@ -76,6 +76,9 @@ export default function Plus() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const currentCity = selection?.locality?.name ?? null;
+  const watchPrefill = queryParams.get('watch') ?? '';
+  const comparePrefill = queryParams.get('compare') ?? '';
+  const collectionPrefill = queryParams.get('item') ?? '';
 
   const reload = useCallback(async () => {
     if (!user) return;
@@ -107,6 +110,21 @@ export default function Plus() {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; requestEpoch.current += 1; };
   }, [reload]);
+
+  useEffect(() => {
+    if (watchPrefill) setTargetValue(watchPrefill);
+  }, [watchPrefill]);
+  useEffect(() => {
+    if (comparePrefill) setCompareValue(comparePrefill);
+  }, [comparePrefill]);
+  useEffect(() => {
+    if (collectionPrefill) setCollectionValue(collectionPrefill);
+  }, [collectionPrefill]);
+  useEffect(() => {
+    if (!status?.active) return;
+    const section = watchPrefill ? 'prices' : comparePrefill ? 'compare' : collectionPrefill ? 'collections' : '';
+    if (section && data) document.getElementById(section)?.scrollIntoView({ block: 'start' });
+  }, [watchPrefill, comparePrefill, collectionPrefill, status?.active, Boolean(data)]);
 
   useEffect(() => {
     if (!data?.active) { setPlaces([]); return; }
@@ -204,7 +222,7 @@ export default function Plus() {
     </header>
     {error && <p className="plus-error" role="alert">{error}</p>}
     {notice && <p className="plus-success" role="status">{notice}</p>}
-    {status?.active && <>
+    {status?.active && data && <>
       <div className="plus-welcome" aria-label="Resumen de tu membresía">
         <div className="plus-welcome-copy">
           <span className="plus-overline">TU ESPACIO PERSONAL</span>
@@ -263,7 +281,12 @@ export default function Plus() {
       <div className="plus-benefit-grid">{benefits.map(b => <article key={b.title}><span className="plus-benefit-icon"><PlusIcon name={b.icon} size={26}/></span><h3>{b.title}</h3><p>{b.description}</p></article>)}</div>
       <p className="plus-note">Los beneficios se activan solo después de verificar la suscripción. Las funciones gratuitas de Xamuko siguen disponibles para todos.</p>
       <button type="button" className="plus-button plus-button-secondary" disabled={loading} onClick={() => { setLoading(true); void reload().catch(() => setError('No pudimos actualizar la consulta.')).finally(() => setLoading(false)); }}>Verificar otra vez</button>
-    </section></> : <>
+    </section></> : !data ? <section className="plus-panel plus-loading" role="status">
+      <span className="plus-overline">TU MEMBRESÍA ESTÁ ACTIVA</span>
+      <h2>{loading ? 'Preparando tus herramientas Plus…' : 'No pudimos cargar tus herramientas Plus'}</h2>
+      <p>Los datos de tus negocios y precios deben verificarse con el servidor. No mostramos valores de ejemplo.</p>
+      {!loading && <button type="button" className="plus-button" onClick={() => { setLoading(true); setError(''); void reload().catch(e => setError(e instanceof Error ? e.message : 'Error de conexión.')).finally(() => setLoading(false)); }}>Reintentar conexión</button>}
+    </section> : <>
       <section className="plus-panel" id="radar" aria-labelledby="plus-radar-heading">
         <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2 id="plus-radar-heading">Tu radar de novedades</h2><p>Productos, servicios y promociones recientes de tus negocios favoritos.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.radarEnabled ?? false} disabled={busy}
