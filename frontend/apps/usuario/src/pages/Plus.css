@@ -718,3 +718,52 @@
   .plus-page .plus-collection-head{flex-wrap:wrap}
   .plus-page .plus-collection-items>div{flex-wrap:wrap}
 }
+
+
+/* Plus-wide type scale: no tiny labels in comparison, history or membership forms. */
+.plus-page .plus-benefit-grid h3,
+.plus-page .plus-compare-grid article h3{font-size:16px;line-height:1.35}
+.plus-page .plus-benefit-grid p,
+.plus-page .plus-compare-grid article p,
+.plus-page .plus-adfree p,
+.plus-page .plus-history p,
+.plus-page .plus-history li,
+.plus-page .plus-collection-items>div,
+.plus-page .plus-collection-picker>p,
+.plus-page .plus-picker-empty,
+.plus-page .plus-preview-warning p,
+.plus-page .plus-preview-exit p,
+.plus-page .plus-subscription-banner p,
+.plus-page .plus-purchase-confirm p,
+.plus-page .plus-purchase-confirm label{font-size:14px;line-height:1.6}
+.plus-page .plus-compare-grid article span,
+.plus-page .plus-compare-grid article a,
+.plus-page .plus-picker-item small,
+.plus-page .plus-picker-pages,
+.plus-page .plus-picker-item button,
+.plus-page .plus-preview-page .plus-preview-chip,
+.plus-page .plus-preview-page .plus-preview-chip[role=status]{font-size:12.5px}
+.plus-page .plus-subscription-eyebrow,
+.plus-page .plus-subscription-price>span,
+.plus-page .plus-subscription-action>small,
+.plus-page .plus-form label,
+.plus-page .plus-collection-head,
+.plus-page .plus-collection-items a{font-size:13px;line-height:1.5}
+.plus-page .plus-picker-item button,
+.plus-page .plus-picker-types button,
+.plus-page .plus-picker-pages button,
+.plus-page .plus-picker-empty button,
+.plus-page .plus-preview-entry{min-height:44px}
+.plus-page .plus-picker-types button,
+.plus-page .plus-picker-pages button{font-size:13px}
+.plus-page .plus-form-inline input,
+.plus-page .plus-collection-picker input{min-height:44px}
+.plus-page .plus-adfree{align-items:flex-start}
+.plus-page .plus-adfree>span{flex:0 0 40px;display:grid;place-items:center}
+@media(max-width:700px){
+ .plus-page .plus-benefit-grid h3{font-size:15px}
+ .plus-page .plus-benefit-grid p{font-size:13px}
+ .plus-page .plus-compare-grid article p{font-size:13px}
+ .plus-page .plus-overview-card>span:nth-last-child(2){font-size:13px}
+ .plus-page .plus-compare-grid article span{font-size:12px}
+}
