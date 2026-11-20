@@ -4,7 +4,7 @@ import { requireAuth } from '../../shared/middleware/require-auth.js';
 import { requireTrustedOrigin } from '../../shared/middleware/require-trusted-origin.js';
 import type { AuthenticatedRequest } from '../../shared/auth/auth-request.js';
 import {
-  plusStatus, plusOverview, setPlusPreferences, plusRadar,
+  plusStatus, plusOverview, setPlusPreferences, plusRadar, plusRouteFavorites,
   addPlusCollection, deletePlusCollection, addPlusCollectionItem, deletePlusCollectionItem,
   addPlusSearch, deletePlusSearch, addPlusWatch, deletePlusWatch, plusPriceHistory, plusCompare,
 } from './user-plus.service.js';
@@ -39,6 +39,7 @@ userPlusRouter.post('/purchase-request', requireTrustedOrigin,
   route(req => requestPlusPurchase(uid(req), plusPurchasePayload.parse(req.body))));
 userPlusRouter.get('/overview', route(req => plusOverview(uid(req))));
 userPlusRouter.get('/radar', route(req => plusRadar(uid(req))));
+userPlusRouter.get('/route-favorites', route(req => plusRouteFavorites(uid(req))));
 userPlusRouter.put('/preferences', requireTrustedOrigin, route(req => setPlusPreferences(uid(req), prefsPayload.parse(req.body))));
 userPlusRouter.post('/collections', requireTrustedOrigin, route(req => addPlusCollection(uid(req), collectionPayload.parse(req.body).title)));
 userPlusRouter.delete('/collections/:id', requireTrustedOrigin, route(req => deletePlusCollection(uid(req), uuid.parse(req.params.id))));
