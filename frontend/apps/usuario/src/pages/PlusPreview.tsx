@@ -185,7 +185,7 @@ export default function PlusPreview() {
         </a>
       </div>
     </section>
-    <section className="plus-panel" id="radar">
+    <section className="plus-panel" id="radar" tabIndex={-1}>
       <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO · EJEMPLO</span><h2>Tu radar de novedades</h2><p>Así aparecen las novedades de los negocios favoritos.</p></div>
         <label className="plus-toggle"><input type="checkbox" checked={radarEnabled} onChange={e => { setRadarEnabled(e.target.checked); updateNotice('Preferencia de prueba actualizada localmente.'); }}/>Recibir avisos</label></div>
       <div className="plus-delivery-controls">
@@ -208,7 +208,7 @@ export default function PlusPreview() {
         <div className="plus-list-row" key={item.name}><span className="plus-row-symbol"><PlusIcon name="radar" size={19}/></span><span><strong>{item.name}</strong><small>{item.business} · Ejemplo {i + 1}</small></span><span className="plus-preview-chip">Demo</span></div>)}</div>
       <p className="plus-footnote">En la versión real, estas novedades se obtienen de publicaciones recientes de tus favoritos.</p>
     </section>
-    <section className="plus-panel" id="prices">
+    <section className="plus-panel" id="prices" tabIndex={-1}>
       <div className="plus-heading"><div><span>02 · AHORRO · EJEMPLO</span><h2>Seguimiento de precios</h2><p>Prueba agregar o quitar productos y consultar un historial de ejemplo.</p></div>
         <label className="plus-toggle"><input type="checkbox" checked={priceAlerts} onChange={e => { setPriceAlerts(e.target.checked); updateNotice('Alerta simulada; no se enviarán notificaciones.'); }}/>Avisar cuando bajen</label></div>
       <div className="plus-follow-guide">
@@ -251,7 +251,7 @@ export default function PlusPreview() {
         : <p>Esta publicación no tiene historial de ejemplo. El backend real todavía no se consulta.</p>}
         <button type="button" onClick={()=>setHistoryId(null)}>Cerrar historial</button></div>}
     </section>
-    <section className="plus-panel" id="compare">
+    <section className="plus-panel" id="compare" tabIndex={-1}>
       <div className="plus-heading"><div><span>03 · COMPARACIÓN · EJEMPLO</span><h2>Compara tus opciones</h2><p>Selecciona de dos a cuatro publicaciones para explorar el comparador.</p></div></div>
       <div className="plus-follow-guide"><span className="plus-follow-guide-icon"><PlusIcon name="compare" size={25}/></span>
         <div><strong>Compara sin pegar enlaces</strong><p>Abre la ficha de un producto o servicio y pulsa <b>Comparar precio</b>. La selección de demostración aparecerá aquí.</p></div>
@@ -265,7 +265,7 @@ export default function PlusPreview() {
       <button type="button" className="plus-button plus-button-secondary" disabled={compareIds.length<2} onClick={()=>setCompared(true)}>Comparar {compareIds.length} opciones</button>
       {compared && <div className="plus-compare-grid">{compareIds.map(id=>{const item=resolve(id);return <article key={id}><span>Publicación de ejemplo</span><h3>{item.name}</h3><p>{item.business}</p><strong>{item.price ? '$'+item.price+' COP · ejemplo' : 'Precio no consultado'}</strong><p>La ubicación, calificación y distancia se consultarán desde el backend real.</p></article>;})}</div>}
     </section>
-    <section className="plus-panel" id="collections">
+    <section className="plus-panel" id="collections" tabIndex={-1}>
       <div className="plus-heading"><div><span>04 · ORGANIZACIÓN · EJEMPLO</span><h2>Tus colecciones</h2><p>Agrega únicamente negocios favoritos y publicaciones con «Me gusta». Todo es un ejemplo local.</p></div></div>
       <form className="plus-form" onSubmit={addCollection}><label>Nombre de la colección<input value={collectionName} maxLength={80} onChange={e=>setCollectionName(e.target.value)} placeholder="Ej. Mis cafeterías favoritas" required/></label><button type="submit" className="plus-button" disabled={collections.length>=50}>Crear colección</button></form>
       <div className="plus-list">{collections.map(col=><article className="plus-collection" key={col.id}>
@@ -293,13 +293,13 @@ export default function PlusPreview() {
           {col.items.map(item=><div key={item.id}><span>{item.description}</span><button type="button" onClick={()=>setCollections(items=>items.map(c=>c.id===col.id?{...c,items:c.items.filter(x=>x.id!==item.id)}:c))}>Quitar</button></div>)}</div>
       </article>)}</div>
     </section>
-    <section className="plus-panel" id="searches">
+    <section className="plus-panel" id="searches" tabIndex={-1}>
       <div className="plus-heading"><div><span>04 · ORGANIZACIÓN · EJEMPLO</span><h2>Búsquedas guardadas</h2><p>Guarda criterios de búsqueda. La lista de prueba se borra al salir.</p></div></div>
       <form className="plus-form" onSubmit={addSearch}><label>Nombre<input value={searchTitle} onChange={e=>setSearchTitle(e.target.value)} placeholder="Ej. Panaderías cerca" required maxLength={80}/></label><label>Buscar<input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Qué quieres encontrar" required maxLength={160}/></label><label>Categoría (opcional)<input value={searchCategory} onChange={e=>setSearchCategory(e.target.value)} maxLength={120}/></label><button type="submit" className="plus-button" disabled={searches.length>=50}>Guardar búsqueda</button></form>
       <div className="plus-list">{searches.map(item=><div className="plus-list-row" key={item.id}><span className="plus-row-symbol"><PlusIcon name="collection" size={19}/></span><span><strong>{item.title}</strong><small>{item.query}{item.category?' · '+item.category:''} · ejemplo</small></span><div className="plus-row-buttons"><Link to={searchHref({id:String(item.id),title:item.title,query:item.query,category:item.category||null,city:null,openNow:false,minRating:null,sort:'recommended'})}>Buscar</Link><button type="button" onClick={()=>setSearches(items=>items.filter(x=>x.id!==item.id))}>Quitar</button></div></div>)}</div>
       <p className="plus-footnote">«Buscar» abre los resultados públicos de Xamuko, no una búsqueda Plus almacenada en el backend.</p>
     </section>
-    <section className="plus-panel" id="routes">
+    <section className="plus-panel" id="routes" tabIndex={-1}>
       <div className="plus-heading"><div><span>05 · EXPLORACIÓN · EJEMPLO</span><h2>Rutas con varios negocios</h2><p>Elige de dos a cuatro paradas para revisar cómo se organiza el recorrido.</p></div></div>
       <div className="plus-routes-list">{sampleStops.map(stop=><label key={stop.id}><input type="checkbox" checked={selectedStops.includes(stop.id)} disabled={!selectedStops.includes(stop.id)&&selectedStops.length>=4} onChange={()=>{setSelectedStops(ids=>ids.includes(stop.id)?ids.filter(x=>x!==stop.id):[...ids,stop.id]);setShowRoute(false);}}/><span>{stop.name} · {stop.address}</span></label>)}</div>
       <div className="plus-route-actions">
@@ -321,7 +321,7 @@ export default function PlusPreview() {
       </div>}
       <p className="plus-footnote">Los negocios y horarios de esta demostración son ficticios. No hay tráfico ni consultas a mapas; Plus real estima el orden por cercanía y abre después el recorrido en Google Maps.</p>
     </section>
-    <section className="plus-panel plus-adfree" id="adfree"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>La membresía real oculta anuncios identificados como publicidad de terceros. Aquí solo se muestra cómo se presenta el beneficio; no cambia el resto de la plataforma.</p><small>Simulación visual · Sin activación de la política global de anuncios</small></div></section>
+    <section className="plus-panel plus-adfree" id="adfree" tabIndex={-1}><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>La membresía real oculta anuncios identificados como publicidad de terceros. Aquí solo se muestra cómo se presenta el beneficio; no cambia el resto de la plataforma.</p><small>Simulación visual · Sin activación de la política global de anuncios</small></div></section>
     <div className="plus-preview-exit"><p>Fin del recorrido de demostración. Los cambios que hiciste aquí no se guardarán.</p><Link to="/plus" className="plus-button plus-button-secondary">Salir de la vista previa</Link></div>
   </PageLayout>;
 }
