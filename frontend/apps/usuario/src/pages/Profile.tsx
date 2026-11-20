@@ -1,4 +1,4 @@
-import { PHOTO_INPUT_ACCEPT } from "@wit/utils";
+import { PHOTO_INPUT_ACCEPT, usePaidPlans } from "@wit/utils";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getNotifications, getProfile, saveProfile, type UserProfile } from "../services/userDataService";
@@ -15,6 +15,7 @@ import "./ProfileEnhancements.css";
 
 export default function Profile() {
   const { logout, user, reloadUser } = useAuth();
+  const { xamukoPlus } = usePaidPlans();
   const [profile, setProfile] = useState<UserProfile>(() => getProfile(user?.id));
   const navigate = useNavigate();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
@@ -82,7 +83,7 @@ export default function Profile() {
       {user && !user.emailVerified && <p className="profile-verification-status" role="status">Correo pendiente de verificación</p>}
       <section className="profile-links profile-activity-only">
         <h2>Tu actividad</h2>
-        <Link to="/plus"><span className="profile-icon--plus" aria-hidden="true"><PlusIcon name="crown" size={21}/></span><div><b>Xamuko Plus</b><small>Radar, precios, comparador, colecciones y rutas</small></div><i>›</i></Link>
+        {xamukoPlus && <Link to="/plus"><span className="profile-icon--plus" aria-hidden="true"><PlusIcon name="crown" size={21}/></span><div><b>Xamuko Plus</b><small>Radar, precios, comparador, colecciones y rutas</small></div><i>›</i></Link>}
         <Link to="/favorites"><span className="profile-icon--stores"><HeartIcon /></span><div><b>Favoritos</b><small>Lugares que guardaste</small></div><i>›</i></Link>
         <Link to="/likes"><span className="profile-icon--products"><ThumbsUpIcon /></span><div><b>Productos y servicios que te gustan</b><small>Lo que has marcado con Me gusta</small></div><i>›</i></Link>
         <Link to="/reviews"><span className="profile-icon--reviews"><ReviewIcon /></span><div><b>Mis opiniones</b><small>Comparte tu experiencia</small></div><i>›</i></Link>
