@@ -75,7 +75,6 @@ export default function PlusPreview() {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const updateNotice = (message: string) => { setNotice(message); setError(''); };
-  const showError = (message: string) => { setError(message); setNotice(''); };
   const resolve = (id: string): Comparison =>
     sampleOffers.find(item => item.id === id) ?? { id, name: 'Publicación agregada para probar la interfaz', business: 'Sin datos del servidor', price: null };
   const updateCompareSelection = (ids: string[]) => {
