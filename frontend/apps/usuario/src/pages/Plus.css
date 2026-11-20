@@ -664,3 +664,57 @@
   .plus-page .plus-spotlight-card{transition:none}
   .plus-page .plus-spotlight-card:hover{transform:none}
 }
+
+
+/* Accessibility and compact-screen hardening; keep every control touch-friendly. */
+.plus-page .plus-button{
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-align:center;
+  line-height:1.4;
+}
+.plus-page .plus-spotlight-card,
+.plus-page .plus-overview-card,
+.plus-page .plus-section-nav a,
+.plus-page .plus-list-row{
+  -webkit-tap-highlight-color:rgba(113,61,201,.14);
+}
+.plus-page .plus-spotlight-detail,
+.plus-page .plus-list-row strong,
+.plus-page .plus-list-row small,
+.plus-page .plus-collection-head,
+.plus-page .plus-collection-items{
+  overflow-wrap:anywhere;
+}
+.plus-page .plus-section-nav a{min-height:44px}
+.plus-page .plus-row-buttons button,
+.plus-page .plus-row-buttons a,
+.plus-page .plus-collection-head button,
+.plus-page .plus-collection-items button,
+.plus-page .plus-history button,
+.plus-page .plus-chips button,
+.plus-page .plus-collection-actions .plus-collection-add{
+  min-height:44px;
+  font-size:13px;
+}
+.plus-page .plus-history button{border-color:#d8c8ec}
+.plus-page .plus-preview-warning a{min-height:44px}
+.plus-page .plus-subscription-cta{min-height:46px}
+.plus-page .plus-delivery-controls select,
+.plus-page .plus-delivery-controls input,
+.plus-page .plus-target-editor input,
+.plus-page .plus-route-actions select,
+.plus-page .plus-route-actions input{max-width:100%}
+.plus-page .plus-panel:focus,
+.plus-page .plus-benefits:focus{outline:3px solid #9770db;outline-offset:4px}
+@media(max-width:700px){
+  .plus-page .plus-list-row{min-width:0}
+  .plus-page .plus-row-buttons{width:100%;justify-content:flex-start}
+  .plus-page .plus-row-buttons button,.plus-page .plus-row-buttons a{flex:1 1 auto}
+  .plus-page .plus-target-editor{min-width:0}
+  .plus-page .plus-route-actions{align-items:stretch}
+  .plus-page .plus-route-actions>span{font-size:13px}
+  .plus-page .plus-collection-head{flex-wrap:wrap}
+  .plus-page .plus-collection-items>div{flex-wrap:wrap}
+}
