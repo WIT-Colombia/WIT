@@ -14,6 +14,7 @@ export type PlusCollection = {
 };
 export type PlusSearch = { id: string; title: string; query: string; category: string | null; city: string | null;
   openNow: boolean; minRating: number | null; sort: string };
+export type PlusRouteFavorite = { id: string; name: string; lat: number; lng: number };
 export type PlusWatch = {
   id: string; offerId: string; kind: 'PRODUCT' | 'SERVICE'; name: string;
   businessName: string; price: string | null; priceText: string | null; currency: string | null;
@@ -51,6 +52,7 @@ export const requestPlusMembership = (acceptedAmountCop: number) =>
 
 export const fetchPlusOverview = () => requestWithSession<PlusOverview>(base + '/overview');
 export const fetchPlusRadar = () => requestWithSession<{ items: PlusRadarItem[] }>(base + '/radar');
+export const fetchPlusRouteFavorites = () => requestWithSession<{ items: PlusRouteFavorite[] }>(base + '/route-favorites');
 export const savePlusPreferences = (data: { radarEnabled?: boolean; priceAlertsEnabled?: boolean }) =>
   requestWithSession(base + '/preferences', { method: 'PUT', ...json(data) });
 export const createPlusCollection = (title: string) =>
