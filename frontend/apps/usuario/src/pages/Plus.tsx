@@ -235,6 +235,13 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       setError('Introduce un precio objetivo positivo, sin separadores de miles y con máximo dos decimales.');
       return;
     }
+    const watched = data?.watches.find(item => item.id === watchId);
+    const currentPrice = watched?.available && watched.price !== null ? Number(watched.price) : NaN;
+    if (Number.isFinite(currentPrice) && Number(targetDraft) >= currentPrice) {
+      setError('El precio objetivo debe ser menor que el precio actual (' +
+        readablePrice(watched?.price ?? null, watched?.currency ?? 'COP') + ').');
+      return;
+    }
     const ok = await run(() => setPlusPriceTarget(watchId, targetDraft),
       'Precio objetivo guardado. Te avisaremos al alcanzarlo, según la modalidad de notificaciones elegida.');
     if (ok) { setTargetEditor(null); setTargetDraft(''); }
@@ -452,12 +459,28 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
             </select>
           </label>
           {data?.preferences?.deliveryMode === 'DAILY' && <form className="plus-digest-schedule"
-            onSubmit={event => { event.preventDefault(); void run(
-              () => savePlusPreferences({ deliveryMode: 'DAILY', digestTimeZone: digestZone.trim(), digestHour }),
-              'Horario de resumen diario guardado.'); }}>
-            <label>Zona horaria (IANA)
+            onSubmit={event => {
+              event.preventDefault();
+              const zone = digestZone.trim();
+              try { new Intl.DateTimeFormat('es-CO', { timeZone: zone }).format(); }
+              catch {
+                setError('Ingresa una zona horaria válida, por ejemplo America/Bogota.');
+                return;
+              }
+              void run(
+                () => savePlusPreferences({ deliveryMode: 'DAILY', digestTimeZone: zone, digestHour }),
+                'Horario de resumen diario guardado.');
+            }}>
+            <label>Zona horaria
               <input aria-label="Zona horaria del resumen" value={digestZone} maxLength={64}
+                list="plus-zones" autoComplete="off"
                 onChange={event => setDigestZone(event.target.value)} required placeholder="America/Bogota"/>
+              <datalist id="plus-zones">
+                {['America/Bogota', 'America/Panama', 'America/Lima', 'America/Guayaquil',
+                  'America/Mexico_City', 'America/El_Salvador', 'America/Santiago',
+                  'America/Argentina/Buenos_Aires', 'America/Sao_Paulo', 'Europe/Madrid', 'UTC']
+                  .map(zone => <option key={zone} value={zone}/>)}
+              </datalist>
             </label>
             <label>Hora local del resumen
               <select aria-label="Hora del resumen" value={digestHour}
@@ -513,7 +536,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
             {item.targetAmount && <button type="button" className="plus-button plus-button-secondary" disabled={busy}
               onClick={() => void run(() => setPlusPriceTarget(item.id, null), 'Objetivo retirado.')
                 .then(ok => { if (ok) setTargetEditor(null); })}>Quitar objetivo</button>}
-            <small>Se avisará una sola vez al alcanzar o superar hacia abajo este precio. Puedes modificarlo para activar un nuevo objetivo.</small>
+            <small>Elige un precio menor que el actual. Recibirás un solo aviso cuando el producto alcance o baje de ese objetivo. Puedes cambiarlo para crear un objetivo nuevo.</small>
           </form>}
           </div>)}</div>
         {!data?.watches.length && <div className="plus-empty"><strong>Aún no sigues precios</strong><p>Explora los productos, abre uno con precio y pulsa «Seguir precio». No necesitas copiar ningún enlace.</p><Link to="/results">Encontrar un producto →</Link></div>}
