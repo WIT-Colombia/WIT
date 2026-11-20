@@ -28,7 +28,7 @@ const prefsPayload = z.object({
   digestTimeZone: z.string().max(64).optional(), digestHour: z.number().int().min(0).max(23).optional(),
 }).strict();
 const watchPayload = z.object({ offerId: uuid }).strict();
-const targetPayload = z.object({ amount: z.union([z.string().regex(/^\\d{1,10}(?:\\.\\d{1,2})?$/), z.null()]) }).strict();
+const targetPayload = z.object({ amount: z.union([z.string().regex(/^\d{1,10}(?:\.\d{1,2})?$/), z.null()]) }).strict();
 const plusPurchasePayload = z.object({ acceptedAmountCop: z.literal(PLUS_MONTHLY_COP), acceptedTerms: z.literal(true) }).strict();
 export const userPlusRouter = Router();
 userPlusRouter.use(requireAuth);
