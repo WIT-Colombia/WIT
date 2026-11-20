@@ -310,7 +310,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         <div className="plus-follow-guide">
           <span className="plus-follow-guide-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
           <div><strong>Sigue precios con un solo toque</strong>
-            <p>Abre la ficha de un producto con precio publicado y pulsa <b>Seguir precio</b>. Aparecerá aquí automáticamente para consultar sus cambios.</p>
+            <p>Abre la ficha de un producto o servicio con precio numérico publicado y pulsa <b>Seguir precio</b>. Aparecerá aquí automáticamente para consultar sus cambios.</p>
           </div>
           <Link className="plus-button plus-button-secondary" to="/results">Explorar productos</Link>
         </div>
