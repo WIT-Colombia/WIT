@@ -64,8 +64,8 @@ function mapBusiness(value: PublicSummary): Business {
 
 function isTrackablePrice(price: PublicOffer['price']): boolean {
   if (price.negotiable) return false;
-  const raw = price.amount ?? price.text;
-  if (raw === null || !/^\d+(?:\.\d{1,2})?$/.test(raw.trim())) return false;
+  const raw = price.amount?.trim() || price.text?.trim() || '';
+  if (!/^\d+(?:\.\d{1,2})?$/.test(raw)) return false;
   const numeric = Number(raw);
   return Number.isFinite(numeric) && numeric > 0;
 }
