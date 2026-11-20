@@ -156,20 +156,36 @@ export default function Plus() {
   }), [places, routeIds]);
   const availableFavorites = useMemo(() => places.filter(place => favorites.includes(place.id) && getBusinessCoordinates(place)), [places, favorites]);
   const routeUrl = buildMultiStopRoute(routeBusinesses, travelMode, selection?.coordinates ?? undefined);
+  const overviewCounts = [
+    { label: 'Novedades recientes', count: radar.length, icon: 'radar' as const, href: '#radar' },
+    { label: 'Precios seguidos', count: data?.watches.length ?? 0, icon: 'price' as const, href: '#prices' },
+    { label: 'Colecciones', count: data?.collections.length ?? 0, icon: 'collection' as const, href: '#collections' },
+    { label: 'Búsquedas guardadas', count: data?.searches.length ?? 0, icon: 'compare' as const, href: '#searches' },
+  ];
+  const plusSections = [
+    { label: 'Novedades', href: '#radar', icon: 'radar' as const },
+    { label: 'Precios', href: '#prices', icon: 'price' as const },
+    { label: 'Comparador', href: '#compare', icon: 'compare' as const },
+    { label: 'Colecciones', href: '#collections', icon: 'collection' as const },
+    { label: 'Búsquedas', href: '#searches', icon: 'collection' as const },
+    { label: 'Rutas', href: '#routes', icon: 'route' as const },
+    { label: 'Sin anuncios', href: '#adfree', icon: 'ad-free' as const },
+  ];
 
   function watchOffer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const target = parsePlusTarget(targetValue);
     if (!target || target.targetType !== 'OFFER') { setError('Escribe el enlace de un producto o servicio de Xamuko.'); return; }
-    void run(() => addPlusWatch(target.targetId), 'Producto o servicio añadido al seguimiento de precios.');
+    void run(() => addPlusWatch(target.targetId), 'Producto o servicio añadido al seguimiento de precios.')
+      .then(ok => { if (ok) setTargetValue(''); });
   }
   function addComparison(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const target = parsePlusTarget(compareValue);
     if (!target || target.targetType !== 'OFFER') { setError('Escribe el enlace de un producto o servicio válido.'); return; }
-    if (compareIds.includes(target.targetId)) return;
+    if (compareIds.includes(target.targetId)) { setError('Esta publicación ya está en la comparación.'); return; }
     if (compareIds.length >= 4) { setError('Puedes comparar un máximo de cuatro elementos.'); return; }
-    setCompareIds([...compareIds, target.targetId]); setCompareValue(''); setComparison([]); setError('');
+    setCompareIds([...compareIds, target.targetId]); setCompareValue(''); setComparison([]); setComparisonBusinesses({}); setError('');
   }
   const dateFormat = (value: string) => new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));
 
@@ -179,7 +195,7 @@ export default function Plus() {
       <span className="plus-kicker">MEMBRESÍA XAMUKO</span>
       <h1><span className="plus-hero-crown"><PlusIcon name="crown" size={32}/></span> Xamuko Plus</h1>
       <p>Descubre oportunidades, organiza tus favoritos y aprovecha mejor tu ciudad.</p>
-      <div className="plus-hero-state" role="status">
+      <div className="plus-hero-state" role="status" aria-live="polite">
         {loading ? 'Consultando membresía…' : error && !status ? 'No pudimos verificar tu membresía' : status?.active
           ? 'Tu membresía Plus está activa'
           : !status?.enabled ? 'Xamuko Plus aún no está habilitado' : 'No tienes una membresía Plus vigente'}
@@ -188,6 +204,27 @@ export default function Plus() {
     </header>
     {error && <p className="plus-error" role="alert">{error}</p>}
     {notice && <p className="plus-success" role="status">{notice}</p>}
+    {status?.active && <>
+      <div className="plus-welcome" aria-label="Resumen de tu membresía">
+        <div className="plus-welcome-copy">
+          <span className="plus-overline">TU ESPACIO PERSONAL</span>
+          <h2>Todo lo que te interesa, en un solo lugar.</h2>
+          <p>Explora novedades, sigue precios y organiza tus próximas visitas. Los indicadores corresponden únicamente a tus datos de Xamuko.</p>
+        </div>
+        <div className="plus-welcome-icon" aria-hidden="true"><PlusIcon name="crown" size={42}/></div>
+      </div>
+      <div className="plus-overview" aria-label="Actividad personal de Xamuko Plus">
+        {overviewCounts.map(item => <a key={item.href} href={item.href} className="plus-overview-card">
+          <span className="plus-overview-icon"><PlusIcon name={item.icon} size={22}/></span>
+          <strong>{item.count.toLocaleString('es-CO')}</strong>
+          <span>{item.label}</span>
+          <span className="plus-overview-arrow" aria-hidden="true">↗</span>
+        </a>)}
+      </div>
+      <nav className="plus-section-nav" aria-label="Ir a una herramienta de Xamuko Plus">
+        {plusSections.map(item => <a key={item.href} href={item.href}><PlusIcon name={item.icon} size={17}/>{item.label}</a>)}
+      </nav>
+    </>}
     {!status?.active ? <>
       <section className="plus-subscription-banner" aria-labelledby="plus-subscription-title">
         <div className="plus-subscription-heading"><span className="plus-subscription-emblem"><PlusIcon name="crown" size={29}/></span>
@@ -227,19 +264,20 @@ export default function Plus() {
       <p className="plus-note">Los beneficios se activan solo después de verificar la suscripción. Las funciones gratuitas de Xamuko siguen disponibles para todos.</p>
       <button type="button" className="plus-button plus-button-secondary" disabled={loading} onClick={() => { setLoading(true); void reload().catch(() => setError('No pudimos actualizar la consulta.')).finally(() => setLoading(false)); }}>Verificar otra vez</button>
     </section></> : <>
-      <section className="plus-panel" id="radar">
-        <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2>Tu radar de novedades</h2><p>Productos, servicios y promociones recientes de tus negocios favoritos.</p></div>
+      <section className="plus-panel" id="radar" aria-labelledby="plus-radar-heading">
+        <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2 id="plus-radar-heading">Tu radar de novedades</h2><p>Productos, servicios y promociones recientes de tus negocios favoritos.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.radarEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ radarEnabled: event.target.checked }))}/>Recibir avisos</label></div>
         {radar.length ? <div className="plus-list">{radar.map(item => <Link key={item.type + ':' + item.id} to={item.href} className="plus-list-row">
           <span className="plus-row-symbol"><PlusIcon name="radar" size={19}/></span><span><strong>{item.title}</strong><small>{item.business} · {dateFormat(item.createdAt)}</small></span><span>Ver ›</span></Link>)}</div>
-          : <p className="plus-empty">Aún no hay novedades recientes. Guarda negocios como favoritos para recibir sus nuevas publicaciones.</p>}
+          : <div className="plus-empty"><strong>Tu radar está al día</strong><p>No hay publicaciones recientes de tus favoritos. Guarda negocios para seguir sus próximas novedades.</p><Link to="/favorites">Ver mis favoritos →</Link></div>}
       </section>
 
-      <section className="plus-panel" id="prices">
-        <div className="plus-heading"><div><span>02 · AHORRO</span><h2>Seguimiento de precios</h2><p>Observa precios reales y recibe avisos si bajan.</p></div>
+      <section className="plus-panel" id="prices" aria-labelledby="plus-prices-heading">
+        <div className="plus-heading"><div><span>02 · AHORRO</span><h2 id="plus-prices-heading">Seguimiento de precios</h2><p>Observa precios reales y recibe avisos si bajan.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.priceAlertsEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ priceAlertsEnabled: event.target.checked }))}/>Avisar cuando bajen</label></div>
+        <p className="plus-feature-note">Sigue hasta 100 publicaciones con precio numérico. Las alertas se envían solo si las activas y el precio publicado realmente baja.</p>
         <form className="plus-form" onSubmit={watchOffer}>
           <label>Enlace del producto o servicio<input value={targetValue} onChange={event => setTargetValue(event.target.value)} placeholder="https://xamuko.com/product/…" required/></label>
           <button className="plus-button" disabled={busy}>Seguir precio</button>
@@ -252,7 +290,7 @@ export default function Plus() {
             }, 'Historial actualizado.')}>Historial</button>}
             <button type="button" disabled={busy} onClick={() => void run(() => removePlusWatch(item.id))}>Quitar</button>
           </div></div>)}</div>
-        {!data?.watches.length && <p className="plus-empty">Todavía no sigues ningún precio.</p>}
+        {!data?.watches.length && <div className="plus-empty"><strong>Aún no sigues precios</strong><p>Busca un producto o servicio con precio publicado, copia su enlace de Xamuko y pégalo arriba.</p><Link to="/results">Explorar publicaciones →</Link></div>}
         {history && <div className="plus-history"><h3>Historial de {history.offer.name}</h3>
           <p>Precio actual publicado: {readablePrice(history.offer.price, history.offer.currency ?? 'COP')}</p>
           {history.history.length ? <ul>{history.history.map((point, i) => <li key={point.createdAt + i}>{dateFormat(point.createdAt)} · {point.previousPrice === null ? 'Primer precio registrado' : readablePrice(point.previousPrice, point.previousCurrency ?? 'COP')} → {readablePrice(point.newPrice, point.currency ?? 'COP')}</li>)}</ul> : <p>Sin cambios registrados desde que se habilitó el historial.</p>}
@@ -260,10 +298,12 @@ export default function Plus() {
         </div>}
       </section>
 
-      <section className="plus-panel" id="compare">
-        <div className="plus-heading"><div><span>03 · COMPARACIÓN</span><h2>Compara tus opciones</h2><p>Selecciona hasta cuatro productos o servicios publicados.</p></div></div>
+      <section className="plus-panel" id="compare" aria-labelledby="plus-compare-heading">
+        <div className="plus-heading"><div><span>03 · COMPARACIÓN</span><h2 id="plus-compare-heading">Compara tus opciones</h2><p>Selecciona hasta cuatro productos o servicios publicados.</p></div></div>
+        <p className="plus-feature-note">Agrega entre dos y cuatro enlaces de publicaciones de Xamuko. Solo se mostrarán datos disponibles y verificados.</p>
         <form className="plus-form" onSubmit={addComparison}><label>Enlace de producto o servicio<input value={compareValue} onChange={event => setCompareValue(event.target.value)} placeholder="Pega un enlace de Xamuko" required/></label><button className="plus-button" disabled={busy || compareIds.length >= 4}>Añadir a comparación</button></form>
-        {compareIds.length > 0 && <><div className="plus-chips">{compareIds.map((id, i) => <button key={id} type="button" onClick={() => { setCompareIds(compareIds.filter(x => x !== id)); setComparison([]); }}>Opción {i + 1} ×</button>)}</div>
+        {compareIds.length === 0 && <p className="plus-empty">Elige dos publicaciones para ver sus precios, negocios y ubicaciones uno junto al otro.</p>}
+        {compareIds.length > 0 && <><p className="plus-selection-caption">{compareIds.length} de 4 opciones seleccionadas</p><div className="plus-chips">{compareIds.map((id, i) => <button key={id} type="button" onClick={() => { setCompareIds(compareIds.filter(x => x !== id)); setComparison([]); }}>Opción {i + 1} ×</button>)}</div>
           <button className="plus-button plus-button-secondary" type="button" disabled={busy || compareIds.length < 2}
             onClick={() => void run(async () => { const result = await comparePlusOffers(compareIds);
               setComparison(result.offers);
@@ -299,8 +339,8 @@ export default function Plus() {
         })}</div>}
       </section>
 
-      <section className="plus-panel" id="collections">
-        <div className="plus-heading"><div><span>04 · ORGANIZACIÓN</span><h2>Tus colecciones</h2><p>Listas personales para guardar negocios, productos y servicios.</p></div></div>
+      <section className="plus-panel" id="collections" aria-labelledby="plus-collections-heading">
+        <div className="plus-heading"><div><span>04 · ORGANIZACIÓN</span><h2 id="plus-collections-heading">Tus colecciones</h2><p>Listas personales para guardar negocios, productos y servicios.</p></div></div>
         <form className="plus-form" onSubmit={event => { event.preventDefault(); if (collectionName.trim()) void run(() => createPlusCollection(collectionName.trim()), 'Colección creada.').then(ok => { if (ok) setCollectionName(''); }); }}>
           <label>Nombre de la colección<input value={collectionName} onChange={event => setCollectionName(event.target.value)} maxLength={80} placeholder="Ej. Mis cafés favoritos" required/></label><button className="plus-button" disabled={busy}>Crear colección</button>
         </form>
@@ -319,8 +359,8 @@ export default function Plus() {
         {!data?.collections.length && <p className="plus-empty">Crea una colección para comenzar.</p>}
       </section>
 
-      <section className="plus-panel" id="searches">
-        <div className="plus-heading"><div><span>04 · ORGANIZACIÓN</span><h2>Búsquedas guardadas</h2><p>Guarda una búsqueda que puedas repetir cuando quieras.</p></div></div>
+      <section className="plus-panel" id="searches" aria-labelledby="plus-searches-heading">
+        <div className="plus-heading"><div><span>04 · ORGANIZACIÓN</span><h2 id="plus-searches-heading">Búsquedas guardadas</h2><p>Guarda una búsqueda que puedas repetir cuando quieras.</p></div></div>
         <form className="plus-form" onSubmit={event => {
           event.preventDefault();
           void run(() => createPlusSearch({
@@ -339,19 +379,20 @@ export default function Plus() {
         </div>)}</div>
       </section>
 
-      <section className="plus-panel" id="routes">
-        <div className="plus-heading"><div><span>05 · EXPLORACIÓN</span><h2>Rutas con varios negocios</h2><p>Selecciona entre dos y cuatro negocios favoritos con ubicación registrada.</p></div></div>
+      <section className="plus-panel" id="routes" aria-labelledby="plus-routes-heading">
+        <div className="plus-heading"><div><span>05 · EXPLORACIÓN</span><h2 id="plus-routes-heading">Rutas con varios negocios</h2><p>Selecciona entre dos y cuatro negocios favoritos con ubicación registrada.</p></div></div>
         <div className="plus-routes-list">{availableFavorites.map(place => <label key={place.id}>
           <input type="checkbox" checked={routeIds.includes(place.id)} disabled={!routeIds.includes(place.id) && routeIds.length >= 4}
             onChange={() => setRouteIds(current => current.includes(place.id) ? current.filter(x => x !== place.id) : [...current, place.id])}/>
           <span>{place.name}</span></label>)}</div>
-        {!availableFavorites.length && <p className="plus-empty">Primero guarda como favoritos negocios con ubicación disponible.</p>}
+        {!availableFavorites.length && <div className="plus-empty"><strong>Tu ruta comienza con tus favoritos</strong><p>Guarda al menos dos negocios con ubicación verificada para armar un recorrido.</p><Link to="/favorites">Ver mis favoritos →</Link></div>}
+        {!!availableFavorites.length && <p className="plus-selection-caption">{routeIds.length} de 4 negocios seleccionados</p>}
         <div className="plus-route-actions"><label>Transporte <select value={travelMode} onChange={event => setTravelMode(event.target.value as 'driving' | 'walking')}><option value="driving">En vehículo</option><option value="walking">A pie</option></select></label>
           {routeUrl ? <a className="plus-button" href={routeUrl} target="_blank" rel="noopener noreferrer">Abrir ruta en Google Maps</a> : <span>Selecciona al menos dos negocios.</span>}</div>
         <p className="plus-footnote">La ruta se abre en Google Maps; la disponibilidad y el recorrido final dependen de ese servicio. Si compartes tu ubicación, se usará como punto de partida.</p>
       </section>
 
-      <section className="plus-panel plus-adfree"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>Mientras Plus esté activo, se ocultan los espacios publicitarios de terceros. Los negocios y resultados públicos siguen visibles.</p></div></section>
+      <section className="plus-panel plus-adfree" id="adfree" aria-label="Beneficio de experiencia sin publicidad"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>Mientras Plus esté activo, se ocultan los espacios publicitarios de terceros. Los negocios y resultados públicos siguen visibles.</p></div></section>
     </>}
   </PageLayout>;
 }
