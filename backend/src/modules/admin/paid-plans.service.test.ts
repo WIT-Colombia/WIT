@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 process.env.AUTH_ACCESS_TOKEN_SECRET ??= 'paid-plan-switch-test-secret-with-32-characters';
 process.env.DATABASE_URL ??= 'mysql://test:test@127.0.0.1:3306/paid_plans_test';
 
@@ -8,6 +9,20 @@ const { availabilityFromRows, paidPlanKey, paidPlanUpdate, isPaidPlanEnabled, se
 test('ambos planes inician apagados cuando aún no se han configurado', () => {
   assert.deepEqual(availabilityFromRows([]), { businessPro: false, xamukoPlus: false });
   assert.deepEqual(availabilityFromRows([{ key: 'unknown', enabled: true }]), { businessPro: false, xamukoPlus: false });
+});
+
+test('Plus stays OFF without a persisted administrator activation', async () => {
+  const db = { paidPlanAvailability: { findUnique: async () => null } }
+    as unknown as NonNullable<Parameters<typeof isPaidPlanEnabled>[1]>;
+  assert.equal(await isPaidPlanEnabled('xamukoPlus', db), false);
+});
+
+test('the final Plus migration closes the earlier automatic enablement exactly once', async () => {
+  const sql = await readFile(new URL('../../../prisma/migrations/20261120180000_xamuko_plus_admin_only_activation/migration.sql', import.meta.url), 'utf8');
+  assert.match(sql, /VALUES\s*\('xamukoPlus',\s*FALSE/i);
+  assert.match(sql, /ON DUPLICATE KEY UPDATE\s*`enabled`\s*=\s*FALSE/i);
+  assert.match(sql, /WHERE\s+`key`\s*=\s*'xamukoPlus'\s+AND\s+`enabled`\s*=\s*TRUE/i);
+  assert.doesNotMatch(sql, /VALUES\s*\('businessPro'/i);
 });
 
 test('entrada estricta: estado booleano, motivo suficiente y confirmación expresa', () => {
@@ -63,4 +78,12 @@ test('los cambios se auditan una sola vez con motivo, actor y estado anterior', 
   assert.deepEqual(audit[2].newState, { key: 'businessPro', enabled: false });
   assert.equal(audit[2].actorUserId, 'admin-test');
   assert.equal(audit[2].reason, reason);
+  // No reboot or migration is required to switch Plus back OFF in Admin.
+  assert.deepEqual(await setPaidPlanAvailability(admin, 'xamukoPlus', false, reason, db),
+    { businessPro: false, xamukoPlus: false });
+  assert.deepEqual(await setPaidPlanAvailability(admin, 'xamukoPlus', false, reason, db),
+    { businessPro: false, xamukoPlus: false });
+  assert.equal(audit.length, 4);
+  assert.deepEqual(audit[3].previousState, { key: 'xamukoPlus', enabled: true });
+  assert.deepEqual(audit[3].newState, { key: 'xamukoPlus', enabled: false });
 });
