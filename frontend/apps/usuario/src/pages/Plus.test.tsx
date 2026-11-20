@@ -175,6 +175,8 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Crear colección' }));
     await waitFor(() => expect(api.createPlusCollection).toHaveBeenCalledWith('Cafeterías'));
+    await screen.findByText('Colección creada.');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Guardar búsqueda' })).not.toBeDisabled());
     fireEvent.change(screen.getByPlaceholderText('Ej. Panaderías cerca'), {
       target: { value: 'Desayunos' },
     });
