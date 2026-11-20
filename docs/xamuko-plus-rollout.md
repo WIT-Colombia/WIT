@@ -73,3 +73,26 @@ No efectuar modificaciones directas a producción ni habilitar cobros sin prueba
 | 15. Seguridad | Revisar solicitudes cruzadas entre dos cuentas y registros administrativos | No hay acceso transversal; cambios de membresía quedan auditados |
 
 **Criterio de cierre:** registrar evidencia de los 15 casos y obtener resultados satisfactorios. Si falta sesión real o falla un caso crítico, mantener el estado **PENDIENTE**, sin declarar la versión apta para producción. No habilitar cobros ni efectuar despliegue por el solo hecho de aprobar el pipeline.
+
+## Cierre de la demostración y activación exclusiva desde Admin (20 de noviembre de 2026)
+
+**Configuración deseada tras el despliegue del backend actualizado:** `PaidPlanAvailability.xamukoPlus = false`. El plan **no se activa automáticamente** durante el arranque, por correos privilegiados ni a través de parámetros `?preview=1`. La plataforma de Usuarios deja de incluir la vista de demostración con datos ficticios, sin alterar las funcionalidades reales que dependen del backend.
+
+### Migración de cierre (nueva, sin reescribir historia)
+
+La migración inicial `20261119130000_paid_plan_availability` creó `xamukoPlus = false`, pero `20261119213000_enable_xamuko_plus_requests` lo habilitó posteriormente. Ambas permanecen intactas para preservar el historial de Prisma.
+
+La nueva migración `20261120180000_xamuko_plus_admin_only_activation` desactiva Xamuko Plus **una sola vez**, registra la transición cuando anteriormente estaba activo y conserva suscripciones, solicitudes, preferencias, colecciones, búsquedas, objetivos e historial. No modifica la disponibilidad de Business PRO. **No se reinicia el estado en cada arranque ni nuevo despliegue:** después de aplicar esta migración, las únicas activaciones y desactivaciones posteriores se hacen desde **Admin → Xamuko Plus**, por un `SUPER_ADMIN`, con justificación de al menos 12 caracteres, confirmación `CONFIRMAR` y auditoría.
+
+No confundir la disponibilidad global con una membresía individual: activar el interruptor no otorga acceso Plus a todos los usuarios. Cada operación comprueba además una suscripción activa, vigente y no revocada.
+
+### Validación pendiente después de desplegar el backend
+
+1. Completar copia de seguridad y la aprobación habitual del esquema. Revisar `prisma migrate status`, aplicar la nueva migración y confirmar en la BD que `xamukoPlus = 0`, sin alterar Business PRO.
+2. Verificar que `GET /api/v1/public/paid-plans` devuelve `xamukoPlus: false`. Con cuenta autenticada, `GET /api/v1/user/plus/status` debe informar `enabled: false, active: false`. No registrar datos privados de usuario en la evidencia.
+3. Abrir `/plus?preview=1#prices`: debe presentar la **página real**, sin atajos de demostración, datos simulados ni herramientas activas por el parámetro de URL.
+4. Desde Admin, habilitar Plus *temporalmente para QA* con justificación y confirmar que el cambio se refleja en el API público y en la auditoría. Otorgar una membresía de prueba únicamente mediante el control administrativo autorizado.
+5. Ejecutar los 15 escenarios funcionales, de seguridad y responsive indicados arriba. Comprobar con una segunda cuenta sin suscripción que no puede operar funciones premium.
+6. Al terminar las pruebas, **deshabilitar nuevamente Xamuko Plus desde Admin**, comprobar el estado global en el API, la preservación de los datos de suscriptores y el segundo evento de auditoría. No habilitar cobros.
+
+**Criterio de publicación:** no anunciar el plan activo hasta tener la validación real del backend desplegado y una activación administrativa expresa.
