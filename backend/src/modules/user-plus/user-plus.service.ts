@@ -148,7 +148,7 @@ export async function setPlusPreferences(userId: string, next: { radarEnabled?: 
     else if (!result.radarEnabled || !result.priceAlertsEnabled) await tx.userPlusDigestEvent.deleteMany({
       where: { userId, kind: { in: [
         ...(!result.radarEnabled ? ['RADAR'] : []),
-        ...(!result.priceAlertsEnabled ? ['PRICE', 'TARGET'] : []),
+        ...(!result.priceAlertsEnabled ? ['PRICE'] : []),
       ] } },
     });
     return result;
@@ -351,8 +351,11 @@ export async function setPlusPriceTarget(userId: string, watchId: string, amount
   });
   if (!watch) throw new AppError(404, 'PLUS_WATCH_NOT_FOUND', 'No encontramos el seguimiento de precios.');
   if (amount === null) {
-    await prisma.userPlusPriceWatch.updateMany({ where: { id: watchId, userId },
-      data: { targetAmount: null, targetCurrency: null, targetNotifiedAt: null } });
+    await prisma.$transaction(async tx => {
+      await tx.userPlusPriceWatch.updateMany({ where: { id: watchId, userId },
+        data: { targetAmount: null, targetCurrency: null, targetNotifiedAt: null } });
+      await tx.userPlusDigestEvent.deleteMany({ where: { userId, sourceId: watch.offerId, kind: 'TARGET' } });
+    });
     return { targetAmount: null, targetCurrency: null, targetNotifiedAt: null };
   }
   const offer = await prisma.businessOffer.findFirst({
@@ -365,14 +368,23 @@ export async function setPlusPriceTarget(userId: string, watchId: string, amount
   const target = new Prisma.Decimal(amount);
   if (!target.gt(0) || !target.lt(current) || target.gt('9999999999.99'))
     throw new AppError(422, 'PLUS_INVALID_TARGET', 'El precio objetivo debe ser mayor que cero y menor que el precio actual.');
-  await prisma.userPlusPriceWatch.updateMany({ where: { id: watchId, userId },
-    data: { targetAmount: target, targetCurrency: offer.currency, targetNotifiedAt: null } });
+  await prisma.$transaction(async tx => {
+    await tx.userPlusPriceWatch.updateMany({ where: { id: watchId, userId },
+      data: { targetAmount: target, targetCurrency: offer.currency, targetNotifiedAt: null } });
+    await tx.userPlusDigestEvent.deleteMany({ where: { userId, sourceId: watch.offerId, kind: 'TARGET' } });
+  });
   return { targetAmount: target.toString(), targetCurrency: offer.currency, targetNotifiedAt: null };
 }
 
 export async function deletePlusWatch(userId: string, id: string) {
   await requirePlus(userId);
-  await prisma.userPlusPriceWatch.deleteMany({ where: { id, userId } });
+  const rows = await prisma.userPlusPriceWatch.findMany({ where: { id, userId }, select: { offerId: true } });
+  await prisma.$transaction(async tx => {
+    await tx.userPlusPriceWatch.deleteMany({ where: { id, userId } });
+    if (rows.length) await tx.userPlusDigestEvent.deleteMany({
+      where: { userId, kind: 'TARGET', sourceId: { in: rows.map(row => row.offerId) } },
+    });
+  });
   return { ok: true };
 }
 export async function plusPriceHistory(userId: string, offerId: string) {
