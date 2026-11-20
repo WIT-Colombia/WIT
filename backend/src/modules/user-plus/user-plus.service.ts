@@ -2,6 +2,7 @@ import { prisma } from '../../config/prisma.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { isPaidPlanEnabled } from '../admin/paid-plans.service.js';
 import { publicReleaseWhere } from '../zones/zones.service.js';
+import { effectivePlusPrice } from './user-plus-events.service.js';
 
 const publishedBusiness = {
   publicationStatus: 'PUBLISHED' as const,
@@ -67,7 +68,7 @@ export async function plusOverview(userId: string) {
     prisma.userPlusSavedSearch.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 }),
     prisma.userPlusPriceWatch.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 100,
       select: { id: true, offerId: true, createdAt: true,
-        offer: { select: { name: true, kind: true, priceAmount: true, priceText: true, currency: true, active: true, adultOnly: true, deletedAt: true,
+        offer: { select: { name: true, kind: true, priceAmount: true, priceText: true, negotiable: true, currency: true, active: true, adultOnly: true, deletedAt: true,
           publicationStatus: true, administrativeStatus: true,
           business: { select: { name: true, publicId: true, adultOnly: true, publicationStatus: true, visibilityStatus: true,
             lifecycleStatus: true, deletionStatus: true, businessAccount: { select: { status: true } } } },
@@ -116,7 +117,7 @@ export async function plusOverview(userId: string) {
       id: row.id, offerId: row.offerId, createdAt: row.createdAt, kind: item.kind,
       name: available ? item.name : 'Publicación no disponible',
       currency: available ? item.currency : null,
-      price: available ? item.priceAmount?.toString() ?? null : null,
+      price: available ? effectivePlusPrice(item.priceAmount, item.priceText, item.negotiable)?.toString() ?? null : null,
       priceText: available ? item.priceText : null,
       businessName: available ? business.name : '',
       available,
@@ -297,9 +298,9 @@ export async function deletePlusSearch(userId: string, id: string) {
 
 export async function addPlusWatch(userId: string, offerId: string) {
   await requirePlus(userId);
-  const offer = await prisma.businessOffer.findFirst({ where: { id: offerId, ...await safeOfferWhere(await adultConsent(userId)) }, select: { id: true, priceAmount: true, negotiable: true } });
+  const offer = await prisma.businessOffer.findFirst({ where: { id: offerId, ...await safeOfferWhere(await adultConsent(userId)) }, select: { id: true, priceAmount: true, priceText: true, negotiable: true } });
   if (!offer) throw new AppError(404, 'PLUS_OFFER_NOT_AVAILABLE', 'Producto o servicio no publicado.');
-  if (!offer.priceAmount || offer.negotiable) throw new AppError(422, 'PLUS_PRICE_NOT_NUMERIC',
+  if (!effectivePlusPrice(offer.priceAmount, offer.priceText, offer.negotiable)) throw new AppError(422, 'PLUS_PRICE_NOT_NUMERIC',
     'Este artículo aún no tiene un precio numérico verificable para seguimiento.');
   const existing = await prisma.userPlusPriceWatch.findUnique({
     where: { userId_offerId: { userId, offerId: offer.id } },
@@ -321,13 +322,13 @@ export async function deletePlusWatch(userId: string, id: string) {
 export async function plusPriceHistory(userId: string, offerId: string) {
   await requirePlus(userId);
   const offer = await prisma.businessOffer.findFirst({ where: { id: offerId, ...await safeOfferWhere(await adultConsent(userId)) },
-    select: { id: true, name: true, priceAmount: true, currency: true } });
+    select: { id: true, name: true, priceAmount: true, priceText: true, negotiable: true, currency: true } });
   if (!offer) throw new AppError(404, 'PLUS_OFFER_NOT_AVAILABLE', 'El elemento no está disponible.');
   const rows = await prisma.offerPriceHistory.findMany({
     where: { offerId }, orderBy: { createdAt: 'desc' }, take: 50,
     select: { previousPrice: true, newPrice: true, previousCurrency: true, currency: true, createdAt: true },
   });
-  return { offer: { id: offer.id, name: offer.name, price: offer.priceAmount?.toString() ?? null, currency: offer.currency },
+  return { offer: { id: offer.id, name: offer.name, price: effectivePlusPrice(offer.priceAmount, offer.priceText, offer.negotiable)?.toString() ?? null, currency: offer.currency },
     history: rows.map(item => ({ ...item,
       previousPrice: item.previousPrice?.toString() ?? null,
       newPrice: item.newPrice?.toString() ?? null })) };
