@@ -42,7 +42,7 @@ const business = {
 function setupOffer(price: number | undefined = 32000) {
   mocks.getOfferPageDetail.mockResolvedValue({
     offer: { id: uuid, businessId: business.id, name: 'Producto de prueba', description: '', price, priceTrackable: price !== undefined && price > 0,
-      priceLabel: price !== undefined ? '$32.000 COP' : 'Consultar precio', image: '', isOffer: false },
+      priceLabel: price !== undefined ? '$ ' + price.toLocaleString('es-CO') + ' COP' : 'Consultar precio', image: '', isOffer: false },
     business,
   });
 }
@@ -113,6 +113,21 @@ describe('Ficha de producto: seguir precio en un toque', () => {
     expect(readPlusComparison('user-1', true)).toEqual([uuid]);
     expect(readPlusComparison('user-1')).toEqual([]);
     expect(screen.getByTestId('destination')).toHaveTextContent('/plus?preview=1#compare');
+  });
+
+  it('renders Seguir precio for a published product showing $ 2.000 COP when the legacy flag is absent', async () => {
+    mocks.getOfferPageDetail.mockResolvedValue({
+      offer: { id: uuid, businessId: business.id, name: 'Pan queso', description: '',
+        price: undefined, priceTrackable: false, priceLabel: '$ 2.000 COP', image: '', isOffer: false },
+      business,
+    });
+    mount();
+    const follow = await screen.findByRole('button', { name: 'Seguir precio' });
+    const compare = screen.getByRole('button', { name: 'Comparar precio' });
+    expect(follow).toBeEnabled();
+    expect(compare).toBeEnabled();
+    fireEvent.click(follow);
+    await waitFor(() => expect(mocks.addPlusWatch).toHaveBeenCalledWith(uuid));
   });
 
   it('does not offer price tracking on products without a positive numeric price', async () => {
