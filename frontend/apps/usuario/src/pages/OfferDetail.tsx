@@ -200,8 +200,13 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const whatsappUrl = business.whatsapp ? whatsappLink(business.whatsapp, whatsappMessage) : null;
   const isRealPublishedOffer = isRealOfferId(item.id);
   const canDemo = canUsePlusVisualPreview(user);
-  const canFollowPrice = (isRealPublishedOffer && item.priceTrackable === true)
-    || (!isRealPublishedOffer && canDemo && isProduct && typeof product.price === "number" && product.price > 0);
+  // A numeric price displayed in a published product may come from legacy price text.
+  // Keep the action visible even if that field had no priceTrackable flag; the API verifies it.
+  const displayedAmount = (item.priceLabel ?? '').trim().match(/^(?:COP\s*)?\$?\s*([\d.,]+)\s*(?:COP)?$/i)?.[1];
+  const displayedNumeric = displayedAmount
+    ? Number(displayedAmount.replace(/\./g, '').replace(',', '.')) > 0 : false;
+  const canFollowPrice = (isRealPublishedOffer || canDemo)
+    && (item.priceTrackable === true || displayedNumeric || (isProduct && typeof product.price === 'number' && product.price > 0));
   const showComparePrice = isRealPublishedOffer || canDemo;
   const handleFollowPrice = () => requireAccount(() => {
     if (watchBusy || watchFollowed) return;
