@@ -1784,6 +1784,7 @@ model UserPlusDigestEvent {
   id         String   @id @default(uuid()) @db.Char(36)
   userId     String   @db.Char(36)
   kind       String   @db.VarChar(16)
+  adultOnly  Boolean  @default(false)
   sourceId   String   @db.Char(36)
   createdAt  DateTime @default(now()) @db.DateTime(3)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
