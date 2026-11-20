@@ -8,7 +8,7 @@ import { plusLocalDateTime } from './user-plus-scheduling.js';
  * or multiple app instances cannot publish duplicate summaries.
  */
 export async function dispatchDuePlusDigests(now = new Date(), db = prisma) {
-  if (!(await isPaidPlanEnabled('xamukoPlus'))) return { sent: 0 };
+  if (!(await isPaidPlanEnabled('xamukoPlus', db))) return { sent: 0 };
   // Page through recipient IDs so a large or already-delivered queue cannot starve others.
   const candidates: Array<{ userId: string }> = [];
   for (let offset = 0; offset < 3000; offset += 300) {
