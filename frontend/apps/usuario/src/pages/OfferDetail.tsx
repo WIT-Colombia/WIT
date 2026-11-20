@@ -16,6 +16,7 @@ import { useAuth } from "../context/AuthContext";
 import { PlusIcon } from "../components/PlusIcon";
 import { addPlusWatch, fetchPlusStatus } from "../services/userPlusService";
 import { canUsePlusVisualPreview } from "../services/plusPreviewAccess";
+import { appendPlusComparison } from "../services/plusComparisonSelection";
 import { activeBusinessContext, createAnalyticsInteractionId, recordBusinessEvent, type AnalyticsContext } from "../services/analyticsService";
 import { whatsappLink } from "../utils/whatsapp";
 import "./OfferDetail.css";
@@ -41,6 +42,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const [watchBusy, setWatchBusy] = useState(false);
   const [watchFollowed, setWatchFollowed] = useState(false);
   const [watchError, setWatchError] = useState("");
+  const [compareError, setCompareError] = useState("");
   const [offer, setOffer] = useState<Product | Service | undefined>(() =>
     kind === "product" ? products.find((item) => item.id === id) : services.find((item) => item.id === id),
   );
@@ -97,6 +99,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
     setWatchBusy(false);
     setWatchFollowed(false);
     setWatchError("");
+    setCompareError("");
 
     void (async () => {
       try {
@@ -195,7 +198,11 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const phone = business.phone;
   const whatsappMessage = `¡Hola! Vi el ${isProduct ? "producto" : "servicio"} ${item.name} en tu perfil de XAMUKO y quisiera recibir más información. ¡Gracias!`;
   const whatsappUrl = business.whatsapp ? whatsappLink(business.whatsapp, whatsappMessage) : null;
-  const canFollowPrice = isRealOfferId(item.id) && item.priceTrackable === true;
+  const isRealPublishedOffer = isRealOfferId(item.id);
+  const canDemo = canUsePlusVisualPreview(user);
+  const canFollowPrice = (isRealPublishedOffer && item.priceTrackable === true)
+    || (!isRealPublishedOffer && canDemo && isProduct && typeof product.price === "number" && product.price > 0);
+  const showComparePrice = isRealPublishedOffer || canDemo;
   const handleFollowPrice = () => requireAccount(() => {
     if (watchBusy || watchFollowed) return;
     setWatchBusy(true);
@@ -203,17 +210,18 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
     void (async () => {
       try {
         const membership = await fetchPlusStatus();
-        if (membership.active) {
+        if (membership.active && isRealPublishedOffer) {
           await addPlusWatch(item.id);
           setWatchFollowed(true);
           return;
         }
-        navigate(canUsePlusVisualPreview(user)
-          ? `/plus?preview=1&watch=${encodeURIComponent(item.id)}` : "/plus");
+        navigate(canDemo
+          ? (isRealPublishedOffer ? `/plus?preview=1&watch=${encodeURIComponent(item.id)}` : '/plus?preview=1')
+          : "/plus");
       } catch (cause) {
         // The authorized UI demonstration does not need the new production API.
         if (canUsePlusVisualPreview(user)) {
-          navigate(`/plus?preview=1&watch=${encodeURIComponent(item.id)}`);
+          navigate(isRealPublishedOffer ? `/plus?preview=1&watch=${encodeURIComponent(item.id)}` : '/plus?preview=1');
           return;
         }
         setWatchError(cause instanceof ApiError && cause.status === 403
@@ -223,6 +231,27 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
         setWatchBusy(false);
       }
     })();
+  });
+  const handleComparePrice = () => requireAccount(() => {
+    if (!user?.id) return;
+    setCompareError("");
+    const preview = canUsePlusVisualPreview(user);
+    if (!isRealPublishedOffer) {
+      // Local catalog samples cannot enter a real comparison or a paid API.
+      if (preview) navigate('/plus?preview=1');
+      return;
+    }
+    // Save selection in the user's tab; the backend validates membership and offers on comparison.
+    const saved = appendPlusComparison(user.id, item.id, preview);
+    if (saved.outcome === 'full') {
+      setCompareError('Ya seleccionaste cuatro opciones. Abre Plus para comparar o eliminar alguna.');
+      return;
+    }
+    if (saved.outcome === 'invalid') {
+      setCompareError('No fue posible seleccionar esta publicación.');
+      return;
+    }
+    navigate(preview ? '/plus?preview=1#compare' : '/plus#compare');
   });
   const handleLike = () => {
     setLikeError(null);
@@ -265,18 +294,6 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           {item.description?.trim() && <p>{item.description}</p>}
           <strong className="offer-detail-price">{priceView}</strong>
           {deadlineLabel && <small className="offer-detail-valid-until">Oferta válida hasta el {deadlineLabel}</small>}
-          {canFollowPrice && <div className="offer-detail-follow-wrap">
-            <button type="button" className={`offer-detail-follow-price${watchFollowed ? " is-following" : ""}`}
-              onClick={handleFollowPrice} disabled={watchBusy || watchFollowed}
-              aria-pressed={watchFollowed}>
-              <PlusIcon name="price" size={19}/>
-              {watchFollowed ? "Siguiendo precio" : watchBusy ? "Verificando Plus…" : "Seguir precio"}
-            </button>
-            {watchFollowed
-              ? <Link className="offer-detail-follow-detail" to="/plus#prices">Ver mis precios seguidos</Link>
-              : <small>Beneficio Xamuko Plus · Recibe avisos de rebajas si los activas.</small>}
-            {watchError && <p className="offer-detail-follow-error" role="alert">{watchError}</p>}
-          </div>}
           <Link className="offer-business-card" to={`/business/${business.id}`}>
             <img src={business.logo || business.image} alt="" />
             <span><small>EN ESTE ESTABLECIMIENTO</small><b>{business.name}</b><em>{business.address}</em></span>
@@ -285,10 +302,18 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           <div className="offer-detail-contact-actions">
             {whatsappUrl && <a className="offer-detail-contact whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => recordBusinessEvent(business.id, "WHATSAPP_CLICK", "click", undefined, analyticsContextRef.current)}>WhatsApp</a>}
             {phone && <a className="offer-detail-contact phone" href={`tel:${phone}`} onClick={() => recordBusinessEvent(business.id, "PHONE_CLICK", "click", undefined, analyticsContextRef.current)}><PhoneIcon />Llamar</a>}
+            {showComparePrice && <button type="button" className="offer-detail-contact plus-compare" onClick={handleComparePrice}>
+              <PlusIcon name="compare" size={19}/> Comparar precio
+            </button>}
+            {canFollowPrice && <button type="button" className={`offer-detail-contact plus-watch${watchFollowed ? " is-following" : ""}`}
+              onClick={handleFollowPrice} disabled={watchBusy || watchFollowed} aria-pressed={watchFollowed}>
+              <PlusIcon name="price" size={19}/>
+              {watchFollowed ? "Siguiendo precio" : watchBusy ? "Verificando Plus…" : "Seguir precio"}
+            </button>}
           </div>
-          {isRealOfferId(item.id) && <div className="offer-detail-plus-links">
-            <Link to={`/plus?compare=${encodeURIComponent(item.id)}`}>≍ Comparar con Plus</Link>
-          </div>}
+          {watchFollowed && <Link className="offer-detail-follow-detail" to="/plus#prices">Ver mis precios seguidos</Link>}
+          {watchError && <p className="offer-detail-follow-error" role="alert">{watchError}</p>}
+          {compareError && <p className="offer-detail-follow-error" role="alert">{compareError}</p> 
           <div className="offer-detail-actions">
             <div className="offer-detail-like-control">
               <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`offer-detail-thumb-button${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}>
