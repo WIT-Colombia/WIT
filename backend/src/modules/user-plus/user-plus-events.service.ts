@@ -21,7 +21,7 @@ export function effectivePlusPrice(amount: Prisma.Decimal | null, text: string |
   }
 }
 
-export async function eligibleUsers(tx: Tx, ids: string[], kind: 'radar' | 'price', adultOnly: boolean) {
+export async function eligibleUsers(tx: Tx, ids: string[], kind: 'radar' | 'price' | 'target', adultOnly: boolean) {
   if (!ids.length || !(await isPaidPlanEnabled('xamukoPlus', tx))) return [];
   const now = new Date();
   const unique = [...new Set(ids)];
@@ -36,7 +36,9 @@ export async function eligibleUsers(tx: Tx, ids: string[], kind: 'radar' | 'pric
   const active = new Set(members.map(m => m.userId));
   // Commercial alerts are opt-in: missing preference rows must never send notifications.
   const optedIn = new Set(preferences.filter(p => kind === 'radar' ? p.radarEnabled : p.priceAlertsEnabled).map(p => p.userId));
-  return people.filter(person => active.has(person.id) && optedIn.has(person.id)
+  // Setting a specific price objective is an explicit opt-in for that one item,
+  // independent of the optional generic notifications for every price reduction.
+  return people.filter(person => active.has(person.id) && (kind === 'target' || optedIn.has(person.id))
     && (adultOnly === false || person.adultContentEnabled)).map(person => person.id);
 }
 
@@ -79,12 +81,17 @@ export async function recordPlusPriceChange(tx: Tx, input: {
     select: { id: true, userId: true, targetAmount: true, targetCurrency: true, targetNotifiedAt: true },
     take: 2000 });
   if (!watchRows.length) return;
-  const recipients = new Set(await eligibleUsers(tx, watchRows.map(w => w.userId), 'price', input.adultOnly));
+  const [regularIds, targetIds] = await Promise.all([
+    eligibleUsers(tx, watchRows.map(w => w.userId), 'price', input.adultOnly),
+    eligibleUsers(tx, watchRows.filter(w => w.targetAmount !== null && w.targetNotifiedAt === null)
+      .map(w => w.userId), 'target', input.adultOnly),
+  ]);
+  const regularRecipients = new Set(regularIds);
+  const targetRecipients = new Set(targetIds);
   const targetUsers: string[] = [];
   const dropUsers: string[] = [];
   for (const watch of watchRows) {
-    if (!recipients.has(watch.userId)) continue;
-    const hitTarget = watch.targetAmount !== null && watch.targetNotifiedAt === null
+    const hitTarget = targetRecipients.has(watch.userId) && watch.targetAmount !== null && watch.targetNotifiedAt === null
       && watch.targetCurrency === input.currency && input.newPrice.lte(watch.targetAmount);
     if (hitTarget) {
       // Atomic one-shot claim; changing the objective re-arms it intentionally.
@@ -94,7 +101,7 @@ export async function recordPlusPriceChange(tx: Tx, input: {
         data: { targetNotifiedAt: new Date() },
       });
       if (claimed.count) targetUsers.push(watch.userId);
-    } else if (dropped) dropUsers.push(watch.userId);
+    } else if (dropped && regularRecipients.has(watch.userId)) dropUsers.push(watch.userId);
   }
   await dispatchPlusAlert(tx, targetUsers, {
     kind: 'TARGET', sourceType: 'PLUS_PRICE_TARGET', sourceId: input.offerId,
