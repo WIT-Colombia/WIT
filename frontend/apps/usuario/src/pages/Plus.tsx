@@ -57,6 +57,7 @@ export default function Plus() {
   const [purchaseBusy, setPurchaseBusy] = useState(false);
   const [data, setData] = useState<PlusOverview | null>(null);
   const [radar, setRadar] = useState<PlusRadarItem[]>([]);
+  const [radarAvailable, setRadarAvailable] = useState(true);
   const [places, setPlaces] = useState<Business[]>([]);
   const [routeIds, setRouteIds] = useState<string[]>([]);
   const [travelMode, setTravelMode] = useState<'driving' | 'walking'>('driving');
@@ -100,10 +101,11 @@ export default function Plus() {
       if (overviewResult.status === 'rejected') throw overviewResult.reason;
       setData(overviewResult.value);
       setRadar(radarResult.status === 'fulfilled' ? radarResult.value.items : []);
+      setRadarAvailable(radarResult.status === 'fulfilled');
       setError(radarResult.status === 'rejected'
         ? 'No pudimos consultar las novedades recientes. Tus demás herramientas Plus siguen disponibles.' : '');
     } else if (epoch === requestEpoch.current) {
-      setData(null); setRadar([]); setHistory(null); setComparison([]); setComparisonBusinesses({});
+      setData(null); setRadar([]); setRadarAvailable(true); setHistory(null); setComparison([]); setComparisonBusinesses({});
     }
   }, [user?.id]);
 
@@ -179,7 +181,7 @@ export default function Plus() {
   const availableFavorites = useMemo(() => places.filter(place => favorites.includes(place.id) && getBusinessCoordinates(place)), [places, favorites]);
   const routeUrl = buildMultiStopRoute(routeBusinesses, travelMode, selection?.coordinates ?? undefined);
   const overviewCounts = [
-    { label: 'Novedades recientes', count: radar.length, icon: 'radar' as const, href: '#radar' },
+    { label: 'Novedades recientes', count: radarAvailable ? radar.length : null, icon: 'radar' as const, href: '#radar' },
     { label: 'Precios seguidos', count: data?.watches.length ?? 0, icon: 'price' as const, href: '#prices' },
     { label: 'Colecciones', count: data?.collections.length ?? 0, icon: 'collection' as const, href: '#collections' },
     { label: 'Búsquedas guardadas', count: data?.searches.length ?? 0, icon: 'compare' as const, href: '#searches' },
@@ -238,7 +240,7 @@ export default function Plus() {
       <div className="plus-overview" aria-label="Actividad personal de Xamuko Plus">
         {overviewCounts.map(item => <a key={item.href} href={item.href} className="plus-overview-card">
           <span className="plus-overview-icon"><PlusIcon name={item.icon} size={22}/></span>
-          <strong>{item.count.toLocaleString('es-CO')}</strong>
+          <strong>{item.count === null ? '—' : item.count.toLocaleString('es-CO')}</strong>
           <span>{item.label}</span>
           <span className="plus-overview-arrow" aria-hidden="true">↗</span>
         </a>)}
@@ -295,7 +297,8 @@ export default function Plus() {
         <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO</span><h2 id="plus-radar-heading">Tu radar de novedades</h2><p>Productos, servicios y promociones recientes de tus negocios favoritos.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.radarEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ radarEnabled: event.target.checked }))}/>Recibir avisos</label></div>
-        {radar.length ? <div className="plus-list">{radar.map(item => <Link key={item.type + ':' + item.id} to={item.href} className="plus-list-row">
+        {!radarAvailable ? <p className="plus-empty">El radar está temporalmente fuera de servicio. Tus demás funciones Plus siguen disponibles.</p>
+          : radar.length ? <div className="plus-list">{radar.map(item => <Link key={item.type + ':' + item.id} to={item.href} className="plus-list-row">
           <span className="plus-row-symbol"><PlusIcon name="radar" size={19}/></span><span><strong>{item.title}</strong><small>{item.business} · {dateFormat(item.createdAt)}</small></span><span>Ver ›</span></Link>)}</div>
           : <div className="plus-empty"><strong>Tu radar está al día</strong><p>No hay publicaciones recientes de tus favoritos. Guarda negocios para seguir sus próximas novedades.</p><Link to="/favorites">Ver mis favoritos →</Link></div>}
       </section>
