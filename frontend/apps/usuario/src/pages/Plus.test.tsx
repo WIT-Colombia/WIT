@@ -224,7 +224,7 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     } });
     renderPlus();
     await screen.findByRole('combobox', { name: 'Hora del resumen' });
-    fireEvent.change(screen.getByRole('textbox', { name: 'Zona horaria del resumen' }), {
+    fireEvent.change(screen.getByRole('combobox', { name: 'Zona horaria del resumen' }), {
       target: { value: 'America/Panama' },
     });
     fireEvent.change(screen.getByRole('combobox', { name: 'Hora del resumen' }), {
@@ -271,7 +271,7 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
       ...overview, preferences: { ...overview.preferences, deliveryMode: 'DAILY' },
     });
     renderPlus();
-    const timezone = await screen.findByRole('textbox', { name: 'Zona horaria del resumen' });
+    const timezone = await screen.findByRole('combobox', { name: 'Zona horaria del resumen' });
     expect(timezone).toHaveAttribute('list', 'plus-zones');
     fireEvent.change(timezone, { target: { value: 'Zona/Inventada' } });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar horario' }));
