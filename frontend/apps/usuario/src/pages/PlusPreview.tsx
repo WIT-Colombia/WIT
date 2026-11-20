@@ -158,6 +158,22 @@ export default function PlusPreview() {
     <section className="plus-panel" id="radar">
       <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO · EJEMPLO</span><h2>Tu radar de novedades</h2><p>Así aparecen las novedades de los negocios favoritos.</p></div>
         <label className="plus-toggle"><input type="checkbox" checked={radarEnabled} onChange={e => { setRadarEnabled(e.target.checked); updateNotice('Preferencia de prueba actualizada localmente.'); }}/>Recibir avisos</label></div>
+      <div className="plus-delivery-controls">
+        <label>Entrega de avisos de ejemplo
+          <select aria-label="Entrega de avisos de ejemplo" value={deliveryMode} onChange={e=>{
+            setDeliveryMode(e.target.value as 'IMMEDIATE'|'DAILY'); updateNotice('Modalidad cambiada solo en esta demostración.');
+          }}><option value="IMMEDIATE">Avisos inmediatos</option><option value="DAILY">Un resumen diario</option></select>
+        </label>
+        {deliveryMode === 'DAILY' && <div className="plus-digest-schedule">
+          <label>Zona horaria<input value={digestZone} onChange={e=>setDigestZone(e.target.value)}
+            aria-label="Zona horaria de ejemplo"/></label>
+          <label>Hora de entrega<select aria-label="Hora de entrega de ejemplo" value={digestHour}
+            onChange={e=>setDigestHour(Number(e.target.value))}>
+            {Array.from({length:24},(_,hour)=><option key={hour} value={hour}>{String(hour).padStart(2,'0')}:00</option>)}
+          </select></label>
+          <p>Esta modalidad no enviará notificaciones reales.</p>
+        </div>}
+      </div>
       <div className="plus-list">{[{ name: 'Nuevo servicio de muestra', business: 'Negocio favorito de ejemplo A' },{ name: 'Promoción de demostración', business: 'Negocio favorito de ejemplo B' }].map((item,i) =>
         <div className="plus-list-row" key={item.name}><span className="plus-row-symbol"><PlusIcon name="radar" size={19}/></span><span><strong>{item.name}</strong><small>{item.business} · Ejemplo {i + 1}</small></span><span className="plus-preview-chip">Demo</span></div>)}</div>
       <p className="plus-footnote">En la versión real, estas novedades se obtienen de publicaciones recientes de tus favoritos.</p>
@@ -173,7 +189,32 @@ export default function PlusPreview() {
       {initialWatchId && <p className="plus-preview-chip" role="status">Has seguido un producto de ejemplo desde su ficha. No se registró ningún seguimiento real.</p>}
       <div className="plus-list">{watches.map(watch => <div className="plus-list-row" key={watch.id}>
         <span className="plus-row-symbol"><PlusIcon name="price" size={19}/></span><span><strong>{watch.name}</strong><small>{watch.business} · {watch.price ? '$' + watch.price + ' COP · ejemplo' : 'Sin precio real, vista previa'}</small></span>
-        <div className="plus-row-buttons"><button type="button" onClick={()=>setHistoryId(historyId === watch.id ? null : watch.id)}>Historial</button><button type="button" onClick={()=>{setWatches(items=>items.filter(x=>x.id!==watch.id));setHistoryId(null);}}>Quitar</button></div>
+        <div className="plus-row-buttons">
+          <button type="button" onClick={()=>setHistoryId(historyId === watch.id ? null : watch.id)}>Historial</button>
+          {watch.price && <button type="button" onClick={()=>{
+            setTargetEditor(targetEditor === watch.id ? null : watch.id); setTargetDraft(watch.target ?? '');
+          }}>{watch.target ? 'Cambiar objetivo' : 'Fijar objetivo'}</button>}
+          <button type="button" onClick={()=>{setWatches(items=>items.filter(x=>x.id!==watch.id));setHistoryId(null);}}>Quitar</button>
+        </div>
+        {watch.target && <p className="plus-target-summary">Objetivo de demostración: {watch.target} COP</p>}
+        {targetEditor === watch.id && <form className="plus-target-editor" onSubmit={e=>{
+          e.preventDefault();
+          const value = Number(targetDraft);
+          if (!Number.isFinite(value) || value <= 0 || value >= Number(watch.price?.replace(/\./g,''))) {
+            updateNotice('El objetivo debe ser positivo e inferior al precio de muestra.'); return;
+          }
+          setWatches(rows=>rows.map(row=>row.id === watch.id ? {...row,target:targetDraft}:row));
+          setTargetEditor(null); updateNotice('Precio objetivo registrado solo en esta demostración.');
+        }}>
+          <label>Precio objetivo de ejemplo<input aria-label={`Precio objetivo demo de ${watch.name}`}
+            type="number" min="0.01" step="0.01" value={targetDraft}
+            onChange={e=>setTargetDraft(e.target.value)} required/></label>
+          <button type="submit" className="plus-button">Guardar objetivo</button>
+          {watch.target && <button type="button" className="plus-button plus-button-secondary" onClick={()=>{
+            setWatches(rows=>rows.map(row=>row.id===watch.id?{...row,target:null}:row));
+            setTargetEditor(null);updateNotice('Objetivo de ejemplo eliminado.');
+          }}>Quitar objetivo</button>}
+        </form>}
       </div>)}</div>
       {historyId && <div className="plus-history"><h3>Historial de demostración</h3>{watches.find(x=>x.id===historyId)?.original
         ? <p>Precio anterior: $39.900 COP → Precio de ejemplo: $32.900 COP. Valores ficticios.</p>
