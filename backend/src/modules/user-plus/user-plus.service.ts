@@ -139,8 +139,19 @@ export async function plusOverview(userId: string) {
 export async function setPlusPreferences(userId: string, next: { radarEnabled?: boolean; priceAlertsEnabled?: boolean; deliveryMode?: 'IMMEDIATE' | 'DAILY'; digestTimeZone?: string; digestHour?: number }) {
   if (next.digestTimeZone) validatedPlusTimezone(next.digestTimeZone);
   await requirePlus(userId);
-  const data = await prisma.userPlusPreference.upsert({
-    where: { userId }, create: { userId, ...next }, update: next,
+  const data = await prisma.$transaction(async tx => {
+    const result = await tx.userPlusPreference.upsert({
+      where: { userId }, create: { userId, ...next }, update: next,
+    });
+    // Never deliver old queued notices after switching to immediate mode or revoking an opt-in.
+    if (result.deliveryMode !== 'DAILY') await tx.userPlusDigestEvent.deleteMany({ where: { userId } });
+    else if (!result.radarEnabled || !result.priceAlertsEnabled) await tx.userPlusDigestEvent.deleteMany({
+      where: { userId, kind: { in: [
+        ...(!result.radarEnabled ? ['RADAR'] : []),
+        ...(!result.priceAlertsEnabled ? ['PRICE', 'TARGET'] : []),
+      ] } },
+    });
+    return result;
   });
   return { radarEnabled: data.radarEnabled, priceAlertsEnabled: data.priceAlertsEnabled,
     deliveryMode: data.deliveryMode, digestTimeZone: data.digestTimeZone, digestHour: data.digestHour };
@@ -202,16 +213,19 @@ export async function plusRouteFavorites(userId: string) {
       await publicReleaseWhere(),
     ] } },
     orderBy: { createdAt: 'desc' },
-    select: { business: { select: { publicId: true, name: true, location: {
-      select: { latitude: true, longitude: true },
-    } } } },
+    select: { business: { select: { publicId: true, name: true,
+      hours: { select: { dayOfWeek: true, isClosed: true, opensAt: true, closesAt: true },
+        orderBy: { dayOfWeek: 'asc' } },
+      location: { select: { latitude: true, longitude: true, timezone: true } },
+    } } },
   });
   const items = rows.flatMap(({ business }) => {
     const lat = business.location?.latitude?.toNumber();
     const lng = business.location?.longitude?.toNumber();
     if (lat === undefined || lng === undefined || !Number.isFinite(lat) || !Number.isFinite(lng)
         || lat < -90 || lat > 90 || lng < -180 || lng > 180) return [];
-    return [{ id: business.publicId, name: business.name, lat, lng }];
+    return [{ id: business.publicId, name: business.name, lat, lng,
+      timezone: business.location?.timezone ?? 'UTC', hours: business.hours }];
   });
   return { items };
 }
