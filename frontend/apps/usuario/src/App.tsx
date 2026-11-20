@@ -9,7 +9,8 @@ import { ZoneAlertResume } from "./components/ZoneAlertResume";
 import { SiteFooter } from "./components/SiteFooter";
 import { PageMetadata } from "@wit/ui";
 import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
-import { getAuthPageMetadata, getPrivateAuthPageMetadata, metadataTags } from "@wit/utils";
+import { getAuthPageMetadata, getPrivateAuthPageMetadata, metadataTags, usePaidPlans } from "@wit/utils";
+import { fetchPlusStatus } from "./services/userPlusService";
 const Home = lazy(() => import("./pages/Home"));
 const ManualLocation = lazy(() => import("./pages/ManualLocation"));
 const Location = lazy(() => import("./pages/Location"));
@@ -41,6 +42,38 @@ const PasswordRecovery = lazy(() => import("./pages/PasswordRecovery"));
 const RecoverPassword = lazy(() => import("./pages/RecoverPassword"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const GoogleCallback = lazy(() => import("./pages/GoogleCallback"));
+
+/** Apply the verified Plus no-third-party-ad entitlement on every Usuario page. */
+function PlusAdFreePolicy() {
+  const { user, status } = useAuth();
+  const { xamukoPlus } = usePaidPlans();
+  useEffect(() => {
+    let mounted = true;
+    const clear = () => document.documentElement.classList.remove('xamuko-plus-ad-free');
+    if (status !== 'authenticated' || !user?.id || !xamukoPlus) {
+      clear();
+      return clear;
+    }
+    const refresh = async () => {
+      try {
+        const membership = await fetchPlusStatus();
+        if (mounted) document.documentElement.classList.toggle('xamuko-plus-ad-free', membership.active === true);
+      } catch {
+        if (mounted) clear();
+      }
+    };
+    void refresh();
+    const interval = window.setInterval(() => { void refresh(); }, 60_000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refresh);
+      clear();
+    };
+  }, [status, user?.id, xamukoPlus]);
+  return null;
+}
 
 function ScrollToTop() {
   const location = useLocation();
@@ -137,7 +170,7 @@ function RoutePending() {
 
 export default function App() {
   const { pathname } = useLocation();
-  return <><ZoneAlertResume /><RouteErrorBoundary key={pathname}><InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<RoutePending />}><Routes>
+  return <><PlusAdFreePolicy /><ZoneAlertResume /><RouteErrorBoundary key={pathname}><InitialLocationGate><PrivateAuthMetadata /><ScrollToTop /><Suspense fallback={<RoutePending />}><Routes>
     <Route path="/" element={<Navigate to="/home" replace />} />
     <Route path="/home" element={<Home />} />
     <Route path="/welcome" element={<Navigate to="/home" replace />} />
