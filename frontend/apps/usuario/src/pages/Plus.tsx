@@ -10,12 +10,13 @@ import { getPublicBusiness } from '../services/publicBusinessApi';
 import { listPublicReviews } from '../services/reviewsService';
 import { distanceBetweenCoordinates, getBusinessCoordinates } from '../utils/coordinates';
 import type { Business } from '../data/mockData';
+import { estimatePlusRoute, optimizePlusRoute } from '../utils/plusRoutePlanner';
 import {
   addPlusCollectionItem, comparePlusOffers, createPlusCollection, createPlusSearch,
   fetchPlusCollectionCandidates,
   fetchPlusOverview, fetchPlusPriceHistory, fetchPlusRadar, fetchPlusRouteFavorites, fetchPlusStatus, fetchPlusPurchaseRequest, requestPlusMembership,
   parsePlusTarget, removePlusCollection, removePlusCollectionItem, removePlusSearch,
-  removePlusWatch, savePlusPreferences, searchHref,
+  removePlusWatch, savePlusPreferences, setPlusPriceTarget, searchHref,
   type PlusOverview, type PlusRadarItem, type PlusRouteFavorite, type PlusCompareOffer, type PriceHistory, type PlusStatus, type PlusPurchaseRequest, type PlusCollectionCandidate,
 } from '../services/userPlusService';
 import PlusPreview from './PlusPreview';
@@ -66,6 +67,14 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   const [routeLoading, setRouteLoading] = useState(true);
   const [routeIds, setRouteIds] = useState<string[]>([]);
   const [travelMode, setTravelMode] = useState<'driving' | 'walking'>('driving');
+  const [routeOptimized, setRouteOptimized] = useState(false);
+  const [visitAt, setVisitAt] = useState(() =>
+    new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+  const [targetEditor, setTargetEditor] = useState<string | null>(null);
+  const [targetDraft, setTargetDraft] = useState('');
+  const [digestZone, setDigestZone] = useState(() =>
+    Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Bogota');
+  const [digestHour, setDigestHour] = useState(8);
   const [collectionName, setCollectionName] = useState('');
   const [collectionPicker, setCollectionPicker] = useState<string | null>(null);
   const [pickerType, setPickerType] = useState<'BUSINESS' | 'OFFER'>('BUSINESS');
@@ -88,6 +97,12 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   const [notice, setNotice] = useState('');
   const currentCity = selection?.locality?.name ?? null;
   const comparePrefill = queryParams.get('compare') ?? '';
+  useEffect(() => {
+    if (data?.preferences) {
+      setDigestZone(data.preferences.digestTimeZone);
+      setDigestHour(data.preferences.digestHour);
+    }
+  }, [data?.preferences?.digestTimeZone, data?.preferences?.digestHour]);
 
   const reload = useCallback(async () => {
     if (!user) return;
@@ -215,6 +230,15 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       return false;
     } finally { setBusy(false); }
   }
+  async function saveTarget(watchId: string) {
+    if (!/^(?:[1-9]\\d{0,9})(?:\\.\\d{1,2})?$/.test(targetDraft)) {
+      setError('Introduce un precio objetivo positivo, sin separadores de miles y con máximo dos decimales.');
+      return;
+    }
+    const ok = await run(() => setPlusPriceTarget(watchId, targetDraft),
+      'Precio objetivo guardado. Te avisaremos al alcanzarlo, según la modalidad de notificaciones elegida.');
+    if (ok) { setTargetEditor(null); setTargetDraft(''); }
+  }
   async function showPriceHistory(offerId: string) {
     if (busy) return;
     setBusy(true); setError(''); setNotice(''); setHistory(null);
@@ -256,12 +280,17 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       setError(cause instanceof Error ? cause.message : 'No pudimos comparar las publicaciones seleccionadas.');
     } finally { setBusy(false); }
   }
-  const routeBusinesses = useMemo(() => routeIds.flatMap(id => {
+  const selectedRouteBusinesses = useMemo(() => routeIds.flatMap(id => {
     const item = places.find(b => b.id === id);
     return item ? [item] : [];
   }), [places, routeIds]);
+  const routeBusinesses = useMemo(() => routeOptimized
+    ? optimizePlusRoute(selectedRouteBusinesses, selection?.coordinates ?? undefined)
+    : selectedRouteBusinesses, [selectedRouteBusinesses, routeOptimized, selection?.coordinates]);
   const availableFavorites = places;
   const routeUrl = buildMultiStopRoute(routeBusinesses, travelMode, selection?.coordinates ?? undefined);
+  const routeEstimates = estimatePlusRoute(routeBusinesses, travelMode, new Date(visitAt),
+    selection?.coordinates ?? undefined);
   const compareLabels = readPlusComparisonLabels(user?.id ?? '');
   const overviewCounts = [
     { label: 'Novedades recientes', count: radarAvailable ? radar.length : null, icon: 'radar' as const, href: '#radar' },
