@@ -327,7 +327,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
             onChange={event => void run(() => savePlusPreferences({ radarEnabled: event.target.checked }))}/>Recibir avisos</label></div>
         {!radarAvailable ? <p className="plus-empty">El radar está temporalmente fuera de servicio. Tus demás funciones Plus siguen disponibles.</p>
           : radar.length ? <div className="plus-list">{radar.map(item => <Link key={item.type + ':' + item.id} to={item.href} className="plus-list-row">
-          <span className="plus-row-symbol plus-radar-avatar"><PlusIcon name="radar" size={19}/><CatalogPhoto src={item.businessProfilePhotoUrl ?? ""} alt={`Foto de perfil de ${item.business}`}/></span><span><strong>{item.title}</strong><small>{item.business} · {dateFormat(item.createdAt)}</small></span><span>Ver ›</span></Link>)}</div>
+          <div className="plus-row-symbol plus-radar-avatar"><PlusIcon name="radar" size={19}/><CatalogPhoto src={item.businessProfilePhotoUrl ?? ""} alt={`Foto de perfil de ${item.business}`}/></div><span><strong>{item.title}</strong><small>{item.business} · {dateFormat(item.createdAt)}</small></span><span>Ver ›</span></Link>)}</div>
           : <div className="plus-empty"><strong>Tu radar está al día</strong><p>No hay publicaciones recientes de tus favoritos. Guarda negocios para seguir sus próximas novedades.</p><Link to="/favorites">Ver mis favoritos →</Link></div>}
       </section>
 
