@@ -129,7 +129,7 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     const image = await screen.findByRole('img', { name: 'Foto de perfil de Panadería Patico' });
     expect(image).toHaveAttribute('src', profilePhotoUrl);
     expect(screen.getByRole('link', { name: /Pan queso/ })).toHaveAttribute('href', '/product/offer-1');
-    expect(screen.getByText('Negocio sin foto')).toBeInTheDocument();
+    expect(screen.getByText(/Negocio sin foto/)).toBeInTheDocument();
     expect(screen.getByTestId('missing-business-photo')).toBeInTheDocument();
   });
 
