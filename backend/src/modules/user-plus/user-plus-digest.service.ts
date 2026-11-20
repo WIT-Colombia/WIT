@@ -42,7 +42,7 @@ export async function dispatchDuePlusDigests(now = new Date()) {
           || membership.revokedAt || membership.startsAt > now || membership.expiresAt <= now
           || !(await isPaidPlanEnabled('xamukoPlus', tx))) return false;
         const allowed = events.filter(event => event.createdAt >= membership.startsAt &&
-          (event.kind === 'RADAR' ? pref.radarEnabled : pref.priceAlertsEnabled));
+          (event.kind === 'RADAR' ? pref.radarEnabled : event.kind === 'TARGET' ? true : pref.priceAlertsEnabled));
         if (!allowed.length) return false;
         // The unique constraint guarantees atomic idempotency across worker instances.
         await tx.userPlusDigestDispatch.create({ data: { userId, localDay: local.day } });
