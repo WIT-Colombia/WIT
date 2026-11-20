@@ -13,6 +13,10 @@ const api = vi.hoisted(() => ({
   requestPlusMembership: vi.fn(),
   fetchPlusOverview: vi.fn(),
   fetchPlusRadar: vi.fn(),
+  fetchPlusPriceHistory: vi.fn(),
+  removePlusWatch: vi.fn(),
+  removePlusSearch: vi.fn(),
+  removePlusCollectionItem: vi.fn(),
   fetchPlusRouteFavorites: vi.fn(),
   addPlusWatch: vi.fn(),
   savePlusPreferences: vi.fn(),
@@ -48,6 +52,10 @@ vi.mock('../services/userPlusService', async importOriginal => ({
   requestPlusMembership: api.requestPlusMembership,
   fetchPlusOverview: api.fetchPlusOverview,
   fetchPlusRadar: api.fetchPlusRadar,
+  fetchPlusPriceHistory: api.fetchPlusPriceHistory,
+  removePlusWatch: api.removePlusWatch,
+  removePlusSearch: api.removePlusSearch,
+  removePlusCollectionItem: api.removePlusCollectionItem,
   fetchPlusRouteFavorites: api.fetchPlusRouteFavorites,
   addPlusWatch: api.addPlusWatch,
   savePlusPreferences: api.savePlusPreferences,
@@ -79,6 +87,10 @@ beforeEach(() => {
   api.fetchPlusPurchaseRequest.mockResolvedValue({ request: null });
   api.fetchPlusOverview.mockResolvedValue(overview);
   api.fetchPlusRadar.mockResolvedValue({ items: [] });
+  api.fetchPlusPriceHistory.mockResolvedValue({ offer: { id: 'offer-1', name: 'Pan queso', price: '2000', currency: 'COP' }, history: [] });
+  api.removePlusWatch.mockResolvedValue({ ok: true });
+  api.removePlusSearch.mockResolvedValue({ ok: true });
+  api.removePlusCollectionItem.mockResolvedValue({ ok: true });
   api.fetchPlusRouteFavorites.mockResolvedValue({ items: [] });
   api.requestPlusMembership.mockResolvedValue({ created: true, request: {
     id: 'request-1', status: 'PENDING_PAYMENT', amountCop: 3900,
@@ -174,6 +186,83 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(screen.getByRole('link', { name: 'Explorar productos' })).toHaveAttribute('href', '/results');
     expect(screen.queryByPlaceholderText('https://xamuko.com/product/…')).not.toBeInTheDocument();
     expect(api.addPlusWatch).not.toHaveBeenCalled();
+  });
+
+  it('opens and closes the actual price history without reloading all Plus data', async () => {
+    api.fetchPlusOverview.mockResolvedValue({ ...overview, watches: [
+      { id: 'watch-1', offerId: 'offer-1', kind: 'PRODUCT', name: 'Pan queso',
+        businessName: 'Panadería Patico', price: '2000', priceText: null, currency: 'COP', available: true },
+    ] });
+    renderPlus();
+    fireEvent.click(await screen.findByRole('button', { name: 'Historial' }));
+    await waitFor(() => expect(api.fetchPlusPriceHistory).toHaveBeenCalledWith('offer-1'));
+    expect(await screen.findByRole('heading', { name: 'Historial de Pan queso' })).toBeInTheDocument();
+    expect(api.fetchPlusOverview).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar historial' }));
+    expect(screen.queryByRole('heading', { name: 'Historial de Pan queso' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar' }));
+    await waitFor(() => expect(api.removePlusWatch).toHaveBeenCalledWith('watch-1'));
+  });
+
+  it('explains when a selected comparison has fewer than two available offers', async () => {
+    const ids = ['12345678-1234-4234-8234-123456789abc', '12345678-1234-4234-8234-123456789abd'];
+    savePlusComparison('user-test', ids);
+    api.comparePlusOffers.mockResolvedValue({ offers: [
+      { id: ids[0], name: 'Pan queso', kind: 'PRODUCT', business: { name: 'Panadería', publicId: 'panaderia' },
+        priceAmount: '2000', priceText: null, currency: 'COP', negotiable: false, description: '' },
+    ] });
+    renderPlus();
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar 2 opciones' }));
+    expect(await screen.findByText(/No hay dos publicaciones disponibles para comparar/)).toBeInTheDocument();
+    expect(screen.queryByText('Comparación actualizada.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Eliminar selección' })).toBeInTheDocument();
+  });
+
+  it('retries a failed favorite-business collection picker without leaving Plus', async () => {
+    api.fetchPlusOverview.mockResolvedValue({ ...overview, collections: [
+      { id: 'collection-1', title: 'Para visitar', items: [] },
+    ] });
+    api.fetchPlusCollectionCandidates.mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue({ items: [{ targetType: 'BUSINESS', targetId: 'business-1',
+        name: 'Café favorito', detail: 'Negocio favorito', href: '/business/cafe' }],
+        pagination: { page: 1, total: 1, totalPages: 1 } });
+    renderPlus();
+    await screen.findByText('Para visitar');
+    fireEvent.click(screen.getByRole('button', { name: 'Agregar' }));
+    expect(await screen.findByText(/No pudimos cargar tus favoritos o Me gusta/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar consulta' }));
+    expect(await screen.findByText('Café favorito')).toBeInTheDocument();
+    expect(api.fetchPlusCollectionCandidates).toHaveBeenCalledTimes(2);
+  });
+
+  it('repeats or removes a saved search using the user account', async () => {
+    api.fetchPlusOverview.mockResolvedValue({ ...overview, searches: [
+      { id: 'search-1', title: 'Cafeterías', query: 'café', category: 'Restaurantes', city: null,
+        openNow: false, minRating: null, sort: 'recommended' },
+    ] });
+    renderPlus();
+    await screen.findByText('Cafeterías');
+    expect(screen.getByRole('link', { name: 'Buscar' }).getAttribute('href'))
+      .toContain('/results?q=caf%C3%A9&category=Restaurantes');
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar' }));
+    await waitFor(() => expect(api.removePlusSearch).toHaveBeenCalledWith('search-1'));
+  });
+
+  it('lets the user switch to walking and clear a multi-business route', async () => {
+    api.fetchPlusRouteFavorites.mockResolvedValue({ items: [
+      { id: 'a', name: 'Local A', lat: 3.52, lng: -76.29 },
+      { id: 'b', name: 'Local B', lat: 3.53, lng: -76.30 },
+      { id: 'c', name: 'Local C', lat: 3.54, lng: -76.31 },
+    ] });
+    renderPlus();
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Local A' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Local B' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Transporte' }), { target: { value: 'walking' } });
+    expect(screen.getByRole('link', { name: 'Abrir ruta en Google Maps' }).getAttribute('href')).toContain('travelmode=walking');
+    fireEvent.click(screen.getByRole('button', { name: 'Limpiar ruta' }));
+    expect(screen.queryByRole('link', { name: 'Abrir ruta en Google Maps' })).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Local A' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Local B' })).not.toBeChecked();
   });
 
   it('loads one-tap comparison choices and lets users restart without pasted links', async () => {
