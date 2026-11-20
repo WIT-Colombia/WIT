@@ -40,7 +40,7 @@ const business = {
 };
 function setupOffer(price: number | undefined = 32000) {
   mocks.getOfferPageDetail.mockResolvedValue({
-    offer: { id: uuid, businessId: business.id, name: 'Producto de prueba', description: '', price,
+    offer: { id: uuid, businessId: business.id, name: 'Producto de prueba', description: '', price, priceTrackable: price !== undefined && price > 0,
       priceLabel: price !== undefined ? '$32.000 COP' : 'Consultar precio', image: '', isOffer: false },
     business,
   });
