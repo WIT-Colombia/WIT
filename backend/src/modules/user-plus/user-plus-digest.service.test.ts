@@ -79,3 +79,27 @@ test('Changing delivery to immediate prevents delivery of an old daily queue', a
   assert.equal((await dispatchDuePlusDigests(at, fx.db)).sent, 0);
   assert.equal(fx.delivered.length, 0);
 });
+
+test('Daily digest scans beyond 3,000 queued recipients without skipping any accounts', async () => {
+  const ids = Array.from({ length: 3001 }, (_, index) => 'member-' + String(index).padStart(5, '0'));
+  let requests = 0;
+  const checked: string[] = [];
+  const db: any = {
+    paidPlanAvailability: { findUnique: async () => ({ enabled: true }) },
+    userPlusDigestEvent: { findMany: async ({ where, take }: any) => {
+      requests++;
+      const after = where?.userId?.gt;
+      const start = after ? ids.findIndex(id => id > after) : 0;
+      return start < 0 ? [] : ids.slice(start, start + take).map(userId => ({ userId }));
+    } },
+    userPlusPreference: { findUnique: async ({ where }: any) => {
+      checked.push(where.userId);
+      return { deliveryMode: 'IMMEDIATE' };
+    } },
+  };
+  assert.deepEqual(await dispatchDuePlusDigests(at, db), { sent: 0 });
+  assert.equal(requests, 11);
+  assert.equal(checked.length, 3001);
+  assert.equal(checked[0], ids[0]);
+  assert.equal(checked.at(-1), ids.at(-1));
+});
