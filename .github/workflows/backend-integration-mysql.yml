@@ -60,6 +60,8 @@ jobs:
         run: npm run prisma:generate
       - name: Apply migrations
         run: npx prisma migrate deploy
+      - name: Verify initial Plus OFF and Business PRO ON in isolated MySQL
+        run: node --import tsx scripts/verify-paid-plan-initial-state.ts
       - name: Run HTTP integration suite
         run: npm run test:integration:pro
       - name: Run backend unit and finance coverage
