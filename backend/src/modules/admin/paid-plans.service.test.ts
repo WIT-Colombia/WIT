@@ -12,8 +12,7 @@ test('ambos planes inician apagados cuando aún no se han configurado', () => {
 });
 
 test('Plus stays OFF without a persisted administrator activation', async () => {
-  const db = { paidPlanAvailability: { findUnique: async () => null } }
-    as unknown as NonNullable<Parameters<typeof isPaidPlanEnabled>[1]>;
+  const db = { paidPlanAvailability: { findUnique: async () => null } } as unknown as NonNullable<Parameters<typeof isPaidPlanEnabled>[1]>;
   assert.equal(await isPaidPlanEnabled('xamukoPlus', db), false);
 });
 
