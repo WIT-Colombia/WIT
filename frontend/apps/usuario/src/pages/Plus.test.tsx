@@ -463,6 +463,29 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(api.fetchPlusStatus).not.toHaveBeenCalled();
   });
 
+  it('simulates all three smart Plus benefits without calling production APIs', () => {
+    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
+    renderPlus('/plus?preview=1');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Entrega de avisos de ejemplo' }), {
+      target: { value: 'DAILY' },
+    });
+    expect(screen.getByRole('combobox', { name: 'Hora de entrega de ejemplo' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fijar objetivo' }));
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Precio objetivo demo de Producto de muestra A' }), {
+      target: { value: '25000' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar objetivo' }));
+    expect(screen.getByText(/Objetivo de demostración: 25000 COP/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Optimizar recorrido' }));
+    expect(screen.getByText(/Recorrido simulado optimizado por cercanía/)).toBeInTheDocument();
+    expect(screen.getByText(/Cerrado según horario de ejemplo/)).toBeInTheDocument();
+    expect(api.savePlusPreferences).not.toHaveBeenCalled();
+    expect(api.setPlusPriceTarget).not.toHaveBeenCalled();
+    expect(api.fetchPlusRouteFavorites).not.toHaveBeenCalled();
+  });
+
   it('does not expose the visual walkthrough to other email accounts', async () => {
     api.fetchPlusStatus.mockResolvedValue(inactive);
     renderPlus('/plus?preview=1');
