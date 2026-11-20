@@ -246,7 +246,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
     const offerId = isRealPublishedOffer ? item.id : (preview ? '11111111-1111-4111-8111-111111111111' : '');
     if (!offerId) return;
     // Save selection in the user's tab; the backend validates membership and offers on comparison.
-    const saved = appendPlusComparison(user.id, offerId, preview);
+    const saved = appendPlusComparison(user.id, offerId, preview, item.name);
     if (saved.outcome === 'full') {
       setCompareError('Ya seleccionaste cuatro opciones. Abre Plus para comparar o eliminar alguna.');
       return;
