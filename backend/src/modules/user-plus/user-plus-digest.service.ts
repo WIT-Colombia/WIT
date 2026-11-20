@@ -25,7 +25,8 @@ export async function dispatchDuePlusDigests(now = new Date()) {
       if (!pref || pref.deliveryMode !== 'DAILY') continue;
       let local;
       try { local = plusLocalDateTime(now, pref.digestTimeZone); } catch { continue; }
-      if (local.hour < pref.digestHour) continue;
+      // Digest is sent in the configured local hour, not immediately on first event after it.
+      if (local.hour !== pref.digestHour) continue;
       const result = await prisma.$transaction(async tx => {
         const [membership, person, events] = await Promise.all([
           tx.userPlusSubscription.findUnique({ where: { userId }, select: {
