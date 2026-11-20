@@ -5,7 +5,7 @@ import {StatePanel} from '../components/common';
 import {can,getSession} from '../services/adminService';
 import {getTechnologyServicesStatus,type TechnologyServicesStatus,type TechnologyCase} from '../services/adminApiClient';
 import {
-  TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
+  TechnologyTabs,TechnologyStatusBadge,TechnologyInfoBox,TechnologyCreateDialog,
   TechnologyCaseDialog,formatDate,number,
 } from './TechnologyShared';
 import './TechnologyOperations.css';
@@ -111,6 +111,7 @@ export function AdminServiceStatusPage(){
         {manage&&<button type="button" className="ato-btn ato-btn-blue"
           onClick={()=>setCreate(true)}><Icon name="file" size={17}/> Registrar incidente</button>}
       </div>}/>
+    <TechnologyTabs/>
     {notice&&<div role="status" className="ato-success"><Icon name="check" size={18}/>{notice}</div>}
     {error&&<div className="ato-message-error" role="alert"><Icon name="shield" size={18}/>
       <span>{error}. Comprueba la actualización de la API y la migración tecnológica.</span>
