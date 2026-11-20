@@ -276,3 +276,17 @@
 @media(max-width:600px){
   .plus-list-row .plus-radar-avatar{flex:0 0 40px;width:40px;height:40px}
 }
+
+/* Explicit route reset and recoverable collection-picker failures on every screen size. */
+.plus-route-selection{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:9px;margin:12px 0}
+.plus-route-selection .plus-selection-caption{margin:0}
+.plus-route-selection .plus-clear-selection{margin:0;min-height:38px;padding:8px 13px}
+.plus-picker-empty{display:grid;justify-items:start;gap:9px}
+.plus-picker-empty p{margin:0;color:#665a7d;font-size:12px;line-height:1.5}
+.plus-picker-empty a{color:#603ab8;font-size:12px;font-weight:750;text-decoration:none}
+.plus-picker-empty a:hover{text-decoration:underline}
+.plus-picker-empty button{min-height:38px;width:auto;padding:8px 13px}
+@media(max-width:600px){
+  .plus-route-selection .plus-clear-selection{width:auto}
+  .plus-picker-empty button{width:auto}
+}
