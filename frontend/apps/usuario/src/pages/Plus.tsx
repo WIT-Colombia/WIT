@@ -352,6 +352,38 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       <nav className="plus-section-nav" aria-label="Ir a una herramienta de Xamuko Plus">
         {plusSections.map(item => <a key={item.href} href={item.href}><PlusIcon name={item.icon} size={17}/>{item.label}</a>)}
       </nav>
+      <section className="plus-spotlight" aria-labelledby="plus-spotlight-heading">
+        <div className="plus-spotlight-heading">
+          <div>
+            <span className="plus-overline">HERRAMIENTAS DESTACADAS</span>
+            <h2 id="plus-spotlight-heading">Aprovecha más tu membresía</h2>
+            <p>Configura alertas de precios, decide cuándo recibir avisos y prepara tus recorridos.</p>
+          </div>
+        </div>
+        <div className="plus-spotlight-grid">
+          <a className="plus-spotlight-card" href="#prices">
+            <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
+            <h3>Precio objetivo</h3>
+            <p>Fija el valor que quieres pagar por un producto y recibe el aviso al alcanzarlo.</p>
+            <span className="plus-spotlight-detail"><strong>{data.watches.filter(item => item.targetAmount).length}</strong> objetivos configurados</span>
+            <span className="plus-spotlight-action">Gestionar precios <PlusIcon name="arrow-right" size={16}/></span>
+          </a>
+          <a className="plus-spotlight-card" href="#radar">
+            <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="radar" size={25}/></span>
+            <h3>Notificaciones inteligentes</h3>
+            <p>Recibe avisos inmediatos o un resumen diario en tu zona horaria.</p>
+            <span className="plus-spotlight-detail"><strong>{data.preferences.deliveryMode === 'DAILY' ? 'Resumen diario' : 'Inmediatas'}</strong> · Modalidad elegida</span>
+            <span className="plus-spotlight-action">Configurar avisos <PlusIcon name="arrow-right" size={16}/></span>
+          </a>
+          <a className="plus-spotlight-card" href="#routes">
+            <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="route" size={25}/></span>
+            <h3>Rutas optimizadas</h3>
+            <p>Organiza hasta cuatro negocios por cercanía y revisa los horarios antes de salir.</p>
+            <span className="plus-spotlight-detail"><strong>{routeLoadError ? 'Sin conexión' : routeLoading ? 'Consultando…' : availableFavorites.length}</strong>{!routeLoading && !routeLoadError ? ' negocios favoritos con ubicación' : ' · Ubicaciones'}</span>
+            <span className="plus-spotlight-action">Planear recorrido <PlusIcon name="arrow-right" size={16}/></span>
+          </a>
+        </div>
+      </section>
     </>}
     {!status?.active ? <>
       <section className="plus-subscription-banner" aria-labelledby="plus-subscription-title">
