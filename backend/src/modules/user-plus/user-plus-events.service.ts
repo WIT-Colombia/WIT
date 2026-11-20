@@ -91,7 +91,9 @@ export async function recordPlusPriceChange(tx: Tx, input: {
   const targetUsers: string[] = [];
   const dropUsers: string[] = [];
   for (const watch of watchRows) {
-    const hitTarget = targetRecipients.has(watch.userId) && watch.targetAmount !== null && watch.targetNotifiedAt === null
+    const hitTarget = dropped && targetRecipients.has(watch.userId) && watch.targetAmount !== null
+      && watch.targetNotifiedAt === null && input.previousPrice !== null
+      && input.previousPrice.gt(watch.targetAmount)
       && watch.targetCurrency === input.currency && input.newPrice.lte(watch.targetAmount);
     if (hitTarget) {
       // Atomic one-shot claim; changing the objective re-arms it intentionally.
