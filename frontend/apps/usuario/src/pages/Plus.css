@@ -233,7 +233,10 @@
 
 /* Collection picker: one Agregar entry, server-authorized favorites and liked offers only. */
 .plus-collection-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.plus-collection-actions .plus-collection-add{min-height:39px;padding:9px 17px;border-radius:10px;color:#fff}
+.plus-collection-actions .plus-collection-add{min-height:42px;padding:9px 17px;border:1px solid #6239bd;border-radius:10px;background:#6239bd;color:#fff;box-shadow:0 4px 12px #4e2c991f}
+.plus-collection-actions .plus-collection-add:hover:not(:disabled){background:#4e279e;border-color:#4e279e;color:#fff}
+.plus-collection-actions .plus-collection-add:focus-visible{outline:3px solid #cdb7ff;outline-offset:2px}
+.plus-collection-actions .plus-collection-add:disabled{opacity:.55;cursor:not-allowed}
 .plus-collection-picker{display:grid;gap:13px;margin:12px 0 16px;padding:17px;border:1px solid #ddd2f4;border-radius:15px;background:#faf8ff}
 .plus-collection-picker>p{margin:0;color:#5c5277;font-size:12px;line-height:1.55}
 .plus-picker-types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
