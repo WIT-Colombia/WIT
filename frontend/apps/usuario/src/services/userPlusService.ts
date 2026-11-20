@@ -8,6 +8,7 @@ export type PlusStatus = {
   enabled: boolean; active: boolean;
   subscription: { status: string; startsAt: string; expiresAt: string; revoked: boolean } | null;
 };
+export type PlusCollectionCandidate = { targetType: 'BUSINESS' | 'OFFER'; targetId: string; name: string; detail: string; href: string };
 export type PlusCollection = {
   id: string; title: string;
   items: Array<{ id: string; targetType: 'BUSINESS' | 'OFFER'; targetId: string; name: string; href: string | null; available: boolean; createdAt: string }>;
@@ -55,6 +56,9 @@ export const fetchPlusRadar = () => requestWithSession<{ items: PlusRadarItem[] 
 export const fetchPlusRouteFavorites = () => requestWithSession<{ items: PlusRouteFavorite[] }>(base + '/route-favorites');
 export const savePlusPreferences = (data: { radarEnabled?: boolean; priceAlertsEnabled?: boolean }) =>
   requestWithSession(base + '/preferences', { method: 'PUT', ...json(data) });
+export const fetchPlusCollectionCandidates = (type: 'BUSINESS' | 'OFFER', page = 1) =>
+  requestWithSession<{ items: PlusCollectionCandidate[]; pagination: { page: number; total: number; totalPages: number } }>(
+    base + '/collections/candidates?type=' + type + '&page=' + page);
 export const createPlusCollection = (title: string) =>
   requestWithSession(base + '/collections', { method: 'POST', ...json({ title }) });
 export const removePlusCollection = (id: string) =>
