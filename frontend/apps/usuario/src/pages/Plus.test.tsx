@@ -131,6 +131,30 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(screen.getByRole('link', { name: /Novedades recientes/ })).toHaveTextContent('0');
   });
 
+  it('highlights the three Plus features using verified account data', async () => {
+    api.fetchPlusOverview.mockResolvedValue({
+      ...overview,
+      watches: [{ id: 'watch-1', offerId: 'offer-1', kind: 'PRODUCT',
+        name: 'Producto con objetivo', businessName: 'Negocio de prueba', price: '4900',
+        priceText: null, currency: 'COP', available: true,
+        targetAmount: '4200', targetCurrency: 'COP', targetNotifiedAt: null }],
+      preferences: { ...overview.preferences, deliveryMode: 'DAILY' },
+    });
+    renderPlus();
+    expect(await screen.findByRole('heading', { name: 'Aprovecha más tu membresía' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Precio objetivo/ })).toHaveTextContent('1 objetivo configurado');
+    expect(screen.getByRole('link', { name: /Precio objetivo/ })).toHaveAttribute('href', '#prices');
+    expect(screen.getByRole('link', { name: /Notificaciones inteligentes/ })).toHaveTextContent('Resumen diario');
+    expect(screen.getByRole('link', { name: /Notificaciones inteligentes/ })).toHaveAttribute('href', '#radar');
+    expect(screen.getByRole('link', { name: /Rutas optimizadas/ })).toHaveAttribute('href', '#routes');
+  });
+
+  it('does not invent an alert modality when the server has no preferences', async () => {
+    api.fetchPlusOverview.mockResolvedValue({ ...overview, preferences: null });
+    renderPlus();
+    expect(await screen.findByRole('link', { name: /Notificaciones inteligentes/ })).toHaveTextContent('Sin configurar');
+  });
+
   it('shows each business profile photo beside its radar alert with a fallback if unavailable', async () => {
     const profilePhotoUrl = '/api/v1/public/businesses/panaderia-patico/photos/photo-123/content';
     api.fetchPlusRadar.mockResolvedValue({ items: [
