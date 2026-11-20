@@ -9,14 +9,20 @@ import { plusLocalDateTime } from './user-plus-scheduling.js';
  */
 export async function dispatchDuePlusDigests(now = new Date(), db = prisma) {
   if (!(await isPaidPlanEnabled('xamukoPlus', db))) return { sent: 0 };
-  // Page through recipient IDs so a large or already-delivered queue cannot starve others.
+  // Cursor-paginate distinct recipient IDs instead of capping at 3,000.
+  // A stable userId cursor also avoids skipping recipients when queue rows are
+  // consumed by concurrent workers while a scan is in progress.
   const candidates: Array<{ userId: string }> = [];
-  for (let offset = 0; offset < 3000; offset += 300) {
+  let lastUserId: string | undefined;
+  for (;;) {
     const page = await db.userPlusDigestEvent.findMany({
-      distinct: ['userId'], orderBy: { userId: 'asc' }, skip: offset, take: 300,
+      distinct: ['userId'], orderBy: { userId: 'asc' }, take: 300,
+      ...(lastUserId ? { where: { userId: { gt: lastUserId } } } : {}),
       select: { userId: true },
     });
+    if (!page.length) break;
     candidates.push(...page);
+    lastUserId = page[page.length - 1].userId;
     if (page.length < 300) break;
   }
   let sent = 0;
