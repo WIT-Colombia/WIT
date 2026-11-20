@@ -58,6 +58,7 @@ export default function Plus() {
   const [radarAvailable, setRadarAvailable] = useState(true);
   const [places, setPlaces] = useState<PlusRouteFavorite[]>([]);
   const [routeLoadError, setRouteLoadError] = useState(false);
+  const [routeLoading, setRouteLoading] = useState(true);
   const [routeIds, setRouteIds] = useState<string[]>([]);
   const [travelMode, setTravelMode] = useState<'driving' | 'walking'>('driving');
   const [collectionName, setCollectionName] = useState('');
@@ -132,12 +133,13 @@ export default function Plus() {
   }, [watchPrefill, comparePrefill, collectionPrefill, status?.active, Boolean(data)]);
 
   useEffect(() => {
-    if (!data?.active) { setPlaces([]); setRouteLoadError(false); return; }
+    if (!data?.active) { setPlaces([]); setRouteLoadError(false); setRouteLoading(false); return; }
     let active = true;
+    setRouteLoading(true);
     void fetchPlusRouteFavorites().then(result => {
-      if (active) { setPlaces(result.items); setRouteLoadError(false); }
+      if (active) { setPlaces(result.items); setRouteLoadError(false); setRouteLoading(false); }
     }).catch(() => {
-      if (active) { setPlaces([]); setRouteLoadError(true); }
+      if (active) { setPlaces([]); setRouteLoadError(true); setRouteLoading(false); }
     });
     return () => { active = false; };
   }, [data?.active]);
@@ -421,8 +423,9 @@ export default function Plus() {
           <input type="checkbox" checked={routeIds.includes(place.id)} disabled={!routeIds.includes(place.id) && routeIds.length >= 4}
             onChange={() => setRouteIds(current => current.includes(place.id) ? current.filter(x => x !== place.id) : [...current, place.id])}/>
           <span>{place.name}</span></label>)}</div>
-        {routeLoadError
-          ? <div className="plus-empty"><strong>No fue posible consultar tus favoritos</strong><p>La consulta de las ubicaciones está temporalmente fuera de servicio. Tus demás funciones Plus siguen disponibles.</p><button type="button" className="plus-button plus-button-secondary" onClick={() => { setRouteLoadError(false); void fetchPlusRouteFavorites().then(result => { setPlaces(result.items); }).catch(() => setRouteLoadError(true)); }}>Reintentar consulta</button></div>
+        {routeLoading ? <p className="plus-empty" role="status">Consultando tus negocios favoritos con ubicación pública…</p>
+          : routeLoadError
+          ? <div className="plus-empty"><strong>No fue posible consultar tus favoritos</strong><p>La consulta de las ubicaciones está temporalmente fuera de servicio. Tus demás funciones Plus siguen disponibles.</p><button type="button" className="plus-button plus-button-secondary" onClick={() => { setRouteLoadError(false); setRouteLoading(true); void fetchPlusRouteFavorites().then(result => { setPlaces(result.items); setRouteLoading(false); }).catch(() => { setRouteLoadError(true); setRouteLoading(false); }); }}>Reintentar consulta</button></div>
           : !availableFavorites.length && <div className="plus-empty"><strong>Tu ruta comienza con tus favoritos</strong><p>Guarda al menos dos negocios con ubicación pública para armar un recorrido.</p><Link to="/favorites">Ver mis favoritos →</Link></div>}
         {!!availableFavorites.length && <p className="plus-selection-caption">{routeIds.length} de 4 negocios seleccionados</p>}
         <div className="plus-route-actions"><label>Transporte <select value={travelMode} onChange={event => setTravelMode(event.target.value as 'driving' | 'walking')}><option value="driving">En vehículo</option><option value="walking">A pie</option></select></label>
