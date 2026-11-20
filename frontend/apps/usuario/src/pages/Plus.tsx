@@ -17,6 +17,7 @@ import {
   type PlusOverview, type PlusRadarItem, type PlusRouteFavorite, type PlusCompareOffer, type PriceHistory, type PlusStatus, type PlusPurchaseRequest,
 } from '../services/userPlusService';
 import PlusPreview from './PlusPreview';
+import { canUsePlusVisualPreview } from '../services/plusPreviewAccess';
 import './Plus.css';
 
 const benefits: Array<{ title: string; description: string; icon: PlusIconName }> = [
@@ -438,12 +439,6 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       <section className="plus-panel plus-adfree" id="adfree" aria-label="Beneficio de experiencia sin publicidad"><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>Mientras Plus esté activo, se ocultan los espacios publicitarios de terceros. Los negocios y resultados públicos siguen visibles.</p></div></section>
     </>}
   </PageLayout>;
-}
-
-/** This UI-only walkthrough never grants a Plus entitlement or sends Plus writes. */
-export function canUsePlusVisualPreview(user: { emailNormalized: string | null; emailVerified: boolean; status: string } | null | undefined): boolean {
-  return user?.emailVerified === true && user?.status === 'ACTIVE'
-    && user.emailNormalized?.trim().toLowerCase() === 'administradoreswit@gmail.com';
 }
 
 export default function Plus() {
