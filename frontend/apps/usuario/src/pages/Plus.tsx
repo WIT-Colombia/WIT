@@ -10,7 +10,7 @@ import { listPublicReviews } from '../services/reviewsService';
 import { distanceBetweenCoordinates, getBusinessCoordinates } from '../utils/coordinates';
 import type { Business } from '../data/mockData';
 import {
-  addPlusCollectionItem, addPlusWatch, comparePlusOffers, createPlusCollection, createPlusSearch,
+  addPlusCollectionItem, comparePlusOffers, createPlusCollection, createPlusSearch,
   fetchPlusOverview, fetchPlusPriceHistory, fetchPlusRadar, fetchPlusRouteFavorites, fetchPlusStatus, fetchPlusPurchaseRequest, requestPlusMembership,
   parsePlusTarget, removePlusCollection, removePlusCollectionItem, removePlusSearch,
   removePlusWatch, savePlusPreferences, searchHref,
@@ -68,7 +68,6 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   const [savedQuery, setSavedQuery] = useState('');
   const [savedTitle, setSavedTitle] = useState('');
   const [savedCategory, setSavedCategory] = useState('');
-  const [targetValue, setTargetValue] = useState(queryParams.get('watch') ?? '');
   const [compareValue, setCompareValue] = useState(queryParams.get('compare') ?? '');
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [comparison, setComparison] = useState<PlusCompareOffer[]>([]);
@@ -79,7 +78,6 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const currentCity = selection?.locality?.name ?? null;
-  const watchPrefill = queryParams.get('watch') ?? '';
   const comparePrefill = queryParams.get('compare') ?? '';
   const collectionPrefill = queryParams.get('item') ?? '';
 
@@ -120,9 +118,6 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   }, [reload]);
 
   useEffect(() => {
-    if (watchPrefill) setTargetValue(watchPrefill);
-  }, [watchPrefill]);
-  useEffect(() => {
     if (comparePrefill) setCompareValue(comparePrefill);
   }, [comparePrefill]);
   useEffect(() => {
@@ -130,9 +125,9 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   }, [collectionPrefill]);
   useEffect(() => {
     if (!status?.active) return;
-    const section = watchPrefill ? 'prices' : comparePrefill ? 'compare' : collectionPrefill ? 'collections' : '';
+    const section = comparePrefill ? 'compare' : collectionPrefill ? 'collections' : '';
     if (section && data) document.getElementById(section)?.scrollIntoView({ block: 'start' });
-  }, [watchPrefill, comparePrefill, collectionPrefill, status?.active, Boolean(data)]);
+  }, [comparePrefill, collectionPrefill, status?.active, Boolean(data)]);
 
   useEffect(() => {
     if (!data?.active) { setPlaces([]); setRouteLoadError(false); setRouteLoading(false); return; }
@@ -206,13 +201,6 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
     { label: 'Sin anuncios', href: '#adfree', icon: 'ad-free' as const },
   ];
 
-  function watchOffer(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const target = parsePlusTarget(targetValue);
-    if (!target || target.targetType !== 'OFFER') { setError('Escribe el enlace de un producto o servicio de Xamuko.'); return; }
-    void run(() => addPlusWatch(target.targetId), 'Producto o servicio añadido al seguimiento de precios.')
-      .then(ok => { if (ok) setTargetValue(''); });
-  }
   function addComparison(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const target = parsePlusTarget(compareValue);
@@ -318,11 +306,14 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         <div className="plus-heading"><div><span>02 · AHORRO</span><h2 id="plus-prices-heading">Seguimiento de precios</h2><p>Observa precios reales y recibe avisos si bajan.</p></div>
           <label className="plus-toggle"><input type="checkbox" checked={data?.preferences?.priceAlertsEnabled ?? false} disabled={busy}
             onChange={event => void run(() => savePlusPreferences({ priceAlertsEnabled: event.target.checked }))}/>Avisar cuando bajen</label></div>
-        <p className="plus-feature-note">Sigue hasta 100 publicaciones con precio numérico. Las alertas se envían solo si las activas y el precio publicado realmente baja.</p>
-        <form className="plus-form" onSubmit={watchOffer}>
-          <label>Enlace del producto o servicio<input value={targetValue} onChange={event => setTargetValue(event.target.value)} placeholder="https://xamuko.com/product/…" required/></label>
-          <button className="plus-button" disabled={busy}>Seguir precio</button>
-        </form>
+        <p className="plus-feature-note">Puedes seguir hasta 100 publicaciones con precio numérico. Recibirás alertas de rebajas únicamente si las activas.</p>
+        <div className="plus-follow-guide">
+          <span className="plus-follow-guide-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
+          <div><strong>Sigue precios con un solo toque</strong>
+            <p>Abre la ficha de un producto con precio publicado y pulsa <b>Seguir precio</b>. Aparecerá aquí automáticamente para consultar sus cambios.</p>
+          </div>
+          <Link className="plus-button plus-button-secondary" to="/results">Explorar productos</Link>
+        </div>
         <div className="plus-list">{data?.watches.map(item => <div className="plus-list-row" key={item.id}>
           <span className="plus-row-symbol"><PlusIcon name="price" size={19}/></span><span><strong>{item.name}</strong><small>{item.businessName} · {item.available ? readablePrice(item.price, item.currency ?? 'COP') : 'Publicación no disponible'}</small></span>
           <div className="plus-row-buttons">
@@ -331,7 +322,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
             }, 'Historial actualizado.')}>Historial</button>}
             <button type="button" disabled={busy} onClick={() => void run(() => removePlusWatch(item.id))}>Quitar</button>
           </div></div>)}</div>
-        {!data?.watches.length && <div className="plus-empty"><strong>Aún no sigues precios</strong><p>Busca un producto o servicio con precio publicado, copia su enlace de Xamuko y pégalo arriba.</p><Link to="/results">Explorar publicaciones →</Link></div>}
+        {!data?.watches.length && <div className="plus-empty"><strong>Aún no sigues precios</strong><p>Explora los productos, abre uno con precio y pulsa «Seguir precio». No necesitas copiar ningún enlace.</p><Link to="/results">Encontrar un producto →</Link></div>}
         {history && <div className="plus-history"><h3>Historial de {history.offer.name}</h3>
           <p>Precio actual publicado: {readablePrice(history.offer.price, history.offer.currency ?? 'COP')}</p>
           {history.history.length ? <ul>{history.history.map((point, i) => <li key={point.createdAt + i}>{dateFormat(point.createdAt)} · {point.previousPrice === null ? 'Primer precio registrado' : readablePrice(point.previousPrice, point.previousCurrency ?? 'COP')} → {readablePrice(point.newPrice, point.currency ?? 'COP')}</li>)}</ul> : <p>Sin cambios registrados desde que se habilitó el historial.</p>}
