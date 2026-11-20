@@ -139,16 +139,13 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     await waitFor(() => expect(api.savePlusPreferences).toHaveBeenCalledWith({ radarEnabled: true }));
   });
 
-  it('sends only the validated offer UUID for real price tracking', async () => {
+  it('guides users to the one-tap button on a product, without asking for a pasted link', async () => {
     renderPlus();
     await screen.findByRole('heading', { name: 'Seguimiento de precios' });
-    const id = '12345678-1234-4234-8234-123456789abc';
-    fireEvent.change(screen.getByPlaceholderText('https://xamuko.com/product/…'), {
-      target: { value: '/product/' + id },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Seguir precio' }));
-    await waitFor(() => expect(api.addPlusWatch).toHaveBeenCalledWith(id));
-    expect(await screen.findByText('Producto o servicio añadido al seguimiento de precios.')).toBeInTheDocument();
+    expect(screen.getByText('Sigue precios con un solo toque')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Explorar productos' })).toHaveAttribute('href', '/results');
+    expect(screen.queryByPlaceholderText('https://xamuko.com/product/…')).not.toBeInTheDocument();
+    expect(api.addPlusWatch).not.toHaveBeenCalled();
   });
 
   it('compares exactly the two selected publications and never more than four', async () => {
@@ -243,16 +240,15 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(screen.queryByText('Prueba visual con datos de ejemplo')).not.toBeInTheDocument();
   });
 
-  it('allows local collection and price edits in preview without any Plus backend writes', () => {
+  it('receives the product button in preview and edits collections without paid backend writes', () => {
     previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
-    renderPlus('/plus?preview=1');
+    renderPlus('/plus?preview=1&watch=33333333-3333-4333-8333-333333333333');
+    expect(screen.getByText('Producto seleccionado para la prueba')).toBeInTheDocument();
+    expect(screen.getByText(/Has seguido un producto de ejemplo desde su ficha/)).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText('Ej. Mis cafeterías favoritas'), { target: { value: 'Cafés de prueba' } });
     fireEvent.click(screen.getByRole('button', { name: 'Crear colección' }));
     expect(screen.getByText('Cafés de prueba')).toBeInTheDocument();
-    const input = screen.getByPlaceholderText('/product/12345678-…');
-    fireEvent.change(input, { target: { value: '/product/33333333-3333-4333-8333-333333333333' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Seguir precio' }));
-    expect(screen.getByText('Seguimiento agregado únicamente a esta vista previa.')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('/product/12345678-…')).not.toBeInTheDocument();
     expect(api.addPlusWatch).not.toHaveBeenCalled();
     expect(api.createPlusCollection).not.toHaveBeenCalled();
     expect(api.fetchPlusStatus).not.toHaveBeenCalled();
