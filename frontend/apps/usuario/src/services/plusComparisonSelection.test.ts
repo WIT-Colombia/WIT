@@ -13,7 +13,7 @@ beforeEach(() => window.sessionStorage.clear());
 
 describe('Comparación Plus: selección por cuenta y pestaña', () => {
   it('adds a product and displays its actual published name without a pasted link', () => {
-    expect(appendPlusComparison('usuario-1', a, false, 'Pan queso')).toMatchObject({ outcome: 'added', ids: [a] });
+    expect(appendPlusComparison('usuario-1', a, 'Pan queso')).toMatchObject({ outcome: 'added', ids: [a] });
     expect(readPlusComparisonLabels('usuario-1')).toEqual({ [a]: 'Pan queso' });
     expect(readPlusComparison('usuario-1')).toEqual([a]);
   });
@@ -28,8 +28,8 @@ describe('Comparación Plus: selección por cuenta y pestaña', () => {
   });
 
   it('removes labels and selections together when the user restarts', () => {
-    appendPlusComparison('usuario-1', a, false, 'Producto 1');
-    appendPlusComparison('usuario-1', b, false, 'Producto 2');
+    appendPlusComparison('usuario-1', a, 'Producto 1');
+    appendPlusComparison('usuario-1', b, 'Producto 2');
     savePlusComparison('usuario-1', [b]);
     expect(readPlusComparisonLabels('usuario-1')).toEqual({ [b]: 'Producto 2' });
     savePlusComparison('usuario-1', []);
@@ -37,13 +37,13 @@ describe('Comparación Plus: selección por cuenta y pestaña', () => {
     expect(readPlusComparisonLabels('usuario-1')).toEqual({});
   });
 
-  it('never mixes other users or the restricted visual walkthrough with paid comparison', () => {
-    appendPlusComparison('usuario-1', a, false, 'Producto real');
-    appendPlusComparison('usuario-1', b, true, 'Producto de prueba');
+  it('never mixes selections or names between real user accounts', () => {
+    appendPlusComparison('usuario-1', a, 'Producto real A');
+    appendPlusComparison('usuario-2', b, 'Producto real B');
     expect(readPlusComparison('usuario-1')).toEqual([a]);
-    expect(readPlusComparison('usuario-1', true)).toEqual([b]);
-    expect(readPlusComparisonLabels('usuario-1', true)).toEqual({ [b]: 'Producto de prueba' });
-    expect(readPlusComparison('usuario-2')).toEqual([]);
+    expect(readPlusComparison('usuario-2')).toEqual([b]);
+    expect(readPlusComparisonLabels('usuario-1')).toEqual({ [a]: 'Producto real A' });
+    expect(readPlusComparisonLabels('usuario-2')).toEqual({ [b]: 'Producto real B' });
   });
 
   it('discards malformed browser data and never exposes an extra selection', () => {
