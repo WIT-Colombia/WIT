@@ -251,6 +251,34 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(api.savePlusPreferences).not.toHaveBeenCalled();
   });
 
+  it('explains why a target cannot equal or exceed the current product price', async () => {
+    const watch = { id: 'watch-1', offerId: 'offer-1', kind: 'PRODUCT', name: 'Pan queso',
+      businessName: 'Panadería Patico', price: '2000', priceText: null, currency: 'COP',
+      targetAmount: null, targetCurrency: null, targetNotifiedAt: null, available: true };
+    api.fetchPlusOverview.mockResolvedValue({ ...overview, watches: [watch] });
+    renderPlus();
+    fireEvent.click(await screen.findByRole('button', { name: 'Fijar objetivo' }));
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Precio objetivo de Pan queso' }), {
+      target: { value: '2000' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar objetivo' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('debe ser menor que el precio actual');
+    expect(api.setPlusPriceTarget).not.toHaveBeenCalled();
+  });
+
+  it('suggests timezones and blocks invalid daily delivery settings before contacting the API', async () => {
+    api.fetchPlusOverview.mockResolvedValue({
+      ...overview, preferences: { ...overview.preferences, deliveryMode: 'DAILY' },
+    });
+    renderPlus();
+    const timezone = await screen.findByRole('textbox', { name: 'Zona horaria del resumen' });
+    expect(timezone).toHaveAttribute('list', 'plus-zones');
+    fireEvent.change(timezone, { target: { value: 'Zona/Inventada' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar horario' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('zona horaria válida');
+    expect(api.savePlusPreferences).not.toHaveBeenCalled();
+  });
+
   it('can delete an existing objective and re-arm it by changing its value', async () => {
     api.fetchPlusOverview.mockResolvedValue({ ...overview, watches: [{
       id: 'watch-1', offerId: 'offer-1', kind: 'PRODUCT', name: 'Pan queso',
