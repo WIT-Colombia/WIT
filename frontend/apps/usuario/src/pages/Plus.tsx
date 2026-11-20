@@ -5,17 +5,16 @@ import { PlusIcon, type PlusIconName } from '../components/PlusIcon';
 import { PageLayout } from '../components/PageLayout';
 import { useAuth } from '../context/AuthContext';
 import { useLocationContext } from '../context/LocationContext';
-import { useFavorites } from '../services/favoritesService';
-import { getPublicBusiness, listPublicBusinesses } from '../services/publicBusinessApi';
+import { getPublicBusiness } from '../services/publicBusinessApi';
 import { listPublicReviews } from '../services/reviewsService';
 import { distanceBetweenCoordinates, getBusinessCoordinates } from '../utils/coordinates';
 import type { Business } from '../data/mockData';
 import {
   addPlusCollectionItem, addPlusWatch, comparePlusOffers, createPlusCollection, createPlusSearch,
-  fetchPlusOverview, fetchPlusPriceHistory, fetchPlusRadar, fetchPlusStatus, fetchPlusPurchaseRequest, requestPlusMembership,
+  fetchPlusOverview, fetchPlusPriceHistory, fetchPlusRadar, fetchPlusRouteFavorites, fetchPlusStatus, fetchPlusPurchaseRequest, requestPlusMembership,
   parsePlusTarget, removePlusCollection, removePlusCollectionItem, removePlusSearch,
   removePlusWatch, savePlusPreferences, searchHref,
-  type PlusOverview, type PlusRadarItem, type PlusCompareOffer, type PriceHistory, type PlusStatus, type PlusPurchaseRequest,
+  type PlusOverview, type PlusRadarItem, type PlusRouteFavorite, type PlusCompareOffer, type PriceHistory, type PlusStatus, type PlusPurchaseRequest,
 } from '../services/userPlusService';
 import './Plus.css';
 
@@ -32,8 +31,8 @@ function readablePrice(value: string | null, currency = 'COP') {
   if (value === null || !Number.isFinite(Number(value))) return 'Precio por consultar';
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: currency || 'COP', maximumFractionDigits: 0 }).format(Number(value));
 }
-function buildMultiStopRoute(points: Business[], travelMode: 'driving' | 'walking', origin?: { lat: number; lng: number }) {
-  const sites = points.map(point => getBusinessCoordinates(point)).filter((p): p is { lat: number; lng: number } => Boolean(p));
+function buildMultiStopRoute(points: PlusRouteFavorite[], travelMode: 'driving' | 'walking', origin?: { lat: number; lng: number }) {
+  const sites = points.map(point => ({ lat: point.lat, lng: point.lng }));
   if (sites.length < 2) return null;
   const coordinates = sites.map(point => point.lat + ',' + point.lng);
   const input = new URLSearchParams({ api: '1', travelmode: travelMode });
@@ -48,7 +47,6 @@ export default function Plus() {
   const { user } = useAuth();
   const [queryParams] = useSearchParams();
   const { selection } = useLocationContext();
-  const { favorites } = useFavorites();
   const requestEpoch = useRef(0);
   const [status, setStatus] = useState<PlusStatus | null>(null);
   const [purchaseRequest, setPurchaseRequest] = useState<PlusPurchaseRequest | null>(null);
@@ -58,7 +56,8 @@ export default function Plus() {
   const [data, setData] = useState<PlusOverview | null>(null);
   const [radar, setRadar] = useState<PlusRadarItem[]>([]);
   const [radarAvailable, setRadarAvailable] = useState(true);
-  const [places, setPlaces] = useState<Business[]>([]);
+  const [places, setPlaces] = useState<PlusRouteFavorite[]>([]);
+  const [routeLoadError, setRouteLoadError] = useState(false);
   const [routeIds, setRouteIds] = useState<string[]>([]);
   const [travelMode, setTravelMode] = useState<'driving' | 'walking'>('driving');
   const [collectionName, setCollectionName] = useState('');
@@ -133,11 +132,18 @@ export default function Plus() {
   }, [watchPrefill, comparePrefill, collectionPrefill, status?.active, Boolean(data)]);
 
   useEffect(() => {
-    if (!data?.active) { setPlaces([]); return; }
+    if (!data?.active) { setPlaces([]); setRouteLoadError(false); return; }
     let active = true;
-    void listPublicBusinesses().then(items => { if (active) setPlaces(items); }).catch(() => { if (active) setPlaces([]); });
+    void fetchPlusRouteFavorites().then(result => {
+      if (active) { setPlaces(result.items); setRouteLoadError(false); }
+    }).catch(() => {
+      if (active) { setPlaces([]); setRouteLoadError(true); }
+    });
     return () => { active = false; };
   }, [data?.active]);
+  useEffect(() => {
+    setRouteIds(ids => ids.filter(id => places.some(place => place.id === id)));
+  }, [places]);
 
   // Refetch entitlement on returning to the page, and while a signed-in session remains open.
   useEffect(() => {
@@ -178,7 +184,7 @@ export default function Plus() {
     const item = places.find(b => b.id === id);
     return item ? [item] : [];
   }), [places, routeIds]);
-  const availableFavorites = useMemo(() => places.filter(place => favorites.includes(place.id) && getBusinessCoordinates(place)), [places, favorites]);
+  const availableFavorites = places;
   const routeUrl = buildMultiStopRoute(routeBusinesses, travelMode, selection?.coordinates ?? undefined);
   const overviewCounts = [
     { label: 'Novedades recientes', count: radarAvailable ? radar.length : null, icon: 'radar' as const, href: '#radar' },
@@ -415,7 +421,9 @@ export default function Plus() {
           <input type="checkbox" checked={routeIds.includes(place.id)} disabled={!routeIds.includes(place.id) && routeIds.length >= 4}
             onChange={() => setRouteIds(current => current.includes(place.id) ? current.filter(x => x !== place.id) : [...current, place.id])}/>
           <span>{place.name}</span></label>)}</div>
-        {!availableFavorites.length && <div className="plus-empty"><strong>Tu ruta comienza con tus favoritos</strong><p>Guarda al menos dos negocios con ubicación verificada para armar un recorrido.</p><Link to="/favorites">Ver mis favoritos →</Link></div>}
+        {routeLoadError
+          ? <div className="plus-empty"><strong>No fue posible consultar tus favoritos</strong><p>La consulta de las ubicaciones está temporalmente fuera de servicio. Tus demás funciones Plus siguen disponibles.</p><button type="button" className="plus-button plus-button-secondary" onClick={() => { setRouteLoadError(false); void fetchPlusRouteFavorites().then(result => { setPlaces(result.items); }).catch(() => setRouteLoadError(true)); }}>Reintentar consulta</button></div>
+          : !availableFavorites.length && <div className="plus-empty"><strong>Tu ruta comienza con tus favoritos</strong><p>Guarda al menos dos negocios con ubicación pública para armar un recorrido.</p><Link to="/favorites">Ver mis favoritos →</Link></div>}
         {!!availableFavorites.length && <p className="plus-selection-caption">{routeIds.length} de 4 negocios seleccionados</p>}
         <div className="plus-route-actions"><label>Transporte <select value={travelMode} onChange={event => setTravelMode(event.target.value as 'driving' | 'walking')}><option value="driving">En vehículo</option><option value="walking">A pie</option></select></label>
           {routeUrl ? <a className="plus-button" href={routeUrl} target="_blank" rel="noopener noreferrer">Abrir ruta en Google Maps</a> : <span>Selecciona al menos dos negocios.</span>}</div>
