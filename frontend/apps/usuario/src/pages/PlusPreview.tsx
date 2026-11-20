@@ -26,7 +26,6 @@ const sections: Array<{ id: string; label: string; icon: PlusIconName }> = [
   { id: 'routes', label: 'Rutas', icon: 'route' },
   { id: 'adfree', label: 'Sin anuncios', icon: 'ad-free' },
 ];
-const makeId = () => String(Date.now()) + '-' + Math.random().toString(36).slice(2, 7);
 
 export default function PlusPreview() {
   const [radarEnabled, setRadarEnabled] = useState(false);
