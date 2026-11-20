@@ -5,6 +5,7 @@ import { useAuth } from "./context/AuthContext";
 import { useLocationContext } from "./context/LocationContext";
 import Register from "./pages/Register";
 import { RequireAccount } from "./components/RequireAccount";
+import { RequirePlusAvailability } from "./components/RequirePlusAvailability";
 import { ZoneAlertResume } from "./components/ZoneAlertResume";
 import { SiteFooter } from "./components/SiteFooter";
 import { PageMetadata } from "@wit/ui";
@@ -206,7 +207,7 @@ export default function App() {
     <Route path="/likes" element={<RequireAccount><Likes /></RequireAccount>} />
     <Route path="/reviews" element={<Reviews />} />
     <Route path="/profile" element={<RequireAccount><Profile /></RequireAccount>} />
-    <Route path="/plus" element={<RequireAccount><Plus /></RequireAccount>} />
+    <Route path="/plus" element={<RequireAccount><RequirePlusAvailability><Plus /></RequirePlusAvailability></RequireAccount>} />
     <Route path="/settings" element={<Settings />} />
     <Route path="/notifications" element={<Notifications />} />
     <Route path="*" element={<NotFound />} />
