@@ -74,6 +74,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   const [pickerTotalPages, setPickerTotalPages] = useState(0);
   const [pickerLoading, setPickerLoading] = useState(false);
   const [pickerError, setPickerError] = useState('');
+  const [pickerReload, setPickerReload] = useState(0);
   const [savedQuery, setSavedQuery] = useState('');
   const [savedTitle, setSavedTitle] = useState('');
   const [savedCategory, setSavedCategory] = useState('');
@@ -173,7 +174,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
       })
       .finally(() => { if (active) setPickerLoading(false); });
     return () => { active = false; };
-  }, [collectionPicker, pickerType, pickerPage, status?.active]);
+  }, [collectionPicker, pickerType, pickerPage, pickerReload, status?.active]);
 
   // Refetch entitlement on returning to the page, and while a signed-in session remains open.
   useEffect(() => {
@@ -202,12 +203,57 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
     setBusy(true); setError(''); setNotice('');
     try {
       await task();
-      try { await reload(); } catch { setError('El cambio se guardó, pero no se pudo actualizar la información.'); }
-      setNotice(success);
+      try {
+        await reload();
+        setNotice(success);
+      } catch {
+        setNotice('El cambio se guardó, pero no pudimos actualizar la información. Comprueba el resultado antes de repetir la acción.');
+      }
       return true;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No pudimos guardar los cambios.');
       return false;
+    } finally { setBusy(false); }
+  }
+  async function showPriceHistory(offerId: string) {
+    if (busy) return;
+    setBusy(true); setError(''); setNotice(''); setHistory(null);
+    try {
+      setHistory(await fetchPlusPriceHistory(offerId));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No pudimos consultar el historial de precios.');
+    } finally { setBusy(false); }
+  }
+  async function showComparison() {
+    if (busy || compareIds.length < 2) return;
+    setBusy(true); setError(''); setNotice(''); setComparison([]); setComparisonBusinesses({});
+    try {
+      const result = await comparePlusOffers(compareIds);
+      if (result.offers.length < 2) {
+        setError('No hay dos publicaciones disponibles para comparar. Revisa tu selección y reemplaza las que ya no estén publicadas.');
+        return;
+      }
+      setComparison(result.offers);
+      const details = await Promise.all(result.offers.map(async offer => {
+        const id = offer.business.publicId;
+        const [detail, reviews] = await Promise.all([
+          getPublicBusiness(id).catch(() => null),
+          listPublicReviews(id, 1, 1).catch(() => null),
+        ]);
+        if (!detail) return null;
+        return { id, business: {
+          ...detail.business,
+          rating: reviews?.summary?.average ?? detail.business.rating,
+          reviewCount: reviews?.summary?.total ?? detail.business.reviewCount,
+        } };
+      }));
+      setComparisonBusinesses(Object.fromEntries(details.filter((item): item is { id: string; business: Business } => item !== null)
+        .map(item => [item.id, item.business])));
+      if (result.offers.length < compareIds.length) {
+        setNotice('Algunas publicaciones ya no están disponibles. Solo se muestran las opciones verificadas.');
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No pudimos comparar las publicaciones seleccionadas.');
     } finally { setBusy(false); }
   }
   const routeBusinesses = useMemo(() => routeIds.flatMap(id => {
@@ -347,9 +393,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         <div className="plus-list">{data?.watches.map(item => <div className="plus-list-row" key={item.id}>
           <span className="plus-row-symbol"><PlusIcon name="price" size={19}/></span><span><strong>{item.name}</strong><small>{item.businessName} · {item.available ? readablePrice(item.price, item.currency ?? 'COP') : 'Publicación no disponible'}</small></span>
           <div className="plus-row-buttons">
-            {item.available && <button type="button" disabled={busy} onClick={() => void run(async () => {
-              const result = await fetchPlusPriceHistory(item.offerId); setHistory(result);
-            }, 'Historial actualizado.')}>Historial</button>}
+            {item.available && <button type="button" disabled={busy} onClick={() => void showPriceHistory(item.offerId)}>Historial</button>}
             <button type="button" disabled={busy} onClick={() => void run(() => removePlusWatch(item.id))}>Quitar</button>
           </div></div>)}</div>
         {!data?.watches.length && <div className="plus-empty"><strong>Aún no sigues precios</strong><p>Explora los productos, abre uno con precio y pulsa «Seguir precio». No necesitas copiar ningún enlace.</p><Link to="/results">Encontrar un producto →</Link></div>}
@@ -372,23 +416,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
         {compareIds.length > 0 && <><p className="plus-selection-caption">{compareIds.length} de 4 opciones seleccionadas</p><div className="plus-chips">{compareIds.map((id, i) => <button key={id} type="button" aria-label={`Quitar ${compareLabels[id] ?? `opción ${i + 1}`}`} onClick={() => updateCompareSelection(compareIds.filter(x => x !== id))}>{compareLabels[id] ?? `Opción ${i + 1}`} ×</button>)}</div>
           <button type="button" className="plus-button plus-clear-selection" disabled={busy} onClick={() => updateCompareSelection([])}>Eliminar selección</button>
           <button className="plus-button plus-button-secondary" type="button" disabled={busy || compareIds.length < 2}
-            onClick={() => void run(async () => { const result = await comparePlusOffers(compareIds);
-              setComparison(result.offers);
-              const details = await Promise.all(result.offers.map(async offer => {
-                const id = offer.business.publicId;
-                const [detail, reviews] = await Promise.all([
-                  getPublicBusiness(id).catch(() => null),
-                  listPublicReviews(id, 1, 1).catch(() => null),
-                ]);
-                if (!detail) return null;
-                return { id, business: {
-                  ...detail.business,
-                  rating: reviews?.summary?.average ?? detail.business.rating,
-                  reviewCount: reviews?.summary?.total ?? detail.business.reviewCount,
-                } };
-              }));
-              setComparisonBusinesses(Object.fromEntries(details.filter((item): item is { id: string; business: Business } => item !== null)
-                .map(item => [item.id, item.business]))); }, 'Comparación actualizada.')}>Comparar {compareIds.length} opciones</button></>}
+            onClick={() => void showComparison()}>Comparar {compareIds.length} opciones</button></>}
         {comparison.length > 0 && <div className="plus-compare-grid">{comparison.map(item => {
           const place = comparisonBusinesses[item.business.publicId];
           const coordinates = place ? getBusinessCoordinates(place) : null;
@@ -431,8 +459,12 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
                 onClick={() => { setPickerType('OFFER'); setPickerPage(1); }}>Productos y servicios con Me gusta</button>
             </div>
             {pickerLoading ? <p role="status">Consultando tus elementos guardados…</p>
-              : pickerError ? <p role="alert">{pickerError}</p>
-              : pickerItems.length === 0 ? <p className="plus-picker-empty">No tienes elementos disponibles en esta categoría.</p>
+              : pickerError ? <div className="plus-picker-empty"><p role="alert">{pickerError}</p>
+                  <button type="button" className="plus-button plus-button-secondary" onClick={() => setPickerReload(value => value + 1)}>Reintentar consulta</button>
+                </div>
+              : pickerItems.length === 0 ? <div className="plus-picker-empty"><p>No tienes elementos disponibles en esta categoría.</p>
+                  <Link to={pickerType === 'BUSINESS' ? '/favorites' : '/likes'}>Ver {pickerType === 'BUSINESS' ? 'mis negocios favoritos' : 'mis Me gusta'} →</Link>
+                </div>
               : <div className="plus-picker-list">{pickerItems.map(item => {
                 const exists = col.items.some(saved => saved.targetType === item.targetType && saved.targetId === item.targetId);
                 return <div className="plus-picker-item" key={item.targetType + item.targetId}>
@@ -464,7 +496,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
           void run(() => createPlusSearch({
             title: savedTitle.trim(), query: savedQuery.trim(), category: savedCategory.trim() || null,
             city: currentCity, openNow: false, minRating: null, sort: 'recommended',
-          }), 'Búsqueda guardada.').then(ok => { if (ok) { setSavedTitle(''); setSavedQuery(''); } });
+          }), 'Búsqueda guardada.').then(ok => { if (ok) { setSavedTitle(''); setSavedQuery(''); setSavedCategory(''); } });
         }}>
           <label>Nombre<input value={savedTitle} maxLength={80} onChange={event => setSavedTitle(event.target.value)} placeholder="Ej. Panaderías cerca" required/></label>
           <label>Buscar<input value={savedQuery} maxLength={160} onChange={event => setSavedQuery(event.target.value)} placeholder="Qué quieres encontrar" required/></label>
@@ -487,7 +519,9 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
           : routeLoadError
           ? <div className="plus-empty"><strong>No fue posible consultar tus favoritos</strong><p>La consulta de las ubicaciones está temporalmente fuera de servicio. Tus demás funciones Plus siguen disponibles.</p><button type="button" className="plus-button plus-button-secondary" onClick={() => { setRouteLoadError(false); setRouteLoading(true); void fetchPlusRouteFavorites().then(result => { setPlaces(result.items); setRouteLoading(false); }).catch(() => { setRouteLoadError(true); setRouteLoading(false); }); }}>Reintentar consulta</button></div>
           : !availableFavorites.length && <div className="plus-empty"><strong>Tu ruta comienza con tus favoritos</strong><p>Guarda al menos dos negocios con ubicación pública para armar un recorrido.</p><Link to="/favorites">Ver mis favoritos →</Link></div>}
-        {!!availableFavorites.length && <p className="plus-selection-caption">{routeIds.length} de 4 negocios seleccionados</p>}
+        {!!availableFavorites.length && <div className="plus-route-selection"><p className="plus-selection-caption">{routeIds.length} de 4 negocios seleccionados</p>
+          {routeIds.length > 0 && <button type="button" className="plus-button plus-clear-selection" onClick={() => setRouteIds([])}>Limpiar ruta</button>}
+        </div>}
         <div className="plus-route-actions"><label>Transporte <select value={travelMode} onChange={event => setTravelMode(event.target.value as 'driving' | 'walking')}><option value="driving">En vehículo</option><option value="walking">A pie</option></select></label>
           {routeUrl ? <a className="plus-button" href={routeUrl} target="_blank" rel="noopener noreferrer">Abrir ruta en Google Maps</a> : <span>Selecciona al menos dos negocios.</span>}</div>
         <p className="plus-footnote">La ruta se abre en Google Maps; la disponibilidad y el recorrido final dependen de ese servicio. Si compartes tu ubicación, se usará como punto de partida.</p>
