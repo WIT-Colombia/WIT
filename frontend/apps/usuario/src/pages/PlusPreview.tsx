@@ -136,7 +136,7 @@ export default function PlusPreview() {
     <header className="plus-hero">
       <span className="plus-kicker">DEMOSTRACIÓN VISUAL · XAMUKO PLUS</span>
       <h1><span className="plus-hero-crown"><PlusIcon name="crown" size={32}/></span> Xamuko Plus</h1>
-      <p>Recorre las seis herramientas Plus antes de actualizar el backend.</p>
+      <p>Recorre las herramientas Plus con datos de demostración, sin modificar tu cuenta.</p>
       <div className="plus-hero-state" role="status">Vista previa autorizada · No es una membresía activa</div>
     </header>
     <div className="plus-preview-warning" role="note">
@@ -155,6 +155,36 @@ export default function PlusPreview() {
     <nav className="plus-section-nav" aria-label="Navegación de herramientas Plus de prueba">
       {sections.map(item => <a key={item.id} href={'#' + item.id}><PlusIcon name={item.icon} size={17}/>{item.label}</a>)}
     </nav>
+    <section className="plus-spotlight" aria-labelledby="plus-preview-spotlight-heading">
+      <div className="plus-spotlight-heading">
+        <span className="plus-overline">HERRAMIENTAS DESTACADAS · DEMOSTRACIÓN</span>
+        <h2 id="plus-preview-spotlight-heading">Así aprovecharás Xamuko Plus</h2>
+        <p>Prueba estas tres funciones con ejemplos que no modifican tu cuenta real.</p>
+      </div>
+      <div className="plus-spotlight-grid">
+        <a className="plus-spotlight-card" href="#prices">
+          <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
+          <h3>Precio objetivo</h3>
+          <p>Prueba a fijar y modificar un precio deseado en los productos de ejemplo.</p>
+          <span className="plus-spotlight-detail"><strong>Ejemplo</strong> · Sin alertas reales</span>
+          <span className="plus-spotlight-action">Probar objetivo <PlusIcon name="arrow-right" size={16}/></span>
+        </a>
+        <a className="plus-spotlight-card" href="#radar">
+          <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="radar" size={25}/></span>
+          <h3>Notificaciones inteligentes</h3>
+          <p>Alterna avisos inmediatos y resumen diario para explorar la configuración.</p>
+          <span className="plus-spotlight-detail"><strong>Simulación</strong> · Sin envíos</span>
+          <span className="plus-spotlight-action">Probar avisos <PlusIcon name="arrow-right" size={16}/></span>
+        </a>
+        <a className="plus-spotlight-card" href="#routes">
+          <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="route" size={25}/></span>
+          <h3>Rutas optimizadas</h3>
+          <p>Organiza un itinerario de ejemplo y revisa las advertencias de horarios.</p>
+          <span className="plus-spotlight-detail"><strong>Simulación</strong> · Sin rutas reales</span>
+          <span className="plus-spotlight-action">Probar recorrido <PlusIcon name="arrow-right" size={16}/></span>
+        </a>
+      </div>
+    </section>
     <section className="plus-panel" id="radar">
       <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO · EJEMPLO</span><h2>Tu radar de novedades</h2><p>Así aparecen las novedades de los negocios favoritos.</p></div>
         <label className="plus-toggle"><input type="checkbox" checked={radarEnabled} onChange={e => { setRadarEnabled(e.target.checked); updateNotice('Preferencia de prueba actualizada localmente.'); }}/>Recibir avisos</label></div>
