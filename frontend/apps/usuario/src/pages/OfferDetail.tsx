@@ -1,3 +1,4 @@
+import { usePaidPlans } from "@wit/utils";
 import { PublicOfferSeo } from "../components/PublicPageSeo";
 import { CatalogPhoto } from "../components/CatalogPhoto";
 import type { Business } from "../data/mockData";
@@ -38,6 +39,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const [shareStatus, setShareStatus] = useState("");
   const requireAccount = useAccountGate();
   const { user } = useAuth();
+  const { xamukoPlus } = usePaidPlans();
   const [watchBusy, setWatchBusy] = useState(false);
   const [watchFollowed, setWatchFollowed] = useState(false);
   const [watchError, setWatchError] = useState("");
@@ -203,11 +205,11 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const displayedAmount = (item.priceLabel ?? '').trim().match(/^(?:COP\s*)?\$?\s*([\d.,]+)\s*(?:COP)?$/i)?.[1];
   const displayedNumeric = displayedAmount
     ? Number(displayedAmount.replace(/\./g, '').replace(',', '.')) > 0 : false;
-  const canFollowPrice = isRealPublishedOffer
+  const canFollowPrice = xamukoPlus && isRealPublishedOffer
     && (item.priceTrackable === true || displayedNumeric || (isProduct && typeof product.price === 'number' && product.price > 0));
-  const showComparePrice = isRealPublishedOffer;
+  const showComparePrice = xamukoPlus && isRealPublishedOffer;
   const handleFollowPrice = () => requireAccount(() => {
-    if (watchBusy || watchFollowed) return;
+    if (!xamukoPlus || watchBusy || watchFollowed) return;
     setWatchBusy(true);
     setWatchError("");
     void (async () => {
@@ -229,7 +231,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
     })();
   });
   const handleComparePrice = () => requireAccount(() => {
-    if (!user?.id) return;
+    if (!xamukoPlus || !user?.id) return;
     setCompareError("");
     // Never send locally generated catalog samples to the paid endpoint.
     if (!isRealPublishedOffer) return;
@@ -303,9 +305,9 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
               {watchFollowed ? "Siguiendo precio" : watchBusy ? "Verificando Plus…" : "Seguir precio"}
             </button>}
           </div>
-          {watchFollowed && <Link className="offer-detail-follow-detail" to="/plus#prices">Ver mis precios seguidos</Link>}
-          {watchError && <p className="offer-detail-follow-error" role="alert">{watchError}</p>}
-          {compareError && <p className="offer-detail-follow-error" role="alert">{compareError}</p>}
+          {xamukoPlus && watchFollowed && <Link className="offer-detail-follow-detail" to="/plus#prices">Ver mis precios seguidos</Link>}
+          {xamukoPlus && watchError && <p className="offer-detail-follow-error" role="alert">{watchError}</p>}
+          {xamukoPlus && compareError && <p className="offer-detail-follow-error" role="alert">{compareError}</p>}
           <div className="offer-detail-actions">
             <div className="offer-detail-like-control">
               <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`offer-detail-thumb-button${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}>
