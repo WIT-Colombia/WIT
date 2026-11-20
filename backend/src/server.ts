@@ -3,13 +3,16 @@ import { app } from './app.js';
 import { prisma } from './config/prisma.js';
 import { startVisibilityNotificationScheduler } from './modules/business/visibility-notifications.service.js';
 import { startZoneLaunchAlertScheduler } from './modules/zones/zones-alerts.service.js';
+import { startPlusDailyDigestScheduler } from './modules/user-plus/user-plus-digest.service.js';
 
 let stopVisibilityScheduler: (() => void) | undefined;
 let stopZoneAlertScheduler: (() => void) | undefined;
+let stopPlusDailyDigestScheduler: (() => void) | undefined;
 const server = app.listen(env.port, env.host, () => {
   console.info(`WIT backend disponible en http://${env.host}:${env.port}/api/v1/health`);
   stopVisibilityScheduler = startVisibilityNotificationScheduler();
   stopZoneAlertScheduler = startZoneLaunchAlertScheduler();
+  stopPlusDailyDigestScheduler = startPlusDailyDigestScheduler();
 });
 server.on('error', (error) => {
   console.error('No se pudo iniciar el servidor:', error.message);
@@ -22,6 +25,7 @@ function shutdown(signal: string) {
   closing = true;
   stopVisibilityScheduler?.();
   stopZoneAlertScheduler?.();
+  stopPlusDailyDigestScheduler?.();
   console.info(`Cerrando servidor (${signal})...`);
   const timeout = setTimeout(() => {
     console.error('Se agotó el tiempo de cierre del servidor.');
