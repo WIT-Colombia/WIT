@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import Plus from './Plus';
+import { readPlusComparison, savePlusComparison } from '../services/plusComparisonSelection';
 
 const previewAuth = vi.hoisted(() => ({ user: { id: 'user-test', emailNormalized: 'different@example.com', emailVerified: true, status: 'ACTIVE' } }));
 
@@ -19,6 +20,7 @@ const api = vi.hoisted(() => ({
   createPlusCollection: vi.fn(),
   createPlusSearch: vi.fn(),
   addPlusCollectionItem: vi.fn(),
+  fetchPlusCollectionCandidates: vi.fn(),
 }));
 
 vi.mock('../components/PageLayout', () => ({
@@ -48,6 +50,7 @@ vi.mock('../services/userPlusService', async importOriginal => ({
   createPlusCollection: api.createPlusCollection,
   createPlusSearch: api.createPlusSearch,
   addPlusCollectionItem: api.addPlusCollectionItem,
+  fetchPlusCollectionCandidates: api.fetchPlusCollectionCandidates,
 }));
 
 const inactive = { enabled: false, active: false, subscription: null };
@@ -63,6 +66,7 @@ const renderPlus = (path = '/plus') => render(<MemoryRouter initialEntries={[pat
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.sessionStorage.clear();
   previewAuth.user.emailNormalized = 'different@example.com';
   previewAuth.user.emailVerified = true;
   previewAuth.user.status = 'ACTIVE';
@@ -81,6 +85,7 @@ beforeEach(() => {
   api.createPlusCollection.mockResolvedValue({ id: 'collection-1' });
   api.createPlusSearch.mockResolvedValue({ id: 'search-1' });
   api.addPlusCollectionItem.mockResolvedValue({ id: 'item-1' });
+  api.fetchPlusCollectionCandidates.mockResolvedValue({ items: [], pagination: { page: 1, total: 0, totalPages: 0 } });
 });
 
 describe('Xamuko Plus: member experience and real entitlement', () => {
@@ -148,20 +153,48 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(api.addPlusWatch).not.toHaveBeenCalled();
   });
 
-  it('compares exactly the two selected publications and never more than four', async () => {
-    renderPlus();
-    await screen.findByRole('heading', { name: 'Compara tus opciones' });
+  it('loads one-tap comparison choices and lets users restart without pasted links', async () => {
     const ids = [
       '12345678-1234-4234-8234-123456789abc',
       '12345678-1234-4234-8234-123456789abd',
     ];
-    const input = screen.getByPlaceholderText('Pega un enlace de Xamuko');
-    for (const id of ids) {
-      fireEvent.change(input, { target: { value: '/product/' + id } });
-      fireEvent.click(screen.getByRole('button', { name: 'Añadir a comparación' }));
-    }
+    savePlusComparison('user-test', ids);
+    renderPlus();
+    await screen.findByRole('heading', { name: 'Compara tus opciones' });
+    expect(screen.getByText('2 de 4 opciones seleccionadas')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Pega un enlace de Xamuko')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Comparar 2 opciones' }));
     await waitFor(() => expect(api.comparePlusOffers).toHaveBeenCalledWith(ids));
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar selección' }));
+    expect(readPlusComparison('user-test')).toEqual([]);
+    expect(screen.queryByRole('button', { name: 'Eliminar selección' })).not.toBeInTheDocument();
+    expect(screen.getByText('Tu comparación está vacía')).toBeInTheDocument();
+  });
+
+  it('only permits picking saved favorites and liked offers into Plus collections', async () => {
+    const businessId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const offerId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    api.fetchPlusOverview.mockResolvedValue({ ...overview, collections: [
+      { id: 'collection-1', title: 'Mis elegidos', items: [] },
+    ] });
+    api.fetchPlusCollectionCandidates.mockImplementation(async (type: 'BUSINESS' | 'OFFER') =>
+      ({ items: [type === 'BUSINESS'
+        ? { targetType: 'BUSINESS', targetId: businessId, name: 'Tienda favorita', detail: 'Negocio favorito', href: '/business/tienda' }
+        : { targetType: 'OFFER', targetId: offerId, name: 'Servicio con Me gusta', detail: 'Servicio · Tienda', href: '/service/servicio' }],
+        pagination: { page: 1, total: 1, totalPages: 1 } }));
+    renderPlus();
+    await screen.findByText('Mis elegidos');
+    expect(screen.queryByPlaceholderText('/business/… o /product/…')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Agregar' }));
+    await waitFor(() => expect(api.fetchPlusCollectionCandidates).toHaveBeenCalledWith('BUSINESS', 1));
+    expect(await screen.findByText('Tienda favorita')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Seleccionar' }));
+    await waitFor(() => expect(api.addPlusCollectionItem).toHaveBeenCalledWith(
+      'collection-1', { targetType: 'BUSINESS', targetId: businessId },
+    ));
+    fireEvent.click(screen.getByRole('button', { name: 'Productos y servicios con Me gusta' }));
+    await waitFor(() => expect(api.fetchPlusCollectionCandidates).toHaveBeenCalledWith('OFFER', 1));
+    expect(await screen.findByText('Servicio con Me gusta')).toBeInTheDocument();
   });
 
   it('saves a personal collection and a search using the real API payload', async () => {
