@@ -14,7 +14,7 @@ export function RequirePlusAvailability({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    void refreshPaidPlans().finally(() => {
+    void refreshPaidPlans().catch(() => { /* A failed availability check must never grant access. */ }).finally(() => {
       if (mounted) setVerified(true);
     });
     return () => { mounted = false; };
