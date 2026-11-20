@@ -155,38 +155,8 @@ export default function PlusPreview() {
     <nav className="plus-section-nav" aria-label="Navegación de herramientas Plus de prueba">
       {sections.map(item => <a key={item.id} href={'#' + item.id}><PlusIcon name={item.icon} size={17}/>{item.label}</a>)}
     </nav>
-    <section className="plus-spotlight" aria-labelledby="plus-preview-spotlight-heading">
-      <div className="plus-spotlight-heading">
-        <span className="plus-overline">HERRAMIENTAS DESTACADAS · DEMOSTRACIÓN</span>
-        <h2 id="plus-preview-spotlight-heading">Así aprovecharás Xamuko Plus</h2>
-        <p>Prueba estas tres funciones con ejemplos que no modifican tu cuenta real.</p>
-      </div>
-      <div className="plus-spotlight-grid">
-        <a className="plus-spotlight-card" href="#prices">
-          <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
-          <h3>Precio objetivo</h3>
-          <p>Prueba a fijar y modificar un precio deseado en los productos de ejemplo.</p>
-          <span className="plus-spotlight-detail"><strong>Ejemplo</strong> · Sin alertas reales</span>
-          <span className="plus-spotlight-action">Probar objetivo <PlusIcon name="arrow-right" size={16}/></span>
-        </a>
-        <a className="plus-spotlight-card" href="#radar">
-          <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="radar" size={25}/></span>
-          <h3>Notificaciones inteligentes</h3>
-          <p>Alterna avisos inmediatos y resumen diario para explorar la configuración.</p>
-          <span className="plus-spotlight-detail"><strong>Simulación</strong> · Sin envíos</span>
-          <span className="plus-spotlight-action">Probar avisos <PlusIcon name="arrow-right" size={16}/></span>
-        </a>
-        <a className="plus-spotlight-card" href="#routes">
-          <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="route" size={25}/></span>
-          <h3>Rutas optimizadas</h3>
-          <p>Organiza un itinerario de ejemplo y revisa las advertencias de horarios.</p>
-          <span className="plus-spotlight-detail"><strong>Simulación</strong> · Sin rutas reales</span>
-          <span className="plus-spotlight-action">Probar recorrido <PlusIcon name="arrow-right" size={16}/></span>
-        </a>
-      </div>
-    </section>
     <section className="plus-panel" id="radar" tabIndex={-1}>
-      <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO · EJEMPLO</span><h2>Tu radar de novedades</h2><p>Así aparecen las novedades de los negocios favoritos.</p></div>
+      <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO · EJEMPLO</span><h2>Tu radar de novedades</h2><p>Así aparecen las novedades de los negocios favoritos y se configuran los avisos.</p></div>
         <label className="plus-toggle"><input type="checkbox" checked={radarEnabled} onChange={e => { setRadarEnabled(e.target.checked); updateNotice('Preferencia de prueba actualizada localmente.'); }}/>Recibir avisos</label></div>
       <div className="plus-delivery-controls">
         <label>Entrega de avisos de ejemplo
@@ -209,7 +179,7 @@ export default function PlusPreview() {
       <p className="plus-footnote">En la versión real, estas novedades se obtienen de publicaciones recientes de tus favoritos.</p>
     </section>
     <section className="plus-panel" id="prices" tabIndex={-1}>
-      <div className="plus-heading"><div><span>02 · AHORRO · EJEMPLO</span><h2>Seguimiento de precios</h2><p>Prueba agregar o quitar productos y consultar un historial de ejemplo.</p></div>
+      <div className="plus-heading"><div><span>02 · AHORRO · EJEMPLO</span><h2>Seguimiento de precios</h2><p>Prueba el seguimiento de precios, fija un objetivo y consulta un historial de ejemplo.</p></div>
         <label className="plus-toggle"><input type="checkbox" checked={priceAlerts} onChange={e => { setPriceAlerts(e.target.checked); updateNotice('Alerta simulada; no se enviarán notificaciones.'); }}/>Avisar cuando bajen</label></div>
       <div className="plus-follow-guide">
         <span className="plus-follow-guide-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
@@ -300,7 +270,7 @@ export default function PlusPreview() {
       <p className="plus-footnote">«Buscar» abre los resultados públicos de Xamuko, no una búsqueda Plus almacenada en el backend.</p>
     </section>
     <section className="plus-panel" id="routes" tabIndex={-1}>
-      <div className="plus-heading"><div><span>05 · EXPLORACIÓN · EJEMPLO</span><h2>Rutas con varios negocios</h2><p>Elige de dos a cuatro paradas para revisar cómo se organiza el recorrido.</p></div></div>
+      <div className="plus-heading"><div><span>05 · EXPLORACIÓN · EJEMPLO</span><h2>Rutas con varios negocios</h2><p>Elige de dos a cuatro paradas, optimiza el recorrido y revisa horarios de ejemplo.</p></div></div>
       <div className="plus-routes-list">{sampleStops.map(stop=><label key={stop.id}><input type="checkbox" checked={selectedStops.includes(stop.id)} disabled={!selectedStops.includes(stop.id)&&selectedStops.length>=4} onChange={()=>{setSelectedStops(ids=>ids.includes(stop.id)?ids.filter(x=>x!==stop.id):[...ids,stop.id]);setShowRoute(false);}}/><span>{stop.name} · {stop.address}</span></label>)}</div>
       <div className="plus-route-actions">
         <label>Transporte <select value={travelMode} onChange={e=>setTravelMode(e.target.value as 'driving'|'walking')}><option value="driving">En vehículo</option><option value="walking">A pie</option></select></label>
