@@ -19,8 +19,6 @@ import {
   removePlusWatch, savePlusPreferences, setPlusPriceTarget, searchHref,
   type PlusOverview, type PlusRadarItem, type PlusRouteFavorite, type PlusCompareOffer, type PriceHistory, type PlusStatus, type PlusPurchaseRequest, type PlusCollectionCandidate,
 } from '../services/userPlusService';
-import PlusPreview from './PlusPreview';
-import { canUsePlusVisualPreview } from '../services/plusPreviewAccess';
 import { appendPlusComparison, readPlusComparison, readPlusComparisonLabels, savePlusComparison } from '../services/plusComparisonSelection';
 import './Plus.css';
 
@@ -49,7 +47,7 @@ function buildMultiStopRoute(points: PlusRouteFavorite[], travelMode: 'driving' 
   return 'https://www.google.com/maps/dir/?' + input.toString();
 }
 
-function PlusReal({ canPreview }: { canPreview: boolean }) {
+export default function Plus() {
   const { user } = useAuth();
   const [queryParams] = useSearchParams();
   const { selection } = useLocationContext();
@@ -325,7 +323,6 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
 
   return <PageLayout className="plus-page">
     <Link to="/profile" className="plus-back">← Volver al perfil</Link>
-    {canPreview && <Link className="plus-preview-entry" to="/plus?preview=1"><PlusIcon name="crown" size={18}/> Recorrer Xamuko Plus en vista de prueba <PlusIcon name="arrow-right" size={18}/></Link>}
     <header className="plus-hero">
       <span className="plus-kicker">MEMBRESÍA XAMUKO</span>
       <h1><span className="plus-hero-crown"><PlusIcon name="crown" size={32}/></span> Xamuko Plus</h1>
@@ -664,11 +661,3 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
   </PageLayout>;
 }
 
-export default function Plus() {
-  const { user } = useAuth();
-  const [params] = useSearchParams();
-  const canPreview = canUsePlusVisualPreview(user);
-  return canPreview && params.get('preview') === '1'
-    ? <PlusPreview />
-    : <PlusReal canPreview={canPreview} />;
-}
