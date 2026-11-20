@@ -171,6 +171,34 @@ export async function plusRadar(userId: string) {
   return { items };
 }
 
+
+/** Route planner must use the current user's own favorites, not the first page of public search.
+ * Only publicly visible, released businesses with public coordinates can enter a route.
+ */
+export async function plusRouteFavorites(userId: string) {
+  await requirePlus(userId);
+  const adultAllowed = await adultConsent(userId);
+  const rows = await prisma.businessFavorite.findMany({
+    where: { userId, business: { AND: [
+      { ...publishedBusiness, ...(adultAllowed ? {} : { adultOnly: false }),
+        location: { is: { visibility: 'PUBLIC', latitude: { not: null }, longitude: { not: null } } } },
+      await publicReleaseWhere(),
+    ] } },
+    orderBy: { createdAt: 'desc' },
+    select: { business: { select: { publicId: true, name: true, location: {
+      select: { latitude: true, longitude: true },
+    } } } },
+  });
+  const items = rows.flatMap(({ business }) => {
+    const lat = business.location?.latitude?.toNumber();
+    const lng = business.location?.longitude?.toNumber();
+    if (lat === undefined || lng === undefined || !Number.isFinite(lat) || !Number.isFinite(lng)
+        || lat < -90 || lat > 90 || lng < -180 || lng > 180) return [];
+    return [{ id: business.publicId, name: business.name, lat, lng }];
+  });
+  return { items };
+}
+
 export async function addPlusCollection(userId: string, title: string) {
   await requirePlus(userId);
   const count = await prisma.userPlusCollection.count({ where: { userId } });
