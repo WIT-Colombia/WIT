@@ -10,7 +10,7 @@ Se incluyen seis capacidades para Usuarios:
 6. Supresión de los espacios reservados de publicidad de terceros para suscriptores Plus.
 
 **No** se ofrecen cupones ni descuentos exclusivos para miembros.
-**No** se ofrece contratación ni cobro por Xamuko Plus: la asignación administrativa manual está destinada a pruebas controladas.
+La página puede registrar una **solicitud de adquisición**, pero enviarla **no cobra, activa ni renueva** una membresía. La habilitación administrativa manual está reservada a pruebas controladas; no se debe confundir solicitud registrada con pago aprobado.
 
 ## Modelo de autorización
 - El interruptor global `PaidPlanAvailability.xamukoPlus` es el primero en verificarse.
@@ -42,3 +42,34 @@ Se incluyen seis capacidades para Usuarios:
 
 ## Prohibiciones operativas
 No efectuar modificaciones directas a producción ni habilitar cobros sin pruebas, respaldo, revisión de migración y autorización de despliegue.
+
+## Aceptación funcional y visual de las tres mejoras (noviembre de 2026)
+
+**Rama autorizada:** `integration/preserve-all-20261029`. Las comprobaciones automatizadas asociadas al commit `566a0a107060717a6ebf12e008f4d69c57776867` finalizaron correctamente:
+- Frontend, pruebas, compilación, auditoría de dependencias y verificación responsive de Plus: [GitHub Actions #44762148552](https://github.com/WIT-Colombia/WIT/actions/runs/44762148552).
+- Backend, pruebas de integración con MySQL: [GitHub Actions #44762148515](https://github.com/WIT-Colombia/WIT/actions/runs/44762148515).
+- Flujo de entrega: etapa de verificación aprobada, **despliegue omitido**; un workflow exitoso no equivale a una publicación: [GitHub Actions #44762148575](https://github.com/WIT-Colombia/WIT/actions/runs/44762148575).
+
+### Prueba manual exigida antes de certificar producción
+
+**Estado: PENDIENTE.** Las pruebas automáticas usan datos y sesiones de prueba; no sustituyen una sesión real de un usuario Plus con backend actualizado. Ejecutar únicamente en un entorno autorizado, después de respaldos y de validar migraciones. No registrar contraseñas, tokens, identificadores privados ni datos personales en los resultados.
+
+| Caso | Acción de prueba | Resultado requerido |
+| --- | --- | --- |
+| 1. Acceso | Ingresar con cuenta básica y cuenta Plus habilitada | Los datos y herramientas premium solo son accesibles a la cuenta autorizada |
+| 2. Precio objetivo | Seguir un producto con precio numérico y fijar objetivo inferior al precio | El objetivo se guarda y se muestra en la ficha Plus de esa cuenta |
+| 3. Edición / baja | Modificar y retirar el objetivo | Se actualiza o elimina sin tocar otros productos |
+| 4. Alerta única | Publicar un precio real que alcance el objetivo y repetir una actualización equivalente | Aparece una alerta autorizada, sin duplicaciones por el mismo objetivo |
+| 5. Consentimiento | Desactivar alertas generales de bajada y conservar un objetivo explícito | El servicio distingue ambas preferencias sin modificar una por la otra |
+| 6. Envío inmediato | Elegir entrega inmediata y generar una novedad permitida | La notificación se atribuye exclusivamente a la cuenta Plus destinataria |
+| 7. Resumen diario | Seleccionar una zona IANA válida y hora local | La preferencia persiste y el envío se realiza en la hora local elegida |
+| 8. Configuración inválida | Ingresar una zona horaria inexistente | Se indica error y no se envía configuración errónea al servidor |
+| 9. Caducidad | Simular expiración o revocación autorizada de la membresía | Se bloquean funciones premium y avisos futuros sin destruir datos guardados |
+| 10. Ruta de dos a cuatro | Elegir 2–4 negocios favoritos georreferenciados y optimizar | Orden conforme a distancia geográfica y controles de cambio/restablecimiento |
+| 11. Horario de cierre | Incluir negocio cuyo horario publicado indique cierre estimado | Advertencia visible sin afirmar disponibilidad garantizada |
+| 12. Google Maps | Abrir ruta optimizada | Origen, paradas y modo coinciden con la selección; no se inventa información de tráfico |
+| 13. Estados vacíos | Probar sin favoritos ni precios seguidos y con caída de un endpoint | Mensajes claros, sin métricas ficticias ni bloqueo del resto de herramientas |
+| 14. Responsive | Comprobar a 360, 390, 820, 1180 y 1440 px; teclado y controles táctiles | Sin desbordamiento ni botones truncados; foco visible y legibilidad consistente |
+| 15. Seguridad | Revisar solicitudes cruzadas entre dos cuentas y registros administrativos | No hay acceso transversal; cambios de membresía quedan auditados |
+
+**Criterio de cierre:** registrar evidencia de los 15 casos y obtener resultados satisfactorios. Si falta sesión real o falla un caso crítico, mantener el estado **PENDIENTE**, sin declarar la versión apta para producción. No habilitar cobros ni efectuar despliegue por el solo hecho de aprobar el pipeline.
