@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { PlusIcon, type PlusIconName } from '../components/PlusIcon';
 import { PageLayout } from '../components/PageLayout';
 import { useAuth } from '../context/AuthContext';
-import { readPlusComparison, savePlusComparison } from '../services/plusComparisonSelection';
+import { readPlusComparison, readPlusComparisonLabels, savePlusComparison } from '../services/plusComparisonSelection';
 import { parsePlusTarget, searchHref } from '../services/userPlusService';
 
 type Watch = { id: string; name: string; business: string; price: string | null; original: string | null };
@@ -102,6 +102,7 @@ export default function PlusPreview() {
     setSearchTitle(''); setSearchQuery(''); setSearchCategory('');
     updateNotice('Búsqueda agregada a la vista previa, sin guardar datos.');
   };
+  const compareLabels = readPlusComparisonLabels(user?.id ?? '', true);
   const stats = [
     { label: 'Novedades de ejemplo', value: 2, href: '#radar', icon: 'radar' as const },
     { label: 'Precios de ejemplo', value: watches.length, href: '#prices', icon: 'price' as const },
@@ -164,7 +165,7 @@ export default function PlusPreview() {
         <Link className="plus-button plus-button-secondary" to="/results">Elegir publicaciones</Link>
       </div>
       <p className="plus-selection-caption">{compareIds.length} de 4 opciones seleccionadas</p>
-      <div className="plus-chips">{compareIds.map((id,i)=><button key={id} type="button" aria-label={`Quitar opción ${i+1}`} onClick={()=>updateCompareSelection(compareIds.filter(x=>x!==id))}>Opción {i+1} ×</button>)}</div>
+      <div className="plus-chips">{compareIds.map((id,i)=><button key={id} type="button" aria-label={`Quitar ${compareLabels[id] ?? `opción ${i+1}`}`} onClick={()=>updateCompareSelection(compareIds.filter(x=>x!==id))}>{compareLabels[id] ?? resolve(id).name} ×</button>)}</div>
       {compareIds.length > 0 && <button type="button" className="plus-button plus-clear-selection" onClick={()=>updateCompareSelection([])}>Eliminar selección</button>}
       <button type="button" className="plus-button plus-button-secondary" disabled={compareIds.length<2} onClick={()=>setCompared(true)}>Comparar {compareIds.length} opciones</button>
       {compared && <div className="plus-compare-grid">{compareIds.map(id=>{const item=resolve(id);return <article key={id}><span>Publicación de ejemplo</span><h3>{item.name}</h3><p>{item.business}</p><strong>{item.price ? '$'+item.price+' COP · ejemplo' : 'Precio no consultado'}</strong><p>La ubicación, calificación y distancia se consultarán desde el backend real.</p></article>;})}</div>}
