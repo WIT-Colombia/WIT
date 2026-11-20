@@ -17,3 +17,11 @@
   animation-iteration-count: 1 !important;
   transition-duration: .01ms !important;
 }
+
+/* Usuario Plus: only verified active members hide explicitly identified third-party ad slots.
+   This never hides businesses, organic search results or platform notices. */
+:root.xamuko-plus-ad-free [data-ad-provider="third-party"],
+:root.xamuko-plus-ad-free [data-third-party-ad],
+:root.xamuko-plus-ad-free .third-party-ad-slot {
+  display: none !important;
+}
