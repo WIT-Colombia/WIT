@@ -9,4 +9,4 @@ export { faqs, type FaqAudience } from './faqs';
 
 export { normalizeImageForUpload, normalizeBusinessPhotoForUpload, BUSINESS_4K_MAX_SIDE, validateUploadImageSource, isSupportedUploadImage, PHOTO_INPUT_ACCEPT, PhotoUploadError, MAX_UPLOAD_IMAGE_BYTES } from './imageUpload';
 
-export { usePaidPlans, refreshPaidPlans, PAID_PLAN_MONTHLY_COP, formatCopPrice, type PaidPlanAvailability, type PaidPlanKey } from './paidPlans';
+export { usePaidPlans, usePaidPlansVerification, refreshPaidPlans, PAID_PLAN_MONTHLY_COP, formatCopPrice, type PaidPlanAvailability, type PaidPlanKey } from './paidPlans';
