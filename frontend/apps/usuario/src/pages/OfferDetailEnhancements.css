@@ -683,3 +683,17 @@
 .offer-detail-plus-links a{display:inline-flex;align-items:center;min-height:37px;padding:8px 12px;border:1px solid #e1d4f7;border-radius:10px;background:#f7f2ff;color:#6336b7;font-size:12px;font-weight:750;text-decoration:none}
 .offer-detail-plus-links a:hover{background:#efe7ff}
 @media(max-width:500px){.offer-detail-plus-links a{flex:1 1 140px;justify-content:center;font-size:11px}}
+
+/* Xamuko Plus: direct price-follow action on a published, numeric-price product. */
+.offer-detail-follow-wrap{display:flex;flex-wrap:wrap;align-items:center;gap:9px 13px;margin:0 0 18px}
+.offer-detail-follow-price{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:45px;padding:10px 17px;border:1px solid #6d3ac9;border-radius:12px;background:linear-gradient(110deg,#6b40c9,#512ab4);color:#fff;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 16px #512ab425;transition:transform .15s ease,box-shadow .15s ease}
+.offer-detail-follow-price:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 18px #512ab433}
+.offer-detail-follow-price:focus-visible{outline:3px solid #c8b6fa;outline-offset:3px}
+.offer-detail-follow-price:disabled{opacity:.7;cursor:default}
+.offer-detail-follow-price.is-following{border-color:#167c50;background:#e7f8ed;box-shadow:none;color:#13734a;opacity:1}
+.offer-detail-follow-wrap>small{flex:1 1 170px;color:var(--xamuko-muted);font-size:11px;line-height:1.55}
+.offer-detail-follow-detail{color:#603bb4;font-size:12px;font-weight:750;text-decoration:none}
+.offer-detail-follow-detail:hover{text-decoration:underline}
+.offer-detail-follow-error{flex:1 0 100%;margin:0;color:#b42318;font-size:12px;line-height:1.5}
+@media(max-width:600px){.offer-detail-follow-wrap{align-items:stretch;flex-direction:column;gap:8px}.offer-detail-follow-price{width:100%;min-height:46px}.offer-detail-follow-wrap>small{flex:auto}}
+@media(prefers-reduced-motion:reduce){.offer-detail-follow-price{transition:none}.offer-detail-follow-price:hover:not(:disabled){transform:none}}
