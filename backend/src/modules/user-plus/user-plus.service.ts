@@ -1,8 +1,10 @@
 import { prisma } from '../../config/prisma.js';
+import { Prisma } from '../../generated/prisma/client.js';
 import { AppError } from '../../shared/errors/app-error.js';
 import { isPaidPlanEnabled } from '../admin/paid-plans.service.js';
 import { publicReleaseWhere } from '../zones/zones.service.js';
 import { effectivePlusPrice } from './user-plus-events.service.js';
+import { validatedPlusTimezone } from './user-plus-scheduling.js';
 
 const publishedBusiness = {
   publicationStatus: 'PUBLISHED' as const,
@@ -67,7 +69,7 @@ export async function plusOverview(userId: string) {
     prisma.userPlusCollection.findMany({ where: { userId }, include: { items: { orderBy: { createdAt: 'desc' } } }, orderBy: { updatedAt: 'desc' }, take: 50 }),
     prisma.userPlusSavedSearch.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 }),
     prisma.userPlusPriceWatch.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 100,
-      select: { id: true, offerId: true, createdAt: true,
+      select: { id: true, offerId: true, createdAt: true, targetAmount: true, targetCurrency: true, targetNotifiedAt: true,
         offer: { select: { name: true, kind: true, priceAmount: true, priceText: true, negotiable: true, currency: true, active: true, adultOnly: true, deletedAt: true,
           publicationStatus: true, administrativeStatus: true,
           business: { select: { name: true, publicId: true, adultOnly: true, publicationStatus: true, visibilityStatus: true,
@@ -115,6 +117,9 @@ export async function plusOverview(userId: string) {
       && (adultAllowed || (!item.adultOnly && !business.adultOnly));
     return {
       id: row.id, offerId: row.offerId, createdAt: row.createdAt, kind: item.kind,
+      targetAmount: available ? row.targetAmount?.toString() ?? null : null,
+      targetCurrency: available ? row.targetCurrency : null,
+      targetNotifiedAt: available ? row.targetNotifiedAt : null,
       name: available ? item.name : 'Publicación no disponible',
       currency: available ? item.currency : null,
       price: available ? effectivePlusPrice(item.priceAmount, item.priceText, item.negotiable)?.toString() ?? null : null,
@@ -125,15 +130,20 @@ export async function plusOverview(userId: string) {
   });
   return { ...status, collections: safeCollections, searches, watches: safeWatches,
     preferences: { radarEnabled: preferences?.radarEnabled ?? false,
-      priceAlertsEnabled: preferences?.priceAlertsEnabled ?? false } };
+      priceAlertsEnabled: preferences?.priceAlertsEnabled ?? false,
+      deliveryMode: preferences?.deliveryMode ?? 'IMMEDIATE',
+      digestTimeZone: preferences?.digestTimeZone ?? 'America/Bogota',
+      digestHour: preferences?.digestHour ?? 8 } };
 }
 
-export async function setPlusPreferences(userId: string, next: { radarEnabled?: boolean; priceAlertsEnabled?: boolean }) {
+export async function setPlusPreferences(userId: string, next: { radarEnabled?: boolean; priceAlertsEnabled?: boolean; deliveryMode?: 'IMMEDIATE' | 'DAILY'; digestTimeZone?: string; digestHour?: number }) {
+  if (next.digestTimeZone) validatedPlusTimezone(next.digestTimeZone);
   await requirePlus(userId);
   const data = await prisma.userPlusPreference.upsert({
     where: { userId }, create: { userId, ...next }, update: next,
   });
-  return { radarEnabled: data.radarEnabled, priceAlertsEnabled: data.priceAlertsEnabled };
+  return { radarEnabled: data.radarEnabled, priceAlertsEnabled: data.priceAlertsEnabled,
+    deliveryMode: data.deliveryMode, digestTimeZone: data.digestTimeZone, digestHour: data.digestHour };
 }
 
 function publicBusinessProfilePhotoUrl(business: { publicId: string; profilePhoto: { id: string } | null }): string | null {
@@ -320,6 +330,32 @@ export async function addPlusWatch(userId: string, offerId: string) {
     select: { id: true, offerId: true },
   });
 }
+export async function setPlusPriceTarget(userId: string, watchId: string, amount: string | null) {
+  await requirePlus(userId);
+  const watch = await prisma.userPlusPriceWatch.findFirst({
+    where: { id: watchId, userId }, select: { id: true, offerId: true },
+  });
+  if (!watch) throw new AppError(404, 'PLUS_WATCH_NOT_FOUND', 'No encontramos el seguimiento de precios.');
+  if (amount === null) {
+    await prisma.userPlusPriceWatch.updateMany({ where: { id: watchId, userId },
+      data: { targetAmount: null, targetCurrency: null, targetNotifiedAt: null } });
+    return { targetAmount: null, targetCurrency: null, targetNotifiedAt: null };
+  }
+  const offer = await prisma.businessOffer.findFirst({
+    where: { id: watch.offerId, ...await safeOfferWhere(await adultConsent(userId)) },
+    select: { priceAmount: true, priceText: true, negotiable: true, currency: true },
+  });
+  const current = offer ? effectivePlusPrice(offer.priceAmount, offer.priceText, offer.negotiable) : null;
+  if (!current || !offer?.currency)
+    throw new AppError(422, 'PLUS_PRICE_UNAVAILABLE', 'El precio o su moneda no están disponibles.');
+  const target = new Prisma.Decimal(amount);
+  if (!target.gt(0) || !target.lt(current) || target.gt('9999999999.99'))
+    throw new AppError(422, 'PLUS_INVALID_TARGET', 'El precio objetivo debe ser mayor que cero y menor que el precio actual.');
+  await prisma.userPlusPriceWatch.updateMany({ where: { id: watchId, userId },
+    data: { targetAmount: target, targetCurrency: offer.currency, targetNotifiedAt: null } });
+  return { targetAmount: target.toString(), targetCurrency: offer.currency, targetNotifiedAt: null };
+}
+
 export async function deletePlusWatch(userId: string, id: string) {
   await requirePlus(userId);
   await prisma.userPlusPriceWatch.deleteMany({ where: { id, userId } });
