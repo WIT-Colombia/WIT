@@ -27,6 +27,7 @@ export type PlusOverview = PlusStatus & {
 };
 export type PlusRadarItem = {
   id: string; title: string; type: 'PRODUCT' | 'SERVICE' | 'PROMOTION'; business: string;
+  businessProfilePhotoUrl: string | null;
   href: string; createdAt: string;
 };
 export type PlusCompareOffer = {
