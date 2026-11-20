@@ -26,6 +26,11 @@ const api = vi.hoisted(() => ({
 vi.mock('../components/PageLayout', () => ({
   PageLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
+vi.mock('../components/CatalogPhoto', () => ({
+  CatalogPhoto: ({ src, alt }: { src: string; alt: string }) => src
+    ? <img src={src} alt={alt} />
+    : <span data-testid="missing-business-photo" aria-hidden="true" />,
+}));
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({ user: previewAuth.user }),
 }));
@@ -108,6 +113,24 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(screen.getByRole('heading', { name: 'Rutas con varios negocios' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Experiencia sin anuncios/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Novedades recientes/ })).toHaveTextContent('0');
+  });
+
+  it('shows each business profile photo beside its radar alert with a fallback if unavailable', async () => {
+    const profilePhotoUrl = '/api/v1/public/businesses/panaderia-patico/photos/photo-123/content';
+    api.fetchPlusRadar.mockResolvedValue({ items: [
+      { id: 'offer-1', type: 'PRODUCT', title: 'Pan queso', business: 'Panadería Patico',
+        businessProfilePhotoUrl: profilePhotoUrl, createdAt: '2026-11-20T10:00:00.000Z',
+        href: '/product/offer-1' },
+      { id: 'offer-2', type: 'SERVICE', title: 'Servicio nuevo', business: 'Negocio sin foto',
+        businessProfilePhotoUrl: null, createdAt: '2026-11-19T10:00:00.000Z',
+        href: '/service/offer-2' },
+    ] });
+    renderPlus();
+    const image = await screen.findByRole('img', { name: 'Foto de perfil de Panadería Patico' });
+    expect(image).toHaveAttribute('src', profilePhotoUrl);
+    expect(screen.getByRole('link', { name: /Pan queso/ })).toHaveAttribute('href', '/product/offer-1');
+    expect(screen.getByText('Negocio sin foto')).toBeInTheDocument();
+    expect(screen.getByTestId('missing-business-photo')).toBeInTheDocument();
   });
 
   it('does not fabricate zero news when the radar API fails', async () => {
