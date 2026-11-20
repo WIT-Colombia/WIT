@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { ProductDetail } from './OfferDetail';
+import { readPlusComparison } from '../services/plusComparisonSelection';
 
 const mocks = vi.hoisted(() => ({
   getOfferPageDetail: vi.fn(),
@@ -46,8 +47,8 @@ function setupOffer(price: number | undefined = 32000) {
   });
 }
 function LocationIndicator() {
-  const { pathname, search } = useLocation();
-  return <output data-testid="destination">{pathname + search}</output>;
+  const { pathname, search, hash } = useLocation();
+  return <output data-testid="destination">{pathname + search + hash}</output>;
 }
 const mount = () => render(<MemoryRouter initialEntries={['/product/' + uuid]}>
   <LocationIndicator/>
@@ -59,6 +60,7 @@ const mount = () => render(<MemoryRouter initialEntries={['/product/' + uuid]}>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.sessionStorage.clear();
   mocks.user.emailNormalized = 'usuario@example.com';
   mocks.user.emailVerified = true;
   mocks.user.status = 'ACTIVE';
@@ -94,6 +96,23 @@ describe('Ficha de producto: seguir precio en un toque', () => {
     await waitFor(() => expect(screen.getByTestId('destination'))
       .toHaveTextContent('/plus?preview=1&watch=' + uuid));
     expect(mocks.addPlusWatch).not.toHaveBeenCalled();
+  });
+
+  it('selects a product directly for comparison and navigates to the Plus shortlist', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar precio' }));
+    expect(readPlusComparison('user-1')).toEqual([uuid]);
+    expect(screen.getByTestId('destination')).toHaveTextContent('/plus#compare');
+    expect(mocks.addPlusWatch).not.toHaveBeenCalled();
+  });
+
+  it('keeps visual comparison selections isolated to the authorized Plus preview', async () => {
+    mocks.user.emailNormalized = 'administradoreswit@gmail.com';
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Comparar precio' }));
+    expect(readPlusComparison('user-1', true)).toEqual([uuid]);
+    expect(readPlusComparison('user-1')).toEqual([]);
+    expect(screen.getByTestId('destination')).toHaveTextContent('/plus?preview=1#compare');
   });
 
   it('does not offer price tracking on products without a positive numeric price', async () => {
