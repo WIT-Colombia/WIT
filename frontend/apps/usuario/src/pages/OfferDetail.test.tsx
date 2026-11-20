@@ -9,9 +9,14 @@ const mocks = vi.hoisted(() => ({
   getOfferPageDetail: vi.fn(),
   fetchPlusStatus: vi.fn(),
   addPlusWatch: vi.fn(),
+  plusEnabled: true,
   user: { id: 'user-1', emailNormalized: 'usuario@example.com', emailVerified: true, status: 'ACTIVE' },
 }));
 
+vi.mock('@wit/utils', async importOriginal => ({
+  ...(await importOriginal<typeof import('@wit/utils')>()),
+  usePaidPlans: () => ({ businessPro: true, xamukoPlus: mocks.plusEnabled }),
+}));
 vi.mock('../components/PublicPageSeo', () => ({ PublicOfferSeo: () => null }));
 vi.mock('../components/CatalogPhoto', () => ({ CatalogPhoto: ({ alt }: { alt: string }) => <div role="img" aria-label={alt}/> }));
 vi.mock('../components/PageLayout', () => ({ PageLayout: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
@@ -60,6 +65,7 @@ const mount = () => render(<MemoryRouter initialEntries={['/product/' + uuid]}>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.plusEnabled = true;
   window.sessionStorage.clear();
   mocks.user.emailNormalized = 'usuario@example.com';
   mocks.user.emailVerified = true;
@@ -88,13 +94,23 @@ describe('Ficha de producto: seguir precio en un toque', () => {
     expect(mocks.addPlusWatch).not.toHaveBeenCalled();
   });
 
-  it('does not give the former test account any price-following bypass', async () => {
+  it('does not show Plus product actions for the former test account when the plan is disabled', async () => {
     mocks.user.emailNormalized = 'administradoreswit@gmail.com';
-    mocks.fetchPlusStatus.mockResolvedValue({ enabled: false, active: false, subscription: null });
+    mocks.plusEnabled = false;
     mount();
-    fireEvent.click(await screen.findByRole('button', { name: 'Seguir precio' }));
-    await waitFor(() => expect(screen.getByTestId('destination')).toHaveTextContent('/plus'));
+    await screen.findByText('Producto de prueba');
+    expect(screen.queryByRole('button', { name: 'Seguir precio' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Comparar precio' })).not.toBeInTheDocument();
+    expect(mocks.fetchPlusStatus).not.toHaveBeenCalled();
     expect(mocks.addPlusWatch).not.toHaveBeenCalled();
+  });
+
+  it('hides all Plus actions for regular users too when the master plan is off', async () => {
+    mocks.plusEnabled = false;
+    mount();
+    await screen.findByText('Producto de prueba');
+    expect(screen.queryByRole('button', { name: 'Seguir precio' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Comparar precio' })).not.toBeInTheDocument();
   });
 
   it('selects a product directly for comparison and navigates to the Plus shortlist', async () => {
