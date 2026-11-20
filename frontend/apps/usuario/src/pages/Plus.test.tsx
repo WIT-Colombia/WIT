@@ -79,10 +79,6 @@ const overview = {
     deliveryMode: 'IMMEDIATE', digestTimeZone: 'America/Panama', digestHour: 8 },
 };
 const renderPlus = (path = '/plus') => render(<MemoryRouter initialEntries={[path]}><Plus /></MemoryRouter>);
-const previewTool = (id: string) => fireEvent.change(
-  screen.getByRole('combobox', { name: 'Elegir herramienta de demostración' }),
-  { target: { value: id } },
-);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -491,126 +487,25 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(route.getAttribute('href')).toContain('3.53');
   });
 
-  it('opens local-only Plus visual preview for the verified designated account', async () => {
+  it('ignores legacy ?preview=1 even for the former designated account when Plus is off', async () => {
     previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
-    renderPlus('/plus?preview=1');
-    expect(screen.getByText('Prueba visual con datos de ejemplo')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Tu radar de novedades' })).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Elegir herramienta de demostración' })).toHaveValue('radar');
-    expect(screen.getByRole('navigation', { name: 'Navegación de herramientas Plus de prueba' })).toBeInTheDocument();
+    api.fetchPlusStatus.mockResolvedValue(inactive);
+    renderPlus('/plus?preview=1#prices');
+    expect(await screen.findByText('Xamuko Plus aún no está habilitado')).toBeInTheDocument();
+    expect(screen.queryByText('Prueba visual con datos de ejemplo')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Seguimiento de precios' })).not.toBeInTheDocument();
-    expect(screen.getByRole('option', { name: '02 · Precios' })).toBeInTheDocument();
-    expect(document.querySelectorAll('.plus-panel[hidden]')).toHaveLength(6);
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Recibir avisos' }));
-    expect(screen.getByText(/Preferencia de prueba actualizada localmente/)).toBeInTheDocument();
-    expect(api.fetchPlusStatus).not.toHaveBeenCalled();
+    expect(screen.queryByRole('link', { name: /Recorrer Xamuko Plus en vista de prueba/ })).not.toBeInTheDocument();
     expect(api.fetchPlusOverview).not.toHaveBeenCalled();
-    expect(api.savePlusPreferences).not.toHaveBeenCalled();
     expect(api.requestPlusMembership).not.toHaveBeenCalled();
   });
 
-  it('lets the authorized preview compare two sample products and clear the selection without backend calls', () => {
+  it('does not grant membership by changing account email or URL parameters', async () => {
     previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
-    renderPlus('/plus?preview=1');
-    previewTool('compare');
-    fireEvent.click(screen.getByRole('button', { name: 'Probar con dos opciones de ejemplo' }));
-    expect(screen.getByText('2 de 4 opciones seleccionadas')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Comparar 2 opciones' }));
-    expect(screen.getByRole('heading', { name: 'Producto de muestra A' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Producto de muestra B' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Eliminar selección' }));
-    expect(readPlusComparison('user-test', true)).toEqual([]);
-    expect(api.comparePlusOffers).not.toHaveBeenCalled();
-    expect(api.fetchPlusStatus).not.toHaveBeenCalled();
-  });
-
-  it('simulates all three smart Plus benefits without calling production APIs', () => {
-    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
-    renderPlus('/plus?preview=1');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Entrega de avisos de ejemplo' }), {
-      target: { value: 'DAILY' },
-    });
-    expect(screen.getByRole('combobox', { name: 'Hora de entrega de ejemplo' })).toBeInTheDocument();
-
-    previewTool('prices');
-    fireEvent.click(screen.getByRole('button', { name: 'Fijar objetivo' }));
-    fireEvent.change(screen.getByRole('spinbutton', { name: 'Precio objetivo demo de Producto de muestra A' }), {
-      target: { value: '25000' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar objetivo' }));
-    expect(screen.getByText(/Objetivo de demostración: 25000 COP/)).toBeInTheDocument();
-
-    previewTool('routes');
-    fireEvent.click(screen.getByRole('button', { name: 'Optimizar recorrido' }));
-    expect(screen.getByText(/Recorrido simulado optimizado por cercanía/)).toBeInTheDocument();
-    expect(screen.getAllByText(/Cerrado según horario de ejemplo/).length).toBeGreaterThan(0);
-    expect(api.savePlusPreferences).not.toHaveBeenCalled();
-    expect(api.setPlusPriceTarget).not.toHaveBeenCalled();
-    expect(api.fetchPlusRouteFavorites).not.toHaveBeenCalled();
-  });
-
-  it('opens a deep link directly to prices and navigates seven tools without a vertical scavenger hunt', () => {
-    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
-    renderPlus('/plus?preview=1#prices');
-    const picker = screen.getByRole('combobox', { name: 'Elegir herramienta de demostración' });
-    expect(picker).toHaveValue('prices');
-    expect(screen.getByRole('heading', { name: 'Seguimiento de precios' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Tu radar de novedades' })).not.toBeInTheDocument();
-    expect(document.querySelectorAll('.plus-panel:not([hidden])')).toHaveLength(1);
-    fireEvent.click(screen.getByRole('button', { name: /Siguiente: Comparador/ }));
-    expect(picker).toHaveValue('compare');
-    expect(screen.getByRole('heading', { name: 'Compara tus opciones' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Anterior/ }));
-    expect(picker).toHaveValue('prices');
-    previewTool('adfree');
-    expect(screen.getByRole('heading', { name: /Experiencia sin anuncios/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Recorrido completado/ })).toBeDisabled();
-    expect(screen.getByRole('link', { name: 'Salir de la vista previa' })).toBeInTheDocument();
-    expect(api.fetchPlusStatus).not.toHaveBeenCalled();
-  });
-
-  it('uses the summary indicators as navigation without losing local preview state', () => {
-    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
-    renderPlus('/plus?preview=1');
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Recibir avisos' }));
-    fireEvent.click(screen.getByRole('link', { name: /Precios de ejemplo/ }));
-    expect(screen.getByRole('heading', { name: 'Seguimiento de precios' })).toBeInTheDocument();
-    previewTool('radar');
-    expect(screen.getByRole('checkbox', { name: 'Recibir avisos' })).toBeChecked();
-    expect(api.savePlusPreferences).not.toHaveBeenCalled();
-  });
-
-  it('does not expose the visual walkthrough to other email accounts', async () => {
-    api.fetchPlusStatus.mockResolvedValue(inactive);
-    renderPlus('/plus?preview=1');
-    expect(await screen.findByText('Xamuko Plus aún no está habilitado')).toBeInTheDocument();
-    expect(screen.queryByText('Prueba visual con datos de ejemplo')).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Recorrer Xamuko Plus en vista de prueba/ })).not.toBeInTheDocument();
-  });
-
-  it('requires a verified and active session before exposing the visual walkthrough', async () => {
-    api.fetchPlusStatus.mockResolvedValue(inactive);
-    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
-    previewAuth.user.emailVerified = false;
-    renderPlus('/plus?preview=1');
-    expect(await screen.findByText('Xamuko Plus aún no está habilitado')).toBeInTheDocument();
-    expect(screen.queryByText('Prueba visual con datos de ejemplo')).not.toBeInTheDocument();
-  });
-
-  it('receives the product button in preview and edits collections without paid backend writes', () => {
-    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
+    api.fetchPlusStatus.mockResolvedValue({ ...inactive, enabled: true });
     renderPlus('/plus?preview=1&watch=33333333-3333-4333-8333-333333333333');
-    expect(screen.getByRole('combobox', { name: 'Elegir herramienta de demostración' })).toHaveValue('prices');
-    expect(screen.getByText('Producto seleccionado para la prueba')).toBeInTheDocument();
-    expect(screen.getByText(/Has seguido un producto de ejemplo desde su ficha/)).toBeInTheDocument();
-    previewTool('collections');
-    fireEvent.change(screen.getByPlaceholderText('Ej. Mis cafeterías favoritas'), { target: { value: 'Cafés de prueba' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Crear colección' }));
-    expect(screen.getByText('Cafés de prueba')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('/product/12345678-…')).not.toBeInTheDocument();
-    expect(api.addPlusWatch).not.toHaveBeenCalled();
-    expect(api.createPlusCollection).not.toHaveBeenCalled();
-    expect(api.fetchPlusStatus).not.toHaveBeenCalled();
+    expect(await screen.findByText('No tienes una membresía Plus vigente')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Tu radar de novedades' })).not.toBeInTheDocument();
+    expect(api.fetchPlusOverview).not.toHaveBeenCalled();
   });
 
 });
