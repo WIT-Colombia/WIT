@@ -4,6 +4,8 @@ import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import Plus from './Plus';
 
+const previewAuth = vi.hoisted(() => ({ user: { id: 'user-test', emailNormalized: 'different@example.com', emailVerified: true, status: 'ACTIVE' } }));
+
 const api = vi.hoisted(() => ({
   fetchPlusStatus: vi.fn(),
   fetchPlusPurchaseRequest: vi.fn(),
@@ -23,7 +25,7 @@ vi.mock('../components/PageLayout', () => ({
   PageLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 vi.mock('../context/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'user-test' } }),
+  useAuth: () => ({ user: previewAuth.user }),
 }));
 vi.mock('../context/LocationContext', () => ({
   useLocationContext: () => ({ selection: null }),
@@ -61,6 +63,9 @@ const renderPlus = (path = '/plus') => render(<MemoryRouter initialEntries={[pat
 
 beforeEach(() => {
   vi.clearAllMocks();
+  previewAuth.user.emailNormalized = 'different@example.com';
+  previewAuth.user.emailVerified = true;
+  previewAuth.user.status = 'ACTIVE';
   api.fetchPlusStatus.mockResolvedValue(active);
   api.fetchPlusPurchaseRequest.mockResolvedValue({ request: null });
   api.fetchPlusOverview.mockResolvedValue(overview);
@@ -200,6 +205,57 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(route.getAttribute('href')).toContain('travelmode=driving');
     expect(route.getAttribute('href')).toContain('3.52');
     expect(route.getAttribute('href')).toContain('3.53');
+  });
+
+  it('opens local-only Plus visual preview for the verified designated account', async () => {
+    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
+    renderPlus('/plus?preview=1');
+    expect(screen.getByText('Prueba visual con datos de ejemplo')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tu radar de novedades' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Seguimiento de precios' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Compara tus opciones' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tus colecciones' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Búsquedas guardadas' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Rutas con varios negocios' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Experiencia sin anuncios/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Recibir avisos' }));
+    expect(screen.getByText(/Preferencia de prueba actualizada localmente/)).toBeInTheDocument();
+    expect(api.fetchPlusStatus).not.toHaveBeenCalled();
+    expect(api.fetchPlusOverview).not.toHaveBeenCalled();
+    expect(api.savePlusPreferences).not.toHaveBeenCalled();
+    expect(api.requestPlusMembership).not.toHaveBeenCalled();
+  });
+
+  it('does not expose the visual walkthrough to other email accounts', async () => {
+    api.fetchPlusStatus.mockResolvedValue(inactive);
+    renderPlus('/plus?preview=1');
+    expect(await screen.findByText('Xamuko Plus aún no está habilitado')).toBeInTheDocument();
+    expect(screen.queryByText('Prueba visual con datos de ejemplo')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Recorrer Xamuko Plus en vista de prueba/ })).not.toBeInTheDocument();
+  });
+
+  it('requires a verified and active session before exposing the visual walkthrough', async () => {
+    api.fetchPlusStatus.mockResolvedValue(inactive);
+    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
+    previewAuth.user.emailVerified = false;
+    renderPlus('/plus?preview=1');
+    expect(await screen.findByText('Xamuko Plus aún no está habilitado')).toBeInTheDocument();
+    expect(screen.queryByText('Prueba visual con datos de ejemplo')).not.toBeInTheDocument();
+  });
+
+  it('allows local collection and price edits in preview without any Plus backend writes', () => {
+    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
+    renderPlus('/plus?preview=1');
+    fireEvent.change(screen.getByPlaceholderText('Ej. Mis cafeterías favoritas'), { target: { value: 'Cafés de prueba' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Crear colección' }));
+    expect(screen.getByText('Cafés de prueba')).toBeInTheDocument();
+    const input = screen.getByPlaceholderText('/product/12345678-…');
+    fireEvent.change(input, { target: { value: '/product/33333333-3333-4333-8333-333333333333' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Seguir precio' }));
+    expect(screen.getByText('Seguimiento agregado únicamente a esta vista previa.')).toBeInTheDocument();
+    expect(api.addPlusWatch).not.toHaveBeenCalled();
+    expect(api.createPlusCollection).not.toHaveBeenCalled();
+    expect(api.fetchPlusStatus).not.toHaveBeenCalled();
   });
 
 });
