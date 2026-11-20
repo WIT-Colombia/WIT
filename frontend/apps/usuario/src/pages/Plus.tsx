@@ -231,7 +231,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
     } finally { setBusy(false); }
   }
   async function saveTarget(watchId: string) {
-    if (!/^(?:[1-9]\\d{0,9})(?:\\.\\d{1,2})?$/.test(targetDraft)) {
+    if (!/^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/.test(targetDraft) || Number(targetDraft) <= 0) {
       setError('Introduce un precio objetivo positivo, sin separadores de miles y con máximo dos decimales.');
       return;
     }
