@@ -195,8 +195,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const phone = business.phone;
   const whatsappMessage = `¡Hola! Vi el ${isProduct ? "producto" : "servicio"} ${item.name} en tu perfil de XAMUKO y quisiera recibir más información. ¡Gracias!`;
   const whatsappUrl = business.whatsapp ? whatsappLink(business.whatsapp, whatsappMessage) : null;
-  const canFollowPrice = isProduct && isRealOfferId(item.id) && typeof product.price === "number"
-    && Number.isFinite(product.price) && product.price > 0;
+  const canFollowPrice = isRealOfferId(item.id) && item.priceTrackable === true;
   const handleFollowPrice = () => requireAccount(() => {
     if (watchBusy || watchFollowed) return;
     setWatchBusy(true);
