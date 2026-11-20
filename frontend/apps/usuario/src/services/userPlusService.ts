@@ -15,15 +15,19 @@ export type PlusCollection = {
 };
 export type PlusSearch = { id: string; title: string; query: string; category: string | null; city: string | null;
   openNow: boolean; minRating: number | null; sort: string };
-export type PlusRouteFavorite = { id: string; name: string; lat: number; lng: number };
+export type PlusRouteFavorite = { id: string; name: string; lat: number; lng: number;
+  timezone: string; hours: Array<{ dayOfWeek: number; isClosed: boolean; opensAt: string | null; closesAt: string | null }>;
+};
 export type PlusWatch = {
   id: string; offerId: string; kind: 'PRODUCT' | 'SERVICE'; name: string;
   businessName: string; price: string | null; priceText: string | null; currency: string | null;
   available: boolean;
+  targetAmount: string | null; targetCurrency: string | null; targetNotifiedAt: string | null;
 };
 export type PlusOverview = PlusStatus & {
   collections: PlusCollection[]; searches: PlusSearch[]; watches: PlusWatch[];
-  preferences: { radarEnabled: boolean; priceAlertsEnabled: boolean } | null;
+  preferences: { radarEnabled: boolean; priceAlertsEnabled: boolean;
+    deliveryMode: 'IMMEDIATE' | 'DAILY'; digestTimeZone: string; digestHour: number } | null;
 };
 export type PlusRadarItem = {
   id: string; title: string; type: 'PRODUCT' | 'SERVICE' | 'PROMOTION'; business: string;
@@ -55,7 +59,8 @@ export const requestPlusMembership = (acceptedAmountCop: number) =>
 export const fetchPlusOverview = () => requestWithSession<PlusOverview>(base + '/overview');
 export const fetchPlusRadar = () => requestWithSession<{ items: PlusRadarItem[] }>(base + '/radar');
 export const fetchPlusRouteFavorites = () => requestWithSession<{ items: PlusRouteFavorite[] }>(base + '/route-favorites');
-export const savePlusPreferences = (data: { radarEnabled?: boolean; priceAlertsEnabled?: boolean }) =>
+export const savePlusPreferences = (data: { radarEnabled?: boolean; priceAlertsEnabled?: boolean;
+  deliveryMode?: 'IMMEDIATE' | 'DAILY'; digestTimeZone?: string; digestHour?: number }) =>
   requestWithSession(base + '/preferences', { method: 'PUT', ...json(data) });
 export const fetchPlusCollectionCandidates = (type: 'BUSINESS' | 'OFFER', page = 1) =>
   requestWithSession<{ items: PlusCollectionCandidate[]; pagination: { page: number; total: number; totalPages: number } }>(
@@ -74,6 +79,10 @@ export const removePlusSearch = (id: string) =>
   requestWithSession(base + '/searches/' + encodeURIComponent(id), { method: 'DELETE' });
 export const addPlusWatch = (offerId: string) =>
   requestWithSession(base + '/watches', { method: 'POST', ...json({ offerId }) });
+export const setPlusPriceTarget = (watchId: string, amount: string | null) =>
+  requestWithSession<{ targetAmount: string | null; targetCurrency: string | null; targetNotifiedAt: string | null }>(
+    base + '/watches/' + encodeURIComponent(watchId) + '/target',
+    { method: 'PUT', ...json({ amount }) });
 export const removePlusWatch = (id: string) =>
   requestWithSession(base + '/watches/' + encodeURIComponent(id), { method: 'DELETE' });
 export const fetchPlusPriceHistory = (offerId: string) =>
