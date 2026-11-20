@@ -88,13 +88,12 @@ describe('Ficha de producto: seguir precio en un toque', () => {
     expect(mocks.addPlusWatch).not.toHaveBeenCalled();
   });
 
-  it('provides the designated test account a visual, non-persistent price follow', async () => {
+  it('does not give the former test account any price-following bypass', async () => {
     mocks.user.emailNormalized = 'administradoreswit@gmail.com';
     mocks.fetchPlusStatus.mockResolvedValue({ enabled: false, active: false, subscription: null });
     mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Seguir precio' }));
-    await waitFor(() => expect(screen.getByTestId('destination'))
-      .toHaveTextContent('/plus?preview=1&watch=' + uuid));
+    await waitFor(() => expect(screen.getByTestId('destination')).toHaveTextContent('/plus'));
     expect(mocks.addPlusWatch).not.toHaveBeenCalled();
   });
 
@@ -106,13 +105,12 @@ describe('Ficha de producto: seguir precio en un toque', () => {
     expect(mocks.addPlusWatch).not.toHaveBeenCalled();
   });
 
-  it('keeps visual comparison selections isolated to the authorized Plus preview', async () => {
+  it('uses the same real comparison list for every account without a demo route', async () => {
     mocks.user.emailNormalized = 'administradoreswit@gmail.com';
     mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Comparar precio' }));
-    expect(readPlusComparison('user-1', true)).toEqual([uuid]);
-    expect(readPlusComparison('user-1')).toEqual([]);
-    expect(screen.getByTestId('destination')).toHaveTextContent('/plus?preview=1#compare');
+    expect(readPlusComparison('user-1')).toEqual([uuid]);
+    expect(screen.getByTestId('destination')).toHaveTextContent('/plus#compare');
   });
 
   it('renders Seguir precio for a published product showing $ 2.000 COP when the legacy flag is absent', async () => {
