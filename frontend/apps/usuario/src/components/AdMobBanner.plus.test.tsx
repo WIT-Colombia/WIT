@@ -76,17 +76,30 @@ describe('Xamuko Plus: third-party advertising visibility', () => {
     expect(screen.queryByRole('complementary', { name: 'Publicidad' })).not.toBeInTheDocument();
   });
 
-  it('waits for confirmed public plan status before deciding advertising for signed-in users', () => {
+  it('does not flash advertising until global availability has loaded', () => {
     state.verification = 'pending';
     const view = render(<AdMobBanner />);
-    expect(screen.queryByRole('complementary', { name: 'Publicidad' })).not.toBeInTheDocument();
-    state.verification = 'unavailable';
-    view.rerender(<AdMobBanner />);
     expect(screen.queryByRole('complementary', { name: 'Publicidad' })).not.toBeInTheDocument();
     state.verification = 'verified';
     view.rerender(<AdMobBanner />);
     expect(screen.getByRole('complementary', { name: 'Publicidad' })).toBeInTheDocument();
     expect(state.fetchPlusStatus).not.toHaveBeenCalled();
+  });
+
+  it('restores banners even if the production backend has not deployed either Plus endpoint yet', async () => {
+    state.verification = 'unavailable';
+    state.fetchPlusStatus.mockRejectedValue(new Error('404: old backend'));
+    render(<AdMobBanner />);
+    expect(await screen.findByRole('complementary', { name: 'Publicidad' })).toBeInTheDocument();
+    expect(state.fetchPlusStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it('honors a known active subscription if the public plan endpoint is temporarily unavailable', async () => {
+    state.verification = 'unavailable';
+    state.fetchPlusStatus.mockResolvedValue({ enabled: true, active: true, subscription: null });
+    render(<AdMobBanner />);
+    await waitFor(() => expect(state.fetchPlusStatus).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('complementary', { name: 'Publicidad' })).not.toBeInTheDocument();
   });
 
   it('restores banners as soon as Admin disables Plus after an active membership check', async () => {
