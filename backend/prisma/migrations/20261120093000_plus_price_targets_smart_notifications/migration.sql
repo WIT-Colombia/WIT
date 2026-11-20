@@ -14,6 +14,7 @@ CREATE TABLE `UserPlusDigestEvent` (
   `id` CHAR(36) NOT NULL,
   `userId` CHAR(36) NOT NULL,
   `kind` VARCHAR(16) NOT NULL,
+  `adultOnly` BOOLEAN NOT NULL DEFAULT false,
   `sourceId` CHAR(36) NOT NULL,
   `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (`id`),
