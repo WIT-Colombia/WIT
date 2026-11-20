@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { PlusIcon, type PlusIconName } from '../components/PlusIcon';
 import { PageLayout } from '../components/PageLayout';
 import { parsePlusTarget, searchHref } from '../services/userPlusService';
@@ -28,12 +28,19 @@ const sections: Array<{ id: string; label: string; icon: PlusIconName }> = [
 ];
 
 export default function PlusPreview() {
+  const [queryParams] = useSearchParams();
+  const requestedWatch = queryParams.get('watch');
+  const parsedWatch = requestedWatch ? parsePlusTarget(requestedWatch) : null;
+  const initialWatchId = parsedWatch?.targetType === 'OFFER' ? parsedWatch.targetId : null;
   const [radarEnabled, setRadarEnabled] = useState(false);
   const [priceAlerts, setPriceAlerts] = useState(false);
-  const [watches, setWatches] = useState<Watch[]>([
-    { id: sampleOffers[0].id, name: sampleOffers[0].name, business: sampleOffers[0].business, price: sampleOffers[0].price, original: '39.900' },
-  ]);
-  const [watchInput, setWatchInput] = useState('');
+  const [watches, setWatches] = useState<Watch[]>(() => {
+    const initial: Watch[] = [{ id: sampleOffers[0].id, name: sampleOffers[0].name, business: sampleOffers[0].business, price: sampleOffers[0].price, original: '39.900' }];
+    if (initialWatchId && !initial.some(item => item.id === initialWatchId)) {
+      initial.push({ id: initialWatchId, name: 'Producto seleccionado para la prueba', business: 'Sin datos reales', price: null, original: null });
+    }
+    return initial;
+  });
   const [historyId, setHistoryId] = useState<string | null>(null);
   const [compareInput, setCompareInput] = useState('');
   const [compareIds, setCompareIds] = useState<string[]>(sampleOffers.map(item => item.id));
@@ -58,19 +65,6 @@ export default function PlusPreview() {
   const showError = (message: string) => { setError(message); setNotice(''); };
   const resolve = (id: string): Comparison =>
     sampleOffers.find(item => item.id === id) ?? { id, name: 'Publicación agregada para probar la interfaz', business: 'Sin datos del servidor', price: null };
-  const addWatch = (event: FormEvent) => {
-    event.preventDefault();
-    const item = parsePlusTarget(watchInput);
-    if (!item || item.targetType !== 'OFFER') {
-      showError('Introduce un enlace válido de producto o servicio de Xamuko.'); return;
-    }
-    if (watches.some(w => w.id === item.targetId)) { showError('Esta publicación ya está en tu lista de prueba.'); return; }
-    if (watches.length >= 100) { showError('Límite de 100 seguimientos.'); return; }
-    const found = resolve(item.targetId);
-    setWatches(items => [...items, { id: item.targetId, name: found.name, business: found.business, price: found.price, original: null }]);
-    setWatchInput('');
-    updateNotice('Seguimiento agregado únicamente a esta vista previa.');
-  };
   const addCompare = (event: FormEvent) => {
     event.preventDefault();
     const item = parsePlusTarget(compareInput);
@@ -143,7 +137,12 @@ export default function PlusPreview() {
     <section className="plus-panel" id="prices">
       <div className="plus-heading"><div><span>02 · AHORRO · EJEMPLO</span><h2>Seguimiento de precios</h2><p>Prueba agregar o quitar productos y consultar un historial de ejemplo.</p></div>
         <label className="plus-toggle"><input type="checkbox" checked={priceAlerts} onChange={e => { setPriceAlerts(e.target.checked); updateNotice('Alerta simulada; no se enviarán notificaciones.'); }}/>Avisar cuando bajen</label></div>
-      <form className="plus-form" onSubmit={addWatch}><label>Enlace de producto o servicio<input value={watchInput} onChange={e=>setWatchInput(e.target.value)} placeholder="/product/12345678-…" required/></label><button className="plus-button" type="submit">Seguir precio</button></form>
+      <div className="plus-follow-guide">
+        <span className="plus-follow-guide-icon" aria-hidden="true"><PlusIcon name="price" size={25}/></span>
+        <div><strong>Un botón en cada ficha de producto</strong><p>Abre un producto publicado y pulsa <b>Seguir precio</b>. Volverás a esta demostración sin activar pagos ni guardar datos.</p></div>
+        <Link className="plus-button plus-button-secondary" to="/results">Explorar productos</Link>
+      </div>
+      {initialWatchId && <p className="plus-preview-chip" role="status">Has seguido un producto de ejemplo desde su ficha. No se registró ningún seguimiento real.</p>}
       <div className="plus-list">{watches.map(watch => <div className="plus-list-row" key={watch.id}>
         <span className="plus-row-symbol"><PlusIcon name="price" size={19}/></span><span><strong>{watch.name}</strong><small>{watch.business} · {watch.price ? '$' + watch.price + ' COP · ejemplo' : 'Sin precio real, vista previa'}</small></span>
         <div className="plus-row-buttons"><button type="button" onClick={()=>setHistoryId(historyId === watch.id ? null : watch.id)}>Historial</button><button type="button" onClick={()=>{setWatches(items=>items.filter(x=>x.id!==watch.id));setHistoryId(null);}}>Quitar</button></div>
