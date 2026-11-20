@@ -667,3 +667,48 @@
  .plus-page .plus-overview-card>span:nth-last-child(2){font-size:13px}
  .plus-page .plus-compare-grid article span{font-size:12px}
 }
+
+
+/* Unified Plus form fields across member, preview, tablet and phone. */
+.plus-page :is(.plus-form,.plus-form-inline,.plus-delivery-controls,.plus-digest-schedule,.plus-target-editor,.plus-route-actions,.plus-collection-picker)
+:is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea){
+  box-sizing:border-box;
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  min-height:46px;
+  padding:10px 12px;
+  border:1px solid #d7cde8;
+  border-radius:11px;
+  background:#fff;
+  color:#302546;
+  font-size:14px;
+  line-height:1.4;
+  font-weight:500;
+}
+.plus-page :is(.plus-form,.plus-form-inline,.plus-delivery-controls,.plus-digest-schedule,.plus-target-editor,.plus-route-actions,.plus-collection-picker)
+:is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea)::placeholder{
+  color:#766d85;
+  opacity:1;
+}
+.plus-page :is(.plus-form,.plus-form-inline,.plus-delivery-controls,.plus-digest-schedule,.plus-target-editor,.plus-route-actions,.plus-collection-picker)
+:is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea):focus-visible{
+  border-color:#8252d1;
+  outline:3px solid #decdfb;
+  outline-offset:1px;
+}
+.plus-page .plus-route-actions label,
+.plus-page .plus-digest-schedule label{min-width:0;flex:1 1 185px}
+.plus-page .plus-form-inline button,
+.plus-page .plus-digest-schedule button,
+.plus-page .plus-target-editor button,
+.plus-page .plus-route-actions .plus-button{min-height:46px}
+@media(max-width:700px){
+  .plus-page :is(.plus-form,.plus-form-inline,.plus-delivery-controls,.plus-digest-schedule,.plus-target-editor,.plus-route-actions,.plus-collection-picker)
+  :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea){font-size:16px}
+  .plus-page .plus-route-actions label,
+  .plus-page .plus-digest-schedule label{width:100%;flex:1 1 100%}
+  .plus-page .plus-route-actions>button,
+  .plus-page .plus-route-actions>a{width:100%;white-space:normal}
+}
