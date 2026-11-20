@@ -11,8 +11,15 @@ export function formatCopPrice(amount: number): string {
 }
 const disabled: PaidPlanAvailability = { businessPro: false, xamukoPlus: false };
 let state = disabled;
+type PaidPlanVerification = 'pending' | 'verified' | 'unavailable';
+let verification: PaidPlanVerification = 'pending';
 let pending: Promise<void> | null = null;
 const listeners = new Set<() => void>();
+function publishVerification(next: PaidPlanVerification) {
+  if (verification === next) return;
+  verification = next;
+  listeners.forEach(listener => listener());
+}
 function publish(next: PaidPlanAvailability) {
   if (state.businessPro === next.businessPro && state.xamukoPlus === next.xamukoPlus) return;
   state = next;
@@ -25,7 +32,11 @@ export function refreshPaidPlans(): Promise<void> {
       if (!response.ok) throw new Error('Plans unavailable');
       const data = await response.json();
       publish({ businessPro: data.businessPro === true, xamukoPlus: data.xamukoPlus === true });
-    }).catch(() => publish(disabled)).finally(() => { pending = null; });
+      publishVerification('verified');
+    }).catch(() => {
+      publish(disabled);
+      publishVerification('unavailable');
+    }).finally(() => { pending = null; });
   return pending;
 }
 let timer: ReturnType<typeof setInterval> | undefined;
@@ -44,4 +55,9 @@ function subscribe(listener: () => void) {
 }
 export function usePaidPlans() {
   return useSyncExternalStore(subscribe, () => state, () => disabled);
+}
+/** Verified only after the public availability API responds successfully.
+ * A failed request must not grant paid members an unverified advertising slot. */
+export function usePaidPlansVerification(): PaidPlanVerification {
+  return useSyncExternalStore(subscribe, () => verification, () => 'pending');
 }
