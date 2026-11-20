@@ -4,7 +4,7 @@ import { AppError } from '../../shared/errors/app-error.js';
 import type { OfferCreateInput, OfferUpdateInput } from './offer.schemas.js';
 import { catalogLimits, limitForKind } from './recognition.service.js';
 import { notifyBusinessOwners } from '../notifications/platform-notifications.service.js';
-import { notifyPlusFollowers, recordPlusPriceChange } from '../user-plus/user-plus-events.service.js';
+import { effectivePlusPrice, notifyPlusFollowers, recordPlusPriceChange } from '../user-plus/user-plus-events.service.js';
 
 type Db = PrismaClient | Prisma.TransactionClient;
 type RequestMeta = { ipAddress?: string };
@@ -56,9 +56,10 @@ export async function createOffer(userId: string, businessIdentifier: string, in
     await audit(tx, userId, offer.id, 'OFFER_CREATED', null, { adultOnly: offer.adultOnly, kind: offer.kind }, meta);
     const publicOffer = offer.active && offer.publicationStatus === 'PUBLISHED'
       && business.publicationStatus === 'PUBLISHED' && business.visibilityStatus === 'VISIBLE';
-    if (offer.priceAmount) await recordPlusPriceChange(tx, {
+    const trackablePrice = effectivePlusPrice(offer.priceAmount, offer.priceText, offer.negotiable);
+    if (trackablePrice) await recordPlusPriceChange(tx, {
       offerId: offer.id, businessId: business.id, name: offer.name,
-      previousPrice: null, newPrice: offer.priceAmount, previousCurrency: null, currency: offer.currency,
+      previousPrice: null, newPrice: trackablePrice, previousCurrency: null, currency: offer.currency,
       adultOnly: offer.adultOnly || business.adultOnly, publiclyVisible: publicOffer,
     });
     if (publicOffer) await notifyPlusFollowers(tx, {
@@ -90,8 +91,10 @@ export async function updateOffer(userId: string, businessIdentifier: string, of
     const publiclyVisible = offer.active && offer.publicationStatus === 'PUBLISHED'
       && business.publicationStatus === 'PUBLISHED' && business.visibilityStatus === 'VISIBLE';
     await recordPlusPriceChange(tx, {
-      offerId: offer.id, businessId: business.id, name: offer.name, previousPrice: current.priceAmount,
-      newPrice: offer.priceAmount, previousCurrency: current.currency, currency: offer.currency,
+      offerId: offer.id, businessId: business.id, name: offer.name,
+      previousPrice: effectivePlusPrice(current.priceAmount, current.priceText, current.negotiable),
+      newPrice: effectivePlusPrice(offer.priceAmount, offer.priceText, offer.negotiable),
+      previousCurrency: current.currency, currency: offer.currency,
       adultOnly: offer.adultOnly || business.adultOnly, publiclyVisible,
     });
     if (publiclyVisible && current.publicationStatus !== 'PUBLISHED') await notifyPlusFollowers(tx, {
