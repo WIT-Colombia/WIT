@@ -15,16 +15,14 @@ export function AdMobBanner({ slot = 'home-inline' }: { slot?: string }) {
     let active = true;
     if (status === 'loading') { setShow(false); return () => { active = false; }; }
     if (!user || status !== 'authenticated') { setShow(true); return () => { active = false; }; }
-    // Do not briefly show ads to existing paying members while the global
-    // availability request is pending or the public API is unavailable.
-    if (availability !== 'verified') {
+    // Avoid an initial advertising flash while plan availability is loading.
+    if (availability === 'pending') {
       setShow(false);
       return () => { active = false; };
     }
-    // Admin's master switch overrides historical subscriptions. If Plus is
-    // globally off, all signed-in users (including administrators) see ads,
-    // even when the separate membership endpoint is not deployed or fails.
-    if (!xamukoPlus) {
+    // Admin's confirmed master OFF switch overrides historical subscriptions.
+    // No private Plus endpoint should be required to display regular banners.
+    if (!xamukoPlus && availability === 'verified') {
       setShow(true);
       return () => { active = false; };
     }
@@ -32,9 +30,14 @@ export function AdMobBanner({ slot = 'home-inline' }: { slot?: string }) {
     const refresh = () => {
       void fetchPlusStatus().then(value => {
         if (active) setShow(value.enabled !== true || value.active !== true);
-      })
-        // When Plus is enabled, do not expose ads to unverified paying members.
-        .catch(() => { if (active) setShow(false); });
+      }).catch(() => {
+        if (!active) return;
+        // During an older/backend-unavailable deployment, public availability
+        // falls back to OFF. Restore the ordinary banner rather than leave all
+        // authenticated accounts permanently ad-free; when Plus is confirmed
+        // enabled, keep the safe no-ad fallback for unverified memberships.
+        setShow(availability === 'unavailable' && !xamukoPlus);
+      });
     };
     refresh();
     const timer = window.setInterval(refresh, 60000);
