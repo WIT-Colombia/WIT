@@ -10,14 +10,13 @@ const api = vi.hoisted(() => ({
   requestPlusMembership: vi.fn(),
   fetchPlusOverview: vi.fn(),
   fetchPlusRadar: vi.fn(),
-  listPublicBusinesses: vi.fn(),
+  fetchPlusRouteFavorites: vi.fn(),
   addPlusWatch: vi.fn(),
   savePlusPreferences: vi.fn(),
   comparePlusOffers: vi.fn(),
   createPlusCollection: vi.fn(),
   createPlusSearch: vi.fn(),
   addPlusCollectionItem: vi.fn(),
-  favorites: [] as string[],
 }));
 
 vi.mock('../components/PageLayout', () => ({
@@ -29,11 +28,7 @@ vi.mock('../context/AuthContext', () => ({
 vi.mock('../context/LocationContext', () => ({
   useLocationContext: () => ({ selection: null }),
 }));
-vi.mock('../services/favoritesService', () => ({
-  useFavorites: () => ({ favorites: api.favorites }),
-}));
 vi.mock('../services/publicBusinessApi', () => ({
-  listPublicBusinesses: api.listPublicBusinesses,
   getPublicBusiness: vi.fn(),
 }));
 vi.mock('../services/reviewsService', () => ({ listPublicReviews: vi.fn() }));
@@ -44,6 +39,7 @@ vi.mock('../services/userPlusService', async importOriginal => ({
   requestPlusMembership: api.requestPlusMembership,
   fetchPlusOverview: api.fetchPlusOverview,
   fetchPlusRadar: api.fetchPlusRadar,
+  fetchPlusRouteFavorites: api.fetchPlusRouteFavorites,
   addPlusWatch: api.addPlusWatch,
   savePlusPreferences: api.savePlusPreferences,
   comparePlusOffers: api.comparePlusOffers,
@@ -65,12 +61,11 @@ const renderPlus = (path = '/plus') => render(<MemoryRouter initialEntries={[pat
 
 beforeEach(() => {
   vi.clearAllMocks();
-  api.favorites = [];
   api.fetchPlusStatus.mockResolvedValue(active);
   api.fetchPlusPurchaseRequest.mockResolvedValue({ request: null });
   api.fetchPlusOverview.mockResolvedValue(overview);
   api.fetchPlusRadar.mockResolvedValue({ items: [] });
-  api.listPublicBusinesses.mockResolvedValue([]);
+  api.fetchPlusRouteFavorites.mockResolvedValue({ items: [] });
   api.requestPlusMembership.mockResolvedValue({ created: true, request: {
     id: 'request-1', status: 'PENDING_PAYMENT', amountCop: 3900,
     currency: 'COP', periodMonths: 1, createdAt: '2026-11-19T12:00:00.000Z',
@@ -192,11 +187,10 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
   it('builds a Google Maps trip only from verified favorite coordinates', async () => {
     const id1 = '12345678-1234-4234-8234-123456789abc';
     const id2 = '12345678-1234-4234-8234-123456789abd';
-    api.favorites = [id1, id2];
-    api.listPublicBusinesses.mockResolvedValue([
-      { id: id1, name: 'Negocio A', coordinatesVerified: true, coordinates: { lat: 3.52, lng: -76.29 } },
-      { id: id2, name: 'Negocio B', coordinatesVerified: true, coordinates: { lat: 3.53, lng: -76.30 } },
-    ]);
+    api.fetchPlusRouteFavorites.mockResolvedValue({ items: [
+      { id: id1, name: 'Negocio A', lat: 3.52, lng: -76.29 },
+      { id: id2, name: 'Negocio B', lat: 3.53, lng: -76.30 },
+    ] });
     renderPlus();
     await screen.findByText('Negocio A');
     fireEvent.click(screen.getByRole('checkbox', { name: 'Negocio A' }));
