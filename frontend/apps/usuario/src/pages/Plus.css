@@ -261,3 +261,18 @@
   .plus-picker-item{align-items:flex-start;flex-direction:column;gap:9px}
   .plus-picker-item button{align-self:flex-start}
 }
+
+/* Radar: the originating business profile photo replaces the generic notification icon.
+   If there is no photo, or it fails to load, the original radar symbol remains visible. */
+.plus-list-row .plus-radar-avatar{
+  position:relative;overflow:hidden;flex:0 0 42px;width:42px;height:42px;
+  border-radius:50%;background:#f1ebff;color:#6740b8;
+}
+.plus-radar-avatar img{
+  position:absolute;inset:0;display:block;width:100%;height:100%;
+  border-radius:50%;object-fit:cover;
+}
+.plus-radar-avatar .catalog-photo-fallback{display:none}
+@media(max-width:600px){
+  .plus-list-row .plus-radar-avatar{flex:0 0 40px;width:40px;height:40px}
+}
