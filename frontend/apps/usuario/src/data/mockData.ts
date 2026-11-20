@@ -44,6 +44,8 @@ export type Product = {
   description: string;
   price?: number;
   priceLabel?: string;
+  /** Whether a published numeric, non-negotiable price is eligible for Xamuko Plus tracking. */
+  priceTrackable?: boolean;
   originalPriceLabel?: string;
   businessName?: string;
   businessCoordinates?: { lat: number; lng: number };
@@ -66,6 +68,8 @@ export type Service = {
   createdAt?: string;
   description: string;
   priceLabel?: string;
+  /** Whether a published numeric, non-negotiable price is eligible for Xamuko Plus tracking. */
+  priceTrackable?: boolean;
   originalPriceLabel?: string;
   businessName?: string;
   businessCoordinates?: { lat: number; lng: number };
