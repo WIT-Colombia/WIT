@@ -62,6 +62,14 @@ function mapBusiness(value: PublicSummary): Business {
   };
 }
 
+function isTrackablePrice(price: PublicOffer['price']): boolean {
+  if (price.negotiable) return false;
+  const raw = price.amount ?? price.text;
+  if (raw === null || !/^\d+(?:\.\d{1,2})?$/.test(raw.trim())) return false;
+  const numeric = Number(raw);
+  return Number.isFinite(numeric) && numeric > 0;
+}
+
 function mapProduct(value: PublicOffer, businessId: string): Product {
   const image = mediaUrl(value.photos[0]?.url);
   const amount = value.price.amount ? Number(value.price.amount) : undefined;
@@ -70,7 +78,7 @@ function mapProduct(value: PublicOffer, businessId: string): Product {
   const priceLabel = value.price.negotiable ? "Precio a convenir" : amount !== undefined ? formatAmount(amount) : value.price.text && Number.isFinite(Number(value.price.text)) ? formatAmount(Number(value.price.text)) : "Consultar precio";
   const business = (value as PublicOffer & { business?: { name?: string; location?: { latitude: number | null; longitude: number | null } | null } }).business;
   const original = (value as PublicOffer & { originalPrice?: string | null }).originalPrice;
-  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image, price: amount, priceTrackable: amount !== undefined && Number.isFinite(amount) && amount > 0 && !value.price.negotiable, priceLabel, originalPriceLabel: original ? formatAmount(Number(original)) : undefined, createdAt: value.createdAt, isOffer: Boolean(value.isOffer), offerLabel: value.offerLabel ?? undefined, discount: value.discount ?? undefined, offerDeadline: formatOfferDeadline(value.offerDeadline), promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
+  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image, price: amount, priceTrackable: isTrackablePrice(value.price), priceLabel, originalPriceLabel: original ? formatAmount(Number(original)) : undefined, createdAt: value.createdAt, isOffer: Boolean(value.isOffer), offerLabel: value.offerLabel ?? undefined, discount: value.discount ?? undefined, offerDeadline: formatOfferDeadline(value.offerDeadline), promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
 }
 
 function formatServicePrice(value: PublicOffer): string {
@@ -87,7 +95,7 @@ function mapService(value: PublicOffer, businessId: string): Service {
   const original = (value as PublicOffer & { originalPrice?: string | null }).originalPrice;
   const currency = value.price.currency ?? "COP";
   const originalPriceLabel = original ? `${new Intl.NumberFormat("es-CO", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(original)).replace(/\u00a0/g, " ")} ${currency}` : undefined;
-  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: mediaUrl(value.photos[0]?.url), createdAt: value.createdAt, priceTrackable: value.price.amount !== null && Number.isFinite(Number(value.price.amount)) && Number(value.price.amount) > 0 && !value.price.negotiable, priceLabel: formatServicePrice(value), originalPriceLabel, isOffer: Boolean(value.isOffer), offerLabel: value.offerLabel ?? undefined, discount: value.discount ?? undefined, offerDeadline: formatOfferDeadline(value.offerDeadline), promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
+  return { id: value.id, businessId, name: value.name, description: value.description ?? "", image: mediaUrl(value.photos[0]?.url), createdAt: value.createdAt, priceTrackable: isTrackablePrice(value.price), priceLabel: formatServicePrice(value), originalPriceLabel, isOffer: Boolean(value.isOffer), offerLabel: value.offerLabel ?? undefined, discount: value.discount ?? undefined, offerDeadline: formatOfferDeadline(value.offerDeadline), promotionId: value.promotion?.id, businessName: business?.name, businessCoordinates: business?.location?.latitude != null && business.location.longitude != null ? { lat: business.location.latitude, lng: business.location.longitude } : undefined };
 }
 
 export async function hydrateBusinessRatings(businesses: Business[]): Promise<Business[]> {
