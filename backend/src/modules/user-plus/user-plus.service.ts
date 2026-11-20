@@ -136,6 +136,12 @@ export async function setPlusPreferences(userId: string, next: { radarEnabled?: 
   return { radarEnabled: data.radarEnabled, priceAlertsEnabled: data.priceAlertsEnabled };
 }
 
+function publicBusinessProfilePhotoUrl(business: { publicId: string; profilePhoto: { id: string } | null }): string | null {
+  if (!business.profilePhoto) return null;
+  return '/api/v1/public/businesses/' + encodeURIComponent(business.publicId)
+    + '/photos/' + encodeURIComponent(business.profilePhoto.id) + '/content';
+}
+
 export async function plusRadar(userId: string) {
   await requirePlus(userId);
   // Radar remains viewable; the user's explicit preference only controls delivery of notices.
@@ -148,7 +154,7 @@ export async function plusRadar(userId: string) {
   const [offers, promotions] = await Promise.all([
     prisma.businessOffer.findMany({
       where: { ...await safeOfferWhere(allowedAdult), businessId: { in: ids }, createdAt: { gte: since } },
-      select: { id: true, name: true, kind: true, createdAt: true, business: { select: { name: true, publicId: true } } },
+      select: { id: true, name: true, kind: true, createdAt: true, business: { select: { name: true, publicId: true, profilePhoto: { select: { id: true } } } } },
       orderBy: { createdAt: 'desc' }, take: 30,
     }),
     prisma.businessPromotion.findMany({
@@ -158,15 +164,15 @@ export async function plusRadar(userId: string) {
           await publicReleaseWhere(),
         ] },
         ...(allowedAdult ? {} : { OR: [{ relatedOfferId: null }, { relatedOffer: { adultOnly: false } }] }) },
-      select: { id: true, title: true, createdAt: true, business: { select: { name: true, publicId: true } } },
+      select: { id: true, title: true, createdAt: true, business: { select: { name: true, publicId: true, profilePhoto: { select: { id: true } } } } },
       orderBy: { createdAt: 'desc' }, take: 30,
     }),
   ]);
   const items = [
-    ...offers.map(offer => ({ id: offer.id, type: offer.kind, title: offer.name, business: offer.business.name,
+    ...offers.map(offer => ({ id: offer.id, type: offer.kind, title: offer.name, business: offer.business.name, businessProfilePhotoUrl: publicBusinessProfilePhotoUrl(offer.business),
       href: '/' + (offer.kind === 'PRODUCT' ? 'product' : 'service') + '/' + offer.id,
       createdAt: offer.createdAt.toISOString() })),
-    ...promotions.map(offer => ({ id: offer.id, type: 'PROMOTION', title: offer.title, business: offer.business.name,
+    ...promotions.map(offer => ({ id: offer.id, type: 'PROMOTION', title: offer.title, business: offer.business.name, businessProfilePhotoUrl: publicBusinessProfilePhotoUrl(offer.business),
       href: '/promociones/' + offer.id, createdAt: offer.createdAt.toISOString() })),
   ].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 40);
   return { items };
