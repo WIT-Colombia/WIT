@@ -156,6 +156,24 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
     setRouteIds(ids => ids.filter(id => places.some(place => place.id === id)));
   }, [places]);
 
+  useEffect(() => {
+    if (!collectionPicker || !status?.active) { setPickerItems([]); return; }
+    let active = true;
+    setPickerLoading(true);
+    setPickerError('');
+    void fetchPlusCollectionCandidates(pickerType, pickerPage)
+      .then(result => {
+        if (!active) return;
+        setPickerItems(result.items);
+        setPickerTotalPages(result.pagination.totalPages);
+      })
+      .catch(() => {
+        if (active) { setPickerItems([]); setPickerTotalPages(0); setPickerError('No pudimos cargar tus favoritos o Me gusta. Vuelve a intentarlo.'); }
+      })
+      .finally(() => { if (active) setPickerLoading(false); });
+    return () => { active = false; };
+  }, [collectionPicker, pickerType, pickerPage, status?.active]);
+
   // Refetch entitlement on returning to the page, and while a signed-in session remains open.
   useEffect(() => {
     if (!user) return;
@@ -392,12 +410,43 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
           <label>Nombre de la colección<input value={collectionName} onChange={event => setCollectionName(event.target.value)} maxLength={80} placeholder="Ej. Mis cafés favoritos" required/></label><button className="plus-button" disabled={busy}>Crear colección</button>
         </form>
         <div className="plus-list">{data?.collections.map(col => <article key={col.id} className="plus-collection">
-          <div className="plus-collection-head"><strong>{col.title}</strong><button type="button" disabled={busy} onClick={() => void run(() => removePlusCollection(col.id))}>Eliminar</button></div>
-          <form className="plus-form plus-form-inline" onSubmit={event => {
-            event.preventDefault(); const target = parsePlusTarget(collectionValue);
-            if (!target) { setError('Copia el enlace del negocio, producto o servicio en Xamuko.'); return; }
-            void run(() => addPlusCollectionItem(col.id, target), 'Guardado en tu colección.').then(ok => { if (ok) setCollectionValue(''); });
-          }}><label>Enlace para agregar<input value={collectionValue} onChange={event => setCollectionValue(event.target.value)} placeholder="/business/… o /product/…" required/></label><button type="submit" disabled={busy}>Agregar</button></form>
+          <div className="plus-collection-head"><strong>{col.title}</strong>
+            <div className="plus-collection-actions">
+              <button type="button" className="plus-button plus-collection-add" disabled={busy || col.items.length >= 100}
+                aria-expanded={collectionPicker === col.id} aria-controls={`plus-picker-${col.id}`}
+                onClick={() => { setCollectionPicker(collectionPicker === col.id ? null : col.id); setPickerType('BUSINESS'); setPickerPage(1); }}>
+                {collectionPicker === col.id ? 'Cerrar' : 'Agregar'}
+              </button>
+              <button type="button" disabled={busy} onClick={() => void run(() => removePlusCollection(col.id)).then(ok => { if (ok && collectionPicker === col.id) setCollectionPicker(null); })}>Eliminar</button>
+            </div>
+          </div>
+          {collectionPicker === col.id && <div className="plus-collection-picker" id={`plus-picker-${col.id}`}>
+            <p>Elige únicamente entre tus negocios favoritos y las publicaciones a las que diste «Me gusta».</p>
+            <div className="plus-picker-types" role="group" aria-label="Origen de los elementos">
+              <button type="button" className={pickerType === 'BUSINESS' ? 'selected' : ''} aria-pressed={pickerType === 'BUSINESS'}
+                onClick={() => { setPickerType('BUSINESS'); setPickerPage(1); }}>Negocios favoritos</button>
+              <button type="button" className={pickerType === 'OFFER' ? 'selected' : ''} aria-pressed={pickerType === 'OFFER'}
+                onClick={() => { setPickerType('OFFER'); setPickerPage(1); }}>Productos y servicios con Me gusta</button>
+            </div>
+            {pickerLoading ? <p role="status">Consultando tus elementos guardados…</p>
+              : pickerError ? <p role="alert">{pickerError}</p>
+              : pickerItems.length === 0 ? <p className="plus-picker-empty">No tienes elementos disponibles en esta categoría.</p>
+              : <div className="plus-picker-list">{pickerItems.map(item => {
+                const exists = col.items.some(saved => saved.targetType === item.targetType && saved.targetId === item.targetId);
+                return <div className="plus-picker-item" key={item.targetType + item.targetId}>
+                  <span><strong>{item.name}</strong><small>{item.detail}</small></span>
+                  <button type="button" disabled={busy || exists || col.items.length >= 100}
+                    onClick={() => void run(() => addPlusCollectionItem(col.id, { targetType: item.targetType, targetId: item.targetId }), 'Guardado en tu colección.')}>
+                    {exists ? 'Ya agregado' : 'Seleccionar'}
+                  </button>
+                </div>;
+              })}</div>}
+            {pickerTotalPages > 1 && <div className="plus-picker-pages">
+              <button type="button" disabled={pickerPage === 1 || pickerLoading} onClick={() => setPickerPage(page => page - 1)}>Anterior</button>
+              <span>Página {pickerPage} de {pickerTotalPages}</span>
+              <button type="button" disabled={pickerPage >= pickerTotalPages || pickerLoading} onClick={() => setPickerPage(page => page + 1)}>Siguiente</button>
+            </div>}
+          </div>}
           <div className="plus-collection-items">{col.items.map(item => <div key={item.id}>
             {item.href ? <Link to={item.href}>{item.name} ›</Link> : <span>{item.name}</span>}
             <button type="button" disabled={busy} onClick={() => void run(() => removePlusCollectionItem(col.id, item.id))}>Quitar</button>
