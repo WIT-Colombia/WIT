@@ -234,7 +234,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
     // Never send locally generated catalog samples to the paid endpoint.
     if (!isRealPublishedOffer) return;
     // Save selection in the user's tab; the backend validates membership and offers on comparison.
-    const saved = appendPlusComparison(user.id, item.id, false, item.name);
+    const saved = appendPlusComparison(user.id, item.id, item.name);
     if (saved.outcome === 'full') {
       setCompareError('Ya seleccionaste cuatro opciones. Abre Plus para comparar o eliminar alguna.');
       return;
