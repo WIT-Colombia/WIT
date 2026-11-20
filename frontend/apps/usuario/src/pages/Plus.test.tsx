@@ -12,6 +12,12 @@ const api = vi.hoisted(() => ({
   fetchPlusRadar: vi.fn(),
   listPublicBusinesses: vi.fn(),
   addPlusWatch: vi.fn(),
+  savePlusPreferences: vi.fn(),
+  comparePlusOffers: vi.fn(),
+  createPlusCollection: vi.fn(),
+  createPlusSearch: vi.fn(),
+  addPlusCollectionItem: vi.fn(),
+  favorites: [] as string[],
 }));
 
 vi.mock('../components/PageLayout', () => ({
@@ -24,7 +30,7 @@ vi.mock('../context/LocationContext', () => ({
   useLocationContext: () => ({ selection: null }),
 }));
 vi.mock('../services/favoritesService', () => ({
-  useFavorites: () => ({ favorites: [] }),
+  useFavorites: () => ({ favorites: api.favorites }),
 }));
 vi.mock('../services/publicBusinessApi', () => ({
   listPublicBusinesses: api.listPublicBusinesses,
@@ -39,6 +45,11 @@ vi.mock('../services/userPlusService', async importOriginal => ({
   fetchPlusOverview: api.fetchPlusOverview,
   fetchPlusRadar: api.fetchPlusRadar,
   addPlusWatch: api.addPlusWatch,
+  savePlusPreferences: api.savePlusPreferences,
+  comparePlusOffers: api.comparePlusOffers,
+  createPlusCollection: api.createPlusCollection,
+  createPlusSearch: api.createPlusSearch,
+  addPlusCollectionItem: api.addPlusCollectionItem,
 }));
 
 const inactive = { enabled: false, active: false, subscription: null };
@@ -54,6 +65,7 @@ const renderPlus = (path = '/plus') => render(<MemoryRouter initialEntries={[pat
 
 beforeEach(() => {
   vi.clearAllMocks();
+  api.favorites = [];
   api.fetchPlusStatus.mockResolvedValue(active);
   api.fetchPlusPurchaseRequest.mockResolvedValue({ request: null });
   api.fetchPlusOverview.mockResolvedValue(overview);
@@ -64,6 +76,11 @@ beforeEach(() => {
     currency: 'COP', periodMonths: 1, createdAt: '2026-11-19T12:00:00.000Z',
   } });
   api.addPlusWatch.mockResolvedValue({ id: 'watch-1' });
+  api.savePlusPreferences.mockResolvedValue({ radarEnabled: true, priceAlertsEnabled: false });
+  api.comparePlusOffers.mockResolvedValue({ offers: [] });
+  api.createPlusCollection.mockResolvedValue({ id: 'collection-1' });
+  api.createPlusSearch.mockResolvedValue({ id: 'search-1' });
+  api.addPlusCollectionItem.mockResolvedValue({ id: 'item-1' });
 });
 
 describe('Xamuko Plus: member experience and real entitlement', () => {
@@ -105,4 +122,88 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     await waitFor(() => expect(api.requestPlusMembership).toHaveBeenCalledWith(3900));
     expect(await screen.findByText(/Aún no se ha realizado ningún cobro ni activado la membresía/)).toBeInTheDocument();
   });
+  it('does not display fabricated values or tools when overview API is unavailable', async () => {
+    api.fetchPlusOverview.mockRejectedValue(new Error('overview unavailable'));
+    renderPlus();
+    expect(await screen.findByText(/No pudimos cargar tus herramientas Plus/)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Precios seguidos/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Compara tus opciones' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reintentar conexión' })).toBeInTheDocument();
+  });
+
+  it('records explicit opt-in to updates from favorite businesses', async () => {
+    renderPlus();
+    const radar = await screen.findByRole('heading', { name: 'Tu radar de novedades' });
+    expect(radar).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Recibir avisos' }));
+    await waitFor(() => expect(api.savePlusPreferences).toHaveBeenCalledWith({ radarEnabled: true }));
+  });
+
+  it('sends only the validated offer UUID for real price tracking', async () => {
+    renderPlus();
+    await screen.findByRole('heading', { name: 'Seguimiento de precios' });
+    const id = '12345678-1234-4234-8234-123456789abc';
+    fireEvent.change(screen.getByPlaceholderText('https://xamuko.com/product/…'), {
+      target: { value: '/product/' + id },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Seguir precio' }));
+    await waitFor(() => expect(api.addPlusWatch).toHaveBeenCalledWith(id));
+    expect(await screen.findByText('Producto o servicio añadido al seguimiento de precios.')).toBeInTheDocument();
+  });
+
+  it('compares exactly the two selected publications and never more than four', async () => {
+    renderPlus();
+    await screen.findByRole('heading', { name: 'Compara tus opciones' });
+    const ids = [
+      '12345678-1234-4234-8234-123456789abc',
+      '12345678-1234-4234-8234-123456789abd',
+    ];
+    const input = screen.getByPlaceholderText('Pega un enlace de Xamuko');
+    for (const id of ids) {
+      fireEvent.change(input, { target: { value: '/product/' + id } });
+      fireEvent.click(screen.getByRole('button', { name: 'Añadir a comparación' }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar 2 opciones' }));
+    await waitFor(() => expect(api.comparePlusOffers).toHaveBeenCalledWith(ids));
+  });
+
+  it('saves a personal collection and a search using the real API payload', async () => {
+    renderPlus();
+    await screen.findByRole('heading', { name: 'Tus colecciones' });
+    fireEvent.change(screen.getByPlaceholderText('Ej. Mis cafés favoritos'), {
+      target: { value: 'Cafeterías' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Crear colección' }));
+    await waitFor(() => expect(api.createPlusCollection).toHaveBeenCalledWith('Cafeterías'));
+    fireEvent.change(screen.getByPlaceholderText('Ej. Panaderías cerca'), {
+      target: { value: 'Desayunos' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Qué quieres encontrar'), {
+      target: { value: 'pan artesanal' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar búsqueda' }));
+    await waitFor(() => expect(api.createPlusSearch).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Desayunos', query: 'pan artesanal', sort: 'recommended' }),
+    ));
+  });
+
+  it('builds a Google Maps trip only from verified favorite coordinates', async () => {
+    const id1 = '12345678-1234-4234-8234-123456789abc';
+    const id2 = '12345678-1234-4234-8234-123456789abd';
+    api.favorites = [id1, id2];
+    api.listPublicBusinesses.mockResolvedValue([
+      { id: id1, name: 'Negocio A', coordinatesVerified: true, coordinates: { lat: 3.52, lng: -76.29 } },
+      { id: id2, name: 'Negocio B', coordinatesVerified: true, coordinates: { lat: 3.53, lng: -76.30 } },
+    ]);
+    renderPlus();
+    await screen.findByText('Negocio A');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Negocio A' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Negocio B' }));
+    const route = screen.getByRole('link', { name: 'Abrir ruta en Google Maps' });
+    expect(route.getAttribute('href')).toContain('https://www.google.com/maps/dir/?');
+    expect(route.getAttribute('href')).toContain('travelmode=driving');
+    expect(route.getAttribute('href')).toContain('3.52');
+    expect(route.getAttribute('href')).toContain('3.53');
+  });
+
 });
