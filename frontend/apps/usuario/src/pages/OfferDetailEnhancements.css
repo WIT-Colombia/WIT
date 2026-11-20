@@ -257,11 +257,11 @@
 }
 .offer-detail-page .offer-detail-price{
   width:fit-content;max-width:100%;margin:19px 0 18px;padding:6px 14px;
-  background:#e8f2ff;border-radius:18px;color:#2563eb;
+  background:#f2ecff;border-radius:18px;color:#563097;
   font-size:clamp(24px,2.4vw,34px);font-weight:800;line-height:1.25;
   box-sizing:border-box;
 }
-.offer-detail-page .offer-detail-price-current{color:#2563eb;font-size:inherit;}
+.offer-detail-page .offer-detail-price-current{color:#563097;font-size:inherit;}
 .offer-detail-page .offer-detail-price-original{font-size:14px;}
 .offer-detail-page .offer-business-card{
   display:flex;align-items:center;min-height:78px;
@@ -284,9 +284,9 @@
   padding:0 12px;border-radius:13px;font:inherit;font-size:13px;font-weight:800;
 }
 .offer-detail-page .offer-detail-contact.whatsapp{background:#00b96b;color:#fff;}
-.offer-detail-page .offer-detail-contact.phone{background:#7b3ffb;border-color:#7b3ffb;color:#fff;}
+.offer-detail-page .offer-detail-contact.phone{background:#176781;border-color:#176781;color:#fff;}
 .offer-detail-page .offer-detail-contact.whatsapp:hover{background:#009a59;}
-.offer-detail-page .offer-detail-contact.phone:hover{background:#6930e9;}
+.offer-detail-page .offer-detail-contact.phone:hover{background:#10556b;border-color:#10556b;}
 .offer-detail-page .offer-detail-actions{margin-top:17px;}
 /* Me gusta: círculo + pulgar + número. Mismo diseño en todos los dispositivos. */
 .offer-detail-page .offer-detail-actions .offer-detail-like-control{
@@ -682,13 +682,12 @@
 /* Consistent two-column actions: WhatsApp, Llamar, Comparar precio, Seguir precio. */
 .offer-detail-page .offer-detail-contact-actions>.offer-detail-contact{min-height:48px;width:100%;box-sizing:border-box}
 .offer-detail-page .offer-detail-contact.plus-compare,.offer-detail-page .offer-detail-contact.plus-watch{
-  border:1px solid #743bd7;border-radius:13px;color:#fff;
-  background:#713bd3;cursor:pointer;font-family:inherit;font-size:13px;font-weight:800;
+  border:1px solid #6736bd;border-radius:13px;color:#fff;
+  background:#6736bd;cursor:pointer;font-family:inherit;font-size:13px;font-weight:800;
   box-shadow:0 5px 14px rgba(95,49,179,.16);transition:background-color .15s,box-shadow .15s;
 }
-.offer-detail-page .offer-detail-contact.plus-watch{background:#5524af;border-color:#5524af}
-.offer-detail-page .offer-detail-contact.plus-compare:hover:not(:disabled){background:#602abf}
-.offer-detail-page .offer-detail-contact.plus-watch:hover:not(:disabled){background:#441b94}
+.offer-detail-page .offer-detail-contact.plus-compare:hover:not(:disabled),
+.offer-detail-page .offer-detail-contact.plus-watch:hover:not(:disabled){background:#572aa8;border-color:#572aa8}
 .offer-detail-page .offer-detail-contact.plus-watch.is-following{
   background:#e2f5e8;border-color:#b4dec6;color:#126d47;box-shadow:none
 }
