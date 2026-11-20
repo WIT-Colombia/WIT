@@ -79,6 +79,10 @@ const overview = {
     deliveryMode: 'IMMEDIATE', digestTimeZone: 'America/Panama', digestHour: 8 },
 };
 const renderPlus = (path = '/plus') => render(<MemoryRouter initialEntries={[path]}><Plus /></MemoryRouter>);
+const previewTool = (id: string) => fireEvent.change(
+  screen.getByRole('combobox', { name: 'Elegir herramienta de demostración' }),
+  { target: { value: id } },
+);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -492,12 +496,11 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     renderPlus('/plus?preview=1');
     expect(screen.getByText('Prueba visual con datos de ejemplo')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Tu radar de novedades' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Seguimiento de precios' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Compara tus opciones' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Tus colecciones' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Búsquedas guardadas' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Rutas con varios negocios' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Experiencia sin anuncios/ })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Elegir herramienta de demostración' })).toHaveValue('radar');
+    expect(screen.getByRole('navigation', { name: 'Navegación de herramientas Plus de prueba' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Seguimiento de precios' })).not.toBeInTheDocument();
+    expect(screen.getByRole('option', { name: '02 · Precios' })).toBeInTheDocument();
+    expect(document.querySelectorAll('.plus-panel[hidden]')).toHaveLength(6);
     fireEvent.click(screen.getByRole('checkbox', { name: 'Recibir avisos' }));
     expect(screen.getByText(/Preferencia de prueba actualizada localmente/)).toBeInTheDocument();
     expect(api.fetchPlusStatus).not.toHaveBeenCalled();
@@ -509,6 +512,7 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
   it('lets the authorized preview compare two sample products and clear the selection without backend calls', () => {
     previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
     renderPlus('/plus?preview=1');
+    previewTool('compare');
     fireEvent.click(screen.getByRole('button', { name: 'Probar con dos opciones de ejemplo' }));
     expect(screen.getByText('2 de 4 opciones seleccionadas')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Comparar 2 opciones' }));
@@ -528,6 +532,7 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     });
     expect(screen.getByRole('combobox', { name: 'Hora de entrega de ejemplo' })).toBeInTheDocument();
 
+    previewTool('prices');
     fireEvent.click(screen.getByRole('button', { name: 'Fijar objetivo' }));
     fireEvent.change(screen.getByRole('spinbutton', { name: 'Precio objetivo demo de Producto de muestra A' }), {
       target: { value: '25000' },
@@ -535,12 +540,44 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Guardar objetivo' }));
     expect(screen.getByText(/Objetivo de demostración: 25000 COP/)).toBeInTheDocument();
 
+    previewTool('routes');
     fireEvent.click(screen.getByRole('button', { name: 'Optimizar recorrido' }));
     expect(screen.getByText(/Recorrido simulado optimizado por cercanía/)).toBeInTheDocument();
     expect(screen.getAllByText(/Cerrado según horario de ejemplo/).length).toBeGreaterThan(0);
     expect(api.savePlusPreferences).not.toHaveBeenCalled();
     expect(api.setPlusPriceTarget).not.toHaveBeenCalled();
     expect(api.fetchPlusRouteFavorites).not.toHaveBeenCalled();
+  });
+
+  it('opens a deep link directly to prices and navigates seven tools without a vertical scavenger hunt', () => {
+    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
+    renderPlus('/plus?preview=1#prices');
+    const picker = screen.getByRole('combobox', { name: 'Elegir herramienta de demostración' });
+    expect(picker).toHaveValue('prices');
+    expect(screen.getByRole('heading', { name: 'Seguimiento de precios' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Tu radar de novedades' })).not.toBeInTheDocument();
+    expect(document.querySelectorAll('.plus-panel:not([hidden])')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: /Siguiente: Comparador/ }));
+    expect(picker).toHaveValue('compare');
+    expect(screen.getByRole('heading', { name: 'Compara tus opciones' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Anterior/ }));
+    expect(picker).toHaveValue('prices');
+    previewTool('adfree');
+    expect(screen.getByRole('heading', { name: /Experiencia sin anuncios/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Recorrido completado/ })).toBeDisabled();
+    expect(screen.getByRole('link', { name: 'Salir de la vista previa' })).toBeInTheDocument();
+    expect(api.fetchPlusStatus).not.toHaveBeenCalled();
+  });
+
+  it('uses the summary indicators as navigation without losing local preview state', () => {
+    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
+    renderPlus('/plus?preview=1');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Recibir avisos' }));
+    fireEvent.click(screen.getByRole('link', { name: /Precios de ejemplo/ }));
+    expect(screen.getByRole('heading', { name: 'Seguimiento de precios' })).toBeInTheDocument();
+    previewTool('radar');
+    expect(screen.getByRole('checkbox', { name: 'Recibir avisos' })).toBeChecked();
+    expect(api.savePlusPreferences).not.toHaveBeenCalled();
   });
 
   it('does not expose the visual walkthrough to other email accounts', async () => {
@@ -563,8 +600,10 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
   it('receives the product button in preview and edits collections without paid backend writes', () => {
     previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
     renderPlus('/plus?preview=1&watch=33333333-3333-4333-8333-333333333333');
+    expect(screen.getByRole('combobox', { name: 'Elegir herramienta de demostración' })).toHaveValue('prices');
     expect(screen.getByText('Producto seleccionado para la prueba')).toBeInTheDocument();
     expect(screen.getByText(/Has seguido un producto de ejemplo desde su ficha/)).toBeInTheDocument();
+    previewTool('collections');
     fireEvent.change(screen.getByPlaceholderText('Ej. Mis cafeterías favoritas'), { target: { value: 'Cafés de prueba' } });
     fireEvent.click(screen.getByRole('button', { name: 'Crear colección' }));
     expect(screen.getByText('Cafés de prueba')).toBeInTheDocument();
