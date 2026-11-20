@@ -94,10 +94,14 @@ export default function Plus() {
       setPurchaseRequest(null);
     }
     if (current.active) {
-      const [overview, feed] = await Promise.all([fetchPlusOverview(), fetchPlusRadar()]);
+      // A temporary radar outage must not block prices, collections or saved searches.
+      const [overviewResult, radarResult] = await Promise.allSettled([fetchPlusOverview(), fetchPlusRadar()]);
       if (epoch !== requestEpoch.current) return;
-      setData(overview);
-      setRadar(feed.items);
+      if (overviewResult.status === 'rejected') throw overviewResult.reason;
+      setData(overviewResult.value);
+      setRadar(radarResult.status === 'fulfilled' ? radarResult.value.items : []);
+      setError(radarResult.status === 'rejected'
+        ? 'No pudimos consultar las novedades recientes. Tus demás herramientas Plus siguen disponibles.' : '');
     } else if (epoch === requestEpoch.current) {
       setData(null); setRadar([]); setHistory(null); setComparison([]); setComparisonBusinesses({});
     }
