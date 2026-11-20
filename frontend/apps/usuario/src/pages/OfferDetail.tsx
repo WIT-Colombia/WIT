@@ -312,7 +312,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           </div>
           {watchFollowed && <Link className="offer-detail-follow-detail" to="/plus#prices">Ver mis precios seguidos</Link>}
           {watchError && <p className="offer-detail-follow-error" role="alert">{watchError}</p>}
-          {compareError && <p className="offer-detail-follow-error" role="alert">{compareError}</p> 
+          {compareError && <p className="offer-detail-follow-error" role="alert">{compareError}</p>}
           <div className="offer-detail-actions">
             <div className="offer-detail-like-control">
               <button type="button" title={like.liked ? "Quitar me gusta" : "Me gusta"} aria-pressed={like.liked} className={`offer-detail-thumb-button${like.liked ? " is-active" : ""}`} aria-label={like.liked ? `Quitar me gusta a ${item.name}` : `Me gusta ${item.name}`} onClick={() => requireAccount(handleLike)}>
