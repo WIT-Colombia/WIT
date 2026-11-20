@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PlusIcon, type PlusIconName } from '../components/PlusIcon';
 import { PageLayout } from '../components/PageLayout';
+import { useAuth } from '../context/AuthContext';
+import { readPlusComparison, savePlusComparison } from '../services/plusComparisonSelection';
 import { parsePlusTarget, searchHref } from '../services/userPlusService';
 
 type Watch = { id: string; name: string; business: string; price: string | null; original: string | null };
@@ -12,6 +14,16 @@ const sampleOffers: Comparison[] = [
   { id: '11111111-1111-4111-8111-111111111111', name: 'Producto de muestra A', business: 'Negocio de ejemplo A', price: '32.900' },
   { id: '22222222-2222-4222-8222-222222222222', name: 'Producto de muestra B', business: 'Negocio de ejemplo B', price: '29.900' },
 ];
+const sampleCollectionCandidates = {
+  BUSINESS: [
+    { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', description: 'Cafetería favorita de ejemplo · Negocio' },
+    { id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', description: 'Tienda favorita de ejemplo · Negocio' },
+  ],
+  OFFER: [
+    { id: sampleOffers[0].id, description: sampleOffers[0].name + ' · Producto con Me gusta' },
+    { id: sampleOffers[1].id, description: sampleOffers[1].name + ' · Servicio con Me gusta' },
+  ],
+};
 const sampleStops = [
   { id: 'a', name: 'Negocio favorito de ejemplo A', address: 'Punto de muestra 1' },
   { id: 'b', name: 'Negocio favorito de ejemplo B', address: 'Punto de muestra 2' },
@@ -28,6 +40,7 @@ const sections: Array<{ id: string; label: string; icon: PlusIconName }> = [
 ];
 
 export default function PlusPreview() {
+  const { user } = useAuth();
   const [queryParams] = useSearchParams();
   const requestedWatch = queryParams.get('watch');
   const parsedWatch = requestedWatch ? parsePlusTarget(requestedWatch) : null;
@@ -42,14 +55,14 @@ export default function PlusPreview() {
     return initial;
   });
   const [historyId, setHistoryId] = useState<string | null>(null);
-  const [compareInput, setCompareInput] = useState('');
-  const [compareIds, setCompareIds] = useState<string[]>(sampleOffers.map(item => item.id));
+  const [compareIds, setCompareIds] = useState<string[]>(() => readPlusComparison(user?.id ?? '', true));
   const [compared, setCompared] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([
     { id: 1, title: 'Mis favoritos de ejemplo', items: [{ id: sampleOffers[0].id, description: 'Producto de ejemplo A' }] },
   ]);
   const [collectionName, setCollectionName] = useState('');
-  const [collectionInputs, setCollectionInputs] = useState<Record<number, string>>({});
+  const [collectionPicker, setCollectionPicker] = useState<number | null>(null);
+  const [collectionSource, setCollectionSource] = useState<'BUSINESS' | 'OFFER'>('BUSINESS');
   const [searches, setSearches] = useState<SavedSearch[]>([
     { id: 1, title: 'Desayunos de ejemplo', query: 'desayunos', category: 'Restaurantes' },
   ]);
@@ -65,14 +78,11 @@ export default function PlusPreview() {
   const showError = (message: string) => { setError(message); setNotice(''); };
   const resolve = (id: string): Comparison =>
     sampleOffers.find(item => item.id === id) ?? { id, name: 'Publicación agregada para probar la interfaz', business: 'Sin datos del servidor', price: null };
-  const addCompare = (event: FormEvent) => {
-    event.preventDefault();
-    const item = parsePlusTarget(compareInput);
-    if (!item || item.targetType !== 'OFFER') { showError('Introduce un enlace válido de Xamuko.'); return; }
-    if (compareIds.includes(item.targetId)) { showError('Esa publicación ya está seleccionada.'); return; }
-    if (compareIds.length >= 4) { showError('Solo puedes seleccionar hasta cuatro publicaciones.'); return; }
-    setCompareIds(items => [...items, item.targetId]); setCompareInput(''); setCompared(false);
-    updateNotice('Opción añadida a la comparación local.');
+  const updateCompareSelection = (ids: string[]) => {
+    setCompareIds(savePlusComparison(user?.id ?? '', ids, true));
+    setCompared(false);
+    setNotice('');
+    setError('');
   };
   const addCollection = (event: FormEvent) => {
     event.preventDefault();
@@ -81,14 +91,10 @@ export default function PlusPreview() {
     setCollections(items => [...items, { id: Date.now(), title, items: [] }]);
     setCollectionName(''); updateNotice('Colección de ejemplo creada. No se guardará en tu cuenta.');
   };
-  const addCollectionItem = (event: FormEvent, id: number) => {
-    event.preventDefault();
-    const target = parsePlusTarget(collectionInputs[id] ?? '');
-    if (!target) { showError('Introduce un enlace válido de negocio, producto o servicio.'); return; }
-    setCollections(items => items.map(col => col.id !== id || col.items.some(x => x.id === target.targetId)
-      ? col : { ...col, items: [...col.items, { id: target.targetId, description: 'Elemento añadido para probar la interfaz' }] }));
-    setCollectionInputs(inputs => ({ ...inputs, [id]: '' }));
-    updateNotice('Elemento añadido localmente a la colección.');
+  const addCollectionItem = (id: number, item: { id: string; description: string }) => {
+    setCollections(items => items.map(col => col.id !== id || col.items.some(x => x.id === item.id)
+      ? col : { ...col, items: [...col.items, item] }));
+    updateNotice('Elemento de ejemplo seleccionado. No se guardará en tu cuenta.');
   };
   const addSearch = (event: FormEvent) => {
     event.preventDefault();
@@ -154,9 +160,13 @@ export default function PlusPreview() {
     </section>
     <section className="plus-panel" id="compare">
       <div className="plus-heading"><div><span>03 · COMPARACIÓN · EJEMPLO</span><h2>Compara tus opciones</h2><p>Selecciona de dos a cuatro publicaciones para explorar el comparador.</p></div></div>
-      <form className="plus-form" onSubmit={addCompare}><label>Enlace de publicación<input value={compareInput} onChange={e=>setCompareInput(e.target.value)} placeholder="Pega un enlace de Xamuko" required/></label><button className="plus-button" type="submit" disabled={compareIds.length>=4}>Añadir a comparación</button></form>
+      <div className="plus-follow-guide"><span className="plus-follow-guide-icon"><PlusIcon name="compare" size={25}/></span>
+        <div><strong>Compara sin pegar enlaces</strong><p>Abre la ficha de un producto o servicio y pulsa <b>Comparar precio</b>. La selección de demostración aparecerá aquí.</p></div>
+        <Link className="plus-button plus-button-secondary" to="/results">Elegir publicaciones</Link>
+      </div>
       <p className="plus-selection-caption">{compareIds.length} de 4 opciones seleccionadas</p>
-      <div className="plus-chips">{compareIds.map((id,i)=><button key={id} type="button" onClick={()=>{setCompareIds(ids=>ids.filter(x=>x!==id));setCompared(false);}}>Opción {i+1} ×</button>)}</div>
+      <div className="plus-chips">{compareIds.map((id,i)=><button key={id} type="button" aria-label={`Quitar opción ${i+1}`} onClick={()=>updateCompareSelection(compareIds.filter(x=>x!==id))}>Opción {i+1} ×</button>)}</div>
+      {compareIds.length > 0 && <button type="button" className="plus-button plus-clear-selection" onClick={()=>updateCompareSelection([])}>Eliminar selección</button>}
       <button type="button" className="plus-button plus-button-secondary" disabled={compareIds.length<2} onClick={()=>setCompared(true)}>Comparar {compareIds.length} opciones</button>
       {compared && <div className="plus-compare-grid">{compareIds.map(id=>{const item=resolve(id);return <article key={id}><span>Publicación de ejemplo</span><h3>{item.name}</h3><p>{item.business}</p><strong>{item.price ? '$'+item.price+' COP · ejemplo' : 'Precio no consultado'}</strong><p>La ubicación, calificación y distancia se consultarán desde el backend real.</p></article>;})}</div>}
     </section>
