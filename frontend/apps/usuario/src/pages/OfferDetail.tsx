@@ -15,7 +15,6 @@ import { useAccountGate } from "../hooks/useAccountGate";
 import { useAuth } from "../context/AuthContext";
 import { PlusIcon } from "../components/PlusIcon";
 import { addPlusWatch, fetchPlusStatus } from "../services/userPlusService";
-import { canUsePlusVisualPreview } from "../services/plusPreviewAccess";
 import { appendPlusComparison } from "../services/plusComparisonSelection";
 import { activeBusinessContext, createAnalyticsInteractionId, recordBusinessEvent, type AnalyticsContext } from "../services/analyticsService";
 import { whatsappLink } from "../utils/whatsapp";
@@ -199,15 +198,14 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const whatsappMessage = `¡Hola! Vi el ${isProduct ? "producto" : "servicio"} ${item.name} en tu perfil de XAMUKO y quisiera recibir más información. ¡Gracias!`;
   const whatsappUrl = business.whatsapp ? whatsappLink(business.whatsapp, whatsappMessage) : null;
   const isRealPublishedOffer = isRealOfferId(item.id);
-  const canDemo = canUsePlusVisualPreview(user);
   // A numeric price displayed in a published product may come from legacy price text.
   // Keep the action visible even if that field had no priceTrackable flag; the API verifies it.
   const displayedAmount = (item.priceLabel ?? '').trim().match(/^(?:COP\s*)?\$?\s*([\d.,]+)\s*(?:COP)?$/i)?.[1];
   const displayedNumeric = displayedAmount
     ? Number(displayedAmount.replace(/\./g, '').replace(',', '.')) > 0 : false;
-  const canFollowPrice = (isRealPublishedOffer || canDemo)
+  const canFollowPrice = isRealPublishedOffer
     && (item.priceTrackable === true || displayedNumeric || (isProduct && typeof product.price === 'number' && product.price > 0));
-  const showComparePrice = isRealPublishedOffer || canDemo;
+  const showComparePrice = isRealPublishedOffer;
   const handleFollowPrice = () => requireAccount(() => {
     if (watchBusy || watchFollowed) return;
     setWatchBusy(true);
@@ -220,15 +218,8 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
           setWatchFollowed(true);
           return;
         }
-        navigate(canDemo
-          ? (isRealPublishedOffer ? `/plus?preview=1&watch=${encodeURIComponent(item.id)}` : '/plus?preview=1')
-          : "/plus");
+        navigate("/plus");
       } catch (cause) {
-        // The authorized UI demonstration does not need the new production API.
-        if (canUsePlusVisualPreview(user)) {
-          navigate(isRealPublishedOffer ? `/plus?preview=1&watch=${encodeURIComponent(item.id)}` : '/plus?preview=1');
-          return;
-        }
         setWatchError(cause instanceof ApiError && cause.status === 403
           ? "No tienes una membresía Plus activa. Consulta tu plan para seguir precios."
           : "No pudimos seguir este precio. Intenta nuevamente.");
@@ -240,13 +231,10 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
   const handleComparePrice = () => requireAccount(() => {
     if (!user?.id) return;
     setCompareError("");
-    const preview = canUsePlusVisualPreview(user);
-    // Catalog samples can only populate the explicitly marked demonstration.
-    // Never send their local, non-UUID IDs to a paid endpoint.
-    const offerId = isRealPublishedOffer ? item.id : (preview ? '11111111-1111-4111-8111-111111111111' : '');
-    if (!offerId) return;
+    // Never send locally generated catalog samples to the paid endpoint.
+    if (!isRealPublishedOffer) return;
     // Save selection in the user's tab; the backend validates membership and offers on comparison.
-    const saved = appendPlusComparison(user.id, offerId, preview, item.name);
+    const saved = appendPlusComparison(user.id, item.id, false, item.name);
     if (saved.outcome === 'full') {
       setCompareError('Ya seleccionaste cuatro opciones. Abre Plus para comparar o eliminar alguna.');
       return;
@@ -255,7 +243,7 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
       setCompareError('No fue posible seleccionar esta publicación.');
       return;
     }
-    navigate(preview ? '/plus?preview=1#compare' : '/plus#compare');
+    navigate('/plus#compare');
   });
   const handleLike = () => {
     setLikeError(null);
