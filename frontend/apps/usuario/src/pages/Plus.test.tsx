@@ -131,7 +131,7 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(screen.getByRole('link', { name: /Novedades recientes/ })).toHaveTextContent('0');
   });
 
-  it('highlights the three Plus features using verified account data', async () => {
+  it('integrates price targets, notification modes and routes in existing peer panels', async () => {
     api.fetchPlusOverview.mockResolvedValue({
       ...overview,
       watches: [{ id: 'watch-1', offerId: 'offer-1', kind: 'PRODUCT',
@@ -141,18 +141,23 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
       preferences: { ...overview.preferences, deliveryMode: 'DAILY' },
     });
     renderPlus();
-    expect(await screen.findByRole('heading', { name: 'Aprovecha más tu membresía' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Precio objetivo/ })).toHaveTextContent('1 objetivo configurado');
-    expect(screen.getByRole('link', { name: /Precio objetivo/ })).toHaveAttribute('href', '#prices');
-    expect(screen.getByRole('link', { name: /Notificaciones inteligentes/ })).toHaveTextContent('Resumen diario');
-    expect(screen.getByRole('link', { name: /Notificaciones inteligentes/ })).toHaveAttribute('href', '#radar');
-    expect(screen.getByRole('link', { name: /Rutas optimizadas/ })).toHaveAttribute('href', '#routes');
+    expect(await screen.findByRole('heading', { name: 'Tu radar de novedades' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Seguimiento de precios' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Rutas con varios negocios' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Frecuencia de avisos Plus' })).toHaveValue('DAILY');
+    expect(screen.getByText(/Objetivo:.*4\.200/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Optimizar recorrido' })).toBeDisabled();
+    expect(document.querySelectorAll('.plus-spotlight')).toHaveLength(0);
+    expect(document.querySelectorAll('.plus-panel#radar, .plus-panel#prices, .plus-panel#routes')).toHaveLength(3);
+    expect(screen.queryByRole('heading', { name: 'Aprovecha más tu membresía' })).not.toBeInTheDocument();
   });
 
-  it('does not invent an alert modality when the server has no preferences', async () => {
+  it('preserves normal notification controls when the server omits preferences', async () => {
     api.fetchPlusOverview.mockResolvedValue({ ...overview, preferences: null });
     renderPlus();
-    expect(await screen.findByRole('link', { name: /Notificaciones inteligentes/ })).toHaveTextContent('Sin configurar');
+    expect(await screen.findByRole('heading', { name: 'Tu radar de novedades' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Frecuencia de avisos Plus' })).toHaveValue('IMMEDIATE');
+    expect(document.querySelectorAll('.plus-spotlight-card')).toHaveLength(0);
   });
 
   it('shows each business profile photo beside its radar alert with a fallback if unavailable', async () => {
