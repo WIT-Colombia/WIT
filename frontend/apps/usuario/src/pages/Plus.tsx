@@ -372,7 +372,7 @@ function PlusReal({ canPreview }: { canPreview: boolean }) {
             <span className="plus-spotlight-icon" aria-hidden="true"><PlusIcon name="radar" size={25}/></span>
             <h3>Notificaciones inteligentes</h3>
             <p>Recibe avisos inmediatos o un resumen diario en tu zona horaria.</p>
-            <span className="plus-spotlight-detail"><strong>{data.preferences.deliveryMode === 'DAILY' ? 'Resumen diario' : 'Inmediatas'}</strong> · Modalidad elegida</span>
+            <span className="plus-spotlight-detail"><strong>{data.preferences?.deliveryMode === 'DAILY' ? 'Resumen diario' : data.preferences?.deliveryMode === 'IMMEDIATE' ? 'Inmediatas' : 'Sin configurar'}</strong> · Modalidad elegida</span>
             <span className="plus-spotlight-action">Configurar avisos <PlusIcon name="arrow-right" size={16}/></span>
           </a>
           <a className="plus-spotlight-card" href="#routes">
