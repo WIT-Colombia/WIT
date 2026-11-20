@@ -236,13 +236,12 @@ function OfferDetail({ kind }: { kind: "product" | "service" }) {
     if (!user?.id) return;
     setCompareError("");
     const preview = canUsePlusVisualPreview(user);
-    if (!isRealPublishedOffer) {
-      // Local catalog samples cannot enter a real comparison or a paid API.
-      if (preview) navigate('/plus?preview=1');
-      return;
-    }
+    // Catalog samples can only populate the explicitly marked demonstration.
+    // Never send their local, non-UUID IDs to a paid endpoint.
+    const offerId = isRealPublishedOffer ? item.id : (preview ? '11111111-1111-4111-8111-111111111111' : '');
+    if (!offerId) return;
     // Save selection in the user's tab; the backend validates membership and offers on comparison.
-    const saved = appendPlusComparison(user.id, item.id, preview);
+    const saved = appendPlusComparison(user.id, offerId, preview);
     if (saved.outcome === 'full') {
       setCompareError('Ya seleccionaste cuatro opciones. Abre Plus para comparar o eliminar alguna.');
       return;
