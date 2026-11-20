@@ -4,9 +4,10 @@ import { PlusIcon, type PlusIconName } from '../components/PlusIcon';
 import { PageLayout } from '../components/PageLayout';
 import { useAuth } from '../context/AuthContext';
 import { readPlusComparison, readPlusComparisonLabels, savePlusComparison } from '../services/plusComparisonSelection';
-import { parsePlusTarget, searchHref } from '../services/userPlusService';
+import { parsePlusTarget, searchHref, type PlusRouteFavorite } from '../services/userPlusService';
+import { estimatePlusRoute, optimizePlusRoute } from '../utils/plusRoutePlanner';
 
-type Watch = { id: string; name: string; business: string; price: string | null; original: string | null };
+type Watch = { id: string; name: string; business: string; price: string | null; original: string | null; target: string | null };
 type Collection = { id: number; title: string; items: Array<{ id: string; description: string }> };
 type SavedSearch = { id: number; title: string; query: string; category: string };
 type Comparison = { id: string; name: string; business: string; price: string | null };
@@ -24,10 +25,17 @@ const sampleCollectionCandidates = {
     { id: sampleOffers[1].id, description: sampleOffers[1].name + ' · Servicio con Me gusta' },
   ],
 };
-const sampleStops = [
-  { id: 'a', name: 'Negocio favorito de ejemplo A', address: 'Punto de muestra 1' },
-  { id: 'b', name: 'Negocio favorito de ejemplo B', address: 'Punto de muestra 2' },
-  { id: 'c', name: 'Negocio favorito de ejemplo C', address: 'Punto de muestra 3' },
+const sampleStops: Array<PlusRouteFavorite & { address: string }> = [
+  { id: 'a', name: 'Negocio favorito de ejemplo A', address: 'Punto de muestra 1',
+    lat: 3.52, lng: -76.29, timezone: 'America/Bogota',
+    hours: Array.from({length: 7}, (_, dayOfWeek) =>
+      ({ dayOfWeek, isClosed: false, opensAt: '08:00', closesAt: '18:00' })) },
+  { id: 'b', name: 'Negocio favorito de ejemplo B', address: 'Punto de muestra 2',
+    lat: 3.56, lng: -76.34, timezone: 'America/Bogota',
+    hours: Array.from({length: 7}, (_, dayOfWeek) =>
+      ({ dayOfWeek, isClosed: true, opensAt: null, closesAt: null })) },
+  { id: 'c', name: 'Negocio favorito de ejemplo C', address: 'Punto de muestra 3',
+    lat: 3.54, lng: -76.32, timezone: 'America/Bogota', hours: [] },
 ];
 const sections: Array<{ id: string; label: string; icon: PlusIconName }> = [
   { id: 'radar', label: 'Novedades', icon: 'radar' },
@@ -47,10 +55,15 @@ export default function PlusPreview() {
   const initialWatchId = parsedWatch?.targetType === 'OFFER' ? parsedWatch.targetId : null;
   const [radarEnabled, setRadarEnabled] = useState(false);
   const [priceAlerts, setPriceAlerts] = useState(false);
+  const [deliveryMode, setDeliveryMode] = useState<'IMMEDIATE' | 'DAILY'>('IMMEDIATE');
+  const [digestZone, setDigestZone] = useState('America/Panama');
+  const [digestHour, setDigestHour] = useState(8);
+  const [targetEditor, setTargetEditor] = useState<string | null>(null);
+  const [targetDraft, setTargetDraft] = useState('');
   const [watches, setWatches] = useState<Watch[]>(() => {
-    const initial: Watch[] = [{ id: sampleOffers[0].id, name: sampleOffers[0].name, business: sampleOffers[0].business, price: sampleOffers[0].price, original: '39.900' }];
+    const initial: Watch[] = [{ id: sampleOffers[0].id, name: sampleOffers[0].name, business: sampleOffers[0].business, price: sampleOffers[0].price, original: '39.900', target: null }];
     if (initialWatchId && !initial.some(item => item.id === initialWatchId)) {
-      initial.push({ id: initialWatchId, name: 'Producto seleccionado para la prueba', business: 'Sin datos reales', price: null, original: null });
+      initial.push({ id: initialWatchId, name: 'Producto seleccionado para la prueba', business: 'Sin datos reales', price: null, original: null, target: null });
     }
     return initial;
   });
@@ -72,6 +85,9 @@ export default function PlusPreview() {
   const [selectedStops, setSelectedStops] = useState<string[]>(['a', 'b']);
   const [travelMode, setTravelMode] = useState<'driving' | 'walking'>('driving');
   const [showRoute, setShowRoute] = useState(false);
+  const [routeOptimized, setRouteOptimized] = useState(false);
+  const [visitAt, setVisitAt] = useState(() =>
+    new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0,16));
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const updateNotice = (message: string) => { setNotice(message); setError(''); };
@@ -102,6 +118,12 @@ export default function PlusPreview() {
     setSearchTitle(''); setSearchQuery(''); setSearchCategory('');
     updateNotice('Búsqueda agregada a la vista previa, sin guardar datos.');
   };
+  const selectedDemoStops = selectedStops.flatMap(id => {
+    const found = sampleStops.find(stop => stop.id === id);
+    return found ? [found] : [];
+  });
+  const orderedDemoStops = routeOptimized ? optimizePlusRoute(selectedDemoStops) : selectedDemoStops;
+  const demoEstimates = estimatePlusRoute(orderedDemoStops, travelMode, new Date(visitAt));
   const compareLabels = readPlusComparisonLabels(user?.id ?? '', true);
   const stats = [
     { label: 'Novedades de ejemplo', value: 2, href: '#radar', icon: 'radar' as const },
