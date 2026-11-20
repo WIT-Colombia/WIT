@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { PlusIcon, type PlusIconName } from '../components/PlusIcon';
 import { PageLayout } from '../components/PageLayout';
 import { useAuth } from '../context/AuthContext';
@@ -50,9 +50,34 @@ const sections: Array<{ id: string; label: string; icon: PlusIconName }> = [
 export default function PlusPreview() {
   const { user } = useAuth();
   const [queryParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const requestedWatch = queryParams.get('watch');
   const parsedWatch = requestedWatch ? parsePlusTarget(requestedWatch) : null;
   const initialWatchId = parsedWatch?.targetType === 'OFFER' ? parsedWatch.targetId : null;
+  // A deep link must select its tool without forcing a seven-section scroll.
+  // A product coming from "Seguir precio" opens directly in Precios.
+  const requestedSection = location.hash.slice(1);
+  const activeSection = sections.some(item => item.id === requestedSection)
+    ? requestedSection : initialWatchId ? 'prices' : 'radar';
+  const activeIndex = sections.findIndex(item => item.id === activeSection);
+  const explicitNavigation = useRef(false);
+  const chooseSection = (id: string) => {
+    if (!sections.some(item => item.id === id)) return;
+    explicitNavigation.current = true;
+    navigate({ pathname: location.pathname, search: location.search, hash: '#' + id },
+      { preventScrollReset: true });
+  };
+  useEffect(() => {
+    if (!location.hash && !initialWatchId && !explicitNavigation.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      const panel = document.getElementById(activeSection);
+      panel?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
+      if (explicitNavigation.current) panel?.focus({ preventScroll: true });
+      explicitNavigation.current = false;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeSection, location.hash, initialWatchId]);
   const [radarEnabled, setRadarEnabled] = useState(false);
   const [priceAlerts, setPriceAlerts] = useState(false);
   const [deliveryMode, setDeliveryMode] = useState<'IMMEDIATE' | 'DAILY'>('IMMEDIATE');
@@ -146,16 +171,43 @@ export default function PlusPreview() {
     </div>
     {error && <p className="plus-error" role="alert">{error}</p>}
     {notice && <p className="plus-success" role="status">{notice}</p>}
-    <div className="plus-welcome"><div className="plus-welcome-copy"><span className="plus-overline">RECORRIDO DE DEMOSTRACIÓN</span><h2>Así se verá tu espacio Plus</h2><p>Explora y prueba la navegación sin activar permisos ni utilizar datos reales.</p></div><div className="plus-welcome-icon"><PlusIcon name="crown" size={42}/></div></div>
     <div className="plus-overview" aria-label="Indicadores de demostración">
-      {stats.map(item => <a className="plus-overview-card" key={item.href} href={item.href}>
+      {stats.map(item => <a className="plus-overview-card" key={item.href} href={item.href}
+        onClick={event => { event.preventDefault(); chooseSection(item.href.slice(1)); }}>
         <span className="plus-overview-icon"><PlusIcon name={item.icon} size={22}/></span><strong>{item.value}</strong><span>{item.label}</span><span className="plus-overview-arrow" aria-hidden="true">↗</span>
       </a>)}
     </div>
-    <nav className="plus-section-nav" aria-label="Navegación de herramientas Plus de prueba">
-      {sections.map(item => <a key={item.id} href={'#' + item.id}><PlusIcon name={item.icon} size={17}/>{item.label}</a>)}
-    </nav>
-    <section className="plus-panel" id="radar" tabIndex={-1}>
+    <div className="plus-tool-workspace" id="plus-tools-workspace">
+      <aside className="plus-tool-sidebar">
+        <span className="plus-tool-eyebrow">TU RECORRIDO PLUS</span>
+        <h2>Elige qué quieres probar</h2>
+        <p>Siete herramientas. Una a la vez, sin perder tu lugar.</p>
+        <nav className="plus-tool-menu" aria-label="Navegación de herramientas Plus de prueba">
+          {sections.map((item, index) => <a href={'#' + item.id} key={item.id}
+            aria-current={activeSection === item.id ? 'location' : undefined}
+            onClick={event => { event.preventDefault(); chooseSection(item.id); }}>
+            <span className="plus-tool-menu-number">{String(index + 1).padStart(2, '0')}</span>
+            <PlusIcon name={item.icon} size={19}/><span>{item.label}</span>
+            {activeSection === item.id && <span className="plus-tool-current" aria-hidden="true"><PlusIcon name="check" size={15}/></span>}
+          </a>)}
+        </nav>
+      </aside>
+      <div className="plus-tool-content">
+        <div className="plus-tool-picker">
+          <label htmlFor="plus-tool-select">¿Qué herramienta quieres probar?</label>
+          <select id="plus-tool-select" aria-label="Elegir herramienta de demostración" value={activeSection}
+            onChange={event => chooseSection(event.target.value)}>
+            {sections.map((item, index) => <option key={item.id} value={item.id}>
+              {String(index + 1).padStart(2, '0')} · {item.label}
+            </option>)}
+          </select>
+        </div>
+        <div className="plus-tool-position" aria-live="polite">
+          <span>HERRAMIENTA {String(activeIndex + 1).padStart(2, '0')} DE {String(sections.length).padStart(2, '0')}</span>
+          <strong>{sections[activeIndex].label}</strong>
+        </div>
+        <div className="plus-tool-stage">
+    <section className="plus-panel" id="radar" tabIndex={-1} hidden={activeSection !== 'radar'}>
       <div className="plus-heading"><div><span>01 · DESCUBRIMIENTO · EJEMPLO</span><h2>Tu radar de novedades</h2><p>Así aparecen las novedades de los negocios favoritos y se configuran los avisos.</p></div>
         <label className="plus-toggle"><input type="checkbox" checked={radarEnabled} onChange={e => { setRadarEnabled(e.target.checked); updateNotice('Preferencia de prueba actualizada localmente.'); }}/>Recibir avisos</label></div>
       <div className="plus-delivery-controls">
@@ -178,7 +230,7 @@ export default function PlusPreview() {
         <div className="plus-list-row" key={item.name}><span className="plus-row-symbol"><PlusIcon name="radar" size={19}/></span><span><strong>{item.name}</strong><small>{item.business} · Ejemplo {i + 1}</small></span><span className="plus-preview-chip">Demo</span></div>)}</div>
       <p className="plus-footnote">En la versión real, estas novedades se obtienen de publicaciones recientes de tus favoritos.</p>
     </section>
-    <section className="plus-panel" id="prices" tabIndex={-1}>
+    <section className="plus-panel" id="prices" tabIndex={-1} hidden={activeSection !== 'prices'}>
       <div className="plus-heading"><div><span>02 · AHORRO · EJEMPLO</span><h2>Seguimiento de precios</h2><p>Prueba el seguimiento de precios, fija un objetivo y consulta un historial de ejemplo.</p></div>
         <label className="plus-toggle"><input type="checkbox" checked={priceAlerts} onChange={e => { setPriceAlerts(e.target.checked); updateNotice('Alerta simulada; no se enviarán notificaciones.'); }}/>Avisar cuando bajen</label></div>
       <div className="plus-follow-guide">
@@ -221,7 +273,7 @@ export default function PlusPreview() {
         : <p>Esta publicación no tiene historial de ejemplo. El backend real todavía no se consulta.</p>}
         <button type="button" onClick={()=>setHistoryId(null)}>Cerrar historial</button></div>}
     </section>
-    <section className="plus-panel" id="compare" tabIndex={-1}>
+    <section className="plus-panel" id="compare" tabIndex={-1} hidden={activeSection !== 'compare'}>
       <div className="plus-heading"><div><span>03 · COMPARACIÓN · EJEMPLO</span><h2>Compara tus opciones</h2><p>Selecciona de dos a cuatro publicaciones para explorar el comparador.</p></div></div>
       <div className="plus-follow-guide"><span className="plus-follow-guide-icon"><PlusIcon name="compare" size={25}/></span>
         <div><strong>Compara sin pegar enlaces</strong><p>Abre la ficha de un producto o servicio y pulsa <b>Comparar precio</b>. La selección de demostración aparecerá aquí.</p></div>
@@ -235,7 +287,7 @@ export default function PlusPreview() {
       <button type="button" className="plus-button plus-button-secondary" disabled={compareIds.length<2} onClick={()=>setCompared(true)}>Comparar {compareIds.length} opciones</button>
       {compared && <div className="plus-compare-grid">{compareIds.map(id=>{const item=resolve(id);return <article key={id}><span>Publicación de ejemplo</span><h3>{item.name}</h3><p>{item.business}</p><strong>{item.price ? '$'+item.price+' COP · ejemplo' : 'Precio no consultado'}</strong><p>La ubicación, calificación y distancia se consultarán desde el backend real.</p></article>;})}</div>}
     </section>
-    <section className="plus-panel" id="collections" tabIndex={-1}>
+    <section className="plus-panel" id="collections" tabIndex={-1} hidden={activeSection !== 'collections'}>
       <div className="plus-heading"><div><span>04 · ORGANIZACIÓN · EJEMPLO</span><h2>Tus colecciones</h2><p>Agrega únicamente negocios favoritos y publicaciones con «Me gusta». Todo es un ejemplo local.</p></div></div>
       <form className="plus-form" onSubmit={addCollection}><label>Nombre de la colección<input value={collectionName} maxLength={80} onChange={e=>setCollectionName(e.target.value)} placeholder="Ej. Mis cafeterías favoritas" required/></label><button type="submit" className="plus-button" disabled={collections.length>=50}>Crear colección</button></form>
       <div className="plus-list">{collections.map(col=><article className="plus-collection" key={col.id}>
@@ -263,13 +315,13 @@ export default function PlusPreview() {
           {col.items.map(item=><div key={item.id}><span>{item.description}</span><button type="button" onClick={()=>setCollections(items=>items.map(c=>c.id===col.id?{...c,items:c.items.filter(x=>x.id!==item.id)}:c))}>Quitar</button></div>)}</div>
       </article>)}</div>
     </section>
-    <section className="plus-panel" id="searches" tabIndex={-1}>
+    <section className="plus-panel" id="searches" tabIndex={-1} hidden={activeSection !== 'searches'}>
       <div className="plus-heading"><div><span>04 · ORGANIZACIÓN · EJEMPLO</span><h2>Búsquedas guardadas</h2><p>Guarda criterios de búsqueda. La lista de prueba se borra al salir.</p></div></div>
       <form className="plus-form" onSubmit={addSearch}><label>Nombre<input value={searchTitle} onChange={e=>setSearchTitle(e.target.value)} placeholder="Ej. Panaderías cerca" required maxLength={80}/></label><label>Buscar<input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Qué quieres encontrar" required maxLength={160}/></label><label>Categoría (opcional)<input value={searchCategory} onChange={e=>setSearchCategory(e.target.value)} maxLength={120}/></label><button type="submit" className="plus-button" disabled={searches.length>=50}>Guardar búsqueda</button></form>
       <div className="plus-list">{searches.map(item=><div className="plus-list-row" key={item.id}><span className="plus-row-symbol"><PlusIcon name="collection" size={19}/></span><span><strong>{item.title}</strong><small>{item.query}{item.category?' · '+item.category:''} · ejemplo</small></span><div className="plus-row-buttons"><Link to={searchHref({id:String(item.id),title:item.title,query:item.query,category:item.category||null,city:null,openNow:false,minRating:null,sort:'recommended'})}>Buscar</Link><button type="button" onClick={()=>setSearches(items=>items.filter(x=>x.id!==item.id))}>Quitar</button></div></div>)}</div>
       <p className="plus-footnote">«Buscar» abre los resultados públicos de Xamuko, no una búsqueda Plus almacenada en el backend.</p>
     </section>
-    <section className="plus-panel" id="routes" tabIndex={-1}>
+    <section className="plus-panel" id="routes" tabIndex={-1} hidden={activeSection !== 'routes'}>
       <div className="plus-heading"><div><span>05 · EXPLORACIÓN · EJEMPLO</span><h2>Rutas con varios negocios</h2><p>Elige de dos a cuatro paradas, optimiza el recorrido y revisa horarios de ejemplo.</p></div></div>
       <div className="plus-routes-list">{sampleStops.map(stop=><label key={stop.id}><input type="checkbox" checked={selectedStops.includes(stop.id)} disabled={!selectedStops.includes(stop.id)&&selectedStops.length>=4} onChange={()=>{setSelectedStops(ids=>ids.includes(stop.id)?ids.filter(x=>x!==stop.id):[...ids,stop.id]);setShowRoute(false);}}/><span>{stop.name} · {stop.address}</span></label>)}</div>
       <div className="plus-route-actions">
@@ -291,7 +343,21 @@ export default function PlusPreview() {
       </div>}
       <p className="plus-footnote">Los negocios y horarios de esta demostración son ficticios. No hay tráfico ni consultas a mapas; Plus real estima el orden por cercanía y abre después el recorrido en Google Maps.</p>
     </section>
-    <section className="plus-panel plus-adfree" id="adfree" tabIndex={-1}><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>La membresía real oculta anuncios identificados como publicidad de terceros. Aquí solo se muestra cómo se presenta el beneficio; no cambia el resto de la plataforma.</p><small>Simulación visual · Sin activación de la política global de anuncios</small></div></section>
-    <div className="plus-preview-exit"><p>Fin del recorrido de demostración. Los cambios que hiciste aquí no se guardarán.</p><Link to="/plus" className="plus-button plus-button-secondary">Salir de la vista previa</Link></div>
+    <section className="plus-panel plus-adfree" id="adfree" tabIndex={-1} hidden={activeSection !== 'adfree'}><span aria-hidden="true"><PlusIcon name="ad-free" size={35}/></span><div><h2>06 · Experiencia sin anuncios</h2><p>La membresía real oculta anuncios identificados como publicidad de terceros. Aquí solo se muestra cómo se presenta el beneficio; no cambia el resto de la plataforma.</p><small>Simulación visual · Sin activación de la política global de anuncios</small></div></section>
+        </div>
+        <nav className="plus-tool-pager" aria-label="Avanzar entre herramientas Plus">
+          <button type="button" className="plus-tool-previous" disabled={activeIndex === 0}
+            onClick={() => chooseSection(sections[activeIndex - 1].id)}>
+            ‹ Anterior
+          </button>
+          <span>{activeIndex + 1} de {sections.length}</span>
+          <button type="button" className="plus-tool-next" disabled={activeIndex === sections.length - 1}
+            onClick={() => chooseSection(sections[activeIndex + 1].id)}>
+            {activeIndex < sections.length - 1 ? 'Siguiente: ' + sections[activeIndex + 1].label : 'Recorrido completado'} <PlusIcon name="arrow-right" size={17}/>
+          </button>
+        </nav>
+      </div>
+    </div>
+    {activeSection === 'adfree' && <div className="plus-preview-exit"><p>Fin del recorrido de demostración. Los cambios que hiciste aquí no se guardarán.</p><Link to="/plus" className="plus-button plus-button-secondary">Salir de la vista previa</Link></div>}
   </PageLayout>;
 }
