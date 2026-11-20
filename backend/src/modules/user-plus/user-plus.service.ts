@@ -199,6 +199,40 @@ export async function plusRouteFavorites(userId: string) {
   return { items };
 }
 
+/** Only currently favorited businesses and liked publications can be selected. */
+export async function plusCollectionCandidates(userId: string, type: 'BUSINESS' | 'OFFER', page = 1) {
+  await requirePlus(userId);
+  const adultAllowed = await adultConsent(userId);
+  const size = 30;
+  const skip = (page - 1) * size;
+  if (type === 'BUSINESS') {
+    const where = { userId, business: { AND: [
+      { ...publishedBusiness, ...(adultAllowed ? {} : { adultOnly: false }) },
+      await publicReleaseWhere(),
+    ] } };
+    const [rows, total] = await Promise.all([
+      prisma.businessFavorite.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take: size,
+        select: { business: { select: { id: true, publicId: true, name: true } } } }),
+      prisma.businessFavorite.count({ where }),
+    ]);
+    return { items: rows.map(row => ({
+      targetType: 'BUSINESS' as const, targetId: row.business.id, name: row.business.name,
+      detail: 'Negocio favorito', href: '/business/' + row.business.publicId,
+    })), pagination: { page, total, totalPages: Math.ceil(total / size) } };
+  }
+  const where = { userId, offer: await safeOfferWhere(adultAllowed) };
+  const [rows, total] = await Promise.all([
+    prisma.businessOfferLike.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take: size,
+      select: { offer: { select: { id: true, name: true, kind: true, business: { select: { name: true } } } } } }),
+    prisma.businessOfferLike.count({ where }),
+  ]);
+  return { items: rows.map(row => ({
+    targetType: 'OFFER' as const, targetId: row.offer.id, name: row.offer.name,
+    detail: (row.offer.kind === 'PRODUCT' ? 'Producto · ' : 'Servicio · ') + row.offer.business.name,
+    href: '/' + (row.offer.kind === 'PRODUCT' ? 'product' : 'service') + '/' + row.offer.id,
+  })), pagination: { page, total, totalPages: Math.ceil(total / size) } };
+}
+
 export async function addPlusCollection(userId: string, title: string) {
   await requirePlus(userId);
   const count = await prisma.userPlusCollection.count({ where: { userId } });
@@ -223,6 +257,12 @@ export async function addPlusCollectionItem(userId: string, id: string, targetTy
       ] }, select: { id: true } })
     : await prisma.businessOffer.findFirst({ where: { id: targetId, ...await safeOfferWhere(adultAllowed) }, select: { id: true } });
   if (!exists) throw new AppError(404, 'PLUS_ITEM_NOT_AVAILABLE', 'El elemento no está disponible.');
+  // Enforce the permitted sources server-side, not just in the user interface.
+  const selectedByUser = targetType === 'BUSINESS'
+    ? await prisma.businessFavorite.findFirst({ where: { userId, businessId: exists.id }, select: { id: true } })
+    : await prisma.businessOfferLike.findFirst({ where: { userId, offerId: exists.id }, select: { id: true } });
+  if (!selectedByUser) throw new AppError(403, 'PLUS_COLLECTION_ITEM_NOT_SAVED',
+    'Solo puedes añadir negocios favoritos o productos y servicios que te gustan.');
   const existing = await prisma.userPlusCollectionItem.findUnique({
     where: { collectionId_targetType_targetId: { collectionId: id, targetType, targetId: exists.id } },
   });
