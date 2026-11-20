@@ -368,6 +368,20 @@ describe('Xamuko Plus: member experience and real entitlement', () => {
     expect(api.requestPlusMembership).not.toHaveBeenCalled();
   });
 
+  it('lets the authorized preview compare two sample products and clear the selection without backend calls', () => {
+    previewAuth.user.emailNormalized = 'administradoreswit@gmail.com';
+    renderPlus('/plus?preview=1');
+    fireEvent.click(screen.getByRole('button', { name: 'Probar con dos opciones de ejemplo' }));
+    expect(screen.getByText('2 de 4 opciones seleccionadas')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Comparar 2 opciones' }));
+    expect(screen.getByRole('heading', { name: 'Producto de muestra A' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Producto de muestra B' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar selección' }));
+    expect(readPlusComparison('user-test', true)).toEqual([]);
+    expect(api.comparePlusOffers).not.toHaveBeenCalled();
+    expect(api.fetchPlusStatus).not.toHaveBeenCalled();
+  });
+
   it('does not expose the visual walkthrough to other email accounts', async () => {
     api.fetchPlusStatus.mockResolvedValue(inactive);
     renderPlus('/plus?preview=1');
