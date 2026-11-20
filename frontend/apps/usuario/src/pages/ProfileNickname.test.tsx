@@ -11,6 +11,11 @@ const state = vi.hoisted(() => ({
   updateProfile: vi.fn(),
   setAccount: vi.fn(),
   uploadAvatar: vi.fn(),
+  plusEnabled: false,
+}));
+vi.mock('@wit/utils', async importOriginal => ({
+  ...(await importOriginal<typeof import('@wit/utils')>()),
+  usePaidPlans: () => ({ businessPro: true, xamukoPlus: state.plusEnabled }),
 }));
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: state.user, logout: vi.fn(), reloadUser: vi.fn() }) }));
 vi.mock('../services/userDataService', () => ({
@@ -29,6 +34,7 @@ vi.mock('../../../negocios/src/services/businessAuthService', () => ({ updatePro
 
 beforeEach(() => {
   vi.clearAllMocks();
+  state.plusEnabled = false;
   state.user = { id: 'cuenta-existente', displayName: 'Nombre visible', emailNormalized: 'perfil@example.test', nickname: '@nickname.unico.42', avatarUrl: null, emailVerified: true, authProviders: ['EMAIL'] };
 });
 afterEach(() => {
@@ -50,6 +56,20 @@ describe('nickname real de la cuenta existente', () => {
     state.user = { ...state.user!, nickname: '@nickname.unico.42' };
     view.rerender(<MemoryRouter><Profile /></MemoryRouter>);
     expect(screen.getByRole('heading', { level: 1 }).nextElementSibling).toHaveTextContent('@nickname.unico.42');
+  });
+  it('oculta completamente Xamuko Plus en Perfil cuando el interruptor global está apagado', () => {
+    state.user = { ...state.user!, emailNormalized: 'administradoreswit@gmail.com' };
+    render(<MemoryRouter><Profile /></MemoryRouter>);
+    expect(screen.queryByRole('link', { name: /Xamuko Plus/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Favoritos/i })).toBeInTheDocument();
+  });
+  it('solo muestra Plus cuando Admin lo habilita y desaparece al volver a apagarlo', () => {
+    state.plusEnabled = true;
+    const view = render(<MemoryRouter><Profile /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: /Xamuko Plus/i })).toHaveAttribute('href', '/plus');
+    state.plusEnabled = false;
+    view.rerender(<MemoryRouter><Profile /></MemoryRouter>);
+    expect(screen.queryByRole('link', { name: /Xamuko Plus/i })).not.toBeInTheDocument();
   });
   it('Business usa el nickname real debajo del nombre y en el campo existente', () => {
     render(<MemoryRouter><ProfilePage /></MemoryRouter>);
