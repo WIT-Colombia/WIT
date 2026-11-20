@@ -66,7 +66,7 @@ export function PaidPlanControl({ plan, name }: { plan: PaidPlanKey; name: strin
     </div>
     <p className="paid-plan-control-description">
       {isPlus
-        ? 'Controla globalmente el radar de novedades, seguimiento de precios, comparador, colecciones, búsquedas, rutas y experiencia sin publicidad. Deshabilitar Plus suspende el acceso a sus beneficios sin borrar datos ni suscripciones. La contratación y los cobros siguen deshabilitados.'
+        ? 'Controla globalmente el radar de novedades, seguimiento de precios, comparador, colecciones, búsquedas, rutas y experiencia sin publicidad. Xamuko Plus no se activa automáticamente con despliegues ni mediante vistas de prueba: solo el superadministrador puede habilitarlo aquí. Al deshabilitarlo se suspende el acceso a los beneficios sin borrar datos ni suscripciones. La contratación y los cobros siguen deshabilitados.'
         : 'Al deshabilitar, se ocultan las ofertas y las funciones exclusivas PRO, y el backend vuelve a aplicar límites básicos. También se suspende temporalmente el acceso avanzado de suscriptores vigentes.'}
     </p>
     <p className="paid-plan-control-preservation">Las suscripciones registradas, estadísticas y demás datos históricos no se eliminan. El registro administrativo permanece disponible.</p>
